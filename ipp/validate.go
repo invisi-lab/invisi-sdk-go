@@ -1,0 +1,57 @@
+package ipp
+
+import (
+	"fmt"
+	"regexp"
+)
+
+var networkPattern = regexp.MustCompile(`^eip155:\d+$`)
+
+// ValidateIPPRequest checks that an IPPRequest is well-formed.
+func ValidateIPPRequest(r IPPRequest) error {
+	if r.V < 1 {
+		return fmt.Errorf("ipp: invalid version: %d (must be >= 1)", r.V)
+	}
+	if !networkPattern.MatchString(r.Network) {
+		return fmt.Errorf("ipp: invalid network: %q (must match eip155:<digits>)", r.Network)
+	}
+
+	p := r.Payload
+	if p.IdentityCommitment == "" {
+		return fmt.Errorf("ipp: identityCommitment is required")
+	}
+	if p.TokenAddress == "" {
+		return fmt.Errorf("ipp: tokenAddress is required")
+	}
+	if p.Operator == "" {
+		return fmt.Errorf("ipp: operator is required")
+	}
+	if p.TreeID == "" {
+		return fmt.Errorf("ipp: treeId is required")
+	}
+	if len(p.PaymentTypes) == 0 {
+		return fmt.Errorf("ipp: paymentTypes must not be empty")
+	}
+	for _, pt := range p.PaymentTypes {
+		switch pt {
+		case PaymentTypeOpen, PaymentTypeBlind, PaymentTypeCredit:
+			// valid
+		default:
+			return fmt.Errorf("ipp: invalid paymentType: %q", pt)
+		}
+	}
+
+	hasNonce := p.Nonce != nil
+	hasPC := p.PaymentCommitment != nil
+
+	if hasNonce != hasPC {
+		return fmt.Errorf("ipp: nonce and paymentCommitment must both be present or both absent")
+	}
+
+	// When no nonce is provided (interactive mode), endpoint is required.
+	if !hasNonce && p.Endpoint == nil {
+		return fmt.Errorf("ipp: endpoint is required when nonce is not provided")
+	}
+
+	return nil
+}
