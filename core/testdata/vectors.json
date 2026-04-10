@@ -1,0 +1,135 @@
+{
+  "poseidon2": [
+    {
+      "inputs": [
+        "1",
+        "2"
+      ],
+      "expected": "0x038682aa1cb5ae4e0a3f13da432a95c77c5c111f6f030faf9cad641ce1ed7383"
+    },
+    {
+      "inputs": [
+        "1",
+        "2",
+        "3",
+        "4"
+      ],
+      "expected": "0x130bf204a32cac1f0ace56c78b731aa3809f06df2731ebcf6b3464a15788b1b9"
+    },
+    {
+      "inputs": [
+        "0",
+        "0"
+      ],
+      "expected": "0x0b63a53787021a4a962a452c2921b3663aff1ffd8d5510540f8e659e782956f1"
+    },
+    {
+      "inputs": [
+        "42"
+      ],
+      "expected": "0x255ee8299be9389b21052fd317f8cae762f9c89f756ac79262fb648a70ee7a08"
+    },
+    {
+      "inputs": [
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6",
+        "7"
+      ],
+      "expected": "0x16f929bc0d216df4b05bdc44222463edf2b9791bd949ab926eebda06a502d238"
+    }
+  ],
+  "deriveNullifierKey": [
+    {
+      "masterKey": "100",
+      "invoiceId": "200",
+      "expected": "0x11d1be3ce292cfef58821d791e0570c3ea0087a297f2495fd90f23db7dec73a6"
+    },
+    {
+      "masterKey": "0",
+      "invoiceId": "0",
+      "expected": "0x1cf72bfcec8abddcd0f50f42fc920980ff16a6d9b41c5bec9730a165119e45b2"
+    }
+  ],
+  "computeIdentityCommitment": [
+    {
+      "nullifierKey": "8059902435717874135396261042205011152580675825595808264720455654581518234534",
+      "receivingAddress": "2457",
+      "expected": "0x27df15cc890df106dbef86186a2d428dd4f1855ae2b9f513f02320ca9265f355"
+    }
+  ],
+  "computePaymentCommitment": [
+    {
+      "chainId": "1",
+      "identityCommitment": "0x27df15cc890df106dbef86186a2d428dd4f1855ae2b9f513f02320ca9265f355",
+      "tokenAddress": "2748",
+      "amount": "1000",
+      "nonce": "42",
+      "expected": "0x1d2764ecf5dc787ef6658062472ca422c869a261639fe18334a20cae5e327280"
+    }
+  ],
+  "computePaymentNullifier": [
+    {
+      "chainId": "1",
+      "nullifierKey": "8059902435717874135396261042205011152580675825595808264720455654581518234534",
+      "tokenAddress": "2748",
+      "amount": "1000",
+      "nonce": "42",
+      "expected": "0x286f0ebe481420262e0f9347832dc52f74041bbfe8880aed7215a8115ee317d8"
+    }
+  ],
+  "computeNullifierKeyHash": [
+    {
+      "nullifierKey": "8059902435717874135396261042205011152580675825595808264720455654581518234534",
+      "expected": "0x302b9fd245ae0f0bd3bb84604fe0dcff1be9ec0a61375378cb1d4398f198e7e7"
+    }
+  ],
+  "computeCreditCommitment": [
+    {
+      "chainId": "1",
+      "identityCommitment": "0x27df15cc890df106dbef86186a2d428dd4f1855ae2b9f513f02320ca9265f355",
+      "payerCommitment": "0x27df15cc890df106dbef86186a2d428dd4f1855ae2b9f513f02320ca9265f355",
+      "tokenAddress": "2748",
+      "amount": "1000",
+      "nonce": "42",
+      "expiry": "9999",
+      "nullifierKeyHash": "0x302b9fd245ae0f0bd3bb84604fe0dcff1be9ec0a61375378cb1d4398f198e7e7",
+      "expected": "0x0236b59808c998f7d8ab49b7437f06f2139060f87946e2ea6dfa871264d59a1f"
+    }
+  ],
+  "computeCreditNullifier": [
+    {
+      "chainId": "1",
+      "nullifierKey": "8059902435717874135396261042205011152580675825595808264720455654581518234534",
+      "tokenAddress": "2748",
+      "amount": "1000",
+      "nonce": "42",
+      "expiry": "9999",
+      "expected": "0x09f70f6fa2ea68e2b7e2fc72f0d0f40aa99d1fff969f1da4be2f63da80d6cfbd"
+    }
+  ],
+  "deriveRemainderNonce": [
+    {
+      "nonce": "100",
+      "newNonce": "200",
+      "expected": "0x2a65f0ac449a4a503a4995e5f36d4bb463459cee8654dfd2cb27b76cde502a69"
+    }
+  ],
+  "deriveRemainderNullifierKey": [
+    {
+      "nullifierKey": "100",
+      "newNonce": "200",
+      "expected": "0x08e764e3f9c32c1bb7039c3f19b4d0af104d9b48db43fb827cd9d505ec62b26e"
+    }
+  ],
+  "computeRefundLink": [
+    {
+      "originalCommitment": "12345",
+      "refundNonce": "67890",
+      "expected": "0x019d5d33141d90b6cc096e9092febb0e1a0eb9a92a8268ef5e108ab3631f2e8d"
+    }
+  ]
+}
