@@ -324,14 +324,26 @@ func TestSyncReceivesRealTimeEvents(t *testing.T) {
 	log.BlockNumber = 101
 	client.sendLog(log)
 
-	// Wait for processing
-	time.Sleep(100 * time.Millisecond)
-
-	if tree.Size() != 1 {
-		t.Errorf("Size() = %d, want 1 after real-time event", tree.Size())
+	// Wait until LastSyncedBlock reaches 101 — it's updated atomically after applyLogs completes.
+	deadline := time.Now().Add(2 * time.Second)
+	for time.Now().Before(deadline) {
+		if sync.LastSyncedBlock() >= 101 {
+			break
+		}
+		time.Sleep(5 * time.Millisecond)
 	}
+
 	if sync.LastSyncedBlock() != 101 {
 		t.Errorf("LastSyncedBlock() = %d, want 101", sync.LastSyncedBlock())
+	}
+
+	// Acquire sync's lock to safely read tree state after the event is fully processed.
+	sync.mu.Lock()
+	size := tree.Size()
+	sync.mu.Unlock()
+
+	if size != 1 {
+		t.Errorf("Size() = %d, want 1 after real-time event", size)
 	}
 }
 
@@ -374,10 +386,21 @@ func TestSyncFallsBackToPolling(t *testing.T) {
 	client.blockNumber = 150
 	client.mu.Unlock()
 
-	// Wait for at least one poll cycle
-	time.Sleep(200 * time.Millisecond)
+	// Wait until the sync has processed block 150, indicating the poll cycle completed.
+	deadline := time.Now().Add(2 * time.Second)
+	for time.Now().Before(deadline) {
+		if sync.LastSyncedBlock() >= 150 {
+			break
+		}
+		time.Sleep(10 * time.Millisecond)
+	}
 
-	if tree.Size() != 1 {
-		t.Errorf("Size() = %d, want 1 after polling", tree.Size())
+	// Acquire the sync's lock to safely read tree state after polling is done.
+	sync.mu.Lock()
+	size := tree.Size()
+	sync.mu.Unlock()
+
+	if size != 1 {
+		t.Errorf("Size() = %d, want 1 after polling", size)
 	}
 }

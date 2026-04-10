@@ -173,3 +173,125 @@ func TestMultipleInsertsProduceDifferentRoots(t *testing.T) {
 		t.Error("root should differ after second insert")
 	}
 }
+
+// --- Task 8: Integration tests ---
+
+func TestIntegration_InsertAndProveAllLeaves(t *testing.T) {
+	tree, err := NewInMemoryMerkleTree()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// Insert 16 leaves
+	for i := uint64(0); i < 16; i++ {
+		var leaf fr.Element
+		leaf.SetUint64(i * 100)
+		idx, err := tree.Insert(leaf)
+		if err != nil {
+			t.Fatalf("Insert(%d): %v", i, err)
+		}
+		if idx != int(i) {
+			t.Fatalf("Insert(%d) = %d, want %d", i, idx, i)
+		}
+	}
+
+	if tree.Size() != 16 {
+		t.Fatalf("Size() = %d, want 16", tree.Size())
+	}
+
+	// Prove and verify every leaf
+	for i := 0; i < 16; i++ {
+		proof, err := tree.GetProof(i)
+		if err != nil {
+			t.Fatalf("GetProof(%d): %v", i, err)
+		}
+		valid, err := proof.Verify()
+		if err != nil {
+			t.Fatalf("Verify(%d): %v", i, err)
+		}
+		if !valid {
+			t.Errorf("proof for leaf %d does not verify", i)
+		}
+	}
+}
+
+func TestIntegration_RootStability(t *testing.T) {
+	// Two trees with identical inserts must produce identical roots.
+	t1, _ := NewInMemoryMerkleTree()
+	t2, _ := NewInMemoryMerkleTree()
+
+	for i := uint64(0); i < 32; i++ {
+		var leaf fr.Element
+		leaf.SetUint64(i + 1)
+		t1.Insert(leaf)
+		t2.Insert(leaf)
+	}
+
+	r1 := t1.Root()
+	r2 := t2.Root()
+	if !r1.Equal(&r2) {
+		t.Error("identical trees should have identical roots")
+	}
+}
+
+func TestIntegration_ProofRootMatchesTreeRoot(t *testing.T) {
+	tree, _ := NewInMemoryMerkleTree()
+
+	var l1, l2 fr.Element
+	l1.SetUint64(1)
+	l2.SetUint64(2)
+
+	tree.Insert(l1)
+	tree.Insert(l2)
+
+	proof0, _ := tree.GetProof(0)
+	proof1, _ := tree.GetProof(1)
+
+	root := tree.Root()
+	if !proof0.Root.Equal(&root) {
+		t.Error("proof0.Root != tree.Root()")
+	}
+	if !proof1.Root.Equal(&root) {
+		t.Error("proof1.Root != tree.Root()")
+	}
+}
+
+func TestIntegration_LargeTree(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping large tree test in short mode")
+	}
+
+	tree, err := NewInMemoryMerkleTree()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// Insert 256 leaves
+	for i := uint64(0); i < 256; i++ {
+		var leaf fr.Element
+		leaf.SetUint64(i)
+		_, err := tree.Insert(leaf)
+		if err != nil {
+			t.Fatalf("Insert(%d): %v", i, err)
+		}
+	}
+
+	if tree.Size() != 256 {
+		t.Fatalf("Size() = %d, want 256", tree.Size())
+	}
+
+	// Spot-check proofs at various indices
+	for _, idx := range []int{0, 1, 127, 128, 255} {
+		proof, err := tree.GetProof(idx)
+		if err != nil {
+			t.Fatalf("GetProof(%d): %v", idx, err)
+		}
+		valid, err := proof.Verify()
+		if err != nil {
+			t.Fatalf("Verify(%d): %v", idx, err)
+		}
+		if !valid {
+			t.Errorf("proof for leaf %d does not verify", idx)
+		}
+	}
+}

@@ -58,6 +58,8 @@ func (m *mockClient) SubscribeFilterLogs(ctx context.Context, q ethereum.FilterQ
 }
 
 func (m *mockClient) BlockNumber(ctx context.Context) (uint64, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
 	return m.blockNumber, nil
 }
 
