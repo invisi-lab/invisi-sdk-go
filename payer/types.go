@@ -6,6 +6,8 @@ import (
 	"github.com/consensys/gnark-crypto/ecc/bn254/fr"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/signer/core/apitypes"
+
+	"github.com/invisi-labs/invisi-sdk-go/ipp"
 )
 
 // ─── Gas Estimates ──────────────────────────────────────────────────
@@ -314,7 +316,7 @@ type VerifyParams struct {
 
 // BuildFromRequestParams configures building calldata from an IPP request.
 type BuildFromRequestParams struct {
-	Request           interface{} // ipp.IPPRequest — typed at call site
+	Request           ipp.IPPRequest
 	Nonce             common.Hash
 	PaymentCommitment common.Hash
 	Amount            *big.Int
