@@ -5,6 +5,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/consensys/gnark-crypto/ecc/bn254/fr"
 	"github.com/ethereum/go-ethereum/common"
 )
 
@@ -151,5 +152,105 @@ func TestBuildSignPayOpenTypedData_NilRefundDefaultsToZero(t *testing.T) {
 	zeroHash := common.Hash{}.Hex()
 	if refundLink != zeroHash {
 		t.Errorf("refundLink = %s, want %s", refundLink, zeroHash)
+	}
+}
+
+// TestBuildSignPayOpenTypedData_InjectNonce verifies that when an explicit Nonce
+// is supplied, the result is deterministic and the nonce is reflected in both
+// SignPayOpenResult.Nonce and TypedData.Message["nonce"].
+func TestBuildSignPayOpenTypedData_InjectNonce(t *testing.T) {
+	// Build a fixed fr.Element from a known big.Int.
+	var fixedNonce fr.Element
+	fixedNonce.SetBigInt(big.NewInt(0xdeadbeef))
+
+	params := SignPayOpenParams{
+		ChainID:            big.NewInt(84532),
+		VerifyingContract:  common.HexToAddress("0xdeadbeef"),
+		IdentityCommitment: common.HexToHash("0x" + strings.Repeat("00", 31) + "ab"),
+		TokenAddress:       common.HexToAddress("0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913"),
+		Amount:             big.NewInt(100_000_000),
+		TreeID:             big.NewInt(1),
+		Nonce:              &fixedNonce,
+		SigNonce:           big.NewInt(0),
+		Deadline:           big.NewInt(1700000000),
+	}
+
+	result1, err := BuildSignPayOpenTypedData(params)
+	if err != nil {
+		t.Fatal(err)
+	}
+	result2, err := BuildSignPayOpenTypedData(params)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// Injected nonce → results must be deterministic.
+	if result1.PaymentCommitment != result2.PaymentCommitment {
+		t.Errorf("PaymentCommitment not deterministic: %s vs %s",
+			result1.PaymentCommitment.Hex(), result2.PaymentCommitment.Hex())
+	}
+	if result1.Nonce != result2.Nonce {
+		t.Errorf("Nonce not deterministic: %s vs %s", result1.Nonce.Hex(), result2.Nonce.Hex())
+	}
+
+	// result.Nonce must be non-zero and must match TypedData.Message["nonce"].
+	if result1.Nonce == (common.Hash{}) {
+		t.Error("Nonce should not be zero")
+	}
+	msgNonce, ok := result1.TypedData.Message["nonce"].(string)
+	if !ok {
+		t.Fatal("TypedData.Message[\"nonce\"] missing or not string")
+	}
+	if msgNonce != result1.Nonce.Hex() {
+		t.Errorf("TypedData nonce %s != result.Nonce %s", msgNonce, result1.Nonce.Hex())
+	}
+}
+
+// TestBuildSignPayOpenTypedData_ParityWithCalldata is the key parity guarantee:
+// for the same (chainId, identityCommitment, tokenAddress, amount, treeId, nonce),
+// BuildSignPayOpenTypedData and BuildPayOpenCalldata must produce the same
+// PaymentCommitment. This proves a relay-mode signature covers the same
+// commitment the server computed via the calldata builder.
+func TestBuildSignPayOpenTypedData_ParityWithCalldata(t *testing.T) {
+	var fixedNonce fr.Element
+	fixedNonce.SetBigInt(big.NewInt(0xcafe1234))
+
+	chainID := big.NewInt(84532)
+	ic := common.HexToHash("0x" + strings.Repeat("00", 31) + "cd")
+	token := common.HexToAddress("0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913")
+	amount := big.NewInt(500_000_000)
+	treeID := big.NewInt(2)
+
+	signResult, err := BuildSignPayOpenTypedData(SignPayOpenParams{
+		ChainID:            chainID,
+		VerifyingContract:  common.HexToAddress("0xdeadbeef"),
+		IdentityCommitment: ic,
+		TokenAddress:       token,
+		Amount:             amount,
+		TreeID:             treeID,
+		Nonce:              &fixedNonce,
+		SigNonce:           big.NewInt(0),
+		Deadline:           big.NewInt(1700000000),
+	})
+	if err != nil {
+		t.Fatalf("BuildSignPayOpenTypedData: %v", err)
+	}
+
+	calldataResult, err := BuildPayOpenCalldata(PayOpenParams{
+		ChainID:            chainID,
+		IdentityCommitment: ic,
+		TokenAddress:       token,
+		Amount:             amount,
+		TreeID:             treeID,
+		Nonce:              &fixedNonce,
+	})
+	if err != nil {
+		t.Fatalf("BuildPayOpenCalldata: %v", err)
+	}
+
+	// Core parity assertion: same inputs + same nonce → same PaymentCommitment.
+	if signResult.PaymentCommitment != calldataResult.PaymentCommitment {
+		t.Errorf("PaymentCommitment mismatch:\n  sign builder:     %s\n  calldata builder: %s",
+			signResult.PaymentCommitment.Hex(), calldataResult.PaymentCommitment.Hex())
 	}
 }

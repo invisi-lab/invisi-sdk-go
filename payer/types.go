@@ -169,6 +169,7 @@ type SignPayOpenParams struct {
 	Amount             *big.Int
 	TreeID             *big.Int
 	RefundLink         *common.Hash // optional; nil = zero
+	Nonce              *fr.Element  // optional; nil = auto-generated
 	SigNonce           *big.Int
 	Deadline           *big.Int
 }
