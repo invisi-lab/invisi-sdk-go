@@ -33,10 +33,7 @@ func ValidateIPPRequest(r IPPRequest) error {
 		return fmt.Errorf("ipp: paymentTypes must not be empty")
 	}
 	for _, pt := range p.PaymentTypes {
-		switch pt {
-		case PaymentTypeOpen, PaymentTypeBlind, PaymentTypeCredit:
-			// valid
-		default:
+		if !pt.Valid() {
 			return fmt.Errorf("ipp: invalid paymentType: %q", pt)
 		}
 	}

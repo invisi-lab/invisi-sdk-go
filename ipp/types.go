@@ -9,6 +9,22 @@ const (
 	PaymentTypeCredit PaymentType = "credit"
 )
 
+// AllPaymentTypes is the single source of truth for the exhaustive set of valid PaymentType values.
+// Consumers that need to enumerate valid types (e.g. for error messages) should reference this slice
+// rather than duplicating the list.
+var AllPaymentTypes = []PaymentType{PaymentTypeOpen, PaymentTypeBlind, PaymentTypeCredit}
+
+// Valid reports whether t is a recognised PaymentType.
+// This is the single source of truth for PaymentType validity; all validation must go through Valid().
+func (t PaymentType) Valid() bool {
+	switch t {
+	case PaymentTypeOpen, PaymentTypeBlind, PaymentTypeCredit:
+		return true
+	default:
+		return false
+	}
+}
+
 // IPPRequest is the top-level envelope for an IPP payment request.
 type IPPRequest struct {
 	V       int               `json:"v" msgpack:"v"`
