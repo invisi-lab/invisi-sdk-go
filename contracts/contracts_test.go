@@ -5,7 +5,7 @@ import (
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/invisi-labs/invisi-sdk-go/contracts"
+	"github.com/invisi-lab/invisi-sdk-go/contracts"
 )
 
 // TestBindingsCompile verifies that all generated ABI bindings parse correctly

@@ -6,7 +6,7 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
-	contracts "github.com/invisi-labs/invisi-sdk-go/contracts"
+	contracts "github.com/invisi-lab/invisi-sdk-go/contracts"
 )
 
 // ResolveInstanceAddress calls InvisiFactory.getInstanceAddress on-chain to

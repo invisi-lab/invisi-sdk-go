@@ -5,7 +5,7 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 
-	"github.com/invisi-labs/invisi-sdk-go/core"
+	"github.com/invisi-lab/invisi-sdk-go/core"
 )
 
 // BuildSettleChangeCalldata computes the payment nullifier and encodes

@@ -4,7 +4,7 @@ import (
 	"math/big"
 
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/invisi-labs/invisi-sdk-go/core"
+	"github.com/invisi-lab/invisi-sdk-go/core"
 )
 
 // ComputePaymentCommitmentForPropose generates a random nonce and computes

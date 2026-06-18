@@ -3,7 +3,7 @@ package deployments_test
 import (
 	"testing"
 
-	"github.com/invisi-labs/invisi-sdk-go/deployments"
+	"github.com/invisi-lab/invisi-sdk-go/deployments"
 )
 
 func TestGetDeployment_ValidChainIDs(t *testing.T) {

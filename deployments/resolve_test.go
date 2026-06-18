@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/invisi-labs/invisi-sdk-go/deployments"
+	"github.com/invisi-lab/invisi-sdk-go/deployments"
 )
 
 func TestResolveInstanceAddress_NilClient(t *testing.T) {

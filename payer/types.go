@@ -7,7 +7,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/signer/core/apitypes"
 
-	"github.com/invisi-labs/invisi-sdk-go/ipp"
+	"github.com/invisi-lab/invisi-sdk-go/ipp"
 )
 
 // ─── Gas Estimates ──────────────────────────────────────────────────

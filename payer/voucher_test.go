@@ -4,7 +4,7 @@ import (
 	"math/big"
 	"testing"
 
-	"github.com/invisi-labs/invisi-sdk-go/ipp"
+	"github.com/invisi-lab/invisi-sdk-go/ipp"
 )
 
 func TestBuildVoucher(t *testing.T) {

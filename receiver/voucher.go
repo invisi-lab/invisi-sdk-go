@@ -5,8 +5,8 @@ import (
 	"strings"
 
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/invisi-labs/invisi-sdk-go/core"
-	"github.com/invisi-labs/invisi-sdk-go/ipp"
+	"github.com/invisi-lab/invisi-sdk-go/core"
+	"github.com/invisi-lab/invisi-sdk-go/ipp"
 )
 
 // VerifyVoucher confirms the voucher binds funds to the receiver's own address

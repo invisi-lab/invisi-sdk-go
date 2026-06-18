@@ -2,7 +2,7 @@ package tree
 
 import (
 	"github.com/consensys/gnark-crypto/ecc/bn254/fr"
-	"github.com/invisi-labs/invisi-sdk-go/core"
+	"github.com/invisi-lab/invisi-sdk-go/core"
 )
 
 const Depth = core.TreeDepth // 16

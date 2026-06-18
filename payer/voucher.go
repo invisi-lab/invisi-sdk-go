@@ -4,7 +4,7 @@ import (
 	"errors"
 	"math/big"
 
-	"github.com/invisi-labs/invisi-sdk-go/ipp"
+	"github.com/invisi-lab/invisi-sdk-go/ipp"
 )
 
 // BuildVoucherParams holds all parameters needed to assemble a payment voucher.

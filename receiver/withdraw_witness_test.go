@@ -6,8 +6,8 @@ import (
 
 	"github.com/consensys/gnark-crypto/ecc/bn254/fr"
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/invisi-labs/invisi-sdk-go/core"
-	"github.com/invisi-labs/invisi-sdk-go/tree"
+	"github.com/invisi-lab/invisi-sdk-go/core"
+	"github.com/invisi-lab/invisi-sdk-go/tree"
 )
 
 // buildTestMerkleTree creates a tree with N payments and returns

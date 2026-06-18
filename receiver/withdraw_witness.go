@@ -5,7 +5,7 @@ import (
 	"math/big"
 
 	"github.com/consensys/gnark-crypto/ecc/bn254/fr"
-	"github.com/invisi-labs/invisi-sdk-go/tree"
+	"github.com/invisi-lab/invisi-sdk-go/tree"
 )
 
 // BuildWithdrawWitness constructs the complete ZK circuit witness for a
