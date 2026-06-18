@@ -1,6 +1,7 @@
 package payer
 
 import (
+	"errors"
 	"math/big"
 
 	"github.com/invisi-labs/invisi-sdk-go/ipp"
@@ -24,6 +25,9 @@ type BuildVoucherParams struct {
 // BuildVoucher assembles a payment voucher (mode 3 address transfer) from values
 // the payer already holds after payOpen. Pure local assembly — no chain/endpoint call.
 func BuildVoucher(params BuildVoucherParams) (ipp.IPPVoucher, error) {
+	if params.Amount == nil {
+		return ipp.IPPVoucher{}, errors.New("amount is nil")
+	}
 	return ipp.IPPVoucher{
 		V:       1,
 		Network: params.Network,

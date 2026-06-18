@@ -11,8 +11,15 @@ import (
 
 // VerifyVoucher confirms the voucher binds funds to the receiver's own address
 // and is internally consistent. MUST pass before withdraw.
+// chainID is accepted for API compatibility but the authoritative chain ID is
+// always derived from voucher.Network via CAIP-2 parsing.
 func VerifyVoucher(voucher ipp.IPPVoucher, receivingAddress common.Address, chainID *big.Int) (bool, error) {
 	p := voucher.Payload
+
+	derivedChainID, err := ipp.CAIP2ToChainID(voucher.Network)
+	if err != nil {
+		return false, err
+	}
 
 	nk, err := core.HexToElement(p.NullifierKey)
 	if err != nil {
@@ -39,7 +46,7 @@ func VerifyVoucher(voucher ipp.IPPVoucher, receivingAddress common.Address, chai
 		return false, err
 	}
 	pc, err := core.ComputePaymentCommitment(
-		core.BigIntToElement(chainID), ic, token,
+		core.BigIntToElement(derivedChainID), ic, token,
 		core.BigIntToElement(amount), nonce,
 	)
 	if err != nil {

@@ -59,6 +59,16 @@ func TestVerifyVoucher_WrongAddress(t *testing.T) {
 	}
 }
 
+func TestVerifyVoucher_TamperedAmount(t *testing.T) {
+	recv := common.HexToAddress("0x00000000000000000000000000000000DeaD0000")
+	v := makeVoucher(t, recv)
+	v.Payload.Amount = "999"
+	ok, _ := VerifyVoucher(v, recv, big.NewInt(84532))
+	if ok {
+		t.Error("expected rejection for tampered amount")
+	}
+}
+
 func TestVoucherToWithdrawRequest_NoSecret(t *testing.T) {
 	recv := common.HexToAddress("0x00000000000000000000000000000000DeaD0000")
 	v := makeVoucher(t, recv)

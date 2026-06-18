@@ -73,7 +73,6 @@ func decodeEnvelope(encoded string, dst any) error {
 	}
 
 	// Verify version consistency using a type-switch on common envelope shapes.
-	type versioned interface{ getV() int }
 	switch d := dst.(type) {
 	case *IPPRequest:
 		if d.V != version {
