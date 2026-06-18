@@ -32,6 +32,7 @@ func CreatePaymentRequest(params CreatePaymentRequestParams) (*ipp.IPPRequest, e
 	request := &ipp.IPPRequest{
 		V:       ipp.IPPCurrentVersion,
 		Network: ipp.ChainIDToCAIP2(params.ChainID),
+		Type:    ipp.MessageTypeRequest,
 		Payload: ipp.IPPPayloadV1{
 			IdentityCommitment: icHex,
 			TokenAddress:       params.TokenAddress.Hex(),
