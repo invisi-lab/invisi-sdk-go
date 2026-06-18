@@ -10,6 +10,7 @@ func sampleRequest() IPPRequest {
 	return IPPRequest{
 		V:       1,
 		Network: "eip155:84532",
+		Type:    MessageTypeRequest,
 		Meta: map[string]string{
 			MetaKeyMerchantName: "Coffee Shop",
 		},
@@ -25,10 +26,75 @@ func sampleRequest() IPPRequest {
 	}
 }
 
+func sampleVoucher() IPPVoucher {
+	return IPPVoucher{
+		V: 1, Network: "eip155:84532", Type: MessageTypeVoucher,
+		Payload: IPPVoucherV1{
+			IdentityCommitment: "0xabc",
+			PaymentCommitment:  "0xdef",
+			TokenAddress:       "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+			Operator:           "0x1234567890123456789012345678901234567890",
+			Amount:             "100000000",
+			Nonce:              "0x123",
+			NullifierKey:       "0x456",
+			TreeID:             "1",
+		},
+	}
+}
+
+func TestVoucherRoundtripJSON(t *testing.T) {
+	v := sampleVoucher()
+	encoded, err := EncodeVoucher(v, FormatJSON)
+	if err != nil {
+		t.Fatalf("encode: %v", err)
+	}
+	if !strings.HasPrefix(encoded, "ipp1:") {
+		t.Errorf("prefix: %q", encoded[:10])
+	}
+	got, err := DecodeVoucher(encoded)
+	if err != nil {
+		t.Fatalf("decode: %v", err)
+	}
+	if got.Payload.NullifierKey != v.Payload.NullifierKey {
+		t.Error("nullifierKey mismatch")
+	}
+}
+
+func TestVoucherRoundtripCompact(t *testing.T) {
+	v := sampleVoucher()
+	encoded, _ := EncodeVoucher(v, FormatCompact)
+	got, err := DecodeVoucher(encoded)
+	if err != nil {
+		t.Fatalf("decode: %v", err)
+	}
+	if got.Payload.Operator != v.Payload.Operator {
+		t.Error("operator mismatch")
+	}
+}
+
+func TestDecodeVoucherRejectsRequest(t *testing.T) {
+	encoded, _ := Encode(sampleRequest(), FormatJSON)
+	if _, err := DecodeVoucher(encoded); err == nil {
+		t.Error("expected error decoding a request as voucher")
+	}
+}
+
+func TestPeekType(t *testing.T) {
+	rv, _ := EncodeVoucher(sampleVoucher(), FormatJSON)
+	if typ, _ := PeekType(rv); typ != MessageTypeVoucher {
+		t.Errorf("got %q", typ)
+	}
+	rr, _ := Encode(sampleRequest(), FormatJSON)
+	if typ, _ := PeekType(rr); typ != MessageTypeRequest {
+		t.Errorf("got %q", typ)
+	}
+}
+
 func minimalRequest() IPPRequest {
 	return IPPRequest{
 		V:       1,
 		Network: "eip155:1",
+		Type:    MessageTypeRequest,
 		Payload: IPPPayloadV1{
 			IdentityCommitment: "0xid",
 			TokenAddress:       "0xtoken",

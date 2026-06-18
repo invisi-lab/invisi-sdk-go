@@ -25,12 +25,44 @@ func (t PaymentType) Valid() bool {
 	}
 }
 
+// IPPMessageType is the discriminator field for IPP envelopes.
+type IPPMessageType string
+
+const (
+	MessageTypeRequest IPPMessageType = "request"
+	MessageTypeVoucher IPPMessageType = "voucher"
+)
+
 // IPPRequest is the top-level envelope for an IPP payment request.
 type IPPRequest struct {
 	V       int               `json:"v" msgpack:"v"`
 	Network string            `json:"network" msgpack:"network"`
+	Type    IPPMessageType    `json:"type" msgpack:"type"`
 	Meta    map[string]string `json:"meta,omitempty" msgpack:"meta,omitempty"`
 	Payload IPPPayloadV1      `json:"payload" msgpack:"payload"`
+}
+
+// IPPVoucher is the top-level envelope for an IPP payment voucher (mode 3).
+type IPPVoucher struct {
+	V       int               `json:"v" msgpack:"v"`
+	Network string            `json:"network" msgpack:"network"`
+	Type    IPPMessageType    `json:"type" msgpack:"type"`
+	Meta    map[string]string `json:"meta,omitempty" msgpack:"meta,omitempty"`
+	Payload IPPVoucherV1      `json:"payload" msgpack:"payload"`
+}
+
+// IPPVoucherV1 is the v1 payload for an IPP payment voucher.
+// It carries the nullifier key (secret) alongside the payment details.
+type IPPVoucherV1 struct {
+	IdentityCommitment string `json:"identityCommitment" msgpack:"identityCommitment"`
+	PaymentCommitment  string `json:"paymentCommitment" msgpack:"paymentCommitment"`
+	TokenAddress       string `json:"tokenAddress" msgpack:"tokenAddress"`
+	Operator           string `json:"operator" msgpack:"operator"`
+	Amount             string `json:"amount" msgpack:"amount"`
+	Nonce              string `json:"nonce" msgpack:"nonce"`
+	NullifierKey       string `json:"nullifierKey" msgpack:"nullifierKey"`
+	TreeID             string `json:"treeId" msgpack:"treeId"`
+	LeafIndex          string `json:"leafIndex,omitempty" msgpack:"leafIndex,omitempty"`
 }
 
 // IPPPayloadV1 is the v1 payload within an IPP request.
