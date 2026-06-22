@@ -43,10 +43,18 @@ type ProposeResponse struct {
 }
 
 // AuthorizeRequest is sent by the payer to authorize a credit line.
+//
+// PayerCommitment and NullifierKeyHash are payer-derived values: the anonymous
+// payer computes them locally and sends them with the authorize so the server
+// folds both into the credit commitment, making it equal the on-chain deposit
+// credit leaf. They are omitted for plain IPP authorize usage and sent only by
+// the credit-grant flow — hence omitempty.
 type AuthorizeRequest struct {
 	IdentityCommitment string `json:"identityCommitment"`
 	Amount             string `json:"amount"`
 	Expiry             string `json:"expiry"`
+	PayerCommitment    string `json:"payerCommitment,omitempty"`
+	NullifierKeyHash   string `json:"nullifierKeyHash,omitempty"`
 }
 
 // AuthorizeResponse is the receiver's reply to a credit authorization.
