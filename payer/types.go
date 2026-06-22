@@ -108,6 +108,7 @@ type CreateCreditParams struct {
 	PayerAddress       fr.Element     // Payer's address as field element
 	TokenAddress       common.Address
 	Amount             *big.Int
+	Nonce              fr.Element // server-assigned, from the IPP authorize response
 	Expiry             *big.Int
 	TreeID             *big.Int
 	ChainID            *big.Int

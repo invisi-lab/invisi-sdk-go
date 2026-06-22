@@ -12,10 +12,11 @@ import (
 )
 
 func TestCreateCredit_Basic(t *testing.T) {
-	var masterKey, creditID, payerAddr fr.Element
+	var masterKey, creditID, payerAddr, nonce fr.Element
 	masterKey.SetUint64(111)
 	creditID.SetUint64(222)
 	payerAddr.SetUint64(333)
+	nonce.SetUint64(555)
 
 	result, err := CreateCredit(CreateCreditParams{
 		PayerMasterKey:     masterKey,
@@ -24,6 +25,7 @@ func TestCreateCredit_Basic(t *testing.T) {
 		PayerAddress:       payerAddr,
 		TokenAddress:       common.HexToAddress("0xcc" + strings.Repeat("00", 19)),
 		Amount:             big.NewInt(1_000_000),
+		Nonce:              nonce,
 		Expiry:             big.NewInt(1700000000),
 		TreeID:             big.NewInt(1),
 		ChainID:            big.NewInt(84532),
@@ -40,6 +42,11 @@ func TestCreateCredit_Basic(t *testing.T) {
 		t.Error("nullifierKeyHash should not be zero")
 	}
 
+	// Nonce must equal the supplied (authorize-response) value
+	if !result.Authorization.Nonce.Equal(&nonce) {
+		t.Errorf("nonce = %s, want supplied value", result.Authorization.Nonce.String())
+	}
+
 	// ApproveAmount == Amount
 	if result.ApproveAmount.Cmp(big.NewInt(1_000_000)) != 0 {
 		t.Errorf("approveAmount = %s, want 1000000", result.ApproveAmount)
@@ -52,10 +59,11 @@ func TestCreateCredit_Basic(t *testing.T) {
 }
 
 func TestCreateCredit_PayerCommitmentConsistency(t *testing.T) {
-	var masterKey, creditID, payerAddr fr.Element
+	var masterKey, creditID, payerAddr, nonce fr.Element
 	masterKey.SetUint64(111)
 	creditID.SetUint64(222)
 	payerAddr.SetUint64(333)
+	nonce.SetUint64(1)
 
 	result, err := CreateCredit(CreateCreditParams{
 		PayerMasterKey:     masterKey,
@@ -64,6 +72,7 @@ func TestCreateCredit_PayerCommitmentConsistency(t *testing.T) {
 		PayerAddress:       payerAddr,
 		TokenAddress:       common.HexToAddress("0xaa"),
 		Amount:             big.NewInt(100),
+		Nonce:              nonce,
 		Expiry:             big.NewInt(999999),
 		TreeID:             big.NewInt(1),
 		ChainID:            big.NewInt(1),
@@ -90,10 +99,11 @@ func TestCreateCredit_PayerCommitmentConsistency(t *testing.T) {
 }
 
 func TestCreateCredit_ChainIDPreserved(t *testing.T) {
-	var masterKey, creditID, payerAddr fr.Element
+	var masterKey, creditID, payerAddr, nonce fr.Element
 	masterKey.SetUint64(1)
 	creditID.SetUint64(2)
 	payerAddr.SetUint64(3)
+	nonce.SetUint64(1)
 
 	result, err := CreateCredit(CreateCreditParams{
 		PayerMasterKey:     masterKey,
@@ -102,6 +112,7 @@ func TestCreateCredit_ChainIDPreserved(t *testing.T) {
 		PayerAddress:       payerAddr,
 		TokenAddress:       common.HexToAddress("0x01"),
 		Amount:             big.NewInt(100),
+		Nonce:              nonce,
 		Expiry:             big.NewInt(999),
 		TreeID:             big.NewInt(1),
 		ChainID:            big.NewInt(42161),

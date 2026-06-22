@@ -17,7 +17,7 @@ import (
 //  2. payerCommitment    = ComputeIdentityCommitment(payerNullifierKey, payerAddress)
 //  3. creditNullifierKey = Poseidon2(D_DERIVE, payerNullifierKey, creditId)
 //  4. nullifierKeyHash   = ComputeNullifierKeyHash(creditNullifierKey)
-//  5. nonce              = random
+//  5. nonce              = params.Nonce (from authorize response)
 func CreateCredit(params CreateCreditParams) (*CreateCreditResult, error) {
 	if params.Amount == nil {
 		return nil, fmt.Errorf("payer: Amount is required")
@@ -57,11 +57,8 @@ func CreateCredit(params CreateCreditParams) (*CreateCreditResult, error) {
 		return nil, fmt.Errorf("payer: failed to compute nullifier key hash: %w", err)
 	}
 
-	// Step 5: nonce = random
-	nonce, err := core.GenerateNonce()
-	if err != nil {
-		return nil, fmt.Errorf("payer: failed to generate nonce: %w", err)
-	}
+	// Step 5: nonce = params.Nonce (server-assigned, from authorize response)
+	nonce := params.Nonce
 
 	// Convert to hashes for ABI encoding
 	payerCommHash := common.HexToHash(core.ElementToHex(payerCommitment))

@@ -10,6 +10,9 @@ func BuildPayOpenUserOp(params PayOpenUserOpParams) (*PayOpenUserOp, error) {
 	if params.ChainID == nil || params.Amount == nil || params.TreeID == nil {
 		return nil, fmt.Errorf("payer: ChainID, Amount, TreeID are required")
 	}
+	if params.Nonce == nil {
+		return nil, fmt.Errorf("payer: Nonce is required")
+	}
 
 	calldataResult, err := BuildPayOpenCalldata(PayOpenParams{
 		ChainID:            params.ChainID,

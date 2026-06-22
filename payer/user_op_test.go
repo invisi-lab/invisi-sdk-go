@@ -5,15 +5,20 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/consensys/gnark-crypto/ecc/bn254/fr"
 	"github.com/ethereum/go-ethereum/common"
 )
 
 func TestBuildPayOpenUserOp(t *testing.T) {
+	var nonce fr.Element
+	nonce.SetUint64(1)
+
 	result, err := BuildPayOpenUserOp(PayOpenUserOpParams{
 		IdentityCommitment: common.HexToHash("0x" + strings.Repeat("00", 31) + "ab"),
 		TokenAddress:       common.HexToAddress("0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913"),
 		Amount:             big.NewInt(100_000_000),
 		TreeID:             big.NewInt(1),
+		Nonce:              &nonce,
 		ProtocolAddress:    common.HexToAddress("0xdeadbeef"),
 		Sender:             common.HexToAddress("0xcafebabe"),
 		ChainID:            big.NewInt(84532),
@@ -57,12 +62,16 @@ func TestBuildPayOpenUserOp(t *testing.T) {
 }
 
 func TestBuildPayOpenUserOp_WithPaymaster(t *testing.T) {
+	var nonce fr.Element
+	nonce.SetUint64(1)
+
 	pm := &PaymasterConfig{URL: "https://pm.example.com", PolicyID: "test-policy"}
 	result, err := BuildPayOpenUserOp(PayOpenUserOpParams{
 		IdentityCommitment: common.HexToHash("0x01"),
 		TokenAddress:       common.HexToAddress("0x01"),
 		Amount:             big.NewInt(100),
 		TreeID:             big.NewInt(1),
+		Nonce:              &nonce,
 		ProtocolAddress:    common.HexToAddress("0x02"),
 		Sender:             common.HexToAddress("0x03"),
 		ChainID:            big.NewInt(1),
