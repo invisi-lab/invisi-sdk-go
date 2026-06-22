@@ -7,6 +7,8 @@ import (
 
 	"github.com/consensys/gnark-crypto/ecc/bn254/fr"
 	"github.com/ethereum/go-ethereum/common"
+
+	"github.com/invisi-lab/invisi-sdk-go/core"
 )
 
 func TestGetEIP712Domain(t *testing.T) {
@@ -30,6 +32,9 @@ func TestGetEIP712Domain(t *testing.T) {
 }
 
 func TestBuildSignPayOpenTypedData(t *testing.T) {
+	var nonce fr.Element
+	nonce.SetUint64(42)
+
 	result, err := BuildSignPayOpenTypedData(SignPayOpenParams{
 		ChainID:            big.NewInt(84532),
 		VerifyingContract:  common.HexToAddress("0xdeadbeef"),
@@ -37,6 +42,7 @@ func TestBuildSignPayOpenTypedData(t *testing.T) {
 		TokenAddress:       common.HexToAddress("0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913"),
 		Amount:             big.NewInt(100_000_000),
 		TreeID:             big.NewInt(1),
+		Nonce:              &nonce,
 		SigNonce:           big.NewInt(0),
 		Deadline:           big.NewInt(1700000000),
 	})
@@ -49,9 +55,10 @@ func TestBuildSignPayOpenTypedData(t *testing.T) {
 		t.Error("paymentCommitment should not be zero")
 	}
 
-	// Nonce should be non-zero
-	if result.Nonce == (common.Hash{}) {
-		t.Error("nonce should not be zero")
+	// Nonce must equal the supplied value
+	expectedNonce := common.HexToHash(core.ElementToHex(nonce))
+	if result.Nonce != expectedNonce {
+		t.Errorf("nonce = %s, want %s", result.Nonce.Hex(), expectedNonce.Hex())
 	}
 
 	// TypedData should have correct primary type
@@ -130,6 +137,9 @@ func TestBuildSignDepositCreditTypedData(t *testing.T) {
 }
 
 func TestBuildSignPayOpenTypedData_NilRefundDefaultsToZero(t *testing.T) {
+	var nonce fr.Element
+	nonce.SetUint64(1)
+
 	result, err := BuildSignPayOpenTypedData(SignPayOpenParams{
 		ChainID:            big.NewInt(1),
 		VerifyingContract:  common.HexToAddress("0x01"),
@@ -137,6 +147,7 @@ func TestBuildSignPayOpenTypedData_NilRefundDefaultsToZero(t *testing.T) {
 		TokenAddress:       common.HexToAddress("0x01"),
 		Amount:             big.NewInt(100),
 		TreeID:             big.NewInt(1),
+		Nonce:              &nonce,
 		SigNonce:           big.NewInt(0),
 		Deadline:           big.NewInt(999),
 	})
@@ -252,5 +263,22 @@ func TestBuildSignPayOpenTypedData_ParityWithCalldata(t *testing.T) {
 	if signResult.PaymentCommitment != calldataResult.PaymentCommitment {
 		t.Errorf("PaymentCommitment mismatch:\n  sign builder:     %s\n  calldata builder: %s",
 			signResult.PaymentCommitment.Hex(), calldataResult.PaymentCommitment.Hex())
+	}
+}
+
+func TestBuildSignPayOpenTypedData_NilNonceErrors(t *testing.T) {
+	_, err := BuildSignPayOpenTypedData(SignPayOpenParams{
+		ChainID:            big.NewInt(1),
+		VerifyingContract:  common.HexToAddress("0xdeadbeef"),
+		IdentityCommitment: common.HexToHash("0x01"),
+		TokenAddress:       common.HexToAddress("0x02"),
+		Amount:             big.NewInt(100),
+		TreeID:             big.NewInt(1),
+		// Nonce omitted (nil)
+		SigNonce: big.NewInt(0),
+		Deadline: big.NewInt(1700000000),
+	})
+	if err == nil {
+		t.Error("expected error when Nonce is nil")
 	}
 }

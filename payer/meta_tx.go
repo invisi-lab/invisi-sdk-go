@@ -3,7 +3,6 @@ package payer
 import (
 	"fmt"
 
-	"github.com/consensys/gnark-crypto/ecc/bn254/fr"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/math"
 	"github.com/ethereum/go-ethereum/signer/core/apitypes"
@@ -82,10 +81,9 @@ func GetEIP712Domain(params EIP712DomainParams) apitypes.TypedDataDomain {
 }
 
 // BuildSignPayOpenTypedData builds EIP-712 typed data for payOpenWithSig.
-// Computes paymentCommitment using the provided Nonce (params.Nonce); if nil, a
-// random nonce is generated. Mirrors the nonce-injection contract of
-// BuildPayOpenCalldata so that the same (inputs, nonce) pair produces the same
-// PaymentCommitment in both builders.
+// Computes paymentCommitment using the caller-supplied Nonce (params.Nonce);
+// Nonce is required and must come from the upstream payment mode (e.g. the
+// server-bound IPP nonce). Mirrors the nonce contract of BuildPayOpenCalldata.
 func BuildSignPayOpenTypedData(params SignPayOpenParams) (*SignPayOpenResult, error) {
 	if params.ChainID == nil || params.Amount == nil || params.TreeID == nil {
 		return nil, fmt.Errorf("payer: ChainID, Amount, TreeID are required")
@@ -94,18 +92,12 @@ func BuildSignPayOpenTypedData(params SignPayOpenParams) (*SignPayOpenResult, er
 		return nil, fmt.Errorf("payer: SigNonce and Deadline are required")
 	}
 
-	// Resolve nonce: use caller-supplied value when provided (e.g. server-bound
-	// IPP nonce), otherwise generate a fresh random one.
-	var nonce fr.Element
-	if params.Nonce != nil {
-		nonce = *params.Nonce
-	} else {
-		var err error
-		nonce, err = core.GenerateNonce()
-		if err != nil {
-			return nil, fmt.Errorf("payer: failed to generate nonce: %w", err)
-		}
+	// Nonce is required — supplied by the caller per the payment mode. This
+	// builder never generates one.
+	if params.Nonce == nil {
+		return nil, fmt.Errorf("payer: Nonce is required")
 	}
+	nonce := *params.Nonce
 	nonceHash := common.HexToHash(core.ElementToHex(nonce))
 
 	// Compute paymentCommitment
