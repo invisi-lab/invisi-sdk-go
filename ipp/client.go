@@ -13,16 +13,60 @@ import (
 type IPPClient struct {
 	baseURL    string
 	httpClient *http.Client
+	// headers are sent on every request, applied before the per-request
+	// Content-Type / Accept so a caller cannot accidentally clobber those.
+	headers map[string]string
+}
+
+// Option customises an IPPClient at construction time.
+type Option func(*IPPClient)
+
+// WithHTTPClient overrides the default *http.Client (e.g. to set a timeout,
+// custom transport, or proxy). Passing nil is a no-op.
+func WithHTTPClient(hc *http.Client) Option {
+	return func(c *IPPClient) {
+		if hc != nil {
+			c.httpClient = hc
+		}
+	}
+}
+
+// WithHeaders registers a set of headers sent on every request the client
+// makes. This is a generic escape hatch for deployment-specific gateway
+// requirements (auth tokens, routing hints, etc.); the SDK stays agnostic to
+// any particular header's meaning. Repeated calls merge, last value wins.
+// Content-Type / Accept set per request take precedence over these.
+func WithHeaders(h map[string]string) Option {
+	return func(c *IPPClient) {
+		if c.headers == nil {
+			c.headers = make(map[string]string, len(h))
+		}
+		for k, v := range h {
+			c.headers[k] = v
+		}
+	}
 }
 
 // NewIPPClient creates a new IPP client pointing at the given endpoint.
 // The endpoint should be the server root (e.g. "https://pay.example.com");
 // the /ipp/v1 prefix is appended automatically.
-func NewIPPClient(endpoint string) *IPPClient {
+func NewIPPClient(endpoint string, opts ...Option) *IPPClient {
 	trimmed := strings.TrimRight(endpoint, "/")
-	return &IPPClient{
+	c := &IPPClient{
 		baseURL:    trimmed + "/ipp/v1",
 		httpClient: &http.Client{},
+	}
+	for _, opt := range opts {
+		opt(c)
+	}
+	return c
+}
+
+// applyHeaders sets the client's per-call default headers on req. Callers set
+// Content-Type / Accept afterwards so request-specific values win.
+func (c *IPPClient) applyHeaders(req *http.Request) {
+	for k, v := range c.headers {
+		req.Header.Set(k, v)
 	}
 }
 
@@ -106,6 +150,7 @@ func post[T any](c *IPPClient, path string, body interface{}) (T, error) {
 	if err != nil {
 		return zero, fmt.Errorf("ipp: create request: %w", err)
 	}
+	c.applyHeaders(req)
 	req.Header.Set("Content-Type", "application/json")
 
 	return doRequest[T](c, req)
@@ -118,6 +163,7 @@ func get[T any](c *IPPClient, path string) (T, error) {
 	if err != nil {
 		return zero, fmt.Errorf("ipp: create request: %w", err)
 	}
+	c.applyHeaders(req)
 	req.Header.Set("Accept", "application/json")
 
 	return doRequest[T](c, req)
