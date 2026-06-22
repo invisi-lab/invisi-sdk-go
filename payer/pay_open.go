@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"math/big"
 
-	"github.com/consensys/gnark-crypto/ecc/bn254/fr"
 	"github.com/ethereum/go-ethereum/common"
 
 	"github.com/invisi-lab/invisi-sdk-go/core"
@@ -23,17 +22,12 @@ func BuildPayOpenCalldata(params PayOpenParams) (*PayOpenCalldata, error) {
 		return nil, fmt.Errorf("payer: TreeID is required")
 	}
 
-	// Resolve nonce
-	var nonce fr.Element
-	if params.Nonce != nil {
-		nonce = *params.Nonce
-	} else {
-		var err error
-		nonce, err = core.GenerateNonce()
-		if err != nil {
-			return nil, fmt.Errorf("payer: failed to generate nonce: %w", err)
-		}
+	// Resolve nonce: caller must supply it per the payment mode. This builder
+	// never generates one.
+	if params.Nonce == nil {
+		return nil, fmt.Errorf("payer: Nonce is required")
 	}
+	nonce := *params.Nonce
 
 	// Convert params to field elements for Poseidon2
 	chainElem := core.BigIntToElement(params.ChainID)

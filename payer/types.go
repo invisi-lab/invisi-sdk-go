@@ -47,7 +47,7 @@ type PayOpenParams struct {
 	Amount             *big.Int
 	TreeID             *big.Int
 	RefundLink         *fr.Element // optional; nil = zero
-	Nonce              *fr.Element // optional; nil = auto-generated
+	Nonce              *fr.Element // required; nil -> error (caller supplies per payment mode)
 }
 
 // PayOpenCalldata is the result of BuildPayOpenCalldata.

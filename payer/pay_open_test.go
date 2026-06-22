@@ -11,12 +11,16 @@ import (
 )
 
 func TestBuildPayOpenCalldata_Basic(t *testing.T) {
+	var nonce fr.Element
+	nonce.SetUint64(7)
+
 	result, err := BuildPayOpenCalldata(PayOpenParams{
 		ChainID:            big.NewInt(1),
 		IdentityCommitment: common.HexToHash("0x00000000000000000000000000000000000000000000000000000000000000ab"),
 		TokenAddress:       common.Address{},
 		Amount:             big.NewInt(100_000_000),
 		TreeID:             big.NewInt(1),
+		Nonce:              &nonce,
 	})
 	if err != nil {
 		t.Fatal(err)
@@ -32,9 +36,10 @@ func TestBuildPayOpenCalldata_Basic(t *testing.T) {
 		t.Error("paymentCommitment should not be zero")
 	}
 
-	// Nonce must be non-zero (random)
-	if result.Nonce == (common.Hash{}) {
-		t.Error("nonce should not be zero")
+	// Nonce must equal the supplied value
+	expectedNonce := common.HexToHash(core.ElementToHex(nonce))
+	if result.Nonce != expectedNonce {
+		t.Errorf("nonce = %s, want %s", result.Nonce.Hex(), expectedNonce.Hex())
 	}
 
 	// ApproveAmount == Amount
@@ -65,24 +70,17 @@ func TestBuildPayOpenCalldata_ExternalNonce(t *testing.T) {
 	}
 }
 
-func TestBuildPayOpenCalldata_UniqueNonces(t *testing.T) {
-	params := PayOpenParams{
+func TestBuildPayOpenCalldata_NilNonceErrors(t *testing.T) {
+	_, err := BuildPayOpenCalldata(PayOpenParams{
 		ChainID:            big.NewInt(1),
 		IdentityCommitment: common.HexToHash("0x00000000000000000000000000000000000000000000000000000000000000ab"),
 		TokenAddress:       common.Address{},
 		Amount:             big.NewInt(100_000_000),
 		TreeID:             big.NewInt(1),
-	}
-	a, err := BuildPayOpenCalldata(params)
-	if err != nil {
-		t.Fatal(err)
-	}
-	b, err := BuildPayOpenCalldata(params)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if a.Nonce == b.Nonce {
-		t.Error("two calls should produce different nonces")
+		// Nonce omitted (nil)
+	})
+	if err == nil {
+		t.Error("expected error when Nonce is nil")
 	}
 }
 
@@ -136,6 +134,9 @@ func TestBuildPayOpenCalldata_WithRefundLink(t *testing.T) {
 	var refund fr.Element
 	refund.SetUint64(999)
 
+	var nonce fr.Element
+	nonce.SetUint64(1)
+
 	result, err := BuildPayOpenCalldata(PayOpenParams{
 		ChainID:            big.NewInt(1),
 		IdentityCommitment: common.HexToHash("0x00000000000000000000000000000000000000000000000000000000000000ab"),
@@ -143,6 +144,7 @@ func TestBuildPayOpenCalldata_WithRefundLink(t *testing.T) {
 		Amount:             big.NewInt(100),
 		TreeID:             big.NewInt(1),
 		RefundLink:         &refund,
+		Nonce:              &nonce,
 	})
 	if err != nil {
 		t.Fatal(err)
