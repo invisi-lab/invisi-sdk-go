@@ -248,7 +248,7 @@ type PayOpenUserOpParams struct {
 	Amount             *big.Int
 	TreeID             *big.Int
 	RefundLink         *fr.Element // optional
-	Nonce              *fr.Element // optional
+	Nonce              *fr.Element // required; nil -> error (caller supplies per payment mode)
 	ProtocolAddress    common.Address
 	Sender             common.Address
 	ChainID            *big.Int
