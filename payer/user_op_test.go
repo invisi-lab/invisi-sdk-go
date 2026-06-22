@@ -7,6 +7,7 @@ import (
 
 	"github.com/consensys/gnark-crypto/ecc/bn254/fr"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/invisi-lab/invisi-sdk-go/core"
 )
 
 func TestBuildPayOpenUserOp(t *testing.T) {
@@ -51,8 +52,9 @@ func TestBuildPayOpenUserOp(t *testing.T) {
 	if result.PaymentCommitment == (common.Hash{}) {
 		t.Error("paymentCommitment should not be zero")
 	}
-	if result.Nonce == (common.Hash{}) {
-		t.Error("nonce should not be zero")
+	expectedNonce := common.HexToHash(core.ElementToHex(nonce))
+	if result.Nonce != expectedNonce {
+		t.Errorf("nonce = %s, want %s", result.Nonce.Hex(), expectedNonce.Hex())
 	}
 
 	// Paymaster should be nil by default
