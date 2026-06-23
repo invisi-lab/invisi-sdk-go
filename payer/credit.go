@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"math/big"
 
+	"github.com/consensys/gnark-crypto/ecc/bn254/fr"
 	"github.com/ethereum/go-ethereum/common"
 
 	"github.com/invisi-lab/invisi-sdk-go/core"
@@ -99,6 +100,31 @@ func CreateCredit(params CreateCreditParams) (*CreateCreditResult, error) {
 		Data:          data,
 		ApproveAmount: new(big.Int).Set(params.Amount),
 	}, nil
+}
+
+// DeriveCreditAuthorizeFields derives the two nonce-independent payer-side values
+// (payerCommitment, nullifierKeyHash) needed to populate an IPP credit authorize
+// request. Both depend only on payerMasterKey, creditID, payerAddress — never nonce.
+// The derivation chain mirrors CreateCredit (steps 1-4), including the mandatory
+// D_DERIVE intermediate step.
+func DeriveCreditAuthorizeFields(payerMasterKey, creditID, payerAddress fr.Element) (string, string, error) {
+	payerNullifierKey, err := core.DeriveNullifierKey(payerMasterKey, creditID)
+	if err != nil {
+		return "", "", fmt.Errorf("payer: derive payer nullifier key: %w", err)
+	}
+	payerCommitment, err := core.ComputeIdentityCommitment(payerNullifierKey, payerAddress)
+	if err != nil {
+		return "", "", fmt.Errorf("payer: compute payer commitment: %w", err)
+	}
+	creditNullifierKey, err := core.Poseidon2Hash(core.ElementFromUint64(core.DomainDerive), payerNullifierKey, creditID)
+	if err != nil {
+		return "", "", fmt.Errorf("payer: derive credit nullifier key: %w", err)
+	}
+	nullifierKeyHash, err := core.ComputeNullifierKeyHash(creditNullifierKey)
+	if err != nil {
+		return "", "", fmt.Errorf("payer: compute nullifier key hash: %w", err)
+	}
+	return core.ElementToHex(payerCommitment), core.ElementToHex(nullifierKeyHash), nil
 }
 
 // BuildReclaimCalldata encodes reclaim(proof, merkleRoot, nullifier, amount, receivingAddress, treeId, expiry).

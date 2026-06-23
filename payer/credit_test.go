@@ -2,6 +2,7 @@ package payer
 
 import (
 	"math/big"
+	"regexp"
 	"strings"
 	"testing"
 
@@ -122,6 +123,57 @@ func TestCreateCredit_ChainIDPreserved(t *testing.T) {
 	}
 	if result.Authorization.ChainID.Int64() != 42161 {
 		t.Errorf("chainId = %d, want 42161", result.Authorization.ChainID.Int64())
+	}
+}
+
+func TestDeriveCreditAuthorizeFields(t *testing.T) {
+	// Reuse the same fixture inputs as TestCreateCredit_Basic so the helper's
+	// derivation chain can be checked byte-for-byte against CreateCredit's output.
+	var masterKey, creditID, payerAddr, nonce fr.Element
+	masterKey.SetUint64(111)
+	creditID.SetUint64(222)
+	payerAddr.SetUint64(333)
+	nonce.SetUint64(555)
+
+	payerCommitment, nullifierKeyHash, err := DeriveCreditAuthorizeFields(masterKey, creditID, payerAddr)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// Both outputs must match the bytes32 hex shape.
+	hexRe := regexp.MustCompile(`^0x[0-9a-f]{64}$`)
+	if !hexRe.MatchString(payerCommitment) {
+		t.Errorf("payerCommitment %q does not match bytes32 hex shape", payerCommitment)
+	}
+	if !hexRe.MatchString(nullifierKeyHash) {
+		t.Errorf("nullifierKeyHash %q does not match bytes32 hex shape", nullifierKeyHash)
+	}
+
+	// Helper must produce the identical values that CreateCredit derives internally,
+	// proving they share the same derivation chain (incl. the D_DERIVE middle step).
+	result, err := CreateCredit(CreateCreditParams{
+		PayerMasterKey:     masterKey,
+		CreditID:           creditID,
+		IdentityCommitment: common.HexToHash("0xab" + strings.Repeat("00", 31)),
+		PayerAddress:       payerAddr,
+		TokenAddress:       common.HexToAddress("0xcc" + strings.Repeat("00", 19)),
+		Amount:             big.NewInt(1_000_000),
+		Nonce:              nonce,
+		Expiry:             big.NewInt(1700000000),
+		TreeID:             big.NewInt(1),
+		ChainID:            big.NewInt(84532),
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if payerCommitment != result.Authorization.PayerCommitment.Hex() {
+		t.Errorf("payerCommitment mismatch: helper %s, CreateCredit %s",
+			payerCommitment, result.Authorization.PayerCommitment.Hex())
+	}
+	if nullifierKeyHash != result.Authorization.NullifierKeyHash.Hex() {
+		t.Errorf("nullifierKeyHash mismatch: helper %s, CreateCredit %s",
+			nullifierKeyHash, result.Authorization.NullifierKeyHash.Hex())
 	}
 }
 

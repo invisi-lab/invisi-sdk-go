@@ -69,6 +69,91 @@ func TestVerifyPaymentCommitment_Invalid(t *testing.T) {
 	}
 }
 
+func TestVerifyCreditCommitment_Valid(t *testing.T) {
+	// Build a known set of credit-commitment inputs.
+	var chainID, identityCommitment, payerCommitment, tokenAddress, amount, nonce, expiry, nullifierKeyHash fr.Element
+	chainID.SetUint64(84532)
+	identityCommitment.SetUint64(0xab)
+	payerCommitment.SetUint64(0xcd)
+	tokenAddress.SetUint64(0xef)
+	amount.SetUint64(1_000_000)
+	nonce.SetUint64(42)
+	expiry.SetUint64(1700000000)
+	nullifierKeyHash.SetUint64(0x99)
+
+	// Compute the expected commitment via core (8 inputs).
+	expected, err := core.ComputeCreditCommitment(
+		chainID, identityCommitment, payerCommitment, tokenAddress,
+		amount, nonce, expiry, nullifierKeyHash,
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	params := VerifyCreditParams{
+		ChainID:            chainID,
+		IdentityCommitment: identityCommitment,
+		PayerCommitment:    payerCommitment,
+		TokenAddress:       tokenAddress,
+		Amount:             amount,
+		Nonce:              nonce,
+		Expiry:             expiry,
+		NullifierKeyHash:   nullifierKeyHash,
+		CreditCommitment:   expected,
+	}
+
+	valid, err := VerifyCreditCommitment(params)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !valid {
+		t.Error("expected credit commitment to be valid")
+	}
+}
+
+func TestVerifyCreditCommitment_Invalid(t *testing.T) {
+	var chainID, identityCommitment, payerCommitment, tokenAddress, amount, nonce, expiry, nullifierKeyHash fr.Element
+	chainID.SetUint64(84532)
+	identityCommitment.SetUint64(0xab)
+	payerCommitment.SetUint64(0xcd)
+	tokenAddress.SetUint64(0xef)
+	amount.SetUint64(1_000_000)
+	nonce.SetUint64(42)
+	expiry.SetUint64(1700000000)
+	nullifierKeyHash.SetUint64(0x99)
+
+	// Expected commitment is computed with the original nonce.
+	expected, err := core.ComputeCreditCommitment(
+		chainID, identityCommitment, payerCommitment, tokenAddress,
+		amount, nonce, expiry, nullifierKeyHash,
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// Tamper the nonce: the recomputed commitment must no longer match.
+	var tamperedNonce fr.Element
+	tamperedNonce.SetUint64(43)
+
+	valid, err := VerifyCreditCommitment(VerifyCreditParams{
+		ChainID:            chainID,
+		IdentityCommitment: identityCommitment,
+		PayerCommitment:    payerCommitment,
+		TokenAddress:       tokenAddress,
+		Amount:             amount,
+		Nonce:              tamperedNonce,
+		Expiry:             expiry,
+		NullifierKeyHash:   nullifierKeyHash,
+		CreditCommitment:   expected,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if valid {
+		t.Error("expected credit commitment to be invalid after nonce tampering")
+	}
+}
+
 func TestVerifyPaymentCommitment_RequiresChainID(t *testing.T) {
 	_, err := VerifyPaymentCommitment(VerifyParams{
 		IdentityCommitment: common.HexToHash("0x01"),
