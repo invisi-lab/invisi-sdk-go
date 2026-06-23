@@ -54,27 +54,27 @@ type IPPVoucher struct {
 // IPPVoucherV1 is the v1 payload for an IPP payment voucher.
 // It carries the nullifier key (secret) alongside the payment details.
 type IPPVoucherV1 struct {
-	IdentityCommitment string `json:"identityCommitment" msgpack:"identityCommitment"`
-	PaymentCommitment  string `json:"paymentCommitment" msgpack:"paymentCommitment"`
-	TokenAddress       string `json:"tokenAddress" msgpack:"tokenAddress"`
+	IdentityCommitment string `json:"identity_commitment" msgpack:"identity_commitment"`
+	PaymentCommitment  string `json:"payment_commitment" msgpack:"payment_commitment"`
+	TokenAddress       string `json:"token_address" msgpack:"token_address"`
 	Operator           string `json:"operator" msgpack:"operator"`
 	Amount             string `json:"amount" msgpack:"amount"`
 	Nonce              string `json:"nonce" msgpack:"nonce"`
-	NullifierKey       string `json:"nullifierKey" msgpack:"nullifierKey"`
-	TreeID             string `json:"treeId" msgpack:"treeId"`
-	LeafIndex          string `json:"leafIndex,omitempty" msgpack:"leafIndex,omitempty"`
+	NullifierKey       string `json:"nullifier_key" msgpack:"nullifier_key"`
+	TreeID             string `json:"tree_id" msgpack:"tree_id"`
+	LeafIndex          string `json:"leaf_index,omitempty" msgpack:"leaf_index,omitempty"`
 }
 
 // IPPPayloadV1 is the v1 payload within an IPP request.
 type IPPPayloadV1 struct {
-	IdentityCommitment string        `json:"identityCommitment" msgpack:"identityCommitment"`
-	TokenAddress       string        `json:"tokenAddress" msgpack:"tokenAddress"`
+	IdentityCommitment string        `json:"identity_commitment" msgpack:"identity_commitment"`
+	TokenAddress       string        `json:"token_address" msgpack:"token_address"`
 	Operator           string        `json:"operator" msgpack:"operator"`
-	TreeID             string        `json:"treeId" msgpack:"treeId"`
-	PaymentTypes       []PaymentType `json:"paymentTypes" msgpack:"paymentTypes"`
+	TreeID             string        `json:"tree_id" msgpack:"tree_id"`
+	PaymentTypes       []PaymentType `json:"payment_types" msgpack:"payment_types"`
 	Amount             *string       `json:"amount,omitempty" msgpack:"amount,omitempty"`
 	Nonce              *string       `json:"nonce,omitempty" msgpack:"nonce,omitempty"`
-	PaymentCommitment  *string       `json:"paymentCommitment,omitempty" msgpack:"paymentCommitment,omitempty"`
+	PaymentCommitment  *string       `json:"payment_commitment,omitempty" msgpack:"payment_commitment,omitempty"`
 	Endpoint           *string       `json:"endpoint,omitempty" msgpack:"endpoint,omitempty"`
 }
 

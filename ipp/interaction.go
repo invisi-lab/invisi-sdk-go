@@ -8,28 +8,28 @@ package ipp
 // gasless payments.
 type PaymasterConfig struct {
 	URL      string                 `json:"url"`
-	PolicyID *string                `json:"policyId,omitempty"`
+	PolicyID *string                `json:"policy_id,omitempty"`
 	Context  map[string]interface{} `json:"context,omitempty"`
 }
 
 // InfoRequest is sent by the payer to retrieve invoice metadata.
 type InfoRequest struct {
-	IdentityCommitment string `json:"identityCommitment"`
+	IdentityCommitment string `json:"identity_commitment"`
 }
 
 // InfoResponse contains invoice metadata returned by the receiver.
 type InfoResponse struct {
-	MerchantName *string          `json:"merchantName,omitempty"`
+	MerchantName *string          `json:"merchant_name,omitempty"`
 	Description  *string          `json:"description,omitempty"`
 	Amount       *string          `json:"amount,omitempty"`
 	Currency     *string          `json:"currency,omitempty"`
-	ExpiresAt    *string          `json:"expiresAt,omitempty"`
+	ExpiresAt    *string          `json:"expires_at,omitempty"`
 	Paymaster    *PaymasterConfig `json:"paymaster,omitempty"`
 }
 
 // ProposeRequest is sent by the payer to propose a payment amount.
 type ProposeRequest struct {
-	IdentityCommitment string `json:"identityCommitment"`
+	IdentityCommitment string `json:"identity_commitment"`
 	Amount             string `json:"amount"`
 }
 
@@ -38,7 +38,7 @@ type ProposeRequest struct {
 type ProposeResponse struct {
 	Status            string  `json:"status"`
 	Nonce             *string `json:"nonce,omitempty"`
-	PaymentCommitment *string `json:"paymentCommitment,omitempty"`
+	PaymentCommitment *string `json:"payment_commitment,omitempty"`
 	Reason            *string `json:"reason,omitempty"`
 }
 
@@ -50,11 +50,11 @@ type ProposeResponse struct {
 // credit leaf. They are omitted for plain IPP authorize usage and sent only by
 // the credit-grant flow — hence omitempty.
 type AuthorizeRequest struct {
-	IdentityCommitment string `json:"identityCommitment"`
+	IdentityCommitment string `json:"identity_commitment"`
 	Amount             string `json:"amount"`
 	Expiry             string `json:"expiry"`
-	PayerCommitment    string `json:"payerCommitment,omitempty"`
-	NullifierKeyHash   string `json:"nullifierKeyHash,omitempty"`
+	PayerCommitment    string `json:"payer_commitment,omitempty"`
+	NullifierKeyHash   string `json:"nullifier_key_hash,omitempty"`
 }
 
 // AuthorizeResponse is the receiver's reply to a credit authorization.
@@ -62,8 +62,8 @@ type AuthorizeRequest struct {
 type AuthorizeResponse struct {
 	Status           string  `json:"status"`
 	Nonce            *string `json:"nonce,omitempty"`
-	CreditCommitment *string `json:"creditCommitment,omitempty"`
-	NullifierKeyHash *string `json:"nullifierKeyHash,omitempty"`
+	CreditCommitment *string `json:"credit_commitment,omitempty"`
+	NullifierKeyHash *string `json:"nullifier_key_hash,omitempty"`
 	Reason           *string `json:"reason,omitempty"`
 }
 
@@ -72,7 +72,7 @@ type AuthorizeResponse struct {
 // "confirmed", "settled".
 type StatusResponse struct {
 	Status string  `json:"status"`
-	TxHash *string `json:"txHash,omitempty"`
+	TxHash *string `json:"tx_hash,omitempty"`
 	Amount *string `json:"amount,omitempty"`
 }
 
@@ -81,7 +81,7 @@ type StatusResponse struct {
 type NotifyRequest struct {
 	Commitment string  `json:"commitment"`
 	Action     string  `json:"action"`
-	TxHash     *string `json:"txHash,omitempty"`
+	TxHash     *string `json:"tx_hash,omitempty"`
 	Network    *string `json:"network,omitempty"`
 }
 
@@ -95,19 +95,19 @@ type NotifyResponse struct {
 
 // WithdrawRequest is sent by the receiver to initiate a batch withdrawal.
 type WithdrawRequest struct {
-	IdentityCommitment string   `json:"identityCommitment"`
-	TokenAddress       string   `json:"tokenAddress"`
-	TreeID             string   `json:"treeId"`
-	PaymentCommitments []string `json:"paymentCommitments"`
+	IdentityCommitment string   `json:"identity_commitment"`
+	TokenAddress       string   `json:"token_address"`
+	TreeID             string   `json:"tree_id"`
+	PaymentCommitments []string `json:"payment_commitments"`
 }
 
 // WithdrawWitness contains the ZK witness data for a withdrawal proof.
 type WithdrawWitness struct {
-	MerkleRoot       string        `json:"merkleRoot"`
+	MerkleRoot       string        `json:"merkle_root"`
 	Nullifiers       []string      `json:"nullifiers"`
-	TotalAmount      string        `json:"totalAmount"`
-	ReceivingAddress string        `json:"receivingAddress"`
-	MerkleProofs     []interface{} `json:"merkleProofs"`
+	TotalAmount      string        `json:"total_amount"`
+	ReceivingAddress string        `json:"receiving_address"`
+	MerkleProofs     []interface{} `json:"merkle_proofs"`
 }
 
 // WithdrawResponse is the server's reply to a withdrawal request.
@@ -120,22 +120,22 @@ type WithdrawResponse struct {
 
 // CreditDrawRequest is sent by the receiver to draw from a credit line.
 type CreditDrawRequest struct {
-	IdentityCommitment string   `json:"identityCommitment"`
-	TokenAddress       string   `json:"tokenAddress"`
-	TreeID             string   `json:"treeId"`
-	CreditCommitments  []string `json:"creditCommitments"`
+	IdentityCommitment string   `json:"identity_commitment"`
+	TokenAddress       string   `json:"token_address"`
+	TreeID             string   `json:"tree_id"`
+	CreditCommitments  []string `json:"credit_commitments"`
 	Amounts            []string `json:"amounts"`
 }
 
 // CreditDrawWitness contains the ZK witness data for a credit draw proof.
 type CreditDrawWitness struct {
-	MerkleRoot           string        `json:"merkleRoot"`
+	MerkleRoot           string        `json:"merkle_root"`
 	Nullifiers           []string      `json:"nullifiers"`
-	TotalAmount          string        `json:"totalAmount"`
-	ReceivingAddress     string        `json:"receivingAddress"`
-	RemainderCommitments []string      `json:"remainderCommitments"`
+	TotalAmount          string        `json:"total_amount"`
+	ReceivingAddress     string        `json:"receiving_address"`
+	RemainderCommitments []string      `json:"remainder_commitments"`
 	Expiry               string        `json:"expiry"`
-	MerkleProofs         []interface{} `json:"merkleProofs"`
+	MerkleProofs         []interface{} `json:"merkle_proofs"`
 }
 
 // CreditDrawResponse is the server's reply to a credit draw request.
@@ -148,19 +148,19 @@ type CreditDrawResponse struct {
 
 // CreditReclaimRequest is sent by the payer to reclaim an expired credit.
 type CreditReclaimRequest struct {
-	CreditCommitment string `json:"creditCommitment"`
-	TokenAddress     string `json:"tokenAddress"`
-	TreeID           string `json:"treeId"`
+	CreditCommitment string `json:"credit_commitment"`
+	TokenAddress     string `json:"token_address"`
+	TreeID           string `json:"tree_id"`
 }
 
 // CreditReclaimWitness contains the ZK witness data for a credit reclaim proof.
 type CreditReclaimWitness struct {
-	MerkleRoot       string      `json:"merkleRoot"`
+	MerkleRoot       string      `json:"merkle_root"`
 	Nullifier        string      `json:"nullifier"`
 	Amount           string      `json:"amount"`
-	ReceivingAddress string      `json:"receivingAddress"`
+	ReceivingAddress string      `json:"receiving_address"`
 	Expiry           string      `json:"expiry"`
-	MerkleProof      interface{} `json:"merkleProof"`
+	MerkleProof      interface{} `json:"merkle_proof"`
 }
 
 // CreditReclaimResponse is the server's reply to a credit reclaim request.
@@ -175,18 +175,18 @@ type CreditReclaimResponse struct {
 type CreditStatusDraw struct {
 	Amount    string `json:"amount"`
 	Timestamp string `json:"timestamp"`
-	TxHash    string `json:"txHash"`
+	TxHash    string `json:"tx_hash"`
 }
 
 // CreditStatusResponse reports the current status of a credit line.
 // Status is "active", "expired", or "reclaimed".
 type CreditStatusResponse struct {
-	Status          string              `json:"status"`
-	OriginalAmount  string              `json:"originalAmount"`
-	DrawnAmount     string              `json:"drawnAmount"`
-	RemainderAmount string              `json:"remainderAmount"`
-	Expiry          string              `json:"expiry"`
-	Draws           []CreditStatusDraw  `json:"draws"`
+	Status          string             `json:"status"`
+	OriginalAmount  string             `json:"original_amount"`
+	DrawnAmount     string             `json:"drawn_amount"`
+	RemainderAmount string             `json:"remainder_amount"`
+	Expiry          string             `json:"expiry"`
+	Draws           []CreditStatusDraw `json:"draws"`
 }
 
 // ── Transaction relay ───────────────────────────────────────────────
@@ -212,12 +212,12 @@ type RelaySignatureRequest struct {
 	Operation          string `json:"operation"`
 	Network            string `json:"network"`
 	Signature          string `json:"signature"`
-	PaymentCommitment  string `json:"paymentCommitment"`
-	IdentityCommitment string `json:"identityCommitment"`
-	TokenAddress       string `json:"tokenAddress"`
+	PaymentCommitment  string `json:"payment_commitment"`
+	IdentityCommitment string `json:"identity_commitment"`
+	TokenAddress       string `json:"token_address"`
 	Amount             string `json:"amount"`
 	Nonce              string `json:"nonce"`
-	TreeID             string `json:"treeId"`
+	TreeID             string `json:"tree_id"`
 }
 
 // RelayCalldataRequest submits raw calldata for relay.
@@ -248,19 +248,19 @@ type RelayProveRequest struct {
 // RelayResponse is the server's reply for signature/calldata/witness relay requests.
 type RelayResponse struct {
 	Status    string          `json:"status"`
-	RelayID   *string         `json:"relayId,omitempty"`
-	TxHash    *string         `json:"txHash,omitempty"`
-	ErrorCode *RelayErrorCode `json:"errorCode,omitempty"`
+	RelayID   *string         `json:"relay_id,omitempty"`
+	TxHash    *string         `json:"tx_hash,omitempty"`
+	ErrorCode *RelayErrorCode `json:"error_code,omitempty"`
 	Reason    *string         `json:"reason,omitempty"`
 }
 
 // RelayProveResponse is the server's reply for prove relay requests.
 type RelayProveResponse struct {
 	Status    string          `json:"status"`
-	RelayID   *string         `json:"relayId,omitempty"`
+	RelayID   *string         `json:"relay_id,omitempty"`
 	Proof     *string         `json:"proof,omitempty"`
 	Calldata  *string         `json:"calldata,omitempty"`
-	ErrorCode *RelayErrorCode `json:"errorCode,omitempty"`
+	ErrorCode *RelayErrorCode `json:"error_code,omitempty"`
 	Reason    *string         `json:"reason,omitempty"`
 }
 
@@ -269,8 +269,8 @@ type RelayStatusResponse struct {
 	Status    string          `json:"status"`
 	Proof     *string         `json:"proof,omitempty"`
 	Calldata  *string         `json:"calldata,omitempty"`
-	TxHash    *string         `json:"txHash,omitempty"`
-	ErrorCode *RelayErrorCode `json:"errorCode,omitempty"`
+	TxHash    *string         `json:"tx_hash,omitempty"`
+	ErrorCode *RelayErrorCode `json:"error_code,omitempty"`
 	Reason    *string         `json:"reason,omitempty"`
 }
 

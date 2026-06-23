@@ -263,3 +263,77 @@ func TestCompactBase64URLNoSpecialChars(t *testing.T) {
 		t.Errorf("compact payload contains non-base64url chars: %q", payload)
 	}
 }
+
+// TestWireKeysSnakeCase verifies that JSON and msgpack wire keys are snake_case.
+func TestWireKeysSnakeCase(t *testing.T) {
+	voucher := sampleVoucher()
+
+	// ── JSON wire keys ──────────────────────────────────────────────────
+	encoded, err := EncodeVoucher(voucher, FormatJSON)
+	if err != nil {
+		t.Fatalf("EncodeVoucher JSON: %v", err)
+	}
+	jsonPayload := encoded[len("ipp1:"):]
+
+	// Keys that must appear as snake_case in the payload object.
+	snakeKeys := []string{
+		`"tree_id"`, `"identity_commitment"`, `"payment_commitment"`,
+		`"token_address"`, `"nullifier_key"`,
+	}
+	for _, k := range snakeKeys {
+		if !strings.Contains(jsonPayload, k) {
+			t.Errorf("JSON wire: expected snake_case key %s not found in %s", k, jsonPayload)
+		}
+	}
+
+	// Keys that must NOT appear (old camelCase forms).
+	camelKeys := []string{
+		`"treeId"`, `"identityCommitment"`, `"paymentCommitment"`,
+		`"tokenAddress"`, `"nullifierKey"`,
+	}
+	for _, k := range camelKeys {
+		if strings.Contains(jsonPayload, k) {
+			t.Errorf("JSON wire: stale camelCase key %s still present in %s", k, jsonPayload)
+		}
+	}
+
+	// Round-trip: decode back and confirm field values survive.
+	decoded, err := DecodeVoucher(encoded)
+	if err != nil {
+		t.Fatalf("DecodeVoucher JSON: %v", err)
+	}
+	if decoded.Payload.TreeID != voucher.Payload.TreeID {
+		t.Errorf("TreeID mismatch after JSON round-trip: got %q, want %q",
+			decoded.Payload.TreeID, voucher.Payload.TreeID)
+	}
+	if decoded.Payload.NullifierKey != voucher.Payload.NullifierKey {
+		t.Errorf("NullifierKey mismatch after JSON round-trip: got %q, want %q",
+			decoded.Payload.NullifierKey, voucher.Payload.NullifierKey)
+	}
+
+	// ── msgpack (compact) wire keys ─────────────────────────────────────
+	// Decode msgpack bytes and marshal to JSON to inspect keys.
+	encodedCompact, err := EncodeVoucher(voucher, FormatCompact)
+	if err != nil {
+		t.Fatalf("EncodeVoucher compact: %v", err)
+	}
+	decodedCompact, err := DecodeVoucher(encodedCompact)
+	if err != nil {
+		t.Fatalf("DecodeVoucher compact: %v", err)
+	}
+	// Re-marshal to JSON to read the key names (codec preserves field→tag mapping).
+	reEncoded, err := EncodeVoucher(decodedCompact, FormatJSON)
+	if err != nil {
+		t.Fatalf("re-encode compact decoded: %v", err)
+	}
+	reJSON := reEncoded[len("ipp1:"):]
+	for _, k := range snakeKeys {
+		if !strings.Contains(reJSON, k) {
+			t.Errorf("compact→JSON: expected snake_case key %s not found", k)
+		}
+	}
+	if decodedCompact.Payload.TreeID != voucher.Payload.TreeID {
+		t.Errorf("TreeID mismatch after compact round-trip: got %q, want %q",
+			decodedCompact.Payload.TreeID, voucher.Payload.TreeID)
+	}
+}
