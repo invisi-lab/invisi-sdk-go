@@ -121,6 +121,12 @@ func (c *IPPClient) CreditStatus(creditCommitment string) (CreditStatusResponse,
 
 // ── Relay endpoints ─────────────────────────────────────────────────
 
+// Relay submits a transaction for relaying. The mode (signature / calldata /
+// witness / prove) carried in params selects which fields the server reads.
+func (c *IPPClient) Relay(params RelayRequest) (RelayResponse, error) {
+	return post[RelayResponse](c, "relay", params)
+}
+
 // RelayStatus queries the status of a relayed transaction.
 func (c *IPPClient) RelayStatus(relayID string) (RelayStatusResponse, error) {
 	return get[RelayStatusResponse](c, "relay/"+relayID)

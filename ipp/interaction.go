@@ -195,15 +195,15 @@ type CreditStatusResponse struct {
 type RelayErrorCode string
 
 const (
-	RelayErrorInvalidSignature    RelayErrorCode = "invalid_signature"
-	RelayErrorInvalidCalldata     RelayErrorCode = "invalid_calldata"
-	RelayErrorInvalidWitness      RelayErrorCode = "invalid_witness"
-	RelayErrorUnsupportedCircuit  RelayErrorCode = "unsupported_circuit"
-	RelayErrorUnsupportedOp       RelayErrorCode = "unsupported_operation"
-	RelayErrorInsufficientGas     RelayErrorCode = "insufficient_gas"
-	RelayErrorQueueFull           RelayErrorCode = "queue_full"
-	RelayErrorRateLimited         RelayErrorCode = "rate_limited"
-	RelayErrorInternal            RelayErrorCode = "internal"
+	RelayErrorInvalidSignature   RelayErrorCode = "invalid_signature"
+	RelayErrorInvalidCalldata    RelayErrorCode = "invalid_calldata"
+	RelayErrorInvalidWitness     RelayErrorCode = "invalid_witness"
+	RelayErrorUnsupportedCircuit RelayErrorCode = "unsupported_circuit"
+	RelayErrorUnsupportedOp      RelayErrorCode = "unsupported_operation"
+	RelayErrorInsufficientGas    RelayErrorCode = "insufficient_gas"
+	RelayErrorQueueFull          RelayErrorCode = "queue_full"
+	RelayErrorRateLimited        RelayErrorCode = "rate_limited"
+	RelayErrorInternal           RelayErrorCode = "internal"
 )
 
 // RelaySignatureRequest submits a signed transaction for relay.
@@ -243,6 +243,51 @@ type RelayProveRequest struct {
 	Operation string      `json:"operation"`
 	Witness   interface{} `json:"witness"`
 	Circuit   string      `json:"circuit"`
+}
+
+// RelayRequest is the single payload accepted by POST /ipp/v1/relay across all
+// four modes. The TS SDK models this as a discriminated union on Mode; Go has no
+// union type, so — like RelaySignatureRequest et al. above — every mode's fields
+// live on one struct and the unused ones are omitted on the wire via omitempty.
+// Only Mode is always sent; it selects which subset the server reads.
+//
+// Wire-type notes (the gateway transcodes proto3 → JSON): tree_id and permit_v
+// are uint32 → JSON numbers; sig_nonce / deadline / permit_deadline are proto
+// uint64, which the gateway serializes as JSON strings, so they are strings here.
+type RelayRequest struct {
+	Mode      string `json:"mode"` // "signature" / "calldata" / "witness" / "prove"
+	Operation string `json:"operation,omitempty"`
+	Network   string `json:"network,omitempty"`
+
+	// mode=signature
+	Signature          string `json:"signature,omitempty"`
+	PaymentCommitment  string `json:"payment_commitment,omitempty"`
+	IdentityCommitment string `json:"identity_commitment,omitempty"`
+	TokenAddress       string `json:"token_address,omitempty"`
+	Amount             string `json:"amount,omitempty"`
+	Nonce              string `json:"nonce,omitempty"`
+	TreeID             uint32 `json:"tree_id,omitempty"`
+
+	// mode=calldata
+	Calldata string `json:"calldata,omitempty"`
+
+	// mode=witness / mode=prove
+	WitnessJSON string `json:"witness_json,omitempty"`
+	Circuit     string `json:"circuit,omitempty"`
+
+	// mode=signature: EIP-712 PayOpenWithSig + EIP-2612 permit structured params;
+	// the relay assembles payOpenWithSig calldata from these. PayerAddress is
+	// carried explicitly (not recovered from the signature) so ERC-1271 contract
+	// wallets work.
+	SigNonce       string `json:"sig_nonce,omitempty"`
+	Deadline       string `json:"deadline,omitempty"`
+	RefundLink     string `json:"refund_link,omitempty"`
+	PermitToken    string `json:"permit_token,omitempty"`
+	PermitDeadline string `json:"permit_deadline,omitempty"`
+	PermitV        uint32 `json:"permit_v,omitempty"`
+	PermitR        string `json:"permit_r,omitempty"`
+	PermitS        string `json:"permit_s,omitempty"`
+	PayerAddress   string `json:"payer_address,omitempty"`
 }
 
 // RelayResponse is the server's reply for signature/calldata/witness relay requests.
