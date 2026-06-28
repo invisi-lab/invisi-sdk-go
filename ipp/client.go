@@ -134,16 +134,6 @@ func (c *IPPClient) RelayStatus(relayID string) (RelayStatusResponse, error) {
 
 // ── Internal helpers ────────────────────────────────────────────────
 
-// IPPError wraps an ErrorResponse returned by the server.
-type IPPError struct {
-	StatusCode int
-	Err        ErrorResponse
-}
-
-func (e *IPPError) Error() string {
-	return e.Err.Error
-}
-
 func post[T any](c *IPPClient, path string, body interface{}) (T, error) {
 	var zero T
 
@@ -178,28 +168,44 @@ func get[T any](c *IPPClient, path string) (T, error) {
 func doRequest[T any](c *IPPClient, req *http.Request) (T, error) {
 	var zero T
 
+	// Channel ⓪ — transport-level failure (network error, timeout): the
+	// round-trip never produced an HTTP response, so this is a *ConnectionError,
+	// not an envelope error.
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
-		return zero, fmt.Errorf("ipp: http request: %w", err)
+		return zero, &ConnectionError{Message: "http request failed", Err: err}
 	}
 	defer resp.Body.Close()
 
 	respBody, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return zero, fmt.Errorf("ipp: read response: %w", err)
-	}
-
-	if resp.StatusCode >= 400 {
-		var errResp ErrorResponse
-		if jsonErr := json.Unmarshal(respBody, &errResp); jsonErr == nil && errResp.Error != "" {
-			return zero, &IPPError{StatusCode: resp.StatusCode, Err: errResp}
+		return zero, &ConnectionError{
+			Message:    "reading response body failed",
+			StatusCode: resp.StatusCode,
+			Err:        err,
 		}
-		return zero, fmt.Errorf("ipp: HTTP %d: %s", resp.StatusCode, string(respBody))
 	}
 
+	// Channel ① — HTTP 4xx/5xx: unwrap the nested Stripe envelope and throw a
+	// typed error. A body that is not the envelope (HTML page, empty, etc.)
+	// downgrades to a *ConnectionError inside newEnvelopeError.
+	if resp.StatusCode >= 400 {
+		return zero, newEnvelopeError(resp.StatusCode, respBody)
+	}
+
+	// Channel ② — HTTP 200 business rejection (status == "rejected") is a normal
+	// success value here, not an error: it is decoded into the response struct's
+	// RejectCode/Reason fields and returned with a nil error so the caller
+	// branches on it. Channel ③ relay failures likewise surface as result-state
+	// fields on RelayStatusResponse, not as errors.
 	var result T
 	if err := json.Unmarshal(respBody, &result); err != nil {
-		return zero, fmt.Errorf("ipp: unmarshal response: %w", err)
+		return zero, &ConnectionError{
+			Message:    "decoding 2xx response body failed",
+			StatusCode: resp.StatusCode,
+			Raw:        respBody,
+			Err:        err,
+		}
 	}
 	return result, nil
 }

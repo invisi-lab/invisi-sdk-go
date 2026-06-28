@@ -40,6 +40,11 @@ type ProposeResponse struct {
 	Nonce             *string `json:"nonce,omitempty"`
 	PaymentCommitment *string `json:"payment_commitment,omitempty"`
 	Reason            *string `json:"reason,omitempty"`
+	// RejectCode is a machine-readable rejection reason (lowercase snake, no type
+	// prefix), populated only when Status == "rejected". A rejection is a normal
+	// HTTP 200 business outcome, not an HTTP error — callers branch on it without
+	// catching a thrown error. See RejectCode constants in codes.go.
+	RejectCode *string `json:"reject_code,omitempty"`
 }
 
 // AuthorizeRequest is sent by the payer to authorize a credit line.
@@ -65,6 +70,9 @@ type AuthorizeResponse struct {
 	CreditCommitment *string `json:"credit_commitment,omitempty"`
 	NullifierKeyHash *string `json:"nullifier_key_hash,omitempty"`
 	Reason           *string `json:"reason,omitempty"`
+	// RejectCode is a machine-readable rejection reason (lowercase snake, no type
+	// prefix), populated only when Status == "rejected".
+	RejectCode *string `json:"reject_code,omitempty"`
 }
 
 // StatusResponse reports the current status of a payment.
@@ -144,6 +152,10 @@ type CreditDrawResponse struct {
 	Witness *CreditDrawWitness `json:"witness,omitempty"`
 	Circuit *string            `json:"circuit,omitempty"`
 	Reason  *string            `json:"reason,omitempty"`
+	// RejectCode carries a true business rejection (e.g. insufficient_credit_balance,
+	// pending_draw_exists) on an HTTP 200 response; populated only when Status ==
+	// "rejected". Syntax/resource/internal failures arrive as HTTP errors instead.
+	RejectCode *string `json:"reject_code,omitempty"`
 }
 
 // CreditReclaimRequest is sent by the payer to reclaim an expired credit.
@@ -169,6 +181,10 @@ type CreditReclaimResponse struct {
 	Witness *CreditReclaimWitness `json:"witness,omitempty"`
 	Circuit *string               `json:"circuit,omitempty"`
 	Reason  *string               `json:"reason,omitempty"`
+	// RejectCode carries a true business rejection (e.g. credit_already_reclaimed,
+	// credit_not_expired) on an HTTP 200 response; populated only when Status ==
+	// "rejected". Syntax/resource/internal failures arrive as HTTP errors instead.
+	RejectCode *string `json:"reject_code,omitempty"`
 }
 
 // CreditStatusDraw represents a single draw event on a credit line.
@@ -191,20 +207,9 @@ type CreditStatusResponse struct {
 
 // ── Transaction relay ───────────────────────────────────────────────
 
-// RelayErrorCode represents error codes returned by the relay service.
-type RelayErrorCode string
-
-const (
-	RelayErrorInvalidSignature   RelayErrorCode = "invalid_signature"
-	RelayErrorInvalidCalldata    RelayErrorCode = "invalid_calldata"
-	RelayErrorInvalidWitness     RelayErrorCode = "invalid_witness"
-	RelayErrorUnsupportedCircuit RelayErrorCode = "unsupported_circuit"
-	RelayErrorUnsupportedOp      RelayErrorCode = "unsupported_operation"
-	RelayErrorInsufficientGas    RelayErrorCode = "insufficient_gas"
-	RelayErrorQueueFull          RelayErrorCode = "queue_full"
-	RelayErrorRateLimited        RelayErrorCode = "rate_limited"
-	RelayErrorInternal           RelayErrorCode = "internal"
-)
+// RelayErrorCode (an open string type) and its convenience constants live in
+// codes.go alongside the other wire machine-code seams. It is read from the
+// asynchronous relay status poll's error_code field — see RelayStatusResponse.
 
 // RelaySignatureRequest submits a signed transaction for relay.
 type RelaySignatureRequest struct {
@@ -291,25 +296,36 @@ type RelayRequest struct {
 }
 
 // RelayResponse is the server's reply for signature/calldata/witness relay requests.
+//
+// This is the SYNCHRONOUS enqueue reply: on success it carries status="queued"
+// plus a relay_id. The asynchronous execution outcome (including any failure
+// error_code) is read later from RelayStatusResponse via RelayStatus();
+// synchronous request failures arrive as a typed HTTP envelope error instead, so
+// this reply carries no error_code field.
 type RelayResponse struct {
-	Status    string          `json:"status"`
-	RelayID   *string         `json:"relay_id,omitempty"`
-	TxHash    *string         `json:"tx_hash,omitempty"`
-	ErrorCode *RelayErrorCode `json:"error_code,omitempty"`
-	Reason    *string         `json:"reason,omitempty"`
+	Status  string  `json:"status"`
+	RelayID *string `json:"relay_id,omitempty"`
+	TxHash  *string `json:"tx_hash,omitempty"`
+	Reason  *string `json:"reason,omitempty"`
 }
 
-// RelayProveResponse is the server's reply for prove relay requests.
+// RelayProveResponse is the server's reply for prove relay requests. Like
+// RelayResponse this is the synchronous enqueue reply and carries no error_code;
+// the async prove outcome is read from RelayStatusResponse via RelayStatus().
 type RelayProveResponse struct {
-	Status    string          `json:"status"`
-	RelayID   *string         `json:"relay_id,omitempty"`
-	Proof     *string         `json:"proof,omitempty"`
-	Calldata  *string         `json:"calldata,omitempty"`
-	ErrorCode *RelayErrorCode `json:"error_code,omitempty"`
-	Reason    *string         `json:"reason,omitempty"`
+	Status   string  `json:"status"`
+	RelayID  *string `json:"relay_id,omitempty"`
+	Proof    *string `json:"proof,omitempty"`
+	Calldata *string `json:"calldata,omitempty"`
+	Reason   *string `json:"reason,omitempty"`
 }
 
 // RelayStatusResponse reports the current status of a relayed transaction.
+//
+// This is where an asynchronous relay FAILURE surfaces: when Status == "failed"
+// the ErrorCode field carries the relay machine code (see RelayErrorCode in
+// codes.go), mirroring Stripe's Payout.failure_code result-state pattern. It is
+// a normal HTTP 200 result-state read, not a thrown error.
 type RelayStatusResponse struct {
 	Status    string          `json:"status"`
 	Proof     *string         `json:"proof,omitempty"`
@@ -317,12 +333,4 @@ type RelayStatusResponse struct {
 	TxHash    *string         `json:"tx_hash,omitempty"`
 	ErrorCode *RelayErrorCode `json:"error_code,omitempty"`
 	Reason    *string         `json:"reason,omitempty"`
-}
-
-// ── Error ───────────────────────────────────────────────────────────
-
-// ErrorResponse is returned by the server on HTTP 4xx/5xx errors.
-type ErrorResponse struct {
-	Error   string  `json:"error"`
-	Message *string `json:"message,omitempty"`
 }
