@@ -60,6 +60,14 @@ type AuthorizeRequest struct {
 	Expiry             string `json:"expiry"`
 	PayerCommitment    string `json:"payer_commitment,omitempty"`
 	NullifierKeyHash   string `json:"nullifier_key_hash,omitempty"`
+	// SubscriptionID links this authorization to a subscription; when set, the
+	// server persists it and forwards it to the subscription side on the
+	// deposit-confirmed event. Omitted for a standalone authorization.
+	SubscriptionID string `json:"subscription_id,omitempty"`
+	// CreditNullifierKey is the payer-derived shared secret (0x bytes32 hex) the
+	// server stores so it can later fill the credit-draw witness on the payer's
+	// behalf. Required by the off-session credit-draw flow; omitted otherwise.
+	CreditNullifierKey string `json:"credit_nullifier_key,omitempty"`
 }
 
 // AuthorizeResponse is the receiver's reply to a credit authorization.
