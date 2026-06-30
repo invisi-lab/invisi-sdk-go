@@ -13,6 +13,8 @@ import (
 // and is internally consistent. MUST pass before withdraw.
 // chainID is accepted for API compatibility but the authoritative chain ID is
 // always derived from voucher.Network via CAIP-2 parsing.
+// The voucher carries ReceivingAddress directly; identityCommitment is recomputed
+// locally from ReceivingAddress + NullifierKey (one-way hash — not reversible).
 func VerifyVoucher(voucher ipp.IPPVoucher, receivingAddress common.Address, chainID *big.Int) (bool, error) {
 	p := voucher.Payload
 
@@ -21,16 +23,20 @@ func VerifyVoucher(voucher ipp.IPPVoucher, receivingAddress common.Address, chai
 		return false, err
 	}
 
+	// Check 1: the voucher's receiving address must be this receiver's own address —
+	// the settle circuit sends funds there, so a mismatch means funds go elsewhere.
+	if common.HexToAddress(p.ReceivingAddress) != receivingAddress {
+		return false, nil
+	}
+
 	nk, err := core.HexToElement(p.NullifierKey)
 	if err != nil {
 		return false, err
 	}
-	ic, err := core.ComputeIdentityCommitment(nk, core.BigIntToElement(receivingAddress.Big()))
+	// Recompute identityCommitment locally (the voucher no longer carries it).
+	ic, err := core.ComputeIdentityCommitment(nk, core.BigIntToElement(common.HexToAddress(p.ReceivingAddress).Big()))
 	if err != nil {
 		return false, err
-	}
-	if !strings.EqualFold(core.ElementToHex(ic), p.IdentityCommitment) {
-		return false, nil
 	}
 
 	token, err := core.HexToElement(p.TokenAddress)
@@ -56,11 +62,12 @@ func VerifyVoucher(voucher ipp.IPPVoucher, receivingAddress common.Address, chai
 }
 
 // VoucherToWithdrawRequest maps voucher payload to the withdraw request body.
-// nullifierKey stays client-side (local proof generation), never in the request.
+// IdentityCommitment is omitted (server-advisory — the server locates leaves by
+// payment commitments). ReceivingAddress and nullifierKey stay client-side (local
+// proof generation), never in the request.
 func VoucherToWithdrawRequest(voucher ipp.IPPVoucher) ipp.WithdrawRequest {
 	p := voucher.Payload
 	return ipp.WithdrawRequest{
-		IdentityCommitment: p.IdentityCommitment,
 		TokenAddress:       p.TokenAddress,
 		TreeID:             p.TreeID,
 		PaymentCommitments: []string{p.PaymentCommitment},

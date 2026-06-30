@@ -27,14 +27,14 @@ func makeVoucher(t *testing.T, recv common.Address) ipp.IPPVoucher {
 	return ipp.IPPVoucher{
 		V: 1, Network: "eip155:84532", Type: ipp.MessageTypeVoucher,
 		Payload: ipp.IPPVoucherV1{
-			IdentityCommitment: core.ElementToHex(ic),
-			PaymentCommitment:  core.ElementToHex(pc),
-			TokenAddress:       token.Hex(),
-			Operator:           "0x1234567890123456789012345678901234567890",
-			Amount:             "100000000",
-			Nonce:              core.ElementToHex(nonce),
-			NullifierKey:       core.ElementToHex(nk),
-			TreeID:             "1",
+			ReceivingAddress:  recv.Hex(),
+			PaymentCommitment: core.ElementToHex(pc),
+			TokenAddress:      token.Hex(),
+			Operator:          "0x1234567890123456789012345678901234567890",
+			Amount:            "100000000",
+			Nonce:             core.ElementToHex(nonce),
+			NullifierKey:      core.ElementToHex(nk),
+			TreeID:            "1",
 		},
 	}
 }
@@ -76,8 +76,8 @@ func TestVoucherToWithdrawRequest_NoSecret(t *testing.T) {
 	if len(req.PaymentCommitments) != 1 || req.PaymentCommitments[0] != v.Payload.PaymentCommitment {
 		t.Error("paymentCommitments mismatch")
 	}
-	if req.IdentityCommitment != v.Payload.IdentityCommitment {
-		t.Error("ic mismatch")
+	if req.IdentityCommitment != "" {
+		t.Error("identityCommitment should be omitted for mode-3 voucher withdraw")
 	}
 	// nullifierKey must not appear in the withdraw request
 }

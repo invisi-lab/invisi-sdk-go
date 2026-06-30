@@ -54,15 +54,17 @@ type IPPVoucher struct {
 // IPPVoucherV1 is the v1 payload for an IPP payment voucher.
 // It carries the nullifier key (secret) alongside the payment details.
 type IPPVoucherV1 struct {
-	IdentityCommitment string `json:"identity_commitment" msgpack:"identity_commitment"`
-	PaymentCommitment  string `json:"payment_commitment" msgpack:"payment_commitment"`
-	TokenAddress       string `json:"token_address" msgpack:"token_address"`
-	Operator           string `json:"operator" msgpack:"operator"`
-	Amount             string `json:"amount" msgpack:"amount"`
-	Nonce              string `json:"nonce" msgpack:"nonce"`
-	NullifierKey       string `json:"nullifier_key" msgpack:"nullifier_key"`
-	TreeID             string `json:"tree_id" msgpack:"tree_id"`
-	LeafIndex          string `json:"leaf_index,omitempty" msgpack:"leaf_index,omitempty"`
+	// ReceivingAddress: with NullifierKey it recomputes identityCommitment /
+	// paymentCommitment and is the settle circuit's receiving_address public input.
+	ReceivingAddress  string `json:"receiving_address" msgpack:"receiving_address"`
+	PaymentCommitment string `json:"payment_commitment" msgpack:"payment_commitment"`
+	TokenAddress      string `json:"token_address" msgpack:"token_address"`
+	Operator          string `json:"operator" msgpack:"operator"`
+	Amount            string `json:"amount" msgpack:"amount"`
+	Nonce             string `json:"nonce" msgpack:"nonce"`
+	NullifierKey      string `json:"nullifier_key" msgpack:"nullifier_key"`
+	TreeID            string `json:"tree_id" msgpack:"tree_id"`
+	LeafIndex         string `json:"leaf_index,omitempty" msgpack:"leaf_index,omitempty"`
 }
 
 // IPPPayloadV1 is the v1 payload within an IPP request.

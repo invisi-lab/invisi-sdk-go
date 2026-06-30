@@ -111,19 +111,21 @@ type NotifyResponse struct {
 
 // WithdrawRequest is sent by the receiver to initiate a batch withdrawal.
 type WithdrawRequest struct {
-	IdentityCommitment string   `json:"identity_commitment"`
+	// IdentityCommitment is advisory: the server locates leaves by
+	// PaymentCommitments and ignores it; mode-3 vouchers omit it.
+	IdentityCommitment string   `json:"identity_commitment,omitempty"`
 	TokenAddress       string   `json:"token_address"`
 	TreeID             string   `json:"tree_id"`
 	PaymentCommitments []string `json:"payment_commitments"`
 }
 
-// WithdrawWitness contains the ZK witness data for a withdrawal proof.
+// WithdrawWitness contains server-authoritative merkle data for a withdrawal.
+// Withdraw is non-custodial (the server has no nullifier key): nullifiers and the
+// receiving address are client-supplied circuit inputs, not returned here.
 type WithdrawWitness struct {
-	MerkleRoot       string        `json:"merkle_root"`
-	Nullifiers       []string      `json:"nullifiers"`
-	TotalAmount      string        `json:"total_amount"`
-	ReceivingAddress string        `json:"receiving_address"`
-	MerkleProofs     []interface{} `json:"merkle_proofs"`
+	MerkleRoot   string        `json:"merkle_root"`
+	MerkleProofs []interface{} `json:"merkle_proofs"`
+	TotalAmount  string        `json:"total_amount"`
 }
 
 // WithdrawResponse is the server's reply to a withdrawal request.

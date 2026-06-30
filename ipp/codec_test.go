@@ -30,14 +30,14 @@ func sampleVoucher() IPPVoucher {
 	return IPPVoucher{
 		V: 1, Network: "eip155:84532", Type: MessageTypeVoucher,
 		Payload: IPPVoucherV1{
-			IdentityCommitment: "0xabc",
-			PaymentCommitment:  "0xdef",
-			TokenAddress:       "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
-			Operator:           "0x1234567890123456789012345678901234567890",
-			Amount:             "100000000",
-			Nonce:              "0x123",
-			NullifierKey:       "0x456",
-			TreeID:             "1",
+			ReceivingAddress:  "0xabc",
+			PaymentCommitment: "0xdef",
+			TokenAddress:      "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+			Operator:          "0x1234567890123456789012345678901234567890",
+			Amount:            "100000000",
+			Nonce:             "0x123",
+			NullifierKey:      "0x456",
+			TreeID:            "1",
 		},
 	}
 }
@@ -277,7 +277,7 @@ func TestWireKeysSnakeCase(t *testing.T) {
 
 	// Keys that must appear as snake_case in the payload object.
 	snakeKeys := []string{
-		`"tree_id"`, `"identity_commitment"`, `"payment_commitment"`,
+		`"tree_id"`, `"receiving_address"`, `"payment_commitment"`,
 		`"token_address"`, `"nullifier_key"`,
 	}
 	for _, k := range snakeKeys {
@@ -288,7 +288,7 @@ func TestWireKeysSnakeCase(t *testing.T) {
 
 	// Keys that must NOT appear (old camelCase forms).
 	camelKeys := []string{
-		`"treeId"`, `"identityCommitment"`, `"paymentCommitment"`,
+		`"treeId"`, `"receivingAddress"`, `"paymentCommitment"`,
 		`"tokenAddress"`, `"nullifierKey"`,
 	}
 	for _, k := range camelKeys {
