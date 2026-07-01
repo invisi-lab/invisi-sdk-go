@@ -25,6 +25,20 @@ func (t PaymentType) Valid() bool {
 	}
 }
 
+// ContainsCredit reports whether credit is among the payment types. It is the
+// single source for the credit-membership check shared by request encoders and
+// validation: a credit request needs an interaction endpoint regardless of mode
+// (the payer must reach Authorize/Notify to run the credit line), so encoders
+// and ValidateIPPRequest gate the endpoint requirement on this.
+func ContainsCredit(pts []PaymentType) bool {
+	for _, pt := range pts {
+		if pt == PaymentTypeCredit {
+			return true
+		}
+	}
+	return false
+}
+
 // IPPMessageType is the discriminator field for IPP envelopes.
 type IPPMessageType string
 

@@ -145,6 +145,32 @@ func TestValidateNoNonceNoEndpoint(t *testing.T) {
 	}
 }
 
+func TestValidateSingleCreditRequiresEndpoint(t *testing.T) {
+	// A credit request needs an endpoint even in single mode (nonce+paymentCommitment
+	// present): the payer must reach Authorize/Notify to run the credit line, which
+	// the embedded direct-pay fields cannot substitute for. Without it the QR is
+	// un-authorizable.
+	r := validRequest()
+	r.Payload.PaymentTypes = []PaymentType{PaymentTypeOpen, PaymentTypeCredit}
+	r.Payload.Endpoint = nil
+	err := ValidateIPPRequest(r)
+	if err == nil {
+		t.Fatal("expected error for single+credit without endpoint")
+	}
+	if !strings.Contains(err.Error(), "endpoint") {
+		t.Errorf("error = %q, want mention of endpoint", err.Error())
+	}
+}
+
+func TestValidateSingleCreditWithEndpointValid(t *testing.T) {
+	r := validRequest()
+	r.Payload.PaymentTypes = []PaymentType{PaymentTypeOpen, PaymentTypeCredit}
+	r.Payload.Endpoint = strPtr("https://pay.example.com/ipp/v1")
+	if err := ValidateIPPRequest(r); err != nil {
+		t.Errorf("expected valid (single+credit with endpoint), got: %v", err)
+	}
+}
+
 func TestValidateEmptyRequiredFields(t *testing.T) {
 	fields := []struct {
 		name  string

@@ -45,9 +45,13 @@ func ValidateIPPRequest(r IPPRequest) error {
 		return fmt.Errorf("ipp: nonce and paymentCommitment must both be present or both absent")
 	}
 
-	// When no nonce is provided (interactive mode), endpoint is required.
-	if !hasNonce && p.Endpoint == nil {
-		return fmt.Errorf("ipp: endpoint is required when nonce is not provided")
+	// Endpoint is required whenever the payer must reach the receiver
+	// interactively: no nonce (interactive/multi mode), or any credit payment
+	// type. A credit payer runs Authorize/Notify to draw the credit line, which
+	// the embedded direct-pay nonce+paymentCommitment cannot substitute for, so
+	// even a single-mode credit request needs the endpoint.
+	if p.Endpoint == nil && (!hasNonce || ContainsCredit(p.PaymentTypes)) {
+		return fmt.Errorf("ipp: endpoint is required for interactive or credit requests")
 	}
 
 	return nil

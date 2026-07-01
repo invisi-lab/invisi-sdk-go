@@ -89,6 +89,26 @@ func TestPaymentTypeConstants(t *testing.T) {
 	}
 }
 
+func TestContainsCredit(t *testing.T) {
+	tests := []struct {
+		name string
+		pts  []PaymentType
+		want bool
+	}{
+		{"credit alone", []PaymentType{PaymentTypeCredit}, true},
+		{"credit among others", []PaymentType{PaymentTypeOpen, PaymentTypeCredit}, true},
+		{"no credit", []PaymentType{PaymentTypeOpen, PaymentTypeBlind}, false},
+		{"empty", nil, false},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := ContainsCredit(tt.pts); got != tt.want {
+				t.Errorf("ContainsCredit(%v) = %v, want %v", tt.pts, got, tt.want)
+			}
+		})
+	}
+}
+
 func TestFormatConstants(t *testing.T) {
 	if FormatJSON != "json" {
 		t.Errorf("FormatJSON = %q, want json", FormatJSON)
