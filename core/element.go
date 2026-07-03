@@ -20,6 +20,11 @@ func HexToElement(h string) (fr.Element, error) {
 	if err != nil {
 		return e, fmt.Errorf("invalid hex: %w", err)
 	}
+	// A canonical BN254 element fits in 32 bytes; a longer decode makes the
+	// left-pad offset (32-len(b)) negative and panics the copy below.
+	if len(b) > 32 {
+		return e, fmt.Errorf("value out of BN254 field range: %d bytes exceeds 32", len(b))
+	}
 	padded := make([]byte, 32)
 	copy(padded[32-len(b):], b)
 	if err := e.SetBytesCanonical(padded); err != nil {

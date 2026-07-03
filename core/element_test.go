@@ -2,6 +2,7 @@ package core
 
 import (
 	"math/big"
+	"strings"
 	"testing"
 
 	"github.com/consensys/gnark-crypto/ecc/bn254/fr"
@@ -72,5 +73,36 @@ func TestHexToElementInvalid(t *testing.T) {
 	_, err := HexToElement("not-hex")
 	if err == nil {
 		t.Error("expected error for invalid hex")
+	}
+}
+
+func TestHexToElementTooLong(t *testing.T) {
+	// 40 bytes: previously drove copy(padded[32-len(b):], b) to a negative
+	// offset and panicked; must now return an error instead.
+	_, err := HexToElement("0x" + strings.Repeat("ff", 40))
+	if err == nil {
+		t.Error("expected error for hex longer than 32 bytes")
+	}
+}
+
+func TestHexToElementBoundary(t *testing.T) {
+	// 32 bytes is the largest accepted width; 33 bytes is the first rejected one.
+	if _, err := HexToElement("0x" + strings.Repeat("00", 32)); err != nil {
+		t.Errorf("32-byte hex should decode, got error: %v", err)
+	}
+	if _, err := HexToElement("0x" + strings.Repeat("ff", 33)); err == nil {
+		t.Error("expected error for 33-byte hex")
+	}
+}
+
+func TestHexToElementUppercasePrefix(t *testing.T) {
+	e, err := HexToElement("0X2A")
+	if err != nil {
+		t.Fatal(err)
+	}
+	var expected fr.Element
+	expected.SetUint64(42)
+	if !e.Equal(&expected) {
+		t.Errorf("got %s, want 42", e.String())
 	}
 }
