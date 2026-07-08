@@ -49,25 +49,20 @@ type ProposeResponse struct {
 
 // AuthorizeRequest is sent by the payer to authorize a credit line.
 //
-// PayerCommitment and NullifierKeyHash are payer-derived values: the anonymous
-// payer computes them locally and sends them with the authorize so the server
-// folds both into the credit commitment, making it equal the on-chain deposit
-// credit leaf. They are omitted for plain IPP authorize usage and sent only by
-// the credit-grant flow — hence omitempty.
+// PayerCommitment is a payer-derived value: the anonymous payer derives it
+// locally from payerMasterKey + creditId and sends it so the server folds it
+// into the credit commitment. The payer does not send nullifier_key_hash or
+// credit_nullifier_key — the server derives creditNullifierKey from
+// receiverMasterKey and returns it (and its hash) in AuthorizeResponse.
 type AuthorizeRequest struct {
 	IdentityCommitment string `json:"identity_commitment"`
 	Amount             string `json:"amount"`
 	Expiry             string `json:"expiry"`
 	PayerCommitment    string `json:"payer_commitment,omitempty"`
-	NullifierKeyHash   string `json:"nullifier_key_hash,omitempty"`
 	// SubscriptionID links this authorization to a subscription; when set, the
 	// server persists it and forwards it to the subscription side on the
 	// deposit-confirmed event. Omitted for a standalone authorization.
 	SubscriptionID string `json:"subscription_id,omitempty"`
-	// CreditNullifierKey is the payer-derived shared secret (0x bytes32 hex) the
-	// server stores so it can later fill the credit-draw witness on the payer's
-	// behalf. Required by the off-session credit-draw flow; omitted otherwise.
-	CreditNullifierKey string `json:"credit_nullifier_key,omitempty"`
 }
 
 // AuthorizeResponse is the receiver's reply to a credit authorization.
@@ -77,7 +72,12 @@ type AuthorizeResponse struct {
 	Nonce            *string `json:"nonce,omitempty"`
 	CreditCommitment *string `json:"credit_commitment,omitempty"`
 	NullifierKeyHash *string `json:"nullifier_key_hash,omitempty"`
-	Reason           *string `json:"reason,omitempty"`
+	// CreditNullifierKey (0x bytes32 hex) is the server-derived shared secret
+	// Poseidon2(D_CREDIT_NKEY, receiverMasterKey, creditId), delivered to the payer
+	// over TLS on an accepted authorize (IPP 6.2 authorize). The payer must verify
+	// NullifierKeyHash == Poseidon2(D_NKHASH, CreditNullifierKey) before deposit.
+	CreditNullifierKey *string `json:"credit_nullifier_key,omitempty"`
+	Reason             *string `json:"reason,omitempty"`
 	// RejectCode is a machine-readable rejection reason (lowercase snake, no type
 	// prefix), populated only when Status == "rejected".
 	RejectCode *string `json:"reject_code,omitempty"`

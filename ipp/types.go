@@ -92,6 +92,12 @@ type IPPPayloadV1 struct {
 	Nonce              *string       `json:"nonce,omitempty" msgpack:"nonce,omitempty"`
 	PaymentCommitment  *string       `json:"payment_commitment,omitempty" msgpack:"payment_commitment,omitempty"`
 	Endpoint           *string       `json:"endpoint,omitempty" msgpack:"endpoint,omitempty"`
+	// CreditID carries the one-time credit code's credit_id: required on the wire
+	// when PaymentTypes includes 'credit' (IPP 6.1 encoding-tightening rule). It is
+	// a public business ID (not a secret) and does not violate the QR secret
+	// isolation invariant. Kept out of SDK baseline validation (same tier as the
+	// endpoint rule).
+	CreditID *string `json:"credit_id,omitempty" msgpack:"credit_id,omitempty"`
 }
 
 // Format identifies the wire format used to encode/decode an IPP request.
