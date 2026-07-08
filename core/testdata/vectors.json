@@ -54,6 +54,18 @@
       "expected": "0x1cf72bfcec8abddcd0f50f42fc920980ff16a6d9b41c5bec9730a165119e45b2"
     }
   ],
+  "deriveCreditNullifierKey": [
+    {
+      "receiverMasterKey": "100",
+      "creditId": "200",
+      "expected": "0x3014b61258fe552f8dc5b8d5f332480c867ca520b13d1206bb2572a625612449"
+    },
+    {
+      "receiverMasterKey": "0",
+      "creditId": "0",
+      "expected": "0x2ee7682681179c2d8290a805cdeb64cc9744167fd5c801c26f1b3f9757c4eebc"
+    }
+  ],
   "computeIdentityCommitment": [
     {
       "nullifierKey": "8059902435717874135396261042205011152580675825595808264720455654581518234534",

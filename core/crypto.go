@@ -8,6 +8,16 @@ func DeriveNullifierKey(masterKey, invoiceId fr.Element) (fr.Element, error) {
 	return Poseidon2Hash(ElementFromUint64(DomainNKey), masterKey, invoiceId)
 }
 
+// DeriveCreditNullifierKey derives the credit shared secret from the receiver's
+// master key and the credit ID. The server owns this derivation and delivers the
+// result to the payer in the IPP 6.2 authorize response; this function exists for
+// receiver-side and tooling use. Domain-separated from DeriveNullifierKey (tag 10
+// vs 1) so neither key reveals the other.
+// Formula: Poseidon2Hash(D_CREDIT_NKEY, receiverMasterKey, creditId)
+func DeriveCreditNullifierKey(receiverMasterKey, creditId fr.Element) (fr.Element, error) {
+	return Poseidon2Hash(ElementFromUint64(DomainCreditNKey), receiverMasterKey, creditId)
+}
+
 // ComputeIdentityCommitment computes the identity commitment.
 // Formula: Poseidon2Hash(D_IDENT, nullifierKey, receivingAddress)
 func ComputeIdentityCommitment(nullifierKey, receivingAddress fr.Element) (fr.Element, error) {

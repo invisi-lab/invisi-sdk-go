@@ -32,6 +32,12 @@ type deriveNullifierKeyVector struct {
 	Expected  string `json:"expected"`
 }
 
+type deriveCreditNullifierKeyVector struct {
+	ReceiverMasterKey string `json:"receiverMasterKey"`
+	CreditID          string `json:"creditId"`
+	Expected          string `json:"expected"`
+}
+
 type computeIdentityCommitmentVector struct {
 	NullifierKey     string `json:"nullifierKey"`
 	ReceivingAddress string `json:"receivingAddress"`
@@ -102,17 +108,18 @@ type computeRefundLinkVector struct {
 }
 
 type vectorsJSON struct {
-	Poseidon2                    []poseidon2Vector                    `json:"poseidon2"`
-	DeriveNullifierKey           []deriveNullifierKeyVector           `json:"deriveNullifierKey"`
-	ComputeIdentityCommitment    []computeIdentityCommitmentVector    `json:"computeIdentityCommitment"`
-	ComputePaymentCommitment     []computePaymentCommitmentVector     `json:"computePaymentCommitment"`
-	ComputePaymentNullifier      []computePaymentNullifierVector      `json:"computePaymentNullifier"`
-	ComputeNullifierKeyHash      []computeNullifierKeyHashVector      `json:"computeNullifierKeyHash"`
-	ComputeCreditCommitment      []computeCreditCommitmentVector      `json:"computeCreditCommitment"`
-	ComputeCreditNullifier       []computeCreditNullifierVector       `json:"computeCreditNullifier"`
-	DeriveRemainderNonce         []deriveRemainderNonceVector         `json:"deriveRemainderNonce"`
-	DeriveRemainderNullifierKey  []deriveRemainderNullifierKeyVector  `json:"deriveRemainderNullifierKey"`
-	ComputeRefundLink            []computeRefundLinkVector            `json:"computeRefundLink"`
+	Poseidon2                   []poseidon2Vector                   `json:"poseidon2"`
+	DeriveNullifierKey          []deriveNullifierKeyVector          `json:"deriveNullifierKey"`
+	DeriveCreditNullifierKey    []deriveCreditNullifierKeyVector    `json:"deriveCreditNullifierKey"`
+	ComputeIdentityCommitment   []computeIdentityCommitmentVector   `json:"computeIdentityCommitment"`
+	ComputePaymentCommitment    []computePaymentCommitmentVector    `json:"computePaymentCommitment"`
+	ComputePaymentNullifier     []computePaymentNullifierVector     `json:"computePaymentNullifier"`
+	ComputeNullifierKeyHash     []computeNullifierKeyHashVector     `json:"computeNullifierKeyHash"`
+	ComputeCreditCommitment     []computeCreditCommitmentVector     `json:"computeCreditCommitment"`
+	ComputeCreditNullifier      []computeCreditNullifierVector      `json:"computeCreditNullifier"`
+	DeriveRemainderNonce        []deriveRemainderNonceVector        `json:"deriveRemainderNonce"`
+	DeriveRemainderNullifierKey []deriveRemainderNullifierKeyVector `json:"deriveRemainderNullifierKey"`
+	ComputeRefundLink           []computeRefundLinkVector           `json:"computeRefundLink"`
 }
 
 // loadVectors reads and parses the vectors.json file.
@@ -378,5 +385,22 @@ func TestCrossLanguageComputeRefundLink(t *testing.T) {
 			t.Fatalf("vector[%d]: ComputeRefundLink error: %v", i, err)
 		}
 		assertHexEqual(t, "ComputeRefundLink", ElementToHex(got), tc.Expected)
+	}
+}
+
+func TestCrossLanguageDeriveCreditNullifierKey(t *testing.T) {
+	v := loadVectors(t)
+	if v == nil {
+		t.Skip("testdata/vectors.json not found; run generate_vectors.ts to create it")
+	}
+
+	for i, tc := range v.DeriveCreditNullifierKey {
+		receiverMasterKey := decimalToElement(t, tc.ReceiverMasterKey)
+		creditId := decimalToElement(t, tc.CreditID)
+		got, err := DeriveCreditNullifierKey(receiverMasterKey, creditId)
+		if err != nil {
+			t.Fatalf("vector[%d]: DeriveCreditNullifierKey error: %v", i, err)
+		}
+		assertHexEqual(t, "DeriveCreditNullifierKey", ElementToHex(got), tc.Expected)
 	}
 }

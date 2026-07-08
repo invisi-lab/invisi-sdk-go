@@ -17,6 +17,7 @@ func TestDomainConstants(t *testing.T) {
 		{"DomainNKHash", DomainNKHash, 7},
 		{"DomainDerive", DomainDerive, 8},
 		{"DomainRefLink", DomainRefLink, 9},
+		{"DomainCreditNKey", DomainCreditNKey, 10},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

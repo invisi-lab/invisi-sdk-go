@@ -394,3 +394,44 @@ func TestInputSensitivity(t *testing.T) {
 		t.Error("DeriveNullifierKey: different invoiceId must produce different output")
 	}
 }
+
+// TestDeriveCreditNullifierKey verifies the formula matches a direct Poseidon2Hash call.
+func TestDeriveCreditNullifierKey(t *testing.T) {
+	e := testElements(t)
+	receiverMasterKey, creditId := e[0], e[1]
+
+	got, err := DeriveCreditNullifierKey(receiverMasterKey, creditId)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	want, err := Poseidon2Hash(ElementFromUint64(DomainCreditNKey), receiverMasterKey, creditId)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if !got.Equal(&want) {
+		t.Errorf("DeriveCreditNullifierKey: got %s, want %s", ElementToHex(got), ElementToHex(want))
+	}
+}
+
+// TestDeriveCreditNullifierKeyDomainIsolation verifies that creditNullifierKey and
+// the receiver/payer nullifierKey — same inputs, different domain tags (10 vs 1) —
+// are distinct: holding one must not reveal the other.
+func TestDeriveCreditNullifierKeyDomainIsolation(t *testing.T) {
+	e := testElements(t)
+	masterKey, creditId := e[0], e[1]
+
+	creditKey, err := DeriveCreditNullifierKey(masterKey, creditId)
+	if err != nil {
+		t.Fatal(err)
+	}
+	nullifierKey, err := DeriveNullifierKey(masterKey, creditId)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if creditKey.Equal(&nullifierKey) {
+		t.Error("domain isolation failure: DeriveCreditNullifierKey and DeriveNullifierKey returned same value")
+	}
+}

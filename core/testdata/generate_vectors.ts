@@ -12,6 +12,7 @@
 import {
   poseidonHash,
   deriveNullifierKey,
+  deriveCreditNullifierKey,
   computeIdentityCommitment,
   computePaymentCommitment,
   computePaymentNullifier,
@@ -58,6 +59,14 @@ async function main() {
   vectors.deriveNullifierKey.push({
     masterKey: "0", invoiceId: "0", expected: toHex(nk2),
   });
+
+  // ---- DeriveCreditNullifierKey (D_CREDIT_NKEY = 10) ----
+  const cnk1 = await deriveCreditNullifierKey(100n, 200n);
+  const cnk2 = await deriveCreditNullifierKey(0n, 0n);
+  vectors.deriveCreditNullifierKey = [
+    { receiverMasterKey: "100", creditId: "200", expected: toHex(cnk1) },
+    { receiverMasterKey: "0", creditId: "0", expected: toHex(cnk2) },
+  ];
 
   // ---- ComputeIdentityCommitment ----
   const ic = await computeIdentityCommitment(nk, 0x999n);
