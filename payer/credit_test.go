@@ -1,6 +1,7 @@
 package payer
 
 import (
+	"errors"
 	"math/big"
 	"regexp"
 	"strings"
@@ -12,168 +13,186 @@ import (
 	"github.com/invisi-lab/invisi-sdk-go/core"
 )
 
-func TestCreateCredit_Basic(t *testing.T) {
-	var masterKey, creditID, payerAddr, nonce fr.Element
-	masterKey.SetUint64(111)
+// creditFixture builds a self-consistent "accepted authorize" fixture: payerCommitment
+// is derived from the payer master key, and the server-side values
+// (nullifier_key_hash, credit_commitment) are computed exactly as the server would,
+// so CreateCredit's two-step verification passes.
+type creditFixture struct {
+	params          CreateCreditParams
+	creditNullKey   fr.Element
+	payerCommitment common.Hash
+	serverNKHash    common.Hash
+}
+
+func newCreditFixture(t *testing.T) creditFixture {
+	t.Helper()
+
+	var payerMasterKey, creditID, payerAddr, creditNullKey, nonce fr.Element
+	payerMasterKey.SetUint64(111)
 	creditID.SetUint64(222)
 	payerAddr.SetUint64(333)
+	creditNullKey.SetUint64(444) // server-derived; opaque to the payer
 	nonce.SetUint64(555)
 
-	result, err := CreateCredit(CreateCreditParams{
-		PayerMasterKey:     masterKey,
-		CreditID:           creditID,
-		IdentityCommitment: common.HexToHash("0xab" + strings.Repeat("00", 31)),
-		PayerAddress:       payerAddr,
-		TokenAddress:       common.HexToAddress("0xcc" + strings.Repeat("00", 19)),
-		Amount:             big.NewInt(1_000_000),
-		Nonce:              nonce,
-		Expiry:             big.NewInt(1700000000),
-		TreeID:             big.NewInt(1),
-		ChainID:            big.NewInt(84532),
-	})
+	pcHex, err := DeriveCreditAuthorizeFields(payerMasterKey, creditID, payerAddr)
+	if err != nil {
+		t.Fatal(err)
+	}
+	payerCommitment := common.HexToHash(pcHex)
+
+	// Tag byte placed low-order (not "0xab" + zeros) so the raw 32-byte value stays
+	// below the BN254 scalar field modulus once run through core.HexToElement below:
+	// CreateCredit's two-step verification folds identityCommitment into
+	// ComputeCreditCommitment as a field element, and a high-order tag byte overflows it.
+	identityCommitment := common.HexToHash("0x" + strings.Repeat("00", 31) + "ab")
+	tokenAddress := common.HexToAddress("0xcc" + strings.Repeat("00", 19))
+	amount := big.NewInt(1_000_000)
+	expiry := big.NewInt(1700000000)
+	treeID := big.NewInt(1)
+	chainID := big.NewInt(84532)
+
+	nkHashElem, err := core.ComputeNullifierKeyHash(creditNullKey)
+	if err != nil {
+		t.Fatal(err)
+	}
+	serverNKHash := common.HexToHash(core.ElementToHex(nkHashElem))
+
+	icElem, err := core.HexToElement(identityCommitment.Hex())
+	if err != nil {
+		t.Fatal(err)
+	}
+	pcElem, err := core.HexToElement(payerCommitment.Hex())
+	if err != nil {
+		t.Fatal(err)
+	}
+	tokenElem, err := core.HexToElement(addressToTokenElement(tokenAddress).Hex())
+	if err != nil {
+		t.Fatal(err)
+	}
+	creditCommElem, err := core.ComputeCreditCommitment(
+		core.BigIntToElement(chainID), icElem, pcElem, tokenElem,
+		core.BigIntToElement(amount), nonce, core.BigIntToElement(expiry), nkHashElem,
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	serverCreditComm := common.HexToHash(core.ElementToHex(creditCommElem))
+
+	return creditFixture{
+		params: CreateCreditParams{
+			CreditID:               creditID,
+			IdentityCommitment:     identityCommitment,
+			PayerCommitment:        payerCommitment,
+			CreditNullifierKey:     creditNullKey,
+			TokenAddress:           tokenAddress,
+			Amount:                 amount,
+			Nonce:                  nonce,
+			Expiry:                 expiry,
+			TreeID:                 treeID,
+			ChainID:                chainID,
+			ServerNullifierKeyHash: serverNKHash,
+			ServerCreditCommitment: serverCreditComm,
+		},
+		creditNullKey:   creditNullKey,
+		payerCommitment: payerCommitment,
+		serverNKHash:    serverNKHash,
+	}
+}
+
+func TestCreateCredit_Basic(t *testing.T) {
+	f := newCreditFixture(t)
+	result, err := CreateCredit(f.params)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	// Authorization fields are populated
-	if result.Authorization.PayerCommitment == (common.Hash{}) {
-		t.Error("payerCommitment should not be zero")
+	if result.Authorization.PayerCommitment != f.payerCommitment {
+		t.Error("payerCommitment should be echoed unchanged")
 	}
-	if result.Authorization.NullifierKeyHash == (common.Hash{}) {
-		t.Error("nullifierKeyHash should not be zero")
+	// depositCredit binds the LOCALLY recomputed hash (reclaim safety anchor).
+	if result.Authorization.NullifierKeyHash != f.serverNKHash {
+		t.Errorf("nullifierKeyHash = %s, want %s",
+			result.Authorization.NullifierKeyHash.Hex(), f.serverNKHash.Hex())
 	}
-
-	// Nonce must equal the supplied (authorize-response) value
-	if !result.Authorization.Nonce.Equal(&nonce) {
-		t.Errorf("nonce = %s, want supplied value", result.Authorization.Nonce.String())
+	if !result.Authorization.CreditNullifierKey.Equal(&f.creditNullKey) {
+		t.Error("creditNullifierKey should be stored for reclaim")
 	}
-
-	// ApproveAmount == Amount
 	if result.ApproveAmount.Cmp(big.NewInt(1_000_000)) != 0 {
 		t.Errorf("approveAmount = %s, want 1000000", result.ApproveAmount)
 	}
-
-	// Data is valid calldata
 	if len(result.Data) < 4 {
 		t.Fatal("calldata too short")
 	}
 }
 
-func TestCreateCredit_PayerCommitmentConsistency(t *testing.T) {
-	var masterKey, creditID, payerAddr, nonce fr.Element
-	masterKey.SetUint64(111)
-	creditID.SetUint64(222)
-	payerAddr.SetUint64(333)
-	nonce.SetUint64(1)
-
-	result, err := CreateCredit(CreateCreditParams{
-		PayerMasterKey:     masterKey,
-		CreditID:           creditID,
-		IdentityCommitment: common.HexToHash("0xab" + strings.Repeat("00", 31)),
-		PayerAddress:       payerAddr,
-		TokenAddress:       common.HexToAddress("0xaa"),
-		Amount:             big.NewInt(100),
-		Nonce:              nonce,
-		Expiry:             big.NewInt(999999),
-		TreeID:             big.NewInt(1),
-		ChainID:            big.NewInt(1),
-	})
+func TestCreateCredit_ChainIDPreserved(t *testing.T) {
+	f := newCreditFixture(t)
+	result, err := CreateCredit(f.params)
 	if err != nil {
 		t.Fatal(err)
 	}
-
-	// Recompute payerCommitment = ComputeIdentityCommitment(payerNullifierKey, payerAddress)
-	payerNullifierKey, err := core.DeriveNullifierKey(masterKey, creditID)
-	if err != nil {
-		t.Fatal(err)
-	}
-	expectedPayerComm, err := core.ComputeIdentityCommitment(payerNullifierKey, payerAddr)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	expectedHash := common.HexToHash(core.ElementToHex(expectedPayerComm))
-	if result.Authorization.PayerCommitment != expectedHash {
-		t.Errorf("payerCommitment mismatch: got %s, want %s",
-			result.Authorization.PayerCommitment.Hex(), expectedHash.Hex())
+	if result.Authorization.ChainID.Int64() != 84532 {
+		t.Errorf("chainId = %d, want 84532", result.Authorization.ChainID.Int64())
 	}
 }
 
-func TestCreateCredit_ChainIDPreserved(t *testing.T) {
-	var masterKey, creditID, payerAddr, nonce fr.Element
-	masterKey.SetUint64(1)
-	creditID.SetUint64(2)
-	payerAddr.SetUint64(3)
-	nonce.SetUint64(1)
-
-	result, err := CreateCredit(CreateCreditParams{
-		PayerMasterKey:     masterKey,
-		CreditID:           creditID,
-		IdentityCommitment: common.HexToHash("0x01"),
-		PayerAddress:       payerAddr,
-		TokenAddress:       common.HexToAddress("0x01"),
-		Amount:             big.NewInt(100),
-		Nonce:              nonce,
-		Expiry:             big.NewInt(999),
-		TreeID:             big.NewInt(1),
-		ChainID:            big.NewInt(42161),
-	})
-	if err != nil {
-		t.Fatal(err)
+// Verification #1: a credit_nullifier_key that does not hash to the server's
+// nullifier_key_hash must abort with ErrCreditKeyHashMismatch — no calldata.
+func TestCreateCredit_RejectsKeyHashMismatch(t *testing.T) {
+	f := newCreditFixture(t)
+	f.params.ServerNullifierKeyHash = common.HexToHash("0xdead" + strings.Repeat("00", 30))
+	_, err := CreateCredit(f.params)
+	if !errors.Is(err, ErrCreditKeyHashMismatch) {
+		t.Fatalf("expected ErrCreditKeyHashMismatch, got %v", err)
 	}
-	if result.Authorization.ChainID.Int64() != 42161 {
-		t.Errorf("chainId = %d, want 42161", result.Authorization.ChainID.Int64())
+}
+
+// Verification #2: a credit_commitment that does not match the local recompute
+// (e.g. server folded a wrong nonce) must abort with ErrCreditCommitmentMismatch.
+func TestCreateCredit_RejectsCommitmentMismatch(t *testing.T) {
+	f := newCreditFixture(t)
+	f.params.ServerCreditCommitment = common.HexToHash("0xbeef" + strings.Repeat("00", 30))
+	_, err := CreateCredit(f.params)
+	if !errors.Is(err, ErrCreditCommitmentMismatch) {
+		t.Fatalf("expected ErrCreditCommitmentMismatch, got %v", err)
+	}
+}
+
+func TestCreateCredit_RequiresServerFields(t *testing.T) {
+	f := newCreditFixture(t)
+	f.params.ServerNullifierKeyHash = common.Hash{}
+	if _, err := CreateCredit(f.params); err == nil {
+		t.Error("expected error when ServerNullifierKeyHash is zero")
 	}
 }
 
 func TestDeriveCreditAuthorizeFields(t *testing.T) {
-	// Reuse the same fixture inputs as TestCreateCredit_Basic so the helper's
-	// derivation chain can be checked byte-for-byte against CreateCredit's output.
-	var masterKey, creditID, payerAddr, nonce fr.Element
-	masterKey.SetUint64(111)
+	var payerMasterKey, creditID, payerAddr fr.Element
+	payerMasterKey.SetUint64(111)
 	creditID.SetUint64(222)
 	payerAddr.SetUint64(333)
-	nonce.SetUint64(555)
 
-	payerCommitment, nullifierKeyHash, err := DeriveCreditAuthorizeFields(masterKey, creditID, payerAddr)
+	payerCommitment, err := DeriveCreditAuthorizeFields(payerMasterKey, creditID, payerAddr)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	// Both outputs must match the bytes32 hex shape.
 	hexRe := regexp.MustCompile(`^0x[0-9a-f]{64}$`)
 	if !hexRe.MatchString(payerCommitment) {
 		t.Errorf("payerCommitment %q does not match bytes32 hex shape", payerCommitment)
 	}
-	if !hexRe.MatchString(nullifierKeyHash) {
-		t.Errorf("nullifierKeyHash %q does not match bytes32 hex shape", nullifierKeyHash)
-	}
 
-	// Helper must produce the identical values that CreateCredit derives internally,
-	// proving they share the same derivation chain (incl. the D_DERIVE middle step).
-	result, err := CreateCredit(CreateCreditParams{
-		PayerMasterKey:     masterKey,
-		CreditID:           creditID,
-		IdentityCommitment: common.HexToHash("0xab" + strings.Repeat("00", 31)),
-		PayerAddress:       payerAddr,
-		TokenAddress:       common.HexToAddress("0xcc" + strings.Repeat("00", 19)),
-		Amount:             big.NewInt(1_000_000),
-		Nonce:              nonce,
-		Expiry:             big.NewInt(1700000000),
-		TreeID:             big.NewInt(1),
-		ChainID:            big.NewInt(84532),
-	})
+	// Must equal Poseidon2(D_IDENT, Poseidon2(D_NKEY, payerMasterKey, creditId), payerAddr).
+	pnk, err := core.DeriveNullifierKey(payerMasterKey, creditID)
 	if err != nil {
 		t.Fatal(err)
 	}
-
-	if payerCommitment != result.Authorization.PayerCommitment.Hex() {
-		t.Errorf("payerCommitment mismatch: helper %s, CreateCredit %s",
-			payerCommitment, result.Authorization.PayerCommitment.Hex())
+	want, err := core.ComputeIdentityCommitment(pnk, payerAddr)
+	if err != nil {
+		t.Fatal(err)
 	}
-	if nullifierKeyHash != result.Authorization.NullifierKeyHash.Hex() {
-		t.Errorf("nullifierKeyHash mismatch: helper %s, CreateCredit %s",
-			nullifierKeyHash, result.Authorization.NullifierKeyHash.Hex())
+	if payerCommitment != core.ElementToHex(want) {
+		t.Errorf("payerCommitment = %s, want %s", payerCommitment, core.ElementToHex(want))
 	}
 }
 
@@ -190,7 +209,6 @@ func TestBuildReclaimCalldata_Basic(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-
 	if len(result.Data) < 4 {
 		t.Fatal("calldata too short")
 	}
@@ -202,7 +220,6 @@ func TestBuildReclaimCalldata_Basic(t *testing.T) {
 func TestBuildReclaimCalldata_RequiresFields(t *testing.T) {
 	_, err := BuildReclaimCalldata(ReclaimParams{
 		Nullifier: common.HexToHash("0x01"),
-		// Missing Amount, TreeID, Expiry
 	})
 	if err == nil {
 		t.Error("expected error for missing required fields")

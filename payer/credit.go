@@ -1,6 +1,7 @@
 package payer
 
 import (
+	"errors"
 	"fmt"
 	"math/big"
 
@@ -10,15 +11,28 @@ import (
 	"github.com/invisi-lab/invisi-sdk-go/core"
 )
 
-// CreateCredit computes all credit-related commitments and encodes
-// depositCredit(identityCommitment, payerCommitment, amount, nonce, expiry, nullifierKeyHash, treeId).
+// Two-step client-verification sentinels (IPP 6.2 authorize). CreateCredit returns
+// one of these when the accepted authorize response is internally inconsistent;
+// the caller MUST abort and never depositCredit.
+var (
+	ErrCreditKeyHashMismatch    = errors.New("payer: credit_nullifier_key does not hash to the server nullifier_key_hash")
+	ErrCreditCommitmentMismatch = errors.New("payer: recomputed credit commitment does not match the server value")
+)
+
+// CreateCredit consumes an accepted IPP authorize response and builds the
+// depositCredit(identityCommitment, payerCommitment, amount, nonce, expiry,
+// nullifierKeyHash, treeId) calldata.
 //
-// Derivation steps:
-//  1. payerNullifierKey  = DeriveNullifierKey(payerMasterKey, creditId)
-//  2. payerCommitment    = ComputeIdentityCommitment(payerNullifierKey, payerAddress)
-//  3. creditNullifierKey = Poseidon2(D_DERIVE, payerNullifierKey, creditId)
-//  4. nullifierKeyHash   = ComputeNullifierKeyHash(creditNullifierKey)
-//  5. nonce              = params.Nonce (from authorize response)
+// creditNullifierKey is derived server-side from the receiver's master key and
+// delivered in the authorize response; the payer does not derive it locally.
+// CreateCredit therefore:
+//  1. recomputes nullifierKeyHash = Poseidon2(D_NKHASH, creditNullifierKey) locally,
+//  2. verifies it equals the server's nullifier_key_hash (else ErrCreditKeyHashMismatch),
+//  3. recomputes the creditCommitment with that local hash and verifies it equals
+//     the server value (else ErrCreditCommitmentMismatch),
+//  4. encodes depositCredit(...) using the LOCALLY recomputed hash — the payer's
+//     reclaim safety anchor: the on-chain nullifierKeyHash is provably the hash of
+//     the key the payer holds, so reclaim never depends on trusting the server.
 func CreateCredit(params CreateCreditParams) (*CreateCreditResult, error) {
 	if params.Amount == nil {
 		return nil, fmt.Errorf("payer: Amount is required")
@@ -32,51 +46,65 @@ func CreateCredit(params CreateCreditParams) (*CreateCreditResult, error) {
 	if params.ChainID == nil {
 		return nil, fmt.Errorf("payer: ChainID is required")
 	}
-
-	// Step 1: payerNullifierKey = DeriveNullifierKey(payerMasterKey, creditId)
-	payerNullifierKey, err := core.DeriveNullifierKey(params.PayerMasterKey, params.CreditID)
-	if err != nil {
-		return nil, fmt.Errorf("payer: failed to derive payer nullifier key: %w", err)
+	if params.ServerNullifierKeyHash == (common.Hash{}) {
+		return nil, fmt.Errorf("payer: ServerNullifierKeyHash is required")
+	}
+	if params.ServerCreditCommitment == (common.Hash{}) {
+		return nil, fmt.Errorf("payer: ServerCreditCommitment is required")
 	}
 
-	// Step 2: payerCommitment = ComputeIdentityCommitment(payerNullifierKey, payerAddress)
-	payerCommitment, err := core.ComputeIdentityCommitment(payerNullifierKey, params.PayerAddress)
+	// Step 1: recompute nullifierKeyHash from the server-delivered key.
+	nullifierKeyHash, err := core.ComputeNullifierKeyHash(params.CreditNullifierKey)
 	if err != nil {
-		return nil, fmt.Errorf("payer: failed to compute payer commitment: %w", err)
+		return nil, fmt.Errorf("payer: compute nullifier key hash: %w", err)
 	}
-
-	// Step 3: creditNullifierKey = Poseidon2(D_DERIVE, payerNullifierKey, creditId)
-	domainDerive := core.ElementFromUint64(core.DomainDerive)
-	creditNullifierKey, err := core.Poseidon2Hash(domainDerive, payerNullifierKey, params.CreditID)
-	if err != nil {
-		return nil, fmt.Errorf("payer: failed to derive credit nullifier key: %w", err)
-	}
-
-	// Step 4: nullifierKeyHash = ComputeNullifierKeyHash(creditNullifierKey)
-	nullifierKeyHash, err := core.ComputeNullifierKeyHash(creditNullifierKey)
-	if err != nil {
-		return nil, fmt.Errorf("payer: failed to compute nullifier key hash: %w", err)
-	}
-
-	// Step 5: nonce = params.Nonce (server-assigned, from authorize response)
-	nonce := params.Nonce
-
-	// Convert to hashes for ABI encoding
-	payerCommHash := common.HexToHash(core.ElementToHex(payerCommitment))
-	nonceHash := common.HexToHash(core.ElementToHex(nonce))
 	nkHash := common.HexToHash(core.ElementToHex(nullifierKeyHash))
+
+	// Step 2 (client verification #1): the delivered key must hash to the
+	// server-returned nullifier_key_hash.
+	if nkHash != params.ServerNullifierKeyHash {
+		return nil, ErrCreditKeyHashMismatch
+	}
+
+	// Step 3 (client verification #2): recompute the credit commitment with the
+	// local hash and confirm it equals the server value (nonce folded correctly).
+	icElem, err := core.HexToElement(params.IdentityCommitment.Hex())
+	if err != nil {
+		return nil, fmt.Errorf("payer: invalid identityCommitment: %w", err)
+	}
+	pcElem, err := core.HexToElement(params.PayerCommitment.Hex())
+	if err != nil {
+		return nil, fmt.Errorf("payer: invalid payerCommitment: %w", err)
+	}
+	tokenElem, err := core.HexToElement(addressToTokenElement(params.TokenAddress).Hex())
+	if err != nil {
+		return nil, fmt.Errorf("payer: invalid tokenAddress: %w", err)
+	}
+	creditCommitment, err := core.ComputeCreditCommitment(
+		core.BigIntToElement(params.ChainID), icElem, pcElem, tokenElem,
+		core.BigIntToElement(params.Amount), params.Nonce,
+		core.BigIntToElement(params.Expiry), nullifierKeyHash,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("payer: compute credit commitment: %w", err)
+	}
+	if common.HexToHash(core.ElementToHex(creditCommitment)) != params.ServerCreditCommitment {
+		return nil, ErrCreditCommitmentMismatch
+	}
+
+	// Step 4: encode depositCredit(...) with the locally recomputed hash.
+	nonceHash := common.HexToHash(core.ElementToHex(params.Nonce))
 	creditIDHash := common.HexToHash(core.ElementToHex(params.CreditID))
 
-	// ABI encode: depositCredit(identityCommitment, payerCommitment, amount, nonce, expiry, nullifierKeyHash, treeId)
 	data, err := packCalldata(
 		invisiProtocolABI,
 		"depositCredit",
 		params.IdentityCommitment, // bytes32
-		payerCommHash,             // bytes32
+		params.PayerCommitment,    // bytes32
 		params.Amount,             // uint256
 		nonceHash,                 // bytes32
 		params.Expiry,             // uint256
-		nkHash,                    // bytes32
+		nkHash,                    // bytes32 — locally recomputed (reclaim anchor)
 		params.TreeID,             // uint256
 	)
 	if err != nil {
@@ -87,12 +115,12 @@ func CreateCredit(params CreateCreditParams) (*CreateCreditResult, error) {
 		Authorization: CreditAuthorization{
 			CreditID:           creditIDHash,
 			IdentityCommitment: params.IdentityCommitment,
-			PayerCommitment:    payerCommHash,
-			CreditNullifierKey: creditNullifierKey,
+			PayerCommitment:    params.PayerCommitment,
+			CreditNullifierKey: params.CreditNullifierKey,
 			NullifierKeyHash:   nkHash,
 			TokenAddress:       params.TokenAddress,
 			Amount:             new(big.Int).Set(params.Amount),
-			Nonce:              nonce,
+			Nonce:              params.Nonce,
 			Expiry:             new(big.Int).Set(params.Expiry),
 			TreeID:             new(big.Int).Set(params.TreeID),
 			ChainID:            new(big.Int).Set(params.ChainID),
@@ -102,29 +130,24 @@ func CreateCredit(params CreateCreditParams) (*CreateCreditResult, error) {
 	}, nil
 }
 
-// DeriveCreditAuthorizeFields derives the two nonce-independent payer-side values
-// (payerCommitment, nullifierKeyHash) needed to populate an IPP credit authorize
-// request. Both depend only on payerMasterKey, creditID, payerAddress — never nonce.
-// The derivation chain mirrors CreateCredit (steps 1-4), including the mandatory
-// D_DERIVE intermediate step.
-func DeriveCreditAuthorizeFields(payerMasterKey, creditID, payerAddress fr.Element) (string, string, error) {
+// DeriveCreditAuthorizeFields derives the single payer-side value — payerCommitment —
+// needed to populate an IPP credit authorize REQUEST, before the server-derived
+// creditNullifierKey is known. The payer cannot compute nullifierKeyHash at this
+// stage — that needs the key, which arrives only in the authorize response — so
+// this helper returns payerCommitment alone.
+//
+//	payerNullifierKey = Poseidon2(D_NKEY, payerMasterKey, creditId)
+//	payerCommitment   = Poseidon2(D_IDENT, payerNullifierKey, payerAddress)
+func DeriveCreditAuthorizeFields(payerMasterKey, creditID, payerAddress fr.Element) (string, error) {
 	payerNullifierKey, err := core.DeriveNullifierKey(payerMasterKey, creditID)
 	if err != nil {
-		return "", "", fmt.Errorf("payer: derive payer nullifier key: %w", err)
+		return "", fmt.Errorf("payer: derive payer nullifier key: %w", err)
 	}
 	payerCommitment, err := core.ComputeIdentityCommitment(payerNullifierKey, payerAddress)
 	if err != nil {
-		return "", "", fmt.Errorf("payer: compute payer commitment: %w", err)
+		return "", fmt.Errorf("payer: compute payer commitment: %w", err)
 	}
-	creditNullifierKey, err := core.Poseidon2Hash(core.ElementFromUint64(core.DomainDerive), payerNullifierKey, creditID)
-	if err != nil {
-		return "", "", fmt.Errorf("payer: derive credit nullifier key: %w", err)
-	}
-	nullifierKeyHash, err := core.ComputeNullifierKeyHash(creditNullifierKey)
-	if err != nil {
-		return "", "", fmt.Errorf("payer: compute nullifier key hash: %w", err)
-	}
-	return core.ElementToHex(payerCommitment), core.ElementToHex(nullifierKeyHash), nil
+	return core.ElementToHex(payerCommitment), nil
 }
 
 // BuildReclaimCalldata encodes reclaim(proof, merkleRoot, nullifier, amount, receivingAddress, treeId, expiry).

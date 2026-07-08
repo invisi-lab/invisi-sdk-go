@@ -100,24 +100,33 @@ type SettleChangeCalldata struct {
 
 // ─── Credit ─────────────────────────────────────────────────────────
 
-// CreateCreditParams configures credit creation by the payer.
+// CreateCreditParams configures the payer's post-authorize credit deposit build.
+//
+// The payer does not derive creditNullifierKey locally: it arrives in the
+// authorize response (CreditNullifierKey), together with the server-assigned Nonce
+// and the verification anchors ServerNullifierKeyHash / ServerCreditCommitment.
+// PayerCommitment is the value the payer derived pre-authorize (see
+// DeriveCreditAuthorizeFields) and sent in the authorize request.
 type CreateCreditParams struct {
-	PayerMasterKey     fr.Element
-	CreditID           fr.Element
-	IdentityCommitment common.Hash    // Receiver's identity commitment
-	PayerAddress       fr.Element     // Payer's address as field element
+	CreditID           fr.Element  // from the one-time credit code's credit_id
+	IdentityCommitment common.Hash // Receiver's identity commitment (from the credit code)
+	PayerCommitment    common.Hash // payer-derived pre-authorize; echoed into the deposit leaf
+	CreditNullifierKey fr.Element  // server-derived, delivered by the authorize response (TLS)
 	TokenAddress       common.Address
 	Amount             *big.Int
-	Nonce              fr.Element // server-assigned, from the IPP authorize response
+	Nonce              fr.Element // server-assigned, from the authorize response
 	Expiry             *big.Int
 	TreeID             *big.Int
 	ChainID            *big.Int
+	// Verification anchors from the authorize response.
+	ServerNullifierKeyHash common.Hash // authorize response nullifier_key_hash
+	ServerCreditCommitment common.Hash // authorize response credit_commitment
 }
 
 // CreditAuthorization contains all credit-related data the receiver needs.
 type CreditAuthorization struct {
 	CreditID           common.Hash
-	IdentityCommitment common.Hash    // Receiver's
+	IdentityCommitment common.Hash // Receiver's
 	PayerCommitment    common.Hash
 	CreditNullifierKey fr.Element
 	NullifierKeyHash   common.Hash
@@ -132,7 +141,7 @@ type CreditAuthorization struct {
 // CreateCreditResult is the result of CreateCredit.
 type CreateCreditResult struct {
 	Authorization CreditAuthorization
-	Data          []byte   // ABI-encoded depositCredit(...) calldata
+	Data          []byte // ABI-encoded depositCredit(...) calldata
 	ApproveAmount *big.Int
 }
 
@@ -149,7 +158,7 @@ type ReclaimParams struct {
 
 // ReclaimCalldata is the result of BuildReclaimCalldata.
 type ReclaimCalldata struct {
-	Data      []byte      // ABI-encoded reclaim(...) calldata
+	Data      []byte // ABI-encoded reclaim(...) calldata
 	Nullifier common.Hash
 }
 
