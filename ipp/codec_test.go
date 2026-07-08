@@ -48,8 +48,8 @@ func TestVoucherRoundtripJSON(t *testing.T) {
 	if err != nil {
 		t.Fatalf("encode: %v", err)
 	}
-	if !strings.HasPrefix(encoded, "ipp1:") {
-		t.Errorf("prefix: %q", encoded[:10])
+	if !strings.HasPrefix(encoded, "{") {
+		t.Errorf("JSON must be a bare document (no prefix), got %q", encoded[:10])
 	}
 	got, err := DecodeVoucher(encoded)
 	if err != nil {
@@ -112,17 +112,36 @@ func TestEncodeJSON(t *testing.T) {
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-	if !strings.HasPrefix(encoded, "ipp1:") {
-		t.Errorf("expected prefix ipp1:, got %q", encoded[:10])
+	if !strings.HasPrefix(encoded, "{") {
+		t.Errorf("JSON must be a bare document (no prefix), got %q", encoded[:10])
 	}
-	// The payload after prefix should be valid JSON.
-	payload := encoded[len("ipp1:"):]
 	var decoded IPPRequest
-	if err := json.Unmarshal([]byte(payload), &decoded); err != nil {
-		t.Fatalf("payload is not valid JSON: %v", err)
+	if err := json.Unmarshal([]byte(encoded), &decoded); err != nil {
+		t.Fatalf("output is not valid JSON: %v", err)
 	}
 	if decoded.V != 1 {
 		t.Errorf("V = %d, want 1", decoded.V)
+	}
+}
+
+// TestDecodeBareJSONFromPeerSDK guards the cross-SDK wire contract: a peer SDK
+// (TS) emits JSON as a bare document with no "ippN:" prefix, and Decode must
+// accept it. Regression guard against requiring a prefix on the JSON format.
+func TestDecodeBareJSONFromPeerSDK(t *testing.T) {
+	const bareJSON = `{"v":1,"network":"eip155:84532","type":"request",` +
+		`"payload":{"identity_commitment":"0xid","token_address":"0xtoken",` +
+		`"operator":"0xop","tree_id":"1","payment_types":["open"],` +
+		`"endpoint":"https://pay.example.com"}}`
+
+	got, err := Decode(bareJSON)
+	if err != nil {
+		t.Fatalf("Decode(bare JSON): %v", err)
+	}
+	if got.V != 1 || got.Type != MessageTypeRequest {
+		t.Errorf("decoded V=%d type=%q, want 1/request", got.V, got.Type)
+	}
+	if got.Payload.IdentityCommitment != "0xid" {
+		t.Errorf("IdentityCommitment = %q, want 0xid", got.Payload.IdentityCommitment)
 	}
 }
 
@@ -236,11 +255,12 @@ func TestEncodeUnknownFormat(t *testing.T) {
 
 func TestDecodeVersionMismatch(t *testing.T) {
 	req := sampleRequest()
-	encoded, err := Encode(req, FormatJSON)
+	// Version mismatch is a compact-only check (prefix vs payload); a JSON
+	// document has no prefix to disagree with its "v" field.
+	encoded, err := Encode(req, FormatCompact)
 	if err != nil {
 		t.Fatalf("encode error: %v", err)
 	}
-	// Replace ipp1: with ipp2:
 	tampered := "ipp2:" + encoded[len("ipp1:"):]
 	_, err = Decode(tampered)
 	if err == nil {
@@ -273,7 +293,7 @@ func TestWireKeysSnakeCase(t *testing.T) {
 	if err != nil {
 		t.Fatalf("EncodeVoucher JSON: %v", err)
 	}
-	jsonPayload := encoded[len("ipp1:"):]
+	jsonPayload := encoded
 
 	// Keys that must appear as snake_case in the payload object.
 	snakeKeys := []string{
@@ -326,7 +346,7 @@ func TestWireKeysSnakeCase(t *testing.T) {
 	if err != nil {
 		t.Fatalf("re-encode compact decoded: %v", err)
 	}
-	reJSON := reEncoded[len("ipp1:"):]
+	reJSON := reEncoded
 	for _, k := range snakeKeys {
 		if !strings.Contains(reJSON, k) {
 			t.Errorf("compact→JSON: expected snake_case key %s not found", k)
