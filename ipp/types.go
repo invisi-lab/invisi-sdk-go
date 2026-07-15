@@ -26,10 +26,11 @@ func (t PaymentType) Valid() bool {
 }
 
 // ContainsCredit reports whether credit is among the payment types. It is the
-// single source for the credit-membership check shared by request encoders and
-// validation: a credit request needs an interaction endpoint regardless of mode
-// (the payer must reach Authorize/Notify to run the credit line), so encoders
-// and ValidateIPPRequest gate the endpoint requirement on this.
+// single source for the credit-membership check: a credit payment type requires
+// credit_id on the wire (IPP 6.1 encoding-tightening rule) so the payer can reach
+// Authorize/Notify to run the credit line. SPEC-029 moved the endpoint
+// requirement itself onto Mode (see ValidateIPPRequest); this helper remains for
+// the credit_id-presence check.
 func ContainsCredit(pts []PaymentType) bool {
 	for _, pt := range pts {
 		if pt == PaymentTypeCredit {
@@ -86,18 +87,21 @@ type IPPPayloadV1 struct {
 	IdentityCommitment string        `json:"identity_commitment" msgpack:"identity_commitment"`
 	TokenAddress       string        `json:"token_address" msgpack:"token_address"`
 	Operator           string        `json:"operator" msgpack:"operator"`
-	TreeID             string        `json:"tree_id" msgpack:"tree_id"`
 	PaymentTypes       []PaymentType `json:"payment_types" msgpack:"payment_types"`
-	Amount             *string       `json:"amount,omitempty" msgpack:"amount,omitempty"`
-	Nonce              *string       `json:"nonce,omitempty" msgpack:"nonce,omitempty"`
-	PaymentCommitment  *string       `json:"payment_commitment,omitempty" msgpack:"payment_commitment,omitempty"`
-	Endpoint           *string       `json:"endpoint,omitempty" msgpack:"endpoint,omitempty"`
+	// Mode is the receive-request mode (SPEC-029 §1): "single" = fixed amount, single-use (1a);
+	// "multi" = many payers / many times (1b/2). Distinct from RelayRequest.Mode.
+	Mode     string  `json:"mode" msgpack:"mode"`
+	Amount   *string `json:"amount,omitempty" msgpack:"amount,omitempty"`
+	Endpoint *string `json:"endpoint,omitempty" msgpack:"endpoint,omitempty"`
 	// CreditID carries the one-time credit code's credit_id: required on the wire
 	// when PaymentTypes includes 'credit' (IPP 6.1 encoding-tightening rule). It is
 	// a public business ID (not a secret) and does not violate the QR secret
 	// isolation invariant. Kept out of SDK baseline validation (same tier as the
 	// endpoint rule).
 	CreditID *string `json:"credit_id,omitempty" msgpack:"credit_id,omitempty"`
+	// SPEC-029: payment materials (nonce / payment_commitment / tree_id) are no longer
+	// prefilled in the request payload — nonce / payment_commitment are delivered via
+	// propose; tree_id via Propose/AuthorizeResponse.
 }
 
 // Format identifies the wire format used to encode/decode an IPP request.

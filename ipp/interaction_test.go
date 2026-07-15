@@ -62,7 +62,7 @@ func TestIPPPayloadCreditIDRoundTrip(t *testing.T) {
 			IdentityCommitment: "0x01",
 			TokenAddress:       "0x02",
 			Operator:           "0x03",
-			TreeID:             "1",
+			Mode:               "single",
 			PaymentTypes:       []PaymentType{PaymentTypeCredit},
 			CreditID:           &creditID,
 			Endpoint:           strPtr("https://pay.example.com/ipp/v1"),
@@ -79,6 +79,69 @@ func TestIPPPayloadCreditIDRoundTrip(t *testing.T) {
 		}
 		if decoded.Payload.CreditID == nil || *decoded.Payload.CreditID != creditID {
 			t.Errorf("format %s: CreditID round-trip failed: got %v", format, decoded.Payload.CreditID)
+		}
+	}
+}
+
+// ProposeResponse must carry tree_id (SPEC-029 §3).
+func TestProposeResponseTreeIDRoundTrip(t *testing.T) {
+	treeID := "7"
+	resp := ProposeResponse{Status: "accepted", TreeID: &treeID}
+	b, err := json.Marshal(resp)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(string(b), `"tree_id"`) {
+		t.Errorf("marshalled ProposeResponse missing tree_id: %s", b)
+	}
+	var back ProposeResponse
+	if err := json.Unmarshal(b, &back); err != nil {
+		t.Fatal(err)
+	}
+	if back.TreeID == nil || *back.TreeID != treeID {
+		t.Errorf("TreeID round-trip failed: got %v", back.TreeID)
+	}
+}
+
+// AuthorizeResponse must carry tree_id (SPEC-029 §3).
+func TestAuthorizeResponseTreeIDRoundTrip(t *testing.T) {
+	treeID := "7"
+	resp := AuthorizeResponse{Status: "accepted", TreeID: &treeID}
+	b, err := json.Marshal(resp)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(string(b), `"tree_id"`) {
+		t.Errorf("marshalled AuthorizeResponse missing tree_id: %s", b)
+	}
+}
+
+// IPPPayloadV1.Mode round-trips over JSON and compact (SPEC-029 §1).
+func TestIPPPayloadModeRoundTrip(t *testing.T) {
+	req := IPPRequest{
+		V:       IPPCurrentVersion,
+		Network: "eip155:84532",
+		Type:    MessageTypeRequest,
+		Payload: IPPPayloadV1{
+			IdentityCommitment: "0x01",
+			TokenAddress:       "0x02",
+			Operator:           "0x03",
+			PaymentTypes:       []PaymentType{PaymentTypeOpen},
+			Mode:               "single",
+			Endpoint:           strPtr("https://pay.example.com/ipp/v1"),
+		},
+	}
+	for _, format := range []Format{FormatJSON, FormatCompact} {
+		enc, err := Encode(req, format)
+		if err != nil {
+			t.Fatalf("Encode(%s): %v", format, err)
+		}
+		decoded, err := Decode(enc)
+		if err != nil {
+			t.Fatalf("Decode(%s): %v", format, err)
+		}
+		if decoded.Payload.Mode != "single" {
+			t.Errorf("format %s: Mode round-trip failed: got %q", format, decoded.Payload.Mode)
 		}
 	}
 }

@@ -5,55 +5,68 @@ import (
 	"testing"
 )
 
-// validRequest returns a well-formed IPPRequest for testing.
-// Mode 1a: nonce + paymentCommitment present (non-interactive).
-func validRequest() IPPRequest {
+// validSingleRequest returns a well-formed single-mode IPPRequest for testing.
+func validSingleRequest() IPPRequest {
+	endpoint := "https://pay.merchant.com"
+	amount := "100"
 	return IPPRequest{
-		V:       1,
+		V:       IPPCurrentVersion,
 		Network: "eip155:84532",
+		Type:    MessageTypeRequest,
 		Payload: IPPPayloadV1{
 			IdentityCommitment: "0xabc",
-			TokenAddress:       "0xtoken",
-			Operator:           "0xoperator",
-			TreeID:             "0xtree",
-			PaymentTypes:       []PaymentType{PaymentTypeOpen},
-			Nonce:              strPtr("0xnonce"),
-			PaymentCommitment:  strPtr("0xcommitment"),
-		},
-	}
-}
-
-// validRequestInteractive returns a well-formed IPPRequest for mode 1b
-// (interactive: no nonce, endpoint required).
-func validRequestInteractive() IPPRequest {
-	return IPPRequest{
-		V:       1,
-		Network: "eip155:84532",
-		Payload: IPPPayloadV1{
-			IdentityCommitment: "0xabc",
-			TokenAddress:       "0xtoken",
-			Operator:           "0xoperator",
-			TreeID:             "0xtree",
+			TokenAddress:       "0xdef",
+			Operator:           "0x1234567890123456789012345678901234567890",
 			PaymentTypes:       []PaymentType{PaymentTypeOpen, PaymentTypeBlind},
-			Endpoint:           strPtr("https://pay.example.com/ipp/v1"),
+			Mode:               "single",
+			Amount:             &amount,
+			Endpoint:           &endpoint,
 		},
 	}
 }
 
-func TestValidateValid(t *testing.T) {
-	if err := ValidateIPPRequest(validRequest()); err != nil {
-		t.Errorf("expected valid, got error: %v", err)
+func TestValidateSinglePasses(t *testing.T) {
+	if err := ValidateIPPRequest(validSingleRequest()); err != nil {
+		t.Fatalf("expected valid, got %v", err)
 	}
 }
 
-func TestValidateInteractiveValid(t *testing.T) {
-	if err := ValidateIPPRequest(validRequestInteractive()); err != nil {
-		t.Errorf("expected valid (interactive), got error: %v", err)
+func TestValidateMultiWithoutEndpointFails(t *testing.T) {
+	req := validSingleRequest()
+	req.Payload.Mode = "multi"
+	req.Payload.Amount = nil
+	req.Payload.Endpoint = nil
+	if err := ValidateIPPRequest(req); err == nil {
+		t.Fatal("expected error: multi without endpoint")
+	}
+}
+
+func TestValidateSingleWithoutAmountPassesBaseline(t *testing.T) {
+	req := validSingleRequest()
+	req.Payload.Amount = nil // amount-per-mode is an encoding-tightening rule, not baseline
+	if err := ValidateIPPRequest(req); err != nil {
+		t.Fatalf("expected valid (baseline ignores amount), got %v", err)
+	}
+}
+
+func TestValidateModelessCreditPassesWithoutEndpoint(t *testing.T) {
+	// SPEC-029 §5 'modeless credit' vector: rule fires only for explicit single/multi.
+	// Authoritative 6.1/§1 carry mode='single' on credit codes; this asserts the
+	// validator does not force endpoint when Mode is empty (untrusted runtime shape).
+	req := validSingleRequest()
+	req.Payload.Mode = "" // absent
+	req.Payload.Amount = nil
+	req.Payload.Endpoint = nil
+	req.Payload.PaymentTypes = []PaymentType{PaymentTypeCredit}
+	creditID := "credit_abc123"
+	req.Payload.CreditID = &creditID
+	if err := ValidateIPPRequest(req); err != nil {
+		t.Fatalf("expected valid (modeless), got %v", err)
 	}
 }
 
 func TestValidateInvalidVersion(t *testing.T) {
-	r := validRequest()
+	r := validSingleRequest()
 	r.V = 0
 	err := ValidateIPPRequest(r)
 	if err == nil {
@@ -76,7 +89,7 @@ func TestValidateInvalidNetwork(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			r := validRequest()
+			r := validSingleRequest()
 			r.Network = tt.network
 			err := ValidateIPPRequest(r)
 			if err == nil {
@@ -87,7 +100,7 @@ func TestValidateInvalidNetwork(t *testing.T) {
 }
 
 func TestValidateEmptyPaymentTypes(t *testing.T) {
-	r := validRequest()
+	r := validSingleRequest()
 	r.Payload.PaymentTypes = nil
 	err := ValidateIPPRequest(r)
 	if err == nil {
@@ -99,7 +112,7 @@ func TestValidateEmptyPaymentTypes(t *testing.T) {
 }
 
 func TestValidateInvalidPaymentType(t *testing.T) {
-	r := validRequest()
+	r := validSingleRequest()
 	r.Payload.PaymentTypes = []PaymentType{"shielded"}
 	err := ValidateIPPRequest(r)
 	if err == nil {
@@ -110,47 +123,10 @@ func TestValidateInvalidPaymentType(t *testing.T) {
 	}
 }
 
-func TestValidateNoncePCMismatch(t *testing.T) {
-	// nonce present but no paymentCommitment
-	r := validRequest()
-	r.Payload.PaymentCommitment = nil
-	err := ValidateIPPRequest(r)
-	if err == nil {
-		t.Fatal("expected error for nonce without paymentCommitment")
-	}
-	if !strings.Contains(err.Error(), "nonce") {
-		t.Errorf("error = %q, want mention of nonce", err.Error())
-	}
-
-	// paymentCommitment present but no nonce
-	r2 := validRequest()
-	r2.Payload.Nonce = nil
-	err2 := ValidateIPPRequest(r2)
-	if err2 == nil {
-		t.Fatal("expected error for paymentCommitment without nonce")
-	}
-}
-
-func TestValidateNoNonceNoEndpoint(t *testing.T) {
-	r := validRequest()
-	r.Payload.Nonce = nil
-	r.Payload.PaymentCommitment = nil
-	r.Payload.Endpoint = nil
-	err := ValidateIPPRequest(r)
-	if err == nil {
-		t.Fatal("expected error when no nonce and no endpoint")
-	}
-	if !strings.Contains(err.Error(), "endpoint") {
-		t.Errorf("error = %q, want mention of endpoint", err.Error())
-	}
-}
-
 func TestValidateSingleCreditRequiresEndpoint(t *testing.T) {
-	// A credit request needs an endpoint even in single mode (nonce+paymentCommitment
-	// present): the payer must reach Authorize/Notify to run the credit line, which
-	// the embedded direct-pay fields cannot substitute for. Without it the QR is
-	// un-authorizable.
-	r := validRequest()
+	// mode=single requires an endpoint regardless of payment types (SPEC-029
+	// baseline); credit's own interactive needs (Authorize/Notify) ride along.
+	r := validSingleRequest()
 	r.Payload.PaymentTypes = []PaymentType{PaymentTypeOpen, PaymentTypeCredit}
 	r.Payload.Endpoint = nil
 	err := ValidateIPPRequest(r)
@@ -163,7 +139,7 @@ func TestValidateSingleCreditRequiresEndpoint(t *testing.T) {
 }
 
 func TestValidateSingleCreditWithEndpointValid(t *testing.T) {
-	r := validRequest()
+	r := validSingleRequest()
 	r.Payload.PaymentTypes = []PaymentType{PaymentTypeOpen, PaymentTypeCredit}
 	r.Payload.Endpoint = strPtr("https://pay.example.com/ipp/v1")
 	if err := ValidateIPPRequest(r); err != nil {
@@ -173,17 +149,16 @@ func TestValidateSingleCreditWithEndpointValid(t *testing.T) {
 
 func TestValidateEmptyRequiredFields(t *testing.T) {
 	fields := []struct {
-		name  string
+		name   string
 		mutate func(*IPPRequest)
 	}{
 		{"identityCommitment", func(r *IPPRequest) { r.Payload.IdentityCommitment = "" }},
 		{"tokenAddress", func(r *IPPRequest) { r.Payload.TokenAddress = "" }},
 		{"operator", func(r *IPPRequest) { r.Payload.Operator = "" }},
-		{"treeId", func(r *IPPRequest) { r.Payload.TreeID = "" }},
 	}
 	for _, tt := range fields {
 		t.Run(tt.name, func(t *testing.T) {
-			r := validRequest()
+			r := validSingleRequest()
 			tt.mutate(&r)
 			err := ValidateIPPRequest(r)
 			if err == nil {

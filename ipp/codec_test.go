@@ -18,10 +18,9 @@ func sampleRequest() IPPRequest {
 			IdentityCommitment: "0xabc",
 			TokenAddress:       "0xtoken",
 			Operator:           "0xoperator",
-			TreeID:             "0xtree",
 			PaymentTypes:       []PaymentType{PaymentTypeOpen, PaymentTypeBlind},
-			Nonce:              strPtr("0xnonce"),
-			PaymentCommitment:  strPtr("0xcommitment"),
+			Mode:               "single",
+			Endpoint:           strPtr("https://pay.example.com/ipp/v1"),
 		},
 	}
 }
@@ -99,8 +98,8 @@ func minimalRequest() IPPRequest {
 			IdentityCommitment: "0xid",
 			TokenAddress:       "0xtoken",
 			Operator:           "0xop",
-			TreeID:             "0xtree",
 			PaymentTypes:       []PaymentType{PaymentTypeOpen},
+			Mode:               "single",
 			Endpoint:           strPtr("https://pay.example.com"),
 		},
 	}
@@ -181,8 +180,8 @@ func TestRoundtripJSON(t *testing.T) {
 		t.Errorf("IdentityCommitment = %q, want %q",
 			decoded.Payload.IdentityCommitment, req.Payload.IdentityCommitment)
 	}
-	if *decoded.Payload.Nonce != *req.Payload.Nonce {
-		t.Errorf("Nonce = %q, want %q", *decoded.Payload.Nonce, *req.Payload.Nonce)
+	if decoded.Payload.Mode != req.Payload.Mode {
+		t.Errorf("Mode = %q, want %q", decoded.Payload.Mode, req.Payload.Mode)
 	}
 	if len(decoded.Payload.PaymentTypes) != len(req.Payload.PaymentTypes) {
 		t.Errorf("PaymentTypes len = %d, want %d",
@@ -210,9 +209,8 @@ func TestRoundtripCompact(t *testing.T) {
 		t.Errorf("IdentityCommitment = %q, want %q",
 			decoded.Payload.IdentityCommitment, req.Payload.IdentityCommitment)
 	}
-	if *decoded.Payload.PaymentCommitment != *req.Payload.PaymentCommitment {
-		t.Errorf("PaymentCommitment = %q, want %q",
-			*decoded.Payload.PaymentCommitment, *req.Payload.PaymentCommitment)
+	if decoded.Payload.Mode != req.Payload.Mode {
+		t.Errorf("Mode = %q, want %q", decoded.Payload.Mode, req.Payload.Mode)
 	}
 }
 
@@ -227,12 +225,6 @@ func TestRoundtripMinimal(t *testing.T) {
 			decoded, err := Decode(encoded)
 			if err != nil {
 				t.Fatalf("decode error: %v", err)
-			}
-			if decoded.Payload.Nonce != nil {
-				t.Error("Nonce should be nil")
-			}
-			if decoded.Payload.PaymentCommitment != nil {
-				t.Error("PaymentCommitment should be nil")
 			}
 			if *decoded.Payload.Endpoint != *req.Payload.Endpoint {
 				t.Errorf("Endpoint = %q, want %q",

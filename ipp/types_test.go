@@ -14,11 +14,9 @@ func TestIPPRequestAllFields(t *testing.T) {
 			IdentityCommitment: "0xabc",
 			TokenAddress:       "0xtoken",
 			Operator:           "0xoperator",
-			TreeID:             "0xtree",
 			PaymentTypes:       []PaymentType{PaymentTypeOpen, PaymentTypeBlind},
+			Mode:               "single",
 			Amount:             strPtr("1000000"),
-			Nonce:              strPtr("0xnonce"),
-			PaymentCommitment:  strPtr("0xcommitment"),
 			Endpoint:           strPtr("https://pay.example.com"),
 		},
 	}
@@ -41,11 +39,8 @@ func TestIPPRequestAllFields(t *testing.T) {
 	if *req.Payload.Amount != "1000000" {
 		t.Errorf("Amount = %s, want 1000000", *req.Payload.Amount)
 	}
-	if *req.Payload.Nonce != "0xnonce" {
-		t.Errorf("Nonce = %s, want 0xnonce", *req.Payload.Nonce)
-	}
-	if *req.Payload.PaymentCommitment != "0xcommitment" {
-		t.Errorf("PaymentCommitment = %s, want 0xcommitment", *req.Payload.PaymentCommitment)
+	if req.Payload.Mode != "single" {
+		t.Errorf("Mode = %s, want single", req.Payload.Mode)
 	}
 }
 
@@ -57,7 +52,6 @@ func TestIPPRequestMinimal(t *testing.T) {
 			IdentityCommitment: "0xabc",
 			TokenAddress:       "0xtoken",
 			Operator:           "0xoperator",
-			TreeID:             "0xtree",
 			PaymentTypes:       []PaymentType{PaymentTypeOpen},
 			Endpoint:           strPtr("https://pay.example.com"),
 		},
@@ -69,11 +63,8 @@ func TestIPPRequestMinimal(t *testing.T) {
 	if req.Payload.Amount != nil {
 		t.Errorf("Amount = %v, want nil", req.Payload.Amount)
 	}
-	if req.Payload.Nonce != nil {
-		t.Errorf("Nonce = %v, want nil", req.Payload.Nonce)
-	}
-	if req.Payload.PaymentCommitment != nil {
-		t.Errorf("PaymentCommitment = %v, want nil", req.Payload.PaymentCommitment)
+	if req.Payload.Mode != "" {
+		t.Errorf("Mode = %q, want empty (zero-value)", req.Payload.Mode)
 	}
 }
 

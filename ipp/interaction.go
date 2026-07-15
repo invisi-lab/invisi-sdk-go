@@ -39,7 +39,9 @@ type ProposeResponse struct {
 	Status            string  `json:"status"`
 	Nonce             *string `json:"nonce,omitempty"`
 	PaymentCommitment *string `json:"payment_commitment,omitempty"`
-	Reason            *string `json:"reason,omitempty"`
+	// TreeID is the target Payment Tree id (SPEC-029 §3); returned when accepted. Lifecycle see 6.1.
+	TreeID *string `json:"tree_id,omitempty"`
+	Reason *string `json:"reason,omitempty"`
 	// RejectCode is a machine-readable rejection reason (lowercase snake, no type
 	// prefix), populated only when Status == "rejected". A rejection is a normal
 	// HTTP 200 business outcome, not an HTTP error — callers branch on it without
@@ -68,8 +70,10 @@ type AuthorizeRequest struct {
 // AuthorizeResponse is the receiver's reply to a credit authorization.
 // Status is "accepted" or "rejected".
 type AuthorizeResponse struct {
-	Status           string  `json:"status"`
-	Nonce            *string `json:"nonce,omitempty"`
+	Status string  `json:"status"`
+	Nonce  *string `json:"nonce,omitempty"`
+	// TreeID is the target Payment Tree id (SPEC-029 §3); returned when accepted. Lifecycle see 6.1.
+	TreeID           *string `json:"tree_id,omitempty"`
 	CreditCommitment *string `json:"credit_commitment,omitempty"`
 	NullifierKeyHash *string `json:"nullifier_key_hash,omitempty"`
 	// CreditNullifierKey (0x bytes32 hex) is the server-derived shared secret
