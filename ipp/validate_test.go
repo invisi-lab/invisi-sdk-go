@@ -50,9 +50,9 @@ func TestValidateSingleWithoutAmountPassesBaseline(t *testing.T) {
 }
 
 func TestValidateModelessCreditPassesWithoutEndpoint(t *testing.T) {
-	// SPEC-029 §5 'modeless credit' vector: rule fires only for explicit single/multi.
-	// Authoritative 6.1/§1 carry mode='single' on credit codes; this asserts the
-	// validator does not force endpoint when Mode is empty (untrusted runtime shape).
+	// 'Modeless credit' vector: rule fires only for explicit single/multi. Credit
+	// codes carry mode='single'; this asserts the validator does not force an
+	// endpoint when Mode is empty (untrusted runtime shape).
 	req := validSingleRequest()
 	req.Payload.Mode = "" // absent
 	req.Payload.Amount = nil
@@ -124,8 +124,8 @@ func TestValidateInvalidPaymentType(t *testing.T) {
 }
 
 func TestValidateSingleCreditRequiresEndpoint(t *testing.T) {
-	// mode=single requires an endpoint regardless of payment types (SPEC-029
-	// baseline); credit's own interactive needs (Authorize/Notify) ride along.
+	// mode=single requires an endpoint regardless of payment types; credit's own
+	// interactive needs (Authorize/Notify) ride along.
 	r := validSingleRequest()
 	r.Payload.PaymentTypes = []PaymentType{PaymentTypeOpen, PaymentTypeCredit}
 	r.Payload.Endpoint = nil

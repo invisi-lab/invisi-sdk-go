@@ -35,11 +35,11 @@ func ValidateIPPRequest(r IPPRequest) error {
 		}
 	}
 
-	// SPEC-029 baseline: scan-distributed requests carry mode ∈ {single,multi} and
-	// deliver payment materials via propose, so they MUST carry an endpoint. The rule
-	// fires only for an explicit single/multi (a credit code's one-time semantics ride
-	// credit_id, not mode; amount-per-mode / credit⇒credit_id are encoding-tightening
-	// rules the encoder guarantees, not SDK baseline).
+	// A single/multi request delivers payment materials via propose, so it must
+	// carry an endpoint. The rule fires only for an explicit single/multi (a
+	// credit code's one-time semantics ride credit_id, not mode; amount-per-mode
+	// / credit⇒credit_id are encoding-tightening rules the encoder guarantees,
+	// not SDK baseline).
 	if p.Mode == "single" || p.Mode == "multi" {
 		if p.Endpoint == nil || *p.Endpoint == "" {
 			return fmt.Errorf("ipp: endpoint is required when mode is 'single' or 'multi' (materials delivered via propose)")

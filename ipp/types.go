@@ -28,9 +28,8 @@ func (t PaymentType) Valid() bool {
 // ContainsCredit reports whether credit is among the payment types. It is the
 // single source for the credit-membership check: a credit payment type requires
 // credit_id on the wire (IPP 6.1 encoding-tightening rule) so the payer can reach
-// Authorize/Notify to run the credit line. SPEC-029 moved the endpoint
-// requirement itself onto Mode (see ValidateIPPRequest); this helper remains for
-// the credit_id-presence check.
+// Authorize/Notify to run the credit line. The endpoint requirement itself lives
+// on Mode (see ValidateIPPRequest); this helper only checks credit_id presence.
 func ContainsCredit(pts []PaymentType) bool {
 	for _, pt := range pts {
 		if pt == PaymentTypeCredit {
@@ -88,7 +87,7 @@ type IPPPayloadV1 struct {
 	TokenAddress       string        `json:"token_address" msgpack:"token_address"`
 	Operator           string        `json:"operator" msgpack:"operator"`
 	PaymentTypes       []PaymentType `json:"payment_types" msgpack:"payment_types"`
-	// Mode is the receive-request mode (SPEC-029 §1): "single" = fixed amount, single-use (1a);
+	// Mode is the receive-request mode: "single" = fixed amount, single-use (1a);
 	// "multi" = many payers / many times (1b/2). Distinct from RelayRequest.Mode.
 	Mode     string  `json:"mode" msgpack:"mode"`
 	Amount   *string `json:"amount,omitempty" msgpack:"amount,omitempty"`
@@ -99,9 +98,6 @@ type IPPPayloadV1 struct {
 	// isolation invariant. Kept out of SDK baseline validation (same tier as the
 	// endpoint rule).
 	CreditID *string `json:"credit_id,omitempty" msgpack:"credit_id,omitempty"`
-	// SPEC-029: payment materials (nonce / payment_commitment / tree_id) are no longer
-	// prefilled in the request payload — nonce / payment_commitment are delivered via
-	// propose; tree_id via Propose/AuthorizeResponse.
 }
 
 // Format identifies the wire format used to encode/decode an IPP request.

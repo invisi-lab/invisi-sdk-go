@@ -7,13 +7,8 @@ import (
 	"github.com/invisi-lab/invisi-sdk-go/core"
 )
 
-// ComputePaymentCommitmentForPropose generates a random nonce and computes
-// the paymentCommitment for a propose response.
-//
-// This is called by the receiver's propose handler when a payer proposes
-// an amount. Since SPEC-029 ("1a 收敛进 propose"), payment materials are no
-// longer pre-computed at request-creation time — CreatePaymentRequest no
-// longer calls this; nonce/paymentCommitment are delivered via propose.
+// ComputePaymentCommitmentForPropose generates a nonce and computes the
+// paymentCommitment for a propose response.
 func ComputePaymentCommitmentForPropose(params ProposeParams) (*ProposeResult, error) {
 	// Generate random nonce
 	nonce, err := core.GenerateNonce()

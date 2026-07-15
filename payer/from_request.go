@@ -49,7 +49,7 @@ func BuildPaymentFromRequest(params BuildFromRequestParams) (*BuildFromRequestRe
 		return nil, fmt.Errorf("payer: paymentCommitment verification failed: server returned incorrect parameters")
 	}
 
-	// Step 3: Build payOpen calldata (treeId from the propose response — SPEC-029 §3)
+	// Step 3: Build payOpen calldata
 	if params.TreeID == nil {
 		return nil, fmt.Errorf("payer: TreeID is required (from propose response)")
 	}

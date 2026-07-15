@@ -12,8 +12,8 @@ import (
 )
 
 // ErrPayerMasterKeyRequired is returned by DeriveChange when PayerMasterKey is the
-// zero element. payBlind change derivation has no random fallback (SPEC-029 §5): a
-// throwaway key would make the change unrecoverable and reintroduce a branch.
+// zero element. A throwaway key would make the change unrecoverable, so payBlind
+// change derivation rejects a zero master key instead of substituting one.
 var ErrPayerMasterKeyRequired = errors.New("payer: PayerMasterKey is required for payBlind change derivation (no random fallback)")
 
 // DeriveChangeParams configures deterministic change derivation for a shielded payment.
@@ -35,10 +35,11 @@ type ChangeDerivation struct {
 	ChangeCommitment   common.Hash
 }
 
-// DeriveChange deterministically derives a shielded payment's change (SPEC-029 §2).
+// DeriveChange deterministically derives a shielded payment's change.
 // Salt = this payment's paymentCommitment (necessarily present, already re-verified);
 // changeNonce reuses the payment nonce. No randomness, no network. treeId / leafIndex
-// are NOT produced here (known only from the propose response / on-chain PayBlind event).
+// are not produced here: they are known only from the propose response / on-chain
+// PayBlind event.
 func DeriveChange(params DeriveChangeParams) (*ChangeDerivation, error) {
 	if params.PayerMasterKey.IsZero() {
 		return nil, ErrPayerMasterKeyRequired

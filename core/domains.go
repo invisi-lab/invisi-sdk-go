@@ -12,7 +12,7 @@ const (
 	DomainRefLink    uint64 = 9
 	DomainCreditNKey uint64 = 10
 	// DomainChangeNKey is the domain tag for shielded-payment change derivation:
-	// Poseidon2(D_CHANGE_NKEY, payerMasterKey, paymentCommitment). SPEC-029.
+	// Poseidon2(D_CHANGE_NKEY, payerMasterKey, paymentCommitment).
 	DomainChangeNKey uint64 = 11
 
 	TreeDepth = 16

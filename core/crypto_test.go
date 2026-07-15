@@ -458,7 +458,7 @@ func TestDeriveChangeNullifierKey(t *testing.T) {
 
 // TestDeriveChangeNullifierKeyDomainIsolation verifies changeNullifierKey is distinct
 // from both the receiver nullifierKey (D_NKEY) and the credit key (D_CREDIT_NKEY) for
-// the same inputs — holding one must not reveal the others (SPEC-029 §2/§6.1).
+// the same inputs — holding one must not reveal the others.
 func TestDeriveChangeNullifierKeyDomainIsolation(t *testing.T) {
 	e := testElements(t)
 	masterKey, salt := e[0], e[1]

@@ -46,7 +46,7 @@ type CreatePaymentRequestParams struct {
 	ChainID          *big.Int
 	Operator         common.Address
 	PaymentTypes     []ipp.PaymentType
-	// Mode is the receive-request mode (SPEC-029 §1): "single" (1a) or "multi" (1b/2).
+	// Mode is the receive-request mode: "single" (1a) or "multi" (1b/2).
 	Mode     string
 	Amount   *big.Int          // optional
 	Endpoint *string           // optional

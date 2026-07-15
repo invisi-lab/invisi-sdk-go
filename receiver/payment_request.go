@@ -8,7 +8,7 @@ import (
 // CreatePaymentRequest generates an invoice internally and builds an IPPRequest
 // envelope for the given mode.
 //
-// Modes (SPEC-029 §1):
+// Modes:
 //   - "single" (1a): fixed amount, single-use — nonce/paymentCommitment are
 //     delivered later via propose, not prefilled here.
 //   - "multi" (1b/2): many payers or many uses; Amount may be set (1b) or
@@ -55,7 +55,5 @@ func CreatePaymentRequest(params CreatePaymentRequestParams) (*ipp.IPPRequest, e
 		request.Meta = params.Meta
 	}
 
-	// SPEC-029: no 1a prefill — payment materials (nonce / paymentCommitment) are
-	// delivered via propose, not embedded in the scan request.
 	return request, nil
 }

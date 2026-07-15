@@ -83,7 +83,6 @@ func TestIPPPayloadCreditIDRoundTrip(t *testing.T) {
 	}
 }
 
-// ProposeResponse must carry tree_id (SPEC-029 §3).
 func TestProposeResponseTreeIDRoundTrip(t *testing.T) {
 	treeID := "7"
 	resp := ProposeResponse{Status: "accepted", TreeID: &treeID}
@@ -103,7 +102,6 @@ func TestProposeResponseTreeIDRoundTrip(t *testing.T) {
 	}
 }
 
-// AuthorizeResponse must carry tree_id (SPEC-029 §3).
 func TestAuthorizeResponseTreeIDRoundTrip(t *testing.T) {
 	treeID := "7"
 	resp := AuthorizeResponse{Status: "accepted", TreeID: &treeID}
@@ -116,7 +114,6 @@ func TestAuthorizeResponseTreeIDRoundTrip(t *testing.T) {
 	}
 }
 
-// IPPPayloadV1.Mode round-trips over JSON and compact (SPEC-029 §1).
 func TestIPPPayloadModeRoundTrip(t *testing.T) {
 	req := IPPRequest{
 		V:       IPPCurrentVersion,

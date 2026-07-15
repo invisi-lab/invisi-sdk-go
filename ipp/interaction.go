@@ -39,7 +39,7 @@ type ProposeResponse struct {
 	Status            string  `json:"status"`
 	Nonce             *string `json:"nonce,omitempty"`
 	PaymentCommitment *string `json:"payment_commitment,omitempty"`
-	// TreeID is the target Payment Tree id (SPEC-029 §3); returned when accepted. Lifecycle see 6.1.
+	// TreeID is the target Payment Tree id (wire tree_id), set when accepted.
 	TreeID *string `json:"tree_id,omitempty"`
 	Reason *string `json:"reason,omitempty"`
 	// RejectCode is a machine-readable rejection reason (lowercase snake, no type
@@ -72,7 +72,7 @@ type AuthorizeRequest struct {
 type AuthorizeResponse struct {
 	Status string  `json:"status"`
 	Nonce  *string `json:"nonce,omitempty"`
-	// TreeID is the target Payment Tree id (SPEC-029 §3); returned when accepted. Lifecycle see 6.1.
+	// TreeID is the target Payment Tree id (wire tree_id), set when accepted.
 	TreeID           *string `json:"tree_id,omitempty"`
 	CreditCommitment *string `json:"credit_commitment,omitempty"`
 	NullifierKeyHash *string `json:"nullifier_key_hash,omitempty"`
