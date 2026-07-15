@@ -59,6 +59,16 @@ type computePaymentCommitmentVector struct {
 	Expected           string `json:"expected"`
 }
 
+type computeChangeCommitmentVector struct {
+	ChainID                string `json:"chainId"`
+	ChangeNullifierKey     string `json:"changeNullifierKey"`
+	ChangeReceivingAddress string `json:"changeReceivingAddress"`
+	TokenAddress           string `json:"tokenAddress"`
+	Amount                 string `json:"amount"`
+	Nonce                  string `json:"nonce"`
+	Expected               string `json:"expected"`
+}
+
 type computePaymentNullifierVector struct {
 	ChainID      string `json:"chainId"`
 	NullifierKey string `json:"nullifierKey"`
@@ -120,6 +130,7 @@ type vectorsJSON struct {
 	DeriveChangeNullifierKey    []deriveChangeNullifierKeyVector    `json:"deriveChangeNullifierKey"`
 	ComputeIdentityCommitment   []computeIdentityCommitmentVector   `json:"computeIdentityCommitment"`
 	ComputePaymentCommitment    []computePaymentCommitmentVector    `json:"computePaymentCommitment"`
+	ComputeChangeCommitment     []computeChangeCommitmentVector     `json:"computeChangeCommitment"`
 	ComputePaymentNullifier     []computePaymentNullifierVector     `json:"computePaymentNullifier"`
 	ComputeNullifierKeyHash     []computeNullifierKeyHashVector     `json:"computeNullifierKeyHash"`
 	ComputeCreditCommitment     []computeCreditCommitmentVector     `json:"computeCreditCommitment"`
@@ -261,6 +272,30 @@ func TestCrossLanguageComputePaymentCommitment(t *testing.T) {
 			t.Fatalf("vector[%d]: ComputePaymentCommitment error: %v", i, err)
 		}
 		assertHexEqual(t, "ComputePaymentCommitment", ElementToHex(got), tc.Expected)
+	}
+}
+
+func TestCrossLanguageComputeChangeCommitment(t *testing.T) {
+	v := loadVectors(t)
+	if v == nil {
+		t.Skip("testdata/vectors.json not found; run generate_vectors.ts to create it")
+	}
+	if len(v.ComputeChangeCommitment) == 0 {
+		t.Fatal("missing computeChangeCommitment vectors")
+	}
+
+	for i, tc := range v.ComputeChangeCommitment {
+		chainId := decimalToElement(t, tc.ChainID)
+		changeNullifierKey := hexOrDecimalToElement(t, tc.ChangeNullifierKey)
+		changeReceivingAddress := decimalToElement(t, tc.ChangeReceivingAddress)
+		tokenAddress := decimalToElement(t, tc.TokenAddress)
+		amount := decimalToElement(t, tc.Amount)
+		nonce := decimalToElement(t, tc.Nonce)
+		got, err := ComputeChangeCommitment(chainId, changeNullifierKey, changeReceivingAddress, tokenAddress, amount, nonce)
+		if err != nil {
+			t.Fatalf("vector[%d]: ComputeChangeCommitment error: %v", i, err)
+		}
+		assertHexEqual(t, "ComputeChangeCommitment", ElementToHex(got), tc.Expected)
 	}
 }
 

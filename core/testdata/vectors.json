@@ -95,6 +95,17 @@
       "expected": "0x1d2764ecf5dc787ef6658062472ca422c869a261639fe18334a20cae5e327280"
     }
   ],
+  "computeChangeCommitment": [
+    {
+      "chainId": "1",
+      "changeNullifierKey": "4466240385388578849709385656176456695375817029808089435052978388861618295354",
+      "changeReceivingAddress": "2457",
+      "tokenAddress": "2748",
+      "amount": "250",
+      "nonce": "7",
+      "expected": "0x2504563f7319b051d7c1d94aa976daa69082c3b66f43456b92530a35142d98c4"
+    }
+  ],
   "computePaymentNullifier": [
     {
       "chainId": "1",

@@ -16,6 +16,7 @@ import {
   deriveChangeNullifierKey,
   computeIdentityCommitment,
   computePaymentCommitment,
+  computeChangeCommitment,
   computePaymentNullifier,
   computeNullifierKeyHash,
   computeCreditCommitment,
@@ -93,6 +94,24 @@ async function main() {
       amount: "1000",
       nonce: "42",
       expected: pc,
+    },
+  ];
+
+  // ---- ComputeChangeCommitment ----
+  // End-to-end change-commitment: wrap a change nullifier key + receiving
+  // address into a change identity commitment, then a payment commitment.
+  // Guards Go DeriveChange/ComputeChangeCommitment parity against the TS
+  // reference (both = D_PAY over computeIdentityCommitment(nk, addr)).
+  const chgCommit = await computeChangeCommitment(1n, chg1, 0x999n, 0xABCn, 250n, 7n);
+  vectors.computeChangeCommitment = [
+    {
+      chainId: "1",
+      changeNullifierKey: toBigintStr(chg1),
+      changeReceivingAddress: "2457",
+      tokenAddress: "2748",
+      amount: "250",
+      nonce: "7",
+      expected: chgCommit,
     },
   ];
 
