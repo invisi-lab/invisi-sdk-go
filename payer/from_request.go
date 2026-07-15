@@ -2,7 +2,6 @@ package payer
 
 import (
 	"fmt"
-	"math/big"
 
 	"github.com/ethereum/go-ethereum/common"
 
@@ -50,11 +49,11 @@ func BuildPaymentFromRequest(params BuildFromRequestParams) (*BuildFromRequestRe
 		return nil, fmt.Errorf("payer: paymentCommitment verification failed: server returned incorrect parameters")
 	}
 
-	// Step 3: Build payOpen calldata
-	treeID, ok := new(big.Int).SetString(p.TreeID, 10)
-	if !ok {
-		return nil, fmt.Errorf("payer: invalid treeId: %q", p.TreeID)
+	// Step 3: Build payOpen calldata (treeId from the propose response — SPEC-029 §3)
+	if params.TreeID == nil {
+		return nil, fmt.Errorf("payer: TreeID is required (from propose response)")
 	}
+	treeID := params.TreeID
 
 	nonceElem, err := core.HexToElement(params.Nonce.Hex())
 	if err != nil {

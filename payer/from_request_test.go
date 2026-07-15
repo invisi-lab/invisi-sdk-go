@@ -19,7 +19,6 @@ func makeTestRequest() ipp.IPPRequest {
 			IdentityCommitment: "0x00000000000000000000000000000000000000000000000000000000000000ab",
 			TokenAddress:       "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
 			Operator:           "0x0000000000000000000000000000000000000001",
-			TreeID:             "1",
 			PaymentTypes:       []ipp.PaymentType{ipp.PaymentTypeOpen},
 		},
 	}
@@ -53,6 +52,7 @@ func TestBuildPaymentFromRequest_Valid(t *testing.T) {
 		Nonce:             nonceHash,
 		PaymentCommitment: commitmentHash,
 		Amount:            amount,
+		TreeID:            big.NewInt(1),
 	})
 	if err != nil {
 		t.Fatal(err)

@@ -331,6 +331,8 @@ type BuildFromRequestParams struct {
 	Nonce             common.Hash
 	PaymentCommitment common.Hash
 	Amount            *big.Int
+	// TreeID now comes from the propose response, not the request payload (SPEC-029 §3).
+	TreeID *big.Int
 }
 
 // BuildFromRequestResult is the result of BuildPaymentFromRequest.
