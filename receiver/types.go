@@ -26,7 +26,7 @@ type GenerateInvoiceParams struct {
 // NullifierKey is sensitive and must never be transmitted or logged.
 type Invoice struct {
 	InvoiceID          fr.Element
-	NullifierKey       fr.Element     // @sensitive — never transmit
+	NullifierKey       fr.Element // @sensitive — never transmit
 	IdentityCommitment common.Hash
 	ReceivingAddress   common.Address
 	TokenAddress       common.Address
@@ -44,13 +44,13 @@ type CreatePaymentRequestParams struct {
 	ReceivingAddress common.Address
 	TokenAddress     common.Address
 	ChainID          *big.Int
-	TreeID           *big.Int
 	Operator         common.Address
 	PaymentTypes     []ipp.PaymentType
-	Amount           *big.Int          // optional
-	Endpoint         *string           // optional
-	Meta             map[string]string // optional
-	MultiPayer       bool              // true = multi-payer mode (no pre-computed nonce)
+	// Mode is the receive-request mode (SPEC-029 §1): "single" (1a) or "multi" (1b/2).
+	Mode     string
+	Amount   *big.Int          // optional
+	Endpoint *string           // optional
+	Meta     map[string]string // optional
 }
 
 // ── Propose ─────────────────────────────────────────────────────────

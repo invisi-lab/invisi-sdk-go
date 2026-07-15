@@ -1,19 +1,18 @@
 package receiver
 
 import (
-	"github.com/ethereum/go-ethereum/common"
 	"github.com/invisi-lab/invisi-sdk-go/core"
 	"github.com/invisi-lab/invisi-sdk-go/ipp"
 )
 
-// CreatePaymentRequest generates an invoice internally, builds an IPPRequest
-// envelope, and optionally pre-computes a nonce + paymentCommitment for
-// mode 1a (single-payer with known amount).
+// CreatePaymentRequest generates an invoice internally and builds an IPPRequest
+// envelope for the given mode.
 //
-// Three modes:
-//   - Mode 1a: Amount set, MultiPayer=false → nonce + paymentCommitment included
-//   - Mode 1b: Amount set, MultiPayer=true → no nonce (assigned by propose)
-//   - Mode 2:  No Amount → interactive mode, endpoint required
+// Modes (SPEC-029 §1):
+//   - "single" (1a): fixed amount, single-use — nonce/paymentCommitment are
+//     delivered later via propose, not prefilled here.
+//   - "multi" (1b/2): many payers or many uses; Amount may be set (1b) or
+//     omitted (2, interactive — Endpoint required).
 func CreatePaymentRequest(params CreatePaymentRequestParams) (*ipp.IPPRequest, error) {
 	// Derive keys
 	nullifierKey, err := core.DeriveNullifierKey(params.MasterKey, params.InvoiceID)
@@ -37,8 +36,8 @@ func CreatePaymentRequest(params CreatePaymentRequestParams) (*ipp.IPPRequest, e
 			IdentityCommitment: icHex,
 			TokenAddress:       params.TokenAddress.Hex(),
 			Operator:           params.Operator.Hex(),
-			TreeID:             params.TreeID.String(),
 			PaymentTypes:       params.PaymentTypes,
+			Mode:               params.Mode,
 		},
 	}
 
@@ -56,23 +55,7 @@ func CreatePaymentRequest(params CreatePaymentRequestParams) (*ipp.IPPRequest, e
 		request.Meta = params.Meta
 	}
 
-	// Mode 1a: amount set, not multi-payer → pre-compute nonce + paymentCommitment
-	if params.Amount != nil && !params.MultiPayer {
-		proposeResult, err := ComputePaymentCommitmentForPropose(ProposeParams{
-			IdentityCommitment: common.HexToHash(icHex),
-			TokenAddress:       params.TokenAddress,
-			Amount:             params.Amount,
-			ChainID:            params.ChainID,
-		})
-		if err != nil {
-			return nil, err
-		}
-
-		nonceHex := proposeResult.Nonce.Hex()
-		pcHex := proposeResult.PaymentCommitment.Hex()
-		request.Payload.Nonce = &nonceHex
-		request.Payload.PaymentCommitment = &pcHex
-	}
-
+	// SPEC-029: no 1a prefill — payment materials (nonce / paymentCommitment) are
+	// delivered via propose, not embedded in the scan request.
 	return request, nil
 }

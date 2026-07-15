@@ -87,9 +87,9 @@ func TestCreatePaymentRequestParamsFields(t *testing.T) {
 		ReceivingAddress: common.HexToAddress("0xdead"),
 		TokenAddress:     common.HexToAddress("0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"),
 		ChainID:          big.NewInt(84532),
-		TreeID:           big.NewInt(1),
 		Operator:         common.HexToAddress("0x1234"),
 		PaymentTypes:     []ipp.PaymentType{ipp.PaymentTypeOpen, ipp.PaymentTypeBlind},
+		Mode:             "single",
 		Amount:           big.NewInt(100_000_000),
 		Endpoint:         &endpoint,
 	}

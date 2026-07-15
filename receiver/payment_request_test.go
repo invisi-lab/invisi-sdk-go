@@ -2,6 +2,7 @@ package receiver
 
 import (
 	"math/big"
+	"strings"
 	"testing"
 
 	"github.com/consensys/gnark-crypto/ecc/bn254/fr"
@@ -22,7 +23,6 @@ func makeBasePaymentRequestParams() CreatePaymentRequestParams {
 		ReceivingAddress: common.HexToAddress("0x000000000000000000000000000000000000dead"),
 		TokenAddress:     common.HexToAddress("0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913"),
 		ChainID:          big.NewInt(84532),
-		TreeID:           big.NewInt(1),
 		Operator:         common.HexToAddress("0x1234567890123456789012345678901234567890"),
 		PaymentTypes:     []ipp.PaymentType{ipp.PaymentTypeOpen, ipp.PaymentTypeBlind},
 	}
@@ -31,6 +31,7 @@ func makeBasePaymentRequestParams() CreatePaymentRequestParams {
 func TestCreatePaymentRequest_CorrectIdentityCommitment(t *testing.T) {
 	params := makeBasePaymentRequestParams()
 	params.Amount = big.NewInt(100_000_000)
+	params.Mode = "single"
 	endpoint := "https://pay.example.com"
 	params.Endpoint = &endpoint
 
@@ -65,6 +66,7 @@ func TestCreatePaymentRequest_CorrectIdentityCommitment(t *testing.T) {
 func TestCreatePaymentRequest_CAIP2Network(t *testing.T) {
 	params := makeBasePaymentRequestParams()
 	params.Amount = big.NewInt(100_000_000)
+	params.Mode = "single"
 	endpoint := "https://pay.example.com"
 	params.Endpoint = &endpoint
 
@@ -86,79 +88,66 @@ func TestCreatePaymentRequest_CAIP2Network(t *testing.T) {
 	}
 }
 
-func TestCreatePaymentRequest_Mode1a_NonceAndPaymentCommitment(t *testing.T) {
-	params := makeBasePaymentRequestParams()
-	params.Amount = big.NewInt(100_000_000)
-	// MultiPayer = false (default)
+func TestCreatePaymentRequest_Single(t *testing.T) {
+	var masterKey, invoiceID fr.Element
+	masterKey.SetUint64(999)
+	invoiceID.SetUint64(1)
+	endpoint := "https://pay.merchant.com"
 
-	request, err := CreatePaymentRequest(params)
+	req, err := CreatePaymentRequest(CreatePaymentRequestParams{
+		MasterKey:        masterKey,
+		InvoiceID:        invoiceID,
+		ReceivingAddress: common.HexToAddress("0xdead"),
+		TokenAddress:     common.HexToAddress("0x" + strings.Repeat("aa", 20)),
+		ChainID:          big.NewInt(84532),
+		Operator:         common.HexToAddress("0x1234567890123456789012345678901234567890"),
+		PaymentTypes:     []ipp.PaymentType{ipp.PaymentTypeOpen, ipp.PaymentTypeBlind},
+		Mode:             "single",
+		Amount:           big.NewInt(100_000_000),
+		Endpoint:         &endpoint,
+	})
 	if err != nil {
 		t.Fatal(err)
 	}
-
-	if request.Payload.Nonce == nil {
-		t.Fatal("Nonce should be set in mode 1a")
+	if req.Payload.Mode != "single" {
+		t.Errorf("Mode = %q, want single", req.Payload.Mode)
 	}
-	if request.Payload.PaymentCommitment == nil {
-		t.Fatal("PaymentCommitment should be set in mode 1a")
-	}
-	if request.Payload.Amount == nil || *request.Payload.Amount != "100000000" {
-		t.Errorf("Amount = %v, want '100000000'", request.Payload.Amount)
-	}
-
-	// Verify paymentCommitment matches core computation
-	nonceBigInt := new(big.Int)
-	nonceBigInt.SetString((*request.Payload.Nonce)[2:], 16) // strip 0x prefix
-	nonceElem := core.BigIntToElement(nonceBigInt)
-
-	icElem, err := core.HexToElement(request.Payload.IdentityCommitment)
-	if err != nil {
-		t.Fatal(err)
-	}
-	tokenBigInt := new(big.Int).SetBytes(params.TokenAddress.Bytes())
-	tokenElem := core.BigIntToElement(tokenBigInt)
-	amountElem := core.BigIntToElement(params.Amount)
-	chainElem := core.BigIntToElement(params.ChainID)
-
-	expectedPC, err := core.ComputePaymentCommitment(chainElem, icElem, tokenElem, amountElem, nonceElem)
-	if err != nil {
-		t.Fatal(err)
-	}
-	expectedPCHex := core.ElementToHex(expectedPC)
-	if *request.Payload.PaymentCommitment != expectedPCHex {
-		t.Errorf("PaymentCommitment mismatch: got %s, want %s",
-			*request.Payload.PaymentCommitment, expectedPCHex)
+	if req.Payload.Amount == nil || *req.Payload.Amount != "100000000" {
+		t.Errorf("Amount = %v", req.Payload.Amount)
 	}
 }
 
-func TestCreatePaymentRequest_Mode1b_MultiPayer(t *testing.T) {
-	params := makeBasePaymentRequestParams()
-	params.Amount = big.NewInt(100_000_000)
-	params.MultiPayer = true
-	endpoint := "https://pay.example.com"
-	params.Endpoint = &endpoint
+func TestCreatePaymentRequest_Multi(t *testing.T) {
+	var masterKey, invoiceID fr.Element
+	masterKey.SetUint64(999)
+	invoiceID.SetUint64(2)
+	endpoint := "https://pay.merchant.com"
 
-	request, err := CreatePaymentRequest(params)
+	req, err := CreatePaymentRequest(CreatePaymentRequestParams{
+		MasterKey:        masterKey,
+		InvoiceID:        invoiceID,
+		ReceivingAddress: common.HexToAddress("0xdead"),
+		TokenAddress:     common.HexToAddress("0x" + strings.Repeat("aa", 20)),
+		ChainID:          big.NewInt(84532),
+		Operator:         common.HexToAddress("0x1234567890123456789012345678901234567890"),
+		PaymentTypes:     []ipp.PaymentType{ipp.PaymentTypeOpen},
+		Mode:             "multi",
+		Endpoint:         &endpoint,
+	})
 	if err != nil {
 		t.Fatal(err)
 	}
-
-	if request.Payload.Nonce != nil {
-		t.Error("Nonce should not be set in multi-payer mode")
+	if req.Payload.Mode != "multi" {
+		t.Errorf("Mode = %q, want multi", req.Payload.Mode)
 	}
-	if request.Payload.PaymentCommitment != nil {
-		t.Error("PaymentCommitment should not be set in multi-payer mode")
-	}
-	if request.Payload.Amount == nil || *request.Payload.Amount != "100000000" {
-		t.Errorf("Amount = %v, want '100000000'", request.Payload.Amount)
-	}
-	if request.Payload.Endpoint == nil || *request.Payload.Endpoint != "https://pay.example.com" {
-		t.Error("Endpoint should be set")
+	if req.Payload.Amount != nil {
+		t.Errorf("Amount should be nil for open-amount multi, got %v", req.Payload.Amount)
 	}
 }
 
 func TestCreatePaymentRequest_Mode2_NoAmount(t *testing.T) {
 	params := makeBasePaymentRequestParams()
+	params.Mode = "multi"
 	// No Amount set
 	endpoint := "https://pay.example.com"
 	params.Endpoint = &endpoint
@@ -171,9 +160,6 @@ func TestCreatePaymentRequest_Mode2_NoAmount(t *testing.T) {
 	if request.Payload.Amount != nil {
 		t.Error("Amount should not be set in mode 2")
 	}
-	if request.Payload.Nonce != nil {
-		t.Error("Nonce should not be set in mode 2")
-	}
 	if request.Payload.Endpoint == nil || *request.Payload.Endpoint != "https://pay.example.com" {
 		t.Error("Endpoint should be set in mode 2")
 	}
@@ -182,6 +168,7 @@ func TestCreatePaymentRequest_Mode2_NoAmount(t *testing.T) {
 func TestCreatePaymentRequest_MetaFields(t *testing.T) {
 	params := makeBasePaymentRequestParams()
 	params.Amount = big.NewInt(100_000_000)
+	params.Mode = "single"
 	params.Meta = map[string]string{
 		"merchantName": "Coffee Shop",
 		"orderId":      "ORD-001",
@@ -206,6 +193,7 @@ func TestCreatePaymentRequest_MetaFields(t *testing.T) {
 func TestCreatePaymentRequest_PaymentTypes(t *testing.T) {
 	params := makeBasePaymentRequestParams()
 	params.Amount = big.NewInt(100_000_000)
+	params.Mode = "single"
 	params.PaymentTypes = []ipp.PaymentType{ipp.PaymentTypeOpen}
 
 	request, err := CreatePaymentRequest(params)
