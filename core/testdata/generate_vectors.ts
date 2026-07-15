@@ -13,6 +13,7 @@ import {
   poseidonHash,
   deriveNullifierKey,
   deriveCreditNullifierKey,
+  deriveChangeNullifierKey,
   computeIdentityCommitment,
   computePaymentCommitment,
   computePaymentNullifier,
@@ -66,6 +67,14 @@ async function main() {
   vectors.deriveCreditNullifierKey = [
     { receiverMasterKey: "100", creditId: "200", expected: toHex(cnk1) },
     { receiverMasterKey: "0", creditId: "0", expected: toHex(cnk2) },
+  ];
+
+  // ---- DeriveChangeNullifierKey (D_CHANGE_NKEY = 11) ----
+  const chg1 = await deriveChangeNullifierKey(100n, 200n);
+  const chg2 = await deriveChangeNullifierKey(0n, 0n);
+  vectors.deriveChangeNullifierKey = [
+    { payerMasterKey: "100", paymentCommitment: "200", expected: toHex(chg1) },
+    { payerMasterKey: "0", paymentCommitment: "0", expected: toHex(chg2) },
   ];
 
   // ---- ComputeIdentityCommitment ----

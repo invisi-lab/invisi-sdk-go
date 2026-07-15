@@ -38,6 +38,12 @@ type deriveCreditNullifierKeyVector struct {
 	Expected          string `json:"expected"`
 }
 
+type deriveChangeNullifierKeyVector struct {
+	PayerMasterKey    string `json:"payerMasterKey"`
+	PaymentCommitment string `json:"paymentCommitment"`
+	Expected          string `json:"expected"`
+}
+
 type computeIdentityCommitmentVector struct {
 	NullifierKey     string `json:"nullifierKey"`
 	ReceivingAddress string `json:"receivingAddress"`
@@ -111,6 +117,7 @@ type vectorsJSON struct {
 	Poseidon2                   []poseidon2Vector                   `json:"poseidon2"`
 	DeriveNullifierKey          []deriveNullifierKeyVector          `json:"deriveNullifierKey"`
 	DeriveCreditNullifierKey    []deriveCreditNullifierKeyVector    `json:"deriveCreditNullifierKey"`
+	DeriveChangeNullifierKey    []deriveChangeNullifierKeyVector    `json:"deriveChangeNullifierKey"`
 	ComputeIdentityCommitment   []computeIdentityCommitmentVector   `json:"computeIdentityCommitment"`
 	ComputePaymentCommitment    []computePaymentCommitmentVector    `json:"computePaymentCommitment"`
 	ComputePaymentNullifier     []computePaymentNullifierVector     `json:"computePaymentNullifier"`
@@ -402,5 +409,25 @@ func TestCrossLanguageDeriveCreditNullifierKey(t *testing.T) {
 			t.Fatalf("vector[%d]: DeriveCreditNullifierKey error: %v", i, err)
 		}
 		assertHexEqual(t, "DeriveCreditNullifierKey", ElementToHex(got), tc.Expected)
+	}
+}
+
+func TestCrossLanguageDeriveChangeNullifierKey(t *testing.T) {
+	v := loadVectors(t)
+	if v == nil {
+		t.Skip("testdata/vectors.json not found; run generate_vectors.ts to create it")
+	}
+	if len(v.DeriveChangeNullifierKey) == 0 {
+		t.Fatal("missing deriveChangeNullifierKey vectors")
+	}
+
+	for i, tc := range v.DeriveChangeNullifierKey {
+		payerMasterKey := hexOrDecimalToElement(t, tc.PayerMasterKey)
+		paymentCommitment := hexOrDecimalToElement(t, tc.PaymentCommitment)
+		got, err := DeriveChangeNullifierKey(payerMasterKey, paymentCommitment)
+		if err != nil {
+			t.Fatalf("vector[%d]: DeriveChangeNullifierKey error: %v", i, err)
+		}
+		assertHexEqual(t, "DeriveChangeNullifierKey", ElementToHex(got), tc.Expected)
 	}
 }

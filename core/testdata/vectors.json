@@ -66,6 +66,18 @@
       "expected": "0x2ee7682681179c2d8290a805cdeb64cc9744167fd5c801c26f1b3f9757c4eebc"
     }
   ],
+  "deriveChangeNullifierKey": [
+    {
+      "payerMasterKey": "100",
+      "paymentCommitment": "200",
+      "expected": "0x09dfcd6f144e3bf69b27da5ef2bb87274f1082e035ddb91b37bfc6702825123a"
+    },
+    {
+      "payerMasterKey": "0",
+      "paymentCommitment": "0",
+      "expected": "0x1dc7e560033fee1662ff1d5dd0583625991982c5452fc2b0b2d97b3577657a47"
+    }
+  ],
   "computeIdentityCommitment": [
     {
       "nullifierKey": "8059902435717874135396261042205011152580675825595808264720455654581518234534",
