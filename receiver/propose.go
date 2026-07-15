@@ -11,8 +11,9 @@ import (
 // the paymentCommitment for a propose response.
 //
 // This is called by the receiver's propose handler when a payer proposes
-// an amount for an interactive payment, or internally by CreatePaymentRequest
-// for mode 1a (pre-computed nonce).
+// an amount. Since SPEC-029 ("1a 收敛进 propose"), payment materials are no
+// longer pre-computed at request-creation time — CreatePaymentRequest no
+// longer calls this; nonce/paymentCommitment are delivered via propose.
 func ComputePaymentCommitmentForPropose(params ProposeParams) (*ProposeResult, error) {
 	// Generate random nonce
 	nonce, err := core.GenerateNonce()
