@@ -18,6 +18,16 @@ func DeriveCreditNullifierKey(receiverMasterKey, creditId fr.Element) (fr.Elemen
 	return Poseidon2Hash(ElementFromUint64(DomainCreditNKey), receiverMasterKey, creditId)
 }
 
+// DeriveChangeNullifierKey derives the change shared secret for a shielded payment
+// (SPEC-029). The salt is THIS payment's paymentCommitment — a value the payer
+// necessarily holds and has already re-verified locally (6.2), so it self-certifies.
+// Domain-separated from DeriveNullifierKey / DeriveCreditNullifierKey (tag 11 vs 1 / 10)
+// so the change key is algebraically isolated from receiver / credit keys.
+// Formula: Poseidon2Hash(D_CHANGE_NKEY, payerMasterKey, paymentCommitment)
+func DeriveChangeNullifierKey(payerMasterKey, paymentCommitment fr.Element) (fr.Element, error) {
+	return Poseidon2Hash(ElementFromUint64(DomainChangeNKey), payerMasterKey, paymentCommitment)
+}
+
 // ComputeIdentityCommitment computes the identity commitment.
 // Formula: Poseidon2Hash(D_IDENT, nullifierKey, receivingAddress)
 func ComputeIdentityCommitment(nullifierKey, receivingAddress fr.Element) (fr.Element, error) {

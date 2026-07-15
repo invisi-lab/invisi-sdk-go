@@ -435,3 +435,51 @@ func TestDeriveCreditNullifierKeyDomainIsolation(t *testing.T) {
 		t.Error("domain isolation failure: DeriveCreditNullifierKey and DeriveNullifierKey returned same value")
 	}
 }
+
+// TestDeriveChangeNullifierKey verifies the formula matches a direct Poseidon2Hash call.
+func TestDeriveChangeNullifierKey(t *testing.T) {
+	e := testElements(t)
+	payerMasterKey, paymentCommitment := e[0], e[1]
+
+	got, err := DeriveChangeNullifierKey(payerMasterKey, paymentCommitment)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	want, err := Poseidon2Hash(ElementFromUint64(DomainChangeNKey), payerMasterKey, paymentCommitment)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if !got.Equal(&want) {
+		t.Errorf("DeriveChangeNullifierKey: got %s, want %s", ElementToHex(got), ElementToHex(want))
+	}
+}
+
+// TestDeriveChangeNullifierKeyDomainIsolation verifies changeNullifierKey is distinct
+// from both the receiver nullifierKey (D_NKEY) and the credit key (D_CREDIT_NKEY) for
+// the same inputs — holding one must not reveal the others (SPEC-029 §2/§6.1).
+func TestDeriveChangeNullifierKeyDomainIsolation(t *testing.T) {
+	e := testElements(t)
+	masterKey, salt := e[0], e[1]
+
+	changeKey, err := DeriveChangeNullifierKey(masterKey, salt)
+	if err != nil {
+		t.Fatal(err)
+	}
+	nullifierKey, err := DeriveNullifierKey(masterKey, salt)
+	if err != nil {
+		t.Fatal(err)
+	}
+	creditKey, err := DeriveCreditNullifierKey(masterKey, salt)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if changeKey.Equal(&nullifierKey) {
+		t.Error("domain isolation failure: change key equals receiver nullifier key")
+	}
+	if changeKey.Equal(&creditKey) {
+		t.Error("domain isolation failure: change key equals credit key")
+	}
+}
