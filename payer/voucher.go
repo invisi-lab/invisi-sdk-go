@@ -18,8 +18,11 @@ type BuildVoucherParams struct {
 	Nonce             string
 	NullifierKey      string
 	TreeID            string
-	LeafIndex         string            // optional, "" = omit
-	Meta              map[string]string // optional
+	LeafIndex         string // optional, "" = omit
+	// Endpoint is the server address that accepts settlement for this voucher;
+	// required (see ipp.IPPVoucherV1.Endpoint).
+	Endpoint string
+	Meta     map[string]string // optional
 }
 
 // BuildVoucher assembles a payment voucher (mode 3 address transfer) from values
@@ -43,6 +46,7 @@ func BuildVoucher(params BuildVoucherParams) (ipp.IPPVoucher, error) {
 			NullifierKey:      params.NullifierKey,
 			TreeID:            params.TreeID,
 			LeafIndex:         params.LeafIndex,
+			Endpoint:          params.Endpoint,
 		},
 	}, nil
 }
