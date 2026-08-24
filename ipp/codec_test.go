@@ -37,6 +37,7 @@ func sampleVoucher() IPPVoucher {
 			Nonce:             "0x123",
 			NullifierKey:      "0x456",
 			TreeID:            "1",
+			Endpoint:          "https://pay.merchant.com",
 		},
 	}
 }

@@ -117,8 +117,17 @@ type NotifyResponse struct {
 type WithdrawRequest struct {
 	// IdentityCommitment is advisory: the server locates leaves by
 	// PaymentCommitments and ignores it; mode-3 vouchers omit it.
-	IdentityCommitment string   `json:"identity_commitment,omitempty"`
-	TokenAddress       string   `json:"token_address"`
+	IdentityCommitment string `json:"identity_commitment,omitempty"`
+	// Network is the CAIP-2 chain identifier (e.g. "eip155:8453"). Together with
+	// Operator and TokenAddress it identifies the (chain, operator, token)
+	// contract instance the server must route the request to.
+	Network      string `json:"network"`
+	TokenAddress string `json:"token_address"`
+	// Operator, with Network and TokenAddress, uniquely determines the contract
+	// instance: the protocol isolates state per-token per-operator, so the
+	// request must self-describe which instance it targets — the server cannot
+	// infer this cross-host from the payment commitments alone.
+	Operator           string   `json:"operator"`
 	TreeID             string   `json:"tree_id"`
 	PaymentCommitments []string `json:"payment_commitments"`
 }

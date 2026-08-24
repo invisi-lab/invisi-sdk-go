@@ -79,6 +79,11 @@ type IPPVoucherV1 struct {
 	NullifierKey      string `json:"nullifier_key" msgpack:"nullifier_key"`
 	TreeID            string `json:"tree_id" msgpack:"tree_id"`
 	LeafIndex         string `json:"leaf_index,omitempty" msgpack:"leaf_index,omitempty"`
+	// Endpoint is the server address that accepts settlement for this voucher;
+	// the receiver uses it to initiate withdraw. Required (unlike the
+	// conditionally-required IPPPayloadV1.Endpoint): a mode-3 voucher carries no
+	// other way for the receiver to learn which server to call.
+	Endpoint string `json:"endpoint" msgpack:"endpoint"`
 }
 
 // IPPPayloadV1 is the v1 payload within an IPP request.

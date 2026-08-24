@@ -35,6 +35,7 @@ func makeVoucher(t *testing.T, recv common.Address) ipp.IPPVoucher {
 			Nonce:             core.ElementToHex(nonce),
 			NullifierKey:      core.ElementToHex(nk),
 			TreeID:            "1",
+			Endpoint:          "https://pay.merchant.com",
 		},
 	}
 }
