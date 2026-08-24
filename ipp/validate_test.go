@@ -167,3 +167,125 @@ func TestValidateEmptyRequiredFields(t *testing.T) {
 		})
 	}
 }
+
+// validVoucher returns a well-formed mode-3 IPPVoucher for testing.
+func validVoucher() IPPVoucher {
+	return IPPVoucher{
+		V:       IPPCurrentVersion,
+		Network: "eip155:84532",
+		Type:    MessageTypeVoucher,
+		Payload: IPPVoucherV1{
+			ReceivingAddress:  "0x1111111111111111111111111111111111111111",
+			PaymentCommitment: "0xabc",
+			TokenAddress:      "0xdef",
+			Operator:          "0x1234567890123456789012345678901234567890",
+			Amount:            "100",
+			Nonce:             "0x01",
+			NullifierKey:      "0x02",
+			TreeID:            "1",
+			Endpoint:          "https://pay.merchant.com",
+		},
+	}
+}
+
+func TestValidateVoucherPasses(t *testing.T) {
+	if err := ValidateIPPVoucher(validVoucher()); err != nil {
+		t.Fatalf("expected valid, got %v", err)
+	}
+}
+
+func TestValidateVoucherInvalidVersion(t *testing.T) {
+	v := validVoucher()
+	v.V = 0
+	err := ValidateIPPVoucher(v)
+	if err == nil {
+		t.Fatal("expected error for v=0")
+	}
+	if !strings.Contains(err.Error(), "version") {
+		t.Errorf("error = %q, want mention of version", err.Error())
+	}
+}
+
+func TestValidateVoucherInvalidNetwork(t *testing.T) {
+	v := validVoucher()
+	v.Network = "mainnet"
+	err := ValidateIPPVoucher(v)
+	if err == nil {
+		t.Fatal("expected error for network=\"mainnet\"")
+	}
+	if !strings.Contains(err.Error(), "network") {
+		t.Errorf("error = %q, want mention of network", err.Error())
+	}
+}
+
+func TestValidateVoucherWrongType(t *testing.T) {
+	v := validVoucher()
+	v.Type = MessageTypeRequest
+	err := ValidateIPPVoucher(v)
+	if err == nil {
+		t.Fatal("expected error for type=request")
+	}
+	if !strings.Contains(err.Error(), "type") {
+		t.Errorf("error = %q, want mention of type", err.Error())
+	}
+}
+
+func TestValidateVoucherEmptyRequiredFields(t *testing.T) {
+	fields := []struct {
+		name   string
+		mutate func(*IPPVoucher)
+	}{
+		{"receivingAddress", func(v *IPPVoucher) { v.Payload.ReceivingAddress = "" }},
+		{"paymentCommitment", func(v *IPPVoucher) { v.Payload.PaymentCommitment = "" }},
+		{"tokenAddress", func(v *IPPVoucher) { v.Payload.TokenAddress = "" }},
+		{"operator", func(v *IPPVoucher) { v.Payload.Operator = "" }},
+		{"amount", func(v *IPPVoucher) { v.Payload.Amount = "" }},
+		{"nonce", func(v *IPPVoucher) { v.Payload.Nonce = "" }},
+		{"nullifierKey", func(v *IPPVoucher) { v.Payload.NullifierKey = "" }},
+		{"treeId", func(v *IPPVoucher) { v.Payload.TreeID = "" }},
+		{"endpoint", func(v *IPPVoucher) { v.Payload.Endpoint = "" }},
+	}
+	for _, tt := range fields {
+		t.Run(tt.name, func(t *testing.T) {
+			v := validVoucher()
+			tt.mutate(&v)
+			err := ValidateIPPVoucher(v)
+			if err == nil {
+				t.Fatalf("expected error for empty %s", tt.name)
+			}
+			if !strings.Contains(err.Error(), tt.name) {
+				t.Errorf("error = %q, want mention of %s", err.Error(), tt.name)
+			}
+		})
+	}
+}
+
+func TestValidateVoucherInvalidEndpoint(t *testing.T) {
+	v := validVoucher()
+	v.Payload.Endpoint = "not a url"
+	err := ValidateIPPVoucher(v)
+	if err == nil {
+		t.Fatal("expected error for endpoint=\"not a url\"")
+	}
+	if !strings.Contains(err.Error(), "endpoint") {
+		t.Errorf("error = %q, want mention of endpoint", err.Error())
+	}
+}
+
+func TestValidateVoucherLocalhostEndpointPasses(t *testing.T) {
+	// The SDK does not enforce https; production-only TLS is an application-layer
+	// concern (see protocol docs), not an SDK validation rule.
+	v := validVoucher()
+	v.Payload.Endpoint = "http://localhost:3000"
+	if err := ValidateIPPVoucher(v); err != nil {
+		t.Errorf("expected valid (no scheme enforcement), got: %v", err)
+	}
+}
+
+func TestValidateVoucherEmptyLeafIndexPasses(t *testing.T) {
+	v := validVoucher()
+	v.Payload.LeafIndex = ""
+	if err := ValidateIPPVoucher(v); err != nil {
+		t.Errorf("expected valid (leafIndex optional), got: %v", err)
+	}
+}
