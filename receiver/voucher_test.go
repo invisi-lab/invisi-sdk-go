@@ -1,7 +1,10 @@
 package receiver
 
 import (
+	"encoding/json"
 	"math/big"
+	"sort"
+	"strings"
 	"testing"
 
 	"github.com/consensys/gnark-crypto/ecc/bn254/fr"
@@ -80,5 +83,94 @@ func TestVoucherToWithdrawRequest_NoSecret(t *testing.T) {
 	if req.IdentityCommitment != "" {
 		t.Error("identityCommitment should be omitted for mode-3 voucher withdraw")
 	}
-	// nullifierKey must not appear in the withdraw request
+
+	// nullifierKey and receivingAddress are non-custodial secrets: they stay
+	// client-side for local proof generation and must never reach the wire.
+	// Assert against the actual JSON.Marshal output, not just the struct shape,
+	// so a future field addition to WithdrawRequest can't silently leak them.
+	b, err := json.Marshal(req)
+	if err != nil {
+		t.Fatal(err)
+	}
+	wire := string(b)
+	if strings.Contains(wire, "nullifier_key") || strings.Contains(wire, v.Payload.NullifierKey) {
+		t.Errorf("withdraw request wire form leaks nullifierKey: %s", wire)
+	}
+	if strings.Contains(wire, "receiving_address") || strings.Contains(wire, v.Payload.ReceivingAddress) {
+		t.Errorf("withdraw request wire form leaks receivingAddress: %s", wire)
+	}
+}
+
+// withdrawRequestFixtureVoucher returns a voucher whose envelope Network
+// ("eip155:1") differs from every field value in the payload below. This
+// catches an implementation that mistakenly sources the withdraw request's
+// Network from the payload (which carries no network field of its own)
+// instead of the envelope.
+func withdrawRequestFixtureVoucher() ipp.IPPVoucher {
+	return ipp.IPPVoucher{
+		V:       1,
+		Network: "eip155:1",
+		Type:    ipp.MessageTypeVoucher,
+		Payload: ipp.IPPVoucherV1{
+			ReceivingAddress:  "0xReceivingAddressPlaceholder",
+			PaymentCommitment: "0xPaymentCommitmentPlaceholder",
+			TokenAddress:      "0xTokenAddressPlaceholder",
+			Operator:          "0xOperatorPlaceholder",
+			Amount:            "100000000",
+			Nonce:             "0xNoncePlaceholder",
+			NullifierKey:      "0xNullifierKeySecretPlaceholder",
+			TreeID:            "42",
+			Endpoint:          "https://pay.merchant.com",
+		},
+	}
+}
+
+func TestVoucherToWithdrawRequest_Fields(t *testing.T) {
+	v := withdrawRequestFixtureVoucher()
+	req := VoucherToWithdrawRequest(v)
+
+	if req.Network != v.Network {
+		t.Errorf("Network = %q, want envelope value %q", req.Network, v.Network)
+	}
+	if req.Operator != v.Payload.Operator {
+		t.Errorf("Operator = %q, want %q", req.Operator, v.Payload.Operator)
+	}
+	if req.TokenAddress != v.Payload.TokenAddress {
+		t.Errorf("TokenAddress = %q, want %q", req.TokenAddress, v.Payload.TokenAddress)
+	}
+	if req.TreeID != v.Payload.TreeID {
+		t.Errorf("TreeID = %q, want %q", req.TreeID, v.Payload.TreeID)
+	}
+	if len(req.PaymentCommitments) != 1 || req.PaymentCommitments[0] != v.Payload.PaymentCommitment {
+		t.Errorf("PaymentCommitments = %v, want [%q]", req.PaymentCommitments, v.Payload.PaymentCommitment)
+	}
+}
+
+func TestVoucherToWithdrawRequest_WireShape(t *testing.T) {
+	v := withdrawRequestFixtureVoucher()
+	req := VoucherToWithdrawRequest(v)
+
+	b, err := json.Marshal(req)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var m map[string]json.RawMessage
+	if err := json.Unmarshal(b, &m); err != nil {
+		t.Fatal(err)
+	}
+	keys := make([]string, 0, len(m))
+	for k := range m {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+
+	want := []string{"network", "operator", "payment_commitments", "token_address", "tree_id"}
+	if len(keys) != len(want) {
+		t.Fatalf("wire keys = %v, want exactly %v", keys, want)
+	}
+	for i := range want {
+		if keys[i] != want[i] {
+			t.Fatalf("wire keys = %v, want exactly %v", keys, want)
+		}
+	}
 }

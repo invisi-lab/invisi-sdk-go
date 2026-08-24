@@ -62,13 +62,18 @@ func VerifyVoucher(voucher ipp.IPPVoucher, receivingAddress common.Address, chai
 }
 
 // VoucherToWithdrawRequest maps voucher payload to the withdraw request body.
+// Network, Operator, and TokenAddress form the (chain, operator, token) instance
+// triple the server needs to route the request. Network comes from the voucher
+// envelope (CAIP-2 chain id) — IPPVoucherV1 carries no network field of its own.
 // IdentityCommitment is omitted (server-advisory — the server locates leaves by
 // payment commitments). ReceivingAddress and nullifierKey stay client-side (local
 // proof generation), never in the request.
 func VoucherToWithdrawRequest(voucher ipp.IPPVoucher) ipp.WithdrawRequest {
 	p := voucher.Payload
 	return ipp.WithdrawRequest{
+		Network:            voucher.Network,
 		TokenAddress:       p.TokenAddress,
+		Operator:           p.Operator,
 		TreeID:             p.TreeID,
 		PaymentCommitments: []string{p.PaymentCommitment},
 	}
