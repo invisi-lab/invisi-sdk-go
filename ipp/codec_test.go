@@ -58,6 +58,9 @@ func TestVoucherRoundtripJSON(t *testing.T) {
 	if got.Payload.NullifierKey != v.Payload.NullifierKey {
 		t.Error("nullifierKey mismatch")
 	}
+	if got.Payload.Endpoint != v.Payload.Endpoint {
+		t.Errorf("endpoint mismatch: got %q, want %q", got.Payload.Endpoint, v.Payload.Endpoint)
+	}
 }
 
 func TestVoucherRoundtripCompact(t *testing.T) {
@@ -70,12 +73,74 @@ func TestVoucherRoundtripCompact(t *testing.T) {
 	if got.Payload.Operator != v.Payload.Operator {
 		t.Error("operator mismatch")
 	}
+	if got.Payload.Endpoint != v.Payload.Endpoint {
+		t.Errorf("endpoint mismatch: got %q, want %q", got.Payload.Endpoint, v.Payload.Endpoint)
+	}
 }
 
 func TestDecodeVoucherRejectsRequest(t *testing.T) {
 	encoded, _ := Encode(sampleRequest(), FormatJSON)
 	if _, err := DecodeVoucher(encoded); err == nil {
 		t.Error("expected error decoding a request as voucher")
+	}
+}
+
+// TestEncodeVoucherMissingEndpoint verifies EncodeVoucher rejects a voucher
+// with an empty Endpoint by calling ValidateIPPVoucher before serializing,
+// mirroring how Encode calls ValidateIPPRequest for requests.
+func TestEncodeVoucherMissingEndpoint(t *testing.T) {
+	v := sampleVoucher()
+	v.Payload.Endpoint = ""
+	if _, err := EncodeVoucher(v, FormatCompact); err == nil {
+		t.Fatal("expected error encoding voucher with missing endpoint (compact)")
+	} else if !strings.Contains(err.Error(), "endpoint") {
+		t.Errorf("error = %q, want mention of endpoint", err.Error())
+	}
+	if _, err := EncodeVoucher(v, FormatJSON); err == nil {
+		t.Fatal("expected error encoding voucher with missing endpoint (json)")
+	} else if !strings.Contains(err.Error(), "endpoint") {
+		t.Errorf("error = %q, want mention of endpoint", err.Error())
+	}
+}
+
+// TestDecodeVoucherMissingEndpointJSON verifies DecodeVoucher enforces
+// ValidateIPPVoucher on the JSON decode path: a hand-written envelope that
+// omits the payload's "endpoint" field must be rejected.
+func TestDecodeVoucherMissingEndpointJSON(t *testing.T) {
+	const missingEndpointJSON = `{"v":1,"network":"eip155:84532","type":"voucher",` +
+		`"payload":{"receiving_address":"0xabc","payment_commitment":"0xdef",` +
+		`"token_address":"0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",` +
+		`"operator":"0x1234567890123456789012345678901234567890",` +
+		`"amount":"100000000","nonce":"0x123","nullifier_key":"0x456","tree_id":"1"}}`
+
+	_, err := DecodeVoucher(missingEndpointJSON)
+	if err == nil {
+		t.Fatal("expected error decoding voucher JSON with missing endpoint")
+	}
+	if !strings.Contains(err.Error(), "endpoint") {
+		t.Errorf("error = %q, want mention of endpoint", err.Error())
+	}
+}
+
+// TestDecodeVoucherMissingEndpointCompact verifies DecodeVoucher enforces
+// ValidateIPPVoucher on the compact decode path. The invalid envelope is built
+// via encodeEnvelope directly (bypassing EncodeVoucher's own validation) so we
+// can construct a wire string that should never be produced by this SDK but
+// must still be rejected on decode (e.g. one emitted by a buggy peer).
+func TestDecodeVoucherMissingEndpointCompact(t *testing.T) {
+	v := sampleVoucher()
+	v.Payload.Endpoint = ""
+	encoded, err := encodeEnvelope(v.V, v, FormatCompact)
+	if err != nil {
+		t.Fatalf("encodeEnvelope: %v", err)
+	}
+
+	_, err = DecodeVoucher(encoded)
+	if err == nil {
+		t.Fatal("expected error decoding voucher compact with missing endpoint")
+	}
+	if !strings.Contains(err.Error(), "endpoint") {
+		t.Errorf("error = %q, want mention of endpoint", err.Error())
 	}
 }
 
@@ -291,7 +356,7 @@ func TestWireKeysSnakeCase(t *testing.T) {
 	// Keys that must appear as snake_case in the payload object.
 	snakeKeys := []string{
 		`"tree_id"`, `"receiving_address"`, `"payment_commitment"`,
-		`"token_address"`, `"nullifier_key"`,
+		`"token_address"`, `"nullifier_key"`, `"endpoint"`,
 	}
 	for _, k := range snakeKeys {
 		if !strings.Contains(jsonPayload, k) {

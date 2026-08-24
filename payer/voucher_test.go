@@ -2,6 +2,7 @@ package payer
 
 import (
 	"math/big"
+	"strings"
 	"testing"
 
 	"github.com/invisi-lab/invisi-sdk-go/ipp"
@@ -46,17 +47,13 @@ func TestBuildVoucher(t *testing.T) {
 	}
 }
 
-// TestBuildVoucherMissingEndpoint documents current behavior when Endpoint is
-// omitted: BuildVoucher performs pure local assembly with no field-presence
-// validation (it only guards against a nil Amount), and EncodeVoucher does not
-// yet call any voucher validator (unlike Encode, which calls ValidateIPPRequest).
-// So today this path assembles and encodes an Endpoint-less voucher without
-// error. This is a known, temporary gap: a parallel task chain is adding
-// ipp.ValidateIPPVoucher and wiring it into EncodeVoucher/DecodeVoucher, at
-// which point a missing Endpoint will start failing at the EncodeVoucher step.
-// This test pins today's actual behavior so it fails loudly (rather than
-// silently going stale) once that validation lands, forcing this test to be
-// updated to assert the new error path.
+// TestBuildVoucherMissingEndpoint documents the split of responsibilities for a
+// missing Endpoint: BuildVoucher performs pure local assembly with no
+// field-presence validation (it only guards against a nil Amount), so it still
+// assembles an Endpoint-less voucher without error. EncodeVoucher, however,
+// calls ipp.ValidateIPPVoucher before serializing (mirroring how ipp.Encode
+// calls ipp.ValidateIPPRequest for requests), so encoding that same
+// Endpoint-less voucher fails with an error mentioning "endpoint".
 func TestBuildVoucherMissingEndpoint(t *testing.T) {
 	v, err := BuildVoucher(BuildVoucherParams{
 		Network:           "eip155:84532",
@@ -77,7 +74,11 @@ func TestBuildVoucherMissingEndpoint(t *testing.T) {
 		t.Fatalf("expected empty Endpoint, got %q", v.Payload.Endpoint)
 	}
 
-	if _, err := ipp.EncodeVoucher(v, ipp.FormatCompact); err != nil {
-		t.Fatalf("EncodeVoucher unexpectedly errored on missing Endpoint: %v", err)
+	_, err = ipp.EncodeVoucher(v, ipp.FormatCompact)
+	if err == nil {
+		t.Fatal("expected EncodeVoucher to reject a voucher with missing Endpoint")
+	}
+	if !strings.Contains(err.Error(), "endpoint") {
+		t.Errorf("error = %q, want mention of endpoint", err.Error())
 	}
 }

@@ -116,6 +116,9 @@ func Decode(encoded string) (IPPRequest, error) {
 // EncodeVoucher mirrors Encode for IPPVoucher; request vs voucher is the "type"
 // field inside the envelope, not the format or any wire prefix.
 func EncodeVoucher(v IPPVoucher, format Format) (string, error) {
+	if err := ValidateIPPVoucher(v); err != nil {
+		return "", err
+	}
 	return encodeEnvelope(v.V, v, format)
 }
 
@@ -128,6 +131,11 @@ func DecodeVoucher(encoded string) (IPPVoucher, error) {
 	if v.Type != MessageTypeVoucher {
 		return IPPVoucher{}, fmt.Errorf("ipp: expected type %q, got %q", MessageTypeVoucher, v.Type)
 	}
+
+	if err := ValidateIPPVoucher(v); err != nil {
+		return IPPVoucher{}, err
+	}
+
 	return v, nil
 }
 
