@@ -11,11 +11,12 @@ import (
 
 // VerifyVoucher confirms the voucher binds funds to the receiver's own address
 // and is internally consistent. MUST pass before withdraw.
-// chainID is accepted for API compatibility but the authoritative chain ID is
-// always derived from voucher.Network via CAIP-2 parsing.
+// The chain ID is always taken from voucher.Network (CAIP-2), so recomputing
+// PaymentCommitment against it also verifies the envelope's network field is
+// unaltered — a tampered Network makes the recomputed commitment mismatch.
 // The voucher carries ReceivingAddress directly; identityCommitment is recomputed
 // locally from ReceivingAddress + NullifierKey (one-way hash — not reversible).
-func VerifyVoucher(voucher ipp.IPPVoucher, receivingAddress common.Address, chainID *big.Int) (bool, error) {
+func VerifyVoucher(voucher ipp.IPPVoucher, receivingAddress common.Address) (bool, error) {
 	p := voucher.Payload
 
 	derivedChainID, err := ipp.CAIP2ToChainID(voucher.Network)

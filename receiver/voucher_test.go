@@ -2,7 +2,6 @@ package receiver
 
 import (
 	"encoding/json"
-	"math/big"
 	"sort"
 	"strings"
 	"testing"
@@ -45,7 +44,7 @@ func makeVoucher(t *testing.T, recv common.Address) ipp.IPPVoucher {
 
 func TestVerifyVoucher_OK(t *testing.T) {
 	recv := common.HexToAddress("0x00000000000000000000000000000000DeaD0000")
-	ok, err := VerifyVoucher(makeVoucher(t, recv), recv, big.NewInt(84532))
+	ok, err := VerifyVoucher(makeVoucher(t, recv), recv)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -57,7 +56,7 @@ func TestVerifyVoucher_OK(t *testing.T) {
 func TestVerifyVoucher_WrongAddress(t *testing.T) {
 	recv := common.HexToAddress("0x00000000000000000000000000000000DeaD0000")
 	other := common.HexToAddress("0x00000000000000000000000000000000bEEf0000")
-	ok, _ := VerifyVoucher(makeVoucher(t, recv), other, big.NewInt(84532))
+	ok, _ := VerifyVoucher(makeVoucher(t, recv), other)
 	if ok {
 		t.Error("expected rejection for wrong receiving address")
 	}
@@ -67,7 +66,7 @@ func TestVerifyVoucher_TamperedAmount(t *testing.T) {
 	recv := common.HexToAddress("0x00000000000000000000000000000000DeaD0000")
 	v := makeVoucher(t, recv)
 	v.Payload.Amount = "999"
-	ok, _ := VerifyVoucher(v, recv, big.NewInt(84532))
+	ok, _ := VerifyVoucher(v, recv)
 	if ok {
 		t.Error("expected rejection for tampered amount")
 	}
@@ -172,5 +171,21 @@ func TestVoucherToWithdrawRequest_WireShape(t *testing.T) {
 		if keys[i] != want[i] {
 			t.Fatalf("wire keys = %v, want exactly %v", keys, want)
 		}
+	}
+}
+
+// TestVerifyVoucher_TamperedNetwork guards against a payer tampering with the
+// voucher envelope's Network field while the PaymentCommitment itself remains
+// genuine (computed under the original, untampered chain ID). Because the
+// authoritative chain ID is always re-derived from voucher.Network (not taken
+// from a caller-supplied argument), recomputing PaymentCommitment under the
+// tampered network yields a mismatch and VerifyVoucher must reject it.
+func TestVerifyVoucher_TamperedNetwork(t *testing.T) {
+	recv := common.HexToAddress("0x00000000000000000000000000000000DeaD0000")
+	v := makeVoucher(t, recv) // PaymentCommitment computed under chainId 84532
+	v.Network = "eip155:1"    // tamper: envelope now claims a different chain
+	ok, _ := VerifyVoucher(v, recv)
+	if ok {
+		t.Error("expected rejection for voucher with tampered envelope network")
 	}
 }
