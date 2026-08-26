@@ -5,16 +5,31 @@ import (
 	"fmt"
 )
 
-// The gateway wraps every REST 4xx/5xx in a Stripe-style nested envelope:
+// TWO envelope shapes are accepted, and both must stay accepted.
+//
+// The gateway emits a Stripe-style NESTED envelope (SPEC-057, every
+// /ipp/v1/* route):
 //
 //	{"error":{"type","code","message","param","request_id","details"}}
 //
-// Decoding therefore unwraps the outer {"error":{...}} layer first, then
-// populates a typed error selected by the inner `type` / HTTP status. A 4xx/5xx
-// body that does NOT parse as this envelope (or a transport failure before any
+// while 06-ipp/6.2 documents a FLAT one, which is what a third party
+// implementing an IPP endpoint from the prose will emit:
+//
+//	{"code","message","param"}
+//
+// Accepting only the nested shape threw away the machine code of every flat
+// answer, and 06-ipp/6.6 requires an unknown code to be propagated to the
+// caller rather than dropped — so a payer wallet silently lost the one field
+// that told it WHY a third-party receiver refused. Narrowing this back to one
+// shape reintroduces that.
+//
+// Only the SHAPE is negotiated here. `code` itself stays an open string: an
+// unrecognised value is surfaced verbatim, never mapped or rejected.
+//
+// A 4xx/5xx body matching neither shape (or a transport failure before any
 // response) is not an envelope error at all — it becomes a *ConnectionError.
 
-// errorEnvelope is the outer {"error":{...}} wrapper the gateway always emits.
+// errorEnvelope is the nested {"error":{...}} wrapper.
 type errorEnvelope struct {
 	Error envelopeBody `json:"error"`
 }
@@ -137,26 +152,42 @@ func (e *ConnectionError) Error() string {
 // Unwrap exposes the underlying transport error to errors.Is / errors.As.
 func (e *ConnectionError) Unwrap() error { return e.Err }
 
-// newEnvelopeError unwraps the nested {"error":{...}} envelope from a 4xx/5xx
-// response body and returns the typed error selected by the inner `type` and
-// HTTP status. If the body is not a parseable envelope (transport-level garbage
-// reached a 4xx/5xx path), it returns a *ConnectionError so callers never see a
-// half-populated envelope error.
-func newEnvelopeError(status int, body []byte) error {
-	var env errorEnvelope
-	if err := json.Unmarshal(body, &env); err != nil {
-		return &ConnectionError{
-			Message:    "4xx/5xx body is not a JSON error envelope",
-			StatusCode: status,
-			Raw:        body,
-			Err:        err,
+// parseErrorEnvelope reads the envelope out of a body in either accepted shape.
+//
+// Nested wins when present: the gateway's shape is the one in production, and a
+// body carrying both is its shape with stray siblings, not a flat envelope. A
+// FLAT body is recognised by a non-empty `code` and nothing else — 6.2 makes
+// `code` the required field, and requiring it is what keeps the old
+// `{"error":"some_string","message":"..."}` shape out. That one has no `code`,
+// so it stays a *ConnectionError; typing it would put the string "some_string"
+// nowhere and hand the caller an error with no machine code anyway.
+//
+// A document carrying none of the fields (`{}`, an unrelated object) is not the
+// contract in either shape: reported as a non-envelope body rather than
+// fabricating an empty typed error.
+func parseErrorEnvelope(body []byte) (envelopeBody, bool) {
+	var nested errorEnvelope
+	if err := json.Unmarshal(body, &nested); err == nil {
+		b := nested.Error
+		if b.Type != "" || b.Code != "" || b.Message != "" {
+			return b, true
 		}
 	}
-	// A well-formed JSON document that carries none of the envelope fields (e.g.
-	// `{}` or an unrelated object) is not the contract either — treat it as a
-	// non-envelope body rather than fabricating an empty typed error.
-	b := env.Error
-	if b.Type == "" && b.Code == "" && b.Message == "" {
+	var flat envelopeBody
+	if err := json.Unmarshal(body, &flat); err == nil && flat.Code != "" {
+		return flat, true
+	}
+	return envelopeBody{}, false
+}
+
+// newEnvelopeError reads the error envelope out of a 4xx/5xx response body in
+// either accepted shape and returns the typed error selected by `type` and HTTP
+// status. If the body matches neither shape (transport-level garbage reached a
+// 4xx/5xx path), it returns a *ConnectionError so callers never see a
+// half-populated envelope error.
+func newEnvelopeError(status int, body []byte) error {
+	b, ok := parseErrorEnvelope(body)
+	if !ok {
 		return &ConnectionError{
 			Message:    "4xx/5xx body did not contain an error envelope",
 			StatusCode: status,
