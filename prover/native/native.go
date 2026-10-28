@@ -1,4 +1,4 @@
-// Package native executes local witness generation and Barretenberg 5.2.1.
+// Package native executes local witness generation and Barretenberg 6.0.0.
 package native
 
 import (
@@ -66,6 +66,11 @@ func (p *NativeProver) run(ctx context.Context, args ...string) ([]byte, error) 
 	defer cancel()
 	cmd := exec.CommandContext(ctx, p.options.BBBinary, args...)
 	cmd.Env = append(os.Environ(), fmt.Sprintf("HARDWARE_CONCURRENCY=%d", p.options.Threads))
+	// BB 6 fast MSM aborts for the production 12-member aggregate on Darwin arm64.
+	// Select its upstream stable MSM implementation without changing proof semantics.
+	if _, configured := os.LookupEnv("BB_MSM_LEGACY"); !configured {
+		cmd.Env = append(cmd.Env, "BB_MSM_LEGACY=1")
+	}
 	var diagnostic boundedOutput
 	cmd.Stdout, cmd.Stderr = &diagnostic, &diagnostic
 	e := cmd.Run()
@@ -86,8 +91,8 @@ func (p *NativeProver) version(ctx context.Context) error {
 	if e != nil {
 		return e
 	}
-	if !regexp.MustCompile(`(?:^|\s)5\.2\.1(?:\s|$)`).Match(out) {
-		return errors.New("Barretenberg 5.2.1 is required")
+	if !regexp.MustCompile(`(?:^|\s)6\.0\.0(?:\s|$)`).Match(out) {
+		return errors.New("Barretenberg 6.0.0 is required")
 	}
 	return nil
 }
@@ -217,7 +222,7 @@ func (p *NativeProver) Prove(ctx context.Context, request prover.ProvingRequest,
 	if e = json.Unmarshal(raw, &proof); e != nil {
 		return bundle, e
 	}
-	if proof.BBVersion != "5.2.1" || proof.Scheme != "ultra_honk" || len(proof.Proof) == 0 {
+	if proof.BBVersion != "6.0.0" || proof.Scheme != "ultra_honk" || len(proof.Proof) == 0 {
 		return bundle, errors.New("unsupported native proof output")
 	}
 	var public struct {
@@ -230,7 +235,7 @@ func (p *NativeProver) Prove(ctx context.Context, request prover.ProvingRequest,
 	if e = json.Unmarshal(raw, &public); e != nil {
 		return bundle, e
 	}
-	bundle = prover.ProofBundle{FormatVersion: 1, CircuitName: request.CircuitName, Target: request.Target, BBVersion: "5.2.1", ArtifactSHA256: request.ArtifactSHA256, VKSHA256: request.VKSHA256}
+	bundle = prover.ProofBundle{FormatVersion: 1, CircuitName: request.CircuitName, Target: request.Target, BBVersion: "6.0.0", ArtifactSHA256: request.ArtifactSHA256, VKSHA256: request.VKSHA256}
 	for _, value := range proof.Proof {
 		v, e := word(value)
 		if e != nil {

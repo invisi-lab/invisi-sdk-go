@@ -51,7 +51,7 @@ func registrationRequest(t *testing.T) prover.ProvingRequest {
 func TestRealOfficialWitnessExecutor(t *testing.T) {
 	binary := os.Getenv("NOIR_EXECUTE_PATH")
 	if binary == "" {
-		t.Skip("set NOIR_EXECUTE_PATH to Noir 1.0.0-rc.4 noir-execute")
+		t.Skip("set NOIR_EXECUTE_PATH to Noir 1.0.0-rc.6 noir-execute")
 	}
 	scratch := t.TempDir()
 	t.Setenv("TMPDIR", scratch)

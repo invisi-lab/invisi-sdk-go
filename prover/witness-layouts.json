@@ -1,9 +1,9 @@
 {
   "transact_user_slots14": {
-    "artifactSha256": "2a6a20839e90b88b1ecd629f59a01821bad3ee11dbe04db1fd9cdce7a3de0e84",
+    "artifactSha256": "486a749ae3944ae83a7ff2d298e7469b18737d88553a7d99c4782f22f7332996",
     "keys": {
-      "evm": "ffe0e1a4e690792ecb4eb1fc1acc9ff60f13d3b5af03cfc6ae6d6bf26e99bdea",
-      "noir-recursive": "8fd94d39491615e178a2bac38a3c125eb0ba536e7e8653a01d81d3c93b9ce788"
+      "evm": "7b3e65d5201246e733a1816489d80acb219a98e8606e1b81e6d48ff0c1fd537a",
+      "noir-recursive": "148957e28e6339a8ce1121851fb7a232e31f4c5b741e415733b8d627f4b62649"
     },
     "publicInputCount": 57,
     "public": [
@@ -112,9 +112,9 @@
     ]
   },
   "transact_user_slots56": {
-    "artifactSha256": "ba83ec2f177d16fa88ea04bc54f2e99920f1ac195cdb05b88b9b3bbc245fd953",
+    "artifactSha256": "169db2ff23c15adb14756edf9bb99bbd343df807b3e1c7f1f510070897e653cf",
     "keys": {
-      "evm": "6ad5d3aff0c72a632fb19895658af093a6a92478a9994985e838a71e61237720"
+      "evm": "cbf54de94bff266bf846f9722c0f3ffa1fb7a0f9f478466f193de0e9123ce7f5"
     },
     "publicInputCount": 183,
     "public": [
@@ -223,9 +223,9 @@
     ]
   },
   "transact_user_slots112": {
-    "artifactSha256": "713b78469b6e97711122210f8497942120c1c9d66d3604bc184566c4eba59cc3",
+    "artifactSha256": "221bbbd6ff0c7d7dec74677e52484f082b3e176bb0fa47f3236064e396d73739",
     "keys": {
-      "evm": "d6a46e297949c28b9a62fd9aef1f202870fdca97b8bfb15beefd27b9e9f3d86e"
+      "evm": "67b2d361b023f193ecdb5a9aefbe2840349ee5ce848ab4101416734f3a7e91e9"
     },
     "publicInputCount": 351,
     "public": [
@@ -334,9 +334,9 @@
     ]
   },
   "transact_user_slots168": {
-    "artifactSha256": "f7b3b1384e961367702f544299ca3521d8205fac31b7691c45ff84325d5a31c3",
+    "artifactSha256": "d479253eaaacc973806a84e142e2362d873bba0f150ce050d32b8d9b2947adc8",
     "keys": {
-      "evm": "e00181533d7e35d2307570528f9e7f8f88e2909b6ae338d93373b608dea96881"
+      "evm": "c50e72b0718c6393f82f5a67e248ba093d0db56ece42bbf092da93e9369c2624"
     },
     "publicInputCount": 519,
     "public": [
@@ -445,9 +445,9 @@
     ]
   },
   "transact_aggregate_14_4": {
-    "artifactSha256": "e84d04147ddd9c85c08ef60b06a05b164d2783da117a454c78d3ab869cec7205",
+    "artifactSha256": "4fe7c63fb80cba35af4c4525fbabcfb75033286e681afbdcb3fb043c03456246",
     "keys": {
-      "evm": "7f890b71677e1665e523d168fb8cd70e71956dcc994449d6d4be3c0819f95bb6"
+      "evm": "664d4ff0de6b8c876ce990ea368d7a59cee411463c24dd5621d64c8949554674"
     },
     "publicInputCount": 229,
     "public": [
@@ -469,9 +469,9 @@
     ]
   },
   "transact_aggregate_14_8": {
-    "artifactSha256": "59fbc35adf3e966183a7c12681b70c8f8543cfdea9d7b0693db3f8a2944bfb1f",
+    "artifactSha256": "0a266ad4bb4c6dce42b1e851fcbb34b1becae1edd6bf6af82d7b9ed7184576df",
     "keys": {
-      "evm": "349013353e22b705dbcfe5ff8083e7aa9b05b84cc50999688f34eb264fa20b3a"
+      "evm": "042139122d0eee8beeaa9c18397276fa5a2872218495fa16ca438fbdd80fa3e1"
     },
     "publicInputCount": 457,
     "public": [
@@ -493,9 +493,9 @@
     ]
   },
   "transact_aggregate_14_12": {
-    "artifactSha256": "8225b3e6c5b3618c92e3d00690dc0ed7c78c7e824136a2cda71eff8520382806",
+    "artifactSha256": "738849e83eb4a78eb69cb6e20a86f6f27ba3784d04a83abd338f84de5c20d7d2",
     "keys": {
-      "evm": "6e779c52c31a0eb0eb9d519ec5eab74ecd236641b953b6d853e82209cb41f4b1"
+      "evm": "539928b264aea4d07a41e772d5d5a7b7666a6883decb985c27ca7422e7f8ea1f"
     },
     "publicInputCount": 685,
     "public": [
@@ -517,9 +517,9 @@
     ]
   },
   "create_credit": {
-    "artifactSha256": "ab97cd5a036851a9748a5cfd8e6f9834e23090c8e95db4531aabfc37d3abb353",
+    "artifactSha256": "078c6d2da1ed2d6bd27fab28af9970261fe626a0b22ae56ad170e5d15b1b05ba",
     "keys": {
-      "evm": "fac0e65b768a28750323cca851990598af936611125b6cfa3f5c16b04c7d084f"
+      "evm": "8285456447e92833a4fa9c330b9c667a3a1b9e48649578082041b9738f037c8f"
     },
     "publicInputCount": 46,
     "public": [
@@ -639,7 +639,7 @@
     ]
   },
   "credit_draw_slots1": {
-    "artifactSha256": "f5e458790948f37a61a833fad52cf2cc3b26a59515d271de32e0caaa4e229eb5",
+    "artifactSha256": "2b9da9d3d1dbd411d9be1bbe2b34305ac5dce7c7d18e3857d8e2be7dd9bf7c21",
     "keys": {
       "evm": "613699a440f50a0937e4c57e5152b5fdea42c31b10157d6b93226fef313df553"
     },
@@ -753,9 +753,9 @@
     ]
   },
   "credit_draw_slots12": {
-    "artifactSha256": "049fb61010666f644fb7dfa915fff7e58d6d244abe3d8d2dae17d6614904ec28",
+    "artifactSha256": "92b741e161a99c05b8810bc24cee6bafc1cebc85347ea47fe511ee6c8f7065be",
     "keys": {
-      "evm": "a07e3fe772b3605121b3ece4710250f323a06a9ee2dc3e360ccaee3e82fc8013"
+      "evm": "a5ae214784fe6e523977ef4e283a6d217fc3f4ec0c5a40effb275693a74ee5ce"
     },
     "publicInputCount": 84,
     "public": [
@@ -867,9 +867,9 @@
     ]
   },
   "credit_draw_slots50": {
-    "artifactSha256": "03323dd7f98b352593cde0541c25c06c1e2be5d2139ca43c4898b5fee51726d1",
+    "artifactSha256": "9c6a23d5dbca3a1aeed461c908f228e89642550775cbc519d633bb1c984a3d04",
     "keys": {
-      "evm": "52c67c2c382e2976164c208d26a7db607878284dc15ae918a5eeb252eb8bf6fb"
+      "evm": "f0b192e2cb312148c7a16fae3acaed9efb01b0c6a1b381ce03468f00b4ef0f2a"
     },
     "publicInputCount": 312,
     "public": [
@@ -981,9 +981,9 @@
     ]
   },
   "credit_draw_slots120": {
-    "artifactSha256": "ed8ada393aec762e9472923c5053d0219627d5db37301ffac7fafe10b45767bc",
+    "artifactSha256": "69686a4f0a8a98d8cef06485b0de1804ca2e8f47ce0244287a03ceef4d67625a",
     "keys": {
-      "evm": "da562564c9ca462bee4f78a33a36b7ab5f6f5e92e5c6ba91c698e3ce2b93d7af"
+      "evm": "6f32ca89775f332a9193af9b1e25641ef14fda9fbdd2685c33ee775d3c170b92"
     },
     "publicInputCount": 732,
     "public": [
@@ -1095,7 +1095,7 @@
     ]
   },
   "credit_cancel": {
-    "artifactSha256": "d332453a2b8c2c544747ac8d5f01912c9757f48d986226fd6a9b0e24d8321474",
+    "artifactSha256": "ff278a04f22d2886c9f27f7785a0b8fc317dd242fd4aa9d0d9398d18b7513daf",
     "keys": {
       "evm": "1f8a3c20cb081d6a90962556da3124919cc4e5675e59ad31562af39299da02fb"
     },
@@ -1172,9 +1172,9 @@
     ]
   },
   "credit_top_up": {
-    "artifactSha256": "ee9dbcf8be6f6c09478190996e90b1d39d4a10a00245950f69fc1d2c329c6e9b",
+    "artifactSha256": "fbe662363d9814983f7940f74369117cd6c84783945fbf527b0ed48d011b58a4",
     "keys": {
-      "evm": "0c369fec0469b60baebb3be650bad42f3ccae6f0ff139cce6ad9a3f451ed7513"
+      "evm": "44436f31414497a708355426da051ee48ba63fdebcb6cfd72347c37c34c98c50"
     },
     "publicInputCount": 50,
     "public": [
@@ -1318,7 +1318,7 @@
     ]
   },
   "wallet_registration": {
-    "artifactSha256": "9db74eeb49ca7fef5e5f0dbe426bdb10964ac1c6ecd56fc2b7ca8d64fb77a320",
+    "artifactSha256": "65c3d429f6bc9735af3136f7c383214c2eb222cd32655791f37f7ae5dd428048",
     "keys": {
       "evm": "b8171bdb558489c75293ee71f64c1ac534f533ae3b3f71107378e46dbd93dd48"
     },

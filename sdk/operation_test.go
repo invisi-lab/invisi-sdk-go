@@ -82,7 +82,7 @@ func (p *testProver) Prove(_ context.Context, r prover.ProvingRequest, _ prover.
 	if p.alter {
 		inputs[0] = common.Hash{}
 	}
-	return prover.ProofBundle{FormatVersion: 1, CircuitName: r.CircuitName, Target: r.Target, BBVersion: "5.2.1", ArtifactSHA256: r.ArtifactSHA256, VKSHA256: r.VKSHA256, Proof: proof, ProofSHA256: hex.EncodeToString(hash[:]), PublicInputs: inputs}, nil
+	return prover.ProofBundle{FormatVersion: 1, CircuitName: r.CircuitName, Target: r.Target, BBVersion: "6.0.0", ArtifactSHA256: r.ArtifactSHA256, VKSHA256: r.VKSHA256, Proof: proof, ProofSHA256: hex.EncodeToString(hash[:]), PublicInputs: inputs}, nil
 }
 func (p *testProver) Verify(context.Context, prover.ProofBundle, prover.ProofStatement, prover.Options) (bool, error) {
 	return true, nil

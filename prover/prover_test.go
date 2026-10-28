@@ -1,6 +1,8 @@
 package prover
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"strings"
 	"testing"
@@ -47,7 +49,7 @@ func TestUnpublishedTargetAndWrongStatementWidthRejected(t *testing.T) {
 }
 
 func TestProofBundleUsesTypeScriptExchangeFormat(t *testing.T) {
-	original := ProofBundle{FormatVersion: 1, CircuitName: "wallet_registration", Target: "evm", BBVersion: "5.2.1", Proof: []byte{0x12, 0x34}, PublicInputs: []common.Hash{common.HexToHash("0x01")}}
+	original := ProofBundle{FormatVersion: 1, CircuitName: "wallet_registration", Target: "evm", BBVersion: "6.0.0", Proof: []byte{0x12, 0x34}, PublicInputs: []common.Hash{common.HexToHash("0x01")}}
 	raw, err := json.Marshal(original)
 	if err != nil {
 		t.Fatal(err)
@@ -61,5 +63,22 @@ func TestProofBundleUsesTypeScriptExchangeFormat(t *testing.T) {
 	}
 	if common.Bytes2Hex(decoded.Proof) != "1234" || decoded.PublicInputs[0] != original.PublicInputs[0] {
 		t.Fatal("proof exchange changed bytes")
+	}
+}
+
+func TestProofBundleRejectsPreviousBBVersion(t *testing.T) {
+	statement, err := Statement("wallet_registration", "evm", make([]common.Hash, 3))
+	if err != nil {
+		t.Fatal(err)
+	}
+	proof := make([]byte, 32)
+	digest := sha256.Sum256(proof)
+	bundle := ProofBundle{FormatVersion: 1, CircuitName: statement.CircuitName, Target: statement.Target, BBVersion: "6.0.0", ArtifactSHA256: statement.ArtifactSHA256, VKSHA256: statement.VKSHA256, Proof: proof, ProofSHA256: hex.EncodeToString(digest[:]), PublicInputs: statement.ExpectedPublicInputs}
+	if err := AssertProofBundle(bundle, statement); err != nil {
+		t.Fatal(err)
+	}
+	bundle.BBVersion = "5.2.1"
+	if err := AssertProofBundle(bundle, statement); err == nil {
+		t.Fatal("previous BB proof accepted")
 	}
 }

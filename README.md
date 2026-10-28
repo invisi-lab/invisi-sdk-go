@@ -80,7 +80,7 @@ Go uses exported names, `context.Context`, explicit errors and `*big.Int` amount
 | `protocol/contracts` | Generated bindings for the exact shared ABI |
 | `rpc` | Protocol RPC discovery, deployment metadata, candidates and authenticated membership |
 | `prover` | Local witness boundary, pinned proof statements and aggregation |
-| `prover/native` | Local BB 5.2.1 generation and verification with authenticated circuit resources |
+| `prover/native` | Local BB 6.0.0 generation and verification with authenticated circuit resources |
 
 Chain RPC supplies blocks, canonical receipts, contract reads and transaction submission. Protocol RPC supplies public history, candidate filtering and membership paths. The SDK decrypts and verifies candidates, saves only its own wallet state, reserves inputs and authorizes local proofs. It has no public-tree implementation, full-chain scanner, IPP transport, payer/receiver packages or legacy compatibility layer.
 
@@ -161,9 +161,9 @@ The application owns reservations, concurrency across processes, operation persi
 
 `prover.Prover` matches the TS SDK's `prove`/`verify` boundary. Progress phases are `witness`, `proving`, `verifying` and `complete`; cancellation uses the Go context. Proofs are bound to the circuit, artifact hash, VK hash, target, exact public inputs, BB version and proof digest. Proof bundle JSON uses the same lower-camel-case fields and `proofHex` encoding as TS. Circuit resources and verification keys are authenticated against the shared TS release.
 
-`native.NewNativeProver(native.NativeOptions{})` uses the official `noir-execute` 1.0.0-rc.4 and BB 5.2.1 executables from PATH. `Prove` runs witness execution, proving and independent verification locally; applications do not need to implement a witness executor. `Verify` requires only BB. There is no Node, TS SDK or source/compiler dependency at runtime.
+`native.NewNativeProver(native.NativeOptions{})` uses the official `noir-execute` 1.0.0-rc.6 and BB 6.0.0 executables from PATH. `Prove` runs witness execution, proving and independent verification locally; applications do not need to implement a witness executor. `Verify` requires only BB. There is no Node, TS SDK or source/compiler dependency at runtime.
 
-Install the matching executables from the official [Noir release](https://github.com/noir-lang/noir/releases/tag/v1.0.0-rc.4) and [Barretenberg release](https://github.com/AztecProtocol/aztec-packages/releases/tag/v5.2.1). These are local tool dependencies, similar to the TS native prover's BB requirement. The SDK checks tool versions and authenticated release assets before execution; it never downloads or upgrades tools automatically. Existing tool installations are not modified.
+Install the matching executables from the official [Noir release](https://github.com/noir-lang/noir/releases/tag/v1.0.0-rc.6) and [Barretenberg release](https://github.com/AztecProtocol/aztec-packages/releases/tag/v6.0.0). These are local tool dependencies, similar to the TS native prover's BB requirement. The SDK checks tool versions and authenticated release assets before execution; it never downloads or upgrades tools automatically. Existing tool installations are not modified.
 
 ```go
 import "github.com/invisi-lab/invisi-sdk-go/prover/native"

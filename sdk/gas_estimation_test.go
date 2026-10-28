@@ -10,6 +10,8 @@ import (
 	"testing"
 )
 
+// BB 6 circuit keys do not match the historical BB 5 measurements, so
+// preparation uses the existing conservative family reference.
 func TestPreparedGasReferenceBeforeProvingWithoutStore(t *testing.T) {
 	invisi, input, backend := explicitFixture(t)
 	prepared, err := invisi.PrepareTransfer(context.Background(), input)
@@ -20,7 +22,7 @@ func TestPreparedGasReferenceBeforeProvingWithoutStore(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if reference.GasUnits != 1617512 {
+	if reference.GasUnits != 1617516 {
 		t.Fatalf("TS reference mismatch: %+v", reference)
 	}
 	if len(backend.requests) != 0 {
@@ -42,7 +44,7 @@ func TestManagedGasReferenceMatchesExplicit(t *testing.T) {
 		t.Fatal(err)
 	}
 	reference, err := operation.EstimateGas()
-	if err != nil || reference.GasUnits != 1617512 {
+	if err != nil || reference.GasUnits != 1617516 {
 		t.Fatalf("%+v %v", reference, err)
 	}
 }
@@ -205,7 +207,7 @@ func TestCustomGasProfileIsSnapshottedAndUsedOnlyForExactMatch(t *testing.T) {
 		t.Fatal(err)
 	}
 	again, err = prepared.EstimateGas()
-	if err != nil || again.GasUnits != 1617512 {
+	if err != nil || again.GasUnits != 1617516 {
 		t.Fatalf("unmatched team profile used: %+v %v", again, err)
 	}
 }
