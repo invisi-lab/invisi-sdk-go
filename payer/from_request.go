@@ -2,78 +2,66 @@ package payer
 
 import (
 	"fmt"
-
 	"github.com/ethereum/go-ethereum/common"
-
 	"github.com/invisi-lab/invisi-sdk-go/core"
 	"github.com/invisi-lab/invisi-sdk-go/ipp"
+	"math/big"
 )
 
-// BuildPaymentFromRequest bridges an ipp.IPPRequest to payment calldata.
-//
-// Flow:
-//  1. Parse chainId from request.Network (CAIP-2)
-//  2. Verify the provided paymentCommitment matches the request parameters
-//  3. Build payOpen calldata using the request's identity commitment, token, treeId
-//
-// This is the main integration point for payer applications receiving IPP payment requests.
-func BuildPaymentFromRequest(params BuildFromRequestParams) (*BuildFromRequestResult, error) {
-	if params.Amount == nil {
-		return nil, fmt.Errorf("payer: Amount is required")
+type BuildShieldFromRequestParams struct {
+	Request               ipp.IPPRequest
+	Nonce, NoteCommitment common.Hash
+	Amount                *big.Int
+	ProtocolAddress       common.Address
+	Deadline              *big.Int
+	Ciphertext            []byte
+	Funding               FundingParams
+	Caller                *common.Address
+}
+
+func BuildShieldFromRequest(p BuildShieldFromRequestParams) (*Calldata, error) {
+	if err := ipp.ValidateIPPRequest(p.Request); err != nil {
+		return nil, err
 	}
-
-	// Step 1: Parse chainId from CAIP-2 network string
-	chainID, err := ipp.CAIP2ToChainID(params.Request.Network)
-	if err != nil {
-		return nil, fmt.Errorf("payer: invalid network: %w", err)
+	allowed := false
+	for _, t := range p.Request.Payload.PaymentTypes {
+		if t == ipp.PaymentTypeOpen {
+			allowed = true
+		}
 	}
-
-	p := params.Request.Payload
-
-	// Step 2: Verify paymentCommitment
-	icHash := common.HexToHash(p.IdentityCommitment)
-	tokenAddr := common.HexToAddress(p.TokenAddress)
-
-	valid, err := VerifyPaymentCommitment(VerifyParams{
-		IdentityCommitment: icHash,
-		TokenAddress:       tokenAddr,
-		Amount:             params.Amount,
-		Nonce:              params.Nonce,
-		PaymentCommitment:  params.PaymentCommitment,
-		ChainID:            chainID,
-	})
+	if !allowed {
+		return nil, fmt.Errorf("request does not accept shield payments")
+	}
+	if err := CheckUint(p.Amount, 128, "amount"); err != nil {
+		return nil, err
+	}
+	r := p.Request.Payload
+	if r.Amount != nil {
+		n, ok := new(big.Int).SetString(*r.Amount, 10)
+		if !ok || n.Cmp(p.Amount) != 0 {
+			return nil, fmt.Errorf("request amount mismatch")
+		}
+	}
+	chain, err := ipp.CAIP2ToChainID(p.Request.Network)
 	if err != nil {
-		return nil, fmt.Errorf("payer: commitment verification failed: %w", err)
+		return nil, err
+	}
+	identity, err := core.HexToElement(r.IdentityCommitment)
+	if err != nil {
+		return nil, err
+	}
+	if !common.IsHexAddress(r.TokenAddress) {
+		return nil, fmt.Errorf("invalid request token address")
+	}
+	token := common.HexToAddress(r.TokenAddress)
+	valid, err := VerifyNoteCommitment(VerifyNoteCommitmentParams{ChainID: chain, IdentityCommitment: identity.Bytes(), TokenAddress: token, Amount: p.Amount, Nonce: p.Nonce, NoteCommitment: p.NoteCommitment})
+	if err != nil {
+		return nil, err
 	}
 	if !valid {
-		return nil, fmt.Errorf("payer: paymentCommitment verification failed: server returned incorrect parameters")
+		return nil, fmt.Errorf("noteCommitment verification failed")
 	}
-
-	// Step 3: Build payOpen calldata
-	if params.TreeID == nil {
-		return nil, fmt.Errorf("payer: TreeID is required (from propose response)")
-	}
-	treeID := params.TreeID
-
-	nonceElem, err := core.HexToElement(params.Nonce.Hex())
-	if err != nil {
-		return nil, fmt.Errorf("payer: invalid nonce: %w", err)
-	}
-
-	result, err := BuildPayOpenCalldata(PayOpenParams{
-		ChainID:            chainID,
-		IdentityCommitment: icHash,
-		TokenAddress:       tokenAddr,
-		Amount:             params.Amount,
-		TreeID:             treeID,
-		Nonce:              &nonceElem,
-	})
-	if err != nil {
-		return nil, fmt.Errorf("payer: failed to build calldata: %w", err)
-	}
-
-	return &BuildFromRequestResult{
-		Calldata:      result.Data,
-		ApproveAmount: result.ApproveAmount,
-	}, nil
+	return BuildShieldCalldata(BuildShieldCalldataParams{Context: TransactionContext{ChainID: chain, ProtocolAddress: p.ProtocolAddress, TokenAddress: token},
+		Params:  ShieldParams{OutputCommitments: [][32]byte{p.NoteCommitment}, Deadline: p.Deadline},
+		Outputs: []ShieldOutput{{IdentityCommitment: identity.Bytes(), Amount: p.Amount, Nonce: p.Nonce}}, Ciphertexts: [][]byte{p.Ciphertext}, Funding: p.Funding, Caller: p.Caller})
 }

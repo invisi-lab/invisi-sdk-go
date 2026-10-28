@@ -2,467 +2,148 @@ package core
 
 import (
 	"encoding/json"
-	"math/big"
-	"os"
-	"path/filepath"
-	"runtime"
-	"strings"
-	"testing"
-
 	"github.com/consensys/gnark-crypto/ecc/bn254/fr"
+	"os"
+	"testing"
 )
 
-// vectorsFile returns the absolute path to testdata/vectors.json
-// relative to this source file.
-func vectorsFile() string {
-	_, thisFile, _, _ := runtime.Caller(0)
-	return filepath.Join(filepath.Dir(thisFile), "testdata", "vectors.json")
+type protocolVector struct {
+	Name     string            `json:"name"`
+	Inputs   []string          `json:"inputs"`
+	Expected json.RawMessage   `json:"expected"`
+	Context  map[string]string `json:"context"`
+	Previous map[string]string `json:"previous"`
+	Recovery map[string]string `json:"recovery"`
 }
 
-// ---------- JSON schema types ----------
-
-type poseidon2Vector struct {
-	Inputs   []string `json:"inputs"`
-	Expected string   `json:"expected"`
-}
-
-type deriveNullifierKeyVector struct {
-	MasterKey string `json:"masterKey"`
-	InvoiceID string `json:"invoiceId"`
-	Expected  string `json:"expected"`
-}
-
-type deriveCreditNullifierKeyVector struct {
-	ReceiverMasterKey string `json:"receiverMasterKey"`
-	CreditID          string `json:"creditId"`
-	Expected          string `json:"expected"`
-}
-
-type deriveChangeNullifierKeyVector struct {
-	PayerMasterKey    string `json:"payerMasterKey"`
-	PaymentCommitment string `json:"paymentCommitment"`
-	Expected          string `json:"expected"`
-}
-
-type computeIdentityCommitmentVector struct {
-	NullifierKey     string `json:"nullifierKey"`
-	ReceivingAddress string `json:"receivingAddress"`
-	Expected         string `json:"expected"`
-}
-
-type computePaymentCommitmentVector struct {
-	ChainID            string `json:"chainId"`
-	IdentityCommitment string `json:"identityCommitment"`
-	TokenAddress       string `json:"tokenAddress"`
-	Amount             string `json:"amount"`
-	Nonce              string `json:"nonce"`
-	Expected           string `json:"expected"`
-}
-
-type computeChangeCommitmentVector struct {
-	ChainID                string `json:"chainId"`
-	ChangeNullifierKey     string `json:"changeNullifierKey"`
-	ChangeReceivingAddress string `json:"changeReceivingAddress"`
-	TokenAddress           string `json:"tokenAddress"`
-	Amount                 string `json:"amount"`
-	Nonce                  string `json:"nonce"`
-	Expected               string `json:"expected"`
-}
-
-type computePaymentNullifierVector struct {
-	ChainID      string `json:"chainId"`
-	NullifierKey string `json:"nullifierKey"`
-	TokenAddress string `json:"tokenAddress"`
-	Amount       string `json:"amount"`
-	Nonce        string `json:"nonce"`
-	Expected     string `json:"expected"`
-}
-
-type computeNullifierKeyHashVector struct {
-	NullifierKey string `json:"nullifierKey"`
-	Expected     string `json:"expected"`
-}
-
-type computeCreditCommitmentVector struct {
-	ChainID            string `json:"chainId"`
-	IdentityCommitment string `json:"identityCommitment"`
-	PayerCommitment    string `json:"payerCommitment"`
-	TokenAddress       string `json:"tokenAddress"`
-	Amount             string `json:"amount"`
-	Nonce              string `json:"nonce"`
-	Expiry             string `json:"expiry"`
-	NullifierKeyHash   string `json:"nullifierKeyHash"`
-	Expected           string `json:"expected"`
-}
-
-type computeCreditNullifierVector struct {
-	ChainID      string `json:"chainId"`
-	NullifierKey string `json:"nullifierKey"`
-	TokenAddress string `json:"tokenAddress"`
-	Amount       string `json:"amount"`
-	Nonce        string `json:"nonce"`
-	Expiry       string `json:"expiry"`
-	Expected     string `json:"expected"`
-}
-
-type deriveRemainderNonceVector struct {
-	Nonce    string `json:"nonce"`
-	NewNonce string `json:"newNonce"`
-	Expected string `json:"expected"`
-}
-
-type deriveRemainderNullifierKeyVector struct {
-	NullifierKey string `json:"nullifierKey"`
-	NewNonce     string `json:"newNonce"`
-	Expected     string `json:"expected"`
-}
-
-type computeRefundLinkVector struct {
-	OriginalCommitment string `json:"originalCommitment"`
-	RefundNonce        string `json:"refundNonce"`
-	Expected           string `json:"expected"`
-}
-
-type vectorsJSON struct {
-	Poseidon2                   []poseidon2Vector                   `json:"poseidon2"`
-	DeriveNullifierKey          []deriveNullifierKeyVector          `json:"deriveNullifierKey"`
-	DeriveCreditNullifierKey    []deriveCreditNullifierKeyVector    `json:"deriveCreditNullifierKey"`
-	DeriveChangeNullifierKey    []deriveChangeNullifierKeyVector    `json:"deriveChangeNullifierKey"`
-	ComputeIdentityCommitment   []computeIdentityCommitmentVector   `json:"computeIdentityCommitment"`
-	ComputePaymentCommitment    []computePaymentCommitmentVector    `json:"computePaymentCommitment"`
-	ComputeChangeCommitment     []computeChangeCommitmentVector     `json:"computeChangeCommitment"`
-	ComputePaymentNullifier     []computePaymentNullifierVector     `json:"computePaymentNullifier"`
-	ComputeNullifierKeyHash     []computeNullifierKeyHashVector     `json:"computeNullifierKeyHash"`
-	ComputeCreditCommitment     []computeCreditCommitmentVector     `json:"computeCreditCommitment"`
-	ComputeCreditNullifier      []computeCreditNullifierVector      `json:"computeCreditNullifier"`
-	DeriveRemainderNonce        []deriveRemainderNonceVector        `json:"deriveRemainderNonce"`
-	DeriveRemainderNullifierKey []deriveRemainderNullifierKeyVector `json:"deriveRemainderNullifierKey"`
-	ComputeRefundLink           []computeRefundLinkVector           `json:"computeRefundLink"`
-}
-
-// loadVectors reads and parses the vectors.json file.
-// Returns nil if the file does not exist (caller should t.Skip).
-func loadVectors(t *testing.T) *vectorsJSON {
+func vectorElement(t *testing.T, s string) fr.Element {
 	t.Helper()
-	path := vectorsFile()
-	data, err := os.ReadFile(path)
+	var e fr.Element
+	if _, err := e.SetString(s); err != nil {
+		t.Fatalf("invalid fixture element %q: %v", s, err)
+	}
+	return e
+}
+func loadProtocolVectors(t *testing.T) []protocolVector {
+	t.Helper()
+	data, err := os.ReadFile("testdata/vectors.json")
 	if err != nil {
-		if os.IsNotExist(err) {
-			return nil
+		t.Fatal(err)
+	}
+	var file struct {
+		Vectors []protocolVector `json:"vectors"`
+	}
+	if err = json.Unmarshal(data, &file); err != nil {
+		t.Fatal(err)
+	}
+	if len(file.Vectors) != 33 {
+		t.Fatalf("expected 33 protocol vectors, got %d", len(file.Vectors))
+	}
+	return file.Vectors
+}
+func TestCurrentProtocolVectors(t *testing.T) {
+	for _, v := range loadProtocolVectors(t) {
+		if v.Name == "RecoverCreditRemainder" {
+			continue
 		}
-		t.Fatalf("failed to read vectors file: %v", err)
+		t.Run(v.Name, func(t *testing.T) {
+			p := make([]fr.Element, len(v.Inputs))
+			for i, s := range v.Inputs {
+				p[i] = vectorElement(t, s)
+			}
+			var got fr.Element
+			var err error
+			switch v.Name {
+			case "DeriveNoteSecret":
+				got, err = DeriveNoteSecret(p[0], p[1])
+			case "ComputeIdentityCommitment":
+				got, err = ComputeIdentityCommitment(p[0], p[1])
+			case "ComputeNoteCommitment":
+				got, err = ComputeNoteCommitment(p[0], p[1], p[2], p[3], p[4])
+			case "ComputeChangeCommitment":
+				got, err = ComputeChangeCommitment(p[0], p[1], p[2], p[3], p[4], p[5])
+			case "ComputeNoteNullifier":
+				got, err = ComputeNoteNullifier(p[0], p[1], p[2], p[3], p[4], p[5])
+			case "ComputeCreditSharedKeyHash":
+				got, err = ComputeCreditSharedKeyHash(p[0])
+			case "ComputeCreditCommitment":
+				got, err = ComputeCreditCommitment(p[0], p[1], p[2], p[3], p[4], p[5], p[6], p[7])
+			case "ComputeCreditNullifier":
+				got, err = ComputeCreditNullifier(p[0], p[1], p[2], p[3], p[4], p[5])
+			case "DeriveRemainderNonce":
+				got, err = DeriveRemainderNonce(p[0], p[1], p[2], p[3], p[4])
+			case "ComputeCreditRecoveryPad":
+				got, err = ComputeCreditRecoveryPad(p[0], p[1], p[2], p[3], p[4])
+			default:
+				t.Fatalf("unknown vector %s", v.Name)
+			}
+			if err != nil {
+				t.Fatal(err)
+			}
+			var expected string
+			if err = json.Unmarshal(v.Expected, &expected); err != nil {
+				t.Fatal(err)
+			}
+			want := vectorElement(t, expected)
+			if got != want {
+				t.Fatalf("got %s want %s", ElementToHex(got), ElementToHex(want))
+			}
+		})
 	}
-	var v vectorsJSON
-	if err := json.Unmarshal(data, &v); err != nil {
-		t.Fatalf("failed to parse vectors JSON: %v", err)
-	}
-	return &v
 }
-
-// decimalToElement converts a decimal string to a field element.
-func decimalToElement(t *testing.T, s string) fr.Element {
-	t.Helper()
-	b, ok := new(big.Int).SetString(s, 10)
-	if !ok {
-		t.Fatalf("invalid decimal string: %q", s)
-	}
-	return BigIntToElement(b)
+func creditFixture(t *testing.T, m map[string]string) CreditNote {
+	return CreditNote{SpenderIdentityCommitment: vectorElement(t, m["spenderIdentityCommitment"]), OwnerIdentityCommitment: vectorElement(t, m["ownerIdentityCommitment"]), TokenAddress: vectorElement(t, m["tokenAddress"]), Amount: vectorElement(t, m["amount"]), Nonce: vectorElement(t, m["nonce"]), Expiry: vectorElement(t, m["expiry"]), CreditSharedKey: vectorElement(t, m["creditSharedKey"])}
 }
-
-// hexOrDecimalToElement converts a hex (0x...) or decimal string to a field element.
-func hexOrDecimalToElement(t *testing.T, s string) fr.Element {
-	t.Helper()
-	if strings.HasPrefix(s, "0x") || strings.HasPrefix(s, "0X") {
-		e, err := HexToElement(s)
+func TestRecoverCreditRemainderProtocolVectors(t *testing.T) {
+	for _, v := range loadProtocolVectors(t) {
+		if v.Name != "RecoverCreditRemainder" {
+			continue
+		}
+		ctx := ProtocolContext{ChainID: vectorElement(t, v.Context["chainId"]), ProtocolAddress: vectorElement(t, v.Context["protocolAddress"])}
+		previous := creditFixture(t, v.Previous)
+		recovery := CreditRemainderRecovery{CreditNullifier: vectorElement(t, v.Recovery["creditNullifier"]), RemainderCommitment: vectorElement(t, v.Recovery["remainderCommitment"]), RecoveryAmount: vectorElement(t, v.Recovery["recoveryAmount"])}
+		var expected map[string]string
+		if err := json.Unmarshal(v.Expected, &expected); err != nil {
+			t.Fatal(err)
+		}
+		got, err := RecoverCreditRemainder(ctx, previous, recovery)
 		if err != nil {
-			t.Fatalf("invalid hex element: %q: %v", s, err)
+			t.Fatal(err)
 		}
-		return e
-	}
-	return decimalToElement(t, s)
-}
-
-// normalizeHex lowercases and ensures 0x prefix + 64-char padding.
-func normalizeHex(s string) string {
-	s = strings.ToLower(s)
-	s = strings.TrimPrefix(s, "0x")
-	for len(s) < 64 {
-		s = "0" + s
-	}
-	return "0x" + s
-}
-
-// assertHexEqual compares two hex strings after normalization.
-func assertHexEqual(t *testing.T, label, got, want string) {
-	t.Helper()
-	if normalizeHex(got) != normalizeHex(want) {
-		t.Errorf("%s: mismatch\n  got:  %s\n  want: %s", label, normalizeHex(got), normalizeHex(want))
-	}
-}
-
-// ---------- Cross-language test ----------
-
-func TestCrossLanguagePoseidon2(t *testing.T) {
-	v := loadVectors(t)
-	if v == nil {
-		t.Skip("testdata/vectors.json not found; run generate_vectors.ts to create it")
-	}
-
-	for i, tc := range v.Poseidon2 {
-		inputs := make([]fr.Element, len(tc.Inputs))
-		for j, s := range tc.Inputs {
-			inputs[j] = decimalToElement(t, s)
+		want := creditFixture(t, expected)
+		if got == nil || *got != want {
+			t.Fatalf("recovered note mismatch: %+v", got)
 		}
-		got, err := Poseidon2Hash(inputs...)
-		if err != nil {
-			t.Fatalf("vector[%d]: Poseidon2Hash error: %v", i, err)
+		full := recovery
+		full.RemainderCommitment = fr.Element{}
+		full.RecoveryAmount = fr.Element{}
+		if got, err := RecoverCreditRemainder(ctx, previous, full); err != nil || got != nil {
+			t.Fatalf("full draw: %v %v", got, err)
 		}
-		assertHexEqual(t, "Poseidon2Hash", ElementToHex(got), tc.Expected)
-	}
-}
-
-func TestCrossLanguageDeriveNullifierKey(t *testing.T) {
-	v := loadVectors(t)
-	if v == nil {
-		t.Skip("testdata/vectors.json not found; run generate_vectors.ts to create it")
-	}
-
-	for i, tc := range v.DeriveNullifierKey {
-		masterKey := decimalToElement(t, tc.MasterKey)
-		invoiceId := decimalToElement(t, tc.InvoiceID)
-		got, err := DeriveNullifierKey(masterKey, invoiceId)
-		if err != nil {
-			t.Fatalf("vector[%d]: DeriveNullifierKey error: %v", i, err)
+		cases := map[string]CreditRemainderRecovery{"nullifier": recovery, "commitment": recovery, "amount": recovery, "full draw amount": full}
+		bad := cases["nullifier"]
+		bad.CreditNullifier = ElementFromUint64(1)
+		cases["nullifier"] = bad
+		bad = cases["commitment"]
+		bad.RemainderCommitment = ElementFromUint64(1)
+		cases["commitment"] = bad
+		bad = cases["amount"]
+		bad.RecoveryAmount = ElementFromUint64(1)
+		cases["amount"] = bad
+		bad = cases["full draw amount"]
+		bad.RecoveryAmount = ElementFromUint64(1)
+		cases["full draw amount"] = bad
+		for name, bad := range cases {
+			t.Run(name, func(t *testing.T) {
+				if _, err := RecoverCreditRemainder(ctx, previous, bad); err == nil {
+					t.Fatal("accepted invalid recovery")
+				}
+			})
 		}
-		assertHexEqual(t, "DeriveNullifierKey", ElementToHex(got), tc.Expected)
-	}
-}
-
-func TestCrossLanguageComputeIdentityCommitment(t *testing.T) {
-	v := loadVectors(t)
-	if v == nil {
-		t.Skip("testdata/vectors.json not found; run generate_vectors.ts to create it")
-	}
-
-	for i, tc := range v.ComputeIdentityCommitment {
-		nullifierKey := hexOrDecimalToElement(t, tc.NullifierKey)
-		receivingAddress := decimalToElement(t, tc.ReceivingAddress)
-		got, err := ComputeIdentityCommitment(nullifierKey, receivingAddress)
-		if err != nil {
-			t.Fatalf("vector[%d]: ComputeIdentityCommitment error: %v", i, err)
+		wrongContext := ctx
+		wrongContext.ProtocolAddress = ElementFromUint64(1)
+		if _, err := RecoverCreditRemainder(wrongContext, previous, recovery); err == nil {
+			t.Fatal("accepted different deployment")
 		}
-		assertHexEqual(t, "ComputeIdentityCommitment", ElementToHex(got), tc.Expected)
-	}
-}
-
-func TestCrossLanguageComputePaymentCommitment(t *testing.T) {
-	v := loadVectors(t)
-	if v == nil {
-		t.Skip("testdata/vectors.json not found; run generate_vectors.ts to create it")
-	}
-
-	for i, tc := range v.ComputePaymentCommitment {
-		chainId := decimalToElement(t, tc.ChainID)
-		identityCommitment := hexOrDecimalToElement(t, tc.IdentityCommitment)
-		tokenAddress := decimalToElement(t, tc.TokenAddress)
-		amount := decimalToElement(t, tc.Amount)
-		nonce := decimalToElement(t, tc.Nonce)
-		got, err := ComputePaymentCommitment(chainId, identityCommitment, tokenAddress, amount, nonce)
-		if err != nil {
-			t.Fatalf("vector[%d]: ComputePaymentCommitment error: %v", i, err)
-		}
-		assertHexEqual(t, "ComputePaymentCommitment", ElementToHex(got), tc.Expected)
-	}
-}
-
-func TestCrossLanguageComputeChangeCommitment(t *testing.T) {
-	v := loadVectors(t)
-	if v == nil {
-		t.Skip("testdata/vectors.json not found; run generate_vectors.ts to create it")
-	}
-	if len(v.ComputeChangeCommitment) == 0 {
-		t.Fatal("missing computeChangeCommitment vectors")
-	}
-
-	for i, tc := range v.ComputeChangeCommitment {
-		chainId := decimalToElement(t, tc.ChainID)
-		changeNullifierKey := hexOrDecimalToElement(t, tc.ChangeNullifierKey)
-		changeReceivingAddress := decimalToElement(t, tc.ChangeReceivingAddress)
-		tokenAddress := decimalToElement(t, tc.TokenAddress)
-		amount := decimalToElement(t, tc.Amount)
-		nonce := decimalToElement(t, tc.Nonce)
-		got, err := ComputeChangeCommitment(chainId, changeNullifierKey, changeReceivingAddress, tokenAddress, amount, nonce)
-		if err != nil {
-			t.Fatalf("vector[%d]: ComputeChangeCommitment error: %v", i, err)
-		}
-		assertHexEqual(t, "ComputeChangeCommitment", ElementToHex(got), tc.Expected)
-	}
-}
-
-func TestCrossLanguageComputePaymentNullifier(t *testing.T) {
-	v := loadVectors(t)
-	if v == nil {
-		t.Skip("testdata/vectors.json not found; run generate_vectors.ts to create it")
-	}
-
-	for i, tc := range v.ComputePaymentNullifier {
-		chainId := decimalToElement(t, tc.ChainID)
-		nullifierKey := hexOrDecimalToElement(t, tc.NullifierKey)
-		tokenAddress := decimalToElement(t, tc.TokenAddress)
-		amount := decimalToElement(t, tc.Amount)
-		nonce := decimalToElement(t, tc.Nonce)
-		got, err := ComputePaymentNullifier(chainId, nullifierKey, tokenAddress, amount, nonce)
-		if err != nil {
-			t.Fatalf("vector[%d]: ComputePaymentNullifier error: %v", i, err)
-		}
-		assertHexEqual(t, "ComputePaymentNullifier", ElementToHex(got), tc.Expected)
-	}
-}
-
-func TestCrossLanguageComputeNullifierKeyHash(t *testing.T) {
-	v := loadVectors(t)
-	if v == nil {
-		t.Skip("testdata/vectors.json not found; run generate_vectors.ts to create it")
-	}
-
-	for i, tc := range v.ComputeNullifierKeyHash {
-		nullifierKey := hexOrDecimalToElement(t, tc.NullifierKey)
-		got, err := ComputeNullifierKeyHash(nullifierKey)
-		if err != nil {
-			t.Fatalf("vector[%d]: ComputeNullifierKeyHash error: %v", i, err)
-		}
-		assertHexEqual(t, "ComputeNullifierKeyHash", ElementToHex(got), tc.Expected)
-	}
-}
-
-func TestCrossLanguageComputeCreditCommitment(t *testing.T) {
-	v := loadVectors(t)
-	if v == nil {
-		t.Skip("testdata/vectors.json not found; run generate_vectors.ts to create it")
-	}
-
-	for i, tc := range v.ComputeCreditCommitment {
-		chainId := decimalToElement(t, tc.ChainID)
-		identityCommitment := hexOrDecimalToElement(t, tc.IdentityCommitment)
-		payerCommitment := hexOrDecimalToElement(t, tc.PayerCommitment)
-		tokenAddress := decimalToElement(t, tc.TokenAddress)
-		amount := decimalToElement(t, tc.Amount)
-		nonce := decimalToElement(t, tc.Nonce)
-		expiry := decimalToElement(t, tc.Expiry)
-		nullifierKeyHash := hexOrDecimalToElement(t, tc.NullifierKeyHash)
-		got, err := ComputeCreditCommitment(chainId, identityCommitment, payerCommitment, tokenAddress, amount, nonce, expiry, nullifierKeyHash)
-		if err != nil {
-			t.Fatalf("vector[%d]: ComputeCreditCommitment error: %v", i, err)
-		}
-		assertHexEqual(t, "ComputeCreditCommitment", ElementToHex(got), tc.Expected)
-	}
-}
-
-func TestCrossLanguageComputeCreditNullifier(t *testing.T) {
-	v := loadVectors(t)
-	if v == nil {
-		t.Skip("testdata/vectors.json not found; run generate_vectors.ts to create it")
-	}
-
-	for i, tc := range v.ComputeCreditNullifier {
-		chainId := decimalToElement(t, tc.ChainID)
-		nullifierKey := hexOrDecimalToElement(t, tc.NullifierKey)
-		tokenAddress := decimalToElement(t, tc.TokenAddress)
-		amount := decimalToElement(t, tc.Amount)
-		nonce := decimalToElement(t, tc.Nonce)
-		expiry := decimalToElement(t, tc.Expiry)
-		got, err := ComputeCreditNullifier(chainId, nullifierKey, tokenAddress, amount, nonce, expiry)
-		if err != nil {
-			t.Fatalf("vector[%d]: ComputeCreditNullifier error: %v", i, err)
-		}
-		assertHexEqual(t, "ComputeCreditNullifier", ElementToHex(got), tc.Expected)
-	}
-}
-
-func TestCrossLanguageDeriveRemainderNonce(t *testing.T) {
-	v := loadVectors(t)
-	if v == nil {
-		t.Skip("testdata/vectors.json not found; run generate_vectors.ts to create it")
-	}
-
-	for i, tc := range v.DeriveRemainderNonce {
-		nonce := decimalToElement(t, tc.Nonce)
-		newNonce := decimalToElement(t, tc.NewNonce)
-		got, err := DeriveRemainderNonce(nonce, newNonce)
-		if err != nil {
-			t.Fatalf("vector[%d]: DeriveRemainderNonce error: %v", i, err)
-		}
-		assertHexEqual(t, "DeriveRemainderNonce", ElementToHex(got), tc.Expected)
-	}
-}
-
-func TestCrossLanguageDeriveRemainderNullifierKey(t *testing.T) {
-	v := loadVectors(t)
-	if v == nil {
-		t.Skip("testdata/vectors.json not found; run generate_vectors.ts to create it")
-	}
-
-	for i, tc := range v.DeriveRemainderNullifierKey {
-		nullifierKey := decimalToElement(t, tc.NullifierKey)
-		newNonce := decimalToElement(t, tc.NewNonce)
-		got, err := DeriveRemainderNullifierKey(nullifierKey, newNonce)
-		if err != nil {
-			t.Fatalf("vector[%d]: DeriveRemainderNullifierKey error: %v", i, err)
-		}
-		assertHexEqual(t, "DeriveRemainderNullifierKey", ElementToHex(got), tc.Expected)
-	}
-}
-
-func TestCrossLanguageComputeRefundLink(t *testing.T) {
-	v := loadVectors(t)
-	if v == nil {
-		t.Skip("testdata/vectors.json not found; run generate_vectors.ts to create it")
-	}
-
-	for i, tc := range v.ComputeRefundLink {
-		originalCommitment := decimalToElement(t, tc.OriginalCommitment)
-		refundNonce := decimalToElement(t, tc.RefundNonce)
-		got, err := ComputeRefundLink(originalCommitment, refundNonce)
-		if err != nil {
-			t.Fatalf("vector[%d]: ComputeRefundLink error: %v", i, err)
-		}
-		assertHexEqual(t, "ComputeRefundLink", ElementToHex(got), tc.Expected)
-	}
-}
-
-func TestCrossLanguageDeriveCreditNullifierKey(t *testing.T) {
-	v := loadVectors(t)
-	if v == nil {
-		t.Skip("testdata/vectors.json not found; run generate_vectors.ts to create it")
-	}
-
-	for i, tc := range v.DeriveCreditNullifierKey {
-		receiverMasterKey := decimalToElement(t, tc.ReceiverMasterKey)
-		creditId := decimalToElement(t, tc.CreditID)
-		got, err := DeriveCreditNullifierKey(receiverMasterKey, creditId)
-		if err != nil {
-			t.Fatalf("vector[%d]: DeriveCreditNullifierKey error: %v", i, err)
-		}
-		assertHexEqual(t, "DeriveCreditNullifierKey", ElementToHex(got), tc.Expected)
-	}
-}
-
-func TestCrossLanguageDeriveChangeNullifierKey(t *testing.T) {
-	v := loadVectors(t)
-	if v == nil {
-		t.Skip("testdata/vectors.json not found; run generate_vectors.ts to create it")
-	}
-	if len(v.DeriveChangeNullifierKey) == 0 {
-		t.Fatal("missing deriveChangeNullifierKey vectors")
-	}
-
-	for i, tc := range v.DeriveChangeNullifierKey {
-		payerMasterKey := hexOrDecimalToElement(t, tc.PayerMasterKey)
-		paymentCommitment := hexOrDecimalToElement(t, tc.PaymentCommitment)
-		got, err := DeriveChangeNullifierKey(payerMasterKey, paymentCommitment)
-		if err != nil {
-			t.Fatalf("vector[%d]: DeriveChangeNullifierKey error: %v", i, err)
-		}
-		assertHexEqual(t, "DeriveChangeNullifierKey", ElementToHex(got), tc.Expected)
 	}
 }

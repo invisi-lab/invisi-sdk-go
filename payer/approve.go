@@ -1,14 +1,12 @@
 package payer
 
-import (
-	"fmt"
-)
+import ()
 
 // BuildApproveCalldata encodes an ERC20 approve(spender, amount) call.
 // Returns the token contract address as `To` and the encoded calldata.
 func BuildApproveCalldata(params ApproveParams) (*ApproveCalldata, error) {
-	if params.Amount == nil {
-		return nil, fmt.Errorf("payer: Amount is required")
+	if err := CheckUint(params.Amount, 256, "amount"); err != nil {
+		return nil, err
 	}
 
 	data, err := packCalldata(

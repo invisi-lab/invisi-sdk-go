@@ -10,16 +10,16 @@ import (
 
 func TestBuildVoucher(t *testing.T) {
 	v, err := BuildVoucher(BuildVoucherParams{
-		Network:           "eip155:84532",
-		ReceivingAddress:  "0xabc",
-		PaymentCommitment: "0xdef",
-		TokenAddress:      "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
-		Operator:          "0x1234567890123456789012345678901234567890",
-		Amount:            big.NewInt(100_000_000),
-		Nonce:             "0x123",
-		NullifierKey:      "0x456",
-		TreeID:            "1",
-		Endpoint:          "https://pay.merchant.com",
+		Network:          "eip155:84532",
+		ReceivingAddress: "0xabc",
+		NoteCommitment:   "0xdef",
+		TokenAddress:     "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+		Operator:         "0x1234567890123456789012345678901234567890",
+		Amount:           big.NewInt(100_000_000),
+		Nonce:            "0x123",
+		NoteSecret:       "0x456",
+		TreeID:           "1",
+		Endpoint:         "https://pay.merchant.com",
 	})
 	if err != nil {
 		t.Fatal(err)
@@ -39,7 +39,7 @@ func TestBuildVoucher(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if got.Payload.NullifierKey != "0x456" {
+	if got.Payload.NoteSecret != "0x456" {
 		t.Error("roundtrip mismatch")
 	}
 	if got.Payload.Endpoint != "https://pay.merchant.com" {
@@ -56,15 +56,15 @@ func TestBuildVoucher(t *testing.T) {
 // Endpoint-less voucher fails with an error mentioning "endpoint".
 func TestBuildVoucherMissingEndpoint(t *testing.T) {
 	v, err := BuildVoucher(BuildVoucherParams{
-		Network:           "eip155:84532",
-		ReceivingAddress:  "0xabc",
-		PaymentCommitment: "0xdef",
-		TokenAddress:      "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
-		Operator:          "0x1234567890123456789012345678901234567890",
-		Amount:            big.NewInt(100_000_000),
-		Nonce:             "0x123",
-		NullifierKey:      "0x456",
-		TreeID:            "1",
+		Network:          "eip155:84532",
+		ReceivingAddress: "0xabc",
+		NoteCommitment:   "0xdef",
+		TokenAddress:     "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+		Operator:         "0x1234567890123456789012345678901234567890",
+		Amount:           big.NewInt(100_000_000),
+		Nonce:            "0x123",
+		NoteSecret:       "0x456",
+		TreeID:           "1",
 		// Endpoint intentionally omitted.
 	})
 	if err != nil {

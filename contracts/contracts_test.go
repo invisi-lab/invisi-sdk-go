@@ -3,9 +3,13 @@ package contracts_test
 import (
 	"testing"
 
+	"bytes"
+	"encoding/json"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/invisi-lab/invisi-sdk-go/contracts"
+	"os"
+	"strings"
 )
 
 // TestBindingsCompile verifies that all generated ABI bindings parse correctly
@@ -59,7 +63,7 @@ func TestInvisiProtocolKeyMethods(t *testing.T) {
 		t.Fatalf("failed to parse ABI: %v", err)
 	}
 
-	required := []string{"payOpen", "payBlind", "depositCredit", "withdraw", "isCommitmentPaid", "isNullifierSpent"}
+	required := []string{"shield", "transact", "createCredit", "creditDraw", "cancelCredit", "topUpCredit", "activeNoteTreeId", "getNoteTreeRoot", "getNoteTreeNextLeafIndex", "isCommitmentPaid", "isNullifierSpent"}
 	for _, name := range required {
 		if _, ok := parsed.Methods[name]; !ok {
 			t.Errorf("InvisiProtocol ABI missing method: %s", name)
@@ -124,3 +128,35 @@ func TestNewBinderConstructors(t *testing.T) {
 
 // Ensure bind package is used (suppress unused import errors).
 var _ = bind.Bind
+
+func TestCurrentABIArtifacts(t *testing.T) {
+	for name, metadata := range map[string]*bind.MetaData{"InvisiProtocol": contracts.InvisiProtocolMetaData, "InvisiFactory": contracts.InvisiFactoryMetaData, "VerifierRouter": contracts.VerifierRouterMetaData, "CreditVerifierRouter": contracts.CreditVerifierRouterMetaData, "IERC20": contracts.IERC20MetaData} {
+		t.Run(name, func(t *testing.T) {
+			source, err := os.ReadFile("abi/" + name + ".abi.json")
+			if err != nil {
+				t.Fatal(err)
+			}
+			var compact bytes.Buffer
+			if err = json.Compact(&compact, source); err != nil {
+				t.Fatal(err)
+			}
+			if strings.ReplaceAll(compact.String(), " ", "") != metadata.ABI {
+				t.Fatal("generated binding differs from source ABI; run go generate ./contracts")
+			}
+			if _, err = metadata.GetAbi(); err != nil {
+				t.Fatal(err)
+			}
+		})
+	}
+	parsed, _ := contracts.InvisiProtocolMetaData.GetAbi()
+	for _, name := range []string{"CommitmentsInserted", "BatchOutputs", "TreeCreated", "Shield", "CreditCreated"} {
+		if _, ok := parsed.Events[name]; !ok {
+			t.Errorf("missing current event %s", name)
+		}
+	}
+	for _, name := range []string{"payOpen", "payBlind", "depositCredit", "withdraw"} {
+		if _, ok := parsed.Methods[name]; ok {
+			t.Errorf("legacy entry point retained: %s", name)
+		}
+	}
+}

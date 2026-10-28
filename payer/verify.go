@@ -2,72 +2,61 @@ package payer
 
 import (
 	"fmt"
-
 	"github.com/consensys/gnark-crypto/ecc/bn254/fr"
 	"github.com/ethereum/go-ethereum/common"
-
 	"github.com/invisi-lab/invisi-sdk-go/core"
+	"math/big"
 )
 
-// VerifyPaymentCommitment recomputes a paymentCommitment from the given params
-// and returns true if it matches the provided paymentCommitment.
-func VerifyPaymentCommitment(params VerifyParams) (bool, error) {
-	if params.ChainID == nil {
-		return false, fmt.Errorf("payer: ChainID is required")
-	}
-	if params.Amount == nil {
-		return false, fmt.Errorf("payer: Amount is required")
-	}
-
-	chainElem := core.BigIntToElement(params.ChainID)
-	icElem, err := core.HexToElement(params.IdentityCommitment.Hex())
-	if err != nil {
-		return false, fmt.Errorf("payer: invalid identityCommitment: %w", err)
-	}
-	tokenHash := addressToTokenElement(params.TokenAddress)
-	tokenElem, err := core.HexToElement(tokenHash.Hex())
-	if err != nil {
-		return false, fmt.Errorf("payer: invalid tokenAddress: %w", err)
-	}
-	amountElem := core.BigIntToElement(params.Amount)
-	nonceElem, err := core.HexToElement(params.Nonce.Hex())
-	if err != nil {
-		return false, fmt.Errorf("payer: invalid nonce: %w", err)
-	}
-
-	computed, err := core.ComputePaymentCommitment(chainElem, icElem, tokenElem, amountElem, nonceElem)
-	if err != nil {
-		return false, fmt.Errorf("payer: failed to compute commitment: %w", err)
-	}
-
-	computedHash := common.HexToHash(core.ElementToHex(computed))
-	return computedHash == params.PaymentCommitment, nil
+type VerifyNoteCommitmentParams struct {
+	ChainID               *big.Int
+	IdentityCommitment    common.Hash
+	TokenAddress          common.Address
+	Amount                *big.Int
+	Nonce, NoteCommitment common.Hash
 }
 
-// VerifyCreditParams carries the inputs needed to recompute a credit commitment,
-// plus the server-returned CreditCommitment value to verify against.
-type VerifyCreditParams struct {
-	ChainID            fr.Element
-	IdentityCommitment fr.Element
-	PayerCommitment    fr.Element
-	TokenAddress       fr.Element
-	Amount             fr.Element
-	Nonce              fr.Element
-	Expiry             fr.Element
-	NullifierKeyHash   fr.Element
-	CreditCommitment   fr.Element // server-returned value to verify
+func VerifyNoteCommitment(p VerifyNoteCommitmentParams) (bool, error) {
+	if err := CheckUint(p.ChainID, 64, "chainID"); err != nil {
+		return false, err
+	}
+	if err := CheckUint(p.Amount, 128, "amount"); err != nil {
+		return false, err
+	}
+	if err := Field(p.IdentityCommitment); err != nil {
+		return false, err
+	}
+	if err := Field(p.Nonce); err != nil {
+		return false, err
+	}
+	if err := Field(p.NoteCommitment); err != nil {
+		return false, err
+	}
+	expected, err := core.ComputeNoteCommitment(core.BigIntToElement(p.ChainID), core.BigIntToElement(p.IdentityCommitment.Big()), core.BigIntToElement(p.TokenAddress.Big()), core.BigIntToElement(p.Amount), core.BigIntToElement(p.Nonce.Big()))
+	return expected.Bytes() == [32]byte(p.NoteCommitment), err
 }
 
-// VerifyCreditCommitment recomputes the credit commitment locally and compares it
-// to the server-returned value. A mismatch means the server folded a wrong nonce
-// (or other parameter) — the caller MUST abort and not depositCredit.
-func VerifyCreditCommitment(p VerifyCreditParams) (bool, error) {
-	got, err := core.ComputeCreditCommitment(
-		p.ChainID, p.IdentityCommitment, p.PayerCommitment, p.TokenAddress,
-		p.Amount, p.Nonce, p.Expiry, p.NullifierKeyHash,
-	)
-	if err != nil {
-		return false, fmt.Errorf("payer: compute credit commitment: %w", err)
+type VerifyCreditCommitmentParams struct {
+	ChainID, SpenderIdentityCommitment, OwnerIdentityCommitment, TokenAddress, Amount, Nonce, Expiry, CreditSharedKey, CreditCommitment fr.Element
+}
+
+func VerifyCreditCommitment(p VerifyCreditCommitmentParams) (bool, error) {
+	if p.CreditSharedKey.IsZero() {
+		return false, fmt.Errorf("creditSharedKey must be nonzero")
 	}
-	return got.Equal(&p.CreditCommitment), nil
+	for _, check := range []struct {
+		value fr.Element
+		bits  int
+		name  string
+	}{{p.ChainID, 64, "chainID"}, {p.TokenAddress, 160, "token"}, {p.Amount, 126, "amount"}, {p.Expiry, 64, "expiry"}} {
+		if err := CheckUint(check.value.BigInt(new(big.Int)), check.bits, check.name); err != nil {
+			return false, err
+		}
+	}
+	keyHash, err := core.ComputeCreditSharedKeyHash(p.CreditSharedKey)
+	if err != nil {
+		return false, err
+	}
+	expected, err := core.ComputeCreditCommitment(p.ChainID, p.SpenderIdentityCommitment, p.OwnerIdentityCommitment, p.TokenAddress, p.Amount, p.Nonce, p.Expiry, keyHash)
+	return expected.Equal(&p.CreditCommitment), err
 }

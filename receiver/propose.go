@@ -1,15 +1,26 @@
 package receiver
 
 import (
+	"fmt"
+	"github.com/invisi-lab/invisi-sdk-go/payer"
 	"math/big"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/invisi-lab/invisi-sdk-go/core"
 )
 
-// ComputePaymentCommitmentForPropose generates a nonce and computes the
-// paymentCommitment for a propose response.
-func ComputePaymentCommitmentForPropose(params ProposeParams) (*ProposeResult, error) {
+// ComputeNoteCommitmentForPropose generates a nonce and computes the
+// noteCommitment for a propose response.
+func ComputeNoteCommitmentForPropose(params ProposeParams) (*ProposeResult, error) {
+	if err := payer.CheckUint(params.ChainID, 64, "chainID"); err != nil {
+		return nil, err
+	}
+	if err := payer.CheckUint(params.Amount, 128, "amount"); err != nil {
+		return nil, err
+	}
+	if params.Amount.Sign() == 0 {
+		return nil, fmt.Errorf("amount must be positive")
+	}
 	// Generate random nonce
 	nonce, err := core.GenerateNonce()
 	if err != nil {
@@ -25,8 +36,8 @@ func ComputePaymentCommitmentForPropose(params ProposeParams) (*ProposeResult, e
 	amountElem := core.BigIntToElement(params.Amount)
 	chainElem := core.BigIntToElement(params.ChainID)
 
-	// paymentCommitment = Poseidon2(D_PAY, chainId, identityCommitment, tokenAddress, amount, nonce)
-	pc, err := core.ComputePaymentCommitment(chainElem, icElem, tokenElem, amountElem, nonce)
+	// noteCommitment = Poseidon2(DNote, chainId, identityCommitment, tokenAddress, amount, nonce)
+	pc, err := core.ComputeNoteCommitment(chainElem, icElem, tokenElem, amountElem, nonce)
 	if err != nil {
 		return nil, err
 	}
@@ -35,7 +46,7 @@ func ComputePaymentCommitmentForPropose(params ProposeParams) (*ProposeResult, e
 	pcHash := common.HexToHash(core.ElementToHex(pc))
 
 	return &ProposeResult{
-		Nonce:             nonceHash,
-		PaymentCommitment: pcHash,
+		Nonce:          nonceHash,
+		NoteCommitment: pcHash,
 	}, nil
 }

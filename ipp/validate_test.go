@@ -175,15 +175,15 @@ func validVoucher() IPPVoucher {
 		Network: "eip155:84532",
 		Type:    MessageTypeVoucher,
 		Payload: IPPVoucherV1{
-			ReceivingAddress:  "0x1111111111111111111111111111111111111111",
-			PaymentCommitment: "0xabc",
-			TokenAddress:      "0xdef",
-			Operator:          "0x1234567890123456789012345678901234567890",
-			Amount:            "100",
-			Nonce:             "0x01",
-			NullifierKey:      "0x02",
-			TreeID:            "1",
-			Endpoint:          "https://pay.merchant.com",
+			ReceivingAddress: "0x1111111111111111111111111111111111111111",
+			NoteCommitment:   "0xabc",
+			TokenAddress:     "0xdef",
+			Operator:         "0x1234567890123456789012345678901234567890",
+			Amount:           "100",
+			Nonce:            "0x01",
+			NoteSecret:       "0x02",
+			TreeID:           "1",
+			Endpoint:         "https://pay.merchant.com",
 		},
 	}
 }
@@ -236,12 +236,12 @@ func TestValidateVoucherEmptyRequiredFields(t *testing.T) {
 		mutate func(*IPPVoucher)
 	}{
 		{"receivingAddress", func(v *IPPVoucher) { v.Payload.ReceivingAddress = "" }},
-		{"paymentCommitment", func(v *IPPVoucher) { v.Payload.PaymentCommitment = "" }},
+		{"noteCommitment", func(v *IPPVoucher) { v.Payload.NoteCommitment = "" }},
 		{"tokenAddress", func(v *IPPVoucher) { v.Payload.TokenAddress = "" }},
 		{"operator", func(v *IPPVoucher) { v.Payload.Operator = "" }},
 		{"amount", func(v *IPPVoucher) { v.Payload.Amount = "" }},
 		{"nonce", func(v *IPPVoucher) { v.Payload.Nonce = "" }},
-		{"nullifierKey", func(v *IPPVoucher) { v.Payload.NullifierKey = "" }},
+		{"noteSecret", func(v *IPPVoucher) { v.Payload.NoteSecret = "" }},
 		{"treeId", func(v *IPPVoucher) { v.Payload.TreeID = "" }},
 		{"endpoint", func(v *IPPVoucher) { v.Payload.Endpoint = "" }},
 	}

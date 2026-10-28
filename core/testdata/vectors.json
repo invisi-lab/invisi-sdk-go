@@ -1,170 +1,413 @@
 {
-  "poseidon2": [
+  "source": "invisi-protocol ede4bc6 scripts; Barretenberg Poseidon2",
+  "vectors": [
     {
+      "name": "DeriveNoteSecret",
       "inputs": [
         "1",
-        "2"
-      ],
-      "expected": "0x038682aa1cb5ae4e0a3f13da432a95c77c5c111f6f030faf9cad641ce1ed7383"
-    },
-    {
-      "inputs": [
-        "1",
-        "2",
-        "3",
-        "4"
-      ],
-      "expected": "0x130bf204a32cac1f0ace56c78b731aa3809f06df2731ebcf6b3464a15788b1b9"
-    },
-    {
-      "inputs": [
-        "0",
-        "0"
-      ],
-      "expected": "0x0b63a53787021a4a962a452c2921b3663aff1ffd8d5510540f8e659e782956f1"
-    },
-    {
-      "inputs": [
         "42"
       ],
-      "expected": "0x255ee8299be9389b21052fd317f8cae762f9c89f756ac79262fb648a70ee7a08"
+      "expected": "0x26d3e7f635937a35c83f0a37fc5c46e1fe233f7147e9825ee5489123c73ccec8"
     },
     {
+      "name": "ComputeIdentityCommitment",
       "inputs": [
         "1",
-        "2",
-        "3",
-        "4",
-        "5",
-        "6",
-        "7"
+        "703710"
       ],
-      "expected": "0x16f929bc0d216df4b05bdc44222463edf2b9791bd949ab926eebda06a502d238"
-    }
-  ],
-  "deriveNullifierKey": [
-    {
-      "masterKey": "100",
-      "invoiceId": "200",
-      "expected": "0x11d1be3ce292cfef58821d791e0570c3ea0087a297f2495fd90f23db7dec73a6"
+      "expected": "0x1f73de1d181546f24fe28f18fc14f41441c0346d0738bffd99efaa81a2ad5cfe"
     },
     {
-      "masterKey": "0",
-      "invoiceId": "0",
-      "expected": "0x1cf72bfcec8abddcd0f50f42fc920980ff16a6d9b41c5bec9730a165119e45b2"
-    }
-  ],
-  "deriveCreditNullifierKey": [
-    {
-      "receiverMasterKey": "100",
-      "creditId": "200",
-      "expected": "0x3014b61258fe552f8dc5b8d5f332480c867ca520b13d1206bb2572a625612449"
+      "name": "ComputeNoteCommitment",
+      "inputs": [
+        "31337",
+        "14226418690594460995656294047329804886538179894850786544627893429654206110974",
+        "22136",
+        "500",
+        "2"
+      ],
+      "expected": "0x135b53d3ef91a637b716a00d200667b1e524720415c0f74844dfb5381a6b6092"
     },
     {
-      "receiverMasterKey": "0",
-      "creditId": "0",
-      "expected": "0x2ee7682681179c2d8290a805cdeb64cc9744167fd5c801c26f1b3f9757c4eebc"
-    }
-  ],
-  "deriveChangeNullifierKey": [
-    {
-      "payerMasterKey": "100",
-      "paymentCommitment": "200",
-      "expected": "0x09dfcd6f144e3bf69b27da5ef2bb87274f1082e035ddb91b37bfc6702825123a"
+      "name": "ComputeChangeCommitment",
+      "inputs": [
+        "31337",
+        "1",
+        "703710",
+        "22136",
+        "500",
+        "2"
+      ],
+      "expected": "0x135b53d3ef91a637b716a00d200667b1e524720415c0f74844dfb5381a6b6092"
     },
     {
-      "payerMasterKey": "0",
-      "paymentCommitment": "0",
-      "expected": "0x1dc7e560033fee1662ff1d5dd0583625991982c5452fc2b0b2d97b3577657a47"
-    }
-  ],
-  "computeIdentityCommitment": [
+      "name": "ComputeNoteNullifier",
+      "inputs": [
+        "31337",
+        "1",
+        "703710",
+        "22136",
+        "500",
+        "2"
+      ],
+      "expected": "0x2874c70f4a55dba3ecf07f10617791b6483961b752cc90eb6191f0ae41e3ee5e"
+    },
     {
-      "nullifierKey": "8059902435717874135396261042205011152580675825595808264720455654581518234534",
-      "receivingAddress": "2457",
-      "expected": "0x27df15cc890df106dbef86186a2d428dd4f1855ae2b9f513f02320ca9265f355"
-    }
-  ],
-  "computePaymentCommitment": [
+      "name": "ComputeCreditSharedKeyHash",
+      "inputs": [
+        "5"
+      ],
+      "expected": "0x19dd42b1b66784c43d39fd51045d5bddfd0065247d5136dfcd68f904b6b400f5"
+    },
     {
-      "chainId": "1",
-      "identityCommitment": "0x27df15cc890df106dbef86186a2d428dd4f1855ae2b9f513f02320ca9265f355",
-      "tokenAddress": "2748",
-      "amount": "1000",
-      "nonce": "42",
-      "expected": "0x1d2764ecf5dc787ef6658062472ca422c869a261639fe18334a20cae5e327280"
-    }
-  ],
-  "computeChangeCommitment": [
+      "name": "ComputeCreditCommitment",
+      "inputs": [
+        "31337",
+        "14226418690594460995656294047329804886538179894850786544627893429654206110974",
+        "20269970577570721474934505414690929183590816226489744637962305237558362030482",
+        "22136",
+        "1000",
+        "3",
+        "2000000000",
+        "11698754722276553082707708399673856386820517548536096022153402349922435727605"
+      ],
+      "expected": "0x29e5b7510501a2696693f529285720aaa2428eac6e9fb1906c00c252428c6580"
+    },
     {
-      "chainId": "1",
-      "changeNullifierKey": "4466240385388578849709385656176456695375817029808089435052978388861618295354",
-      "changeReceivingAddress": "2457",
-      "tokenAddress": "2748",
-      "amount": "250",
-      "nonce": "7",
-      "expected": "0x2504563f7319b051d7c1d94aa976daa69082c3b66f43456b92530a35142d98c4"
-    }
-  ],
-  "computePaymentNullifier": [
+      "name": "ComputeCreditNullifier",
+      "inputs": [
+        "31337",
+        "5",
+        "22136",
+        "1000",
+        "3",
+        "2000000000"
+      ],
+      "expected": "0x1d0c567b0508dab881fd13e55339ede867dd41ca9a8e97a0e8899e75825beea4"
+    },
     {
-      "chainId": "1",
-      "nullifierKey": "8059902435717874135396261042205011152580675825595808264720455654581518234534",
-      "tokenAddress": "2748",
-      "amount": "1000",
-      "nonce": "42",
-      "expected": "0x286f0ebe481420262e0f9347832dc52f74041bbfe8880aed7215a8115ee317d8"
-    }
-  ],
-  "computeNullifierKeyHash": [
+      "name": "DeriveRemainderNonce",
+      "inputs": [
+        "31337",
+        "4660",
+        "22136",
+        "13138871640481533860920921291164695880264516248388515916376231944892282826404",
+        "5"
+      ],
+      "expected": "0x2aef75a0ea202ddb36460a82d421dca164da4cc0faaf88f000f2863149a5fb66"
+    },
     {
-      "nullifierKey": "8059902435717874135396261042205011152580675825595808264720455654581518234534",
-      "expected": "0x302b9fd245ae0f0bd3bb84604fe0dcff1be9ec0a61375378cb1d4398f198e7e7"
-    }
-  ],
-  "computeCreditCommitment": [
+      "name": "ComputeCreditRecoveryPad",
+      "inputs": [
+        "31337",
+        "4660",
+        "22136",
+        "13138871640481533860920921291164695880264516248388515916376231944892282826404",
+        "5"
+      ],
+      "expected": "0x0bae50e3e6ef9fac75550239e9628c92ea06144c8dbcee5a7b6d9755017a68fc"
+    },
     {
-      "chainId": "1",
-      "identityCommitment": "0x27df15cc890df106dbef86186a2d428dd4f1855ae2b9f513f02320ca9265f355",
-      "payerCommitment": "0x27df15cc890df106dbef86186a2d428dd4f1855ae2b9f513f02320ca9265f355",
-      "tokenAddress": "2748",
-      "amount": "1000",
-      "nonce": "42",
-      "expiry": "9999",
-      "nullifierKeyHash": "0x302b9fd245ae0f0bd3bb84604fe0dcff1be9ec0a61375378cb1d4398f198e7e7",
-      "expected": "0x0236b59808c998f7d8ab49b7437f06f2139060f87946e2ea6dfa871264d59a1f"
-    }
-  ],
-  "computeCreditNullifier": [
+      "name": "RecoverCreditRemainder",
+      "context": {
+        "chainId": "31337",
+        "protocolAddress": "4660"
+      },
+      "previous": {
+        "spenderIdentityCommitment": "14226418690594460995656294047329804886538179894850786544627893429654206110974",
+        "ownerIdentityCommitment": "20269970577570721474934505414690929183590816226489744637962305237558362030482",
+        "amount": "1000",
+        "nonce": "3",
+        "expiry": "2000000000",
+        "creditSharedKey": "5",
+        "tokenAddress": "22136"
+      },
+      "recovery": {
+        "creditNullifier": "0x1d0c567b0508dab881fd13e55339ede867dd41ca9a8e97a0e8899e75825beea4",
+        "remainderCommitment": "0x203df6d812433891a9915a698c3889d5cd44fffb724dba8d1959f97ae5ff4292",
+        "recoveryAmount": "0x0bae50e3e6ef9fac75550239e9628c92ea06144c8dbcee5a7b6d9755017a6b54"
+      },
+      "expected": {
+        "spenderIdentityCommitment": "14226418690594460995656294047329804886538179894850786544627893429654206110974",
+        "ownerIdentityCommitment": "20269970577570721474934505414690929183590816226489744637962305237558362030482",
+        "amount": "600",
+        "nonce": "19420227931549577381644527631669144487484506469596626867542867802921818782566",
+        "expiry": "2000000000",
+        "creditSharedKey": "5",
+        "tokenAddress": "22136"
+      }
+    },
     {
-      "chainId": "1",
-      "nullifierKey": "8059902435717874135396261042205011152580675825595808264720455654581518234534",
-      "tokenAddress": "2748",
-      "amount": "1000",
-      "nonce": "42",
-      "expiry": "9999",
-      "expected": "0x09f70f6fa2ea68e2b7e2fc72f0d0f40aa99d1fff969f1da4be2f63da80d6cfbd"
-    }
-  ],
-  "deriveRemainderNonce": [
+      "name": "DeriveNoteSecret",
+      "inputs": [
+        "19",
+        "42"
+      ],
+      "expected": "0x035adabc0ee51e5a777f1d02c72dbd0f4d9e906959019af7250436271160186b"
+    },
     {
-      "nonce": "100",
-      "newNonce": "200",
-      "expected": "0x2a65f0ac449a4a503a4995e5f36d4bb463459cee8654dfd2cb27b76cde502a69"
-    }
-  ],
-  "deriveRemainderNullifierKey": [
+      "name": "ComputeIdentityCommitment",
+      "inputs": [
+        "19",
+        "703710"
+      ],
+      "expected": "0x014e65855d55bc519f829935e823d14c635da3d4c6ebd12adcf97fafb95a9354"
+    },
     {
-      "nullifierKey": "100",
-      "newNonce": "200",
-      "expected": "0x08e764e3f9c32c1bb7039c3f19b4d0af104d9b48db43fb827cd9d505ec62b26e"
-    }
-  ],
-  "computeRefundLink": [
+      "name": "ComputeNoteCommitment",
+      "inputs": [
+        "31337",
+        "590827591519225657786077719211703742106484116366206690690425578260287624020",
+        "22136",
+        "500",
+        "20"
+      ],
+      "expected": "0x1d071207a88521aec9202d5f0e469c828682975050ef6b822e08c3c96db1ad74"
+    },
     {
-      "originalCommitment": "12345",
-      "refundNonce": "67890",
-      "expected": "0x019d5d33141d90b6cc096e9092febb0e1a0eb9a92a8268ef5e108ab3631f2e8d"
+      "name": "ComputeChangeCommitment",
+      "inputs": [
+        "31337",
+        "19",
+        "703710",
+        "22136",
+        "500",
+        "20"
+      ],
+      "expected": "0x1d071207a88521aec9202d5f0e469c828682975050ef6b822e08c3c96db1ad74"
+    },
+    {
+      "name": "ComputeNoteNullifier",
+      "inputs": [
+        "31337",
+        "19",
+        "703710",
+        "22136",
+        "500",
+        "20"
+      ],
+      "expected": "0x019a50867dca82af8d30bcb607cf4a9123041dfdc8d41f48ba4157514580d3d8"
+    },
+    {
+      "name": "ComputeCreditSharedKeyHash",
+      "inputs": [
+        "23"
+      ],
+      "expected": "0x20b28bab3ee29d213ac481be9d568a9cdb6fbb98ea5ea4ab2f042833d3c44d2a"
+    },
+    {
+      "name": "ComputeCreditCommitment",
+      "inputs": [
+        "31337",
+        "590827591519225657786077719211703742106484116366206690690425578260287624020",
+        "5358568146512342710285581679781501273898534353785206237353979369111832337626",
+        "22136",
+        "1000",
+        "21",
+        "2000000000",
+        "14789473891710746398535535521741838931860948100527696505643408664737685458218"
+      ],
+      "expected": "0x1abbe61aed17dce271f2d525114b3d9fcf5bf8bf819689d4b6cb297828a53dc9"
+    },
+    {
+      "name": "ComputeCreditNullifier",
+      "inputs": [
+        "31337",
+        "23",
+        "22136",
+        "1000",
+        "21",
+        "2000000000"
+      ],
+      "expected": "0x1cd06a6f9f5694d532a986bc81e8485f4b55494e29b8d40693bbac2852410085"
+    },
+    {
+      "name": "DeriveRemainderNonce",
+      "inputs": [
+        "31337",
+        "4660",
+        "22136",
+        "13032998544252474556867340068138145885252304847327266496741278418223082045573",
+        "23"
+      ],
+      "expected": "0x0e1222ef551ba2a20d8a436876b8e77afd54ac87b77ba4852ee0491e49a6b852"
+    },
+    {
+      "name": "ComputeCreditRecoveryPad",
+      "inputs": [
+        "31337",
+        "4660",
+        "22136",
+        "13032998544252474556867340068138145885252304847327266496741278418223082045573",
+        "23"
+      ],
+      "expected": "0x1690b4a4502b95fca43a936401362ef1dd2eaa579bac4eb57e8c96fca8c1adc5"
+    },
+    {
+      "name": "RecoverCreditRemainder",
+      "context": {
+        "chainId": "31337",
+        "protocolAddress": "4660"
+      },
+      "previous": {
+        "spenderIdentityCommitment": "590827591519225657786077719211703742106484116366206690690425578260287624020",
+        "ownerIdentityCommitment": "5358568146512342710285581679781501273898534353785206237353979369111832337626",
+        "amount": "1000",
+        "nonce": "21",
+        "expiry": "2000000000",
+        "creditSharedKey": "23",
+        "tokenAddress": "22136"
+      },
+      "recovery": {
+        "creditNullifier": "0x1cd06a6f9f5694d532a986bc81e8485f4b55494e29b8d40693bbac2852410085",
+        "remainderCommitment": "0x2fb64e351f8abb8eb8d4e06e042b45072e6791eae657be3534e6ce4241d520d3",
+        "recoveryAmount": "0x1690b4a4502b95fca43a936401362ef1dd2eaa579bac4eb57e8c96fca8c1b01d"
+      },
+      "expected": {
+        "spenderIdentityCommitment": "590827591519225657786077719211703742106484116366206690690425578260287624020",
+        "ownerIdentityCommitment": "5358568146512342710285581679781501273898534353785206237353979369111832337626",
+        "amount": "600",
+        "nonce": "6364424239097697972105653470856527013784415506754505031052487644178343704658",
+        "expiry": "2000000000",
+        "creditSharedKey": "23",
+        "tokenAddress": "22136"
+      }
+    },
+    {
+      "name": "DeriveNoteSecret",
+      "inputs": [
+        "21888242871839275222246405745257275088548364400416034343698204186575808494617",
+        "42"
+      ],
+      "expected": "0x008776a9147482e96e6d8beaa5bf42a306629aa8b95d037a11e0005ffab22aeb"
+    },
+    {
+      "name": "ComputeIdentityCommitment",
+      "inputs": [
+        "21888242871839275222246405745257275088548364400416034343698204186575808494617",
+        "703710"
+      ],
+      "expected": "0x0257f8ed98493b11e4f5961fc68eba6696ed5b173b7e78bf3e27571d1478ea9f"
+    },
+    {
+      "name": "ComputeNoteCommitment",
+      "inputs": [
+        "31337",
+        "1060059430441210101402521767985385732017610622167067019498574867533967977119",
+        "22136",
+        "500",
+        "21888242871839275222246405745257275088548364400416034343698204186575808494618"
+      ],
+      "expected": "0x1407b22b8e30365e4bb6f03fca0475b0fbb992f1d0990f33ae3a8caf41fbe1b1"
+    },
+    {
+      "name": "ComputeChangeCommitment",
+      "inputs": [
+        "31337",
+        "21888242871839275222246405745257275088548364400416034343698204186575808494617",
+        "703710",
+        "22136",
+        "500",
+        "21888242871839275222246405745257275088548364400416034343698204186575808494618"
+      ],
+      "expected": "0x1407b22b8e30365e4bb6f03fca0475b0fbb992f1d0990f33ae3a8caf41fbe1b1"
+    },
+    {
+      "name": "ComputeNoteNullifier",
+      "inputs": [
+        "31337",
+        "21888242871839275222246405745257275088548364400416034343698204186575808494617",
+        "703710",
+        "22136",
+        "500",
+        "21888242871839275222246405745257275088548364400416034343698204186575808494618"
+      ],
+      "expected": "0x0db08747205838db8df1c35578e5b2d35b6bd8e22aa6e808b8b10787612e655a"
+    },
+    {
+      "name": "ComputeCreditSharedKeyHash",
+      "inputs": [
+        "21888242871839275222246405745257275088548364400416034343698204186575808494621"
+      ],
+      "expected": "0x0d598e1f1051769ad55190e031be2a0fe37482304dde49672b8105d66fed770b"
+    },
+    {
+      "name": "ComputeCreditCommitment",
+      "inputs": [
+        "31337",
+        "1060059430441210101402521767985385732017610622167067019498574867533967977119",
+        "1297176668789324030774912503068512618162975892481738121635317351742274859661",
+        "22136",
+        "1000",
+        "21888242871839275222246405745257275088548364400416034343698204186575808494619",
+        "2000000000",
+        "6038297305805838920489893416373431228568081545309558059591664977655223908107"
+      ],
+      "expected": "0x1918cb645e4f636171504e1a81416e21aae49741800f8fb8f75265ade7e04b24"
+    },
+    {
+      "name": "ComputeCreditNullifier",
+      "inputs": [
+        "31337",
+        "21888242871839275222246405745257275088548364400416034343698204186575808494621",
+        "22136",
+        "1000",
+        "21888242871839275222246405745257275088548364400416034343698204186575808494619",
+        "2000000000"
+      ],
+      "expected": "0x22cee437ce8f03a7e192f210789f378c6a27965753cbe430f02a1025015882ed"
+    },
+    {
+      "name": "DeriveRemainderNonce",
+      "inputs": [
+        "31337",
+        "4660",
+        "22136",
+        "15744182449892704064684099260916193758737765365912898181479341132965337400045",
+        "21888242871839275222246405745257275088548364400416034343698204186575808494621"
+      ],
+      "expected": "0x06b48c43f8d59a4697d9749cc2c4fbef35161cca291003ecc321ec898a2c433b"
+    },
+    {
+      "name": "ComputeCreditRecoveryPad",
+      "inputs": [
+        "31337",
+        "4660",
+        "22136",
+        "15744182449892704064684099260916193758737765365912898181479341132965337400045",
+        "21888242871839275222246405745257275088548364400416034343698204186575808494621"
+      ],
+      "expected": "0x2be7442dd59e09d92640fa420dc94eb21072c5a07d0d75ace5ac9c704436b1d3"
+    },
+    {
+      "name": "RecoverCreditRemainder",
+      "context": {
+        "chainId": "31337",
+        "protocolAddress": "4660"
+      },
+      "previous": {
+        "spenderIdentityCommitment": "1060059430441210101402521767985385732017610622167067019498574867533967977119",
+        "ownerIdentityCommitment": "1297176668789324030774912503068512618162975892481738121635317351742274859661",
+        "amount": "1000",
+        "nonce": "21888242871839275222246405745257275088548364400416034343698204186575808494619",
+        "expiry": "2000000000",
+        "creditSharedKey": "21888242871839275222246405745257275088548364400416034343698204186575808494621",
+        "tokenAddress": "22136"
+      },
+      "recovery": {
+        "creditNullifier": "0x22cee437ce8f03a7e192f210789f378c6a27965753cbe430f02a1025015882ed",
+        "remainderCommitment": "0x03a7d192930da5f4719e8835a35cfb489007efc957ad195b6c1cb43f06929452",
+        "recoveryAmount": "0x2be7442dd59e09d92640fa420dc94eb21072c5a07d0d75ace5ac9c704436b42b"
+      },
+      "expected": {
+        "spenderIdentityCommitment": "1060059430441210101402521767985385732017610622167067019498574867533967977119",
+        "ownerIdentityCommitment": "1297176668789324030774912503068512618162975892481738121635317351742274859661",
+        "amount": "600",
+        "nonce": "3032877640170004250646856831547883495957207998582519757256084185149311042363",
+        "expiry": "2000000000",
+        "creditSharedKey": "21888242871839275222246405745257275088548364400416034343698204186575808494621",
+        "tokenAddress": "22136"
+      }
     }
   ]
 }

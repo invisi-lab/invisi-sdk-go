@@ -2,26 +2,31 @@ package core
 
 import (
 	"crypto/rand"
-	"math/big"
-
 	"github.com/consensys/gnark-crypto/ecc/bn254/fr"
+	"math/big"
 )
 
-// FieldModulus is the BN254 scalar field modulus.
-var FieldModulus, _ = new(big.Int).SetString(
-	"21888242871839275222246405745257275088548364400416034343698204186575808495617", 10,
-)
+// FieldModulus returns a fresh copy of the BN254 scalar field modulus.
+func FieldModulus() *big.Int { return fr.Modulus() }
 
-// GenerateNonce generates a cryptographically secure random nonce
-// within the BN254 scalar field.
+// GenerateNonce samples uniformly from the canonical BN254 field.
 func GenerateNonce() (fr.Element, error) {
-	buf := make([]byte, 32)
-	if _, err := rand.Read(buf); err != nil {
+	n, err := rand.Int(rand.Reader, fr.Modulus())
+	if err != nil {
 		return fr.Element{}, err
 	}
-	raw := new(big.Int).SetBytes(buf)
-	raw.Mod(raw, FieldModulus)
-	var e fr.Element
-	e.SetBigInt(raw)
-	return e, nil
+	return BigIntToElement(n), nil
+}
+
+// GenerateCreditSharedKey samples an independent, uniformly random nonzero field secret.
+func GenerateCreditSharedKey() (fr.Element, error) {
+	for {
+		key, err := GenerateNonce()
+		if err != nil {
+			return fr.Element{}, err
+		}
+		if !key.IsZero() {
+			return key, nil
+		}
+	}
 }

@@ -1,205 +1,67 @@
 package receiver
 
 import (
-	"math/big"
-
 	"github.com/consensys/gnark-crypto/ecc/bn254/fr"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/invisi-lab/invisi-sdk-go/core"
 	"github.com/invisi-lab/invisi-sdk-go/ipp"
-	"github.com/invisi-lab/invisi-sdk-go/tree"
+	"github.com/invisi-lab/invisi-sdk-go/payer"
+	"math/big"
 )
 
-// ── Invoice ─────────────────────────────────────────────────────────
-
-// GenerateInvoiceParams holds inputs for GenerateInvoice.
 type GenerateInvoiceParams struct {
-	MasterKey        fr.Element
-	InvoiceID        fr.Element
-	ReceivingAddress common.Address
-	TokenAddress     common.Address
-	Amount           *big.Int
-	TreeID           *big.Int
-	Operator         common.Address
+	MasterKey, InvoiceID                     fr.Element
+	ReceivingAddress, TokenAddress, Operator common.Address
 }
 
-// Invoice contains the generated invoice data.
-// NullifierKey is sensitive and must never be transmitted or logged.
+// NoteSecret is private invoice material and must not be included in public service queries.
 type Invoice struct {
-	InvoiceID          fr.Element
-	NullifierKey       fr.Element // @sensitive — never transmit
-	IdentityCommitment common.Hash
-	ReceivingAddress   common.Address
-	TokenAddress       common.Address
-	Amount             *big.Int
-	TreeID             *big.Int
-	Operator           common.Address
+	InvoiceID, NoteSecret                    fr.Element
+	IdentityCommitment                       common.Hash
+	ReceivingAddress, TokenAddress, Operator common.Address
 }
-
-// ── Payment Request ─────────────────────────────────────────────────
-
-// CreatePaymentRequestParams holds inputs for CreatePaymentRequest.
 type CreatePaymentRequestParams struct {
-	MasterKey        fr.Element
-	InvoiceID        fr.Element
-	ReceivingAddress common.Address
-	TokenAddress     common.Address
-	ChainID          *big.Int
-	Operator         common.Address
-	PaymentTypes     []ipp.PaymentType
-	// Mode is the receive-request mode: "single" (1a) or "multi" (1b/2).
-	Mode     string
-	Amount   *big.Int          // optional
-	Endpoint *string           // optional
-	Meta     map[string]string // optional
+	MasterKey, InvoiceID                     fr.Element
+	ReceivingAddress, TokenAddress, Operator common.Address
+	ChainID                                  *big.Int
+	PaymentTypes                             []ipp.PaymentType
+	Mode                                     string
+	Amount                                   *big.Int
+	Endpoint                                 *string
+	Meta                                     map[string]string
 }
-
-// ── Propose ─────────────────────────────────────────────────────────
-
-// ProposeParams holds inputs for ComputePaymentCommitmentForPropose.
 type ProposeParams struct {
 	IdentityCommitment common.Hash
 	TokenAddress       common.Address
-	Amount             *big.Int
-	ChainID            *big.Int
+	Amount, ChainID    *big.Int
 }
-
-// ProposeResult holds the output of ComputePaymentCommitmentForPropose.
-type ProposeResult struct {
-	Nonce             common.Hash
-	PaymentCommitment common.Hash
+type ProposeResult struct{ Nonce, NoteCommitment common.Hash }
+type BuildUnsignedWithdrawalCalldataParams struct {
+	Context     payer.TransactionContext
+	Proof       []byte
+	Params      payer.CrossTreeTransactParams
+	Funding     payer.FundingParams
+	Caller      *common.Address
+	SourceNotes []core.Note
 }
-
-// ── Batch Circuit Selection ─────────────────────────────────────────
-
-// BatchCircuitInfo identifies a batch ZK circuit and its maximum capacity.
-type BatchCircuitInfo struct {
-	Name    string
-	MaxSize int
+type BuildCreditDrawCalldataParams struct {
+	Context     payer.TransactionContext
+	Proof       []byte
+	Params      payer.CreditDrawParams
+	Ciphertexts [][]byte
 }
-
-// ── Withdraw Witness ────────────────────────────────────────────────
-
-// BuildWithdrawWitnessParams holds inputs for BuildWithdrawWitness.
-type BuildWithdrawWitnessParams struct {
-	NullifierKeys    []fr.Element
-	ReceivingAddress common.Address
-	TokenAddress     common.Address
-	Amounts          []*big.Int
-	Nonces           []fr.Element
-	MerkleProofs     []tree.MerkleProof
+type BuildCancelCreditCalldataParams struct {
+	Context       payer.TransactionContext
+	Proof         []byte
+	Params        payer.CancelCreditParams
+	Authorization payer.CreditAuthorization
 }
-
-// WithdrawWitness contains all ZK circuit inputs for a batch settlement proof.
-// This is the Go SDK's key differentiator from the TS SDK — witness is built
-// locally, then sent to a remote prover for proof generation.
-type WithdrawWitness struct {
-	NullifierKeys []fr.Element
-	Amounts       []*big.Int
-	Nonces        []fr.Element
-	MerkleProofs  []tree.MerkleProof
-	TreeRoot      fr.Element
-	TotalAmount   *big.Int
-	Receiver      common.Address
-}
-
-// ── Withdraw Calldata ───────────────────────────────────────────────
-
-// WithdrawParams holds inputs for BuildWithdrawCalldata.
-type WithdrawParams struct {
-	Nullifiers       []common.Hash
-	TotalAmount      *big.Int
-	ReceivingAddress common.Address
-	MerkleRoot       common.Hash
-	Proof            []byte
-	TreeID           *big.Int
-}
-
-// WithdrawCalldata holds the encoded contract calldata for a withdraw transaction.
-type WithdrawCalldata struct {
-	Data        []byte
-	Nullifiers  []common.Hash
-	TotalAmount *big.Int
-}
-
-// ── Credit Draw ─────────────────────────────────────────────────────
-
-// BuildCreditDrawWitnessParams holds inputs for BuildCreditDrawWitness.
-type BuildCreditDrawWitnessParams struct {
-	NullifierKeys      []fr.Element
-	ReceivingAddress   common.Address
-	TokenAddress       common.Address
-	Amounts            []*big.Int
-	Nonces             []fr.Element
-	Expiries           []*big.Int
-	PayerCommitments   []fr.Element
-	NullifierKeyHashes []fr.Element
-	MerkleProofs       []tree.MerkleProof
-}
-
-// CreditDrawWitness contains all ZK circuit inputs for a credit draw proof.
-type CreditDrawWitness struct {
-	NullifierKeys        []fr.Element
-	Amounts              []*big.Int
-	Nonces               []fr.Element
-	MerkleProofs         []tree.MerkleProof
-	TreeRoot             fr.Element
-	TotalAmount          *big.Int
-	Receiver             common.Address
-	RemainderCommitments []fr.Element
-	Expiries             []*big.Int
-	PayerCommitments     []fr.Element
-	NullifierKeyHashes   []fr.Element
-}
-
-// CreditDrawParams holds inputs for BuildCreditDrawCalldata.
-type CreditDrawParams struct {
-	Nullifiers           []common.Hash
-	TotalAmount          *big.Int
-	ReceivingAddress     common.Address
-	MerkleRoot           common.Hash
-	Proof                []byte
-	TreeID               *big.Int
-	RemainderCommitments []common.Hash
-	Expiry               *big.Int
-}
-
-// CreditDrawCalldata holds the encoded contract calldata for a creditDraw transaction.
-type CreditDrawCalldata struct {
-	Data        []byte
-	Nullifiers  []common.Hash
-	TotalAmount *big.Int
-}
-
-// ── Credit Reclaim ──────────────────────────────────────────────────
-
-// CreditReclaimParams holds inputs for BuildCreditReclaimCalldata.
-type CreditReclaimParams struct {
-	Nullifier        common.Hash
-	Amount           *big.Int
-	ReceivingAddress common.Address
-	MerkleRoot       common.Hash
-	Proof            []byte
-	TreeID           *big.Int
-	Expiry           *big.Int
-}
-
-// CreditReclaimCalldata holds the encoded contract calldata for a reclaim transaction.
-type CreditReclaimCalldata struct {
-	Data []byte
-}
-
-// ── Refund ──────────────────────────────────────────────────────────
-
-// RefundPayOpenParams holds inputs for BuildRefundPayOpenCalldata.
-type RefundPayOpenParams struct {
-	IdentityCommitment common.Hash
-	RefundAmount       *big.Int
-	Nonce              common.Hash
-	TreeID             *big.Int
-	RefundLink         common.Hash
-}
-
-// RefundPayOpenCalldata holds the encoded contract calldata for a refund payOpen transaction.
-type RefundPayOpenCalldata struct {
-	Data []byte
+type BuildTopUpCreditCalldataParams struct {
+	Context       payer.TransactionContext
+	Proof         []byte
+	Params        payer.TopUpCreditParams
+	Ciphertexts   [][]byte
+	Funding       payer.FundingParams
+	Authorization payer.CreditAuthorization
+	Caller        *common.Address
 }

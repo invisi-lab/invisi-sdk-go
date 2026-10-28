@@ -46,7 +46,7 @@ func TestCreatePaymentRequest_CorrectIdentityCommitment(t *testing.T) {
 	}
 
 	// Verify identityCommitment matches core computation
-	nk, err := core.DeriveNullifierKey(params.MasterKey, params.InvoiceID)
+	nk, err := core.DeriveNoteSecret(params.MasterKey, params.InvoiceID)
 	if err != nil {
 		t.Fatal(err)
 	}

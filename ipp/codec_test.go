@@ -29,15 +29,15 @@ func sampleVoucher() IPPVoucher {
 	return IPPVoucher{
 		V: 1, Network: "eip155:84532", Type: MessageTypeVoucher,
 		Payload: IPPVoucherV1{
-			ReceivingAddress:  "0xabc",
-			PaymentCommitment: "0xdef",
-			TokenAddress:      "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
-			Operator:          "0x1234567890123456789012345678901234567890",
-			Amount:            "100000000",
-			Nonce:             "0x123",
-			NullifierKey:      "0x456",
-			TreeID:            "1",
-			Endpoint:          "https://pay.merchant.com",
+			ReceivingAddress: "0xabc",
+			NoteCommitment:   "0xdef",
+			TokenAddress:     "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+			Operator:         "0x1234567890123456789012345678901234567890",
+			Amount:           "100000000",
+			Nonce:            "0x123",
+			NoteSecret:       "0x456",
+			TreeID:           "1",
+			Endpoint:         "https://pay.merchant.com",
 		},
 	}
 }
@@ -55,8 +55,8 @@ func TestVoucherRoundtripJSON(t *testing.T) {
 	if err != nil {
 		t.Fatalf("decode: %v", err)
 	}
-	if got.Payload.NullifierKey != v.Payload.NullifierKey {
-		t.Error("nullifierKey mismatch")
+	if got.Payload.NoteSecret != v.Payload.NoteSecret {
+		t.Error("noteSecret mismatch")
 	}
 	if got.Payload.Endpoint != v.Payload.Endpoint {
 		t.Errorf("endpoint mismatch: got %q, want %q", got.Payload.Endpoint, v.Payload.Endpoint)
@@ -108,10 +108,10 @@ func TestEncodeVoucherMissingEndpoint(t *testing.T) {
 // omits the payload's "endpoint" field must be rejected.
 func TestDecodeVoucherMissingEndpointJSON(t *testing.T) {
 	const missingEndpointJSON = `{"v":1,"network":"eip155:84532","type":"voucher",` +
-		`"payload":{"receiving_address":"0xabc","payment_commitment":"0xdef",` +
+		`"payload":{"receiving_address":"0xabc","note_commitment":"0xdef",` +
 		`"token_address":"0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",` +
 		`"operator":"0x1234567890123456789012345678901234567890",` +
-		`"amount":"100000000","nonce":"0x123","nullifier_key":"0x456","tree_id":"1"}}`
+		`"amount":"100000000","nonce":"0x123","note_secret":"0x456","tree_id":"1"}}`
 
 	_, err := DecodeVoucher(missingEndpointJSON)
 	if err == nil {
@@ -195,7 +195,7 @@ func TestEncodeJSON(t *testing.T) {
 func TestDecodeBareJSONFromPeerSDK(t *testing.T) {
 	const bareJSON = `{"v":1,"network":"eip155:84532","type":"request",` +
 		`"payload":{"identity_commitment":"0xid","token_address":"0xtoken",` +
-		`"operator":"0xop","tree_id":"1","payment_types":["open"],` +
+		`"operator":"0xop","payment_types":["open"],` +
 		`"endpoint":"https://pay.example.com"}}`
 
 	got, err := Decode(bareJSON)
@@ -355,8 +355,8 @@ func TestWireKeysSnakeCase(t *testing.T) {
 
 	// Keys that must appear as snake_case in the payload object.
 	snakeKeys := []string{
-		`"tree_id"`, `"receiving_address"`, `"payment_commitment"`,
-		`"token_address"`, `"nullifier_key"`, `"endpoint"`,
+		`"tree_id"`, `"receiving_address"`, `"note_commitment"`,
+		`"token_address"`, `"note_secret"`, `"endpoint"`,
 	}
 	for _, k := range snakeKeys {
 		if !strings.Contains(jsonPayload, k) {
@@ -366,8 +366,8 @@ func TestWireKeysSnakeCase(t *testing.T) {
 
 	// Keys that must NOT appear (old camelCase forms).
 	camelKeys := []string{
-		`"treeId"`, `"receivingAddress"`, `"paymentCommitment"`,
-		`"tokenAddress"`, `"nullifierKey"`,
+		`"treeId"`, `"receivingAddress"`, `"noteCommitment"`,
+		`"tokenAddress"`, `"noteSecret"`,
 	}
 	for _, k := range camelKeys {
 		if strings.Contains(jsonPayload, k) {
@@ -384,9 +384,9 @@ func TestWireKeysSnakeCase(t *testing.T) {
 		t.Errorf("TreeID mismatch after JSON round-trip: got %q, want %q",
 			decoded.Payload.TreeID, voucher.Payload.TreeID)
 	}
-	if decoded.Payload.NullifierKey != voucher.Payload.NullifierKey {
-		t.Errorf("NullifierKey mismatch after JSON round-trip: got %q, want %q",
-			decoded.Payload.NullifierKey, voucher.Payload.NullifierKey)
+	if decoded.Payload.NoteSecret != voucher.Payload.NoteSecret {
+		t.Errorf("NoteSecret mismatch after JSON round-trip: got %q, want %q",
+			decoded.Payload.NoteSecret, voucher.Payload.NoteSecret)
 	}
 
 	// ── msgpack (compact) wire keys ─────────────────────────────────────

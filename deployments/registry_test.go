@@ -12,7 +12,7 @@ func TestGetDeployment_ValidChainIDs(t *testing.T) {
 		network string
 		env     string
 	}{
-		{1, "ethereum", "mainnet"},
+		{1, "mainnet", "mainnet"},
 		{10, "optimism", "mainnet"},
 		{8453, "base", "mainnet"},
 		{42161, "arbitrum", "mainnet"},

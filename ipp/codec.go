@@ -1,6 +1,7 @@
 package ipp
 
 import (
+	"bytes"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
@@ -62,7 +63,12 @@ func decodeEnvelope(encoded string, dst any) error {
 		if err != nil {
 			return fmt.Errorf("ipp: base64 decode: %w", err)
 		}
-		if err := msgpack.Unmarshal(data, dst); err != nil {
+		decoder := msgpack.NewDecoder(bytes.NewReader(data))
+		switch dst.(type) {
+		case *IPPRequest, *IPPVoucher:
+			decoder.DisallowUnknownFields(true)
+		}
+		if err := decoder.Decode(dst); err != nil {
 			return fmt.Errorf("ipp: msgpack unmarshal: %w", err)
 		}
 		switch d := dst.(type) {

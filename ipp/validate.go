@@ -66,8 +66,8 @@ func ValidateIPPVoucher(v IPPVoucher) error {
 	if p.ReceivingAddress == "" {
 		return fmt.Errorf("ipp: receivingAddress is required")
 	}
-	if p.PaymentCommitment == "" {
-		return fmt.Errorf("ipp: paymentCommitment is required")
+	if p.NoteCommitment == "" {
+		return fmt.Errorf("ipp: noteCommitment is required")
 	}
 	if p.TokenAddress == "" {
 		return fmt.Errorf("ipp: tokenAddress is required")
@@ -81,8 +81,8 @@ func ValidateIPPVoucher(v IPPVoucher) error {
 	if p.Nonce == "" {
 		return fmt.Errorf("ipp: nonce is required")
 	}
-	if p.NullifierKey == "" {
-		return fmt.Errorf("ipp: nullifierKey is required")
+	if p.NoteSecret == "" {
+		return fmt.Errorf("ipp: noteSecret is required")
 	}
 	if p.TreeID == "" {
 		return fmt.Errorf("ipp: treeId is required")

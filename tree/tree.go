@@ -2,6 +2,7 @@ package tree
 
 import (
 	"fmt"
+	"sync"
 
 	"github.com/consensys/gnark-crypto/ecc/bn254/fr"
 	"github.com/invisi-lab/invisi-sdk-go/core"
@@ -13,6 +14,7 @@ const MaxLeaves = 1 << Depth // 65536
 // InMemoryMerkleTree is a depth-16 Poseidon2 Merkle tree.
 // It stores all layers for arbitrary proof generation.
 type InMemoryMerkleTree struct {
+	mu sync.RWMutex
 	// zeros[i] is the default hash at level i for an empty subtree.
 	zeros [Depth + 1]fr.Element
 	// layers[0] = leaves, layers[Depth] = [root].
@@ -57,12 +59,20 @@ func (t *InMemoryMerkleTree) Depth() int {
 
 // Size returns the number of inserted leaves.
 func (t *InMemoryMerkleTree) Size() int {
+	t.mu.RLock()
+	defer t.mu.RUnlock()
 	return t.size
 }
 
 // Root returns the current Merkle root.
 // For an empty tree, returns zeros[Depth].
 func (t *InMemoryMerkleTree) Root() fr.Element {
+	t.mu.RLock()
+	defer t.mu.RUnlock()
+	return t.rootLocked()
+}
+
+func (t *InMemoryMerkleTree) rootLocked() fr.Element {
 	topLayer := t.layers[Depth]
 	if len(topLayer) == 0 {
 		return t.zeros[Depth]
@@ -73,6 +83,12 @@ func (t *InMemoryMerkleTree) Root() fr.Element {
 // Insert adds a leaf to the tree and returns its index.
 // Returns an error if the tree is full (>= 2^16 leaves).
 func (t *InMemoryMerkleTree) Insert(leaf fr.Element) (int, error) {
+	t.mu.Lock()
+	defer t.mu.Unlock()
+	return t.insertLocked(leaf)
+}
+
+func (t *InMemoryMerkleTree) insertLocked(leaf fr.Element) (int, error) {
 	index := t.size
 	if index >= MaxLeaves {
 		return 0, fmt.Errorf("tree full: max %d leaves", MaxLeaves)
@@ -127,6 +143,8 @@ func (t *InMemoryMerkleTree) Insert(leaf fr.Element) (int, error) {
 
 // GetProof generates a Merkle inclusion proof for the leaf at the given index.
 func (t *InMemoryMerkleTree) GetProof(leafIndex int) (MerkleProof, error) {
+	t.mu.RLock()
+	defer t.mu.RUnlock()
 	if leafIndex < 0 || leafIndex >= t.size {
 		return MerkleProof{}, fmt.Errorf("leafIndex %d out of range [0, %d)", leafIndex, t.size)
 	}
@@ -134,7 +152,7 @@ func (t *InMemoryMerkleTree) GetProof(leafIndex int) (MerkleProof, error) {
 	var proof MerkleProof
 	proof.Leaf = t.layers[0][leafIndex]
 	proof.Index = leafIndex
-	proof.Root = t.Root()
+	proof.Root = t.rootLocked()
 
 	currentIndex := leafIndex
 	for level := 0; level < Depth; level++ {
@@ -156,4 +174,22 @@ func (t *InMemoryMerkleTree) GetProof(leafIndex int) (MerkleProof, error) {
 	}
 
 	return proof, nil
+}
+
+// GetLeaf returns a canonical field commitment at an inserted leaf index.
+func (t *InMemoryMerkleTree) GetLeaf(index int) (fr.Element, error) {
+	t.mu.RLock()
+	defer t.mu.RUnlock()
+	if index < 0 || index >= t.size {
+		return fr.Element{}, fmt.Errorf("leaf index %d out of range", index)
+	}
+	return t.layers[0][index], nil
+}
+
+func (t *InMemoryMerkleTree) cloneLocked() *InMemoryMerkleTree {
+	copyTree := &InMemoryMerkleTree{zeros: t.zeros, size: t.size}
+	for i := range t.layers {
+		copyTree.layers[i] = append([]fr.Element(nil), t.layers[i]...)
+	}
+	return copyTree
 }

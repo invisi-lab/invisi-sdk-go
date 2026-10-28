@@ -1,19 +1,15 @@
 package core
 
 const (
-	DomainNKey       uint64 = 1
-	DomainIdent      uint64 = 2
-	DomainPay        uint64 = 3
-	DomainNull       uint64 = 4
-	DomainCredit     uint64 = 5
-	DomainCNull      uint64 = 6
-	DomainNKHash     uint64 = 7
-	DomainDerive     uint64 = 8
-	DomainRefLink    uint64 = 9
-	DomainCreditNKey uint64 = 10
-	// DomainChangeNKey is the domain tag for shielded-payment change derivation:
-	// Poseidon2(D_CHANGE_NKEY, payerMasterKey, paymentCommitment).
-	DomainChangeNKey uint64 = 11
-
-	TreeDepth = 16
+	// DNoteSecret is an optional offchain invoice-key policy, not a circuit derivation.
+	DNoteSecret           uint64 = 1
+	DIdent                uint64 = 2
+	DNote                 uint64 = 3
+	DNull                 uint64 = 4
+	DCredit               uint64 = 5
+	DCNull                uint64 = 6
+	DCreditKeyHash        uint64 = 7
+	DCreditRecovery       uint64 = 9
+	DCreditRemainderNonce uint64 = 10
+	TreeDepth                    = 16
 )

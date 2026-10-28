@@ -41,10 +41,8 @@ const (
 	RejectInsufficientCreditBalance RejectCode = "insufficient_credit_balance"
 	// RejectPendingDrawExists: the credit already has a pending draw.
 	RejectPendingDrawExists RejectCode = "pending_draw_exists"
-	// RejectCreditAlreadyReclaimed: the credit has already been reclaimed.
-	RejectCreditAlreadyReclaimed RejectCode = "credit_already_reclaimed"
-	// RejectCreditNotExpired: the credit is not yet expired and cannot be reclaimed.
-	RejectCreditNotExpired RejectCode = "credit_not_expired"
+	// RejectCreditAlreadyCancelled: the credit has already been cancelled.
+	RejectCreditAlreadyCancelled RejectCode = "credit_already_cancelled"
 	// RejectNoPreallocatedCredential: a single-mode request has no preallocated credential.
 	RejectNoPreallocatedCredential RejectCode = "no_preallocated_credential"
 )

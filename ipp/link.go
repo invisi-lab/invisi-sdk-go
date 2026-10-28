@@ -30,7 +30,7 @@ import (
 //     builds. Collapsing the two entry points, or renaming this one, removes the
 //     only thing those guards can match on.
 //   - Every rule here is a WIRE rule shared with packages/ipp/src/link.ts and
-//     the 06-ipp/6.6 conformance fixture. Loosening or tightening one on this
+//     the 05-ipp/5.6 conformance fixture. Loosening or tightening one on this
 //     side alone produces a code that pays in one wallet and not in another,
 //     which is the exact failure the shared rules exist to prevent. The written
 //     form of a URL is refused or accepted as-is; it is never repaired, because
@@ -106,7 +106,7 @@ const (
 )
 
 // envelopeTopLevelKeys is the closed set of IPPMessage top-level keys
-// (06-ipp/6.1 §JSON 格式). The payer rejecting anything else is what makes the
+// (05-ipp/5.1 §JSON 格式). The payer rejecting anything else is what makes the
 // forward-compatibility promise real: the envelope extension point is `meta`,
 // and a sixth top-level key is a breaking change that must bump `v`. Note this
 // is the opposite stance from machine error codes, which are an open set.
@@ -1017,7 +1017,7 @@ func decodeLinkBody(body []byte) (*IPPRequest, error) {
 	}
 	// Same decoder as the ipp1: carrier from here on, so the two carriers
 	// produce one shape by construction. It runs ValidateIPPRequest and rejects
-	// a voucher envelope (a voucher carries nullifier_key and must never be
+	// a voucher envelope (a voucher carries note_secret and must never be
 	// handed out by an anonymous public GET).
 	request, err := Decode(string(doc))
 	if err != nil {

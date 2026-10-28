@@ -29,8 +29,108 @@ var (
 	_ = abi.ConvertType
 )
 
-// Struct0 is an auto generated low-level Go binding around an user-defined struct.
-type Struct0 struct {
+// IInvisiMetaTxTokenPermit is an auto generated low-level Go binding around an user-defined struct.
+type IInvisiMetaTxTokenPermit struct {
+	Deadline *big.Int
+	V        uint8
+	R        [32]byte
+	S        [32]byte
+}
+
+// IInvisiProtocolCancelCreditParams is an auto generated low-level Go binding around an user-defined struct.
+type IInvisiProtocolCancelCreditParams struct {
+	Source    IInvisiProtocolInputSource
+	Nullifier [32]byte
+	Owner     common.Address
+	Amount    *big.Int
+	Deadline  *big.Int
+}
+
+// IInvisiProtocolCreateCreditParams is an auto generated low-level Go binding around an user-defined struct.
+type IInvisiProtocolCreateCreditParams struct {
+	Sources          []IInvisiProtocolInputSource
+	Nullifiers       [][32]byte
+	CreditCommitment [32]byte
+	ChangeCommitment [32]byte
+	Owner            common.Address
+	Expiry           *big.Int
+	Deadline         *big.Int
+}
+
+// IInvisiProtocolCreditAuthorization is an auto generated low-level Go binding around an user-defined struct.
+type IInvisiProtocolCreditAuthorization struct {
+	SigNonce  *big.Int
+	Signature []byte
+}
+
+// IInvisiProtocolCreditDrawParams is an auto generated low-level Go binding around an user-defined struct.
+type IInvisiProtocolCreditDrawParams struct {
+	Sources              []IInvisiProtocolInputSource
+	Nullifiers           [][32]byte
+	RemainderCommitments [][32]byte
+	Expiries             []*big.Int
+	RecoveryAmounts      [][32]byte
+	Spender              common.Address
+	TotalAmount          *big.Int
+	Deadline             *big.Int
+}
+
+// IInvisiProtocolCrossTreeTransactParams is an auto generated low-level Go binding around an user-defined struct.
+type IInvisiProtocolCrossTreeTransactParams struct {
+	Sources           []IInvisiProtocolInputSource
+	Nullifiers        [][32]byte
+	OutputCommitments [][32]byte
+	WithdrawalAddress common.Address
+	WithdrawalAmount  *big.Int
+	Deadline          *big.Int
+}
+
+// IInvisiProtocolFundingParams is an auto generated low-level Go binding around an user-defined struct.
+type IInvisiProtocolFundingParams struct {
+	Payer     common.Address
+	Amount    *big.Int
+	SigNonce  *big.Int
+	Deadline  *big.Int
+	Signature []byte
+	Permit    IInvisiMetaTxTokenPermit
+}
+
+// IInvisiProtocolInputSource is an auto generated low-level Go binding around an user-defined struct.
+type IInvisiProtocolInputSource struct {
+	TreeId     *big.Int
+	MerkleRoot [32]byte
+}
+
+// IInvisiProtocolShieldOutput is an auto generated low-level Go binding around an user-defined struct.
+type IInvisiProtocolShieldOutput struct {
+	IdentityCommitment [32]byte
+	Amount             *big.Int
+	Nonce              [32]byte
+}
+
+// IInvisiProtocolShieldParams is an auto generated low-level Go binding around an user-defined struct.
+type IInvisiProtocolShieldParams struct {
+	OutputCommitments [][32]byte
+	Deadline          *big.Int
+}
+
+// IInvisiProtocolTopUpCreditParams is an auto generated low-level Go binding around an user-defined struct.
+type IInvisiProtocolTopUpCreditParams struct {
+	Creation        IInvisiProtocolCreateCreditParams
+	CreditSource    IInvisiProtocolInputSource
+	CreditNullifier [32]byte
+	PreviousExpiry  *big.Int
+}
+
+// IInvisiProtocolTransactRequest is an auto generated low-level Go binding around an user-defined struct.
+type IInvisiProtocolTransactRequest struct {
+	Params      IInvisiProtocolCrossTreeTransactParams
+	Ciphertexts [][]byte
+	Funding     IInvisiProtocolFundingParams
+}
+
+// InstanceParams is an auto generated low-level Go binding around an user-defined struct.
+type InstanceParams struct {
 	Factory         common.Address
 	Token           common.Address
 	GlobalEmergency common.Address
@@ -40,38 +140,9 @@ type Struct0 struct {
 	VerifierRouter  common.Address
 }
 
-// Struct2 is an auto generated low-level Go binding around an user-defined struct.
-type Struct2 struct {
-	Signer      common.Address
-	SigNonce    *big.Int
-	Deadline    *big.Int
-	Signature   []byte
-	PermitToken common.Address
-	Permit      Struct1
-}
-
-// Struct3 is an auto generated low-level Go binding around an user-defined struct.
-type Struct3 struct {
-	MerkleRoot           [32]byte
-	Nullifiers           [][32]byte
-	TotalAmount          *big.Int
-	ReceivingAddress     common.Address
-	TreeId               *big.Int
-	RemainderCommitments [][32]byte
-	Expiry               *big.Int
-}
-
-// Struct1 is an auto generated low-level Go binding around an user-defined struct.
-type Struct1 struct {
-	Deadline *big.Int
-	V        uint8
-	R        [32]byte
-	S        [32]byte
-}
-
 // InvisiProtocolMetaData contains all meta data concerning the InvisiProtocol contract.
 var InvisiProtocolMetaData = &bind.MetaData{
-	ABI: "[{\"type\":\"constructor\",\"inputs\":[{\"name\":\"params\",\"type\":\"tuple\",\"components\":[{\"name\":\"factory\",\"type\":\"address\"},{\"name\":\"token\",\"type\":\"address\"},{\"name\":\"globalEmergency\",\"type\":\"address\"},{\"name\":\"emergencyAdmin\",\"type\":\"address\"},{\"name\":\"timelockAdmin\",\"type\":\"address\"},{\"name\":\"maxPerDeposit\",\"type\":\"uint256\"},{\"name\":\"verifierRouter\",\"type\":\"address\"}]},{\"name\":\"_screener\",\"type\":\"address\"}],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"CHAIN_ID\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"COOLDOWN_PERIOD\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"DEPOSIT_CREDIT_TYPEHASH\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"bytes32\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"PAY_BLIND_TYPEHASH\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"bytes32\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"PAY_OPEN_TYPEHASH\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"bytes32\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"VERSION\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"creditDraw\",\"inputs\":[{\"name\":\"proof\",\"type\":\"bytes\"},{\"name\":\"params\",\"type\":\"tuple\",\"components\":[{\"name\":\"merkleRoot\",\"type\":\"bytes32\"},{\"name\":\"nullifiers\",\"type\":\"bytes32[]\"},{\"name\":\"totalAmount\",\"type\":\"uint256\"},{\"name\":\"receivingAddress\",\"type\":\"address\"},{\"name\":\"treeId\",\"type\":\"uint256\"},{\"name\":\"remainderCommitments\",\"type\":\"bytes32[]\"},{\"name\":\"expiry\",\"type\":\"uint256\"}]}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"depositCredit\",\"inputs\":[{\"name\":\"identityCommitment\",\"type\":\"bytes32\"},{\"name\":\"payerCommitment\",\"type\":\"bytes32\"},{\"name\":\"amount\",\"type\":\"uint256\"},{\"name\":\"nonce\",\"type\":\"bytes32\"},{\"name\":\"expiry\",\"type\":\"uint256\"},{\"name\":\"nullifierKeyHash\",\"type\":\"bytes32\"},{\"name\":\"treeId\",\"type\":\"uint256\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"depositCreditWithSig\",\"inputs\":[{\"name\":\"identityCommitment\",\"type\":\"bytes32\"},{\"name\":\"payerCommitment\",\"type\":\"bytes32\"},{\"name\":\"amount\",\"type\":\"uint256\"},{\"name\":\"nonce\",\"type\":\"bytes32\"},{\"name\":\"expiry\",\"type\":\"uint256\"},{\"name\":\"nullifierKeyHash\",\"type\":\"bytes32\"},{\"name\":\"treeId\",\"type\":\"uint256\"},{\"name\":\"meta\",\"type\":\"tuple\",\"components\":[{\"name\":\"signer\",\"type\":\"address\"},{\"name\":\"sigNonce\",\"type\":\"uint256\"},{\"name\":\"deadline\",\"type\":\"uint256\"},{\"name\":\"signature\",\"type\":\"bytes\"},{\"name\":\"permitToken\",\"type\":\"address\"},{\"name\":\"permit\",\"type\":\"tuple\",\"components\":[{\"name\":\"deadline\",\"type\":\"uint256\"},{\"name\":\"v\",\"type\":\"uint8\"},{\"name\":\"r\",\"type\":\"bytes32\"},{\"name\":\"s\",\"type\":\"bytes32\"}]}]}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"eip712Domain\",\"inputs\":[],\"outputs\":[{\"name\":\"fields\",\"type\":\"bytes1\"},{\"name\":\"name\",\"type\":\"string\"},{\"name\":\"version\",\"type\":\"string\"},{\"name\":\"chainId\",\"type\":\"uint256\"},{\"name\":\"verifyingContract\",\"type\":\"address\"},{\"name\":\"salt\",\"type\":\"bytes32\"},{\"name\":\"extensions\",\"type\":\"uint256[]\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"emergencyAdmin\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"factory\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getPaymentTreeRoot\",\"inputs\":[{\"name\":\"treeId\",\"type\":\"uint256\"}],\"outputs\":[{\"name\":\"\",\"type\":\"bytes32\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getTreeCount\",\"inputs\":[],\"outputs\":[{\"name\":\"count\",\"type\":\"uint256\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"globalEmergency\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"globalPause\",\"inputs\":[],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"invalidateNonce\",\"inputs\":[],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"isCommitmentPaid\",\"inputs\":[{\"name\":\"paymentCommitment\",\"type\":\"bytes32\"}],\"outputs\":[{\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"isNullifierSpent\",\"inputs\":[{\"name\":\"nullifier\",\"type\":\"bytes32\"}],\"outputs\":[{\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"isTreeFull\",\"inputs\":[{\"name\":\"treeId\",\"type\":\"uint256\"}],\"outputs\":[{\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"maxPerDeposit\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"nonces\",\"inputs\":[{\"name\":\"\",\"type\":\"address\"}],\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"pause\",\"inputs\":[],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"paused\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"payBlind\",\"inputs\":[{\"name\":\"proof\",\"type\":\"bytes\"},{\"name\":\"paymentCommitment\",\"type\":\"bytes32\"},{\"name\":\"changeCommitment\",\"type\":\"bytes32\"},{\"name\":\"inputAmount\",\"type\":\"uint256\"},{\"name\":\"treeId\",\"type\":\"uint256\"},{\"name\":\"refundLink\",\"type\":\"bytes32\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"payBlindWithSig\",\"inputs\":[{\"name\":\"proof\",\"type\":\"bytes\"},{\"name\":\"paymentCommitment\",\"type\":\"bytes32\"},{\"name\":\"changeCommitment\",\"type\":\"bytes32\"},{\"name\":\"inputAmount\",\"type\":\"uint256\"},{\"name\":\"treeId\",\"type\":\"uint256\"},{\"name\":\"refundLink\",\"type\":\"bytes32\"},{\"name\":\"meta\",\"type\":\"tuple\",\"components\":[{\"name\":\"signer\",\"type\":\"address\"},{\"name\":\"sigNonce\",\"type\":\"uint256\"},{\"name\":\"deadline\",\"type\":\"uint256\"},{\"name\":\"signature\",\"type\":\"bytes\"},{\"name\":\"permitToken\",\"type\":\"address\"},{\"name\":\"permit\",\"type\":\"tuple\",\"components\":[{\"name\":\"deadline\",\"type\":\"uint256\"},{\"name\":\"v\",\"type\":\"uint8\"},{\"name\":\"r\",\"type\":\"bytes32\"},{\"name\":\"s\",\"type\":\"bytes32\"}]}]}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"payOpen\",\"inputs\":[{\"name\":\"identityCommitment\",\"type\":\"bytes32\"},{\"name\":\"amount\",\"type\":\"uint256\"},{\"name\":\"nonce\",\"type\":\"bytes32\"},{\"name\":\"treeId\",\"type\":\"uint256\"},{\"name\":\"refundLink\",\"type\":\"bytes32\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"payOpenWithSig\",\"inputs\":[{\"name\":\"identityCommitment\",\"type\":\"bytes32\"},{\"name\":\"amount\",\"type\":\"uint256\"},{\"name\":\"nonce\",\"type\":\"bytes32\"},{\"name\":\"treeId\",\"type\":\"uint256\"},{\"name\":\"refundLink\",\"type\":\"bytes32\"},{\"name\":\"meta\",\"type\":\"tuple\",\"components\":[{\"name\":\"signer\",\"type\":\"address\"},{\"name\":\"sigNonce\",\"type\":\"uint256\"},{\"name\":\"deadline\",\"type\":\"uint256\"},{\"name\":\"signature\",\"type\":\"bytes\"},{\"name\":\"permitToken\",\"type\":\"address\"},{\"name\":\"permit\",\"type\":\"tuple\",\"components\":[{\"name\":\"deadline\",\"type\":\"uint256\"},{\"name\":\"v\",\"type\":\"uint8\"},{\"name\":\"r\",\"type\":\"bytes32\"},{\"name\":\"s\",\"type\":\"bytes32\"}]}]}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"reclaim\",\"inputs\":[{\"name\":\"proof\",\"type\":\"bytes\"},{\"name\":\"merkleRoot\",\"type\":\"bytes32\"},{\"name\":\"nullifier\",\"type\":\"bytes32\"},{\"name\":\"amount\",\"type\":\"uint256\"},{\"name\":\"receivingAddress\",\"type\":\"address\"},{\"name\":\"treeId\",\"type\":\"uint256\"},{\"name\":\"expiry\",\"type\":\"uint256\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"screener\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"setDepositLimit\",\"inputs\":[{\"name\":\"newMaxPerDeposit\",\"type\":\"uint256\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"setScreener\",\"inputs\":[{\"name\":\"newScreener\",\"type\":\"address\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"timelockAdmin\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"token\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"unpause\",\"inputs\":[],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"verifierRouter\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"withdraw\",\"inputs\":[{\"name\":\"proof\",\"type\":\"bytes\"},{\"name\":\"merkleRoot\",\"type\":\"bytes32\"},{\"name\":\"nullifiers\",\"type\":\"bytes32[]\"},{\"name\":\"totalAmount\",\"type\":\"uint256\"},{\"name\":\"receivingAddress\",\"type\":\"address\"},{\"name\":\"treeId\",\"type\":\"uint256\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"event\",\"name\":\"CreditDeposit\",\"inputs\":[{\"name\":\"commitment\",\"type\":\"bytes32\",\"indexed\":true},{\"name\":\"depositor\",\"type\":\"address\",\"indexed\":true},{\"name\":\"treeId\",\"type\":\"uint256\",\"indexed\":true},{\"name\":\"leafIndex\",\"type\":\"uint32\",\"indexed\":false},{\"name\":\"identityCommitment\",\"type\":\"bytes32\",\"indexed\":false},{\"name\":\"payerCommitment\",\"type\":\"bytes32\",\"indexed\":false},{\"name\":\"tokenAddress\",\"type\":\"address\",\"indexed\":false},{\"name\":\"amount\",\"type\":\"uint256\",\"indexed\":false},{\"name\":\"nonce\",\"type\":\"bytes32\",\"indexed\":false},{\"name\":\"expiry\",\"type\":\"uint256\",\"indexed\":false},{\"name\":\"nullifierKeyHash\",\"type\":\"bytes32\",\"indexed\":false}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"CreditDraw\",\"inputs\":[{\"name\":\"receivingAddress\",\"type\":\"address\",\"indexed\":true},{\"name\":\"tokenAddress\",\"type\":\"address\",\"indexed\":true},{\"name\":\"treeId\",\"type\":\"uint256\",\"indexed\":true},{\"name\":\"merkleRoot\",\"type\":\"bytes32\",\"indexed\":false},{\"name\":\"nullifiers\",\"type\":\"bytes32[]\",\"indexed\":false},{\"name\":\"totalAmount\",\"type\":\"uint256\",\"indexed\":false},{\"name\":\"remainderCommitments\",\"type\":\"bytes32[]\",\"indexed\":false},{\"name\":\"remainderLeafIndices\",\"type\":\"uint32[]\",\"indexed\":false},{\"name\":\"expiry\",\"type\":\"uint256\",\"indexed\":false}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"CreditReclaim\",\"inputs\":[{\"name\":\"receivingAddress\",\"type\":\"address\",\"indexed\":true},{\"name\":\"treeId\",\"type\":\"uint256\",\"indexed\":true},{\"name\":\"nullifier\",\"type\":\"bytes32\",\"indexed\":true},{\"name\":\"merkleRoot\",\"type\":\"bytes32\",\"indexed\":false},{\"name\":\"tokenAddress\",\"type\":\"address\",\"indexed\":false},{\"name\":\"amount\",\"type\":\"uint256\",\"indexed\":false},{\"name\":\"expiry\",\"type\":\"uint256\",\"indexed\":false}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"DepositLimitUpdated\",\"inputs\":[{\"name\":\"maxPerDeposit\",\"type\":\"uint256\",\"indexed\":false}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"EIP712DomainChanged\",\"inputs\":[],\"anonymous\":false},{\"type\":\"event\",\"name\":\"NonceInvalidated\",\"inputs\":[{\"name\":\"signer\",\"type\":\"address\",\"indexed\":true},{\"name\":\"newNonce\",\"type\":\"uint256\",\"indexed\":false}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"Paused\",\"inputs\":[{\"name\":\"account\",\"type\":\"address\",\"indexed\":false}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"PayBlind\",\"inputs\":[{\"name\":\"paymentCommitment\",\"type\":\"bytes32\",\"indexed\":true},{\"name\":\"payer\",\"type\":\"address\",\"indexed\":true},{\"name\":\"treeId\",\"type\":\"uint256\",\"indexed\":true},{\"name\":\"changeCommitment\",\"type\":\"bytes32\",\"indexed\":false},{\"name\":\"paymentLeafIndex\",\"type\":\"uint32\",\"indexed\":false},{\"name\":\"changeLeafIndex\",\"type\":\"uint32\",\"indexed\":false},{\"name\":\"tokenAddress\",\"type\":\"address\",\"indexed\":false},{\"name\":\"inputAmount\",\"type\":\"uint256\",\"indexed\":false},{\"name\":\"refundLink\",\"type\":\"bytes32\",\"indexed\":false}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"PayOpen\",\"inputs\":[{\"name\":\"paymentCommitment\",\"type\":\"bytes32\",\"indexed\":true},{\"name\":\"payer\",\"type\":\"address\",\"indexed\":true},{\"name\":\"treeId\",\"type\":\"uint256\",\"indexed\":true},{\"name\":\"leafIndex\",\"type\":\"uint32\",\"indexed\":false},{\"name\":\"tokenAddress\",\"type\":\"address\",\"indexed\":false},{\"name\":\"amount\",\"type\":\"uint256\",\"indexed\":false},{\"name\":\"identityCommitment\",\"type\":\"bytes32\",\"indexed\":false},{\"name\":\"nonce\",\"type\":\"bytes32\",\"indexed\":false},{\"name\":\"refundLink\",\"type\":\"bytes32\",\"indexed\":false}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"ScreenerUpdated\",\"inputs\":[{\"name\":\"newScreener\",\"type\":\"address\",\"indexed\":true}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"TreeCreated\",\"inputs\":[{\"name\":\"treeId\",\"type\":\"uint256\",\"indexed\":true}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"Unpaused\",\"inputs\":[{\"name\":\"account\",\"type\":\"address\",\"indexed\":false}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"Withdraw\",\"inputs\":[{\"name\":\"receivingAddress\",\"type\":\"address\",\"indexed\":true},{\"name\":\"tokenAddress\",\"type\":\"address\",\"indexed\":true},{\"name\":\"treeId\",\"type\":\"uint256\",\"indexed\":true},{\"name\":\"merkleRoot\",\"type\":\"bytes32\",\"indexed\":false},{\"name\":\"nullifiers\",\"type\":\"bytes32[]\",\"indexed\":false},{\"name\":\"totalAmount\",\"type\":\"uint256\",\"indexed\":false}],\"anonymous\":false},{\"type\":\"error\",\"name\":\"AddressScreeningFailed\",\"inputs\":[{\"name\":\"account\",\"type\":\"address\"}]},{\"type\":\"error\",\"name\":\"ChainIdMismatch\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"CommitmentAlreadyPaid\",\"inputs\":[{\"name\":\"commitment\",\"type\":\"bytes32\"}]},{\"type\":\"error\",\"name\":\"CooldownNotPassed\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"CreditDrawWindowClosed\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"DoubleSpend\",\"inputs\":[{\"name\":\"nullifier\",\"type\":\"bytes32\"}]},{\"type\":\"error\",\"name\":\"EnforcedPause\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"ExceedsDepositLimit\",\"inputs\":[{\"name\":\"amount\",\"type\":\"uint256\"},{\"name\":\"maxPerDeposit\",\"type\":\"uint256\"}]},{\"type\":\"error\",\"name\":\"ExpectedPause\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"ExpiryInPast\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"InvalidAmount\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"InvalidBatchSize\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"InvalidCommitment\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"InvalidIdentityCommitment\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"InvalidMerkleRoot\",\"inputs\":[{\"name\":\"root\",\"type\":\"bytes32\"}]},{\"type\":\"error\",\"name\":\"InvalidNonce\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"InvalidNullifierKeyHash\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"InvalidPayerCommitment\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"InvalidProof\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"InvalidReceivingAddress\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"InvalidSignature\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"InvalidTree\",\"inputs\":[{\"name\":\"treeId\",\"type\":\"uint256\"}]},{\"type\":\"error\",\"name\":\"LengthMismatch\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"MerkleTreeFull\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"NotAdmin\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"NotEmergencyAdmin\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"NotGlobalEmergency\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"NullifierAlreadySpent\",\"inputs\":[{\"name\":\"nullifier\",\"type\":\"bytes32\"}]},{\"type\":\"error\",\"name\":\"NullifiersEmpty\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"ReentrancyGuardReentrantCall\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"SafeERC20FailedOperation\",\"inputs\":[{\"name\":\"token\",\"type\":\"address\"}]},{\"type\":\"error\",\"name\":\"SignatureExpired\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"StaleRoot\",\"inputs\":[{\"name\":\"root\",\"type\":\"bytes32\"}]},{\"type\":\"error\",\"name\":\"TransferFailed\",\"inputs\":[{\"name\":\"token\",\"type\":\"address\"},{\"name\":\"to\",\"type\":\"address\"},{\"name\":\"amount\",\"type\":\"uint256\"}]},{\"type\":\"error\",\"name\":\"TreeAlreadyInitialized\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"TreeFull\",\"inputs\":[{\"name\":\"treeId\",\"type\":\"uint256\"}]},{\"type\":\"error\",\"name\":\"TreeNotInitialized\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"WrongPermitToken\",\"inputs\":[{\"name\":\"provided\",\"type\":\"address\"},{\"name\":\"expected\",\"type\":\"address\"}]},{\"type\":\"error\",\"name\":\"ZeroNullifier\",\"inputs\":[]}]",
+	ABI: "[{\"type\":\"constructor\",\"inputs\":[{\"name\":\"params\",\"type\":\"tuple\",\"internalType\":\"structInstanceParams\",\"components\":[{\"name\":\"factory\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"token\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"globalEmergency\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"emergencyAdmin\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"timelockAdmin\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"maxPerDeposit\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"verifierRouter\",\"type\":\"address\",\"internalType\":\"contractIVerifierRouter\"}]},{\"name\":\"_screener\",\"type\":\"address\",\"internalType\":\"address\"}],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"CHAIN_ID\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"FUND_SHIELD_TYPEHASH\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"FUND_TRANSACT_TYPEHASH\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"VERSION\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"activeNoteTreeId\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"cancelCredit\",\"inputs\":[{\"name\":\"\",\"type\":\"bytes\",\"internalType\":\"bytes\"},{\"name\":\"\",\"type\":\"tuple\",\"internalType\":\"structIInvisiProtocol.CancelCreditParams\",\"components\":[{\"name\":\"source\",\"type\":\"tuple\",\"internalType\":\"structIInvisiProtocol.InputSource\",\"components\":[{\"name\":\"treeId\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"merkleRoot\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}]},{\"name\":\"nullifier\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"owner\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"amount\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"deadline\",\"type\":\"uint256\",\"internalType\":\"uint256\"}]},{\"name\":\"\",\"type\":\"tuple\",\"internalType\":\"structIInvisiProtocol.CreditAuthorization\",\"components\":[{\"name\":\"sigNonce\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"signature\",\"type\":\"bytes\",\"internalType\":\"bytes\"}]}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"createCredit\",\"inputs\":[{\"name\":\"\",\"type\":\"bytes\",\"internalType\":\"bytes\"},{\"name\":\"\",\"type\":\"tuple\",\"internalType\":\"structIInvisiProtocol.CreateCreditParams\",\"components\":[{\"name\":\"sources\",\"type\":\"tuple[]\",\"internalType\":\"structIInvisiProtocol.InputSource[]\",\"components\":[{\"name\":\"treeId\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"merkleRoot\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}]},{\"name\":\"nullifiers\",\"type\":\"bytes32[]\",\"internalType\":\"bytes32[]\"},{\"name\":\"creditCommitment\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"changeCommitment\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"owner\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"expiry\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"deadline\",\"type\":\"uint256\",\"internalType\":\"uint256\"}]},{\"name\":\"\",\"type\":\"bytes[]\",\"internalType\":\"bytes[]\"},{\"name\":\"\",\"type\":\"tuple\",\"internalType\":\"structIInvisiProtocol.FundingParams\",\"components\":[{\"name\":\"payer\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"amount\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"sigNonce\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"deadline\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"signature\",\"type\":\"bytes\",\"internalType\":\"bytes\"},{\"name\":\"permit\",\"type\":\"tuple\",\"internalType\":\"structIInvisiMetaTx.TokenPermit\",\"components\":[{\"name\":\"deadline\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"v\",\"type\":\"uint8\",\"internalType\":\"uint8\"},{\"name\":\"r\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"s\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}]}]},{\"name\":\"\",\"type\":\"tuple\",\"internalType\":\"structIInvisiProtocol.CreditAuthorization\",\"components\":[{\"name\":\"sigNonce\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"signature\",\"type\":\"bytes\",\"internalType\":\"bytes\"}]}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"creditDraw\",\"inputs\":[{\"name\":\"\",\"type\":\"bytes\",\"internalType\":\"bytes\"},{\"name\":\"\",\"type\":\"tuple\",\"internalType\":\"structIInvisiProtocol.CreditDrawParams\",\"components\":[{\"name\":\"sources\",\"type\":\"tuple[]\",\"internalType\":\"structIInvisiProtocol.InputSource[]\",\"components\":[{\"name\":\"treeId\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"merkleRoot\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}]},{\"name\":\"nullifiers\",\"type\":\"bytes32[]\",\"internalType\":\"bytes32[]\"},{\"name\":\"remainderCommitments\",\"type\":\"bytes32[]\",\"internalType\":\"bytes32[]\"},{\"name\":\"expiries\",\"type\":\"uint256[]\",\"internalType\":\"uint256[]\"},{\"name\":\"recoveryAmounts\",\"type\":\"bytes32[]\",\"internalType\":\"bytes32[]\"},{\"name\":\"spender\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"totalAmount\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"deadline\",\"type\":\"uint256\",\"internalType\":\"uint256\"}]},{\"name\":\"\",\"type\":\"bytes[]\",\"internalType\":\"bytes[]\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"eip712Domain\",\"inputs\":[],\"outputs\":[{\"name\":\"fields\",\"type\":\"bytes1\",\"internalType\":\"bytes1\"},{\"name\":\"name\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"version\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"chainId\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"verifyingContract\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"salt\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"extensions\",\"type\":\"uint256[]\",\"internalType\":\"uint256[]\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"emergencyAdmin\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"address\",\"internalType\":\"address\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"factory\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"address\",\"internalType\":\"address\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getNoteTreeNextLeafIndex\",\"inputs\":[{\"name\":\"treeId\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[{\"name\":\"\",\"type\":\"uint32\",\"internalType\":\"uint32\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getNoteTreeRoot\",\"inputs\":[{\"name\":\"treeId\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[{\"name\":\"\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getTreeCount\",\"inputs\":[],\"outputs\":[{\"name\":\"count\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"globalEmergency\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"address\",\"internalType\":\"address\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"globalPause\",\"inputs\":[],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"invalidateNonce\",\"inputs\":[],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"isCommitmentPaid\",\"inputs\":[{\"name\":\"noteCommitment\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}],\"outputs\":[{\"name\":\"\",\"type\":\"bool\",\"internalType\":\"bool\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"isNullifierSpent\",\"inputs\":[{\"name\":\"nullifier\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}],\"outputs\":[{\"name\":\"\",\"type\":\"bool\",\"internalType\":\"bool\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"isTreeFull\",\"inputs\":[{\"name\":\"treeId\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[{\"name\":\"\",\"type\":\"bool\",\"internalType\":\"bool\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"maxPerDeposit\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"nonces\",\"inputs\":[{\"name\":\"\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[{\"name\":\"\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"pause\",\"inputs\":[],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"paused\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"bool\",\"internalType\":\"bool\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"rootHistory\",\"inputs\":[{\"name\":\"\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}],\"outputs\":[{\"name\":\"\",\"type\":\"bool\",\"internalType\":\"bool\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"screener\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"address\",\"internalType\":\"address\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"setDepositLimit\",\"inputs\":[{\"name\":\"newMaxPerDeposit\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"setScreener\",\"inputs\":[{\"name\":\"newScreener\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"shield\",\"inputs\":[{\"name\":\"\",\"type\":\"tuple\",\"internalType\":\"structIInvisiProtocol.ShieldParams\",\"components\":[{\"name\":\"outputCommitments\",\"type\":\"bytes32[]\",\"internalType\":\"bytes32[]\"},{\"name\":\"deadline\",\"type\":\"uint256\",\"internalType\":\"uint256\"}]},{\"name\":\"\",\"type\":\"tuple[]\",\"internalType\":\"structIInvisiProtocol.ShieldOutput[]\",\"components\":[{\"name\":\"identityCommitment\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"amount\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"nonce\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}]},{\"name\":\"\",\"type\":\"bytes[]\",\"internalType\":\"bytes[]\"},{\"name\":\"\",\"type\":\"tuple\",\"internalType\":\"structIInvisiProtocol.FundingParams\",\"components\":[{\"name\":\"payer\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"amount\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"sigNonce\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"deadline\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"signature\",\"type\":\"bytes\",\"internalType\":\"bytes\"},{\"name\":\"permit\",\"type\":\"tuple\",\"internalType\":\"structIInvisiMetaTx.TokenPermit\",\"components\":[{\"name\":\"deadline\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"v\",\"type\":\"uint8\",\"internalType\":\"uint8\"},{\"name\":\"r\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"s\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}]}]}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"timelockAdmin\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"address\",\"internalType\":\"address\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"token\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"address\",\"internalType\":\"address\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"topUpCredit\",\"inputs\":[{\"name\":\"\",\"type\":\"bytes\",\"internalType\":\"bytes\"},{\"name\":\"\",\"type\":\"tuple\",\"internalType\":\"structIInvisiProtocol.TopUpCreditParams\",\"components\":[{\"name\":\"creation\",\"type\":\"tuple\",\"internalType\":\"structIInvisiProtocol.CreateCreditParams\",\"components\":[{\"name\":\"sources\",\"type\":\"tuple[]\",\"internalType\":\"structIInvisiProtocol.InputSource[]\",\"components\":[{\"name\":\"treeId\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"merkleRoot\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}]},{\"name\":\"nullifiers\",\"type\":\"bytes32[]\",\"internalType\":\"bytes32[]\"},{\"name\":\"creditCommitment\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"changeCommitment\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"owner\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"expiry\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"deadline\",\"type\":\"uint256\",\"internalType\":\"uint256\"}]},{\"name\":\"creditSource\",\"type\":\"tuple\",\"internalType\":\"structIInvisiProtocol.InputSource\",\"components\":[{\"name\":\"treeId\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"merkleRoot\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}]},{\"name\":\"creditNullifier\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"previousExpiry\",\"type\":\"uint256\",\"internalType\":\"uint256\"}]},{\"name\":\"\",\"type\":\"bytes[]\",\"internalType\":\"bytes[]\"},{\"name\":\"\",\"type\":\"tuple\",\"internalType\":\"structIInvisiProtocol.FundingParams\",\"components\":[{\"name\":\"payer\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"amount\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"sigNonce\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"deadline\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"signature\",\"type\":\"bytes\",\"internalType\":\"bytes\"},{\"name\":\"permit\",\"type\":\"tuple\",\"internalType\":\"structIInvisiMetaTx.TokenPermit\",\"components\":[{\"name\":\"deadline\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"v\",\"type\":\"uint8\",\"internalType\":\"uint8\"},{\"name\":\"r\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"s\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}]}]},{\"name\":\"\",\"type\":\"tuple\",\"internalType\":\"structIInvisiProtocol.CreditAuthorization\",\"components\":[{\"name\":\"sigNonce\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"signature\",\"type\":\"bytes\",\"internalType\":\"bytes\"}]}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"transact\",\"inputs\":[{\"name\":\"\",\"type\":\"bytes\",\"internalType\":\"bytes\"},{\"name\":\"\",\"type\":\"tuple\",\"internalType\":\"structIInvisiProtocol.TransactRequest\",\"components\":[{\"name\":\"params\",\"type\":\"tuple\",\"internalType\":\"structIInvisiProtocol.CrossTreeTransactParams\",\"components\":[{\"name\":\"sources\",\"type\":\"tuple[]\",\"internalType\":\"structIInvisiProtocol.InputSource[]\",\"components\":[{\"name\":\"treeId\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"merkleRoot\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}]},{\"name\":\"nullifiers\",\"type\":\"bytes32[]\",\"internalType\":\"bytes32[]\"},{\"name\":\"outputCommitments\",\"type\":\"bytes32[]\",\"internalType\":\"bytes32[]\"},{\"name\":\"withdrawalAddress\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"withdrawalAmount\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"deadline\",\"type\":\"uint256\",\"internalType\":\"uint256\"}]},{\"name\":\"ciphertexts\",\"type\":\"bytes[]\",\"internalType\":\"bytes[]\"},{\"name\":\"funding\",\"type\":\"tuple\",\"internalType\":\"structIInvisiProtocol.FundingParams\",\"components\":[{\"name\":\"payer\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"amount\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"sigNonce\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"deadline\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"signature\",\"type\":\"bytes\",\"internalType\":\"bytes\"},{\"name\":\"permit\",\"type\":\"tuple\",\"internalType\":\"structIInvisiMetaTx.TokenPermit\",\"components\":[{\"name\":\"deadline\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"v\",\"type\":\"uint8\",\"internalType\":\"uint8\"},{\"name\":\"r\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"s\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}]}]}]}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"transact\",\"inputs\":[{\"name\":\"\",\"type\":\"bytes\",\"internalType\":\"bytes\"},{\"name\":\"\",\"type\":\"tuple[]\",\"internalType\":\"structIInvisiProtocol.TransactRequest[]\",\"components\":[{\"name\":\"params\",\"type\":\"tuple\",\"internalType\":\"structIInvisiProtocol.CrossTreeTransactParams\",\"components\":[{\"name\":\"sources\",\"type\":\"tuple[]\",\"internalType\":\"structIInvisiProtocol.InputSource[]\",\"components\":[{\"name\":\"treeId\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"merkleRoot\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}]},{\"name\":\"nullifiers\",\"type\":\"bytes32[]\",\"internalType\":\"bytes32[]\"},{\"name\":\"outputCommitments\",\"type\":\"bytes32[]\",\"internalType\":\"bytes32[]\"},{\"name\":\"withdrawalAddress\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"withdrawalAmount\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"deadline\",\"type\":\"uint256\",\"internalType\":\"uint256\"}]},{\"name\":\"ciphertexts\",\"type\":\"bytes[]\",\"internalType\":\"bytes[]\"},{\"name\":\"funding\",\"type\":\"tuple\",\"internalType\":\"structIInvisiProtocol.FundingParams\",\"components\":[{\"name\":\"payer\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"amount\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"sigNonce\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"deadline\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"signature\",\"type\":\"bytes\",\"internalType\":\"bytes\"},{\"name\":\"permit\",\"type\":\"tuple\",\"internalType\":\"structIInvisiMetaTx.TokenPermit\",\"components\":[{\"name\":\"deadline\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"v\",\"type\":\"uint8\",\"internalType\":\"uint8\"},{\"name\":\"r\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"s\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}]}]}]}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"unpause\",\"inputs\":[],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"verifierRouter\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"address\",\"internalType\":\"contractIVerifierRouter\"}],\"stateMutability\":\"view\"},{\"type\":\"event\",\"name\":\"BatchOutputs\",\"inputs\":[{\"name\":\"treeId\",\"type\":\"uint256\",\"indexed\":true,\"internalType\":\"uint256\"},{\"name\":\"startLeafIndex\",\"type\":\"uint32\",\"indexed\":false,\"internalType\":\"uint32\"},{\"name\":\"firstOutputOffset\",\"type\":\"uint256\",\"indexed\":false,\"internalType\":\"uint256\"},{\"name\":\"commitments\",\"type\":\"bytes32[]\",\"indexed\":false,\"internalType\":\"bytes32[]\"},{\"name\":\"packedCiphertexts\",\"type\":\"bytes\",\"indexed\":false,\"internalType\":\"bytes\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"BatchRequest\",\"inputs\":[{\"name\":\"requestIndex\",\"type\":\"uint256\",\"indexed\":true,\"internalType\":\"uint256\"},{\"name\":\"capacity\",\"type\":\"uint256\",\"indexed\":false,\"internalType\":\"uint256\"},{\"name\":\"sources\",\"type\":\"tuple[]\",\"indexed\":false,\"internalType\":\"structIInvisiProtocol.InputSource[]\",\"components\":[{\"name\":\"treeId\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"merkleRoot\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}]},{\"name\":\"nullifiers\",\"type\":\"bytes32[]\",\"indexed\":false,\"internalType\":\"bytes32[]\"},{\"name\":\"outputCount\",\"type\":\"uint256\",\"indexed\":false,\"internalType\":\"uint256\"},{\"name\":\"payer\",\"type\":\"address\",\"indexed\":false,\"internalType\":\"address\"},{\"name\":\"depositAmount\",\"type\":\"uint256\",\"indexed\":false,\"internalType\":\"uint256\"},{\"name\":\"withdrawalAddress\",\"type\":\"address\",\"indexed\":false,\"internalType\":\"address\"},{\"name\":\"withdrawalAmount\",\"type\":\"uint256\",\"indexed\":false,\"internalType\":\"uint256\"},{\"name\":\"deadline\",\"type\":\"uint256\",\"indexed\":false,\"internalType\":\"uint256\"},{\"name\":\"statementHash\",\"type\":\"bytes32\",\"indexed\":false,\"internalType\":\"bytes32\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"CommitmentsInserted\",\"inputs\":[{\"name\":\"treeId\",\"type\":\"uint256\",\"indexed\":true,\"internalType\":\"uint256\"},{\"name\":\"startLeafIndex\",\"type\":\"uint32\",\"indexed\":false,\"internalType\":\"uint32\"},{\"name\":\"commitments\",\"type\":\"bytes32[]\",\"indexed\":false,\"internalType\":\"bytes32[]\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"CreditCancelled\",\"inputs\":[{\"name\":\"owner\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"inputTreeId\",\"type\":\"uint256\",\"indexed\":true,\"internalType\":\"uint256\"},{\"name\":\"nullifier\",\"type\":\"bytes32\",\"indexed\":true,\"internalType\":\"bytes32\"},{\"name\":\"amount\",\"type\":\"uint256\",\"indexed\":false,\"internalType\":\"uint256\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"CreditCreated\",\"inputs\":[{\"name\":\"owner\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"outputTreeId\",\"type\":\"uint256\",\"indexed\":true,\"internalType\":\"uint256\"},{\"name\":\"sources\",\"type\":\"tuple[]\",\"indexed\":false,\"internalType\":\"structIInvisiProtocol.InputSource[]\",\"components\":[{\"name\":\"treeId\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"merkleRoot\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}]},{\"name\":\"nullifiers\",\"type\":\"bytes32[]\",\"indexed\":false,\"internalType\":\"bytes32[]\"},{\"name\":\"creditCommitment\",\"type\":\"bytes32\",\"indexed\":false,\"internalType\":\"bytes32\"},{\"name\":\"changeCommitment\",\"type\":\"bytes32\",\"indexed\":false,\"internalType\":\"bytes32\"},{\"name\":\"leafIndices\",\"type\":\"uint32[]\",\"indexed\":false,\"internalType\":\"uint32[]\"},{\"name\":\"ciphertexts\",\"type\":\"bytes[]\",\"indexed\":false,\"internalType\":\"bytes[]\"},{\"name\":\"expiry\",\"type\":\"uint256\",\"indexed\":false,\"internalType\":\"uint256\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"CreditDraw\",\"inputs\":[{\"name\":\"spender\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"outputTreeId\",\"type\":\"uint256\",\"indexed\":true,\"internalType\":\"uint256\"},{\"name\":\"params\",\"type\":\"tuple\",\"indexed\":false,\"internalType\":\"structIInvisiProtocol.CreditDrawParams\",\"components\":[{\"name\":\"sources\",\"type\":\"tuple[]\",\"internalType\":\"structIInvisiProtocol.InputSource[]\",\"components\":[{\"name\":\"treeId\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"merkleRoot\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}]},{\"name\":\"nullifiers\",\"type\":\"bytes32[]\",\"internalType\":\"bytes32[]\"},{\"name\":\"remainderCommitments\",\"type\":\"bytes32[]\",\"internalType\":\"bytes32[]\"},{\"name\":\"expiries\",\"type\":\"uint256[]\",\"internalType\":\"uint256[]\"},{\"name\":\"recoveryAmounts\",\"type\":\"bytes32[]\",\"internalType\":\"bytes32[]\"},{\"name\":\"spender\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"totalAmount\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"deadline\",\"type\":\"uint256\",\"internalType\":\"uint256\"}]},{\"name\":\"remainderLeafIndices\",\"type\":\"uint32[]\",\"indexed\":false,\"internalType\":\"uint32[]\"},{\"name\":\"ciphertexts\",\"type\":\"bytes[]\",\"indexed\":false,\"internalType\":\"bytes[]\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"CreditToppedUp\",\"inputs\":[{\"name\":\"owner\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"outputTreeId\",\"type\":\"uint256\",\"indexed\":true,\"internalType\":\"uint256\"},{\"name\":\"params\",\"type\":\"tuple\",\"indexed\":false,\"internalType\":\"structIInvisiProtocol.TopUpCreditParams\",\"components\":[{\"name\":\"creation\",\"type\":\"tuple\",\"internalType\":\"structIInvisiProtocol.CreateCreditParams\",\"components\":[{\"name\":\"sources\",\"type\":\"tuple[]\",\"internalType\":\"structIInvisiProtocol.InputSource[]\",\"components\":[{\"name\":\"treeId\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"merkleRoot\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}]},{\"name\":\"nullifiers\",\"type\":\"bytes32[]\",\"internalType\":\"bytes32[]\"},{\"name\":\"creditCommitment\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"changeCommitment\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"owner\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"expiry\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"deadline\",\"type\":\"uint256\",\"internalType\":\"uint256\"}]},{\"name\":\"creditSource\",\"type\":\"tuple\",\"internalType\":\"structIInvisiProtocol.InputSource\",\"components\":[{\"name\":\"treeId\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"merkleRoot\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}]},{\"name\":\"creditNullifier\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"previousExpiry\",\"type\":\"uint256\",\"internalType\":\"uint256\"}]},{\"name\":\"leafIndices\",\"type\":\"uint32[]\",\"indexed\":false,\"internalType\":\"uint32[]\"},{\"name\":\"ciphertexts\",\"type\":\"bytes[]\",\"indexed\":false,\"internalType\":\"bytes[]\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"CrossTreeTransact\",\"inputs\":[{\"name\":\"outputTreeId\",\"type\":\"uint256\",\"indexed\":true,\"internalType\":\"uint256\"},{\"name\":\"sources\",\"type\":\"tuple[]\",\"indexed\":false,\"internalType\":\"structIInvisiProtocol.InputSource[]\",\"components\":[{\"name\":\"treeId\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"merkleRoot\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}]},{\"name\":\"nullifiers\",\"type\":\"bytes32[]\",\"indexed\":false,\"internalType\":\"bytes32[]\"},{\"name\":\"outputCommitments\",\"type\":\"bytes32[]\",\"indexed\":false,\"internalType\":\"bytes32[]\"},{\"name\":\"leafIndices\",\"type\":\"uint32[]\",\"indexed\":false,\"internalType\":\"uint32[]\"},{\"name\":\"ciphertexts\",\"type\":\"bytes[]\",\"indexed\":false,\"internalType\":\"bytes[]\"},{\"name\":\"withdrawalAddress\",\"type\":\"address\",\"indexed\":false,\"internalType\":\"address\"},{\"name\":\"withdrawalAmount\",\"type\":\"uint256\",\"indexed\":false,\"internalType\":\"uint256\"},{\"name\":\"deadline\",\"type\":\"uint256\",\"indexed\":false,\"internalType\":\"uint256\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"DepositLimitUpdated\",\"inputs\":[{\"name\":\"maxPerDeposit\",\"type\":\"uint256\",\"indexed\":false,\"internalType\":\"uint256\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"EIP712DomainChanged\",\"inputs\":[],\"anonymous\":false},{\"type\":\"event\",\"name\":\"NonceInvalidated\",\"inputs\":[{\"name\":\"signer\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"newNonce\",\"type\":\"uint256\",\"indexed\":false,\"internalType\":\"uint256\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"Paused\",\"inputs\":[{\"name\":\"account\",\"type\":\"address\",\"indexed\":false,\"internalType\":\"address\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"PublicDeposit\",\"inputs\":[{\"name\":\"payer\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"amount\",\"type\":\"uint256\",\"indexed\":false,\"internalType\":\"uint256\"},{\"name\":\"proofHash\",\"type\":\"bytes32\",\"indexed\":false,\"internalType\":\"bytes32\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"ScreenerUpdated\",\"inputs\":[{\"name\":\"newScreener\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"Shield\",\"inputs\":[{\"name\":\"payer\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"amount\",\"type\":\"uint256\",\"indexed\":false,\"internalType\":\"uint256\"},{\"name\":\"treeId\",\"type\":\"uint256\",\"indexed\":true,\"internalType\":\"uint256\"},{\"name\":\"startLeafIndex\",\"type\":\"uint32\",\"indexed\":false,\"internalType\":\"uint32\"},{\"name\":\"ciphertexts\",\"type\":\"bytes[]\",\"indexed\":false,\"internalType\":\"bytes[]\"},{\"name\":\"deadline\",\"type\":\"uint256\",\"indexed\":false,\"internalType\":\"uint256\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"Transact\",\"inputs\":[{\"name\":\"inputTreeId\",\"type\":\"uint256\",\"indexed\":true,\"internalType\":\"uint256\"},{\"name\":\"outputTreeId\",\"type\":\"uint256\",\"indexed\":true,\"internalType\":\"uint256\"},{\"name\":\"nullifiers\",\"type\":\"bytes32[]\",\"indexed\":false,\"internalType\":\"bytes32[]\"},{\"name\":\"outputCommitments\",\"type\":\"bytes32[]\",\"indexed\":false,\"internalType\":\"bytes32[]\"},{\"name\":\"leafIndices\",\"type\":\"uint32[]\",\"indexed\":false,\"internalType\":\"uint32[]\"},{\"name\":\"ciphertexts\",\"type\":\"bytes[]\",\"indexed\":false,\"internalType\":\"bytes[]\"},{\"name\":\"withdrawalAddress\",\"type\":\"address\",\"indexed\":false,\"internalType\":\"address\"},{\"name\":\"withdrawalAmount\",\"type\":\"uint256\",\"indexed\":false,\"internalType\":\"uint256\"},{\"name\":\"deadline\",\"type\":\"uint256\",\"indexed\":false,\"internalType\":\"uint256\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"TransactAggregated\",\"inputs\":[{\"name\":\"proofHash\",\"type\":\"bytes32\",\"indexed\":true,\"internalType\":\"bytes32\"},{\"name\":\"requestCount\",\"type\":\"uint256\",\"indexed\":false,\"internalType\":\"uint256\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"TreeCreated\",\"inputs\":[{\"name\":\"treeId\",\"type\":\"uint256\",\"indexed\":true,\"internalType\":\"uint256\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"Unpaused\",\"inputs\":[{\"name\":\"account\",\"type\":\"address\",\"indexed\":false,\"internalType\":\"address\"}],\"anonymous\":false},{\"type\":\"error\",\"name\":\"AddressScreeningFailed\",\"inputs\":[{\"name\":\"account\",\"type\":\"address\",\"internalType\":\"address\"}]},{\"type\":\"error\",\"name\":\"ChainIdMismatch\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"CommitmentAlreadyPaid\",\"inputs\":[{\"name\":\"commitment\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}]},{\"type\":\"error\",\"name\":\"CreditDrawWindowClosed\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"DoubleSpend\",\"inputs\":[{\"name\":\"nullifier\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}]},{\"type\":\"error\",\"name\":\"EnforcedPause\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"ExceedsDepositLimit\",\"inputs\":[{\"name\":\"amount\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"maxPerDeposit\",\"type\":\"uint256\",\"internalType\":\"uint256\"}]},{\"type\":\"error\",\"name\":\"ExpectedPause\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"ExpiryInPast\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"InexactTokenReceipt\",\"inputs\":[{\"name\":\"requested\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"received\",\"type\":\"uint256\",\"internalType\":\"uint256\"}]},{\"type\":\"error\",\"name\":\"InvalidAggregateBatch\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"InvalidAmount\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"InvalidBatchSize\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"InvalidCommitment\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"InvalidCreditExpiry\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"InvalidFunding\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"InvalidIdentityCommitment\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"InvalidMerkleRoot\",\"inputs\":[{\"name\":\"root\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}]},{\"type\":\"error\",\"name\":\"InvalidNonce\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"InvalidNullifierKeyHash\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"InvalidOwnerIdentityCommitment\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"InvalidPrivateTransferCiphertext\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"InvalidPrivateTransferContext\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"InvalidPrivateTransferShape\",\"inputs\":[{\"name\":\"inputs\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"outputs\",\"type\":\"uint256\",\"internalType\":\"uint256\"}]},{\"type\":\"error\",\"name\":\"InvalidProof\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"InvalidReceivingAddress\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"InvalidShieldContext\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"InvalidShieldOutputCount\",\"inputs\":[{\"name\":\"outputs\",\"type\":\"uint256\",\"internalType\":\"uint256\"}]},{\"type\":\"error\",\"name\":\"InvalidShortString\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"InvalidSignature\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"InvalidTree\",\"inputs\":[{\"name\":\"treeId\",\"type\":\"uint256\",\"internalType\":\"uint256\"}]},{\"type\":\"error\",\"name\":\"LengthMismatch\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"NotAdmin\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"NotEmergencyAdmin\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"NotGlobalEmergency\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"NullifierAlreadySpent\",\"inputs\":[{\"name\":\"nullifier\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}]},{\"type\":\"error\",\"name\":\"NullifiersEmpty\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"PrivateTransferExpired\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"ReentrancyGuardReentrantCall\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"ShieldExpired\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"SignatureExpired\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"StaleRoot\",\"inputs\":[{\"name\":\"root\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}]},{\"type\":\"error\",\"name\":\"StringTooLong\",\"inputs\":[{\"name\":\"str\",\"type\":\"string\",\"internalType\":\"string\"}]},{\"type\":\"error\",\"name\":\"TransferFailed\",\"inputs\":[{\"name\":\"token\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"to\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"amount\",\"type\":\"uint256\",\"internalType\":\"uint256\"}]},{\"type\":\"error\",\"name\":\"TreeFull\",\"inputs\":[{\"name\":\"treeId\",\"type\":\"uint256\",\"internalType\":\"uint256\"}]},{\"type\":\"error\",\"name\":\"WrongPermitToken\",\"inputs\":[{\"name\":\"provided\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"expected\",\"type\":\"address\",\"internalType\":\"address\"}]},{\"type\":\"error\",\"name\":\"ZeroNullifier\",\"inputs\":[]}]",
 }
 
 // InvisiProtocolABI is the input ABI used to generate the binding from.
@@ -251,43 +322,12 @@ func (_InvisiProtocol *InvisiProtocolCallerSession) CHAINID() (*big.Int, error) 
 	return _InvisiProtocol.Contract.CHAINID(&_InvisiProtocol.CallOpts)
 }
 
-// COOLDOWNPERIOD is a free data retrieval call binding the contract method 0x6e99d52f.
+// FUNDSHIELDTYPEHASH is a free data retrieval call binding the contract method 0xbe9f7d0e.
 //
-// Solidity: function COOLDOWN_PERIOD() view returns(uint256)
-func (_InvisiProtocol *InvisiProtocolCaller) COOLDOWNPERIOD(opts *bind.CallOpts) (*big.Int, error) {
+// Solidity: function FUND_SHIELD_TYPEHASH() view returns(bytes32)
+func (_InvisiProtocol *InvisiProtocolCaller) FUNDSHIELDTYPEHASH(opts *bind.CallOpts) ([32]byte, error) {
 	var out []interface{}
-	err := _InvisiProtocol.contract.Call(opts, &out, "COOLDOWN_PERIOD")
-
-	if err != nil {
-		return *new(*big.Int), err
-	}
-
-	out0 := *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
-
-	return out0, err
-
-}
-
-// COOLDOWNPERIOD is a free data retrieval call binding the contract method 0x6e99d52f.
-//
-// Solidity: function COOLDOWN_PERIOD() view returns(uint256)
-func (_InvisiProtocol *InvisiProtocolSession) COOLDOWNPERIOD() (*big.Int, error) {
-	return _InvisiProtocol.Contract.COOLDOWNPERIOD(&_InvisiProtocol.CallOpts)
-}
-
-// COOLDOWNPERIOD is a free data retrieval call binding the contract method 0x6e99d52f.
-//
-// Solidity: function COOLDOWN_PERIOD() view returns(uint256)
-func (_InvisiProtocol *InvisiProtocolCallerSession) COOLDOWNPERIOD() (*big.Int, error) {
-	return _InvisiProtocol.Contract.COOLDOWNPERIOD(&_InvisiProtocol.CallOpts)
-}
-
-// DEPOSITCREDITTYPEHASH is a free data retrieval call binding the contract method 0xe0c77c2d.
-//
-// Solidity: function DEPOSIT_CREDIT_TYPEHASH() view returns(bytes32)
-func (_InvisiProtocol *InvisiProtocolCaller) DEPOSITCREDITTYPEHASH(opts *bind.CallOpts) ([32]byte, error) {
-	var out []interface{}
-	err := _InvisiProtocol.contract.Call(opts, &out, "DEPOSIT_CREDIT_TYPEHASH")
+	err := _InvisiProtocol.contract.Call(opts, &out, "FUND_SHIELD_TYPEHASH")
 
 	if err != nil {
 		return *new([32]byte), err
@@ -299,26 +339,26 @@ func (_InvisiProtocol *InvisiProtocolCaller) DEPOSITCREDITTYPEHASH(opts *bind.Ca
 
 }
 
-// DEPOSITCREDITTYPEHASH is a free data retrieval call binding the contract method 0xe0c77c2d.
+// FUNDSHIELDTYPEHASH is a free data retrieval call binding the contract method 0xbe9f7d0e.
 //
-// Solidity: function DEPOSIT_CREDIT_TYPEHASH() view returns(bytes32)
-func (_InvisiProtocol *InvisiProtocolSession) DEPOSITCREDITTYPEHASH() ([32]byte, error) {
-	return _InvisiProtocol.Contract.DEPOSITCREDITTYPEHASH(&_InvisiProtocol.CallOpts)
+// Solidity: function FUND_SHIELD_TYPEHASH() view returns(bytes32)
+func (_InvisiProtocol *InvisiProtocolSession) FUNDSHIELDTYPEHASH() ([32]byte, error) {
+	return _InvisiProtocol.Contract.FUNDSHIELDTYPEHASH(&_InvisiProtocol.CallOpts)
 }
 
-// DEPOSITCREDITTYPEHASH is a free data retrieval call binding the contract method 0xe0c77c2d.
+// FUNDSHIELDTYPEHASH is a free data retrieval call binding the contract method 0xbe9f7d0e.
 //
-// Solidity: function DEPOSIT_CREDIT_TYPEHASH() view returns(bytes32)
-func (_InvisiProtocol *InvisiProtocolCallerSession) DEPOSITCREDITTYPEHASH() ([32]byte, error) {
-	return _InvisiProtocol.Contract.DEPOSITCREDITTYPEHASH(&_InvisiProtocol.CallOpts)
+// Solidity: function FUND_SHIELD_TYPEHASH() view returns(bytes32)
+func (_InvisiProtocol *InvisiProtocolCallerSession) FUNDSHIELDTYPEHASH() ([32]byte, error) {
+	return _InvisiProtocol.Contract.FUNDSHIELDTYPEHASH(&_InvisiProtocol.CallOpts)
 }
 
-// PAYBLINDTYPEHASH is a free data retrieval call binding the contract method 0xd597ba47.
+// FUNDTRANSACTTYPEHASH is a free data retrieval call binding the contract method 0x8ebb23e8.
 //
-// Solidity: function PAY_BLIND_TYPEHASH() view returns(bytes32)
-func (_InvisiProtocol *InvisiProtocolCaller) PAYBLINDTYPEHASH(opts *bind.CallOpts) ([32]byte, error) {
+// Solidity: function FUND_TRANSACT_TYPEHASH() view returns(bytes32)
+func (_InvisiProtocol *InvisiProtocolCaller) FUNDTRANSACTTYPEHASH(opts *bind.CallOpts) ([32]byte, error) {
 	var out []interface{}
-	err := _InvisiProtocol.contract.Call(opts, &out, "PAY_BLIND_TYPEHASH")
+	err := _InvisiProtocol.contract.Call(opts, &out, "FUND_TRANSACT_TYPEHASH")
 
 	if err != nil {
 		return *new([32]byte), err
@@ -330,49 +370,18 @@ func (_InvisiProtocol *InvisiProtocolCaller) PAYBLINDTYPEHASH(opts *bind.CallOpt
 
 }
 
-// PAYBLINDTYPEHASH is a free data retrieval call binding the contract method 0xd597ba47.
+// FUNDTRANSACTTYPEHASH is a free data retrieval call binding the contract method 0x8ebb23e8.
 //
-// Solidity: function PAY_BLIND_TYPEHASH() view returns(bytes32)
-func (_InvisiProtocol *InvisiProtocolSession) PAYBLINDTYPEHASH() ([32]byte, error) {
-	return _InvisiProtocol.Contract.PAYBLINDTYPEHASH(&_InvisiProtocol.CallOpts)
+// Solidity: function FUND_TRANSACT_TYPEHASH() view returns(bytes32)
+func (_InvisiProtocol *InvisiProtocolSession) FUNDTRANSACTTYPEHASH() ([32]byte, error) {
+	return _InvisiProtocol.Contract.FUNDTRANSACTTYPEHASH(&_InvisiProtocol.CallOpts)
 }
 
-// PAYBLINDTYPEHASH is a free data retrieval call binding the contract method 0xd597ba47.
+// FUNDTRANSACTTYPEHASH is a free data retrieval call binding the contract method 0x8ebb23e8.
 //
-// Solidity: function PAY_BLIND_TYPEHASH() view returns(bytes32)
-func (_InvisiProtocol *InvisiProtocolCallerSession) PAYBLINDTYPEHASH() ([32]byte, error) {
-	return _InvisiProtocol.Contract.PAYBLINDTYPEHASH(&_InvisiProtocol.CallOpts)
-}
-
-// PAYOPENTYPEHASH is a free data retrieval call binding the contract method 0x730337db.
-//
-// Solidity: function PAY_OPEN_TYPEHASH() view returns(bytes32)
-func (_InvisiProtocol *InvisiProtocolCaller) PAYOPENTYPEHASH(opts *bind.CallOpts) ([32]byte, error) {
-	var out []interface{}
-	err := _InvisiProtocol.contract.Call(opts, &out, "PAY_OPEN_TYPEHASH")
-
-	if err != nil {
-		return *new([32]byte), err
-	}
-
-	out0 := *abi.ConvertType(out[0], new([32]byte)).(*[32]byte)
-
-	return out0, err
-
-}
-
-// PAYOPENTYPEHASH is a free data retrieval call binding the contract method 0x730337db.
-//
-// Solidity: function PAY_OPEN_TYPEHASH() view returns(bytes32)
-func (_InvisiProtocol *InvisiProtocolSession) PAYOPENTYPEHASH() ([32]byte, error) {
-	return _InvisiProtocol.Contract.PAYOPENTYPEHASH(&_InvisiProtocol.CallOpts)
-}
-
-// PAYOPENTYPEHASH is a free data retrieval call binding the contract method 0x730337db.
-//
-// Solidity: function PAY_OPEN_TYPEHASH() view returns(bytes32)
-func (_InvisiProtocol *InvisiProtocolCallerSession) PAYOPENTYPEHASH() ([32]byte, error) {
-	return _InvisiProtocol.Contract.PAYOPENTYPEHASH(&_InvisiProtocol.CallOpts)
+// Solidity: function FUND_TRANSACT_TYPEHASH() view returns(bytes32)
+func (_InvisiProtocol *InvisiProtocolCallerSession) FUNDTRANSACTTYPEHASH() ([32]byte, error) {
+	return _InvisiProtocol.Contract.FUNDTRANSACTTYPEHASH(&_InvisiProtocol.CallOpts)
 }
 
 // VERSION is a free data retrieval call binding the contract method 0xffa1ad74.
@@ -404,6 +413,37 @@ func (_InvisiProtocol *InvisiProtocolSession) VERSION() (*big.Int, error) {
 // Solidity: function VERSION() view returns(uint256)
 func (_InvisiProtocol *InvisiProtocolCallerSession) VERSION() (*big.Int, error) {
 	return _InvisiProtocol.Contract.VERSION(&_InvisiProtocol.CallOpts)
+}
+
+// ActiveNoteTreeId is a free data retrieval call binding the contract method 0x236c8dd6.
+//
+// Solidity: function activeNoteTreeId() view returns(uint256)
+func (_InvisiProtocol *InvisiProtocolCaller) ActiveNoteTreeId(opts *bind.CallOpts) (*big.Int, error) {
+	var out []interface{}
+	err := _InvisiProtocol.contract.Call(opts, &out, "activeNoteTreeId")
+
+	if err != nil {
+		return *new(*big.Int), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
+
+	return out0, err
+
+}
+
+// ActiveNoteTreeId is a free data retrieval call binding the contract method 0x236c8dd6.
+//
+// Solidity: function activeNoteTreeId() view returns(uint256)
+func (_InvisiProtocol *InvisiProtocolSession) ActiveNoteTreeId() (*big.Int, error) {
+	return _InvisiProtocol.Contract.ActiveNoteTreeId(&_InvisiProtocol.CallOpts)
+}
+
+// ActiveNoteTreeId is a free data retrieval call binding the contract method 0x236c8dd6.
+//
+// Solidity: function activeNoteTreeId() view returns(uint256)
+func (_InvisiProtocol *InvisiProtocolCallerSession) ActiveNoteTreeId() (*big.Int, error) {
+	return _InvisiProtocol.Contract.ActiveNoteTreeId(&_InvisiProtocol.CallOpts)
 }
 
 // Eip712Domain is a free data retrieval call binding the contract method 0x84b0196e.
@@ -538,12 +578,43 @@ func (_InvisiProtocol *InvisiProtocolCallerSession) Factory() (common.Address, e
 	return _InvisiProtocol.Contract.Factory(&_InvisiProtocol.CallOpts)
 }
 
-// GetPaymentTreeRoot is a free data retrieval call binding the contract method 0x8588c186.
+// GetNoteTreeNextLeafIndex is a free data retrieval call binding the contract method 0xb7b81f59.
 //
-// Solidity: function getPaymentTreeRoot(uint256 treeId) view returns(bytes32)
-func (_InvisiProtocol *InvisiProtocolCaller) GetPaymentTreeRoot(opts *bind.CallOpts, treeId *big.Int) ([32]byte, error) {
+// Solidity: function getNoteTreeNextLeafIndex(uint256 treeId) view returns(uint32)
+func (_InvisiProtocol *InvisiProtocolCaller) GetNoteTreeNextLeafIndex(opts *bind.CallOpts, treeId *big.Int) (uint32, error) {
 	var out []interface{}
-	err := _InvisiProtocol.contract.Call(opts, &out, "getPaymentTreeRoot", treeId)
+	err := _InvisiProtocol.contract.Call(opts, &out, "getNoteTreeNextLeafIndex", treeId)
+
+	if err != nil {
+		return *new(uint32), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(uint32)).(*uint32)
+
+	return out0, err
+
+}
+
+// GetNoteTreeNextLeafIndex is a free data retrieval call binding the contract method 0xb7b81f59.
+//
+// Solidity: function getNoteTreeNextLeafIndex(uint256 treeId) view returns(uint32)
+func (_InvisiProtocol *InvisiProtocolSession) GetNoteTreeNextLeafIndex(treeId *big.Int) (uint32, error) {
+	return _InvisiProtocol.Contract.GetNoteTreeNextLeafIndex(&_InvisiProtocol.CallOpts, treeId)
+}
+
+// GetNoteTreeNextLeafIndex is a free data retrieval call binding the contract method 0xb7b81f59.
+//
+// Solidity: function getNoteTreeNextLeafIndex(uint256 treeId) view returns(uint32)
+func (_InvisiProtocol *InvisiProtocolCallerSession) GetNoteTreeNextLeafIndex(treeId *big.Int) (uint32, error) {
+	return _InvisiProtocol.Contract.GetNoteTreeNextLeafIndex(&_InvisiProtocol.CallOpts, treeId)
+}
+
+// GetNoteTreeRoot is a free data retrieval call binding the contract method 0xd7793a38.
+//
+// Solidity: function getNoteTreeRoot(uint256 treeId) view returns(bytes32)
+func (_InvisiProtocol *InvisiProtocolCaller) GetNoteTreeRoot(opts *bind.CallOpts, treeId *big.Int) ([32]byte, error) {
+	var out []interface{}
+	err := _InvisiProtocol.contract.Call(opts, &out, "getNoteTreeRoot", treeId)
 
 	if err != nil {
 		return *new([32]byte), err
@@ -555,18 +626,18 @@ func (_InvisiProtocol *InvisiProtocolCaller) GetPaymentTreeRoot(opts *bind.CallO
 
 }
 
-// GetPaymentTreeRoot is a free data retrieval call binding the contract method 0x8588c186.
+// GetNoteTreeRoot is a free data retrieval call binding the contract method 0xd7793a38.
 //
-// Solidity: function getPaymentTreeRoot(uint256 treeId) view returns(bytes32)
-func (_InvisiProtocol *InvisiProtocolSession) GetPaymentTreeRoot(treeId *big.Int) ([32]byte, error) {
-	return _InvisiProtocol.Contract.GetPaymentTreeRoot(&_InvisiProtocol.CallOpts, treeId)
+// Solidity: function getNoteTreeRoot(uint256 treeId) view returns(bytes32)
+func (_InvisiProtocol *InvisiProtocolSession) GetNoteTreeRoot(treeId *big.Int) ([32]byte, error) {
+	return _InvisiProtocol.Contract.GetNoteTreeRoot(&_InvisiProtocol.CallOpts, treeId)
 }
 
-// GetPaymentTreeRoot is a free data retrieval call binding the contract method 0x8588c186.
+// GetNoteTreeRoot is a free data retrieval call binding the contract method 0xd7793a38.
 //
-// Solidity: function getPaymentTreeRoot(uint256 treeId) view returns(bytes32)
-func (_InvisiProtocol *InvisiProtocolCallerSession) GetPaymentTreeRoot(treeId *big.Int) ([32]byte, error) {
-	return _InvisiProtocol.Contract.GetPaymentTreeRoot(&_InvisiProtocol.CallOpts, treeId)
+// Solidity: function getNoteTreeRoot(uint256 treeId) view returns(bytes32)
+func (_InvisiProtocol *InvisiProtocolCallerSession) GetNoteTreeRoot(treeId *big.Int) ([32]byte, error) {
+	return _InvisiProtocol.Contract.GetNoteTreeRoot(&_InvisiProtocol.CallOpts, treeId)
 }
 
 // GetTreeCount is a free data retrieval call binding the contract method 0x5028f70b.
@@ -633,10 +704,10 @@ func (_InvisiProtocol *InvisiProtocolCallerSession) GlobalEmergency() (common.Ad
 
 // IsCommitmentPaid is a free data retrieval call binding the contract method 0xe7c3ffe7.
 //
-// Solidity: function isCommitmentPaid(bytes32 paymentCommitment) view returns(bool)
-func (_InvisiProtocol *InvisiProtocolCaller) IsCommitmentPaid(opts *bind.CallOpts, paymentCommitment [32]byte) (bool, error) {
+// Solidity: function isCommitmentPaid(bytes32 noteCommitment) view returns(bool)
+func (_InvisiProtocol *InvisiProtocolCaller) IsCommitmentPaid(opts *bind.CallOpts, noteCommitment [32]byte) (bool, error) {
 	var out []interface{}
-	err := _InvisiProtocol.contract.Call(opts, &out, "isCommitmentPaid", paymentCommitment)
+	err := _InvisiProtocol.contract.Call(opts, &out, "isCommitmentPaid", noteCommitment)
 
 	if err != nil {
 		return *new(bool), err
@@ -650,16 +721,16 @@ func (_InvisiProtocol *InvisiProtocolCaller) IsCommitmentPaid(opts *bind.CallOpt
 
 // IsCommitmentPaid is a free data retrieval call binding the contract method 0xe7c3ffe7.
 //
-// Solidity: function isCommitmentPaid(bytes32 paymentCommitment) view returns(bool)
-func (_InvisiProtocol *InvisiProtocolSession) IsCommitmentPaid(paymentCommitment [32]byte) (bool, error) {
-	return _InvisiProtocol.Contract.IsCommitmentPaid(&_InvisiProtocol.CallOpts, paymentCommitment)
+// Solidity: function isCommitmentPaid(bytes32 noteCommitment) view returns(bool)
+func (_InvisiProtocol *InvisiProtocolSession) IsCommitmentPaid(noteCommitment [32]byte) (bool, error) {
+	return _InvisiProtocol.Contract.IsCommitmentPaid(&_InvisiProtocol.CallOpts, noteCommitment)
 }
 
 // IsCommitmentPaid is a free data retrieval call binding the contract method 0xe7c3ffe7.
 //
-// Solidity: function isCommitmentPaid(bytes32 paymentCommitment) view returns(bool)
-func (_InvisiProtocol *InvisiProtocolCallerSession) IsCommitmentPaid(paymentCommitment [32]byte) (bool, error) {
-	return _InvisiProtocol.Contract.IsCommitmentPaid(&_InvisiProtocol.CallOpts, paymentCommitment)
+// Solidity: function isCommitmentPaid(bytes32 noteCommitment) view returns(bool)
+func (_InvisiProtocol *InvisiProtocolCallerSession) IsCommitmentPaid(noteCommitment [32]byte) (bool, error) {
+	return _InvisiProtocol.Contract.IsCommitmentPaid(&_InvisiProtocol.CallOpts, noteCommitment)
 }
 
 // IsNullifierSpent is a free data retrieval call binding the contract method 0xd5a4e325.
@@ -817,6 +888,37 @@ func (_InvisiProtocol *InvisiProtocolCallerSession) Paused() (bool, error) {
 	return _InvisiProtocol.Contract.Paused(&_InvisiProtocol.CallOpts)
 }
 
+// RootHistory is a free data retrieval call binding the contract method 0xc718dbda.
+//
+// Solidity: function rootHistory(uint256 , bytes32 ) view returns(bool)
+func (_InvisiProtocol *InvisiProtocolCaller) RootHistory(opts *bind.CallOpts, arg0 *big.Int, arg1 [32]byte) (bool, error) {
+	var out []interface{}
+	err := _InvisiProtocol.contract.Call(opts, &out, "rootHistory", arg0, arg1)
+
+	if err != nil {
+		return *new(bool), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(bool)).(*bool)
+
+	return out0, err
+
+}
+
+// RootHistory is a free data retrieval call binding the contract method 0xc718dbda.
+//
+// Solidity: function rootHistory(uint256 , bytes32 ) view returns(bool)
+func (_InvisiProtocol *InvisiProtocolSession) RootHistory(arg0 *big.Int, arg1 [32]byte) (bool, error) {
+	return _InvisiProtocol.Contract.RootHistory(&_InvisiProtocol.CallOpts, arg0, arg1)
+}
+
+// RootHistory is a free data retrieval call binding the contract method 0xc718dbda.
+//
+// Solidity: function rootHistory(uint256 , bytes32 ) view returns(bool)
+func (_InvisiProtocol *InvisiProtocolCallerSession) RootHistory(arg0 *big.Int, arg1 [32]byte) (bool, error) {
+	return _InvisiProtocol.Contract.RootHistory(&_InvisiProtocol.CallOpts, arg0, arg1)
+}
+
 // Screener is a free data retrieval call binding the contract method 0x6e0fec70.
 //
 // Solidity: function screener() view returns(address)
@@ -941,67 +1043,67 @@ func (_InvisiProtocol *InvisiProtocolCallerSession) VerifierRouter() (common.Add
 	return _InvisiProtocol.Contract.VerifierRouter(&_InvisiProtocol.CallOpts)
 }
 
-// CreditDraw is a paid mutator transaction binding the contract method 0x014a29e6.
+// CancelCredit is a paid mutator transaction binding the contract method 0xcbda6fb5.
 //
-// Solidity: function creditDraw(bytes proof, (bytes32,bytes32[],uint256,address,uint256,bytes32[],uint256) params) returns()
-func (_InvisiProtocol *InvisiProtocolTransactor) CreditDraw(opts *bind.TransactOpts, proof []byte, params Struct3) (*types.Transaction, error) {
-	return _InvisiProtocol.contract.Transact(opts, "creditDraw", proof, params)
+// Solidity: function cancelCredit(bytes , ((uint256,bytes32),bytes32,address,uint256,uint256) , (uint256,bytes) ) returns()
+func (_InvisiProtocol *InvisiProtocolTransactor) CancelCredit(opts *bind.TransactOpts, arg0 []byte, arg1 IInvisiProtocolCancelCreditParams, arg2 IInvisiProtocolCreditAuthorization) (*types.Transaction, error) {
+	return _InvisiProtocol.contract.Transact(opts, "cancelCredit", arg0, arg1, arg2)
 }
 
-// CreditDraw is a paid mutator transaction binding the contract method 0x014a29e6.
+// CancelCredit is a paid mutator transaction binding the contract method 0xcbda6fb5.
 //
-// Solidity: function creditDraw(bytes proof, (bytes32,bytes32[],uint256,address,uint256,bytes32[],uint256) params) returns()
-func (_InvisiProtocol *InvisiProtocolSession) CreditDraw(proof []byte, params Struct3) (*types.Transaction, error) {
-	return _InvisiProtocol.Contract.CreditDraw(&_InvisiProtocol.TransactOpts, proof, params)
+// Solidity: function cancelCredit(bytes , ((uint256,bytes32),bytes32,address,uint256,uint256) , (uint256,bytes) ) returns()
+func (_InvisiProtocol *InvisiProtocolSession) CancelCredit(arg0 []byte, arg1 IInvisiProtocolCancelCreditParams, arg2 IInvisiProtocolCreditAuthorization) (*types.Transaction, error) {
+	return _InvisiProtocol.Contract.CancelCredit(&_InvisiProtocol.TransactOpts, arg0, arg1, arg2)
 }
 
-// CreditDraw is a paid mutator transaction binding the contract method 0x014a29e6.
+// CancelCredit is a paid mutator transaction binding the contract method 0xcbda6fb5.
 //
-// Solidity: function creditDraw(bytes proof, (bytes32,bytes32[],uint256,address,uint256,bytes32[],uint256) params) returns()
-func (_InvisiProtocol *InvisiProtocolTransactorSession) CreditDraw(proof []byte, params Struct3) (*types.Transaction, error) {
-	return _InvisiProtocol.Contract.CreditDraw(&_InvisiProtocol.TransactOpts, proof, params)
+// Solidity: function cancelCredit(bytes , ((uint256,bytes32),bytes32,address,uint256,uint256) , (uint256,bytes) ) returns()
+func (_InvisiProtocol *InvisiProtocolTransactorSession) CancelCredit(arg0 []byte, arg1 IInvisiProtocolCancelCreditParams, arg2 IInvisiProtocolCreditAuthorization) (*types.Transaction, error) {
+	return _InvisiProtocol.Contract.CancelCredit(&_InvisiProtocol.TransactOpts, arg0, arg1, arg2)
 }
 
-// DepositCredit is a paid mutator transaction binding the contract method 0x83847d64.
+// CreateCredit is a paid mutator transaction binding the contract method 0xd3d7c536.
 //
-// Solidity: function depositCredit(bytes32 identityCommitment, bytes32 payerCommitment, uint256 amount, bytes32 nonce, uint256 expiry, bytes32 nullifierKeyHash, uint256 treeId) returns()
-func (_InvisiProtocol *InvisiProtocolTransactor) DepositCredit(opts *bind.TransactOpts, identityCommitment [32]byte, payerCommitment [32]byte, amount *big.Int, nonce [32]byte, expiry *big.Int, nullifierKeyHash [32]byte, treeId *big.Int) (*types.Transaction, error) {
-	return _InvisiProtocol.contract.Transact(opts, "depositCredit", identityCommitment, payerCommitment, amount, nonce, expiry, nullifierKeyHash, treeId)
+// Solidity: function createCredit(bytes , ((uint256,bytes32)[],bytes32[],bytes32,bytes32,address,uint256,uint256) , bytes[] , (address,uint256,uint256,uint256,bytes,(uint256,uint8,bytes32,bytes32)) , (uint256,bytes) ) returns()
+func (_InvisiProtocol *InvisiProtocolTransactor) CreateCredit(opts *bind.TransactOpts, arg0 []byte, arg1 IInvisiProtocolCreateCreditParams, arg2 [][]byte, arg3 IInvisiProtocolFundingParams, arg4 IInvisiProtocolCreditAuthorization) (*types.Transaction, error) {
+	return _InvisiProtocol.contract.Transact(opts, "createCredit", arg0, arg1, arg2, arg3, arg4)
 }
 
-// DepositCredit is a paid mutator transaction binding the contract method 0x83847d64.
+// CreateCredit is a paid mutator transaction binding the contract method 0xd3d7c536.
 //
-// Solidity: function depositCredit(bytes32 identityCommitment, bytes32 payerCommitment, uint256 amount, bytes32 nonce, uint256 expiry, bytes32 nullifierKeyHash, uint256 treeId) returns()
-func (_InvisiProtocol *InvisiProtocolSession) DepositCredit(identityCommitment [32]byte, payerCommitment [32]byte, amount *big.Int, nonce [32]byte, expiry *big.Int, nullifierKeyHash [32]byte, treeId *big.Int) (*types.Transaction, error) {
-	return _InvisiProtocol.Contract.DepositCredit(&_InvisiProtocol.TransactOpts, identityCommitment, payerCommitment, amount, nonce, expiry, nullifierKeyHash, treeId)
+// Solidity: function createCredit(bytes , ((uint256,bytes32)[],bytes32[],bytes32,bytes32,address,uint256,uint256) , bytes[] , (address,uint256,uint256,uint256,bytes,(uint256,uint8,bytes32,bytes32)) , (uint256,bytes) ) returns()
+func (_InvisiProtocol *InvisiProtocolSession) CreateCredit(arg0 []byte, arg1 IInvisiProtocolCreateCreditParams, arg2 [][]byte, arg3 IInvisiProtocolFundingParams, arg4 IInvisiProtocolCreditAuthorization) (*types.Transaction, error) {
+	return _InvisiProtocol.Contract.CreateCredit(&_InvisiProtocol.TransactOpts, arg0, arg1, arg2, arg3, arg4)
 }
 
-// DepositCredit is a paid mutator transaction binding the contract method 0x83847d64.
+// CreateCredit is a paid mutator transaction binding the contract method 0xd3d7c536.
 //
-// Solidity: function depositCredit(bytes32 identityCommitment, bytes32 payerCommitment, uint256 amount, bytes32 nonce, uint256 expiry, bytes32 nullifierKeyHash, uint256 treeId) returns()
-func (_InvisiProtocol *InvisiProtocolTransactorSession) DepositCredit(identityCommitment [32]byte, payerCommitment [32]byte, amount *big.Int, nonce [32]byte, expiry *big.Int, nullifierKeyHash [32]byte, treeId *big.Int) (*types.Transaction, error) {
-	return _InvisiProtocol.Contract.DepositCredit(&_InvisiProtocol.TransactOpts, identityCommitment, payerCommitment, amount, nonce, expiry, nullifierKeyHash, treeId)
+// Solidity: function createCredit(bytes , ((uint256,bytes32)[],bytes32[],bytes32,bytes32,address,uint256,uint256) , bytes[] , (address,uint256,uint256,uint256,bytes,(uint256,uint8,bytes32,bytes32)) , (uint256,bytes) ) returns()
+func (_InvisiProtocol *InvisiProtocolTransactorSession) CreateCredit(arg0 []byte, arg1 IInvisiProtocolCreateCreditParams, arg2 [][]byte, arg3 IInvisiProtocolFundingParams, arg4 IInvisiProtocolCreditAuthorization) (*types.Transaction, error) {
+	return _InvisiProtocol.Contract.CreateCredit(&_InvisiProtocol.TransactOpts, arg0, arg1, arg2, arg3, arg4)
 }
 
-// DepositCreditWithSig is a paid mutator transaction binding the contract method 0xedb30e24.
+// CreditDraw is a paid mutator transaction binding the contract method 0x402c4421.
 //
-// Solidity: function depositCreditWithSig(bytes32 identityCommitment, bytes32 payerCommitment, uint256 amount, bytes32 nonce, uint256 expiry, bytes32 nullifierKeyHash, uint256 treeId, (address,uint256,uint256,bytes,address,(uint256,uint8,bytes32,bytes32)) meta) returns()
-func (_InvisiProtocol *InvisiProtocolTransactor) DepositCreditWithSig(opts *bind.TransactOpts, identityCommitment [32]byte, payerCommitment [32]byte, amount *big.Int, nonce [32]byte, expiry *big.Int, nullifierKeyHash [32]byte, treeId *big.Int, meta Struct2) (*types.Transaction, error) {
-	return _InvisiProtocol.contract.Transact(opts, "depositCreditWithSig", identityCommitment, payerCommitment, amount, nonce, expiry, nullifierKeyHash, treeId, meta)
+// Solidity: function creditDraw(bytes , ((uint256,bytes32)[],bytes32[],bytes32[],uint256[],bytes32[],address,uint256,uint256) , bytes[] ) returns()
+func (_InvisiProtocol *InvisiProtocolTransactor) CreditDraw(opts *bind.TransactOpts, arg0 []byte, arg1 IInvisiProtocolCreditDrawParams, arg2 [][]byte) (*types.Transaction, error) {
+	return _InvisiProtocol.contract.Transact(opts, "creditDraw", arg0, arg1, arg2)
 }
 
-// DepositCreditWithSig is a paid mutator transaction binding the contract method 0xedb30e24.
+// CreditDraw is a paid mutator transaction binding the contract method 0x402c4421.
 //
-// Solidity: function depositCreditWithSig(bytes32 identityCommitment, bytes32 payerCommitment, uint256 amount, bytes32 nonce, uint256 expiry, bytes32 nullifierKeyHash, uint256 treeId, (address,uint256,uint256,bytes,address,(uint256,uint8,bytes32,bytes32)) meta) returns()
-func (_InvisiProtocol *InvisiProtocolSession) DepositCreditWithSig(identityCommitment [32]byte, payerCommitment [32]byte, amount *big.Int, nonce [32]byte, expiry *big.Int, nullifierKeyHash [32]byte, treeId *big.Int, meta Struct2) (*types.Transaction, error) {
-	return _InvisiProtocol.Contract.DepositCreditWithSig(&_InvisiProtocol.TransactOpts, identityCommitment, payerCommitment, amount, nonce, expiry, nullifierKeyHash, treeId, meta)
+// Solidity: function creditDraw(bytes , ((uint256,bytes32)[],bytes32[],bytes32[],uint256[],bytes32[],address,uint256,uint256) , bytes[] ) returns()
+func (_InvisiProtocol *InvisiProtocolSession) CreditDraw(arg0 []byte, arg1 IInvisiProtocolCreditDrawParams, arg2 [][]byte) (*types.Transaction, error) {
+	return _InvisiProtocol.Contract.CreditDraw(&_InvisiProtocol.TransactOpts, arg0, arg1, arg2)
 }
 
-// DepositCreditWithSig is a paid mutator transaction binding the contract method 0xedb30e24.
+// CreditDraw is a paid mutator transaction binding the contract method 0x402c4421.
 //
-// Solidity: function depositCreditWithSig(bytes32 identityCommitment, bytes32 payerCommitment, uint256 amount, bytes32 nonce, uint256 expiry, bytes32 nullifierKeyHash, uint256 treeId, (address,uint256,uint256,bytes,address,(uint256,uint8,bytes32,bytes32)) meta) returns()
-func (_InvisiProtocol *InvisiProtocolTransactorSession) DepositCreditWithSig(identityCommitment [32]byte, payerCommitment [32]byte, amount *big.Int, nonce [32]byte, expiry *big.Int, nullifierKeyHash [32]byte, treeId *big.Int, meta Struct2) (*types.Transaction, error) {
-	return _InvisiProtocol.Contract.DepositCreditWithSig(&_InvisiProtocol.TransactOpts, identityCommitment, payerCommitment, amount, nonce, expiry, nullifierKeyHash, treeId, meta)
+// Solidity: function creditDraw(bytes , ((uint256,bytes32)[],bytes32[],bytes32[],uint256[],bytes32[],address,uint256,uint256) , bytes[] ) returns()
+func (_InvisiProtocol *InvisiProtocolTransactorSession) CreditDraw(arg0 []byte, arg1 IInvisiProtocolCreditDrawParams, arg2 [][]byte) (*types.Transaction, error) {
+	return _InvisiProtocol.Contract.CreditDraw(&_InvisiProtocol.TransactOpts, arg0, arg1, arg2)
 }
 
 // GlobalPause is a paid mutator transaction binding the contract method 0xf12d54d8.
@@ -1067,111 +1169,6 @@ func (_InvisiProtocol *InvisiProtocolTransactorSession) Pause() (*types.Transact
 	return _InvisiProtocol.Contract.Pause(&_InvisiProtocol.TransactOpts)
 }
 
-// PayBlind is a paid mutator transaction binding the contract method 0x82d33b9b.
-//
-// Solidity: function payBlind(bytes proof, bytes32 paymentCommitment, bytes32 changeCommitment, uint256 inputAmount, uint256 treeId, bytes32 refundLink) returns()
-func (_InvisiProtocol *InvisiProtocolTransactor) PayBlind(opts *bind.TransactOpts, proof []byte, paymentCommitment [32]byte, changeCommitment [32]byte, inputAmount *big.Int, treeId *big.Int, refundLink [32]byte) (*types.Transaction, error) {
-	return _InvisiProtocol.contract.Transact(opts, "payBlind", proof, paymentCommitment, changeCommitment, inputAmount, treeId, refundLink)
-}
-
-// PayBlind is a paid mutator transaction binding the contract method 0x82d33b9b.
-//
-// Solidity: function payBlind(bytes proof, bytes32 paymentCommitment, bytes32 changeCommitment, uint256 inputAmount, uint256 treeId, bytes32 refundLink) returns()
-func (_InvisiProtocol *InvisiProtocolSession) PayBlind(proof []byte, paymentCommitment [32]byte, changeCommitment [32]byte, inputAmount *big.Int, treeId *big.Int, refundLink [32]byte) (*types.Transaction, error) {
-	return _InvisiProtocol.Contract.PayBlind(&_InvisiProtocol.TransactOpts, proof, paymentCommitment, changeCommitment, inputAmount, treeId, refundLink)
-}
-
-// PayBlind is a paid mutator transaction binding the contract method 0x82d33b9b.
-//
-// Solidity: function payBlind(bytes proof, bytes32 paymentCommitment, bytes32 changeCommitment, uint256 inputAmount, uint256 treeId, bytes32 refundLink) returns()
-func (_InvisiProtocol *InvisiProtocolTransactorSession) PayBlind(proof []byte, paymentCommitment [32]byte, changeCommitment [32]byte, inputAmount *big.Int, treeId *big.Int, refundLink [32]byte) (*types.Transaction, error) {
-	return _InvisiProtocol.Contract.PayBlind(&_InvisiProtocol.TransactOpts, proof, paymentCommitment, changeCommitment, inputAmount, treeId, refundLink)
-}
-
-// PayBlindWithSig is a paid mutator transaction binding the contract method 0xc172f2db.
-//
-// Solidity: function payBlindWithSig(bytes proof, bytes32 paymentCommitment, bytes32 changeCommitment, uint256 inputAmount, uint256 treeId, bytes32 refundLink, (address,uint256,uint256,bytes,address,(uint256,uint8,bytes32,bytes32)) meta) returns()
-func (_InvisiProtocol *InvisiProtocolTransactor) PayBlindWithSig(opts *bind.TransactOpts, proof []byte, paymentCommitment [32]byte, changeCommitment [32]byte, inputAmount *big.Int, treeId *big.Int, refundLink [32]byte, meta Struct2) (*types.Transaction, error) {
-	return _InvisiProtocol.contract.Transact(opts, "payBlindWithSig", proof, paymentCommitment, changeCommitment, inputAmount, treeId, refundLink, meta)
-}
-
-// PayBlindWithSig is a paid mutator transaction binding the contract method 0xc172f2db.
-//
-// Solidity: function payBlindWithSig(bytes proof, bytes32 paymentCommitment, bytes32 changeCommitment, uint256 inputAmount, uint256 treeId, bytes32 refundLink, (address,uint256,uint256,bytes,address,(uint256,uint8,bytes32,bytes32)) meta) returns()
-func (_InvisiProtocol *InvisiProtocolSession) PayBlindWithSig(proof []byte, paymentCommitment [32]byte, changeCommitment [32]byte, inputAmount *big.Int, treeId *big.Int, refundLink [32]byte, meta Struct2) (*types.Transaction, error) {
-	return _InvisiProtocol.Contract.PayBlindWithSig(&_InvisiProtocol.TransactOpts, proof, paymentCommitment, changeCommitment, inputAmount, treeId, refundLink, meta)
-}
-
-// PayBlindWithSig is a paid mutator transaction binding the contract method 0xc172f2db.
-//
-// Solidity: function payBlindWithSig(bytes proof, bytes32 paymentCommitment, bytes32 changeCommitment, uint256 inputAmount, uint256 treeId, bytes32 refundLink, (address,uint256,uint256,bytes,address,(uint256,uint8,bytes32,bytes32)) meta) returns()
-func (_InvisiProtocol *InvisiProtocolTransactorSession) PayBlindWithSig(proof []byte, paymentCommitment [32]byte, changeCommitment [32]byte, inputAmount *big.Int, treeId *big.Int, refundLink [32]byte, meta Struct2) (*types.Transaction, error) {
-	return _InvisiProtocol.Contract.PayBlindWithSig(&_InvisiProtocol.TransactOpts, proof, paymentCommitment, changeCommitment, inputAmount, treeId, refundLink, meta)
-}
-
-// PayOpen is a paid mutator transaction binding the contract method 0x8cf55984.
-//
-// Solidity: function payOpen(bytes32 identityCommitment, uint256 amount, bytes32 nonce, uint256 treeId, bytes32 refundLink) returns()
-func (_InvisiProtocol *InvisiProtocolTransactor) PayOpen(opts *bind.TransactOpts, identityCommitment [32]byte, amount *big.Int, nonce [32]byte, treeId *big.Int, refundLink [32]byte) (*types.Transaction, error) {
-	return _InvisiProtocol.contract.Transact(opts, "payOpen", identityCommitment, amount, nonce, treeId, refundLink)
-}
-
-// PayOpen is a paid mutator transaction binding the contract method 0x8cf55984.
-//
-// Solidity: function payOpen(bytes32 identityCommitment, uint256 amount, bytes32 nonce, uint256 treeId, bytes32 refundLink) returns()
-func (_InvisiProtocol *InvisiProtocolSession) PayOpen(identityCommitment [32]byte, amount *big.Int, nonce [32]byte, treeId *big.Int, refundLink [32]byte) (*types.Transaction, error) {
-	return _InvisiProtocol.Contract.PayOpen(&_InvisiProtocol.TransactOpts, identityCommitment, amount, nonce, treeId, refundLink)
-}
-
-// PayOpen is a paid mutator transaction binding the contract method 0x8cf55984.
-//
-// Solidity: function payOpen(bytes32 identityCommitment, uint256 amount, bytes32 nonce, uint256 treeId, bytes32 refundLink) returns()
-func (_InvisiProtocol *InvisiProtocolTransactorSession) PayOpen(identityCommitment [32]byte, amount *big.Int, nonce [32]byte, treeId *big.Int, refundLink [32]byte) (*types.Transaction, error) {
-	return _InvisiProtocol.Contract.PayOpen(&_InvisiProtocol.TransactOpts, identityCommitment, amount, nonce, treeId, refundLink)
-}
-
-// PayOpenWithSig is a paid mutator transaction binding the contract method 0x1c18781e.
-//
-// Solidity: function payOpenWithSig(bytes32 identityCommitment, uint256 amount, bytes32 nonce, uint256 treeId, bytes32 refundLink, (address,uint256,uint256,bytes,address,(uint256,uint8,bytes32,bytes32)) meta) returns()
-func (_InvisiProtocol *InvisiProtocolTransactor) PayOpenWithSig(opts *bind.TransactOpts, identityCommitment [32]byte, amount *big.Int, nonce [32]byte, treeId *big.Int, refundLink [32]byte, meta Struct2) (*types.Transaction, error) {
-	return _InvisiProtocol.contract.Transact(opts, "payOpenWithSig", identityCommitment, amount, nonce, treeId, refundLink, meta)
-}
-
-// PayOpenWithSig is a paid mutator transaction binding the contract method 0x1c18781e.
-//
-// Solidity: function payOpenWithSig(bytes32 identityCommitment, uint256 amount, bytes32 nonce, uint256 treeId, bytes32 refundLink, (address,uint256,uint256,bytes,address,(uint256,uint8,bytes32,bytes32)) meta) returns()
-func (_InvisiProtocol *InvisiProtocolSession) PayOpenWithSig(identityCommitment [32]byte, amount *big.Int, nonce [32]byte, treeId *big.Int, refundLink [32]byte, meta Struct2) (*types.Transaction, error) {
-	return _InvisiProtocol.Contract.PayOpenWithSig(&_InvisiProtocol.TransactOpts, identityCommitment, amount, nonce, treeId, refundLink, meta)
-}
-
-// PayOpenWithSig is a paid mutator transaction binding the contract method 0x1c18781e.
-//
-// Solidity: function payOpenWithSig(bytes32 identityCommitment, uint256 amount, bytes32 nonce, uint256 treeId, bytes32 refundLink, (address,uint256,uint256,bytes,address,(uint256,uint8,bytes32,bytes32)) meta) returns()
-func (_InvisiProtocol *InvisiProtocolTransactorSession) PayOpenWithSig(identityCommitment [32]byte, amount *big.Int, nonce [32]byte, treeId *big.Int, refundLink [32]byte, meta Struct2) (*types.Transaction, error) {
-	return _InvisiProtocol.Contract.PayOpenWithSig(&_InvisiProtocol.TransactOpts, identityCommitment, amount, nonce, treeId, refundLink, meta)
-}
-
-// Reclaim is a paid mutator transaction binding the contract method 0xb9ed9a68.
-//
-// Solidity: function reclaim(bytes proof, bytes32 merkleRoot, bytes32 nullifier, uint256 amount, address receivingAddress, uint256 treeId, uint256 expiry) returns()
-func (_InvisiProtocol *InvisiProtocolTransactor) Reclaim(opts *bind.TransactOpts, proof []byte, merkleRoot [32]byte, nullifier [32]byte, amount *big.Int, receivingAddress common.Address, treeId *big.Int, expiry *big.Int) (*types.Transaction, error) {
-	return _InvisiProtocol.contract.Transact(opts, "reclaim", proof, merkleRoot, nullifier, amount, receivingAddress, treeId, expiry)
-}
-
-// Reclaim is a paid mutator transaction binding the contract method 0xb9ed9a68.
-//
-// Solidity: function reclaim(bytes proof, bytes32 merkleRoot, bytes32 nullifier, uint256 amount, address receivingAddress, uint256 treeId, uint256 expiry) returns()
-func (_InvisiProtocol *InvisiProtocolSession) Reclaim(proof []byte, merkleRoot [32]byte, nullifier [32]byte, amount *big.Int, receivingAddress common.Address, treeId *big.Int, expiry *big.Int) (*types.Transaction, error) {
-	return _InvisiProtocol.Contract.Reclaim(&_InvisiProtocol.TransactOpts, proof, merkleRoot, nullifier, amount, receivingAddress, treeId, expiry)
-}
-
-// Reclaim is a paid mutator transaction binding the contract method 0xb9ed9a68.
-//
-// Solidity: function reclaim(bytes proof, bytes32 merkleRoot, bytes32 nullifier, uint256 amount, address receivingAddress, uint256 treeId, uint256 expiry) returns()
-func (_InvisiProtocol *InvisiProtocolTransactorSession) Reclaim(proof []byte, merkleRoot [32]byte, nullifier [32]byte, amount *big.Int, receivingAddress common.Address, treeId *big.Int, expiry *big.Int) (*types.Transaction, error) {
-	return _InvisiProtocol.Contract.Reclaim(&_InvisiProtocol.TransactOpts, proof, merkleRoot, nullifier, amount, receivingAddress, treeId, expiry)
-}
-
 // SetDepositLimit is a paid mutator transaction binding the contract method 0xbdc8144b.
 //
 // Solidity: function setDepositLimit(uint256 newMaxPerDeposit) returns()
@@ -1214,6 +1211,90 @@ func (_InvisiProtocol *InvisiProtocolTransactorSession) SetScreener(newScreener 
 	return _InvisiProtocol.Contract.SetScreener(&_InvisiProtocol.TransactOpts, newScreener)
 }
 
+// Shield is a paid mutator transaction binding the contract method 0x702e7d33.
+//
+// Solidity: function shield((bytes32[],uint256) , (bytes32,uint256,bytes32)[] , bytes[] , (address,uint256,uint256,uint256,bytes,(uint256,uint8,bytes32,bytes32)) ) returns()
+func (_InvisiProtocol *InvisiProtocolTransactor) Shield(opts *bind.TransactOpts, arg0 IInvisiProtocolShieldParams, arg1 []IInvisiProtocolShieldOutput, arg2 [][]byte, arg3 IInvisiProtocolFundingParams) (*types.Transaction, error) {
+	return _InvisiProtocol.contract.Transact(opts, "shield", arg0, arg1, arg2, arg3)
+}
+
+// Shield is a paid mutator transaction binding the contract method 0x702e7d33.
+//
+// Solidity: function shield((bytes32[],uint256) , (bytes32,uint256,bytes32)[] , bytes[] , (address,uint256,uint256,uint256,bytes,(uint256,uint8,bytes32,bytes32)) ) returns()
+func (_InvisiProtocol *InvisiProtocolSession) Shield(arg0 IInvisiProtocolShieldParams, arg1 []IInvisiProtocolShieldOutput, arg2 [][]byte, arg3 IInvisiProtocolFundingParams) (*types.Transaction, error) {
+	return _InvisiProtocol.Contract.Shield(&_InvisiProtocol.TransactOpts, arg0, arg1, arg2, arg3)
+}
+
+// Shield is a paid mutator transaction binding the contract method 0x702e7d33.
+//
+// Solidity: function shield((bytes32[],uint256) , (bytes32,uint256,bytes32)[] , bytes[] , (address,uint256,uint256,uint256,bytes,(uint256,uint8,bytes32,bytes32)) ) returns()
+func (_InvisiProtocol *InvisiProtocolTransactorSession) Shield(arg0 IInvisiProtocolShieldParams, arg1 []IInvisiProtocolShieldOutput, arg2 [][]byte, arg3 IInvisiProtocolFundingParams) (*types.Transaction, error) {
+	return _InvisiProtocol.Contract.Shield(&_InvisiProtocol.TransactOpts, arg0, arg1, arg2, arg3)
+}
+
+// TopUpCredit is a paid mutator transaction binding the contract method 0x36d16863.
+//
+// Solidity: function topUpCredit(bytes , (((uint256,bytes32)[],bytes32[],bytes32,bytes32,address,uint256,uint256),(uint256,bytes32),bytes32,uint256) , bytes[] , (address,uint256,uint256,uint256,bytes,(uint256,uint8,bytes32,bytes32)) , (uint256,bytes) ) returns()
+func (_InvisiProtocol *InvisiProtocolTransactor) TopUpCredit(opts *bind.TransactOpts, arg0 []byte, arg1 IInvisiProtocolTopUpCreditParams, arg2 [][]byte, arg3 IInvisiProtocolFundingParams, arg4 IInvisiProtocolCreditAuthorization) (*types.Transaction, error) {
+	return _InvisiProtocol.contract.Transact(opts, "topUpCredit", arg0, arg1, arg2, arg3, arg4)
+}
+
+// TopUpCredit is a paid mutator transaction binding the contract method 0x36d16863.
+//
+// Solidity: function topUpCredit(bytes , (((uint256,bytes32)[],bytes32[],bytes32,bytes32,address,uint256,uint256),(uint256,bytes32),bytes32,uint256) , bytes[] , (address,uint256,uint256,uint256,bytes,(uint256,uint8,bytes32,bytes32)) , (uint256,bytes) ) returns()
+func (_InvisiProtocol *InvisiProtocolSession) TopUpCredit(arg0 []byte, arg1 IInvisiProtocolTopUpCreditParams, arg2 [][]byte, arg3 IInvisiProtocolFundingParams, arg4 IInvisiProtocolCreditAuthorization) (*types.Transaction, error) {
+	return _InvisiProtocol.Contract.TopUpCredit(&_InvisiProtocol.TransactOpts, arg0, arg1, arg2, arg3, arg4)
+}
+
+// TopUpCredit is a paid mutator transaction binding the contract method 0x36d16863.
+//
+// Solidity: function topUpCredit(bytes , (((uint256,bytes32)[],bytes32[],bytes32,bytes32,address,uint256,uint256),(uint256,bytes32),bytes32,uint256) , bytes[] , (address,uint256,uint256,uint256,bytes,(uint256,uint8,bytes32,bytes32)) , (uint256,bytes) ) returns()
+func (_InvisiProtocol *InvisiProtocolTransactorSession) TopUpCredit(arg0 []byte, arg1 IInvisiProtocolTopUpCreditParams, arg2 [][]byte, arg3 IInvisiProtocolFundingParams, arg4 IInvisiProtocolCreditAuthorization) (*types.Transaction, error) {
+	return _InvisiProtocol.Contract.TopUpCredit(&_InvisiProtocol.TransactOpts, arg0, arg1, arg2, arg3, arg4)
+}
+
+// Transact is a paid mutator transaction binding the contract method 0x536d0c1e.
+//
+// Solidity: function transact(bytes , (((uint256,bytes32)[],bytes32[],bytes32[],address,uint256,uint256),bytes[],(address,uint256,uint256,uint256,bytes,(uint256,uint8,bytes32,bytes32))) ) returns()
+func (_InvisiProtocol *InvisiProtocolTransactor) Transact(opts *bind.TransactOpts, arg0 []byte, arg1 IInvisiProtocolTransactRequest) (*types.Transaction, error) {
+	return _InvisiProtocol.contract.Transact(opts, "transact", arg0, arg1)
+}
+
+// Transact is a paid mutator transaction binding the contract method 0x536d0c1e.
+//
+// Solidity: function transact(bytes , (((uint256,bytes32)[],bytes32[],bytes32[],address,uint256,uint256),bytes[],(address,uint256,uint256,uint256,bytes,(uint256,uint8,bytes32,bytes32))) ) returns()
+func (_InvisiProtocol *InvisiProtocolSession) Transact(arg0 []byte, arg1 IInvisiProtocolTransactRequest) (*types.Transaction, error) {
+	return _InvisiProtocol.Contract.Transact(&_InvisiProtocol.TransactOpts, arg0, arg1)
+}
+
+// Transact is a paid mutator transaction binding the contract method 0x536d0c1e.
+//
+// Solidity: function transact(bytes , (((uint256,bytes32)[],bytes32[],bytes32[],address,uint256,uint256),bytes[],(address,uint256,uint256,uint256,bytes,(uint256,uint8,bytes32,bytes32))) ) returns()
+func (_InvisiProtocol *InvisiProtocolTransactorSession) Transact(arg0 []byte, arg1 IInvisiProtocolTransactRequest) (*types.Transaction, error) {
+	return _InvisiProtocol.Contract.Transact(&_InvisiProtocol.TransactOpts, arg0, arg1)
+}
+
+// Transact0 is a paid mutator transaction binding the contract method 0x9bd36a3f.
+//
+// Solidity: function transact(bytes , (((uint256,bytes32)[],bytes32[],bytes32[],address,uint256,uint256),bytes[],(address,uint256,uint256,uint256,bytes,(uint256,uint8,bytes32,bytes32)))[] ) returns()
+func (_InvisiProtocol *InvisiProtocolTransactor) Transact0(opts *bind.TransactOpts, arg0 []byte, arg1 []IInvisiProtocolTransactRequest) (*types.Transaction, error) {
+	return _InvisiProtocol.contract.Transact(opts, "transact0", arg0, arg1)
+}
+
+// Transact0 is a paid mutator transaction binding the contract method 0x9bd36a3f.
+//
+// Solidity: function transact(bytes , (((uint256,bytes32)[],bytes32[],bytes32[],address,uint256,uint256),bytes[],(address,uint256,uint256,uint256,bytes,(uint256,uint8,bytes32,bytes32)))[] ) returns()
+func (_InvisiProtocol *InvisiProtocolSession) Transact0(arg0 []byte, arg1 []IInvisiProtocolTransactRequest) (*types.Transaction, error) {
+	return _InvisiProtocol.Contract.Transact0(&_InvisiProtocol.TransactOpts, arg0, arg1)
+}
+
+// Transact0 is a paid mutator transaction binding the contract method 0x9bd36a3f.
+//
+// Solidity: function transact(bytes , (((uint256,bytes32)[],bytes32[],bytes32[],address,uint256,uint256),bytes[],(address,uint256,uint256,uint256,bytes,(uint256,uint8,bytes32,bytes32)))[] ) returns()
+func (_InvisiProtocol *InvisiProtocolTransactorSession) Transact0(arg0 []byte, arg1 []IInvisiProtocolTransactRequest) (*types.Transaction, error) {
+	return _InvisiProtocol.Contract.Transact0(&_InvisiProtocol.TransactOpts, arg0, arg1)
+}
+
 // Unpause is a paid mutator transaction binding the contract method 0x3f4ba83a.
 //
 // Solidity: function unpause() returns()
@@ -1235,30 +1316,9 @@ func (_InvisiProtocol *InvisiProtocolTransactorSession) Unpause() (*types.Transa
 	return _InvisiProtocol.Contract.Unpause(&_InvisiProtocol.TransactOpts)
 }
 
-// Withdraw is a paid mutator transaction binding the contract method 0x04723758.
-//
-// Solidity: function withdraw(bytes proof, bytes32 merkleRoot, bytes32[] nullifiers, uint256 totalAmount, address receivingAddress, uint256 treeId) returns()
-func (_InvisiProtocol *InvisiProtocolTransactor) Withdraw(opts *bind.TransactOpts, proof []byte, merkleRoot [32]byte, nullifiers [][32]byte, totalAmount *big.Int, receivingAddress common.Address, treeId *big.Int) (*types.Transaction, error) {
-	return _InvisiProtocol.contract.Transact(opts, "withdraw", proof, merkleRoot, nullifiers, totalAmount, receivingAddress, treeId)
-}
-
-// Withdraw is a paid mutator transaction binding the contract method 0x04723758.
-//
-// Solidity: function withdraw(bytes proof, bytes32 merkleRoot, bytes32[] nullifiers, uint256 totalAmount, address receivingAddress, uint256 treeId) returns()
-func (_InvisiProtocol *InvisiProtocolSession) Withdraw(proof []byte, merkleRoot [32]byte, nullifiers [][32]byte, totalAmount *big.Int, receivingAddress common.Address, treeId *big.Int) (*types.Transaction, error) {
-	return _InvisiProtocol.Contract.Withdraw(&_InvisiProtocol.TransactOpts, proof, merkleRoot, nullifiers, totalAmount, receivingAddress, treeId)
-}
-
-// Withdraw is a paid mutator transaction binding the contract method 0x04723758.
-//
-// Solidity: function withdraw(bytes proof, bytes32 merkleRoot, bytes32[] nullifiers, uint256 totalAmount, address receivingAddress, uint256 treeId) returns()
-func (_InvisiProtocol *InvisiProtocolTransactorSession) Withdraw(proof []byte, merkleRoot [32]byte, nullifiers [][32]byte, totalAmount *big.Int, receivingAddress common.Address, treeId *big.Int) (*types.Transaction, error) {
-	return _InvisiProtocol.Contract.Withdraw(&_InvisiProtocol.TransactOpts, proof, merkleRoot, nullifiers, totalAmount, receivingAddress, treeId)
-}
-
-// InvisiProtocolCreditDepositIterator is returned from FilterCreditDeposit and is used to iterate over the raw logs and unpacked data for CreditDeposit events raised by the InvisiProtocol contract.
-type InvisiProtocolCreditDepositIterator struct {
-	Event *InvisiProtocolCreditDeposit // Event containing the contract specifics and raw log
+// InvisiProtocolBatchOutputsIterator is returned from FilterBatchOutputs and is used to iterate over the raw logs and unpacked data for BatchOutputs events raised by the InvisiProtocol contract.
+type InvisiProtocolBatchOutputsIterator struct {
+	Event *InvisiProtocolBatchOutputs // Event containing the contract specifics and raw log
 
 	contract *bind.BoundContract // Generic contract to use for unpacking event data
 	event    string              // Event name to use for unpacking event data
@@ -1272,7 +1332,7 @@ type InvisiProtocolCreditDepositIterator struct {
 // Next advances the iterator to the subsequent event, returning whether there
 // are any more events found. In case of a retrieval or parsing error, false is
 // returned and Error() can be queried for the exact failure.
-func (it *InvisiProtocolCreditDepositIterator) Next() bool {
+func (it *InvisiProtocolBatchOutputsIterator) Next() bool {
 	// If the iterator failed, stop iterating
 	if it.fail != nil {
 		return false
@@ -1281,7 +1341,7 @@ func (it *InvisiProtocolCreditDepositIterator) Next() bool {
 	if it.done {
 		select {
 		case log := <-it.logs:
-			it.Event = new(InvisiProtocolCreditDeposit)
+			it.Event = new(InvisiProtocolBatchOutputs)
 			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
 				it.fail = err
 				return false
@@ -1296,7 +1356,7 @@ func (it *InvisiProtocolCreditDepositIterator) Next() bool {
 	// Iterator still in progress, wait for either a data or an error event
 	select {
 	case log := <-it.logs:
-		it.Event = new(InvisiProtocolCreditDeposit)
+		it.Event = new(InvisiProtocolBatchOutputs)
 		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
 			it.fail = err
 			return false
@@ -1312,77 +1372,55 @@ func (it *InvisiProtocolCreditDepositIterator) Next() bool {
 }
 
 // Error returns any retrieval or parsing error occurred during filtering.
-func (it *InvisiProtocolCreditDepositIterator) Error() error {
+func (it *InvisiProtocolBatchOutputsIterator) Error() error {
 	return it.fail
 }
 
 // Close terminates the iteration process, releasing any pending underlying
 // resources.
-func (it *InvisiProtocolCreditDepositIterator) Close() error {
+func (it *InvisiProtocolBatchOutputsIterator) Close() error {
 	it.sub.Unsubscribe()
 	return nil
 }
 
-// InvisiProtocolCreditDeposit represents a CreditDeposit event raised by the InvisiProtocol contract.
-type InvisiProtocolCreditDeposit struct {
-	Commitment         [32]byte
-	Depositor          common.Address
-	TreeId             *big.Int
-	LeafIndex          uint32
-	IdentityCommitment [32]byte
-	PayerCommitment    [32]byte
-	TokenAddress       common.Address
-	Amount             *big.Int
-	Nonce              [32]byte
-	Expiry             *big.Int
-	NullifierKeyHash   [32]byte
-	Raw                types.Log // Blockchain specific contextual infos
+// InvisiProtocolBatchOutputs represents a BatchOutputs event raised by the InvisiProtocol contract.
+type InvisiProtocolBatchOutputs struct {
+	TreeId            *big.Int
+	StartLeafIndex    uint32
+	FirstOutputOffset *big.Int
+	Commitments       [][32]byte
+	PackedCiphertexts []byte
+	Raw               types.Log // Blockchain specific contextual infos
 }
 
-// FilterCreditDeposit is a free log retrieval operation binding the contract event 0x0c71f59fc782f32bb0f185b01ff5e6b5a9449adc86fd74c3c8bd27eac4d25689.
+// FilterBatchOutputs is a free log retrieval operation binding the contract event 0xb777242f5badb86f5f4c26fb210306f07680ae3c44342065283f32ae6a8e890a.
 //
-// Solidity: event CreditDeposit(bytes32 indexed commitment, address indexed depositor, uint256 indexed treeId, uint32 leafIndex, bytes32 identityCommitment, bytes32 payerCommitment, address tokenAddress, uint256 amount, bytes32 nonce, uint256 expiry, bytes32 nullifierKeyHash)
-func (_InvisiProtocol *InvisiProtocolFilterer) FilterCreditDeposit(opts *bind.FilterOpts, commitment [][32]byte, depositor []common.Address, treeId []*big.Int) (*InvisiProtocolCreditDepositIterator, error) {
+// Solidity: event BatchOutputs(uint256 indexed treeId, uint32 startLeafIndex, uint256 firstOutputOffset, bytes32[] commitments, bytes packedCiphertexts)
+func (_InvisiProtocol *InvisiProtocolFilterer) FilterBatchOutputs(opts *bind.FilterOpts, treeId []*big.Int) (*InvisiProtocolBatchOutputsIterator, error) {
 
-	var commitmentRule []interface{}
-	for _, commitmentItem := range commitment {
-		commitmentRule = append(commitmentRule, commitmentItem)
-	}
-	var depositorRule []interface{}
-	for _, depositorItem := range depositor {
-		depositorRule = append(depositorRule, depositorItem)
-	}
 	var treeIdRule []interface{}
 	for _, treeIdItem := range treeId {
 		treeIdRule = append(treeIdRule, treeIdItem)
 	}
 
-	logs, sub, err := _InvisiProtocol.contract.FilterLogs(opts, "CreditDeposit", commitmentRule, depositorRule, treeIdRule)
+	logs, sub, err := _InvisiProtocol.contract.FilterLogs(opts, "BatchOutputs", treeIdRule)
 	if err != nil {
 		return nil, err
 	}
-	return &InvisiProtocolCreditDepositIterator{contract: _InvisiProtocol.contract, event: "CreditDeposit", logs: logs, sub: sub}, nil
+	return &InvisiProtocolBatchOutputsIterator{contract: _InvisiProtocol.contract, event: "BatchOutputs", logs: logs, sub: sub}, nil
 }
 
-// WatchCreditDeposit is a free log subscription operation binding the contract event 0x0c71f59fc782f32bb0f185b01ff5e6b5a9449adc86fd74c3c8bd27eac4d25689.
+// WatchBatchOutputs is a free log subscription operation binding the contract event 0xb777242f5badb86f5f4c26fb210306f07680ae3c44342065283f32ae6a8e890a.
 //
-// Solidity: event CreditDeposit(bytes32 indexed commitment, address indexed depositor, uint256 indexed treeId, uint32 leafIndex, bytes32 identityCommitment, bytes32 payerCommitment, address tokenAddress, uint256 amount, bytes32 nonce, uint256 expiry, bytes32 nullifierKeyHash)
-func (_InvisiProtocol *InvisiProtocolFilterer) WatchCreditDeposit(opts *bind.WatchOpts, sink chan<- *InvisiProtocolCreditDeposit, commitment [][32]byte, depositor []common.Address, treeId []*big.Int) (event.Subscription, error) {
+// Solidity: event BatchOutputs(uint256 indexed treeId, uint32 startLeafIndex, uint256 firstOutputOffset, bytes32[] commitments, bytes packedCiphertexts)
+func (_InvisiProtocol *InvisiProtocolFilterer) WatchBatchOutputs(opts *bind.WatchOpts, sink chan<- *InvisiProtocolBatchOutputs, treeId []*big.Int) (event.Subscription, error) {
 
-	var commitmentRule []interface{}
-	for _, commitmentItem := range commitment {
-		commitmentRule = append(commitmentRule, commitmentItem)
-	}
-	var depositorRule []interface{}
-	for _, depositorItem := range depositor {
-		depositorRule = append(depositorRule, depositorItem)
-	}
 	var treeIdRule []interface{}
 	for _, treeIdItem := range treeId {
 		treeIdRule = append(treeIdRule, treeIdItem)
 	}
 
-	logs, sub, err := _InvisiProtocol.contract.WatchLogs(opts, "CreditDeposit", commitmentRule, depositorRule, treeIdRule)
+	logs, sub, err := _InvisiProtocol.contract.WatchLogs(opts, "BatchOutputs", treeIdRule)
 	if err != nil {
 		return nil, err
 	}
@@ -1392,8 +1430,8 @@ func (_InvisiProtocol *InvisiProtocolFilterer) WatchCreditDeposit(opts *bind.Wat
 			select {
 			case log := <-logs:
 				// New log arrived, parse the event and forward to the user
-				event := new(InvisiProtocolCreditDeposit)
-				if err := _InvisiProtocol.contract.UnpackLog(event, "CreditDeposit", log); err != nil {
+				event := new(InvisiProtocolBatchOutputs)
+				if err := _InvisiProtocol.contract.UnpackLog(event, "BatchOutputs", log); err != nil {
 					return err
 				}
 				event.Raw = log
@@ -1414,12 +1452,635 @@ func (_InvisiProtocol *InvisiProtocolFilterer) WatchCreditDeposit(opts *bind.Wat
 	}), nil
 }
 
-// ParseCreditDeposit is a log parse operation binding the contract event 0x0c71f59fc782f32bb0f185b01ff5e6b5a9449adc86fd74c3c8bd27eac4d25689.
+// ParseBatchOutputs is a log parse operation binding the contract event 0xb777242f5badb86f5f4c26fb210306f07680ae3c44342065283f32ae6a8e890a.
 //
-// Solidity: event CreditDeposit(bytes32 indexed commitment, address indexed depositor, uint256 indexed treeId, uint32 leafIndex, bytes32 identityCommitment, bytes32 payerCommitment, address tokenAddress, uint256 amount, bytes32 nonce, uint256 expiry, bytes32 nullifierKeyHash)
-func (_InvisiProtocol *InvisiProtocolFilterer) ParseCreditDeposit(log types.Log) (*InvisiProtocolCreditDeposit, error) {
-	event := new(InvisiProtocolCreditDeposit)
-	if err := _InvisiProtocol.contract.UnpackLog(event, "CreditDeposit", log); err != nil {
+// Solidity: event BatchOutputs(uint256 indexed treeId, uint32 startLeafIndex, uint256 firstOutputOffset, bytes32[] commitments, bytes packedCiphertexts)
+func (_InvisiProtocol *InvisiProtocolFilterer) ParseBatchOutputs(log types.Log) (*InvisiProtocolBatchOutputs, error) {
+	event := new(InvisiProtocolBatchOutputs)
+	if err := _InvisiProtocol.contract.UnpackLog(event, "BatchOutputs", log); err != nil {
+		return nil, err
+	}
+	event.Raw = log
+	return event, nil
+}
+
+// InvisiProtocolBatchRequestIterator is returned from FilterBatchRequest and is used to iterate over the raw logs and unpacked data for BatchRequest events raised by the InvisiProtocol contract.
+type InvisiProtocolBatchRequestIterator struct {
+	Event *InvisiProtocolBatchRequest // Event containing the contract specifics and raw log
+
+	contract *bind.BoundContract // Generic contract to use for unpacking event data
+	event    string              // Event name to use for unpacking event data
+
+	logs chan types.Log        // Log channel receiving the found contract events
+	sub  ethereum.Subscription // Subscription for errors, completion and termination
+	done bool                  // Whether the subscription completed delivering logs
+	fail error                 // Occurred error to stop iteration
+}
+
+// Next advances the iterator to the subsequent event, returning whether there
+// are any more events found. In case of a retrieval or parsing error, false is
+// returned and Error() can be queried for the exact failure.
+func (it *InvisiProtocolBatchRequestIterator) Next() bool {
+	// If the iterator failed, stop iterating
+	if it.fail != nil {
+		return false
+	}
+	// If the iterator completed, deliver directly whatever's available
+	if it.done {
+		select {
+		case log := <-it.logs:
+			it.Event = new(InvisiProtocolBatchRequest)
+			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+				it.fail = err
+				return false
+			}
+			it.Event.Raw = log
+			return true
+
+		default:
+			return false
+		}
+	}
+	// Iterator still in progress, wait for either a data or an error event
+	select {
+	case log := <-it.logs:
+		it.Event = new(InvisiProtocolBatchRequest)
+		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+			it.fail = err
+			return false
+		}
+		it.Event.Raw = log
+		return true
+
+	case err := <-it.sub.Err():
+		it.done = true
+		it.fail = err
+		return it.Next()
+	}
+}
+
+// Error returns any retrieval or parsing error occurred during filtering.
+func (it *InvisiProtocolBatchRequestIterator) Error() error {
+	return it.fail
+}
+
+// Close terminates the iteration process, releasing any pending underlying
+// resources.
+func (it *InvisiProtocolBatchRequestIterator) Close() error {
+	it.sub.Unsubscribe()
+	return nil
+}
+
+// InvisiProtocolBatchRequest represents a BatchRequest event raised by the InvisiProtocol contract.
+type InvisiProtocolBatchRequest struct {
+	RequestIndex      *big.Int
+	Capacity          *big.Int
+	Sources           []IInvisiProtocolInputSource
+	Nullifiers        [][32]byte
+	OutputCount       *big.Int
+	Payer             common.Address
+	DepositAmount     *big.Int
+	WithdrawalAddress common.Address
+	WithdrawalAmount  *big.Int
+	Deadline          *big.Int
+	StatementHash     [32]byte
+	Raw               types.Log // Blockchain specific contextual infos
+}
+
+// FilterBatchRequest is a free log retrieval operation binding the contract event 0x3bdeaeb068d1980b36c4faa4e183df2aa30b9d9b7acc367ef33e68dfd5fb9119.
+//
+// Solidity: event BatchRequest(uint256 indexed requestIndex, uint256 capacity, (uint256,bytes32)[] sources, bytes32[] nullifiers, uint256 outputCount, address payer, uint256 depositAmount, address withdrawalAddress, uint256 withdrawalAmount, uint256 deadline, bytes32 statementHash)
+func (_InvisiProtocol *InvisiProtocolFilterer) FilterBatchRequest(opts *bind.FilterOpts, requestIndex []*big.Int) (*InvisiProtocolBatchRequestIterator, error) {
+
+	var requestIndexRule []interface{}
+	for _, requestIndexItem := range requestIndex {
+		requestIndexRule = append(requestIndexRule, requestIndexItem)
+	}
+
+	logs, sub, err := _InvisiProtocol.contract.FilterLogs(opts, "BatchRequest", requestIndexRule)
+	if err != nil {
+		return nil, err
+	}
+	return &InvisiProtocolBatchRequestIterator{contract: _InvisiProtocol.contract, event: "BatchRequest", logs: logs, sub: sub}, nil
+}
+
+// WatchBatchRequest is a free log subscription operation binding the contract event 0x3bdeaeb068d1980b36c4faa4e183df2aa30b9d9b7acc367ef33e68dfd5fb9119.
+//
+// Solidity: event BatchRequest(uint256 indexed requestIndex, uint256 capacity, (uint256,bytes32)[] sources, bytes32[] nullifiers, uint256 outputCount, address payer, uint256 depositAmount, address withdrawalAddress, uint256 withdrawalAmount, uint256 deadline, bytes32 statementHash)
+func (_InvisiProtocol *InvisiProtocolFilterer) WatchBatchRequest(opts *bind.WatchOpts, sink chan<- *InvisiProtocolBatchRequest, requestIndex []*big.Int) (event.Subscription, error) {
+
+	var requestIndexRule []interface{}
+	for _, requestIndexItem := range requestIndex {
+		requestIndexRule = append(requestIndexRule, requestIndexItem)
+	}
+
+	logs, sub, err := _InvisiProtocol.contract.WatchLogs(opts, "BatchRequest", requestIndexRule)
+	if err != nil {
+		return nil, err
+	}
+	return event.NewSubscription(func(quit <-chan struct{}) error {
+		defer sub.Unsubscribe()
+		for {
+			select {
+			case log := <-logs:
+				// New log arrived, parse the event and forward to the user
+				event := new(InvisiProtocolBatchRequest)
+				if err := _InvisiProtocol.contract.UnpackLog(event, "BatchRequest", log); err != nil {
+					return err
+				}
+				event.Raw = log
+
+				select {
+				case sink <- event:
+				case err := <-sub.Err():
+					return err
+				case <-quit:
+					return nil
+				}
+			case err := <-sub.Err():
+				return err
+			case <-quit:
+				return nil
+			}
+		}
+	}), nil
+}
+
+// ParseBatchRequest is a log parse operation binding the contract event 0x3bdeaeb068d1980b36c4faa4e183df2aa30b9d9b7acc367ef33e68dfd5fb9119.
+//
+// Solidity: event BatchRequest(uint256 indexed requestIndex, uint256 capacity, (uint256,bytes32)[] sources, bytes32[] nullifiers, uint256 outputCount, address payer, uint256 depositAmount, address withdrawalAddress, uint256 withdrawalAmount, uint256 deadline, bytes32 statementHash)
+func (_InvisiProtocol *InvisiProtocolFilterer) ParseBatchRequest(log types.Log) (*InvisiProtocolBatchRequest, error) {
+	event := new(InvisiProtocolBatchRequest)
+	if err := _InvisiProtocol.contract.UnpackLog(event, "BatchRequest", log); err != nil {
+		return nil, err
+	}
+	event.Raw = log
+	return event, nil
+}
+
+// InvisiProtocolCommitmentsInsertedIterator is returned from FilterCommitmentsInserted and is used to iterate over the raw logs and unpacked data for CommitmentsInserted events raised by the InvisiProtocol contract.
+type InvisiProtocolCommitmentsInsertedIterator struct {
+	Event *InvisiProtocolCommitmentsInserted // Event containing the contract specifics and raw log
+
+	contract *bind.BoundContract // Generic contract to use for unpacking event data
+	event    string              // Event name to use for unpacking event data
+
+	logs chan types.Log        // Log channel receiving the found contract events
+	sub  ethereum.Subscription // Subscription for errors, completion and termination
+	done bool                  // Whether the subscription completed delivering logs
+	fail error                 // Occurred error to stop iteration
+}
+
+// Next advances the iterator to the subsequent event, returning whether there
+// are any more events found. In case of a retrieval or parsing error, false is
+// returned and Error() can be queried for the exact failure.
+func (it *InvisiProtocolCommitmentsInsertedIterator) Next() bool {
+	// If the iterator failed, stop iterating
+	if it.fail != nil {
+		return false
+	}
+	// If the iterator completed, deliver directly whatever's available
+	if it.done {
+		select {
+		case log := <-it.logs:
+			it.Event = new(InvisiProtocolCommitmentsInserted)
+			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+				it.fail = err
+				return false
+			}
+			it.Event.Raw = log
+			return true
+
+		default:
+			return false
+		}
+	}
+	// Iterator still in progress, wait for either a data or an error event
+	select {
+	case log := <-it.logs:
+		it.Event = new(InvisiProtocolCommitmentsInserted)
+		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+			it.fail = err
+			return false
+		}
+		it.Event.Raw = log
+		return true
+
+	case err := <-it.sub.Err():
+		it.done = true
+		it.fail = err
+		return it.Next()
+	}
+}
+
+// Error returns any retrieval or parsing error occurred during filtering.
+func (it *InvisiProtocolCommitmentsInsertedIterator) Error() error {
+	return it.fail
+}
+
+// Close terminates the iteration process, releasing any pending underlying
+// resources.
+func (it *InvisiProtocolCommitmentsInsertedIterator) Close() error {
+	it.sub.Unsubscribe()
+	return nil
+}
+
+// InvisiProtocolCommitmentsInserted represents a CommitmentsInserted event raised by the InvisiProtocol contract.
+type InvisiProtocolCommitmentsInserted struct {
+	TreeId         *big.Int
+	StartLeafIndex uint32
+	Commitments    [][32]byte
+	Raw            types.Log // Blockchain specific contextual infos
+}
+
+// FilterCommitmentsInserted is a free log retrieval operation binding the contract event 0x184a7bd65e05e172f493712d9cf2e9cd5fab522a20803086fec8c1502742214a.
+//
+// Solidity: event CommitmentsInserted(uint256 indexed treeId, uint32 startLeafIndex, bytes32[] commitments)
+func (_InvisiProtocol *InvisiProtocolFilterer) FilterCommitmentsInserted(opts *bind.FilterOpts, treeId []*big.Int) (*InvisiProtocolCommitmentsInsertedIterator, error) {
+
+	var treeIdRule []interface{}
+	for _, treeIdItem := range treeId {
+		treeIdRule = append(treeIdRule, treeIdItem)
+	}
+
+	logs, sub, err := _InvisiProtocol.contract.FilterLogs(opts, "CommitmentsInserted", treeIdRule)
+	if err != nil {
+		return nil, err
+	}
+	return &InvisiProtocolCommitmentsInsertedIterator{contract: _InvisiProtocol.contract, event: "CommitmentsInserted", logs: logs, sub: sub}, nil
+}
+
+// WatchCommitmentsInserted is a free log subscription operation binding the contract event 0x184a7bd65e05e172f493712d9cf2e9cd5fab522a20803086fec8c1502742214a.
+//
+// Solidity: event CommitmentsInserted(uint256 indexed treeId, uint32 startLeafIndex, bytes32[] commitments)
+func (_InvisiProtocol *InvisiProtocolFilterer) WatchCommitmentsInserted(opts *bind.WatchOpts, sink chan<- *InvisiProtocolCommitmentsInserted, treeId []*big.Int) (event.Subscription, error) {
+
+	var treeIdRule []interface{}
+	for _, treeIdItem := range treeId {
+		treeIdRule = append(treeIdRule, treeIdItem)
+	}
+
+	logs, sub, err := _InvisiProtocol.contract.WatchLogs(opts, "CommitmentsInserted", treeIdRule)
+	if err != nil {
+		return nil, err
+	}
+	return event.NewSubscription(func(quit <-chan struct{}) error {
+		defer sub.Unsubscribe()
+		for {
+			select {
+			case log := <-logs:
+				// New log arrived, parse the event and forward to the user
+				event := new(InvisiProtocolCommitmentsInserted)
+				if err := _InvisiProtocol.contract.UnpackLog(event, "CommitmentsInserted", log); err != nil {
+					return err
+				}
+				event.Raw = log
+
+				select {
+				case sink <- event:
+				case err := <-sub.Err():
+					return err
+				case <-quit:
+					return nil
+				}
+			case err := <-sub.Err():
+				return err
+			case <-quit:
+				return nil
+			}
+		}
+	}), nil
+}
+
+// ParseCommitmentsInserted is a log parse operation binding the contract event 0x184a7bd65e05e172f493712d9cf2e9cd5fab522a20803086fec8c1502742214a.
+//
+// Solidity: event CommitmentsInserted(uint256 indexed treeId, uint32 startLeafIndex, bytes32[] commitments)
+func (_InvisiProtocol *InvisiProtocolFilterer) ParseCommitmentsInserted(log types.Log) (*InvisiProtocolCommitmentsInserted, error) {
+	event := new(InvisiProtocolCommitmentsInserted)
+	if err := _InvisiProtocol.contract.UnpackLog(event, "CommitmentsInserted", log); err != nil {
+		return nil, err
+	}
+	event.Raw = log
+	return event, nil
+}
+
+// InvisiProtocolCreditCancelledIterator is returned from FilterCreditCancelled and is used to iterate over the raw logs and unpacked data for CreditCancelled events raised by the InvisiProtocol contract.
+type InvisiProtocolCreditCancelledIterator struct {
+	Event *InvisiProtocolCreditCancelled // Event containing the contract specifics and raw log
+
+	contract *bind.BoundContract // Generic contract to use for unpacking event data
+	event    string              // Event name to use for unpacking event data
+
+	logs chan types.Log        // Log channel receiving the found contract events
+	sub  ethereum.Subscription // Subscription for errors, completion and termination
+	done bool                  // Whether the subscription completed delivering logs
+	fail error                 // Occurred error to stop iteration
+}
+
+// Next advances the iterator to the subsequent event, returning whether there
+// are any more events found. In case of a retrieval or parsing error, false is
+// returned and Error() can be queried for the exact failure.
+func (it *InvisiProtocolCreditCancelledIterator) Next() bool {
+	// If the iterator failed, stop iterating
+	if it.fail != nil {
+		return false
+	}
+	// If the iterator completed, deliver directly whatever's available
+	if it.done {
+		select {
+		case log := <-it.logs:
+			it.Event = new(InvisiProtocolCreditCancelled)
+			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+				it.fail = err
+				return false
+			}
+			it.Event.Raw = log
+			return true
+
+		default:
+			return false
+		}
+	}
+	// Iterator still in progress, wait for either a data or an error event
+	select {
+	case log := <-it.logs:
+		it.Event = new(InvisiProtocolCreditCancelled)
+		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+			it.fail = err
+			return false
+		}
+		it.Event.Raw = log
+		return true
+
+	case err := <-it.sub.Err():
+		it.done = true
+		it.fail = err
+		return it.Next()
+	}
+}
+
+// Error returns any retrieval or parsing error occurred during filtering.
+func (it *InvisiProtocolCreditCancelledIterator) Error() error {
+	return it.fail
+}
+
+// Close terminates the iteration process, releasing any pending underlying
+// resources.
+func (it *InvisiProtocolCreditCancelledIterator) Close() error {
+	it.sub.Unsubscribe()
+	return nil
+}
+
+// InvisiProtocolCreditCancelled represents a CreditCancelled event raised by the InvisiProtocol contract.
+type InvisiProtocolCreditCancelled struct {
+	Owner       common.Address
+	InputTreeId *big.Int
+	Nullifier   [32]byte
+	Amount      *big.Int
+	Raw         types.Log // Blockchain specific contextual infos
+}
+
+// FilterCreditCancelled is a free log retrieval operation binding the contract event 0xd3a01af206da81bc9f6b178a7e45bd5b3794b25fa7af09d3ead80789f983a482.
+//
+// Solidity: event CreditCancelled(address indexed owner, uint256 indexed inputTreeId, bytes32 indexed nullifier, uint256 amount)
+func (_InvisiProtocol *InvisiProtocolFilterer) FilterCreditCancelled(opts *bind.FilterOpts, owner []common.Address, inputTreeId []*big.Int, nullifier [][32]byte) (*InvisiProtocolCreditCancelledIterator, error) {
+
+	var ownerRule []interface{}
+	for _, ownerItem := range owner {
+		ownerRule = append(ownerRule, ownerItem)
+	}
+	var inputTreeIdRule []interface{}
+	for _, inputTreeIdItem := range inputTreeId {
+		inputTreeIdRule = append(inputTreeIdRule, inputTreeIdItem)
+	}
+	var nullifierRule []interface{}
+	for _, nullifierItem := range nullifier {
+		nullifierRule = append(nullifierRule, nullifierItem)
+	}
+
+	logs, sub, err := _InvisiProtocol.contract.FilterLogs(opts, "CreditCancelled", ownerRule, inputTreeIdRule, nullifierRule)
+	if err != nil {
+		return nil, err
+	}
+	return &InvisiProtocolCreditCancelledIterator{contract: _InvisiProtocol.contract, event: "CreditCancelled", logs: logs, sub: sub}, nil
+}
+
+// WatchCreditCancelled is a free log subscription operation binding the contract event 0xd3a01af206da81bc9f6b178a7e45bd5b3794b25fa7af09d3ead80789f983a482.
+//
+// Solidity: event CreditCancelled(address indexed owner, uint256 indexed inputTreeId, bytes32 indexed nullifier, uint256 amount)
+func (_InvisiProtocol *InvisiProtocolFilterer) WatchCreditCancelled(opts *bind.WatchOpts, sink chan<- *InvisiProtocolCreditCancelled, owner []common.Address, inputTreeId []*big.Int, nullifier [][32]byte) (event.Subscription, error) {
+
+	var ownerRule []interface{}
+	for _, ownerItem := range owner {
+		ownerRule = append(ownerRule, ownerItem)
+	}
+	var inputTreeIdRule []interface{}
+	for _, inputTreeIdItem := range inputTreeId {
+		inputTreeIdRule = append(inputTreeIdRule, inputTreeIdItem)
+	}
+	var nullifierRule []interface{}
+	for _, nullifierItem := range nullifier {
+		nullifierRule = append(nullifierRule, nullifierItem)
+	}
+
+	logs, sub, err := _InvisiProtocol.contract.WatchLogs(opts, "CreditCancelled", ownerRule, inputTreeIdRule, nullifierRule)
+	if err != nil {
+		return nil, err
+	}
+	return event.NewSubscription(func(quit <-chan struct{}) error {
+		defer sub.Unsubscribe()
+		for {
+			select {
+			case log := <-logs:
+				// New log arrived, parse the event and forward to the user
+				event := new(InvisiProtocolCreditCancelled)
+				if err := _InvisiProtocol.contract.UnpackLog(event, "CreditCancelled", log); err != nil {
+					return err
+				}
+				event.Raw = log
+
+				select {
+				case sink <- event:
+				case err := <-sub.Err():
+					return err
+				case <-quit:
+					return nil
+				}
+			case err := <-sub.Err():
+				return err
+			case <-quit:
+				return nil
+			}
+		}
+	}), nil
+}
+
+// ParseCreditCancelled is a log parse operation binding the contract event 0xd3a01af206da81bc9f6b178a7e45bd5b3794b25fa7af09d3ead80789f983a482.
+//
+// Solidity: event CreditCancelled(address indexed owner, uint256 indexed inputTreeId, bytes32 indexed nullifier, uint256 amount)
+func (_InvisiProtocol *InvisiProtocolFilterer) ParseCreditCancelled(log types.Log) (*InvisiProtocolCreditCancelled, error) {
+	event := new(InvisiProtocolCreditCancelled)
+	if err := _InvisiProtocol.contract.UnpackLog(event, "CreditCancelled", log); err != nil {
+		return nil, err
+	}
+	event.Raw = log
+	return event, nil
+}
+
+// InvisiProtocolCreditCreatedIterator is returned from FilterCreditCreated and is used to iterate over the raw logs and unpacked data for CreditCreated events raised by the InvisiProtocol contract.
+type InvisiProtocolCreditCreatedIterator struct {
+	Event *InvisiProtocolCreditCreated // Event containing the contract specifics and raw log
+
+	contract *bind.BoundContract // Generic contract to use for unpacking event data
+	event    string              // Event name to use for unpacking event data
+
+	logs chan types.Log        // Log channel receiving the found contract events
+	sub  ethereum.Subscription // Subscription for errors, completion and termination
+	done bool                  // Whether the subscription completed delivering logs
+	fail error                 // Occurred error to stop iteration
+}
+
+// Next advances the iterator to the subsequent event, returning whether there
+// are any more events found. In case of a retrieval or parsing error, false is
+// returned and Error() can be queried for the exact failure.
+func (it *InvisiProtocolCreditCreatedIterator) Next() bool {
+	// If the iterator failed, stop iterating
+	if it.fail != nil {
+		return false
+	}
+	// If the iterator completed, deliver directly whatever's available
+	if it.done {
+		select {
+		case log := <-it.logs:
+			it.Event = new(InvisiProtocolCreditCreated)
+			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+				it.fail = err
+				return false
+			}
+			it.Event.Raw = log
+			return true
+
+		default:
+			return false
+		}
+	}
+	// Iterator still in progress, wait for either a data or an error event
+	select {
+	case log := <-it.logs:
+		it.Event = new(InvisiProtocolCreditCreated)
+		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+			it.fail = err
+			return false
+		}
+		it.Event.Raw = log
+		return true
+
+	case err := <-it.sub.Err():
+		it.done = true
+		it.fail = err
+		return it.Next()
+	}
+}
+
+// Error returns any retrieval or parsing error occurred during filtering.
+func (it *InvisiProtocolCreditCreatedIterator) Error() error {
+	return it.fail
+}
+
+// Close terminates the iteration process, releasing any pending underlying
+// resources.
+func (it *InvisiProtocolCreditCreatedIterator) Close() error {
+	it.sub.Unsubscribe()
+	return nil
+}
+
+// InvisiProtocolCreditCreated represents a CreditCreated event raised by the InvisiProtocol contract.
+type InvisiProtocolCreditCreated struct {
+	Owner            common.Address
+	OutputTreeId     *big.Int
+	Sources          []IInvisiProtocolInputSource
+	Nullifiers       [][32]byte
+	CreditCommitment [32]byte
+	ChangeCommitment [32]byte
+	LeafIndices      []uint32
+	Ciphertexts      [][]byte
+	Expiry           *big.Int
+	Raw              types.Log // Blockchain specific contextual infos
+}
+
+// FilterCreditCreated is a free log retrieval operation binding the contract event 0x0610845e6868b37caef6415707fb47f139760ae7ca75efda2fb134e6c5cfbb1b.
+//
+// Solidity: event CreditCreated(address indexed owner, uint256 indexed outputTreeId, (uint256,bytes32)[] sources, bytes32[] nullifiers, bytes32 creditCommitment, bytes32 changeCommitment, uint32[] leafIndices, bytes[] ciphertexts, uint256 expiry)
+func (_InvisiProtocol *InvisiProtocolFilterer) FilterCreditCreated(opts *bind.FilterOpts, owner []common.Address, outputTreeId []*big.Int) (*InvisiProtocolCreditCreatedIterator, error) {
+
+	var ownerRule []interface{}
+	for _, ownerItem := range owner {
+		ownerRule = append(ownerRule, ownerItem)
+	}
+	var outputTreeIdRule []interface{}
+	for _, outputTreeIdItem := range outputTreeId {
+		outputTreeIdRule = append(outputTreeIdRule, outputTreeIdItem)
+	}
+
+	logs, sub, err := _InvisiProtocol.contract.FilterLogs(opts, "CreditCreated", ownerRule, outputTreeIdRule)
+	if err != nil {
+		return nil, err
+	}
+	return &InvisiProtocolCreditCreatedIterator{contract: _InvisiProtocol.contract, event: "CreditCreated", logs: logs, sub: sub}, nil
+}
+
+// WatchCreditCreated is a free log subscription operation binding the contract event 0x0610845e6868b37caef6415707fb47f139760ae7ca75efda2fb134e6c5cfbb1b.
+//
+// Solidity: event CreditCreated(address indexed owner, uint256 indexed outputTreeId, (uint256,bytes32)[] sources, bytes32[] nullifiers, bytes32 creditCommitment, bytes32 changeCommitment, uint32[] leafIndices, bytes[] ciphertexts, uint256 expiry)
+func (_InvisiProtocol *InvisiProtocolFilterer) WatchCreditCreated(opts *bind.WatchOpts, sink chan<- *InvisiProtocolCreditCreated, owner []common.Address, outputTreeId []*big.Int) (event.Subscription, error) {
+
+	var ownerRule []interface{}
+	for _, ownerItem := range owner {
+		ownerRule = append(ownerRule, ownerItem)
+	}
+	var outputTreeIdRule []interface{}
+	for _, outputTreeIdItem := range outputTreeId {
+		outputTreeIdRule = append(outputTreeIdRule, outputTreeIdItem)
+	}
+
+	logs, sub, err := _InvisiProtocol.contract.WatchLogs(opts, "CreditCreated", ownerRule, outputTreeIdRule)
+	if err != nil {
+		return nil, err
+	}
+	return event.NewSubscription(func(quit <-chan struct{}) error {
+		defer sub.Unsubscribe()
+		for {
+			select {
+			case log := <-logs:
+				// New log arrived, parse the event and forward to the user
+				event := new(InvisiProtocolCreditCreated)
+				if err := _InvisiProtocol.contract.UnpackLog(event, "CreditCreated", log); err != nil {
+					return err
+				}
+				event.Raw = log
+
+				select {
+				case sink <- event:
+				case err := <-sub.Err():
+					return err
+				case <-quit:
+					return nil
+				}
+			case err := <-sub.Err():
+				return err
+			case <-quit:
+				return nil
+			}
+		}
+	}), nil
+}
+
+// ParseCreditCreated is a log parse operation binding the contract event 0x0610845e6868b37caef6415707fb47f139760ae7ca75efda2fb134e6c5cfbb1b.
+//
+// Solidity: event CreditCreated(address indexed owner, uint256 indexed outputTreeId, (uint256,bytes32)[] sources, bytes32[] nullifiers, bytes32 creditCommitment, bytes32 changeCommitment, uint32[] leafIndices, bytes[] ciphertexts, uint256 expiry)
+func (_InvisiProtocol *InvisiProtocolFilterer) ParseCreditCreated(log types.Log) (*InvisiProtocolCreditCreated, error) {
+	event := new(InvisiProtocolCreditCreated)
+	if err := _InvisiProtocol.contract.UnpackLog(event, "CreditCreated", log); err != nil {
 		return nil, err
 	}
 	event.Raw = log
@@ -1495,62 +2156,50 @@ func (it *InvisiProtocolCreditDrawIterator) Close() error {
 
 // InvisiProtocolCreditDraw represents a CreditDraw event raised by the InvisiProtocol contract.
 type InvisiProtocolCreditDraw struct {
-	ReceivingAddress     common.Address
-	TokenAddress         common.Address
-	TreeId               *big.Int
-	MerkleRoot           [32]byte
-	Nullifiers           [][32]byte
-	TotalAmount          *big.Int
-	RemainderCommitments [][32]byte
+	Spender              common.Address
+	OutputTreeId         *big.Int
+	Params               IInvisiProtocolCreditDrawParams
 	RemainderLeafIndices []uint32
-	Expiry               *big.Int
+	Ciphertexts          [][]byte
 	Raw                  types.Log // Blockchain specific contextual infos
 }
 
-// FilterCreditDraw is a free log retrieval operation binding the contract event 0xf2f2479f1d8f7e92d095561ab31e3cc4c663278249667f4e9a50563d618e7df5.
+// FilterCreditDraw is a free log retrieval operation binding the contract event 0x0b01e5ed3eb8bfbba123707c187741678eb97e5133240f33e85cd46bdf034b11.
 //
-// Solidity: event CreditDraw(address indexed receivingAddress, address indexed tokenAddress, uint256 indexed treeId, bytes32 merkleRoot, bytes32[] nullifiers, uint256 totalAmount, bytes32[] remainderCommitments, uint32[] remainderLeafIndices, uint256 expiry)
-func (_InvisiProtocol *InvisiProtocolFilterer) FilterCreditDraw(opts *bind.FilterOpts, receivingAddress []common.Address, tokenAddress []common.Address, treeId []*big.Int) (*InvisiProtocolCreditDrawIterator, error) {
+// Solidity: event CreditDraw(address indexed spender, uint256 indexed outputTreeId, ((uint256,bytes32)[],bytes32[],bytes32[],uint256[],bytes32[],address,uint256,uint256) params, uint32[] remainderLeafIndices, bytes[] ciphertexts)
+func (_InvisiProtocol *InvisiProtocolFilterer) FilterCreditDraw(opts *bind.FilterOpts, spender []common.Address, outputTreeId []*big.Int) (*InvisiProtocolCreditDrawIterator, error) {
 
-	var receivingAddressRule []interface{}
-	for _, receivingAddressItem := range receivingAddress {
-		receivingAddressRule = append(receivingAddressRule, receivingAddressItem)
+	var spenderRule []interface{}
+	for _, spenderItem := range spender {
+		spenderRule = append(spenderRule, spenderItem)
 	}
-	var tokenAddressRule []interface{}
-	for _, tokenAddressItem := range tokenAddress {
-		tokenAddressRule = append(tokenAddressRule, tokenAddressItem)
-	}
-	var treeIdRule []interface{}
-	for _, treeIdItem := range treeId {
-		treeIdRule = append(treeIdRule, treeIdItem)
+	var outputTreeIdRule []interface{}
+	for _, outputTreeIdItem := range outputTreeId {
+		outputTreeIdRule = append(outputTreeIdRule, outputTreeIdItem)
 	}
 
-	logs, sub, err := _InvisiProtocol.contract.FilterLogs(opts, "CreditDraw", receivingAddressRule, tokenAddressRule, treeIdRule)
+	logs, sub, err := _InvisiProtocol.contract.FilterLogs(opts, "CreditDraw", spenderRule, outputTreeIdRule)
 	if err != nil {
 		return nil, err
 	}
 	return &InvisiProtocolCreditDrawIterator{contract: _InvisiProtocol.contract, event: "CreditDraw", logs: logs, sub: sub}, nil
 }
 
-// WatchCreditDraw is a free log subscription operation binding the contract event 0xf2f2479f1d8f7e92d095561ab31e3cc4c663278249667f4e9a50563d618e7df5.
+// WatchCreditDraw is a free log subscription operation binding the contract event 0x0b01e5ed3eb8bfbba123707c187741678eb97e5133240f33e85cd46bdf034b11.
 //
-// Solidity: event CreditDraw(address indexed receivingAddress, address indexed tokenAddress, uint256 indexed treeId, bytes32 merkleRoot, bytes32[] nullifiers, uint256 totalAmount, bytes32[] remainderCommitments, uint32[] remainderLeafIndices, uint256 expiry)
-func (_InvisiProtocol *InvisiProtocolFilterer) WatchCreditDraw(opts *bind.WatchOpts, sink chan<- *InvisiProtocolCreditDraw, receivingAddress []common.Address, tokenAddress []common.Address, treeId []*big.Int) (event.Subscription, error) {
+// Solidity: event CreditDraw(address indexed spender, uint256 indexed outputTreeId, ((uint256,bytes32)[],bytes32[],bytes32[],uint256[],bytes32[],address,uint256,uint256) params, uint32[] remainderLeafIndices, bytes[] ciphertexts)
+func (_InvisiProtocol *InvisiProtocolFilterer) WatchCreditDraw(opts *bind.WatchOpts, sink chan<- *InvisiProtocolCreditDraw, spender []common.Address, outputTreeId []*big.Int) (event.Subscription, error) {
 
-	var receivingAddressRule []interface{}
-	for _, receivingAddressItem := range receivingAddress {
-		receivingAddressRule = append(receivingAddressRule, receivingAddressItem)
+	var spenderRule []interface{}
+	for _, spenderItem := range spender {
+		spenderRule = append(spenderRule, spenderItem)
 	}
-	var tokenAddressRule []interface{}
-	for _, tokenAddressItem := range tokenAddress {
-		tokenAddressRule = append(tokenAddressRule, tokenAddressItem)
-	}
-	var treeIdRule []interface{}
-	for _, treeIdItem := range treeId {
-		treeIdRule = append(treeIdRule, treeIdItem)
+	var outputTreeIdRule []interface{}
+	for _, outputTreeIdItem := range outputTreeId {
+		outputTreeIdRule = append(outputTreeIdRule, outputTreeIdItem)
 	}
 
-	logs, sub, err := _InvisiProtocol.contract.WatchLogs(opts, "CreditDraw", receivingAddressRule, tokenAddressRule, treeIdRule)
+	logs, sub, err := _InvisiProtocol.contract.WatchLogs(opts, "CreditDraw", spenderRule, outputTreeIdRule)
 	if err != nil {
 		return nil, err
 	}
@@ -1582,9 +2231,9 @@ func (_InvisiProtocol *InvisiProtocolFilterer) WatchCreditDraw(opts *bind.WatchO
 	}), nil
 }
 
-// ParseCreditDraw is a log parse operation binding the contract event 0xf2f2479f1d8f7e92d095561ab31e3cc4c663278249667f4e9a50563d618e7df5.
+// ParseCreditDraw is a log parse operation binding the contract event 0x0b01e5ed3eb8bfbba123707c187741678eb97e5133240f33e85cd46bdf034b11.
 //
-// Solidity: event CreditDraw(address indexed receivingAddress, address indexed tokenAddress, uint256 indexed treeId, bytes32 merkleRoot, bytes32[] nullifiers, uint256 totalAmount, bytes32[] remainderCommitments, uint32[] remainderLeafIndices, uint256 expiry)
+// Solidity: event CreditDraw(address indexed spender, uint256 indexed outputTreeId, ((uint256,bytes32)[],bytes32[],bytes32[],uint256[],bytes32[],address,uint256,uint256) params, uint32[] remainderLeafIndices, bytes[] ciphertexts)
 func (_InvisiProtocol *InvisiProtocolFilterer) ParseCreditDraw(log types.Log) (*InvisiProtocolCreditDraw, error) {
 	event := new(InvisiProtocolCreditDraw)
 	if err := _InvisiProtocol.contract.UnpackLog(event, "CreditDraw", log); err != nil {
@@ -1594,9 +2243,9 @@ func (_InvisiProtocol *InvisiProtocolFilterer) ParseCreditDraw(log types.Log) (*
 	return event, nil
 }
 
-// InvisiProtocolCreditReclaimIterator is returned from FilterCreditReclaim and is used to iterate over the raw logs and unpacked data for CreditReclaim events raised by the InvisiProtocol contract.
-type InvisiProtocolCreditReclaimIterator struct {
-	Event *InvisiProtocolCreditReclaim // Event containing the contract specifics and raw log
+// InvisiProtocolCreditToppedUpIterator is returned from FilterCreditToppedUp and is used to iterate over the raw logs and unpacked data for CreditToppedUp events raised by the InvisiProtocol contract.
+type InvisiProtocolCreditToppedUpIterator struct {
+	Event *InvisiProtocolCreditToppedUp // Event containing the contract specifics and raw log
 
 	contract *bind.BoundContract // Generic contract to use for unpacking event data
 	event    string              // Event name to use for unpacking event data
@@ -1610,7 +2259,7 @@ type InvisiProtocolCreditReclaimIterator struct {
 // Next advances the iterator to the subsequent event, returning whether there
 // are any more events found. In case of a retrieval or parsing error, false is
 // returned and Error() can be queried for the exact failure.
-func (it *InvisiProtocolCreditReclaimIterator) Next() bool {
+func (it *InvisiProtocolCreditToppedUpIterator) Next() bool {
 	// If the iterator failed, stop iterating
 	if it.fail != nil {
 		return false
@@ -1619,7 +2268,7 @@ func (it *InvisiProtocolCreditReclaimIterator) Next() bool {
 	if it.done {
 		select {
 		case log := <-it.logs:
-			it.Event = new(InvisiProtocolCreditReclaim)
+			it.Event = new(InvisiProtocolCreditToppedUp)
 			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
 				it.fail = err
 				return false
@@ -1634,7 +2283,7 @@ func (it *InvisiProtocolCreditReclaimIterator) Next() bool {
 	// Iterator still in progress, wait for either a data or an error event
 	select {
 	case log := <-it.logs:
-		it.Event = new(InvisiProtocolCreditReclaim)
+		it.Event = new(InvisiProtocolCreditToppedUp)
 		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
 			it.fail = err
 			return false
@@ -1650,73 +2299,63 @@ func (it *InvisiProtocolCreditReclaimIterator) Next() bool {
 }
 
 // Error returns any retrieval or parsing error occurred during filtering.
-func (it *InvisiProtocolCreditReclaimIterator) Error() error {
+func (it *InvisiProtocolCreditToppedUpIterator) Error() error {
 	return it.fail
 }
 
 // Close terminates the iteration process, releasing any pending underlying
 // resources.
-func (it *InvisiProtocolCreditReclaimIterator) Close() error {
+func (it *InvisiProtocolCreditToppedUpIterator) Close() error {
 	it.sub.Unsubscribe()
 	return nil
 }
 
-// InvisiProtocolCreditReclaim represents a CreditReclaim event raised by the InvisiProtocol contract.
-type InvisiProtocolCreditReclaim struct {
-	ReceivingAddress common.Address
-	TreeId           *big.Int
-	Nullifier        [32]byte
-	MerkleRoot       [32]byte
-	TokenAddress     common.Address
-	Amount           *big.Int
-	Expiry           *big.Int
-	Raw              types.Log // Blockchain specific contextual infos
+// InvisiProtocolCreditToppedUp represents a CreditToppedUp event raised by the InvisiProtocol contract.
+type InvisiProtocolCreditToppedUp struct {
+	Owner        common.Address
+	OutputTreeId *big.Int
+	Params       IInvisiProtocolTopUpCreditParams
+	LeafIndices  []uint32
+	Ciphertexts  [][]byte
+	Raw          types.Log // Blockchain specific contextual infos
 }
 
-// FilterCreditReclaim is a free log retrieval operation binding the contract event 0x3b2ee014ba86800a5a9ccb4a6e2056d6e8cf1f4bd6a10cf93db9b00086d5d144.
+// FilterCreditToppedUp is a free log retrieval operation binding the contract event 0x08b435688fb827d10a681a405ce7b441fbe167154f75767224351e07715637c9.
 //
-// Solidity: event CreditReclaim(address indexed receivingAddress, uint256 indexed treeId, bytes32 indexed nullifier, bytes32 merkleRoot, address tokenAddress, uint256 amount, uint256 expiry)
-func (_InvisiProtocol *InvisiProtocolFilterer) FilterCreditReclaim(opts *bind.FilterOpts, receivingAddress []common.Address, treeId []*big.Int, nullifier [][32]byte) (*InvisiProtocolCreditReclaimIterator, error) {
+// Solidity: event CreditToppedUp(address indexed owner, uint256 indexed outputTreeId, (((uint256,bytes32)[],bytes32[],bytes32,bytes32,address,uint256,uint256),(uint256,bytes32),bytes32,uint256) params, uint32[] leafIndices, bytes[] ciphertexts)
+func (_InvisiProtocol *InvisiProtocolFilterer) FilterCreditToppedUp(opts *bind.FilterOpts, owner []common.Address, outputTreeId []*big.Int) (*InvisiProtocolCreditToppedUpIterator, error) {
 
-	var receivingAddressRule []interface{}
-	for _, receivingAddressItem := range receivingAddress {
-		receivingAddressRule = append(receivingAddressRule, receivingAddressItem)
+	var ownerRule []interface{}
+	for _, ownerItem := range owner {
+		ownerRule = append(ownerRule, ownerItem)
 	}
-	var treeIdRule []interface{}
-	for _, treeIdItem := range treeId {
-		treeIdRule = append(treeIdRule, treeIdItem)
-	}
-	var nullifierRule []interface{}
-	for _, nullifierItem := range nullifier {
-		nullifierRule = append(nullifierRule, nullifierItem)
+	var outputTreeIdRule []interface{}
+	for _, outputTreeIdItem := range outputTreeId {
+		outputTreeIdRule = append(outputTreeIdRule, outputTreeIdItem)
 	}
 
-	logs, sub, err := _InvisiProtocol.contract.FilterLogs(opts, "CreditReclaim", receivingAddressRule, treeIdRule, nullifierRule)
+	logs, sub, err := _InvisiProtocol.contract.FilterLogs(opts, "CreditToppedUp", ownerRule, outputTreeIdRule)
 	if err != nil {
 		return nil, err
 	}
-	return &InvisiProtocolCreditReclaimIterator{contract: _InvisiProtocol.contract, event: "CreditReclaim", logs: logs, sub: sub}, nil
+	return &InvisiProtocolCreditToppedUpIterator{contract: _InvisiProtocol.contract, event: "CreditToppedUp", logs: logs, sub: sub}, nil
 }
 
-// WatchCreditReclaim is a free log subscription operation binding the contract event 0x3b2ee014ba86800a5a9ccb4a6e2056d6e8cf1f4bd6a10cf93db9b00086d5d144.
+// WatchCreditToppedUp is a free log subscription operation binding the contract event 0x08b435688fb827d10a681a405ce7b441fbe167154f75767224351e07715637c9.
 //
-// Solidity: event CreditReclaim(address indexed receivingAddress, uint256 indexed treeId, bytes32 indexed nullifier, bytes32 merkleRoot, address tokenAddress, uint256 amount, uint256 expiry)
-func (_InvisiProtocol *InvisiProtocolFilterer) WatchCreditReclaim(opts *bind.WatchOpts, sink chan<- *InvisiProtocolCreditReclaim, receivingAddress []common.Address, treeId []*big.Int, nullifier [][32]byte) (event.Subscription, error) {
+// Solidity: event CreditToppedUp(address indexed owner, uint256 indexed outputTreeId, (((uint256,bytes32)[],bytes32[],bytes32,bytes32,address,uint256,uint256),(uint256,bytes32),bytes32,uint256) params, uint32[] leafIndices, bytes[] ciphertexts)
+func (_InvisiProtocol *InvisiProtocolFilterer) WatchCreditToppedUp(opts *bind.WatchOpts, sink chan<- *InvisiProtocolCreditToppedUp, owner []common.Address, outputTreeId []*big.Int) (event.Subscription, error) {
 
-	var receivingAddressRule []interface{}
-	for _, receivingAddressItem := range receivingAddress {
-		receivingAddressRule = append(receivingAddressRule, receivingAddressItem)
+	var ownerRule []interface{}
+	for _, ownerItem := range owner {
+		ownerRule = append(ownerRule, ownerItem)
 	}
-	var treeIdRule []interface{}
-	for _, treeIdItem := range treeId {
-		treeIdRule = append(treeIdRule, treeIdItem)
-	}
-	var nullifierRule []interface{}
-	for _, nullifierItem := range nullifier {
-		nullifierRule = append(nullifierRule, nullifierItem)
+	var outputTreeIdRule []interface{}
+	for _, outputTreeIdItem := range outputTreeId {
+		outputTreeIdRule = append(outputTreeIdRule, outputTreeIdItem)
 	}
 
-	logs, sub, err := _InvisiProtocol.contract.WatchLogs(opts, "CreditReclaim", receivingAddressRule, treeIdRule, nullifierRule)
+	logs, sub, err := _InvisiProtocol.contract.WatchLogs(opts, "CreditToppedUp", ownerRule, outputTreeIdRule)
 	if err != nil {
 		return nil, err
 	}
@@ -1726,8 +2365,8 @@ func (_InvisiProtocol *InvisiProtocolFilterer) WatchCreditReclaim(opts *bind.Wat
 			select {
 			case log := <-logs:
 				// New log arrived, parse the event and forward to the user
-				event := new(InvisiProtocolCreditReclaim)
-				if err := _InvisiProtocol.contract.UnpackLog(event, "CreditReclaim", log); err != nil {
+				event := new(InvisiProtocolCreditToppedUp)
+				if err := _InvisiProtocol.contract.UnpackLog(event, "CreditToppedUp", log); err != nil {
 					return err
 				}
 				event.Raw = log
@@ -1748,12 +2387,164 @@ func (_InvisiProtocol *InvisiProtocolFilterer) WatchCreditReclaim(opts *bind.Wat
 	}), nil
 }
 
-// ParseCreditReclaim is a log parse operation binding the contract event 0x3b2ee014ba86800a5a9ccb4a6e2056d6e8cf1f4bd6a10cf93db9b00086d5d144.
+// ParseCreditToppedUp is a log parse operation binding the contract event 0x08b435688fb827d10a681a405ce7b441fbe167154f75767224351e07715637c9.
 //
-// Solidity: event CreditReclaim(address indexed receivingAddress, uint256 indexed treeId, bytes32 indexed nullifier, bytes32 merkleRoot, address tokenAddress, uint256 amount, uint256 expiry)
-func (_InvisiProtocol *InvisiProtocolFilterer) ParseCreditReclaim(log types.Log) (*InvisiProtocolCreditReclaim, error) {
-	event := new(InvisiProtocolCreditReclaim)
-	if err := _InvisiProtocol.contract.UnpackLog(event, "CreditReclaim", log); err != nil {
+// Solidity: event CreditToppedUp(address indexed owner, uint256 indexed outputTreeId, (((uint256,bytes32)[],bytes32[],bytes32,bytes32,address,uint256,uint256),(uint256,bytes32),bytes32,uint256) params, uint32[] leafIndices, bytes[] ciphertexts)
+func (_InvisiProtocol *InvisiProtocolFilterer) ParseCreditToppedUp(log types.Log) (*InvisiProtocolCreditToppedUp, error) {
+	event := new(InvisiProtocolCreditToppedUp)
+	if err := _InvisiProtocol.contract.UnpackLog(event, "CreditToppedUp", log); err != nil {
+		return nil, err
+	}
+	event.Raw = log
+	return event, nil
+}
+
+// InvisiProtocolCrossTreeTransactIterator is returned from FilterCrossTreeTransact and is used to iterate over the raw logs and unpacked data for CrossTreeTransact events raised by the InvisiProtocol contract.
+type InvisiProtocolCrossTreeTransactIterator struct {
+	Event *InvisiProtocolCrossTreeTransact // Event containing the contract specifics and raw log
+
+	contract *bind.BoundContract // Generic contract to use for unpacking event data
+	event    string              // Event name to use for unpacking event data
+
+	logs chan types.Log        // Log channel receiving the found contract events
+	sub  ethereum.Subscription // Subscription for errors, completion and termination
+	done bool                  // Whether the subscription completed delivering logs
+	fail error                 // Occurred error to stop iteration
+}
+
+// Next advances the iterator to the subsequent event, returning whether there
+// are any more events found. In case of a retrieval or parsing error, false is
+// returned and Error() can be queried for the exact failure.
+func (it *InvisiProtocolCrossTreeTransactIterator) Next() bool {
+	// If the iterator failed, stop iterating
+	if it.fail != nil {
+		return false
+	}
+	// If the iterator completed, deliver directly whatever's available
+	if it.done {
+		select {
+		case log := <-it.logs:
+			it.Event = new(InvisiProtocolCrossTreeTransact)
+			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+				it.fail = err
+				return false
+			}
+			it.Event.Raw = log
+			return true
+
+		default:
+			return false
+		}
+	}
+	// Iterator still in progress, wait for either a data or an error event
+	select {
+	case log := <-it.logs:
+		it.Event = new(InvisiProtocolCrossTreeTransact)
+		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+			it.fail = err
+			return false
+		}
+		it.Event.Raw = log
+		return true
+
+	case err := <-it.sub.Err():
+		it.done = true
+		it.fail = err
+		return it.Next()
+	}
+}
+
+// Error returns any retrieval or parsing error occurred during filtering.
+func (it *InvisiProtocolCrossTreeTransactIterator) Error() error {
+	return it.fail
+}
+
+// Close terminates the iteration process, releasing any pending underlying
+// resources.
+func (it *InvisiProtocolCrossTreeTransactIterator) Close() error {
+	it.sub.Unsubscribe()
+	return nil
+}
+
+// InvisiProtocolCrossTreeTransact represents a CrossTreeTransact event raised by the InvisiProtocol contract.
+type InvisiProtocolCrossTreeTransact struct {
+	OutputTreeId      *big.Int
+	Sources           []IInvisiProtocolInputSource
+	Nullifiers        [][32]byte
+	OutputCommitments [][32]byte
+	LeafIndices       []uint32
+	Ciphertexts       [][]byte
+	WithdrawalAddress common.Address
+	WithdrawalAmount  *big.Int
+	Deadline          *big.Int
+	Raw               types.Log // Blockchain specific contextual infos
+}
+
+// FilterCrossTreeTransact is a free log retrieval operation binding the contract event 0x3a397292385a3a48664272813b6d002763f919f88527d7c30ba40bfb8b3b3172.
+//
+// Solidity: event CrossTreeTransact(uint256 indexed outputTreeId, (uint256,bytes32)[] sources, bytes32[] nullifiers, bytes32[] outputCommitments, uint32[] leafIndices, bytes[] ciphertexts, address withdrawalAddress, uint256 withdrawalAmount, uint256 deadline)
+func (_InvisiProtocol *InvisiProtocolFilterer) FilterCrossTreeTransact(opts *bind.FilterOpts, outputTreeId []*big.Int) (*InvisiProtocolCrossTreeTransactIterator, error) {
+
+	var outputTreeIdRule []interface{}
+	for _, outputTreeIdItem := range outputTreeId {
+		outputTreeIdRule = append(outputTreeIdRule, outputTreeIdItem)
+	}
+
+	logs, sub, err := _InvisiProtocol.contract.FilterLogs(opts, "CrossTreeTransact", outputTreeIdRule)
+	if err != nil {
+		return nil, err
+	}
+	return &InvisiProtocolCrossTreeTransactIterator{contract: _InvisiProtocol.contract, event: "CrossTreeTransact", logs: logs, sub: sub}, nil
+}
+
+// WatchCrossTreeTransact is a free log subscription operation binding the contract event 0x3a397292385a3a48664272813b6d002763f919f88527d7c30ba40bfb8b3b3172.
+//
+// Solidity: event CrossTreeTransact(uint256 indexed outputTreeId, (uint256,bytes32)[] sources, bytes32[] nullifiers, bytes32[] outputCommitments, uint32[] leafIndices, bytes[] ciphertexts, address withdrawalAddress, uint256 withdrawalAmount, uint256 deadline)
+func (_InvisiProtocol *InvisiProtocolFilterer) WatchCrossTreeTransact(opts *bind.WatchOpts, sink chan<- *InvisiProtocolCrossTreeTransact, outputTreeId []*big.Int) (event.Subscription, error) {
+
+	var outputTreeIdRule []interface{}
+	for _, outputTreeIdItem := range outputTreeId {
+		outputTreeIdRule = append(outputTreeIdRule, outputTreeIdItem)
+	}
+
+	logs, sub, err := _InvisiProtocol.contract.WatchLogs(opts, "CrossTreeTransact", outputTreeIdRule)
+	if err != nil {
+		return nil, err
+	}
+	return event.NewSubscription(func(quit <-chan struct{}) error {
+		defer sub.Unsubscribe()
+		for {
+			select {
+			case log := <-logs:
+				// New log arrived, parse the event and forward to the user
+				event := new(InvisiProtocolCrossTreeTransact)
+				if err := _InvisiProtocol.contract.UnpackLog(event, "CrossTreeTransact", log); err != nil {
+					return err
+				}
+				event.Raw = log
+
+				select {
+				case sink <- event:
+				case err := <-sub.Err():
+					return err
+				case <-quit:
+					return nil
+				}
+			case err := <-sub.Err():
+				return err
+			case <-quit:
+				return nil
+			}
+		}
+	}), nil
+}
+
+// ParseCrossTreeTransact is a log parse operation binding the contract event 0x3a397292385a3a48664272813b6d002763f919f88527d7c30ba40bfb8b3b3172.
+//
+// Solidity: event CrossTreeTransact(uint256 indexed outputTreeId, (uint256,bytes32)[] sources, bytes32[] nullifiers, bytes32[] outputCommitments, uint32[] leafIndices, bytes[] ciphertexts, address withdrawalAddress, uint256 withdrawalAmount, uint256 deadline)
+func (_InvisiProtocol *InvisiProtocolFilterer) ParseCrossTreeTransact(log types.Log) (*InvisiProtocolCrossTreeTransact, error) {
+	event := new(InvisiProtocolCrossTreeTransact)
+	if err := _InvisiProtocol.contract.UnpackLog(event, "CrossTreeTransact", log); err != nil {
 		return nil, err
 	}
 	event.Raw = log
@@ -2306,9 +3097,9 @@ func (_InvisiProtocol *InvisiProtocolFilterer) ParsePaused(log types.Log) (*Invi
 	return event, nil
 }
 
-// InvisiProtocolPayBlindIterator is returned from FilterPayBlind and is used to iterate over the raw logs and unpacked data for PayBlind events raised by the InvisiProtocol contract.
-type InvisiProtocolPayBlindIterator struct {
-	Event *InvisiProtocolPayBlind // Event containing the contract specifics and raw log
+// InvisiProtocolPublicDepositIterator is returned from FilterPublicDeposit and is used to iterate over the raw logs and unpacked data for PublicDeposit events raised by the InvisiProtocol contract.
+type InvisiProtocolPublicDepositIterator struct {
+	Event *InvisiProtocolPublicDeposit // Event containing the contract specifics and raw log
 
 	contract *bind.BoundContract // Generic contract to use for unpacking event data
 	event    string              // Event name to use for unpacking event data
@@ -2322,7 +3113,7 @@ type InvisiProtocolPayBlindIterator struct {
 // Next advances the iterator to the subsequent event, returning whether there
 // are any more events found. In case of a retrieval or parsing error, false is
 // returned and Error() can be queried for the exact failure.
-func (it *InvisiProtocolPayBlindIterator) Next() bool {
+func (it *InvisiProtocolPublicDepositIterator) Next() bool {
 	// If the iterator failed, stop iterating
 	if it.fail != nil {
 		return false
@@ -2331,7 +3122,7 @@ func (it *InvisiProtocolPayBlindIterator) Next() bool {
 	if it.done {
 		select {
 		case log := <-it.logs:
-			it.Event = new(InvisiProtocolPayBlind)
+			it.Event = new(InvisiProtocolPublicDeposit)
 			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
 				it.fail = err
 				return false
@@ -2346,7 +3137,7 @@ func (it *InvisiProtocolPayBlindIterator) Next() bool {
 	// Iterator still in progress, wait for either a data or an error event
 	select {
 	case log := <-it.logs:
-		it.Event = new(InvisiProtocolPayBlind)
+		it.Event = new(InvisiProtocolPublicDeposit)
 		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
 			it.fail = err
 			return false
@@ -2362,75 +3153,53 @@ func (it *InvisiProtocolPayBlindIterator) Next() bool {
 }
 
 // Error returns any retrieval or parsing error occurred during filtering.
-func (it *InvisiProtocolPayBlindIterator) Error() error {
+func (it *InvisiProtocolPublicDepositIterator) Error() error {
 	return it.fail
 }
 
 // Close terminates the iteration process, releasing any pending underlying
 // resources.
-func (it *InvisiProtocolPayBlindIterator) Close() error {
+func (it *InvisiProtocolPublicDepositIterator) Close() error {
 	it.sub.Unsubscribe()
 	return nil
 }
 
-// InvisiProtocolPayBlind represents a PayBlind event raised by the InvisiProtocol contract.
-type InvisiProtocolPayBlind struct {
-	PaymentCommitment [32]byte
-	Payer             common.Address
-	TreeId            *big.Int
-	ChangeCommitment  [32]byte
-	PaymentLeafIndex  uint32
-	ChangeLeafIndex   uint32
-	TokenAddress      common.Address
-	InputAmount       *big.Int
-	RefundLink        [32]byte
-	Raw               types.Log // Blockchain specific contextual infos
+// InvisiProtocolPublicDeposit represents a PublicDeposit event raised by the InvisiProtocol contract.
+type InvisiProtocolPublicDeposit struct {
+	Payer     common.Address
+	Amount    *big.Int
+	ProofHash [32]byte
+	Raw       types.Log // Blockchain specific contextual infos
 }
 
-// FilterPayBlind is a free log retrieval operation binding the contract event 0x83e3d65f2607cd88742c493d815d57ee9b77bc5e777a5988bd3cf1b257a0c9ac.
+// FilterPublicDeposit is a free log retrieval operation binding the contract event 0xacec8d7ea4e2c39bfdce9213c449892c2cf4d27d5734eb154dbbcadda139542a.
 //
-// Solidity: event PayBlind(bytes32 indexed paymentCommitment, address indexed payer, uint256 indexed treeId, bytes32 changeCommitment, uint32 paymentLeafIndex, uint32 changeLeafIndex, address tokenAddress, uint256 inputAmount, bytes32 refundLink)
-func (_InvisiProtocol *InvisiProtocolFilterer) FilterPayBlind(opts *bind.FilterOpts, paymentCommitment [][32]byte, payer []common.Address, treeId []*big.Int) (*InvisiProtocolPayBlindIterator, error) {
+// Solidity: event PublicDeposit(address indexed payer, uint256 amount, bytes32 proofHash)
+func (_InvisiProtocol *InvisiProtocolFilterer) FilterPublicDeposit(opts *bind.FilterOpts, payer []common.Address) (*InvisiProtocolPublicDepositIterator, error) {
 
-	var paymentCommitmentRule []interface{}
-	for _, paymentCommitmentItem := range paymentCommitment {
-		paymentCommitmentRule = append(paymentCommitmentRule, paymentCommitmentItem)
-	}
 	var payerRule []interface{}
 	for _, payerItem := range payer {
 		payerRule = append(payerRule, payerItem)
 	}
-	var treeIdRule []interface{}
-	for _, treeIdItem := range treeId {
-		treeIdRule = append(treeIdRule, treeIdItem)
-	}
 
-	logs, sub, err := _InvisiProtocol.contract.FilterLogs(opts, "PayBlind", paymentCommitmentRule, payerRule, treeIdRule)
+	logs, sub, err := _InvisiProtocol.contract.FilterLogs(opts, "PublicDeposit", payerRule)
 	if err != nil {
 		return nil, err
 	}
-	return &InvisiProtocolPayBlindIterator{contract: _InvisiProtocol.contract, event: "PayBlind", logs: logs, sub: sub}, nil
+	return &InvisiProtocolPublicDepositIterator{contract: _InvisiProtocol.contract, event: "PublicDeposit", logs: logs, sub: sub}, nil
 }
 
-// WatchPayBlind is a free log subscription operation binding the contract event 0x83e3d65f2607cd88742c493d815d57ee9b77bc5e777a5988bd3cf1b257a0c9ac.
+// WatchPublicDeposit is a free log subscription operation binding the contract event 0xacec8d7ea4e2c39bfdce9213c449892c2cf4d27d5734eb154dbbcadda139542a.
 //
-// Solidity: event PayBlind(bytes32 indexed paymentCommitment, address indexed payer, uint256 indexed treeId, bytes32 changeCommitment, uint32 paymentLeafIndex, uint32 changeLeafIndex, address tokenAddress, uint256 inputAmount, bytes32 refundLink)
-func (_InvisiProtocol *InvisiProtocolFilterer) WatchPayBlind(opts *bind.WatchOpts, sink chan<- *InvisiProtocolPayBlind, paymentCommitment [][32]byte, payer []common.Address, treeId []*big.Int) (event.Subscription, error) {
+// Solidity: event PublicDeposit(address indexed payer, uint256 amount, bytes32 proofHash)
+func (_InvisiProtocol *InvisiProtocolFilterer) WatchPublicDeposit(opts *bind.WatchOpts, sink chan<- *InvisiProtocolPublicDeposit, payer []common.Address) (event.Subscription, error) {
 
-	var paymentCommitmentRule []interface{}
-	for _, paymentCommitmentItem := range paymentCommitment {
-		paymentCommitmentRule = append(paymentCommitmentRule, paymentCommitmentItem)
-	}
 	var payerRule []interface{}
 	for _, payerItem := range payer {
 		payerRule = append(payerRule, payerItem)
 	}
-	var treeIdRule []interface{}
-	for _, treeIdItem := range treeId {
-		treeIdRule = append(treeIdRule, treeIdItem)
-	}
 
-	logs, sub, err := _InvisiProtocol.contract.WatchLogs(opts, "PayBlind", paymentCommitmentRule, payerRule, treeIdRule)
+	logs, sub, err := _InvisiProtocol.contract.WatchLogs(opts, "PublicDeposit", payerRule)
 	if err != nil {
 		return nil, err
 	}
@@ -2440,8 +3209,8 @@ func (_InvisiProtocol *InvisiProtocolFilterer) WatchPayBlind(opts *bind.WatchOpt
 			select {
 			case log := <-logs:
 				// New log arrived, parse the event and forward to the user
-				event := new(InvisiProtocolPayBlind)
-				if err := _InvisiProtocol.contract.UnpackLog(event, "PayBlind", log); err != nil {
+				event := new(InvisiProtocolPublicDeposit)
+				if err := _InvisiProtocol.contract.UnpackLog(event, "PublicDeposit", log); err != nil {
 					return err
 				}
 				event.Raw = log
@@ -2462,180 +3231,12 @@ func (_InvisiProtocol *InvisiProtocolFilterer) WatchPayBlind(opts *bind.WatchOpt
 	}), nil
 }
 
-// ParsePayBlind is a log parse operation binding the contract event 0x83e3d65f2607cd88742c493d815d57ee9b77bc5e777a5988bd3cf1b257a0c9ac.
+// ParsePublicDeposit is a log parse operation binding the contract event 0xacec8d7ea4e2c39bfdce9213c449892c2cf4d27d5734eb154dbbcadda139542a.
 //
-// Solidity: event PayBlind(bytes32 indexed paymentCommitment, address indexed payer, uint256 indexed treeId, bytes32 changeCommitment, uint32 paymentLeafIndex, uint32 changeLeafIndex, address tokenAddress, uint256 inputAmount, bytes32 refundLink)
-func (_InvisiProtocol *InvisiProtocolFilterer) ParsePayBlind(log types.Log) (*InvisiProtocolPayBlind, error) {
-	event := new(InvisiProtocolPayBlind)
-	if err := _InvisiProtocol.contract.UnpackLog(event, "PayBlind", log); err != nil {
-		return nil, err
-	}
-	event.Raw = log
-	return event, nil
-}
-
-// InvisiProtocolPayOpenIterator is returned from FilterPayOpen and is used to iterate over the raw logs and unpacked data for PayOpen events raised by the InvisiProtocol contract.
-type InvisiProtocolPayOpenIterator struct {
-	Event *InvisiProtocolPayOpen // Event containing the contract specifics and raw log
-
-	contract *bind.BoundContract // Generic contract to use for unpacking event data
-	event    string              // Event name to use for unpacking event data
-
-	logs chan types.Log        // Log channel receiving the found contract events
-	sub  ethereum.Subscription // Subscription for errors, completion and termination
-	done bool                  // Whether the subscription completed delivering logs
-	fail error                 // Occurred error to stop iteration
-}
-
-// Next advances the iterator to the subsequent event, returning whether there
-// are any more events found. In case of a retrieval or parsing error, false is
-// returned and Error() can be queried for the exact failure.
-func (it *InvisiProtocolPayOpenIterator) Next() bool {
-	// If the iterator failed, stop iterating
-	if it.fail != nil {
-		return false
-	}
-	// If the iterator completed, deliver directly whatever's available
-	if it.done {
-		select {
-		case log := <-it.logs:
-			it.Event = new(InvisiProtocolPayOpen)
-			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
-				it.fail = err
-				return false
-			}
-			it.Event.Raw = log
-			return true
-
-		default:
-			return false
-		}
-	}
-	// Iterator still in progress, wait for either a data or an error event
-	select {
-	case log := <-it.logs:
-		it.Event = new(InvisiProtocolPayOpen)
-		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
-			it.fail = err
-			return false
-		}
-		it.Event.Raw = log
-		return true
-
-	case err := <-it.sub.Err():
-		it.done = true
-		it.fail = err
-		return it.Next()
-	}
-}
-
-// Error returns any retrieval or parsing error occurred during filtering.
-func (it *InvisiProtocolPayOpenIterator) Error() error {
-	return it.fail
-}
-
-// Close terminates the iteration process, releasing any pending underlying
-// resources.
-func (it *InvisiProtocolPayOpenIterator) Close() error {
-	it.sub.Unsubscribe()
-	return nil
-}
-
-// InvisiProtocolPayOpen represents a PayOpen event raised by the InvisiProtocol contract.
-type InvisiProtocolPayOpen struct {
-	PaymentCommitment  [32]byte
-	Payer              common.Address
-	TreeId             *big.Int
-	LeafIndex          uint32
-	TokenAddress       common.Address
-	Amount             *big.Int
-	IdentityCommitment [32]byte
-	Nonce              [32]byte
-	RefundLink         [32]byte
-	Raw                types.Log // Blockchain specific contextual infos
-}
-
-// FilterPayOpen is a free log retrieval operation binding the contract event 0x9f10377faeb9f73ccf3fe18c5a599dbea119d1838c47019f33307694f89c3a97.
-//
-// Solidity: event PayOpen(bytes32 indexed paymentCommitment, address indexed payer, uint256 indexed treeId, uint32 leafIndex, address tokenAddress, uint256 amount, bytes32 identityCommitment, bytes32 nonce, bytes32 refundLink)
-func (_InvisiProtocol *InvisiProtocolFilterer) FilterPayOpen(opts *bind.FilterOpts, paymentCommitment [][32]byte, payer []common.Address, treeId []*big.Int) (*InvisiProtocolPayOpenIterator, error) {
-
-	var paymentCommitmentRule []interface{}
-	for _, paymentCommitmentItem := range paymentCommitment {
-		paymentCommitmentRule = append(paymentCommitmentRule, paymentCommitmentItem)
-	}
-	var payerRule []interface{}
-	for _, payerItem := range payer {
-		payerRule = append(payerRule, payerItem)
-	}
-	var treeIdRule []interface{}
-	for _, treeIdItem := range treeId {
-		treeIdRule = append(treeIdRule, treeIdItem)
-	}
-
-	logs, sub, err := _InvisiProtocol.contract.FilterLogs(opts, "PayOpen", paymentCommitmentRule, payerRule, treeIdRule)
-	if err != nil {
-		return nil, err
-	}
-	return &InvisiProtocolPayOpenIterator{contract: _InvisiProtocol.contract, event: "PayOpen", logs: logs, sub: sub}, nil
-}
-
-// WatchPayOpen is a free log subscription operation binding the contract event 0x9f10377faeb9f73ccf3fe18c5a599dbea119d1838c47019f33307694f89c3a97.
-//
-// Solidity: event PayOpen(bytes32 indexed paymentCommitment, address indexed payer, uint256 indexed treeId, uint32 leafIndex, address tokenAddress, uint256 amount, bytes32 identityCommitment, bytes32 nonce, bytes32 refundLink)
-func (_InvisiProtocol *InvisiProtocolFilterer) WatchPayOpen(opts *bind.WatchOpts, sink chan<- *InvisiProtocolPayOpen, paymentCommitment [][32]byte, payer []common.Address, treeId []*big.Int) (event.Subscription, error) {
-
-	var paymentCommitmentRule []interface{}
-	for _, paymentCommitmentItem := range paymentCommitment {
-		paymentCommitmentRule = append(paymentCommitmentRule, paymentCommitmentItem)
-	}
-	var payerRule []interface{}
-	for _, payerItem := range payer {
-		payerRule = append(payerRule, payerItem)
-	}
-	var treeIdRule []interface{}
-	for _, treeIdItem := range treeId {
-		treeIdRule = append(treeIdRule, treeIdItem)
-	}
-
-	logs, sub, err := _InvisiProtocol.contract.WatchLogs(opts, "PayOpen", paymentCommitmentRule, payerRule, treeIdRule)
-	if err != nil {
-		return nil, err
-	}
-	return event.NewSubscription(func(quit <-chan struct{}) error {
-		defer sub.Unsubscribe()
-		for {
-			select {
-			case log := <-logs:
-				// New log arrived, parse the event and forward to the user
-				event := new(InvisiProtocolPayOpen)
-				if err := _InvisiProtocol.contract.UnpackLog(event, "PayOpen", log); err != nil {
-					return err
-				}
-				event.Raw = log
-
-				select {
-				case sink <- event:
-				case err := <-sub.Err():
-					return err
-				case <-quit:
-					return nil
-				}
-			case err := <-sub.Err():
-				return err
-			case <-quit:
-				return nil
-			}
-		}
-	}), nil
-}
-
-// ParsePayOpen is a log parse operation binding the contract event 0x9f10377faeb9f73ccf3fe18c5a599dbea119d1838c47019f33307694f89c3a97.
-//
-// Solidity: event PayOpen(bytes32 indexed paymentCommitment, address indexed payer, uint256 indexed treeId, uint32 leafIndex, address tokenAddress, uint256 amount, bytes32 identityCommitment, bytes32 nonce, bytes32 refundLink)
-func (_InvisiProtocol *InvisiProtocolFilterer) ParsePayOpen(log types.Log) (*InvisiProtocolPayOpen, error) {
-	event := new(InvisiProtocolPayOpen)
-	if err := _InvisiProtocol.contract.UnpackLog(event, "PayOpen", log); err != nil {
+// Solidity: event PublicDeposit(address indexed payer, uint256 amount, bytes32 proofHash)
+func (_InvisiProtocol *InvisiProtocolFilterer) ParsePublicDeposit(log types.Log) (*InvisiProtocolPublicDeposit, error) {
+	event := new(InvisiProtocolPublicDeposit)
+	if err := _InvisiProtocol.contract.UnpackLog(event, "PublicDeposit", log); err != nil {
 		return nil, err
 	}
 	event.Raw = log
@@ -2780,6 +3381,470 @@ func (_InvisiProtocol *InvisiProtocolFilterer) WatchScreenerUpdated(opts *bind.W
 func (_InvisiProtocol *InvisiProtocolFilterer) ParseScreenerUpdated(log types.Log) (*InvisiProtocolScreenerUpdated, error) {
 	event := new(InvisiProtocolScreenerUpdated)
 	if err := _InvisiProtocol.contract.UnpackLog(event, "ScreenerUpdated", log); err != nil {
+		return nil, err
+	}
+	event.Raw = log
+	return event, nil
+}
+
+// InvisiProtocolShieldIterator is returned from FilterShield and is used to iterate over the raw logs and unpacked data for Shield events raised by the InvisiProtocol contract.
+type InvisiProtocolShieldIterator struct {
+	Event *InvisiProtocolShield // Event containing the contract specifics and raw log
+
+	contract *bind.BoundContract // Generic contract to use for unpacking event data
+	event    string              // Event name to use for unpacking event data
+
+	logs chan types.Log        // Log channel receiving the found contract events
+	sub  ethereum.Subscription // Subscription for errors, completion and termination
+	done bool                  // Whether the subscription completed delivering logs
+	fail error                 // Occurred error to stop iteration
+}
+
+// Next advances the iterator to the subsequent event, returning whether there
+// are any more events found. In case of a retrieval or parsing error, false is
+// returned and Error() can be queried for the exact failure.
+func (it *InvisiProtocolShieldIterator) Next() bool {
+	// If the iterator failed, stop iterating
+	if it.fail != nil {
+		return false
+	}
+	// If the iterator completed, deliver directly whatever's available
+	if it.done {
+		select {
+		case log := <-it.logs:
+			it.Event = new(InvisiProtocolShield)
+			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+				it.fail = err
+				return false
+			}
+			it.Event.Raw = log
+			return true
+
+		default:
+			return false
+		}
+	}
+	// Iterator still in progress, wait for either a data or an error event
+	select {
+	case log := <-it.logs:
+		it.Event = new(InvisiProtocolShield)
+		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+			it.fail = err
+			return false
+		}
+		it.Event.Raw = log
+		return true
+
+	case err := <-it.sub.Err():
+		it.done = true
+		it.fail = err
+		return it.Next()
+	}
+}
+
+// Error returns any retrieval or parsing error occurred during filtering.
+func (it *InvisiProtocolShieldIterator) Error() error {
+	return it.fail
+}
+
+// Close terminates the iteration process, releasing any pending underlying
+// resources.
+func (it *InvisiProtocolShieldIterator) Close() error {
+	it.sub.Unsubscribe()
+	return nil
+}
+
+// InvisiProtocolShield represents a Shield event raised by the InvisiProtocol contract.
+type InvisiProtocolShield struct {
+	Payer          common.Address
+	Amount         *big.Int
+	TreeId         *big.Int
+	StartLeafIndex uint32
+	Ciphertexts    [][]byte
+	Deadline       *big.Int
+	Raw            types.Log // Blockchain specific contextual infos
+}
+
+// FilterShield is a free log retrieval operation binding the contract event 0x97a98cd508547a5c343e8521eaf926f177a1f02816379623eb074fd5e43d6db6.
+//
+// Solidity: event Shield(address indexed payer, uint256 amount, uint256 indexed treeId, uint32 startLeafIndex, bytes[] ciphertexts, uint256 deadline)
+func (_InvisiProtocol *InvisiProtocolFilterer) FilterShield(opts *bind.FilterOpts, payer []common.Address, treeId []*big.Int) (*InvisiProtocolShieldIterator, error) {
+
+	var payerRule []interface{}
+	for _, payerItem := range payer {
+		payerRule = append(payerRule, payerItem)
+	}
+
+	var treeIdRule []interface{}
+	for _, treeIdItem := range treeId {
+		treeIdRule = append(treeIdRule, treeIdItem)
+	}
+
+	logs, sub, err := _InvisiProtocol.contract.FilterLogs(opts, "Shield", payerRule, treeIdRule)
+	if err != nil {
+		return nil, err
+	}
+	return &InvisiProtocolShieldIterator{contract: _InvisiProtocol.contract, event: "Shield", logs: logs, sub: sub}, nil
+}
+
+// WatchShield is a free log subscription operation binding the contract event 0x97a98cd508547a5c343e8521eaf926f177a1f02816379623eb074fd5e43d6db6.
+//
+// Solidity: event Shield(address indexed payer, uint256 amount, uint256 indexed treeId, uint32 startLeafIndex, bytes[] ciphertexts, uint256 deadline)
+func (_InvisiProtocol *InvisiProtocolFilterer) WatchShield(opts *bind.WatchOpts, sink chan<- *InvisiProtocolShield, payer []common.Address, treeId []*big.Int) (event.Subscription, error) {
+
+	var payerRule []interface{}
+	for _, payerItem := range payer {
+		payerRule = append(payerRule, payerItem)
+	}
+
+	var treeIdRule []interface{}
+	for _, treeIdItem := range treeId {
+		treeIdRule = append(treeIdRule, treeIdItem)
+	}
+
+	logs, sub, err := _InvisiProtocol.contract.WatchLogs(opts, "Shield", payerRule, treeIdRule)
+	if err != nil {
+		return nil, err
+	}
+	return event.NewSubscription(func(quit <-chan struct{}) error {
+		defer sub.Unsubscribe()
+		for {
+			select {
+			case log := <-logs:
+				// New log arrived, parse the event and forward to the user
+				event := new(InvisiProtocolShield)
+				if err := _InvisiProtocol.contract.UnpackLog(event, "Shield", log); err != nil {
+					return err
+				}
+				event.Raw = log
+
+				select {
+				case sink <- event:
+				case err := <-sub.Err():
+					return err
+				case <-quit:
+					return nil
+				}
+			case err := <-sub.Err():
+				return err
+			case <-quit:
+				return nil
+			}
+		}
+	}), nil
+}
+
+// ParseShield is a log parse operation binding the contract event 0x97a98cd508547a5c343e8521eaf926f177a1f02816379623eb074fd5e43d6db6.
+//
+// Solidity: event Shield(address indexed payer, uint256 amount, uint256 indexed treeId, uint32 startLeafIndex, bytes[] ciphertexts, uint256 deadline)
+func (_InvisiProtocol *InvisiProtocolFilterer) ParseShield(log types.Log) (*InvisiProtocolShield, error) {
+	event := new(InvisiProtocolShield)
+	if err := _InvisiProtocol.contract.UnpackLog(event, "Shield", log); err != nil {
+		return nil, err
+	}
+	event.Raw = log
+	return event, nil
+}
+
+// InvisiProtocolTransactIterator is returned from FilterTransact and is used to iterate over the raw logs and unpacked data for Transact events raised by the InvisiProtocol contract.
+type InvisiProtocolTransactIterator struct {
+	Event *InvisiProtocolTransact // Event containing the contract specifics and raw log
+
+	contract *bind.BoundContract // Generic contract to use for unpacking event data
+	event    string              // Event name to use for unpacking event data
+
+	logs chan types.Log        // Log channel receiving the found contract events
+	sub  ethereum.Subscription // Subscription for errors, completion and termination
+	done bool                  // Whether the subscription completed delivering logs
+	fail error                 // Occurred error to stop iteration
+}
+
+// Next advances the iterator to the subsequent event, returning whether there
+// are any more events found. In case of a retrieval or parsing error, false is
+// returned and Error() can be queried for the exact failure.
+func (it *InvisiProtocolTransactIterator) Next() bool {
+	// If the iterator failed, stop iterating
+	if it.fail != nil {
+		return false
+	}
+	// If the iterator completed, deliver directly whatever's available
+	if it.done {
+		select {
+		case log := <-it.logs:
+			it.Event = new(InvisiProtocolTransact)
+			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+				it.fail = err
+				return false
+			}
+			it.Event.Raw = log
+			return true
+
+		default:
+			return false
+		}
+	}
+	// Iterator still in progress, wait for either a data or an error event
+	select {
+	case log := <-it.logs:
+		it.Event = new(InvisiProtocolTransact)
+		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+			it.fail = err
+			return false
+		}
+		it.Event.Raw = log
+		return true
+
+	case err := <-it.sub.Err():
+		it.done = true
+		it.fail = err
+		return it.Next()
+	}
+}
+
+// Error returns any retrieval or parsing error occurred during filtering.
+func (it *InvisiProtocolTransactIterator) Error() error {
+	return it.fail
+}
+
+// Close terminates the iteration process, releasing any pending underlying
+// resources.
+func (it *InvisiProtocolTransactIterator) Close() error {
+	it.sub.Unsubscribe()
+	return nil
+}
+
+// InvisiProtocolTransact represents a Transact event raised by the InvisiProtocol contract.
+type InvisiProtocolTransact struct {
+	InputTreeId       *big.Int
+	OutputTreeId      *big.Int
+	Nullifiers        [][32]byte
+	OutputCommitments [][32]byte
+	LeafIndices       []uint32
+	Ciphertexts       [][]byte
+	WithdrawalAddress common.Address
+	WithdrawalAmount  *big.Int
+	Deadline          *big.Int
+	Raw               types.Log // Blockchain specific contextual infos
+}
+
+// FilterTransact is a free log retrieval operation binding the contract event 0x9cedaa0dd097dadc64592eef3d97f25bd2e79597f9760511d64fae3c28f51b84.
+//
+// Solidity: event Transact(uint256 indexed inputTreeId, uint256 indexed outputTreeId, bytes32[] nullifiers, bytes32[] outputCommitments, uint32[] leafIndices, bytes[] ciphertexts, address withdrawalAddress, uint256 withdrawalAmount, uint256 deadline)
+func (_InvisiProtocol *InvisiProtocolFilterer) FilterTransact(opts *bind.FilterOpts, inputTreeId []*big.Int, outputTreeId []*big.Int) (*InvisiProtocolTransactIterator, error) {
+
+	var inputTreeIdRule []interface{}
+	for _, inputTreeIdItem := range inputTreeId {
+		inputTreeIdRule = append(inputTreeIdRule, inputTreeIdItem)
+	}
+	var outputTreeIdRule []interface{}
+	for _, outputTreeIdItem := range outputTreeId {
+		outputTreeIdRule = append(outputTreeIdRule, outputTreeIdItem)
+	}
+
+	logs, sub, err := _InvisiProtocol.contract.FilterLogs(opts, "Transact", inputTreeIdRule, outputTreeIdRule)
+	if err != nil {
+		return nil, err
+	}
+	return &InvisiProtocolTransactIterator{contract: _InvisiProtocol.contract, event: "Transact", logs: logs, sub: sub}, nil
+}
+
+// WatchTransact is a free log subscription operation binding the contract event 0x9cedaa0dd097dadc64592eef3d97f25bd2e79597f9760511d64fae3c28f51b84.
+//
+// Solidity: event Transact(uint256 indexed inputTreeId, uint256 indexed outputTreeId, bytes32[] nullifiers, bytes32[] outputCommitments, uint32[] leafIndices, bytes[] ciphertexts, address withdrawalAddress, uint256 withdrawalAmount, uint256 deadline)
+func (_InvisiProtocol *InvisiProtocolFilterer) WatchTransact(opts *bind.WatchOpts, sink chan<- *InvisiProtocolTransact, inputTreeId []*big.Int, outputTreeId []*big.Int) (event.Subscription, error) {
+
+	var inputTreeIdRule []interface{}
+	for _, inputTreeIdItem := range inputTreeId {
+		inputTreeIdRule = append(inputTreeIdRule, inputTreeIdItem)
+	}
+	var outputTreeIdRule []interface{}
+	for _, outputTreeIdItem := range outputTreeId {
+		outputTreeIdRule = append(outputTreeIdRule, outputTreeIdItem)
+	}
+
+	logs, sub, err := _InvisiProtocol.contract.WatchLogs(opts, "Transact", inputTreeIdRule, outputTreeIdRule)
+	if err != nil {
+		return nil, err
+	}
+	return event.NewSubscription(func(quit <-chan struct{}) error {
+		defer sub.Unsubscribe()
+		for {
+			select {
+			case log := <-logs:
+				// New log arrived, parse the event and forward to the user
+				event := new(InvisiProtocolTransact)
+				if err := _InvisiProtocol.contract.UnpackLog(event, "Transact", log); err != nil {
+					return err
+				}
+				event.Raw = log
+
+				select {
+				case sink <- event:
+				case err := <-sub.Err():
+					return err
+				case <-quit:
+					return nil
+				}
+			case err := <-sub.Err():
+				return err
+			case <-quit:
+				return nil
+			}
+		}
+	}), nil
+}
+
+// ParseTransact is a log parse operation binding the contract event 0x9cedaa0dd097dadc64592eef3d97f25bd2e79597f9760511d64fae3c28f51b84.
+//
+// Solidity: event Transact(uint256 indexed inputTreeId, uint256 indexed outputTreeId, bytes32[] nullifiers, bytes32[] outputCommitments, uint32[] leafIndices, bytes[] ciphertexts, address withdrawalAddress, uint256 withdrawalAmount, uint256 deadline)
+func (_InvisiProtocol *InvisiProtocolFilterer) ParseTransact(log types.Log) (*InvisiProtocolTransact, error) {
+	event := new(InvisiProtocolTransact)
+	if err := _InvisiProtocol.contract.UnpackLog(event, "Transact", log); err != nil {
+		return nil, err
+	}
+	event.Raw = log
+	return event, nil
+}
+
+// InvisiProtocolTransactAggregatedIterator is returned from FilterTransactAggregated and is used to iterate over the raw logs and unpacked data for TransactAggregated events raised by the InvisiProtocol contract.
+type InvisiProtocolTransactAggregatedIterator struct {
+	Event *InvisiProtocolTransactAggregated // Event containing the contract specifics and raw log
+
+	contract *bind.BoundContract // Generic contract to use for unpacking event data
+	event    string              // Event name to use for unpacking event data
+
+	logs chan types.Log        // Log channel receiving the found contract events
+	sub  ethereum.Subscription // Subscription for errors, completion and termination
+	done bool                  // Whether the subscription completed delivering logs
+	fail error                 // Occurred error to stop iteration
+}
+
+// Next advances the iterator to the subsequent event, returning whether there
+// are any more events found. In case of a retrieval or parsing error, false is
+// returned and Error() can be queried for the exact failure.
+func (it *InvisiProtocolTransactAggregatedIterator) Next() bool {
+	// If the iterator failed, stop iterating
+	if it.fail != nil {
+		return false
+	}
+	// If the iterator completed, deliver directly whatever's available
+	if it.done {
+		select {
+		case log := <-it.logs:
+			it.Event = new(InvisiProtocolTransactAggregated)
+			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+				it.fail = err
+				return false
+			}
+			it.Event.Raw = log
+			return true
+
+		default:
+			return false
+		}
+	}
+	// Iterator still in progress, wait for either a data or an error event
+	select {
+	case log := <-it.logs:
+		it.Event = new(InvisiProtocolTransactAggregated)
+		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+			it.fail = err
+			return false
+		}
+		it.Event.Raw = log
+		return true
+
+	case err := <-it.sub.Err():
+		it.done = true
+		it.fail = err
+		return it.Next()
+	}
+}
+
+// Error returns any retrieval or parsing error occurred during filtering.
+func (it *InvisiProtocolTransactAggregatedIterator) Error() error {
+	return it.fail
+}
+
+// Close terminates the iteration process, releasing any pending underlying
+// resources.
+func (it *InvisiProtocolTransactAggregatedIterator) Close() error {
+	it.sub.Unsubscribe()
+	return nil
+}
+
+// InvisiProtocolTransactAggregated represents a TransactAggregated event raised by the InvisiProtocol contract.
+type InvisiProtocolTransactAggregated struct {
+	ProofHash    [32]byte
+	RequestCount *big.Int
+	Raw          types.Log // Blockchain specific contextual infos
+}
+
+// FilterTransactAggregated is a free log retrieval operation binding the contract event 0xb550ba00978bffde806b7356916d552dea8794ebdc978bc7d205be9d2ce1a8df.
+//
+// Solidity: event TransactAggregated(bytes32 indexed proofHash, uint256 requestCount)
+func (_InvisiProtocol *InvisiProtocolFilterer) FilterTransactAggregated(opts *bind.FilterOpts, proofHash [][32]byte) (*InvisiProtocolTransactAggregatedIterator, error) {
+
+	var proofHashRule []interface{}
+	for _, proofHashItem := range proofHash {
+		proofHashRule = append(proofHashRule, proofHashItem)
+	}
+
+	logs, sub, err := _InvisiProtocol.contract.FilterLogs(opts, "TransactAggregated", proofHashRule)
+	if err != nil {
+		return nil, err
+	}
+	return &InvisiProtocolTransactAggregatedIterator{contract: _InvisiProtocol.contract, event: "TransactAggregated", logs: logs, sub: sub}, nil
+}
+
+// WatchTransactAggregated is a free log subscription operation binding the contract event 0xb550ba00978bffde806b7356916d552dea8794ebdc978bc7d205be9d2ce1a8df.
+//
+// Solidity: event TransactAggregated(bytes32 indexed proofHash, uint256 requestCount)
+func (_InvisiProtocol *InvisiProtocolFilterer) WatchTransactAggregated(opts *bind.WatchOpts, sink chan<- *InvisiProtocolTransactAggregated, proofHash [][32]byte) (event.Subscription, error) {
+
+	var proofHashRule []interface{}
+	for _, proofHashItem := range proofHash {
+		proofHashRule = append(proofHashRule, proofHashItem)
+	}
+
+	logs, sub, err := _InvisiProtocol.contract.WatchLogs(opts, "TransactAggregated", proofHashRule)
+	if err != nil {
+		return nil, err
+	}
+	return event.NewSubscription(func(quit <-chan struct{}) error {
+		defer sub.Unsubscribe()
+		for {
+			select {
+			case log := <-logs:
+				// New log arrived, parse the event and forward to the user
+				event := new(InvisiProtocolTransactAggregated)
+				if err := _InvisiProtocol.contract.UnpackLog(event, "TransactAggregated", log); err != nil {
+					return err
+				}
+				event.Raw = log
+
+				select {
+				case sink <- event:
+				case err := <-sub.Err():
+					return err
+				case <-quit:
+					return nil
+				}
+			case err := <-sub.Err():
+				return err
+			case <-quit:
+				return nil
+			}
+		}
+	}), nil
+}
+
+// ParseTransactAggregated is a log parse operation binding the contract event 0xb550ba00978bffde806b7356916d552dea8794ebdc978bc7d205be9d2ce1a8df.
+//
+// Solidity: event TransactAggregated(bytes32 indexed proofHash, uint256 requestCount)
+func (_InvisiProtocol *InvisiProtocolFilterer) ParseTransactAggregated(log types.Log) (*InvisiProtocolTransactAggregated, error) {
+	event := new(InvisiProtocolTransactAggregated)
+	if err := _InvisiProtocol.contract.UnpackLog(event, "TransactAggregated", log); err != nil {
 		return nil, err
 	}
 	event.Raw = log
@@ -3058,171 +4123,6 @@ func (_InvisiProtocol *InvisiProtocolFilterer) WatchUnpaused(opts *bind.WatchOpt
 func (_InvisiProtocol *InvisiProtocolFilterer) ParseUnpaused(log types.Log) (*InvisiProtocolUnpaused, error) {
 	event := new(InvisiProtocolUnpaused)
 	if err := _InvisiProtocol.contract.UnpackLog(event, "Unpaused", log); err != nil {
-		return nil, err
-	}
-	event.Raw = log
-	return event, nil
-}
-
-// InvisiProtocolWithdrawIterator is returned from FilterWithdraw and is used to iterate over the raw logs and unpacked data for Withdraw events raised by the InvisiProtocol contract.
-type InvisiProtocolWithdrawIterator struct {
-	Event *InvisiProtocolWithdraw // Event containing the contract specifics and raw log
-
-	contract *bind.BoundContract // Generic contract to use for unpacking event data
-	event    string              // Event name to use for unpacking event data
-
-	logs chan types.Log        // Log channel receiving the found contract events
-	sub  ethereum.Subscription // Subscription for errors, completion and termination
-	done bool                  // Whether the subscription completed delivering logs
-	fail error                 // Occurred error to stop iteration
-}
-
-// Next advances the iterator to the subsequent event, returning whether there
-// are any more events found. In case of a retrieval or parsing error, false is
-// returned and Error() can be queried for the exact failure.
-func (it *InvisiProtocolWithdrawIterator) Next() bool {
-	// If the iterator failed, stop iterating
-	if it.fail != nil {
-		return false
-	}
-	// If the iterator completed, deliver directly whatever's available
-	if it.done {
-		select {
-		case log := <-it.logs:
-			it.Event = new(InvisiProtocolWithdraw)
-			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
-				it.fail = err
-				return false
-			}
-			it.Event.Raw = log
-			return true
-
-		default:
-			return false
-		}
-	}
-	// Iterator still in progress, wait for either a data or an error event
-	select {
-	case log := <-it.logs:
-		it.Event = new(InvisiProtocolWithdraw)
-		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
-			it.fail = err
-			return false
-		}
-		it.Event.Raw = log
-		return true
-
-	case err := <-it.sub.Err():
-		it.done = true
-		it.fail = err
-		return it.Next()
-	}
-}
-
-// Error returns any retrieval or parsing error occurred during filtering.
-func (it *InvisiProtocolWithdrawIterator) Error() error {
-	return it.fail
-}
-
-// Close terminates the iteration process, releasing any pending underlying
-// resources.
-func (it *InvisiProtocolWithdrawIterator) Close() error {
-	it.sub.Unsubscribe()
-	return nil
-}
-
-// InvisiProtocolWithdraw represents a Withdraw event raised by the InvisiProtocol contract.
-type InvisiProtocolWithdraw struct {
-	ReceivingAddress common.Address
-	TokenAddress     common.Address
-	TreeId           *big.Int
-	MerkleRoot       [32]byte
-	Nullifiers       [][32]byte
-	TotalAmount      *big.Int
-	Raw              types.Log // Blockchain specific contextual infos
-}
-
-// FilterWithdraw is a free log retrieval operation binding the contract event 0x684a67d57bf8a6a947f940bda94a1bc12de75656034e5a98d0ff8af18d29962a.
-//
-// Solidity: event Withdraw(address indexed receivingAddress, address indexed tokenAddress, uint256 indexed treeId, bytes32 merkleRoot, bytes32[] nullifiers, uint256 totalAmount)
-func (_InvisiProtocol *InvisiProtocolFilterer) FilterWithdraw(opts *bind.FilterOpts, receivingAddress []common.Address, tokenAddress []common.Address, treeId []*big.Int) (*InvisiProtocolWithdrawIterator, error) {
-
-	var receivingAddressRule []interface{}
-	for _, receivingAddressItem := range receivingAddress {
-		receivingAddressRule = append(receivingAddressRule, receivingAddressItem)
-	}
-	var tokenAddressRule []interface{}
-	for _, tokenAddressItem := range tokenAddress {
-		tokenAddressRule = append(tokenAddressRule, tokenAddressItem)
-	}
-	var treeIdRule []interface{}
-	for _, treeIdItem := range treeId {
-		treeIdRule = append(treeIdRule, treeIdItem)
-	}
-
-	logs, sub, err := _InvisiProtocol.contract.FilterLogs(opts, "Withdraw", receivingAddressRule, tokenAddressRule, treeIdRule)
-	if err != nil {
-		return nil, err
-	}
-	return &InvisiProtocolWithdrawIterator{contract: _InvisiProtocol.contract, event: "Withdraw", logs: logs, sub: sub}, nil
-}
-
-// WatchWithdraw is a free log subscription operation binding the contract event 0x684a67d57bf8a6a947f940bda94a1bc12de75656034e5a98d0ff8af18d29962a.
-//
-// Solidity: event Withdraw(address indexed receivingAddress, address indexed tokenAddress, uint256 indexed treeId, bytes32 merkleRoot, bytes32[] nullifiers, uint256 totalAmount)
-func (_InvisiProtocol *InvisiProtocolFilterer) WatchWithdraw(opts *bind.WatchOpts, sink chan<- *InvisiProtocolWithdraw, receivingAddress []common.Address, tokenAddress []common.Address, treeId []*big.Int) (event.Subscription, error) {
-
-	var receivingAddressRule []interface{}
-	for _, receivingAddressItem := range receivingAddress {
-		receivingAddressRule = append(receivingAddressRule, receivingAddressItem)
-	}
-	var tokenAddressRule []interface{}
-	for _, tokenAddressItem := range tokenAddress {
-		tokenAddressRule = append(tokenAddressRule, tokenAddressItem)
-	}
-	var treeIdRule []interface{}
-	for _, treeIdItem := range treeId {
-		treeIdRule = append(treeIdRule, treeIdItem)
-	}
-
-	logs, sub, err := _InvisiProtocol.contract.WatchLogs(opts, "Withdraw", receivingAddressRule, tokenAddressRule, treeIdRule)
-	if err != nil {
-		return nil, err
-	}
-	return event.NewSubscription(func(quit <-chan struct{}) error {
-		defer sub.Unsubscribe()
-		for {
-			select {
-			case log := <-logs:
-				// New log arrived, parse the event and forward to the user
-				event := new(InvisiProtocolWithdraw)
-				if err := _InvisiProtocol.contract.UnpackLog(event, "Withdraw", log); err != nil {
-					return err
-				}
-				event.Raw = log
-
-				select {
-				case sink <- event:
-				case err := <-sub.Err():
-					return err
-				case <-quit:
-					return nil
-				}
-			case err := <-sub.Err():
-				return err
-			case <-quit:
-				return nil
-			}
-		}
-	}), nil
-}
-
-// ParseWithdraw is a log parse operation binding the contract event 0x684a67d57bf8a6a947f940bda94a1bc12de75656034e5a98d0ff8af18d29962a.
-//
-// Solidity: event Withdraw(address indexed receivingAddress, address indexed tokenAddress, uint256 indexed treeId, bytes32 merkleRoot, bytes32[] nullifiers, uint256 totalAmount)
-func (_InvisiProtocol *InvisiProtocolFilterer) ParseWithdraw(log types.Log) (*InvisiProtocolWithdraw, error) {
-	event := new(InvisiProtocolWithdraw)
-	if err := _InvisiProtocol.contract.UnpackLog(event, "Withdraw", log); err != nil {
 		return nil, err
 	}
 	event.Raw = log

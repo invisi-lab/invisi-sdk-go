@@ -9,16 +9,16 @@ import (
 
 // BuildVoucherParams holds all parameters needed to assemble a payment voucher.
 type BuildVoucherParams struct {
-	Network           string
-	ReceivingAddress  string
-	PaymentCommitment string
-	TokenAddress      string
-	Operator          string
-	Amount            *big.Int
-	Nonce             string
-	NullifierKey      string
-	TreeID            string
-	LeafIndex         string // optional, "" = omit
+	Network          string
+	ReceivingAddress string
+	NoteCommitment   string
+	TokenAddress     string
+	Operator         string
+	Amount           *big.Int
+	Nonce            string
+	NoteSecret       string
+	TreeID           string
+	LeafIndex        string // optional, "" = omit
 	// Endpoint is the server address that accepts settlement for this voucher;
 	// required (see ipp.IPPVoucherV1.Endpoint).
 	Endpoint string
@@ -26,7 +26,7 @@ type BuildVoucherParams struct {
 }
 
 // BuildVoucher assembles a payment voucher (mode 3 address transfer) from values
-// the payer already holds after payOpen. Pure local assembly — no chain/endpoint call.
+// the payer already holds after confirmed commitment insertion. Pure local assembly — no chain/endpoint call.
 func BuildVoucher(params BuildVoucherParams) (ipp.IPPVoucher, error) {
 	if params.Amount == nil {
 		return ipp.IPPVoucher{}, errors.New("amount is nil")
@@ -37,16 +37,16 @@ func BuildVoucher(params BuildVoucherParams) (ipp.IPPVoucher, error) {
 		Type:    ipp.MessageTypeVoucher,
 		Meta:    params.Meta,
 		Payload: ipp.IPPVoucherV1{
-			ReceivingAddress:  params.ReceivingAddress,
-			PaymentCommitment: params.PaymentCommitment,
-			TokenAddress:      params.TokenAddress,
-			Operator:          params.Operator,
-			Amount:            params.Amount.String(),
-			Nonce:             params.Nonce,
-			NullifierKey:      params.NullifierKey,
-			TreeID:            params.TreeID,
-			LeafIndex:         params.LeafIndex,
-			Endpoint:          params.Endpoint,
+			ReceivingAddress: params.ReceivingAddress,
+			NoteCommitment:   params.NoteCommitment,
+			TokenAddress:     params.TokenAddress,
+			Operator:         params.Operator,
+			Amount:           params.Amount.String(),
+			Nonce:            params.Nonce,
+			NoteSecret:       params.NoteSecret,
+			TreeID:           params.TreeID,
+			LeafIndex:        params.LeafIndex,
+			Endpoint:         params.Endpoint,
 		},
 	}, nil
 }

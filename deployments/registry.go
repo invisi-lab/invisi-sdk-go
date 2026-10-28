@@ -8,7 +8,7 @@ import (
 // registry maps chain ID to its deployment metadata.
 // Addresses are zero-valued (placeholder) until the protocol is deployed on each chain.
 var registry = map[int64]ChainDeployment{
-	1:        {ChainID: 1, Network: "ethereum", Env: "mainnet"},
+	1:        {ChainID: 1, Network: "mainnet", Env: "mainnet"},
 	10:       {ChainID: 10, Network: "optimism", Env: "mainnet"},
 	8453:     {ChainID: 8453, Network: "base", Env: "mainnet"},
 	42161:    {ChainID: 42161, Network: "arbitrum", Env: "mainnet"},
@@ -25,6 +25,11 @@ func GetDeployment(chainID int64) (ChainDeployment, error) {
 	if !ok {
 		return ChainDeployment{}, fmt.Errorf("unsupported chain ID: %d", chainID)
 	}
+	// Return independent mutable collections, keeping the registry immutable.
+	d.TransactUserVerifiers = make(map[int]ContractDeployment)
+	d.TransactAggregateVerifiers = make(map[int]ContractDeployment)
+	d.CreditVerifiers = make(map[string]ContractDeployment)
+	d.CreationCode = append([]byte(nil), d.CreationCode...)
 	return d, nil
 }
 

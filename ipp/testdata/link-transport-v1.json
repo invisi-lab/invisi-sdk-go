@@ -1,8 +1,8 @@
 {
-  "$schema_note": "IPP transport-binding conformance fixture. Normative companion to 06-ipp/6.6-transport-bindings.md. Object keys are wire form (snake_case), per 06-ipp/6.1 JSON format. Run 06-ipp/conformance/validate.mjs to check this file's own self-consistency.",
+  "$schema_note": "IPP transport-binding conformance fixture. Normative companion to 05-ipp/5.6-transport-bindings.md. Object keys are wire form (snake_case), per 05-ipp/5.1 JSON format. Run 05-ipp/conformance/validate.mjs to check this file's own self-consistency.",
   "fixture_version": 10,
   "ipp_version": 1,
-  "spec": "06-ipp/6.6-transport-bindings.md",
+  "spec": "05-ipp/5.6-transport-bindings.md",
   "link_url_grammar": {
     "scheme": "https",
     "path_suffix_template": "/ipp/v1/link/{link_token}",
@@ -556,7 +556,7 @@
       "type": "voucher",
       "payload": {
         "receiving_address": "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
-        "payment_commitment": "0xdeadbeefcafebabe0011223344556677889900aabbccddeeff00112233445566",
+        "note_commitment": "0xdeadbeefcafebabe0011223344556677889900aabbccddeeff00112233445566",
         "token_address": "0x036CbD53842c5426634e7929541eC2318f3dCF7e",
         "operator": "0x1234567890123456789012345678901234567890",
         "amount": "100000000",

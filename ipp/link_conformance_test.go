@@ -1,6 +1,6 @@
 package ipp
 
-// Conformance run against the shared 06-ipp/6.6 fixture.
+// Conformance run against the shared 05-ipp/5.6 fixture.
 //
 // This file exists for one failure shape that nothing else in either SDK can
 // see. Six times now, this implementation and packages/ipp/src/link.ts have
@@ -17,8 +17,8 @@ package ipp
 // is that two readers hit the same ambiguity independently.
 //
 // testdata/link-transport-v1.json is a byte-identical copy of
-// protocol-docs/06-ipp/conformance/link-transport-v1.json and is NEVER edited
-// here. protocol-docs/06-ipp/conformance/vendored-copies.mjs fails when the two
+// protocol-docs/05-ipp/conformance/link-transport-v1.json and is NEVER edited
+// here. protocol-docs/05-ipp/conformance/vendored-copies.mjs fails when the two
 // differ; --write is the only sanctioned way to change this copy.
 //
 // Verdicts only, on purpose. Pinning the REASON needs a language-neutral name
@@ -145,7 +145,7 @@ func loadConformanceFixture(t *testing.T) *conformanceFixture {
 	if err != nil {
 		// Never a skip. A missing fixture means the cross-implementation check
 		// did not run, and "did not run" must not read as "the two sides agree".
-		t.Fatalf("reading %s: %v (regenerate with protocol-docs/06-ipp/conformance/vendored-copies.mjs --write)", conformanceFixturePath, err)
+		t.Fatalf("reading %s: %v (regenerate with protocol-docs/05-ipp/conformance/vendored-copies.mjs --write)", conformanceFixturePath, err)
 	}
 	var fx conformanceFixture
 	if err := json.Unmarshal(raw, &fx); err != nil {
@@ -220,8 +220,8 @@ func conformanceTransport(status int, header http.Header, body []byte) *counting
 func TestConformanceFixtureIsIntact(t *testing.T) {
 	fx := loadConformanceFixture(t)
 
-	if fx.Spec != "06-ipp/6.6-transport-bindings.md" {
-		t.Errorf("fixture spec = %q, want 06-ipp/6.6-transport-bindings.md", fx.Spec)
+	if fx.Spec != "05-ipp/5.6-transport-bindings.md" {
+		t.Errorf("fixture spec = %q, want 05-ipp/5.6-transport-bindings.md", fx.Spec)
 	}
 	if fx.IPPVersion != IPPCurrentVersion {
 		t.Errorf("fixture ipp_version = %d, want %d", fx.IPPVersion, IPPCurrentVersion)

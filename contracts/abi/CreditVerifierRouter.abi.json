@@ -1,0 +1,288 @@
+[
+  {
+    "type": "constructor",
+    "inputs": [
+      {
+        "name": "singleRegistry",
+        "type": "address",
+        "internalType": "contract IPrivateTransferVerifierRegistry"
+      },
+      {
+        "name": "crossRegistry",
+        "type": "address",
+        "internalType": "contract CrossTreeVerifierRegistry"
+      },
+      {
+        "name": "creditVerifiers",
+        "type": "address[7]",
+        "internalType": "contract IVerifier[7]"
+      }
+    ],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "createCreditVerifier",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "address",
+        "internalType": "contract IVerifier"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "creditCancelVerifier",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "address",
+        "internalType": "contract IVerifier"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "creditDrawSlots120Verifier",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "address",
+        "internalType": "contract IVerifier"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "creditDrawSlots12Verifier",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "address",
+        "internalType": "contract IVerifier"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "creditDrawSlots1Verifier",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "address",
+        "internalType": "contract IVerifier"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "creditDrawSlots50Verifier",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "address",
+        "internalType": "contract IVerifier"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "creditTopUpVerifier",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "address",
+        "internalType": "contract IVerifier"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "crossTreeRegistry",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "address",
+        "internalType": "contract CrossTreeVerifierRegistry"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "getCreateCreditVerifier",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "address",
+        "internalType": "contract IVerifier"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "getCreditCancelVerifier",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "address",
+        "internalType": "contract IVerifier"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "getCreditDrawVerifier",
+    "inputs": [
+      {
+        "name": "inputs",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "",
+        "type": "address",
+        "internalType": "contract IVerifier"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "getCreditTopUpVerifier",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "address",
+        "internalType": "contract IVerifier"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "getCrossTreeVerifier",
+    "inputs": [
+      {
+        "name": "inputs",
+        "type": "uint256",
+        "internalType": "uint256"
+      },
+      {
+        "name": "outputs",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "",
+        "type": "address",
+        "internalType": "contract IVerifier"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "getPrivateTransferVerifier",
+    "inputs": [
+      {
+        "name": "inputs",
+        "type": "uint256",
+        "internalType": "uint256"
+      },
+      {
+        "name": "outputs",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "",
+        "type": "address",
+        "internalType": "contract IVerifier"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "privateTransferRegistry",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "address",
+        "internalType": "contract IPrivateTransferVerifierRegistry"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "error",
+    "name": "InvalidBatchSize",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "UnsupportedCreditCreation",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "UnsupportedCrossTreeShape",
+    "inputs": [
+      {
+        "name": "inputs",
+        "type": "uint256",
+        "internalType": "uint256"
+      },
+      {
+        "name": "outputs",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ]
+  },
+  {
+    "type": "error",
+    "name": "UnsupportedPrivateTransferShape",
+    "inputs": [
+      {
+        "name": "inputs",
+        "type": "uint256",
+        "internalType": "uint256"
+      },
+      {
+        "name": "outputs",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ]
+  }
+]

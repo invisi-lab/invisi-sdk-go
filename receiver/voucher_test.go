@@ -17,7 +17,7 @@ func makeVoucher(t *testing.T, recv common.Address) ipp.IPPVoucher {
 	var mk, inv fr.Element // payer masterKey, random invoiceId
 	mk.SetUint64(999)
 	inv.SetUint64(7)
-	nk, _ := core.DeriveNullifierKey(mk, inv)
+	nk, _ := core.DeriveNoteSecret(mk, inv)
 	ic, _ := core.ComputeIdentityCommitment(nk, core.BigIntToElement(recv.Big()))
 	var amount fr.Element
 	amount.SetUint64(100_000_000)
@@ -25,19 +25,19 @@ func makeVoucher(t *testing.T, recv common.Address) ipp.IPPVoucher {
 	nonce.SetUint64(12345)
 	token := common.HexToAddress("0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913")
 	chainID := core.ElementFromUint64(84532)
-	pc, _ := core.ComputePaymentCommitment(chainID, ic, core.BigIntToElement(token.Big()), amount, nonce)
+	pc, _ := core.ComputeNoteCommitment(chainID, ic, core.BigIntToElement(token.Big()), amount, nonce)
 	return ipp.IPPVoucher{
 		V: 1, Network: "eip155:84532", Type: ipp.MessageTypeVoucher,
 		Payload: ipp.IPPVoucherV1{
-			ReceivingAddress:  recv.Hex(),
-			PaymentCommitment: core.ElementToHex(pc),
-			TokenAddress:      token.Hex(),
-			Operator:          "0x1234567890123456789012345678901234567890",
-			Amount:            "100000000",
-			Nonce:             core.ElementToHex(nonce),
-			NullifierKey:      core.ElementToHex(nk),
-			TreeID:            "1",
-			Endpoint:          "https://pay.merchant.com",
+			ReceivingAddress: recv.Hex(),
+			NoteCommitment:   core.ElementToHex(pc),
+			TokenAddress:     token.Hex(),
+			Operator:         "0x1234567890123456789012345678901234567890",
+			Amount:           "100000000",
+			Nonce:            core.ElementToHex(nonce),
+			NoteSecret:       core.ElementToHex(nk),
+			TreeID:           "1",
+			Endpoint:         "https://pay.merchant.com",
 		},
 	}
 }
@@ -76,14 +76,11 @@ func TestVoucherToWithdrawRequest_NoSecret(t *testing.T) {
 	recv := common.HexToAddress("0x00000000000000000000000000000000DeaD0000")
 	v := makeVoucher(t, recv)
 	req := VoucherToWithdrawRequest(v)
-	if len(req.PaymentCommitments) != 1 || req.PaymentCommitments[0] != v.Payload.PaymentCommitment {
-		t.Error("paymentCommitments mismatch")
-	}
-	if req.IdentityCommitment != "" {
-		t.Error("identityCommitment should be omitted for mode-3 voucher withdraw")
+	if len(req.NoteCommitments) != 1 || req.NoteCommitments[0] != v.Payload.NoteCommitment {
+		t.Error("noteCommitments mismatch")
 	}
 
-	// nullifierKey and receivingAddress are non-custodial secrets: they stay
+	// noteSecret and receivingAddress are non-custodial secrets: they stay
 	// client-side for local proof generation and must never reach the wire.
 	// Assert against the actual JSON.Marshal output, not just the struct shape,
 	// so a future field addition to WithdrawRequest can't silently leak them.
@@ -92,8 +89,8 @@ func TestVoucherToWithdrawRequest_NoSecret(t *testing.T) {
 		t.Fatal(err)
 	}
 	wire := string(b)
-	if strings.Contains(wire, "nullifier_key") || strings.Contains(wire, v.Payload.NullifierKey) {
-		t.Errorf("withdraw request wire form leaks nullifierKey: %s", wire)
+	if strings.Contains(wire, "note_secret") || strings.Contains(wire, v.Payload.NoteSecret) {
+		t.Errorf("withdraw request wire form leaks noteSecret: %s", wire)
 	}
 	if strings.Contains(wire, "receiving_address") || strings.Contains(wire, v.Payload.ReceivingAddress) {
 		t.Errorf("withdraw request wire form leaks receivingAddress: %s", wire)
@@ -111,15 +108,15 @@ func withdrawRequestFixtureVoucher() ipp.IPPVoucher {
 		Network: "eip155:1",
 		Type:    ipp.MessageTypeVoucher,
 		Payload: ipp.IPPVoucherV1{
-			ReceivingAddress:  "0xReceivingAddressPlaceholder",
-			PaymentCommitment: "0xPaymentCommitmentPlaceholder",
-			TokenAddress:      "0xTokenAddressPlaceholder",
-			Operator:          "0xOperatorPlaceholder",
-			Amount:            "100000000",
-			Nonce:             "0xNoncePlaceholder",
-			NullifierKey:      "0xNullifierKeySecretPlaceholder",
-			TreeID:            "42",
-			Endpoint:          "https://pay.merchant.com",
+			ReceivingAddress: "0xReceivingAddressPlaceholder",
+			NoteCommitment:   "0xNoteCommitmentPlaceholder",
+			TokenAddress:     "0xTokenAddressPlaceholder",
+			Operator:         "0xOperatorPlaceholder",
+			Amount:           "100000000",
+			Nonce:            "0xNoncePlaceholder",
+			NoteSecret:       "0xNoteSecretSecretPlaceholder",
+			TreeID:           "42",
+			Endpoint:         "https://pay.merchant.com",
 		},
 	}
 }
@@ -140,8 +137,8 @@ func TestVoucherToWithdrawRequest_Fields(t *testing.T) {
 	if req.TreeID != v.Payload.TreeID {
 		t.Errorf("TreeID = %q, want %q", req.TreeID, v.Payload.TreeID)
 	}
-	if len(req.PaymentCommitments) != 1 || req.PaymentCommitments[0] != v.Payload.PaymentCommitment {
-		t.Errorf("PaymentCommitments = %v, want [%q]", req.PaymentCommitments, v.Payload.PaymentCommitment)
+	if len(req.NoteCommitments) != 1 || req.NoteCommitments[0] != v.Payload.NoteCommitment {
+		t.Errorf("NoteCommitments = %v, want [%q]", req.NoteCommitments, v.Payload.NoteCommitment)
 	}
 }
 
@@ -163,7 +160,7 @@ func TestVoucherToWithdrawRequest_WireShape(t *testing.T) {
 	}
 	sort.Strings(keys)
 
-	want := []string{"network", "operator", "payment_commitments", "token_address", "tree_id"}
+	want := []string{"network", "note_commitments", "operator", "token_address", "tree_id"}
 	if len(keys) != len(want) {
 		t.Fatalf("wire keys = %v, want exactly %v", keys, want)
 	}
@@ -175,14 +172,14 @@ func TestVoucherToWithdrawRequest_WireShape(t *testing.T) {
 }
 
 // TestVerifyVoucher_TamperedNetwork guards against a payer tampering with the
-// voucher envelope's Network field while the PaymentCommitment itself remains
+// voucher envelope's Network field while the NoteCommitment itself remains
 // genuine (computed under the original, untampered chain ID). Because the
 // authoritative chain ID is always re-derived from voucher.Network (not taken
-// from a caller-supplied argument), recomputing PaymentCommitment under the
+// from a caller-supplied argument), recomputing NoteCommitment under the
 // tampered network yields a mismatch and VerifyVoucher must reject it.
 func TestVerifyVoucher_TamperedNetwork(t *testing.T) {
 	recv := common.HexToAddress("0x00000000000000000000000000000000DeaD0000")
-	v := makeVoucher(t, recv) // PaymentCommitment computed under chainId 84532
+	v := makeVoucher(t, recv) // NoteCommitment computed under chainId 84532
 	v.Network = "eip155:1"    // tamper: envelope now claims a different chain
 	ok, _ := VerifyVoucher(v, recv)
 	if ok {

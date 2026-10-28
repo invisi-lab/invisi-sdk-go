@@ -12,13 +12,13 @@ import (
 //
 //	{"error":{"type","code","message","param","request_id","details"}}
 //
-// while 06-ipp/6.2 documents a FLAT one, which is what a third party
+// while 05-ipp/5.2 documents a FLAT one, which is what a third party
 // implementing an IPP endpoint from the prose will emit:
 //
 //	{"code","message","param"}
 //
 // Accepting only the nested shape threw away the machine code of every flat
-// answer, and 06-ipp/6.6 requires an unknown code to be propagated to the
+// answer, and 05-ipp/5.8 requires an unknown code to be propagated to the
 // caller rather than dropped — so a payer wallet silently lost the one field
 // that told it WHY a third-party receiver refused. Narrowing this back to one
 // shape reintroduces that.

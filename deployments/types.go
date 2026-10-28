@@ -15,16 +15,16 @@ type ContractDeployment struct {
 // ChainDeployment holds all protocol contract addresses for a given chain.
 // Addresses are zero-valued for chains that have not yet been deployed to.
 type ChainDeployment struct {
-	ChainID                 int64
-	Network                 string
-	Env                     string
-	DeployedAt              string
-	InvisiFactory           ContractDeployment
-	VerifierRouter          ContractDeployment
-	SingleSettleVerifier    ContractDeployment
-	BatchSettleVerifier     ContractDeployment
-	ShieldedPaymentVerifier ContractDeployment
-	ProofLib                ContractDeployment
-	CreationCode            []byte
-	CreationCodeHash        common.Hash
+	ChainID                    int64
+	Network                    string
+	Env                        string
+	DeployedAt                 string
+	InvisiFactory              ContractDeployment
+	VerifierRouter             ContractDeployment
+	CreditVerifierRouter       ContractDeployment
+	TransactUserVerifiers      map[int]ContractDeployment
+	TransactAggregateVerifiers map[int]ContractDeployment
+	CreditVerifiers            map[string]ContractDeployment
+	CreationCode               []byte
+	CreationCodeHash           common.Hash
 }

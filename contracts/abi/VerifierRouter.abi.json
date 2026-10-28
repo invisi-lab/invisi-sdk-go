@@ -1,127 +1,145 @@
 [
   {
-    "type": "constructor",
-    "inputs": [
-      { "name": "batch1Verifier_", "type": "address" },
-      { "name": "batch3Verifier_", "type": "address" },
-      { "name": "batch10Verifier_", "type": "address" },
-      { "name": "batch100Verifier_", "type": "address" },
-      { "name": "shieldedPaymentVerifier_", "type": "address" },
-      { "name": "creditDraw1Verifier_", "type": "address" },
-      { "name": "creditDraw3Verifier_", "type": "address" },
-      { "name": "creditDraw10Verifier_", "type": "address" },
-      { "name": "creditDraw100Verifier_", "type": "address" },
-      { "name": "creditReclaimVerifier_", "type": "address" }
+    "type": "function",
+    "name": "getCreateCreditVerifier",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "address",
+        "internalType": "contract IVerifier"
+      }
     ],
-    "stateMutability": "nonpayable"
-  },
-  {
-    "type": "function",
-    "name": "batch100Verifier",
-    "inputs": [],
-    "outputs": [{ "name": "", "type": "address" }],
     "stateMutability": "view"
   },
   {
     "type": "function",
-    "name": "batch10Verifier",
+    "name": "getCreditCancelVerifier",
     "inputs": [],
-    "outputs": [{ "name": "", "type": "address" }],
-    "stateMutability": "view"
-  },
-  {
-    "type": "function",
-    "name": "batch1Verifier",
-    "inputs": [],
-    "outputs": [{ "name": "", "type": "address" }],
-    "stateMutability": "view"
-  },
-  {
-    "type": "function",
-    "name": "batch3Verifier",
-    "inputs": [],
-    "outputs": [{ "name": "", "type": "address" }],
-    "stateMutability": "view"
-  },
-  {
-    "type": "function",
-    "name": "creditDraw100Verifier",
-    "inputs": [],
-    "outputs": [{ "name": "", "type": "address" }],
-    "stateMutability": "view"
-  },
-  {
-    "type": "function",
-    "name": "creditDraw10Verifier",
-    "inputs": [],
-    "outputs": [{ "name": "", "type": "address" }],
-    "stateMutability": "view"
-  },
-  {
-    "type": "function",
-    "name": "creditDraw1Verifier",
-    "inputs": [],
-    "outputs": [{ "name": "", "type": "address" }],
-    "stateMutability": "view"
-  },
-  {
-    "type": "function",
-    "name": "creditDraw3Verifier",
-    "inputs": [],
-    "outputs": [{ "name": "", "type": "address" }],
-    "stateMutability": "view"
-  },
-  {
-    "type": "function",
-    "name": "creditReclaimVerifier",
-    "inputs": [],
-    "outputs": [{ "name": "", "type": "address" }],
+    "outputs": [
+      {
+        "name": "",
+        "type": "address",
+        "internalType": "contract IVerifier"
+      }
+    ],
     "stateMutability": "view"
   },
   {
     "type": "function",
     "name": "getCreditDrawVerifier",
-    "inputs": [{ "name": "count", "type": "uint256" }],
+    "inputs": [
+      {
+        "name": "inputs",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
     "outputs": [
-      { "name": "verifier", "type": "address" },
-      { "name": "maxSize", "type": "uint256" }
+      {
+        "name": "",
+        "type": "address",
+        "internalType": "contract IVerifier"
+      }
     ],
     "stateMutability": "view"
   },
   {
     "type": "function",
-    "name": "getCreditReclaimVerifier",
+    "name": "getCreditTopUpVerifier",
     "inputs": [],
-    "outputs": [{ "name": "", "type": "address" }],
-    "stateMutability": "view"
-  },
-  {
-    "type": "function",
-    "name": "getShieldedPaymentVerifier",
-    "inputs": [],
-    "outputs": [{ "name": "", "type": "address" }],
-    "stateMutability": "view"
-  },
-  {
-    "type": "function",
-    "name": "getWithdrawVerifier",
-    "inputs": [{ "name": "count", "type": "uint256" }],
     "outputs": [
-      { "name": "verifier", "type": "address" },
-      { "name": "maxSize", "type": "uint256" }
+      {
+        "name": "",
+        "type": "address",
+        "internalType": "contract IVerifier"
+      }
     ],
     "stateMutability": "view"
   },
   {
     "type": "function",
-    "name": "shieldedPaymentVerifier",
-    "inputs": [],
-    "outputs": [{ "name": "", "type": "address" }],
+    "name": "getCrossTreeVerifier",
+    "inputs": [
+      {
+        "name": "inputs",
+        "type": "uint256",
+        "internalType": "uint256"
+      },
+      {
+        "name": "outputs",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "",
+        "type": "address",
+        "internalType": "contract IVerifier"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "getPrivateTransferVerifier",
+    "inputs": [
+      {
+        "name": "inputs",
+        "type": "uint256",
+        "internalType": "uint256"
+      },
+      {
+        "name": "outputs",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "",
+        "type": "address",
+        "internalType": "contract IVerifier"
+      }
+    ],
     "stateMutability": "view"
   },
   {
     "type": "error",
-    "name": "InvalidBatchCount",
-    "inputs": [{ "name": "count", "type": "uint256" }]
+    "name": "UnsupportedCreditCreation",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "UnsupportedCrossTreeShape",
+    "inputs": [
+      {
+        "name": "inputs",
+        "type": "uint256",
+        "internalType": "uint256"
+      },
+      {
+        "name": "outputs",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ]
+  },
+  {
+    "type": "error",
+    "name": "UnsupportedPrivateTransferShape",
+    "inputs": [
+      {
+        "name": "inputs",
+        "type": "uint256",
+        "internalType": "uint256"
+      },
+      {
+        "name": "outputs",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ]
   }
 ]

@@ -88,8 +88,8 @@ func (c *IPPClient) Authorize(params AuthorizeRequest) (AuthorizeResponse, error
 }
 
 // Status queries the current status of a payment by its commitment.
-func (c *IPPClient) Status(paymentCommitment string) (StatusResponse, error) {
-	return get[StatusResponse](c, "status/"+paymentCommitment)
+func (c *IPPClient) Status(noteCommitment string) (StatusResponse, error) {
+	return get[StatusResponse](c, "status/"+noteCommitment)
 }
 
 // Notify sends a payment action notification (submitted or cancelled).
@@ -104,25 +104,10 @@ func (c *IPPClient) Withdraw(params WithdrawRequest) (WithdrawResponse, error) {
 	return post[WithdrawResponse](c, "withdraw", params)
 }
 
-// CreditDraw draws from a credit line.
-func (c *IPPClient) CreditDraw(params CreditDrawRequest) (CreditDrawResponse, error) {
-	return post[CreditDrawResponse](c, "credit-draw", params)
-}
-
-// CreditReclaim reclaims an expired credit.
-func (c *IPPClient) CreditReclaim(params CreditReclaimRequest) (CreditReclaimResponse, error) {
-	return post[CreditReclaimResponse](c, "credit-reclaim", params)
-}
-
-// CreditStatus queries the current status of a credit line.
-func (c *IPPClient) CreditStatus(creditCommitment string) (CreditStatusResponse, error) {
-	return get[CreditStatusResponse](c, "credit/"+creditCommitment)
-}
-
 // ── Relay endpoints ─────────────────────────────────────────────────
 
-// Relay submits a transaction for relaying. The mode (signature / calldata /
-// witness / prove) carried in params selects which fields the server reads.
+// Relay submits a transaction for relaying. Mode selects calldata submission,
+// remote proving and submission (witness), or remote proving only (prove).
 func (c *IPPClient) Relay(params RelayRequest) (RelayResponse, error) {
 	return post[RelayResponse](c, "relay", params)
 }
@@ -137,6 +122,9 @@ func (c *IPPClient) RelayStatus(relayID string) (RelayStatusResponse, error) {
 func post[T any](c *IPPClient, path string, body interface{}) (T, error) {
 	var zero T
 
+	if err := validatePublicRequest(body); err != nil {
+		return zero, err
+	}
 	jsonBytes, err := json.Marshal(body)
 	if err != nil {
 		return zero, fmt.Errorf("ipp: marshal request: %w", err)
@@ -186,10 +174,10 @@ func doRequest[T any](c *IPPClient, req *http.Request) (T, error) {
 		}
 	}
 
-	// Channel ① — HTTP 4xx/5xx: unwrap the nested Stripe envelope and throw a
+	// Channel ① — non-2xx HTTP: unwrap either documented envelope shape as a
 	// typed error. A body that is not the envelope (HTML page, empty, etc.)
 	// downgrades to a *ConnectionError inside newEnvelopeError.
-	if resp.StatusCode >= 400 {
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
 		return zero, newEnvelopeError(resp.StatusCode, respBody)
 	}
 
@@ -206,6 +194,9 @@ func doRequest[T any](c *IPPClient, req *http.Request) (T, error) {
 			Raw:        respBody,
 			Err:        err,
 		}
+	}
+	if err := validatePublicResponse(result); err != nil {
+		return zero, &ConnectionError{Message: "invalid 2xx IPP response", StatusCode: resp.StatusCode, Raw: respBody, Err: err}
 	}
 	return result, nil
 }

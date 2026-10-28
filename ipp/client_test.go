@@ -52,9 +52,9 @@ func TestClientInfo(t *testing.T) {
 
 func TestClientPropose(t *testing.T) {
 	want := ProposeResponse{
-		Status:            "accepted",
-		Nonce:             strPtr("0x42"),
-		PaymentCommitment: strPtr("0xdef"),
+		Status:         "accepted",
+		Nonce:          strPtr("0x42"),
+		NoteCommitment: strPtr("0xdef"),
 	}
 	srv := newTestServer(t, "POST", "/ipp/v1/propose", 200, want)
 	defer srv.Close()
@@ -134,78 +134,10 @@ func TestClientStatus(t *testing.T) {
 	}
 }
 
-func TestClientRelaySignature(t *testing.T) {
-	want := RelayResponse{
-		Status:  "queued",
-		RelayID: strPtr("relay-123"),
-	}
-	// Capture the request body to assert the signature-mode fields land on the
-	// wire under their snake_case names with the right JSON types (tree_id is a
-	// number; sig_nonce / deadline are strings).
-	var gotBody map[string]interface{}
-	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.Method != "POST" {
-			t.Errorf("expected POST, got %s", r.Method)
-		}
-		if r.URL.Path != "/ipp/v1/relay" {
-			t.Errorf("path = %s, want /ipp/v1/relay", r.URL.Path)
-		}
-		if err := json.NewDecoder(r.Body).Decode(&gotBody); err != nil {
-			t.Fatalf("decode body: %v", err)
-		}
-		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(want)
-	}))
-	defer srv.Close()
-
-	client := NewIPPClient(srv.URL)
-	got, err := client.Relay(RelayRequest{
-		Mode:               "signature",
-		Operation:          "pay-open",
-		Network:            "eip155:84532",
-		Signature:          "0xsig",
-		PaymentCommitment:  "0xpay",
-		IdentityCommitment: "0xid",
-		TokenAddress:       "0xusdc",
-		Amount:             "100000000",
-		Nonce:              "0x1",
-		TreeID:             1,
-		SigNonce:           "7",
-		Deadline:           "1750000000",
-		PayerAddress:       "0xpayer",
-	})
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-	if got.Status != "queued" {
-		t.Errorf("status = %s, want queued", got.Status)
-	}
-	if got.RelayID == nil || *got.RelayID != "relay-123" {
-		t.Errorf("relayID = %v, want relay-123", got.RelayID)
-	}
-	if gotBody["mode"] != "signature" {
-		t.Errorf("body.mode = %v, want signature", gotBody["mode"])
-	}
-	if gotBody["signature"] != "0xsig" {
-		t.Errorf("body.signature = %v, want 0xsig", gotBody["signature"])
-	}
-	// tree_id is uint32 → JSON number (decodes into Go as float64).
-	if tid, ok := gotBody["tree_id"].(float64); !ok || tid != 1 {
-		t.Errorf("body.tree_id = %v (%T), want 1 (number)", gotBody["tree_id"], gotBody["tree_id"])
-	}
-	// sig_nonce / deadline are proto uint64 → JSON strings.
-	if gotBody["sig_nonce"] != "7" {
-		t.Errorf("body.sig_nonce = %v, want \"7\"", gotBody["sig_nonce"])
-	}
-	if gotBody["deadline"] != "1750000000" {
-		t.Errorf("body.deadline = %v, want \"1750000000\"", gotBody["deadline"])
-	}
-	if gotBody["payer_address"] != "0xpayer" {
-		t.Errorf("body.payer_address = %v, want 0xpayer", gotBody["payer_address"])
-	}
-	// calldata-mode field must be absent for a signature-mode request.
-	if _, present := gotBody["calldata"]; present {
-		t.Errorf("body.calldata present for signature mode: %v", gotBody["calldata"])
+func TestClientRelaySignatureRejected(t *testing.T) {
+	client := NewIPPClient("http://unused.invalid")
+	if _, err := client.Relay(RelayRequest{Mode: "signature", Operation: RelayShield}); err == nil {
+		t.Fatal("retired signature mode accepted")
 	}
 }
 
@@ -233,10 +165,11 @@ func TestClientRelayCalldata(t *testing.T) {
 
 	client := NewIPPClient(srv.URL)
 	got, err := client.Relay(RelayRequest{
-		Mode:      "calldata",
-		Operation: "pay-open",
-		Network:   "eip155:84532",
-		Calldata:  "0xdeadbeef",
+		Mode:            "calldata",
+		Operation:       RelayShield,
+		ProtocolAddress: "0x1234567890123456789012345678901234567890",
+		Network:         "eip155:84532",
+		Calldata:        "0xdeadbeef",
 	})
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -276,7 +209,7 @@ func rawHandlerServer(t *testing.T, status int, body string) *httptest.Server {
 func TestClientHTTPError(t *testing.T) {
 	// The gateway wraps 4xx/5xx in the nested Stripe envelope; a 400 with an
 	// invalid_request_error must decode to *InvalidRequestError with its fields.
-	body := `{"error":{"type":"invalid_request_error","code":"invalid_payer_commitment","message":"payer_commitment must be bytes32","param":"payer_commitment","request_id":"req_123","details":{"hint":"len"}}}`
+	body := `{"error":{"type":"invalid_request_error","code":"invalid_owner_identity_commitment","message":"owner_identity_commitment must be bytes32","param":"owner_identity_commitment","request_id":"req_123","details":{"hint":"len"}}}`
 	srv := rawHandlerServer(t, 400, body)
 	defer srv.Close()
 
@@ -298,11 +231,11 @@ func TestClientHTTPError(t *testing.T) {
 	if base.StatusCode != 400 {
 		t.Errorf("statusCode = %d, want 400", base.StatusCode)
 	}
-	if base.Code != "invalid_payer_commitment" {
-		t.Errorf("code = %q, want invalid_payer_commitment", base.Code)
+	if base.Code != "invalid_owner_identity_commitment" {
+		t.Errorf("code = %q, want invalid_owner_identity_commitment", base.Code)
 	}
-	if base.Param != "payer_commitment" {
-		t.Errorf("param = %q, want payer_commitment", base.Param)
+	if base.Param != "owner_identity_commitment" {
+		t.Errorf("param = %q, want owner_identity_commitment", base.Param)
 	}
 	if base.RequestID != "req_123" {
 		t.Errorf("requestID = %q, want req_123", base.RequestID)
@@ -476,23 +409,13 @@ func TestClientProposeRejected(t *testing.T) {
 	}
 }
 
-// TestClientCreditDrawRejected: same for credit-draw, the canonical channel ②
-// business rejection.
-func TestClientCreditDrawRejected(t *testing.T) {
-	want := CreditDrawResponse{
-		Status:     "rejected",
-		RejectCode: strPtr(string(RejectPendingDrawExists)),
-	}
-	srv := newTestServer(t, "POST", "/ipp/v1/credit-draw", 200, want)
+func TestClientAuthorizeRejected(t *testing.T) {
+	want := AuthorizeResponse{Status: "rejected", RejectCode: strPtr("merchant_policy_rejected")}
+	srv := newTestServer(t, "POST", "/ipp/v1/authorize", 200, want)
 	defer srv.Close()
-
-	client := NewIPPClient(srv.URL)
-	got, err := client.CreditDraw(CreditDrawRequest{IdentityCommitment: "0xabc"})
-	if err != nil {
-		t.Fatalf("a 200 rejection must NOT be a thrown error, got: %v", err)
-	}
-	if got.RejectCode == nil || *got.RejectCode != "pending_draw_exists" {
-		t.Errorf("rejectCode = %v, want pending_draw_exists", got.RejectCode)
+	got, err := NewIPPClient(srv.URL).Authorize(AuthorizeRequest{SpenderIdentityCommitment: "0x1", OwnerIdentityCommitment: "0x2", Amount: "1", Expiry: "10"})
+	if err != nil || got.RejectCode == nil || *got.RejectCode != "merchant_policy_rejected" {
+		t.Fatalf("business rejection: %+v, %v", got, err)
 	}
 }
 

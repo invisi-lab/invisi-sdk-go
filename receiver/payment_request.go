@@ -9,19 +9,19 @@ import (
 // envelope for the given mode.
 //
 // Modes:
-//   - "single" (1a): fixed amount, single-use — nonce/paymentCommitment are
+//   - "single" (1a): fixed amount, single-use — nonce/noteCommitment are
 //     delivered later via propose, not prefilled here.
 //   - "multi" (1b/2): many payers or many uses; Amount may be set (1b) or
 //     omitted (2, interactive — Endpoint required).
 func CreatePaymentRequest(params CreatePaymentRequestParams) (*ipp.IPPRequest, error) {
 	// Derive keys
-	nullifierKey, err := core.DeriveNullifierKey(params.MasterKey, params.InvoiceID)
+	noteSecret, err := core.DeriveNoteSecret(params.MasterKey, params.InvoiceID)
 	if err != nil {
 		return nil, err
 	}
 
 	recvAddrElem := addressToElement(params.ReceivingAddress)
-	identityCommitment, err := core.ComputeIdentityCommitment(nullifierKey, recvAddrElem)
+	identityCommitment, err := core.ComputeIdentityCommitment(noteSecret, recvAddrElem)
 	if err != nil {
 		return nil, err
 	}

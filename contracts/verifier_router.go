@@ -31,7 +31,7 @@ var (
 
 // VerifierRouterMetaData contains all meta data concerning the VerifierRouter contract.
 var VerifierRouterMetaData = &bind.MetaData{
-	ABI: "[{\"type\":\"constructor\",\"inputs\":[{\"name\":\"batch1Verifier_\",\"type\":\"address\"},{\"name\":\"batch3Verifier_\",\"type\":\"address\"},{\"name\":\"batch10Verifier_\",\"type\":\"address\"},{\"name\":\"batch100Verifier_\",\"type\":\"address\"},{\"name\":\"shieldedPaymentVerifier_\",\"type\":\"address\"},{\"name\":\"creditDraw1Verifier_\",\"type\":\"address\"},{\"name\":\"creditDraw3Verifier_\",\"type\":\"address\"},{\"name\":\"creditDraw10Verifier_\",\"type\":\"address\"},{\"name\":\"creditDraw100Verifier_\",\"type\":\"address\"},{\"name\":\"creditReclaimVerifier_\",\"type\":\"address\"}],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"batch100Verifier\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"batch10Verifier\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"batch1Verifier\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"batch3Verifier\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"creditDraw100Verifier\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"creditDraw10Verifier\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"creditDraw1Verifier\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"creditDraw3Verifier\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"creditReclaimVerifier\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getCreditDrawVerifier\",\"inputs\":[{\"name\":\"count\",\"type\":\"uint256\"}],\"outputs\":[{\"name\":\"verifier\",\"type\":\"address\"},{\"name\":\"maxSize\",\"type\":\"uint256\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getCreditReclaimVerifier\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getShieldedPaymentVerifier\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getWithdrawVerifier\",\"inputs\":[{\"name\":\"count\",\"type\":\"uint256\"}],\"outputs\":[{\"name\":\"verifier\",\"type\":\"address\"},{\"name\":\"maxSize\",\"type\":\"uint256\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"shieldedPaymentVerifier\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\"},{\"type\":\"error\",\"name\":\"InvalidBatchCount\",\"inputs\":[{\"name\":\"count\",\"type\":\"uint256\"}]}]",
+	ABI: "[{\"type\":\"function\",\"name\":\"getCreateCreditVerifier\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"address\",\"internalType\":\"contractIVerifier\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getCreditCancelVerifier\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"address\",\"internalType\":\"contractIVerifier\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getCreditDrawVerifier\",\"inputs\":[{\"name\":\"inputs\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[{\"name\":\"\",\"type\":\"address\",\"internalType\":\"contractIVerifier\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getCreditTopUpVerifier\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"address\",\"internalType\":\"contractIVerifier\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getCrossTreeVerifier\",\"inputs\":[{\"name\":\"inputs\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"outputs\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[{\"name\":\"\",\"type\":\"address\",\"internalType\":\"contractIVerifier\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getPrivateTransferVerifier\",\"inputs\":[{\"name\":\"inputs\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"outputs\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[{\"name\":\"\",\"type\":\"address\",\"internalType\":\"contractIVerifier\"}],\"stateMutability\":\"view\"},{\"type\":\"error\",\"name\":\"UnsupportedCreditCreation\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"UnsupportedCrossTreeShape\",\"inputs\":[{\"name\":\"inputs\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"outputs\",\"type\":\"uint256\",\"internalType\":\"uint256\"}]},{\"type\":\"error\",\"name\":\"UnsupportedPrivateTransferShape\",\"inputs\":[{\"name\":\"inputs\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"outputs\",\"type\":\"uint256\",\"internalType\":\"uint256\"}]}]",
 }
 
 // VerifierRouterABI is the input ABI used to generate the binding from.
@@ -180,12 +180,12 @@ func (_VerifierRouter *VerifierRouterTransactorRaw) Transact(opts *bind.Transact
 	return _VerifierRouter.Contract.contract.Transact(opts, method, params...)
 }
 
-// Batch100Verifier is a free data retrieval call binding the contract method 0xce455515.
+// GetCreateCreditVerifier is a free data retrieval call binding the contract method 0x445fc806.
 //
-// Solidity: function batch100Verifier() view returns(address)
-func (_VerifierRouter *VerifierRouterCaller) Batch100Verifier(opts *bind.CallOpts) (common.Address, error) {
+// Solidity: function getCreateCreditVerifier() view returns(address)
+func (_VerifierRouter *VerifierRouterCaller) GetCreateCreditVerifier(opts *bind.CallOpts) (common.Address, error) {
 	var out []interface{}
-	err := _VerifierRouter.contract.Call(opts, &out, "batch100Verifier")
+	err := _VerifierRouter.contract.Call(opts, &out, "getCreateCreditVerifier")
 
 	if err != nil {
 		return *new(common.Address), err
@@ -197,26 +197,26 @@ func (_VerifierRouter *VerifierRouterCaller) Batch100Verifier(opts *bind.CallOpt
 
 }
 
-// Batch100Verifier is a free data retrieval call binding the contract method 0xce455515.
+// GetCreateCreditVerifier is a free data retrieval call binding the contract method 0x445fc806.
 //
-// Solidity: function batch100Verifier() view returns(address)
-func (_VerifierRouter *VerifierRouterSession) Batch100Verifier() (common.Address, error) {
-	return _VerifierRouter.Contract.Batch100Verifier(&_VerifierRouter.CallOpts)
+// Solidity: function getCreateCreditVerifier() view returns(address)
+func (_VerifierRouter *VerifierRouterSession) GetCreateCreditVerifier() (common.Address, error) {
+	return _VerifierRouter.Contract.GetCreateCreditVerifier(&_VerifierRouter.CallOpts)
 }
 
-// Batch100Verifier is a free data retrieval call binding the contract method 0xce455515.
+// GetCreateCreditVerifier is a free data retrieval call binding the contract method 0x445fc806.
 //
-// Solidity: function batch100Verifier() view returns(address)
-func (_VerifierRouter *VerifierRouterCallerSession) Batch100Verifier() (common.Address, error) {
-	return _VerifierRouter.Contract.Batch100Verifier(&_VerifierRouter.CallOpts)
+// Solidity: function getCreateCreditVerifier() view returns(address)
+func (_VerifierRouter *VerifierRouterCallerSession) GetCreateCreditVerifier() (common.Address, error) {
+	return _VerifierRouter.Contract.GetCreateCreditVerifier(&_VerifierRouter.CallOpts)
 }
 
-// Batch10Verifier is a free data retrieval call binding the contract method 0x0c64ef86.
+// GetCreditCancelVerifier is a free data retrieval call binding the contract method 0x7207e214.
 //
-// Solidity: function batch10Verifier() view returns(address)
-func (_VerifierRouter *VerifierRouterCaller) Batch10Verifier(opts *bind.CallOpts) (common.Address, error) {
+// Solidity: function getCreditCancelVerifier() view returns(address)
+func (_VerifierRouter *VerifierRouterCaller) GetCreditCancelVerifier(opts *bind.CallOpts) (common.Address, error) {
 	var out []interface{}
-	err := _VerifierRouter.contract.Call(opts, &out, "batch10Verifier")
+	err := _VerifierRouter.contract.Call(opts, &out, "getCreditCancelVerifier")
 
 	if err != nil {
 		return *new(common.Address), err
@@ -228,288 +228,57 @@ func (_VerifierRouter *VerifierRouterCaller) Batch10Verifier(opts *bind.CallOpts
 
 }
 
-// Batch10Verifier is a free data retrieval call binding the contract method 0x0c64ef86.
+// GetCreditCancelVerifier is a free data retrieval call binding the contract method 0x7207e214.
 //
-// Solidity: function batch10Verifier() view returns(address)
-func (_VerifierRouter *VerifierRouterSession) Batch10Verifier() (common.Address, error) {
-	return _VerifierRouter.Contract.Batch10Verifier(&_VerifierRouter.CallOpts)
+// Solidity: function getCreditCancelVerifier() view returns(address)
+func (_VerifierRouter *VerifierRouterSession) GetCreditCancelVerifier() (common.Address, error) {
+	return _VerifierRouter.Contract.GetCreditCancelVerifier(&_VerifierRouter.CallOpts)
 }
 
-// Batch10Verifier is a free data retrieval call binding the contract method 0x0c64ef86.
+// GetCreditCancelVerifier is a free data retrieval call binding the contract method 0x7207e214.
 //
-// Solidity: function batch10Verifier() view returns(address)
-func (_VerifierRouter *VerifierRouterCallerSession) Batch10Verifier() (common.Address, error) {
-	return _VerifierRouter.Contract.Batch10Verifier(&_VerifierRouter.CallOpts)
-}
-
-// Batch1Verifier is a free data retrieval call binding the contract method 0xab2df0f9.
-//
-// Solidity: function batch1Verifier() view returns(address)
-func (_VerifierRouter *VerifierRouterCaller) Batch1Verifier(opts *bind.CallOpts) (common.Address, error) {
-	var out []interface{}
-	err := _VerifierRouter.contract.Call(opts, &out, "batch1Verifier")
-
-	if err != nil {
-		return *new(common.Address), err
-	}
-
-	out0 := *abi.ConvertType(out[0], new(common.Address)).(*common.Address)
-
-	return out0, err
-
-}
-
-// Batch1Verifier is a free data retrieval call binding the contract method 0xab2df0f9.
-//
-// Solidity: function batch1Verifier() view returns(address)
-func (_VerifierRouter *VerifierRouterSession) Batch1Verifier() (common.Address, error) {
-	return _VerifierRouter.Contract.Batch1Verifier(&_VerifierRouter.CallOpts)
-}
-
-// Batch1Verifier is a free data retrieval call binding the contract method 0xab2df0f9.
-//
-// Solidity: function batch1Verifier() view returns(address)
-func (_VerifierRouter *VerifierRouterCallerSession) Batch1Verifier() (common.Address, error) {
-	return _VerifierRouter.Contract.Batch1Verifier(&_VerifierRouter.CallOpts)
-}
-
-// Batch3Verifier is a free data retrieval call binding the contract method 0x4c72c129.
-//
-// Solidity: function batch3Verifier() view returns(address)
-func (_VerifierRouter *VerifierRouterCaller) Batch3Verifier(opts *bind.CallOpts) (common.Address, error) {
-	var out []interface{}
-	err := _VerifierRouter.contract.Call(opts, &out, "batch3Verifier")
-
-	if err != nil {
-		return *new(common.Address), err
-	}
-
-	out0 := *abi.ConvertType(out[0], new(common.Address)).(*common.Address)
-
-	return out0, err
-
-}
-
-// Batch3Verifier is a free data retrieval call binding the contract method 0x4c72c129.
-//
-// Solidity: function batch3Verifier() view returns(address)
-func (_VerifierRouter *VerifierRouterSession) Batch3Verifier() (common.Address, error) {
-	return _VerifierRouter.Contract.Batch3Verifier(&_VerifierRouter.CallOpts)
-}
-
-// Batch3Verifier is a free data retrieval call binding the contract method 0x4c72c129.
-//
-// Solidity: function batch3Verifier() view returns(address)
-func (_VerifierRouter *VerifierRouterCallerSession) Batch3Verifier() (common.Address, error) {
-	return _VerifierRouter.Contract.Batch3Verifier(&_VerifierRouter.CallOpts)
-}
-
-// CreditDraw100Verifier is a free data retrieval call binding the contract method 0x3c671715.
-//
-// Solidity: function creditDraw100Verifier() view returns(address)
-func (_VerifierRouter *VerifierRouterCaller) CreditDraw100Verifier(opts *bind.CallOpts) (common.Address, error) {
-	var out []interface{}
-	err := _VerifierRouter.contract.Call(opts, &out, "creditDraw100Verifier")
-
-	if err != nil {
-		return *new(common.Address), err
-	}
-
-	out0 := *abi.ConvertType(out[0], new(common.Address)).(*common.Address)
-
-	return out0, err
-
-}
-
-// CreditDraw100Verifier is a free data retrieval call binding the contract method 0x3c671715.
-//
-// Solidity: function creditDraw100Verifier() view returns(address)
-func (_VerifierRouter *VerifierRouterSession) CreditDraw100Verifier() (common.Address, error) {
-	return _VerifierRouter.Contract.CreditDraw100Verifier(&_VerifierRouter.CallOpts)
-}
-
-// CreditDraw100Verifier is a free data retrieval call binding the contract method 0x3c671715.
-//
-// Solidity: function creditDraw100Verifier() view returns(address)
-func (_VerifierRouter *VerifierRouterCallerSession) CreditDraw100Verifier() (common.Address, error) {
-	return _VerifierRouter.Contract.CreditDraw100Verifier(&_VerifierRouter.CallOpts)
-}
-
-// CreditDraw10Verifier is a free data retrieval call binding the contract method 0xff33c99f.
-//
-// Solidity: function creditDraw10Verifier() view returns(address)
-func (_VerifierRouter *VerifierRouterCaller) CreditDraw10Verifier(opts *bind.CallOpts) (common.Address, error) {
-	var out []interface{}
-	err := _VerifierRouter.contract.Call(opts, &out, "creditDraw10Verifier")
-
-	if err != nil {
-		return *new(common.Address), err
-	}
-
-	out0 := *abi.ConvertType(out[0], new(common.Address)).(*common.Address)
-
-	return out0, err
-
-}
-
-// CreditDraw10Verifier is a free data retrieval call binding the contract method 0xff33c99f.
-//
-// Solidity: function creditDraw10Verifier() view returns(address)
-func (_VerifierRouter *VerifierRouterSession) CreditDraw10Verifier() (common.Address, error) {
-	return _VerifierRouter.Contract.CreditDraw10Verifier(&_VerifierRouter.CallOpts)
-}
-
-// CreditDraw10Verifier is a free data retrieval call binding the contract method 0xff33c99f.
-//
-// Solidity: function creditDraw10Verifier() view returns(address)
-func (_VerifierRouter *VerifierRouterCallerSession) CreditDraw10Verifier() (common.Address, error) {
-	return _VerifierRouter.Contract.CreditDraw10Verifier(&_VerifierRouter.CallOpts)
-}
-
-// CreditDraw1Verifier is a free data retrieval call binding the contract method 0xc8d64835.
-//
-// Solidity: function creditDraw1Verifier() view returns(address)
-func (_VerifierRouter *VerifierRouterCaller) CreditDraw1Verifier(opts *bind.CallOpts) (common.Address, error) {
-	var out []interface{}
-	err := _VerifierRouter.contract.Call(opts, &out, "creditDraw1Verifier")
-
-	if err != nil {
-		return *new(common.Address), err
-	}
-
-	out0 := *abi.ConvertType(out[0], new(common.Address)).(*common.Address)
-
-	return out0, err
-
-}
-
-// CreditDraw1Verifier is a free data retrieval call binding the contract method 0xc8d64835.
-//
-// Solidity: function creditDraw1Verifier() view returns(address)
-func (_VerifierRouter *VerifierRouterSession) CreditDraw1Verifier() (common.Address, error) {
-	return _VerifierRouter.Contract.CreditDraw1Verifier(&_VerifierRouter.CallOpts)
-}
-
-// CreditDraw1Verifier is a free data retrieval call binding the contract method 0xc8d64835.
-//
-// Solidity: function creditDraw1Verifier() view returns(address)
-func (_VerifierRouter *VerifierRouterCallerSession) CreditDraw1Verifier() (common.Address, error) {
-	return _VerifierRouter.Contract.CreditDraw1Verifier(&_VerifierRouter.CallOpts)
-}
-
-// CreditDraw3Verifier is a free data retrieval call binding the contract method 0xca6ddfe1.
-//
-// Solidity: function creditDraw3Verifier() view returns(address)
-func (_VerifierRouter *VerifierRouterCaller) CreditDraw3Verifier(opts *bind.CallOpts) (common.Address, error) {
-	var out []interface{}
-	err := _VerifierRouter.contract.Call(opts, &out, "creditDraw3Verifier")
-
-	if err != nil {
-		return *new(common.Address), err
-	}
-
-	out0 := *abi.ConvertType(out[0], new(common.Address)).(*common.Address)
-
-	return out0, err
-
-}
-
-// CreditDraw3Verifier is a free data retrieval call binding the contract method 0xca6ddfe1.
-//
-// Solidity: function creditDraw3Verifier() view returns(address)
-func (_VerifierRouter *VerifierRouterSession) CreditDraw3Verifier() (common.Address, error) {
-	return _VerifierRouter.Contract.CreditDraw3Verifier(&_VerifierRouter.CallOpts)
-}
-
-// CreditDraw3Verifier is a free data retrieval call binding the contract method 0xca6ddfe1.
-//
-// Solidity: function creditDraw3Verifier() view returns(address)
-func (_VerifierRouter *VerifierRouterCallerSession) CreditDraw3Verifier() (common.Address, error) {
-	return _VerifierRouter.Contract.CreditDraw3Verifier(&_VerifierRouter.CallOpts)
-}
-
-// CreditReclaimVerifier is a free data retrieval call binding the contract method 0x6ae56772.
-//
-// Solidity: function creditReclaimVerifier() view returns(address)
-func (_VerifierRouter *VerifierRouterCaller) CreditReclaimVerifier(opts *bind.CallOpts) (common.Address, error) {
-	var out []interface{}
-	err := _VerifierRouter.contract.Call(opts, &out, "creditReclaimVerifier")
-
-	if err != nil {
-		return *new(common.Address), err
-	}
-
-	out0 := *abi.ConvertType(out[0], new(common.Address)).(*common.Address)
-
-	return out0, err
-
-}
-
-// CreditReclaimVerifier is a free data retrieval call binding the contract method 0x6ae56772.
-//
-// Solidity: function creditReclaimVerifier() view returns(address)
-func (_VerifierRouter *VerifierRouterSession) CreditReclaimVerifier() (common.Address, error) {
-	return _VerifierRouter.Contract.CreditReclaimVerifier(&_VerifierRouter.CallOpts)
-}
-
-// CreditReclaimVerifier is a free data retrieval call binding the contract method 0x6ae56772.
-//
-// Solidity: function creditReclaimVerifier() view returns(address)
-func (_VerifierRouter *VerifierRouterCallerSession) CreditReclaimVerifier() (common.Address, error) {
-	return _VerifierRouter.Contract.CreditReclaimVerifier(&_VerifierRouter.CallOpts)
+// Solidity: function getCreditCancelVerifier() view returns(address)
+func (_VerifierRouter *VerifierRouterCallerSession) GetCreditCancelVerifier() (common.Address, error) {
+	return _VerifierRouter.Contract.GetCreditCancelVerifier(&_VerifierRouter.CallOpts)
 }
 
 // GetCreditDrawVerifier is a free data retrieval call binding the contract method 0x86b5ceca.
 //
-// Solidity: function getCreditDrawVerifier(uint256 count) view returns(address verifier, uint256 maxSize)
-func (_VerifierRouter *VerifierRouterCaller) GetCreditDrawVerifier(opts *bind.CallOpts, count *big.Int) (struct {
-	Verifier common.Address
-	MaxSize  *big.Int
-}, error) {
+// Solidity: function getCreditDrawVerifier(uint256 inputs) view returns(address)
+func (_VerifierRouter *VerifierRouterCaller) GetCreditDrawVerifier(opts *bind.CallOpts, inputs *big.Int) (common.Address, error) {
 	var out []interface{}
-	err := _VerifierRouter.contract.Call(opts, &out, "getCreditDrawVerifier", count)
+	err := _VerifierRouter.contract.Call(opts, &out, "getCreditDrawVerifier", inputs)
 
-	outstruct := new(struct {
-		Verifier common.Address
-		MaxSize  *big.Int
-	})
 	if err != nil {
-		return *outstruct, err
+		return *new(common.Address), err
 	}
 
-	outstruct.Verifier = *abi.ConvertType(out[0], new(common.Address)).(*common.Address)
-	outstruct.MaxSize = *abi.ConvertType(out[1], new(*big.Int)).(**big.Int)
+	out0 := *abi.ConvertType(out[0], new(common.Address)).(*common.Address)
 
-	return *outstruct, err
+	return out0, err
 
 }
 
 // GetCreditDrawVerifier is a free data retrieval call binding the contract method 0x86b5ceca.
 //
-// Solidity: function getCreditDrawVerifier(uint256 count) view returns(address verifier, uint256 maxSize)
-func (_VerifierRouter *VerifierRouterSession) GetCreditDrawVerifier(count *big.Int) (struct {
-	Verifier common.Address
-	MaxSize  *big.Int
-}, error) {
-	return _VerifierRouter.Contract.GetCreditDrawVerifier(&_VerifierRouter.CallOpts, count)
+// Solidity: function getCreditDrawVerifier(uint256 inputs) view returns(address)
+func (_VerifierRouter *VerifierRouterSession) GetCreditDrawVerifier(inputs *big.Int) (common.Address, error) {
+	return _VerifierRouter.Contract.GetCreditDrawVerifier(&_VerifierRouter.CallOpts, inputs)
 }
 
 // GetCreditDrawVerifier is a free data retrieval call binding the contract method 0x86b5ceca.
 //
-// Solidity: function getCreditDrawVerifier(uint256 count) view returns(address verifier, uint256 maxSize)
-func (_VerifierRouter *VerifierRouterCallerSession) GetCreditDrawVerifier(count *big.Int) (struct {
-	Verifier common.Address
-	MaxSize  *big.Int
-}, error) {
-	return _VerifierRouter.Contract.GetCreditDrawVerifier(&_VerifierRouter.CallOpts, count)
+// Solidity: function getCreditDrawVerifier(uint256 inputs) view returns(address)
+func (_VerifierRouter *VerifierRouterCallerSession) GetCreditDrawVerifier(inputs *big.Int) (common.Address, error) {
+	return _VerifierRouter.Contract.GetCreditDrawVerifier(&_VerifierRouter.CallOpts, inputs)
 }
 
-// GetCreditReclaimVerifier is a free data retrieval call binding the contract method 0x0b0d79b3.
+// GetCreditTopUpVerifier is a free data retrieval call binding the contract method 0x604ee023.
 //
-// Solidity: function getCreditReclaimVerifier() view returns(address)
-func (_VerifierRouter *VerifierRouterCaller) GetCreditReclaimVerifier(opts *bind.CallOpts) (common.Address, error) {
+// Solidity: function getCreditTopUpVerifier() view returns(address)
+func (_VerifierRouter *VerifierRouterCaller) GetCreditTopUpVerifier(opts *bind.CallOpts) (common.Address, error) {
 	var out []interface{}
-	err := _VerifierRouter.contract.Call(opts, &out, "getCreditReclaimVerifier")
+	err := _VerifierRouter.contract.Call(opts, &out, "getCreditTopUpVerifier")
 
 	if err != nil {
 		return *new(common.Address), err
@@ -521,26 +290,26 @@ func (_VerifierRouter *VerifierRouterCaller) GetCreditReclaimVerifier(opts *bind
 
 }
 
-// GetCreditReclaimVerifier is a free data retrieval call binding the contract method 0x0b0d79b3.
+// GetCreditTopUpVerifier is a free data retrieval call binding the contract method 0x604ee023.
 //
-// Solidity: function getCreditReclaimVerifier() view returns(address)
-func (_VerifierRouter *VerifierRouterSession) GetCreditReclaimVerifier() (common.Address, error) {
-	return _VerifierRouter.Contract.GetCreditReclaimVerifier(&_VerifierRouter.CallOpts)
+// Solidity: function getCreditTopUpVerifier() view returns(address)
+func (_VerifierRouter *VerifierRouterSession) GetCreditTopUpVerifier() (common.Address, error) {
+	return _VerifierRouter.Contract.GetCreditTopUpVerifier(&_VerifierRouter.CallOpts)
 }
 
-// GetCreditReclaimVerifier is a free data retrieval call binding the contract method 0x0b0d79b3.
+// GetCreditTopUpVerifier is a free data retrieval call binding the contract method 0x604ee023.
 //
-// Solidity: function getCreditReclaimVerifier() view returns(address)
-func (_VerifierRouter *VerifierRouterCallerSession) GetCreditReclaimVerifier() (common.Address, error) {
-	return _VerifierRouter.Contract.GetCreditReclaimVerifier(&_VerifierRouter.CallOpts)
+// Solidity: function getCreditTopUpVerifier() view returns(address)
+func (_VerifierRouter *VerifierRouterCallerSession) GetCreditTopUpVerifier() (common.Address, error) {
+	return _VerifierRouter.Contract.GetCreditTopUpVerifier(&_VerifierRouter.CallOpts)
 }
 
-// GetShieldedPaymentVerifier is a free data retrieval call binding the contract method 0x7749a31b.
+// GetCrossTreeVerifier is a free data retrieval call binding the contract method 0xf63ba548.
 //
-// Solidity: function getShieldedPaymentVerifier() view returns(address)
-func (_VerifierRouter *VerifierRouterCaller) GetShieldedPaymentVerifier(opts *bind.CallOpts) (common.Address, error) {
+// Solidity: function getCrossTreeVerifier(uint256 inputs, uint256 outputs) view returns(address)
+func (_VerifierRouter *VerifierRouterCaller) GetCrossTreeVerifier(opts *bind.CallOpts, inputs *big.Int, outputs *big.Int) (common.Address, error) {
 	var out []interface{}
-	err := _VerifierRouter.contract.Call(opts, &out, "getShieldedPaymentVerifier")
+	err := _VerifierRouter.contract.Call(opts, &out, "getCrossTreeVerifier", inputs, outputs)
 
 	if err != nil {
 		return *new(common.Address), err
@@ -552,71 +321,26 @@ func (_VerifierRouter *VerifierRouterCaller) GetShieldedPaymentVerifier(opts *bi
 
 }
 
-// GetShieldedPaymentVerifier is a free data retrieval call binding the contract method 0x7749a31b.
+// GetCrossTreeVerifier is a free data retrieval call binding the contract method 0xf63ba548.
 //
-// Solidity: function getShieldedPaymentVerifier() view returns(address)
-func (_VerifierRouter *VerifierRouterSession) GetShieldedPaymentVerifier() (common.Address, error) {
-	return _VerifierRouter.Contract.GetShieldedPaymentVerifier(&_VerifierRouter.CallOpts)
+// Solidity: function getCrossTreeVerifier(uint256 inputs, uint256 outputs) view returns(address)
+func (_VerifierRouter *VerifierRouterSession) GetCrossTreeVerifier(inputs *big.Int, outputs *big.Int) (common.Address, error) {
+	return _VerifierRouter.Contract.GetCrossTreeVerifier(&_VerifierRouter.CallOpts, inputs, outputs)
 }
 
-// GetShieldedPaymentVerifier is a free data retrieval call binding the contract method 0x7749a31b.
+// GetCrossTreeVerifier is a free data retrieval call binding the contract method 0xf63ba548.
 //
-// Solidity: function getShieldedPaymentVerifier() view returns(address)
-func (_VerifierRouter *VerifierRouterCallerSession) GetShieldedPaymentVerifier() (common.Address, error) {
-	return _VerifierRouter.Contract.GetShieldedPaymentVerifier(&_VerifierRouter.CallOpts)
+// Solidity: function getCrossTreeVerifier(uint256 inputs, uint256 outputs) view returns(address)
+func (_VerifierRouter *VerifierRouterCallerSession) GetCrossTreeVerifier(inputs *big.Int, outputs *big.Int) (common.Address, error) {
+	return _VerifierRouter.Contract.GetCrossTreeVerifier(&_VerifierRouter.CallOpts, inputs, outputs)
 }
 
-// GetWithdrawVerifier is a free data retrieval call binding the contract method 0x1fb59810.
+// GetPrivateTransferVerifier is a free data retrieval call binding the contract method 0x25f670ac.
 //
-// Solidity: function getWithdrawVerifier(uint256 count) view returns(address verifier, uint256 maxSize)
-func (_VerifierRouter *VerifierRouterCaller) GetWithdrawVerifier(opts *bind.CallOpts, count *big.Int) (struct {
-	Verifier common.Address
-	MaxSize  *big.Int
-}, error) {
+// Solidity: function getPrivateTransferVerifier(uint256 inputs, uint256 outputs) view returns(address)
+func (_VerifierRouter *VerifierRouterCaller) GetPrivateTransferVerifier(opts *bind.CallOpts, inputs *big.Int, outputs *big.Int) (common.Address, error) {
 	var out []interface{}
-	err := _VerifierRouter.contract.Call(opts, &out, "getWithdrawVerifier", count)
-
-	outstruct := new(struct {
-		Verifier common.Address
-		MaxSize  *big.Int
-	})
-	if err != nil {
-		return *outstruct, err
-	}
-
-	outstruct.Verifier = *abi.ConvertType(out[0], new(common.Address)).(*common.Address)
-	outstruct.MaxSize = *abi.ConvertType(out[1], new(*big.Int)).(**big.Int)
-
-	return *outstruct, err
-
-}
-
-// GetWithdrawVerifier is a free data retrieval call binding the contract method 0x1fb59810.
-//
-// Solidity: function getWithdrawVerifier(uint256 count) view returns(address verifier, uint256 maxSize)
-func (_VerifierRouter *VerifierRouterSession) GetWithdrawVerifier(count *big.Int) (struct {
-	Verifier common.Address
-	MaxSize  *big.Int
-}, error) {
-	return _VerifierRouter.Contract.GetWithdrawVerifier(&_VerifierRouter.CallOpts, count)
-}
-
-// GetWithdrawVerifier is a free data retrieval call binding the contract method 0x1fb59810.
-//
-// Solidity: function getWithdrawVerifier(uint256 count) view returns(address verifier, uint256 maxSize)
-func (_VerifierRouter *VerifierRouterCallerSession) GetWithdrawVerifier(count *big.Int) (struct {
-	Verifier common.Address
-	MaxSize  *big.Int
-}, error) {
-	return _VerifierRouter.Contract.GetWithdrawVerifier(&_VerifierRouter.CallOpts, count)
-}
-
-// ShieldedPaymentVerifier is a free data retrieval call binding the contract method 0x5a36aaf1.
-//
-// Solidity: function shieldedPaymentVerifier() view returns(address)
-func (_VerifierRouter *VerifierRouterCaller) ShieldedPaymentVerifier(opts *bind.CallOpts) (common.Address, error) {
-	var out []interface{}
-	err := _VerifierRouter.contract.Call(opts, &out, "shieldedPaymentVerifier")
+	err := _VerifierRouter.contract.Call(opts, &out, "getPrivateTransferVerifier", inputs, outputs)
 
 	if err != nil {
 		return *new(common.Address), err
@@ -628,16 +352,16 @@ func (_VerifierRouter *VerifierRouterCaller) ShieldedPaymentVerifier(opts *bind.
 
 }
 
-// ShieldedPaymentVerifier is a free data retrieval call binding the contract method 0x5a36aaf1.
+// GetPrivateTransferVerifier is a free data retrieval call binding the contract method 0x25f670ac.
 //
-// Solidity: function shieldedPaymentVerifier() view returns(address)
-func (_VerifierRouter *VerifierRouterSession) ShieldedPaymentVerifier() (common.Address, error) {
-	return _VerifierRouter.Contract.ShieldedPaymentVerifier(&_VerifierRouter.CallOpts)
+// Solidity: function getPrivateTransferVerifier(uint256 inputs, uint256 outputs) view returns(address)
+func (_VerifierRouter *VerifierRouterSession) GetPrivateTransferVerifier(inputs *big.Int, outputs *big.Int) (common.Address, error) {
+	return _VerifierRouter.Contract.GetPrivateTransferVerifier(&_VerifierRouter.CallOpts, inputs, outputs)
 }
 
-// ShieldedPaymentVerifier is a free data retrieval call binding the contract method 0x5a36aaf1.
+// GetPrivateTransferVerifier is a free data retrieval call binding the contract method 0x25f670ac.
 //
-// Solidity: function shieldedPaymentVerifier() view returns(address)
-func (_VerifierRouter *VerifierRouterCallerSession) ShieldedPaymentVerifier() (common.Address, error) {
-	return _VerifierRouter.Contract.ShieldedPaymentVerifier(&_VerifierRouter.CallOpts)
+// Solidity: function getPrivateTransferVerifier(uint256 inputs, uint256 outputs) view returns(address)
+func (_VerifierRouter *VerifierRouterCallerSession) GetPrivateTransferVerifier(inputs *big.Int, outputs *big.Int) (common.Address, error) {
+	return _VerifierRouter.Contract.GetPrivateTransferVerifier(&_VerifierRouter.CallOpts, inputs, outputs)
 }

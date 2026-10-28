@@ -4,191 +4,324 @@ import (
 	"context"
 	"fmt"
 	"math/big"
-	"strings"
 	"sync"
+	"time"
 
 	"github.com/ethereum/go-ethereum"
-	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/core/types"
 )
 
-// InvisiTreeManagerOptions configures an InvisiTreeManager.
 type InvisiTreeManagerOptions struct {
 	Client          EthClient
 	InstanceAddress common.Address
 	FromBlock       uint64
+	PollInterval    time.Duration
+	OnError         func(error)
 }
-
-// treeEntry holds a tree and its sync.
 type treeEntry struct {
 	tree *InMemoryMerkleTree
 	sync *MerkleTreeSync
 }
 
-// InvisiTreeManager manages multiple Payment Trees indexed by treeID.
-// treeId starts at 1 (index 0 is reserved/invalid on-chain).
+// InvisiTreeManager retains every historical note tree and discovers new active
+// trees. IDs begin at one; each tree holds at most 65,536 commitments.
 type InvisiTreeManager struct {
 	client          EthClient
 	instanceAddress common.Address
 	fromBlock       uint64
-
-	mu        sync.RWMutex
-	trees     map[string]*treeEntry // keyed by treeID.String()
-	treeCount int
-	cancel    context.CancelFunc
+	pollInterval    time.Duration
+	onError         func(error)
+	ledger          *commitmentLedger
+	mu              sync.RWMutex
+	discoveryMu     sync.Mutex
+	lifecycleMu     sync.Mutex
+	runCtx          context.Context
+	trees           map[string]*treeEntry
+	treeCount       int
+	err             error
+	cancel          context.CancelFunc
+	running         bool
+	wg              sync.WaitGroup
 }
 
-// NewInvisiTreeManager creates a new multi-tree manager.
 func NewInvisiTreeManager(opts InvisiTreeManagerOptions) *InvisiTreeManager {
-	return &InvisiTreeManager{
-		client:          opts.Client,
-		instanceAddress: opts.InstanceAddress,
-		fromBlock:       opts.FromBlock,
-		trees:           make(map[string]*treeEntry),
+	interval := opts.PollInterval
+	if interval <= 0 {
+		interval = DefaultPollInterval
 	}
+	return &InvisiTreeManager{client: opts.Client, instanceAddress: opts.InstanceAddress, fromBlock: opts.FromBlock, pollInterval: interval, onError: opts.OnError, ledger: newCommitmentLedger(), trees: make(map[string]*treeEntry)}
 }
-
-// Start discovers all trees from the contract and starts syncing each.
 func (m *InvisiTreeManager) Start(ctx context.Context) error {
-	ctx, cancel := context.WithCancel(ctx)
-	m.cancel = cancel
-
-	count, err := m.fetchTreeCount(ctx)
+	m.lifecycleMu.Lock()
+	defer m.lifecycleMu.Unlock()
+	m.mu.RLock()
+	err := m.err
+	active := m.running && m.runCtx != nil && m.runCtx.Err() == nil
+	m.mu.RUnlock()
 	if err != nil {
-		cancel()
-		return fmt.Errorf("fetching tree count: %w", err)
+		return err
 	}
-	m.treeCount = count
-
-	// Start all trees concurrently
-	var wg sync.WaitGroup
-	errCh := make(chan error, count)
-
-	for i := 1; i <= count; i++ {
-		wg.Add(1)
-		treeID := big.NewInt(int64(i))
-		go func(id *big.Int) {
-			defer wg.Done()
-			if err := m.initTree(ctx, id); err != nil {
-				errCh <- fmt.Errorf("init tree %s: %w", id.String(), err)
+	if active {
+		return nil
+	}
+	m.wg.Wait()
+	if err := m.Error(); err != nil {
+		return err
+	}
+	if m.client == nil {
+		return fmt.Errorf("client is nil")
+	}
+	ctx, cancel := context.WithCancel(ctx)
+	m.mu.Lock()
+	m.cancel = cancel
+	m.runCtx = ctx
+	m.running = true
+	m.mu.Unlock()
+	launched := false
+	defer func() {
+		if !launched {
+			m.finishRun(cancel)
+		}
+	}()
+	ch := make(chan types.Log, 256)
+	query := ethereum.FilterQuery{FromBlock: new(big.Int).SetUint64(m.fromBlock), Addresses: []common.Address{m.instanceAddress}, Topics: [][]common.Hash{{treeCreatedEventSig}}}
+	sub, subErr := m.client.SubscribeFilterLogs(ctx, query, ch)
+	count, err := m.fetchActiveTreeID(ctx)
+	if err == nil && count < m.TreeCount() {
+		err = fmt.Errorf("active tree ID regressed; rebuild required")
+	}
+	if err == nil {
+		m.mu.RLock()
+		existing := make([]*treeEntry, 0, len(m.trees))
+		for _, entry := range m.trees {
+			existing = append(existing, entry)
+		}
+		m.mu.RUnlock()
+		for _, entry := range existing {
+			if err = entry.sync.Start(ctx); err != nil {
+				break
 			}
-		}(treeID)
-	}
-
-	wg.Wait()
-	close(errCh)
-
-	// Return first error if any
-	for err := range errCh {
-		if err != nil {
-			cancel()
-			return err
 		}
 	}
-
+	if err == nil {
+		err = m.discoverThrough(ctx, count)
+	}
+	if err != nil {
+		if sub != nil {
+			sub.Unsubscribe()
+		}
+		if ctx.Err() == nil {
+			m.fail(err)
+		}
+		return err
+	}
+	if err := ctx.Err(); err != nil {
+		if sub != nil {
+			sub.Unsubscribe()
+		}
+		return err
+	}
+	m.wg.Add(1)
+	launched = true
+	go func() {
+		defer m.wg.Done()
+		defer m.finishRun(cancel)
+		if subErr == nil {
+			defer sub.Unsubscribe()
+		}
+		m.watch(ctx, sub, ch)
+	}()
 	return nil
 }
-
-// Stop stops all tree syncs.
 func (m *InvisiTreeManager) Stop() {
-	if m.cancel != nil {
-		m.cancel()
-	}
-	m.mu.RLock()
-	defer m.mu.RUnlock()
+	m.lifecycleMu.Lock()
+	defer m.lifecycleMu.Unlock()
+	m.mu.Lock()
+	cancel := m.cancel
+	m.running = false
+	entries := make([]*treeEntry, 0, len(m.trees))
 	for _, entry := range m.trees {
+		entries = append(entries, entry)
+	}
+	m.mu.Unlock()
+	if cancel != nil {
+		cancel()
+	}
+	m.wg.Wait()
+	for _, entry := range entries {
 		entry.sync.Stop()
 	}
 }
 
-// TreeCount returns the number of trees discovered from the contract.
-func (m *InvisiTreeManager) TreeCount() int {
-	return m.treeCount
+// finishRun releases every child subscription before allowing a restart.
+func (m *InvisiTreeManager) finishRun(cancel context.CancelFunc) {
+	cancel()
+	m.mu.RLock()
+	entries := make([]*treeEntry, 0, len(m.trees))
+	for _, entry := range m.trees {
+		entries = append(entries, entry)
+	}
+	m.mu.RUnlock()
+	for _, entry := range entries {
+		entry.sync.Stop()
+	}
+	m.mu.Lock()
+	m.running = false
+	m.mu.Unlock()
 }
 
-// GetTree returns the InMemoryMerkleTree for the given treeID.
-func (m *InvisiTreeManager) GetTree(treeID *big.Int) (*InMemoryMerkleTree, error) {
+func (m *InvisiTreeManager) Error() error { m.mu.RLock(); defer m.mu.RUnlock(); return m.err }
+func (m *InvisiTreeManager) fail(err error) {
+	m.mu.Lock()
+	if m.err != nil {
+		m.mu.Unlock()
+		return
+	}
+	m.err = err
+	m.running = false
+	cancel := m.cancel
+	m.mu.Unlock()
+	if cancel != nil {
+		cancel()
+	}
+	if m.onError != nil {
+		go m.onError(err)
+	}
+}
+func (m *InvisiTreeManager) TreeCount() int { m.mu.RLock(); defer m.mu.RUnlock(); return m.treeCount }
+func (m *InvisiTreeManager) GetTree(id *big.Int) (*InMemoryMerkleTree, error) {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
-	entry, ok := m.trees[treeID.String()]
+	if m.err != nil {
+		return nil, m.err
+	}
+	if id == nil || id.Sign() <= 0 {
+		return nil, fmt.Errorf("tree ID must be positive")
+	}
+	entry, ok := m.trees[id.String()]
 	if !ok {
-		return nil, fmt.Errorf("tree %s not found", treeID.String())
+		return nil, fmt.Errorf("tree %s not found", id)
+	}
+	if err := entry.sync.Error(); err != nil {
+		return nil, err
 	}
 	return entry.tree, nil
 }
-
-// GetPaymentProof returns a MerkleProof for a leaf in the specified tree.
-func (m *InvisiTreeManager) GetPaymentProof(treeID *big.Int, leafIndex int) (MerkleProof, error) {
-	m.mu.RLock()
-	defer m.mu.RUnlock()
-	entry, ok := m.trees[treeID.String()]
-	if !ok {
-		return MerkleProof{}, fmt.Errorf("tree %s not found", treeID.String())
-	}
-	return entry.tree.GetProof(leafIndex)
-}
-
-// initTree creates and starts a single tree sync.
-func (m *InvisiTreeManager) initTree(ctx context.Context, treeID *big.Int) error {
-	tree, err := NewInMemoryMerkleTree()
+func (m *InvisiTreeManager) GetNoteProof(id *big.Int, index int) (MerkleProof, error) {
+	tree, err := m.GetTree(id)
 	if err != nil {
-		return err
+		return MerkleProof{}, err
 	}
-
-	s := NewMerkleTreeSync(MerkleTreeSyncOptions{
-		Tree:            tree,
-		Client:          m.client,
-		InstanceAddress: m.instanceAddress,
-		FromBlock:       m.fromBlock,
-		TreeID:          treeID,
-	})
-
-	if err := s.Start(ctx); err != nil {
-		return err
+	return tree.GetProof(index)
+}
+func (m *InvisiTreeManager) discoverThrough(ctx context.Context, count int) error {
+	m.discoveryMu.Lock()
+	defer m.discoveryMu.Unlock()
+	for id := m.TreeCount() + 1; id <= count; id++ {
+		if err := ctx.Err(); err != nil {
+			return err
+		}
+		tree, err := NewInMemoryMerkleTree()
+		if err != nil {
+			return err
+		}
+		s := NewMerkleTreeSync(MerkleTreeSyncOptions{Tree: tree, Client: m.client, InstanceAddress: m.instanceAddress, FromBlock: m.fromBlock, TreeID: big.NewInt(int64(id)), PollInterval: m.pollInterval, OnError: m.fail, ledger: m.ledger})
+		if err = s.Start(ctx); err != nil {
+			return fmt.Errorf("sync tree %d: %w", id, err)
+		}
+		m.mu.Lock()
+		if !m.running {
+			m.mu.Unlock()
+			s.Stop()
+			return ctx.Err()
+		}
+		m.trees[big.NewInt(int64(id)).String()] = &treeEntry{tree, s}
+		m.treeCount = id
+		m.mu.Unlock()
 	}
-
-	m.mu.Lock()
-	m.trees[treeID.String()] = &treeEntry{tree: tree, sync: s}
-	m.mu.Unlock()
-
 	return nil
 }
-
-// fetchTreeCount calls getTreeCount() on the contract.
-func (m *InvisiTreeManager) fetchTreeCount(ctx context.Context) (int, error) {
-	// ABI-encode getTreeCount() call.
-	// getTreeCount() has selector 0x091f3d5e (keccak256("getTreeCount()")[:4]).
-	// We construct it from ABI to be safe.
-	const getTreeCountABI = `[{"type":"function","name":"getTreeCount","inputs":[],"outputs":[{"name":"count","type":"uint256"}]}]`
-	parsed, err := abi.JSON(strings.NewReader(getTreeCountABI))
+func (m *InvisiTreeManager) fetchActiveTreeID(ctx context.Context) (int, error) {
+	data, err := protocolABI.Pack("activeNoteTreeId")
 	if err != nil {
 		return 0, err
 	}
-
-	calldata, err := parsed.Pack("getTreeCount")
+	result, err := m.client.CallContract(ctx, ethereum.CallMsg{To: &m.instanceAddress, Data: data}, nil)
 	if err != nil {
 		return 0, err
 	}
-
-	result, err := m.client.CallContract(ctx, ethereum.CallMsg{
-		To:   &m.instanceAddress,
-		Data: calldata,
-	}, nil)
+	values, err := protocolABI.Unpack("activeNoteTreeId", result)
 	if err != nil {
 		return 0, err
 	}
-
-	outputs, err := parsed.Unpack("getTreeCount", result)
-	if err != nil {
-		return 0, err
+	if len(values) != 1 {
+		return 0, fmt.Errorf("activeNoteTreeId returned invalid result")
 	}
-	if len(outputs) == 0 {
-		return 0, fmt.Errorf("getTreeCount returned no outputs")
+	id := values[0].(*big.Int)
+	if id.Sign() <= 0 || !id.IsInt64() || uint64(id.Int64()) > uint64(^uint(0)>>1) {
+		return 0, fmt.Errorf("invalid active note tree ID %s", id)
 	}
-
-	count, ok := outputs[0].(*big.Int)
-	if !ok {
-		return 0, fmt.Errorf("getTreeCount: unexpected type %T", outputs[0])
+	return int(id.Int64()), nil
+}
+func (m *InvisiTreeManager) watch(ctx context.Context, sub ethereum.Subscription, ch <-chan types.Log) {
+	var errors <-chan error
+	if sub != nil {
+		errors = sub.Err()
 	}
-	return int(count.Int64()), nil
+	ticker := time.NewTicker(m.pollInterval)
+	defer ticker.Stop()
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case err, ok := <-errors:
+			if ok && err != nil && ctx.Err() == nil {
+				m.fail(err)
+			}
+			return
+		case log, ok := <-ch:
+			if !ok {
+				m.fail(fmt.Errorf("tree discovery subscription closed"))
+				return
+			}
+			if log.Address != m.instanceAddress || len(log.Topics) == 0 || log.Topics[0] != treeCreatedEventSig {
+				continue
+			}
+			if log.Removed {
+				m.fail(fmt.Errorf("TreeCreated removed by reorg; rebuild required"))
+				return
+			}
+			if len(log.Topics) != 2 {
+				m.fail(fmt.Errorf("invalid TreeCreated topics"))
+				return
+			}
+			id := new(big.Int).SetBytes(log.Topics[1][:])
+			if !id.IsInt64() || id.Sign() <= 0 || uint64(id.Int64()) > uint64(^uint(0)>>1) {
+				m.fail(fmt.Errorf("invalid TreeCreated ID"))
+				return
+			}
+			if err := m.discoverThrough(ctx, int(id.Int64())); err != nil {
+				if ctx.Err() == nil {
+					m.fail(err)
+				}
+				return
+			}
+		case <-ticker.C:
+			count, err := m.fetchActiveTreeID(ctx)
+			if err != nil {
+				continue
+			}
+			if count < m.TreeCount() {
+				m.fail(fmt.Errorf("active tree ID regressed; rebuild required"))
+				return
+			}
+			if err = m.discoverThrough(ctx, count); err != nil {
+				if ctx.Err() == nil {
+					m.fail(err)
+				}
+				return
+			}
+		}
+	}
 }

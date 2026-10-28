@@ -17,8 +17,8 @@ func makeProposeParams() ProposeParams {
 	}
 }
 
-func TestComputePaymentCommitmentForPropose_ReturnsNonceAndCommitment(t *testing.T) {
-	result, err := ComputePaymentCommitmentForPropose(makeProposeParams())
+func TestComputeNoteCommitmentForPropose_ReturnsNonceAndCommitment(t *testing.T) {
+	result, err := ComputeNoteCommitmentForPropose(makeProposeParams())
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -28,20 +28,20 @@ func TestComputePaymentCommitmentForPropose_ReturnsNonceAndCommitment(t *testing
 		t.Error("Nonce is zero")
 	}
 
-	// PaymentCommitment must not be zero
-	if result.PaymentCommitment == (common.Hash{}) {
-		t.Error("PaymentCommitment is zero")
+	// NoteCommitment must not be zero
+	if result.NoteCommitment == (common.Hash{}) {
+		t.Error("NoteCommitment is zero")
 	}
 }
 
-func TestComputePaymentCommitmentForPropose_DifferentNoncesEachCall(t *testing.T) {
+func TestComputeNoteCommitmentForPropose_DifferentNoncesEachCall(t *testing.T) {
 	params := makeProposeParams()
 
-	a, err := ComputePaymentCommitmentForPropose(params)
+	a, err := ComputeNoteCommitmentForPropose(params)
 	if err != nil {
 		t.Fatal(err)
 	}
-	b, err := ComputePaymentCommitmentForPropose(params)
+	b, err := ComputeNoteCommitmentForPropose(params)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -49,15 +49,15 @@ func TestComputePaymentCommitmentForPropose_DifferentNoncesEachCall(t *testing.T
 	if a.Nonce == b.Nonce {
 		t.Error("Two calls produced the same nonce")
 	}
-	if a.PaymentCommitment == b.PaymentCommitment {
-		t.Error("Two calls produced the same paymentCommitment")
+	if a.NoteCommitment == b.NoteCommitment {
+		t.Error("Two calls produced the same noteCommitment")
 	}
 }
 
-func TestComputePaymentCommitmentForPropose_MatchesCoreComputation(t *testing.T) {
+func TestComputeNoteCommitmentForPropose_MatchesCoreComputation(t *testing.T) {
 	params := makeProposeParams()
 
-	result, err := ComputePaymentCommitmentForPropose(params)
+	result, err := ComputeNoteCommitmentForPropose(params)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -72,14 +72,14 @@ func TestComputePaymentCommitmentForPropose_MatchesCoreComputation(t *testing.T)
 	amountElem := core.BigIntToElement(params.Amount)
 	chainElem := core.BigIntToElement(params.ChainID)
 
-	expectedPC, err := core.ComputePaymentCommitment(chainElem, icElem, tokenElem, amountElem, nonceElem)
+	expectedPC, err := core.ComputeNoteCommitment(chainElem, icElem, tokenElem, amountElem, nonceElem)
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	expectedPCHash := common.HexToHash(core.ElementToHex(expectedPC))
-	if result.PaymentCommitment != expectedPCHash {
-		t.Errorf("PaymentCommitment mismatch: got %s, want %s",
-			result.PaymentCommitment.Hex(), expectedPCHash.Hex())
+	if result.NoteCommitment != expectedPCHash {
+		t.Errorf("NoteCommitment mismatch: got %s, want %s",
+			result.NoteCommitment.Hex(), expectedPCHash.Hex())
 	}
 }

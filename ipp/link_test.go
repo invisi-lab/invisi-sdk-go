@@ -1195,22 +1195,22 @@ func TestResolveLinkRejectsNonEnvelopeBody(t *testing.T) {
 }
 
 func TestResolveLinkRejectsVoucherEnvelope(t *testing.T) {
-	// A voucher carries nullifier_key; an anonymous public GET must never hand
+	// A voucher carries note_secret; an anonymous public GET must never hand
 	// one out, and the payer must not accept one if it does.
 	voucher := IPPVoucher{
 		V:       IPPCurrentVersion,
 		Network: "eip155:97",
 		Type:    MessageTypeVoucher,
 		Payload: IPPVoucherV1{
-			ReceivingAddress:  "0xrecv",
-			PaymentCommitment: "0xpc",
-			TokenAddress:      "0xtoken",
-			Operator:          "0xop",
-			Amount:            "1",
-			Nonce:             "0x1",
-			NullifierKey:      "0xnk",
-			TreeID:            "1",
-			Endpoint:          "https://pay.example.com",
+			ReceivingAddress: "0xrecv",
+			NoteCommitment:   "0xpc",
+			TokenAddress:     "0xtoken",
+			Operator:         "0xop",
+			Amount:           "1",
+			Nonce:            "0x1",
+			NoteSecret:       "0xnk",
+			TreeID:           "1",
+			Endpoint:         "https://pay.example.com",
 		},
 	}
 	body, err := EncodeVoucher(voucher, FormatJSON)
