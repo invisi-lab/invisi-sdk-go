@@ -119,17 +119,12 @@ func (s *WalletSession) frame(ctx context.Context, token common.Address, deadlin
 		return c, block, 0, errors.New("invalid deadline")
 	}
 	c.Now = new(big.Int).SetUint64(head.Time)
-	caller, e := contracts.NewInvisiProtocolCaller(c.ProtocolAddress, s.options.Provider)
+	code, e := s.options.Provider.CodeAt(ctx, token, new(big.Int).SetUint64(block.Number))
 	if e != nil {
 		return c, block, 0, e
 	}
-	opts := &bind.CallOpts{Context: ctx, BlockNumber: new(big.Int).SetUint64(block.Number)}
-	config, e := caller.GetTokenConfig(opts, token)
-	if e != nil {
-		return c, block, 0, e
-	}
-	if !config.Registered {
-		return c, block, 0, errors.New("unsupported token")
+	if len(code) == 0 {
+		return c, block, 0, errors.New("token address must have contract code")
 	}
 	state, e := s.preparationInventory(ctx)
 	if e != nil {

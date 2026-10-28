@@ -119,7 +119,7 @@ result, err := session.Refresh(ctx, sdk.RefreshOptions{
 - `PrepareCancelCredit`: owner-authorized complete public refund; expiry does not prohibit cancellation.
 - `PrepareTopUpCredit`: owner-authorized increase before expiry; the replacement expiry may stay unchanged or increase.
 
-The contract determines token support, pauses and limits. Registry metadata is independent of supported tokens. Ordinary proof capacity is selected automatically from combined input/output counts: 14/56/112/168. Credit creation/top-up supports up to ten funds inputs. Input reservations are atomic and cover both local roles of the same Credit leaf.
+ERC20 assets require no token registration, token pause configuration or deposit limits. Global pauses, address screening and funding/spend authorization remain enforced. Receiving-key registry metadata is independent of token selection. Ordinary proof capacity is selected automatically from combined input/output counts: 14/56/112/168. Credit creation/top-up supports up to ten funds inputs. Input reservations are atomic and cover both local roles of the same Credit leaf.
 
 `Preview` exposes recipients, amounts, change, Credit roles, expiry and required permissions without exporting note secrets or private signatures. `Authorize` signs the complete frozen operation statement. `Prove` rejects stale circuit/VK identities and different public inputs, then independently verifies the returned bundle. Proof generation and private authorization do not consume the public payer's funding nonce.
 

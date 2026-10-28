@@ -118,13 +118,6 @@ type IInvisiProtocolShieldParams struct {
 	Deadline          *big.Int
 }
 
-// IInvisiProtocolTokenConfig is an auto generated low-level Go binding around an user-defined struct.
-type IInvisiProtocolTokenConfig struct {
-	Registered    bool
-	Paused        bool
-	MaxPerDeposit *big.Int
-}
-
 // IInvisiProtocolTopUpCreditParams is an auto generated low-level Go binding around an user-defined struct.
 type IInvisiProtocolTopUpCreditParams struct {
 	Creation        IInvisiProtocolCreateCreditParams
@@ -151,7 +144,7 @@ type InstanceParams struct {
 
 // InvisiProtocolMetaData contains all meta data concerning the InvisiProtocol contract.
 var InvisiProtocolMetaData = &bind.MetaData{
-	ABI: "[{\"type\":\"constructor\",\"inputs\":[{\"name\":\"params\",\"type\":\"tuple\",\"internalType\":\"structInstanceParams\",\"components\":[{\"name\":\"factory\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"initialOwner\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"globalEmergency\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"emergencyAdmin\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"verifierRouter\",\"type\":\"address\",\"internalType\":\"contractIVerifierRouter\"}]},{\"name\":\"_screener\",\"type\":\"address\",\"internalType\":\"address\"}],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"CHAIN_ID\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"FUND_SHIELD_TYPEHASH\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"FUND_TRANSACT_TYPEHASH\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"VERSION\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"acceptOwnership\",\"inputs\":[],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"activeNoteTreeId\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"addToken\",\"inputs\":[{\"name\":\"token\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"limit\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"cancelCredit\",\"inputs\":[{\"name\":\"\",\"type\":\"bytes\",\"internalType\":\"bytes\"},{\"name\":\"p\",\"type\":\"tuple\",\"internalType\":\"structIInvisiProtocol.CancelCreditParams\",\"components\":[{\"name\":\"token\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"source\",\"type\":\"tuple\",\"internalType\":\"structIInvisiProtocol.InputSource\",\"components\":[{\"name\":\"treeId\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"merkleRoot\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}]},{\"name\":\"nullifier\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"owner\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"amount\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"deadline\",\"type\":\"uint256\",\"internalType\":\"uint256\"}]}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"circuitPaused\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"bool\",\"internalType\":\"bool\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"createCredit\",\"inputs\":[{\"name\":\"\",\"type\":\"bytes\",\"internalType\":\"bytes\"},{\"name\":\"p\",\"type\":\"tuple\",\"internalType\":\"structIInvisiProtocol.CreateCreditParams\",\"components\":[{\"name\":\"token\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"sources\",\"type\":\"tuple[]\",\"internalType\":\"structIInvisiProtocol.InputSource[]\",\"components\":[{\"name\":\"treeId\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"merkleRoot\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}]},{\"name\":\"nullifiers\",\"type\":\"bytes32[]\",\"internalType\":\"bytes32[]\"},{\"name\":\"creditCommitment\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"changeCommitment\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"owner\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"expiry\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"deadline\",\"type\":\"uint256\",\"internalType\":\"uint256\"}]},{\"name\":\"\",\"type\":\"tuple[]\",\"internalType\":\"structIInvisiProtocol.Delivery[]\",\"components\":[{\"name\":\"ciphertext\",\"type\":\"bytes\",\"internalType\":\"bytes\"},{\"name\":\"clue\",\"type\":\"bytes\",\"internalType\":\"bytes\"}]},{\"name\":\"\",\"type\":\"tuple\",\"internalType\":\"structIInvisiProtocol.FundingParams\",\"components\":[{\"name\":\"payer\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"amount\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"sigNonce\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"deadline\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"signature\",\"type\":\"bytes\",\"internalType\":\"bytes\"},{\"name\":\"permit\",\"type\":\"tuple\",\"internalType\":\"structIInvisiMetaTx.TokenPermit\",\"components\":[{\"name\":\"deadline\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"v\",\"type\":\"uint8\",\"internalType\":\"uint8\"},{\"name\":\"r\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"s\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}]}]}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"creditDraw\",\"inputs\":[{\"name\":\"\",\"type\":\"bytes\",\"internalType\":\"bytes\"},{\"name\":\"p\",\"type\":\"tuple\",\"internalType\":\"structIInvisiProtocol.CreditDrawParams\",\"components\":[{\"name\":\"token\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"sources\",\"type\":\"tuple[]\",\"internalType\":\"structIInvisiProtocol.InputSource[]\",\"components\":[{\"name\":\"treeId\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"merkleRoot\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}]},{\"name\":\"nullifiers\",\"type\":\"bytes32[]\",\"internalType\":\"bytes32[]\"},{\"name\":\"remainderCommitments\",\"type\":\"bytes32[]\",\"internalType\":\"bytes32[]\"},{\"name\":\"expiries\",\"type\":\"uint256[]\",\"internalType\":\"uint256[]\"},{\"name\":\"recoveryAmounts\",\"type\":\"bytes32[]\",\"internalType\":\"bytes32[]\"},{\"name\":\"spender\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"totalAmount\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"deadline\",\"type\":\"uint256\",\"internalType\":\"uint256\"}]},{\"name\":\"\",\"type\":\"tuple[]\",\"internalType\":\"structIInvisiProtocol.Delivery[]\",\"components\":[{\"name\":\"ciphertext\",\"type\":\"bytes\",\"internalType\":\"bytes\"},{\"name\":\"clue\",\"type\":\"bytes\",\"internalType\":\"bytes\"}]}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"eip712Domain\",\"inputs\":[],\"outputs\":[{\"name\":\"fields\",\"type\":\"bytes1\",\"internalType\":\"bytes1\"},{\"name\":\"name\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"version\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"chainId\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"verifyingContract\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"salt\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"extensions\",\"type\":\"uint256[]\",\"internalType\":\"uint256[]\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"emergencyAdmin\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"address\",\"internalType\":\"address\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"factory\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"address\",\"internalType\":\"address\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getNoteTreeNextLeafIndex\",\"inputs\":[{\"name\":\"treeId\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[{\"name\":\"\",\"type\":\"uint32\",\"internalType\":\"uint32\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getNoteTreeRoot\",\"inputs\":[{\"name\":\"treeId\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[{\"name\":\"\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getTokenConfig\",\"inputs\":[{\"name\":\"token\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[{\"name\":\"\",\"type\":\"tuple\",\"internalType\":\"structIInvisiProtocol.TokenConfig\",\"components\":[{\"name\":\"registered\",\"type\":\"bool\",\"internalType\":\"bool\"},{\"name\":\"paused\",\"type\":\"bool\",\"internalType\":\"bool\"},{\"name\":\"maxPerDeposit\",\"type\":\"uint256\",\"internalType\":\"uint256\"}]}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getTreeCount\",\"inputs\":[],\"outputs\":[{\"name\":\"count\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"globalEmergency\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"address\",\"internalType\":\"address\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"globalPause\",\"inputs\":[],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"globalUnpause\",\"inputs\":[],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"invalidateNonce\",\"inputs\":[],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"isCommitmentPaid\",\"inputs\":[{\"name\":\"noteCommitment\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}],\"outputs\":[{\"name\":\"\",\"type\":\"bool\",\"internalType\":\"bool\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"isNullifierSpent\",\"inputs\":[{\"name\":\"nullifier\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}],\"outputs\":[{\"name\":\"\",\"type\":\"bool\",\"internalType\":\"bool\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"isTreeFull\",\"inputs\":[{\"name\":\"treeId\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[{\"name\":\"\",\"type\":\"bool\",\"internalType\":\"bool\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"maxPerDeposit\",\"inputs\":[{\"name\":\"token\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[{\"name\":\"\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"nonces\",\"inputs\":[{\"name\":\"\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[{\"name\":\"\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"owner\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"address\",\"internalType\":\"address\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"pause\",\"inputs\":[],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"pauseToken\",\"inputs\":[{\"name\":\"token\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"paused\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"bool\",\"internalType\":\"bool\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"pendingOwner\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"address\",\"internalType\":\"address\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"renounceOwnership\",\"inputs\":[],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"rootHistory\",\"inputs\":[{\"name\":\"\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}],\"outputs\":[{\"name\":\"\",\"type\":\"bool\",\"internalType\":\"bool\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"screener\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"address\",\"internalType\":\"address\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"setDepositLimit\",\"inputs\":[{\"name\":\"token\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"newMaxPerDeposit\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"setScreener\",\"inputs\":[{\"name\":\"newScreener\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"shield\",\"inputs\":[{\"name\":\"p\",\"type\":\"tuple\",\"internalType\":\"structIInvisiProtocol.ShieldParams\",\"components\":[{\"name\":\"token\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"outputCommitments\",\"type\":\"bytes32[]\",\"internalType\":\"bytes32[]\"},{\"name\":\"deadline\",\"type\":\"uint256\",\"internalType\":\"uint256\"}]},{\"name\":\"\",\"type\":\"tuple[]\",\"internalType\":\"structIInvisiProtocol.ShieldOutput[]\",\"components\":[{\"name\":\"identity\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"amount\",\"type\":\"uint256\",\"internalType\":\"uint256\"}]},{\"name\":\"\",\"type\":\"tuple[]\",\"internalType\":\"structIInvisiProtocol.Delivery[]\",\"components\":[{\"name\":\"ciphertext\",\"type\":\"bytes\",\"internalType\":\"bytes\"},{\"name\":\"clue\",\"type\":\"bytes\",\"internalType\":\"bytes\"}]},{\"name\":\"\",\"type\":\"tuple\",\"internalType\":\"structIInvisiProtocol.FundingParams\",\"components\":[{\"name\":\"payer\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"amount\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"sigNonce\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"deadline\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"signature\",\"type\":\"bytes\",\"internalType\":\"bytes\"},{\"name\":\"permit\",\"type\":\"tuple\",\"internalType\":\"structIInvisiMetaTx.TokenPermit\",\"components\":[{\"name\":\"deadline\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"v\",\"type\":\"uint8\",\"internalType\":\"uint8\"},{\"name\":\"r\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"s\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}]}]}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"supportedTokens\",\"inputs\":[{\"name\":\"\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[{\"name\":\"\",\"type\":\"address\",\"internalType\":\"address\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"tokenCount\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"topUpCredit\",\"inputs\":[{\"name\":\"\",\"type\":\"bytes\",\"internalType\":\"bytes\"},{\"name\":\"p\",\"type\":\"tuple\",\"internalType\":\"structIInvisiProtocol.TopUpCreditParams\",\"components\":[{\"name\":\"creation\",\"type\":\"tuple\",\"internalType\":\"structIInvisiProtocol.CreateCreditParams\",\"components\":[{\"name\":\"token\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"sources\",\"type\":\"tuple[]\",\"internalType\":\"structIInvisiProtocol.InputSource[]\",\"components\":[{\"name\":\"treeId\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"merkleRoot\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}]},{\"name\":\"nullifiers\",\"type\":\"bytes32[]\",\"internalType\":\"bytes32[]\"},{\"name\":\"creditCommitment\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"changeCommitment\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"owner\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"expiry\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"deadline\",\"type\":\"uint256\",\"internalType\":\"uint256\"}]},{\"name\":\"creditSource\",\"type\":\"tuple\",\"internalType\":\"structIInvisiProtocol.InputSource\",\"components\":[{\"name\":\"treeId\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"merkleRoot\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}]},{\"name\":\"creditNullifier\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"previousExpiry\",\"type\":\"uint256\",\"internalType\":\"uint256\"}]},{\"name\":\"\",\"type\":\"tuple[]\",\"internalType\":\"structIInvisiProtocol.Delivery[]\",\"components\":[{\"name\":\"ciphertext\",\"type\":\"bytes\",\"internalType\":\"bytes\"},{\"name\":\"clue\",\"type\":\"bytes\",\"internalType\":\"bytes\"}]},{\"name\":\"\",\"type\":\"tuple\",\"internalType\":\"structIInvisiProtocol.FundingParams\",\"components\":[{\"name\":\"payer\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"amount\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"sigNonce\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"deadline\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"signature\",\"type\":\"bytes\",\"internalType\":\"bytes\"},{\"name\":\"permit\",\"type\":\"tuple\",\"internalType\":\"structIInvisiMetaTx.TokenPermit\",\"components\":[{\"name\":\"deadline\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"v\",\"type\":\"uint8\",\"internalType\":\"uint8\"},{\"name\":\"r\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"s\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}]}]}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"transact\",\"inputs\":[{\"name\":\"\",\"type\":\"bytes\",\"internalType\":\"bytes\"},{\"name\":\"requests\",\"type\":\"tuple[]\",\"internalType\":\"structIInvisiProtocol.TransactRequest[]\",\"components\":[{\"name\":\"params\",\"type\":\"tuple\",\"internalType\":\"structIInvisiProtocol.CrossTreeTransactParams\",\"components\":[{\"name\":\"token\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"sources\",\"type\":\"tuple[]\",\"internalType\":\"structIInvisiProtocol.InputSource[]\",\"components\":[{\"name\":\"treeId\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"merkleRoot\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}]},{\"name\":\"nullifiers\",\"type\":\"bytes32[]\",\"internalType\":\"bytes32[]\"},{\"name\":\"outputCommitments\",\"type\":\"bytes32[]\",\"internalType\":\"bytes32[]\"},{\"name\":\"withdrawalAddress\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"withdrawalAmount\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"deadline\",\"type\":\"uint256\",\"internalType\":\"uint256\"}]},{\"name\":\"deliveries\",\"type\":\"tuple[]\",\"internalType\":\"structIInvisiProtocol.Delivery[]\",\"components\":[{\"name\":\"ciphertext\",\"type\":\"bytes\",\"internalType\":\"bytes\"},{\"name\":\"clue\",\"type\":\"bytes\",\"internalType\":\"bytes\"}]},{\"name\":\"funding\",\"type\":\"tuple\",\"internalType\":\"structIInvisiProtocol.FundingParams\",\"components\":[{\"name\":\"payer\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"amount\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"sigNonce\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"deadline\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"signature\",\"type\":\"bytes\",\"internalType\":\"bytes\"},{\"name\":\"permit\",\"type\":\"tuple\",\"internalType\":\"structIInvisiMetaTx.TokenPermit\",\"components\":[{\"name\":\"deadline\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"v\",\"type\":\"uint8\",\"internalType\":\"uint8\"},{\"name\":\"r\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"s\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}]}]}]}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"transact\",\"inputs\":[{\"name\":\"\",\"type\":\"bytes\",\"internalType\":\"bytes\"},{\"name\":\"r\",\"type\":\"tuple\",\"internalType\":\"structIInvisiProtocol.TransactRequest\",\"components\":[{\"name\":\"params\",\"type\":\"tuple\",\"internalType\":\"structIInvisiProtocol.CrossTreeTransactParams\",\"components\":[{\"name\":\"token\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"sources\",\"type\":\"tuple[]\",\"internalType\":\"structIInvisiProtocol.InputSource[]\",\"components\":[{\"name\":\"treeId\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"merkleRoot\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}]},{\"name\":\"nullifiers\",\"type\":\"bytes32[]\",\"internalType\":\"bytes32[]\"},{\"name\":\"outputCommitments\",\"type\":\"bytes32[]\",\"internalType\":\"bytes32[]\"},{\"name\":\"withdrawalAddress\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"withdrawalAmount\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"deadline\",\"type\":\"uint256\",\"internalType\":\"uint256\"}]},{\"name\":\"deliveries\",\"type\":\"tuple[]\",\"internalType\":\"structIInvisiProtocol.Delivery[]\",\"components\":[{\"name\":\"ciphertext\",\"type\":\"bytes\",\"internalType\":\"bytes\"},{\"name\":\"clue\",\"type\":\"bytes\",\"internalType\":\"bytes\"}]},{\"name\":\"funding\",\"type\":\"tuple\",\"internalType\":\"structIInvisiProtocol.FundingParams\",\"components\":[{\"name\":\"payer\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"amount\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"sigNonce\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"deadline\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"signature\",\"type\":\"bytes\",\"internalType\":\"bytes\"},{\"name\":\"permit\",\"type\":\"tuple\",\"internalType\":\"structIInvisiMetaTx.TokenPermit\",\"components\":[{\"name\":\"deadline\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"v\",\"type\":\"uint8\",\"internalType\":\"uint8\"},{\"name\":\"r\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"s\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}]}]}]}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"transferOwnership\",\"inputs\":[{\"name\":\"newOwner\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"unpause\",\"inputs\":[],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"unpauseToken\",\"inputs\":[{\"name\":\"token\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"verifierRouter\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"address\",\"internalType\":\"contractIVerifierRouter\"}],\"stateMutability\":\"view\"},{\"type\":\"event\",\"name\":\"BatchOutputs\",\"inputs\":[{\"name\":\"treeId\",\"type\":\"uint256\",\"indexed\":true,\"internalType\":\"uint256\"},{\"name\":\"startLeafIndex\",\"type\":\"uint32\",\"indexed\":false,\"internalType\":\"uint32\"},{\"name\":\"firstOutputOffset\",\"type\":\"uint256\",\"indexed\":false,\"internalType\":\"uint256\"},{\"name\":\"tokens\",\"type\":\"address[]\",\"indexed\":false,\"internalType\":\"address[]\"},{\"name\":\"commitments\",\"type\":\"bytes32[]\",\"indexed\":false,\"internalType\":\"bytes32[]\"},{\"name\":\"packedDeliveries\",\"type\":\"bytes\",\"indexed\":false,\"internalType\":\"bytes\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"BatchRequest\",\"inputs\":[{\"name\":\"token\",\"type\":\"address\",\"indexed\":false,\"internalType\":\"address\"},{\"name\":\"requestIndex\",\"type\":\"uint256\",\"indexed\":true,\"internalType\":\"uint256\"},{\"name\":\"capacity\",\"type\":\"uint256\",\"indexed\":false,\"internalType\":\"uint256\"},{\"name\":\"sources\",\"type\":\"tuple[]\",\"indexed\":false,\"internalType\":\"structIInvisiProtocol.InputSource[]\",\"components\":[{\"name\":\"treeId\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"merkleRoot\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}]},{\"name\":\"nullifiers\",\"type\":\"bytes32[]\",\"indexed\":false,\"internalType\":\"bytes32[]\"},{\"name\":\"outputCount\",\"type\":\"uint256\",\"indexed\":false,\"internalType\":\"uint256\"},{\"name\":\"payer\",\"type\":\"address\",\"indexed\":false,\"internalType\":\"address\"},{\"name\":\"depositAmount\",\"type\":\"uint256\",\"indexed\":false,\"internalType\":\"uint256\"},{\"name\":\"withdrawalAddress\",\"type\":\"address\",\"indexed\":false,\"internalType\":\"address\"},{\"name\":\"withdrawalAmount\",\"type\":\"uint256\",\"indexed\":false,\"internalType\":\"uint256\"},{\"name\":\"deadline\",\"type\":\"uint256\",\"indexed\":false,\"internalType\":\"uint256\"},{\"name\":\"statementHash\",\"type\":\"bytes32\",\"indexed\":false,\"internalType\":\"bytes32\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"CircuitPauseUpdated\",\"inputs\":[{\"name\":\"paused\",\"type\":\"bool\",\"indexed\":false,\"internalType\":\"bool\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"CommitmentsInserted\",\"inputs\":[{\"name\":\"treeId\",\"type\":\"uint256\",\"indexed\":true,\"internalType\":\"uint256\"},{\"name\":\"startLeafIndex\",\"type\":\"uint32\",\"indexed\":false,\"internalType\":\"uint32\"},{\"name\":\"commitments\",\"type\":\"bytes32[]\",\"indexed\":false,\"internalType\":\"bytes32[]\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"CreditCancelled\",\"inputs\":[{\"name\":\"token\",\"type\":\"address\",\"indexed\":false,\"internalType\":\"address\"},{\"name\":\"owner\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"inputTreeId\",\"type\":\"uint256\",\"indexed\":true,\"internalType\":\"uint256\"},{\"name\":\"nullifier\",\"type\":\"bytes32\",\"indexed\":true,\"internalType\":\"bytes32\"},{\"name\":\"amount\",\"type\":\"uint256\",\"indexed\":false,\"internalType\":\"uint256\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"CreditCreated\",\"inputs\":[{\"name\":\"token\",\"type\":\"address\",\"indexed\":false,\"internalType\":\"address\"},{\"name\":\"owner\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"outputTreeId\",\"type\":\"uint256\",\"indexed\":true,\"internalType\":\"uint256\"},{\"name\":\"sources\",\"type\":\"tuple[]\",\"indexed\":false,\"internalType\":\"structIInvisiProtocol.InputSource[]\",\"components\":[{\"name\":\"treeId\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"merkleRoot\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}]},{\"name\":\"nullifiers\",\"type\":\"bytes32[]\",\"indexed\":false,\"internalType\":\"bytes32[]\"},{\"name\":\"creditCommitment\",\"type\":\"bytes32\",\"indexed\":false,\"internalType\":\"bytes32\"},{\"name\":\"changeCommitment\",\"type\":\"bytes32\",\"indexed\":false,\"internalType\":\"bytes32\"},{\"name\":\"leafIndices\",\"type\":\"uint32[]\",\"indexed\":false,\"internalType\":\"uint32[]\"},{\"name\":\"deliveries\",\"type\":\"tuple[]\",\"indexed\":false,\"internalType\":\"structIInvisiProtocol.Delivery[]\",\"components\":[{\"name\":\"ciphertext\",\"type\":\"bytes\",\"internalType\":\"bytes\"},{\"name\":\"clue\",\"type\":\"bytes\",\"internalType\":\"bytes\"}]},{\"name\":\"expiry\",\"type\":\"uint256\",\"indexed\":false,\"internalType\":\"uint256\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"CreditDraw\",\"inputs\":[{\"name\":\"spender\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"outputTreeId\",\"type\":\"uint256\",\"indexed\":true,\"internalType\":\"uint256\"},{\"name\":\"params\",\"type\":\"tuple\",\"indexed\":false,\"internalType\":\"structIInvisiProtocol.CreditDrawParams\",\"components\":[{\"name\":\"token\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"sources\",\"type\":\"tuple[]\",\"internalType\":\"structIInvisiProtocol.InputSource[]\",\"components\":[{\"name\":\"treeId\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"merkleRoot\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}]},{\"name\":\"nullifiers\",\"type\":\"bytes32[]\",\"internalType\":\"bytes32[]\"},{\"name\":\"remainderCommitments\",\"type\":\"bytes32[]\",\"internalType\":\"bytes32[]\"},{\"name\":\"expiries\",\"type\":\"uint256[]\",\"internalType\":\"uint256[]\"},{\"name\":\"recoveryAmounts\",\"type\":\"bytes32[]\",\"internalType\":\"bytes32[]\"},{\"name\":\"spender\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"totalAmount\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"deadline\",\"type\":\"uint256\",\"internalType\":\"uint256\"}]},{\"name\":\"remainderLeafIndices\",\"type\":\"uint32[]\",\"indexed\":false,\"internalType\":\"uint32[]\"},{\"name\":\"deliveries\",\"type\":\"tuple[]\",\"indexed\":false,\"internalType\":\"structIInvisiProtocol.Delivery[]\",\"components\":[{\"name\":\"ciphertext\",\"type\":\"bytes\",\"internalType\":\"bytes\"},{\"name\":\"clue\",\"type\":\"bytes\",\"internalType\":\"bytes\"}]}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"CreditToppedUp\",\"inputs\":[{\"name\":\"owner\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"outputTreeId\",\"type\":\"uint256\",\"indexed\":true,\"internalType\":\"uint256\"},{\"name\":\"params\",\"type\":\"tuple\",\"indexed\":false,\"internalType\":\"structIInvisiProtocol.TopUpCreditParams\",\"components\":[{\"name\":\"creation\",\"type\":\"tuple\",\"internalType\":\"structIInvisiProtocol.CreateCreditParams\",\"components\":[{\"name\":\"token\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"sources\",\"type\":\"tuple[]\",\"internalType\":\"structIInvisiProtocol.InputSource[]\",\"components\":[{\"name\":\"treeId\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"merkleRoot\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}]},{\"name\":\"nullifiers\",\"type\":\"bytes32[]\",\"internalType\":\"bytes32[]\"},{\"name\":\"creditCommitment\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"changeCommitment\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"owner\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"expiry\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"deadline\",\"type\":\"uint256\",\"internalType\":\"uint256\"}]},{\"name\":\"creditSource\",\"type\":\"tuple\",\"internalType\":\"structIInvisiProtocol.InputSource\",\"components\":[{\"name\":\"treeId\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"merkleRoot\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}]},{\"name\":\"creditNullifier\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"previousExpiry\",\"type\":\"uint256\",\"internalType\":\"uint256\"}]},{\"name\":\"leafIndices\",\"type\":\"uint32[]\",\"indexed\":false,\"internalType\":\"uint32[]\"},{\"name\":\"deliveries\",\"type\":\"tuple[]\",\"indexed\":false,\"internalType\":\"structIInvisiProtocol.Delivery[]\",\"components\":[{\"name\":\"ciphertext\",\"type\":\"bytes\",\"internalType\":\"bytes\"},{\"name\":\"clue\",\"type\":\"bytes\",\"internalType\":\"bytes\"}]}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"CrossTreeTransact\",\"inputs\":[{\"name\":\"token\",\"type\":\"address\",\"indexed\":false,\"internalType\":\"address\"},{\"name\":\"outputTreeId\",\"type\":\"uint256\",\"indexed\":true,\"internalType\":\"uint256\"},{\"name\":\"sources\",\"type\":\"tuple[]\",\"indexed\":false,\"internalType\":\"structIInvisiProtocol.InputSource[]\",\"components\":[{\"name\":\"treeId\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"merkleRoot\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}]},{\"name\":\"nullifiers\",\"type\":\"bytes32[]\",\"indexed\":false,\"internalType\":\"bytes32[]\"},{\"name\":\"outputCommitments\",\"type\":\"bytes32[]\",\"indexed\":false,\"internalType\":\"bytes32[]\"},{\"name\":\"leafIndices\",\"type\":\"uint32[]\",\"indexed\":false,\"internalType\":\"uint32[]\"},{\"name\":\"deliveries\",\"type\":\"tuple[]\",\"indexed\":false,\"internalType\":\"structIInvisiProtocol.Delivery[]\",\"components\":[{\"name\":\"ciphertext\",\"type\":\"bytes\",\"internalType\":\"bytes\"},{\"name\":\"clue\",\"type\":\"bytes\",\"internalType\":\"bytes\"}]},{\"name\":\"withdrawalAddress\",\"type\":\"address\",\"indexed\":false,\"internalType\":\"address\"},{\"name\":\"withdrawalAmount\",\"type\":\"uint256\",\"indexed\":false,\"internalType\":\"uint256\"},{\"name\":\"deadline\",\"type\":\"uint256\",\"indexed\":false,\"internalType\":\"uint256\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"DepositLimitUpdated\",\"inputs\":[{\"name\":\"token\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"maxPerDeposit\",\"type\":\"uint256\",\"indexed\":false,\"internalType\":\"uint256\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"EIP712DomainChanged\",\"inputs\":[],\"anonymous\":false},{\"type\":\"event\",\"name\":\"NonceInvalidated\",\"inputs\":[{\"name\":\"signer\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"newNonce\",\"type\":\"uint256\",\"indexed\":false,\"internalType\":\"uint256\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"OwnershipTransferStarted\",\"inputs\":[{\"name\":\"previousOwner\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"newOwner\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"OwnershipTransferred\",\"inputs\":[{\"name\":\"previousOwner\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"newOwner\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"Paused\",\"inputs\":[{\"name\":\"account\",\"type\":\"address\",\"indexed\":false,\"internalType\":\"address\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"PublicDeposit\",\"inputs\":[{\"name\":\"token\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"payer\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"amount\",\"type\":\"uint256\",\"indexed\":false,\"internalType\":\"uint256\"},{\"name\":\"proofHash\",\"type\":\"bytes32\",\"indexed\":false,\"internalType\":\"bytes32\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"ScreenerUpdated\",\"inputs\":[{\"name\":\"newScreener\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"Shield\",\"inputs\":[{\"name\":\"token\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"payer\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"amount\",\"type\":\"uint256\",\"indexed\":false,\"internalType\":\"uint256\"},{\"name\":\"treeId\",\"type\":\"uint256\",\"indexed\":true,\"internalType\":\"uint256\"},{\"name\":\"startLeafIndex\",\"type\":\"uint32\",\"indexed\":false,\"internalType\":\"uint32\"},{\"name\":\"deliveries\",\"type\":\"tuple[]\",\"indexed\":false,\"internalType\":\"structIInvisiProtocol.Delivery[]\",\"components\":[{\"name\":\"ciphertext\",\"type\":\"bytes\",\"internalType\":\"bytes\"},{\"name\":\"clue\",\"type\":\"bytes\",\"internalType\":\"bytes\"}]},{\"name\":\"deadline\",\"type\":\"uint256\",\"indexed\":false,\"internalType\":\"uint256\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"TokenAdded\",\"inputs\":[{\"name\":\"token\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"maxPerDeposit\",\"type\":\"uint256\",\"indexed\":false,\"internalType\":\"uint256\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"TokenPauseUpdated\",\"inputs\":[{\"name\":\"token\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"paused\",\"type\":\"bool\",\"indexed\":false,\"internalType\":\"bool\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"Transact\",\"inputs\":[{\"name\":\"token\",\"type\":\"address\",\"indexed\":false,\"internalType\":\"address\"},{\"name\":\"inputTreeId\",\"type\":\"uint256\",\"indexed\":true,\"internalType\":\"uint256\"},{\"name\":\"outputTreeId\",\"type\":\"uint256\",\"indexed\":true,\"internalType\":\"uint256\"},{\"name\":\"nullifiers\",\"type\":\"bytes32[]\",\"indexed\":false,\"internalType\":\"bytes32[]\"},{\"name\":\"outputCommitments\",\"type\":\"bytes32[]\",\"indexed\":false,\"internalType\":\"bytes32[]\"},{\"name\":\"leafIndices\",\"type\":\"uint32[]\",\"indexed\":false,\"internalType\":\"uint32[]\"},{\"name\":\"deliveries\",\"type\":\"tuple[]\",\"indexed\":false,\"internalType\":\"structIInvisiProtocol.Delivery[]\",\"components\":[{\"name\":\"ciphertext\",\"type\":\"bytes\",\"internalType\":\"bytes\"},{\"name\":\"clue\",\"type\":\"bytes\",\"internalType\":\"bytes\"}]},{\"name\":\"withdrawalAddress\",\"type\":\"address\",\"indexed\":false,\"internalType\":\"address\"},{\"name\":\"withdrawalAmount\",\"type\":\"uint256\",\"indexed\":false,\"internalType\":\"uint256\"},{\"name\":\"deadline\",\"type\":\"uint256\",\"indexed\":false,\"internalType\":\"uint256\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"TransactAggregated\",\"inputs\":[{\"name\":\"proofHash\",\"type\":\"bytes32\",\"indexed\":true,\"internalType\":\"bytes32\"},{\"name\":\"requestCount\",\"type\":\"uint256\",\"indexed\":false,\"internalType\":\"uint256\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"TreeCreated\",\"inputs\":[{\"name\":\"treeId\",\"type\":\"uint256\",\"indexed\":true,\"internalType\":\"uint256\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"Unpaused\",\"inputs\":[{\"name\":\"account\",\"type\":\"address\",\"indexed\":false,\"internalType\":\"address\"}],\"anonymous\":false},{\"type\":\"error\",\"name\":\"AddressScreeningFailed\",\"inputs\":[{\"name\":\"account\",\"type\":\"address\",\"internalType\":\"address\"}]},{\"type\":\"error\",\"name\":\"ChainIdMismatch\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"CommitmentAlreadyPaid\",\"inputs\":[{\"name\":\"commitment\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}]},{\"type\":\"error\",\"name\":\"CreditDrawWindowClosed\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"DoubleSpend\",\"inputs\":[{\"name\":\"nullifier\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}]},{\"type\":\"error\",\"name\":\"EnforcedPause\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"ExceedsDepositLimit\",\"inputs\":[{\"name\":\"amount\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"maxPerDeposit\",\"type\":\"uint256\",\"internalType\":\"uint256\"}]},{\"type\":\"error\",\"name\":\"ExpectedPause\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"ExpiryInPast\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"InexactTokenReceipt\",\"inputs\":[{\"name\":\"requested\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"received\",\"type\":\"uint256\",\"internalType\":\"uint256\"}]},{\"type\":\"error\",\"name\":\"InvalidAggregateBatch\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"InvalidAmount\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"InvalidBatchSize\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"InvalidCommitment\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"InvalidCreditExpiry\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"InvalidDelivery\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"InvalidFunding\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"InvalidIdentityCommitment\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"InvalidMerkleRoot\",\"inputs\":[{\"name\":\"root\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}]},{\"type\":\"error\",\"name\":\"InvalidNonce\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"InvalidNullifierKeyHash\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"InvalidOwnerIdentityCommitment\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"InvalidPrivateTransferCiphertext\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"InvalidPrivateTransferContext\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"InvalidPrivateTransferShape\",\"inputs\":[{\"name\":\"inputs\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"outputs\",\"type\":\"uint256\",\"internalType\":\"uint256\"}]},{\"type\":\"error\",\"name\":\"InvalidProof\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"InvalidReceivingAddress\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"InvalidShieldContext\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"InvalidShieldOutputCount\",\"inputs\":[{\"name\":\"outputs\",\"type\":\"uint256\",\"internalType\":\"uint256\"}]},{\"type\":\"error\",\"name\":\"InvalidShortString\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"InvalidSignature\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"InvalidToken\",\"inputs\":[{\"name\":\"token\",\"type\":\"address\",\"internalType\":\"address\"}]},{\"type\":\"error\",\"name\":\"InvalidTree\",\"inputs\":[{\"name\":\"treeId\",\"type\":\"uint256\",\"internalType\":\"uint256\"}]},{\"type\":\"error\",\"name\":\"LengthMismatch\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"NotEmergencyAdmin\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"NotGlobalEmergency\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"NullifierAlreadySpent\",\"inputs\":[{\"name\":\"nullifier\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}]},{\"type\":\"error\",\"name\":\"NullifiersEmpty\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"OwnableInvalidOwner\",\"inputs\":[{\"name\":\"owner\",\"type\":\"address\",\"internalType\":\"address\"}]},{\"type\":\"error\",\"name\":\"OwnableUnauthorizedAccount\",\"inputs\":[{\"name\":\"account\",\"type\":\"address\",\"internalType\":\"address\"}]},{\"type\":\"error\",\"name\":\"PrivateTransferExpired\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"ReentrancyGuardReentrantCall\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"ShieldExpired\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"SignatureExpired\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"StaleRoot\",\"inputs\":[{\"name\":\"root\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}]},{\"type\":\"error\",\"name\":\"StringTooLong\",\"inputs\":[{\"name\":\"str\",\"type\":\"string\",\"internalType\":\"string\"}]},{\"type\":\"error\",\"name\":\"TokenAlreadyRegistered\",\"inputs\":[{\"name\":\"token\",\"type\":\"address\",\"internalType\":\"address\"}]},{\"type\":\"error\",\"name\":\"TransferFailed\",\"inputs\":[{\"name\":\"token\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"to\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"amount\",\"type\":\"uint256\",\"internalType\":\"uint256\"}]},{\"type\":\"error\",\"name\":\"TreeFull\",\"inputs\":[{\"name\":\"treeId\",\"type\":\"uint256\",\"internalType\":\"uint256\"}]},{\"type\":\"error\",\"name\":\"UnsupportedToken\",\"inputs\":[{\"name\":\"token\",\"type\":\"address\",\"internalType\":\"address\"}]},{\"type\":\"error\",\"name\":\"WrongPermitToken\",\"inputs\":[{\"name\":\"provided\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"expected\",\"type\":\"address\",\"internalType\":\"address\"}]},{\"type\":\"error\",\"name\":\"ZeroNullifier\",\"inputs\":[]}]",
+	ABI: "[{\"type\":\"constructor\",\"inputs\":[{\"name\":\"params\",\"type\":\"tuple\",\"internalType\":\"structInstanceParams\",\"components\":[{\"name\":\"factory\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"initialOwner\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"globalEmergency\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"emergencyAdmin\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"verifierRouter\",\"type\":\"address\",\"internalType\":\"contractIVerifierRouter\"}]},{\"name\":\"_screener\",\"type\":\"address\",\"internalType\":\"address\"}],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"CHAIN_ID\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"FUND_SHIELD_TYPEHASH\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"FUND_TRANSACT_TYPEHASH\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"VERSION\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"acceptOwnership\",\"inputs\":[],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"activeNoteTreeId\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"cancelCredit\",\"inputs\":[{\"name\":\"\",\"type\":\"bytes\",\"internalType\":\"bytes\"},{\"name\":\"p\",\"type\":\"tuple\",\"internalType\":\"structIInvisiProtocol.CancelCreditParams\",\"components\":[{\"name\":\"token\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"source\",\"type\":\"tuple\",\"internalType\":\"structIInvisiProtocol.InputSource\",\"components\":[{\"name\":\"treeId\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"merkleRoot\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}]},{\"name\":\"nullifier\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"owner\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"amount\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"deadline\",\"type\":\"uint256\",\"internalType\":\"uint256\"}]}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"circuitPaused\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"bool\",\"internalType\":\"bool\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"createCredit\",\"inputs\":[{\"name\":\"\",\"type\":\"bytes\",\"internalType\":\"bytes\"},{\"name\":\"p\",\"type\":\"tuple\",\"internalType\":\"structIInvisiProtocol.CreateCreditParams\",\"components\":[{\"name\":\"token\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"sources\",\"type\":\"tuple[]\",\"internalType\":\"structIInvisiProtocol.InputSource[]\",\"components\":[{\"name\":\"treeId\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"merkleRoot\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}]},{\"name\":\"nullifiers\",\"type\":\"bytes32[]\",\"internalType\":\"bytes32[]\"},{\"name\":\"creditCommitment\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"changeCommitment\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"owner\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"expiry\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"deadline\",\"type\":\"uint256\",\"internalType\":\"uint256\"}]},{\"name\":\"\",\"type\":\"tuple[]\",\"internalType\":\"structIInvisiProtocol.Delivery[]\",\"components\":[{\"name\":\"ciphertext\",\"type\":\"bytes\",\"internalType\":\"bytes\"},{\"name\":\"clue\",\"type\":\"bytes\",\"internalType\":\"bytes\"}]},{\"name\":\"\",\"type\":\"tuple\",\"internalType\":\"structIInvisiProtocol.FundingParams\",\"components\":[{\"name\":\"payer\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"amount\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"sigNonce\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"deadline\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"signature\",\"type\":\"bytes\",\"internalType\":\"bytes\"},{\"name\":\"permit\",\"type\":\"tuple\",\"internalType\":\"structIInvisiMetaTx.TokenPermit\",\"components\":[{\"name\":\"deadline\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"v\",\"type\":\"uint8\",\"internalType\":\"uint8\"},{\"name\":\"r\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"s\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}]}]}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"creditDraw\",\"inputs\":[{\"name\":\"\",\"type\":\"bytes\",\"internalType\":\"bytes\"},{\"name\":\"p\",\"type\":\"tuple\",\"internalType\":\"structIInvisiProtocol.CreditDrawParams\",\"components\":[{\"name\":\"token\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"sources\",\"type\":\"tuple[]\",\"internalType\":\"structIInvisiProtocol.InputSource[]\",\"components\":[{\"name\":\"treeId\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"merkleRoot\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}]},{\"name\":\"nullifiers\",\"type\":\"bytes32[]\",\"internalType\":\"bytes32[]\"},{\"name\":\"remainderCommitments\",\"type\":\"bytes32[]\",\"internalType\":\"bytes32[]\"},{\"name\":\"expiries\",\"type\":\"uint256[]\",\"internalType\":\"uint256[]\"},{\"name\":\"recoveryAmounts\",\"type\":\"bytes32[]\",\"internalType\":\"bytes32[]\"},{\"name\":\"spender\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"totalAmount\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"deadline\",\"type\":\"uint256\",\"internalType\":\"uint256\"}]},{\"name\":\"\",\"type\":\"tuple[]\",\"internalType\":\"structIInvisiProtocol.Delivery[]\",\"components\":[{\"name\":\"ciphertext\",\"type\":\"bytes\",\"internalType\":\"bytes\"},{\"name\":\"clue\",\"type\":\"bytes\",\"internalType\":\"bytes\"}]}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"eip712Domain\",\"inputs\":[],\"outputs\":[{\"name\":\"fields\",\"type\":\"bytes1\",\"internalType\":\"bytes1\"},{\"name\":\"name\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"version\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"chainId\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"verifyingContract\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"salt\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"extensions\",\"type\":\"uint256[]\",\"internalType\":\"uint256[]\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"emergencyAdmin\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"address\",\"internalType\":\"address\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"factory\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"address\",\"internalType\":\"address\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getNoteTreeNextLeafIndex\",\"inputs\":[{\"name\":\"treeId\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[{\"name\":\"\",\"type\":\"uint32\",\"internalType\":\"uint32\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getNoteTreeRoot\",\"inputs\":[{\"name\":\"treeId\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[{\"name\":\"\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getTreeCount\",\"inputs\":[],\"outputs\":[{\"name\":\"count\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"globalEmergency\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"address\",\"internalType\":\"address\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"invalidateNonce\",\"inputs\":[],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"isCommitmentPaid\",\"inputs\":[{\"name\":\"noteCommitment\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}],\"outputs\":[{\"name\":\"\",\"type\":\"bool\",\"internalType\":\"bool\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"isNullifierSpent\",\"inputs\":[{\"name\":\"nullifier\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}],\"outputs\":[{\"name\":\"\",\"type\":\"bool\",\"internalType\":\"bool\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"isTreeFull\",\"inputs\":[{\"name\":\"treeId\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[{\"name\":\"\",\"type\":\"bool\",\"internalType\":\"bool\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"nonces\",\"inputs\":[{\"name\":\"\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[{\"name\":\"\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"owner\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"address\",\"internalType\":\"address\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"pause\",\"inputs\":[],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"pauseCircuit\",\"inputs\":[],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"paused\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"bool\",\"internalType\":\"bool\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"pendingOwner\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"address\",\"internalType\":\"address\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"renounceOwnership\",\"inputs\":[],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"rootHistory\",\"inputs\":[{\"name\":\"\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}],\"outputs\":[{\"name\":\"\",\"type\":\"bool\",\"internalType\":\"bool\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"screener\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"address\",\"internalType\":\"address\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"setScreener\",\"inputs\":[{\"name\":\"newScreener\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"shield\",\"inputs\":[{\"name\":\"p\",\"type\":\"tuple\",\"internalType\":\"structIInvisiProtocol.ShieldParams\",\"components\":[{\"name\":\"token\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"outputCommitments\",\"type\":\"bytes32[]\",\"internalType\":\"bytes32[]\"},{\"name\":\"deadline\",\"type\":\"uint256\",\"internalType\":\"uint256\"}]},{\"name\":\"\",\"type\":\"tuple[]\",\"internalType\":\"structIInvisiProtocol.ShieldOutput[]\",\"components\":[{\"name\":\"identity\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"amount\",\"type\":\"uint256\",\"internalType\":\"uint256\"}]},{\"name\":\"\",\"type\":\"tuple[]\",\"internalType\":\"structIInvisiProtocol.Delivery[]\",\"components\":[{\"name\":\"ciphertext\",\"type\":\"bytes\",\"internalType\":\"bytes\"},{\"name\":\"clue\",\"type\":\"bytes\",\"internalType\":\"bytes\"}]},{\"name\":\"\",\"type\":\"tuple\",\"internalType\":\"structIInvisiProtocol.FundingParams\",\"components\":[{\"name\":\"payer\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"amount\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"sigNonce\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"deadline\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"signature\",\"type\":\"bytes\",\"internalType\":\"bytes\"},{\"name\":\"permit\",\"type\":\"tuple\",\"internalType\":\"structIInvisiMetaTx.TokenPermit\",\"components\":[{\"name\":\"deadline\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"v\",\"type\":\"uint8\",\"internalType\":\"uint8\"},{\"name\":\"r\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"s\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}]}]}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"topUpCredit\",\"inputs\":[{\"name\":\"\",\"type\":\"bytes\",\"internalType\":\"bytes\"},{\"name\":\"p\",\"type\":\"tuple\",\"internalType\":\"structIInvisiProtocol.TopUpCreditParams\",\"components\":[{\"name\":\"creation\",\"type\":\"tuple\",\"internalType\":\"structIInvisiProtocol.CreateCreditParams\",\"components\":[{\"name\":\"token\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"sources\",\"type\":\"tuple[]\",\"internalType\":\"structIInvisiProtocol.InputSource[]\",\"components\":[{\"name\":\"treeId\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"merkleRoot\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}]},{\"name\":\"nullifiers\",\"type\":\"bytes32[]\",\"internalType\":\"bytes32[]\"},{\"name\":\"creditCommitment\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"changeCommitment\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"owner\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"expiry\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"deadline\",\"type\":\"uint256\",\"internalType\":\"uint256\"}]},{\"name\":\"creditSource\",\"type\":\"tuple\",\"internalType\":\"structIInvisiProtocol.InputSource\",\"components\":[{\"name\":\"treeId\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"merkleRoot\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}]},{\"name\":\"creditNullifier\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"previousExpiry\",\"type\":\"uint256\",\"internalType\":\"uint256\"}]},{\"name\":\"\",\"type\":\"tuple[]\",\"internalType\":\"structIInvisiProtocol.Delivery[]\",\"components\":[{\"name\":\"ciphertext\",\"type\":\"bytes\",\"internalType\":\"bytes\"},{\"name\":\"clue\",\"type\":\"bytes\",\"internalType\":\"bytes\"}]},{\"name\":\"\",\"type\":\"tuple\",\"internalType\":\"structIInvisiProtocol.FundingParams\",\"components\":[{\"name\":\"payer\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"amount\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"sigNonce\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"deadline\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"signature\",\"type\":\"bytes\",\"internalType\":\"bytes\"},{\"name\":\"permit\",\"type\":\"tuple\",\"internalType\":\"structIInvisiMetaTx.TokenPermit\",\"components\":[{\"name\":\"deadline\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"v\",\"type\":\"uint8\",\"internalType\":\"uint8\"},{\"name\":\"r\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"s\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}]}]}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"transact\",\"inputs\":[{\"name\":\"\",\"type\":\"bytes\",\"internalType\":\"bytes\"},{\"name\":\"requests\",\"type\":\"tuple[]\",\"internalType\":\"structIInvisiProtocol.TransactRequest[]\",\"components\":[{\"name\":\"params\",\"type\":\"tuple\",\"internalType\":\"structIInvisiProtocol.CrossTreeTransactParams\",\"components\":[{\"name\":\"token\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"sources\",\"type\":\"tuple[]\",\"internalType\":\"structIInvisiProtocol.InputSource[]\",\"components\":[{\"name\":\"treeId\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"merkleRoot\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}]},{\"name\":\"nullifiers\",\"type\":\"bytes32[]\",\"internalType\":\"bytes32[]\"},{\"name\":\"outputCommitments\",\"type\":\"bytes32[]\",\"internalType\":\"bytes32[]\"},{\"name\":\"withdrawalAddress\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"withdrawalAmount\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"deadline\",\"type\":\"uint256\",\"internalType\":\"uint256\"}]},{\"name\":\"deliveries\",\"type\":\"tuple[]\",\"internalType\":\"structIInvisiProtocol.Delivery[]\",\"components\":[{\"name\":\"ciphertext\",\"type\":\"bytes\",\"internalType\":\"bytes\"},{\"name\":\"clue\",\"type\":\"bytes\",\"internalType\":\"bytes\"}]},{\"name\":\"funding\",\"type\":\"tuple\",\"internalType\":\"structIInvisiProtocol.FundingParams\",\"components\":[{\"name\":\"payer\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"amount\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"sigNonce\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"deadline\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"signature\",\"type\":\"bytes\",\"internalType\":\"bytes\"},{\"name\":\"permit\",\"type\":\"tuple\",\"internalType\":\"structIInvisiMetaTx.TokenPermit\",\"components\":[{\"name\":\"deadline\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"v\",\"type\":\"uint8\",\"internalType\":\"uint8\"},{\"name\":\"r\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"s\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}]}]}]}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"transact\",\"inputs\":[{\"name\":\"\",\"type\":\"bytes\",\"internalType\":\"bytes\"},{\"name\":\"r\",\"type\":\"tuple\",\"internalType\":\"structIInvisiProtocol.TransactRequest\",\"components\":[{\"name\":\"params\",\"type\":\"tuple\",\"internalType\":\"structIInvisiProtocol.CrossTreeTransactParams\",\"components\":[{\"name\":\"token\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"sources\",\"type\":\"tuple[]\",\"internalType\":\"structIInvisiProtocol.InputSource[]\",\"components\":[{\"name\":\"treeId\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"merkleRoot\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}]},{\"name\":\"nullifiers\",\"type\":\"bytes32[]\",\"internalType\":\"bytes32[]\"},{\"name\":\"outputCommitments\",\"type\":\"bytes32[]\",\"internalType\":\"bytes32[]\"},{\"name\":\"withdrawalAddress\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"withdrawalAmount\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"deadline\",\"type\":\"uint256\",\"internalType\":\"uint256\"}]},{\"name\":\"deliveries\",\"type\":\"tuple[]\",\"internalType\":\"structIInvisiProtocol.Delivery[]\",\"components\":[{\"name\":\"ciphertext\",\"type\":\"bytes\",\"internalType\":\"bytes\"},{\"name\":\"clue\",\"type\":\"bytes\",\"internalType\":\"bytes\"}]},{\"name\":\"funding\",\"type\":\"tuple\",\"internalType\":\"structIInvisiProtocol.FundingParams\",\"components\":[{\"name\":\"payer\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"amount\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"sigNonce\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"deadline\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"signature\",\"type\":\"bytes\",\"internalType\":\"bytes\"},{\"name\":\"permit\",\"type\":\"tuple\",\"internalType\":\"structIInvisiMetaTx.TokenPermit\",\"components\":[{\"name\":\"deadline\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"v\",\"type\":\"uint8\",\"internalType\":\"uint8\"},{\"name\":\"r\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"s\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}]}]}]}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"transferOwnership\",\"inputs\":[{\"name\":\"newOwner\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"unpause\",\"inputs\":[],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"unpauseCircuit\",\"inputs\":[],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"verifierRouter\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"address\",\"internalType\":\"contractIVerifierRouter\"}],\"stateMutability\":\"view\"},{\"type\":\"event\",\"name\":\"BatchOutputs\",\"inputs\":[{\"name\":\"treeId\",\"type\":\"uint256\",\"indexed\":true,\"internalType\":\"uint256\"},{\"name\":\"startLeafIndex\",\"type\":\"uint32\",\"indexed\":false,\"internalType\":\"uint32\"},{\"name\":\"firstOutputOffset\",\"type\":\"uint256\",\"indexed\":false,\"internalType\":\"uint256\"},{\"name\":\"tokens\",\"type\":\"address[]\",\"indexed\":false,\"internalType\":\"address[]\"},{\"name\":\"commitments\",\"type\":\"bytes32[]\",\"indexed\":false,\"internalType\":\"bytes32[]\"},{\"name\":\"packedDeliveries\",\"type\":\"bytes\",\"indexed\":false,\"internalType\":\"bytes\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"BatchRequest\",\"inputs\":[{\"name\":\"token\",\"type\":\"address\",\"indexed\":false,\"internalType\":\"address\"},{\"name\":\"requestIndex\",\"type\":\"uint256\",\"indexed\":true,\"internalType\":\"uint256\"},{\"name\":\"capacity\",\"type\":\"uint256\",\"indexed\":false,\"internalType\":\"uint256\"},{\"name\":\"sources\",\"type\":\"tuple[]\",\"indexed\":false,\"internalType\":\"structIInvisiProtocol.InputSource[]\",\"components\":[{\"name\":\"treeId\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"merkleRoot\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}]},{\"name\":\"nullifiers\",\"type\":\"bytes32[]\",\"indexed\":false,\"internalType\":\"bytes32[]\"},{\"name\":\"outputCount\",\"type\":\"uint256\",\"indexed\":false,\"internalType\":\"uint256\"},{\"name\":\"payer\",\"type\":\"address\",\"indexed\":false,\"internalType\":\"address\"},{\"name\":\"depositAmount\",\"type\":\"uint256\",\"indexed\":false,\"internalType\":\"uint256\"},{\"name\":\"withdrawalAddress\",\"type\":\"address\",\"indexed\":false,\"internalType\":\"address\"},{\"name\":\"withdrawalAmount\",\"type\":\"uint256\",\"indexed\":false,\"internalType\":\"uint256\"},{\"name\":\"deadline\",\"type\":\"uint256\",\"indexed\":false,\"internalType\":\"uint256\"},{\"name\":\"statementHash\",\"type\":\"bytes32\",\"indexed\":false,\"internalType\":\"bytes32\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"CircuitPauseUpdated\",\"inputs\":[{\"name\":\"paused\",\"type\":\"bool\",\"indexed\":false,\"internalType\":\"bool\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"CommitmentsInserted\",\"inputs\":[{\"name\":\"treeId\",\"type\":\"uint256\",\"indexed\":true,\"internalType\":\"uint256\"},{\"name\":\"startLeafIndex\",\"type\":\"uint32\",\"indexed\":false,\"internalType\":\"uint32\"},{\"name\":\"commitments\",\"type\":\"bytes32[]\",\"indexed\":false,\"internalType\":\"bytes32[]\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"CreditCancelled\",\"inputs\":[{\"name\":\"token\",\"type\":\"address\",\"indexed\":false,\"internalType\":\"address\"},{\"name\":\"owner\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"inputTreeId\",\"type\":\"uint256\",\"indexed\":true,\"internalType\":\"uint256\"},{\"name\":\"nullifier\",\"type\":\"bytes32\",\"indexed\":true,\"internalType\":\"bytes32\"},{\"name\":\"amount\",\"type\":\"uint256\",\"indexed\":false,\"internalType\":\"uint256\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"CreditCreated\",\"inputs\":[{\"name\":\"token\",\"type\":\"address\",\"indexed\":false,\"internalType\":\"address\"},{\"name\":\"owner\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"outputTreeId\",\"type\":\"uint256\",\"indexed\":true,\"internalType\":\"uint256\"},{\"name\":\"sources\",\"type\":\"tuple[]\",\"indexed\":false,\"internalType\":\"structIInvisiProtocol.InputSource[]\",\"components\":[{\"name\":\"treeId\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"merkleRoot\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}]},{\"name\":\"nullifiers\",\"type\":\"bytes32[]\",\"indexed\":false,\"internalType\":\"bytes32[]\"},{\"name\":\"creditCommitment\",\"type\":\"bytes32\",\"indexed\":false,\"internalType\":\"bytes32\"},{\"name\":\"changeCommitment\",\"type\":\"bytes32\",\"indexed\":false,\"internalType\":\"bytes32\"},{\"name\":\"leafIndices\",\"type\":\"uint32[]\",\"indexed\":false,\"internalType\":\"uint32[]\"},{\"name\":\"deliveries\",\"type\":\"tuple[]\",\"indexed\":false,\"internalType\":\"structIInvisiProtocol.Delivery[]\",\"components\":[{\"name\":\"ciphertext\",\"type\":\"bytes\",\"internalType\":\"bytes\"},{\"name\":\"clue\",\"type\":\"bytes\",\"internalType\":\"bytes\"}]},{\"name\":\"expiry\",\"type\":\"uint256\",\"indexed\":false,\"internalType\":\"uint256\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"CreditDraw\",\"inputs\":[{\"name\":\"spender\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"outputTreeId\",\"type\":\"uint256\",\"indexed\":true,\"internalType\":\"uint256\"},{\"name\":\"params\",\"type\":\"tuple\",\"indexed\":false,\"internalType\":\"structIInvisiProtocol.CreditDrawParams\",\"components\":[{\"name\":\"token\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"sources\",\"type\":\"tuple[]\",\"internalType\":\"structIInvisiProtocol.InputSource[]\",\"components\":[{\"name\":\"treeId\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"merkleRoot\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}]},{\"name\":\"nullifiers\",\"type\":\"bytes32[]\",\"internalType\":\"bytes32[]\"},{\"name\":\"remainderCommitments\",\"type\":\"bytes32[]\",\"internalType\":\"bytes32[]\"},{\"name\":\"expiries\",\"type\":\"uint256[]\",\"internalType\":\"uint256[]\"},{\"name\":\"recoveryAmounts\",\"type\":\"bytes32[]\",\"internalType\":\"bytes32[]\"},{\"name\":\"spender\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"totalAmount\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"deadline\",\"type\":\"uint256\",\"internalType\":\"uint256\"}]},{\"name\":\"remainderLeafIndices\",\"type\":\"uint32[]\",\"indexed\":false,\"internalType\":\"uint32[]\"},{\"name\":\"deliveries\",\"type\":\"tuple[]\",\"indexed\":false,\"internalType\":\"structIInvisiProtocol.Delivery[]\",\"components\":[{\"name\":\"ciphertext\",\"type\":\"bytes\",\"internalType\":\"bytes\"},{\"name\":\"clue\",\"type\":\"bytes\",\"internalType\":\"bytes\"}]}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"CreditToppedUp\",\"inputs\":[{\"name\":\"owner\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"outputTreeId\",\"type\":\"uint256\",\"indexed\":true,\"internalType\":\"uint256\"},{\"name\":\"params\",\"type\":\"tuple\",\"indexed\":false,\"internalType\":\"structIInvisiProtocol.TopUpCreditParams\",\"components\":[{\"name\":\"creation\",\"type\":\"tuple\",\"internalType\":\"structIInvisiProtocol.CreateCreditParams\",\"components\":[{\"name\":\"token\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"sources\",\"type\":\"tuple[]\",\"internalType\":\"structIInvisiProtocol.InputSource[]\",\"components\":[{\"name\":\"treeId\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"merkleRoot\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}]},{\"name\":\"nullifiers\",\"type\":\"bytes32[]\",\"internalType\":\"bytes32[]\"},{\"name\":\"creditCommitment\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"changeCommitment\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"owner\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"expiry\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"deadline\",\"type\":\"uint256\",\"internalType\":\"uint256\"}]},{\"name\":\"creditSource\",\"type\":\"tuple\",\"internalType\":\"structIInvisiProtocol.InputSource\",\"components\":[{\"name\":\"treeId\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"merkleRoot\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}]},{\"name\":\"creditNullifier\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"previousExpiry\",\"type\":\"uint256\",\"internalType\":\"uint256\"}]},{\"name\":\"leafIndices\",\"type\":\"uint32[]\",\"indexed\":false,\"internalType\":\"uint32[]\"},{\"name\":\"deliveries\",\"type\":\"tuple[]\",\"indexed\":false,\"internalType\":\"structIInvisiProtocol.Delivery[]\",\"components\":[{\"name\":\"ciphertext\",\"type\":\"bytes\",\"internalType\":\"bytes\"},{\"name\":\"clue\",\"type\":\"bytes\",\"internalType\":\"bytes\"}]}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"CrossTreeTransact\",\"inputs\":[{\"name\":\"token\",\"type\":\"address\",\"indexed\":false,\"internalType\":\"address\"},{\"name\":\"outputTreeId\",\"type\":\"uint256\",\"indexed\":true,\"internalType\":\"uint256\"},{\"name\":\"sources\",\"type\":\"tuple[]\",\"indexed\":false,\"internalType\":\"structIInvisiProtocol.InputSource[]\",\"components\":[{\"name\":\"treeId\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"merkleRoot\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}]},{\"name\":\"nullifiers\",\"type\":\"bytes32[]\",\"indexed\":false,\"internalType\":\"bytes32[]\"},{\"name\":\"outputCommitments\",\"type\":\"bytes32[]\",\"indexed\":false,\"internalType\":\"bytes32[]\"},{\"name\":\"leafIndices\",\"type\":\"uint32[]\",\"indexed\":false,\"internalType\":\"uint32[]\"},{\"name\":\"deliveries\",\"type\":\"tuple[]\",\"indexed\":false,\"internalType\":\"structIInvisiProtocol.Delivery[]\",\"components\":[{\"name\":\"ciphertext\",\"type\":\"bytes\",\"internalType\":\"bytes\"},{\"name\":\"clue\",\"type\":\"bytes\",\"internalType\":\"bytes\"}]},{\"name\":\"withdrawalAddress\",\"type\":\"address\",\"indexed\":false,\"internalType\":\"address\"},{\"name\":\"withdrawalAmount\",\"type\":\"uint256\",\"indexed\":false,\"internalType\":\"uint256\"},{\"name\":\"deadline\",\"type\":\"uint256\",\"indexed\":false,\"internalType\":\"uint256\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"EIP712DomainChanged\",\"inputs\":[],\"anonymous\":false},{\"type\":\"event\",\"name\":\"NonceInvalidated\",\"inputs\":[{\"name\":\"signer\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"newNonce\",\"type\":\"uint256\",\"indexed\":false,\"internalType\":\"uint256\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"OwnershipTransferStarted\",\"inputs\":[{\"name\":\"previousOwner\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"newOwner\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"OwnershipTransferred\",\"inputs\":[{\"name\":\"previousOwner\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"newOwner\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"Paused\",\"inputs\":[{\"name\":\"account\",\"type\":\"address\",\"indexed\":false,\"internalType\":\"address\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"PublicDeposit\",\"inputs\":[{\"name\":\"token\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"payer\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"amount\",\"type\":\"uint256\",\"indexed\":false,\"internalType\":\"uint256\"},{\"name\":\"proofHash\",\"type\":\"bytes32\",\"indexed\":false,\"internalType\":\"bytes32\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"ScreenerUpdated\",\"inputs\":[{\"name\":\"newScreener\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"Shield\",\"inputs\":[{\"name\":\"token\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"payer\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"amount\",\"type\":\"uint256\",\"indexed\":false,\"internalType\":\"uint256\"},{\"name\":\"treeId\",\"type\":\"uint256\",\"indexed\":true,\"internalType\":\"uint256\"},{\"name\":\"startLeafIndex\",\"type\":\"uint32\",\"indexed\":false,\"internalType\":\"uint32\"},{\"name\":\"deliveries\",\"type\":\"tuple[]\",\"indexed\":false,\"internalType\":\"structIInvisiProtocol.Delivery[]\",\"components\":[{\"name\":\"ciphertext\",\"type\":\"bytes\",\"internalType\":\"bytes\"},{\"name\":\"clue\",\"type\":\"bytes\",\"internalType\":\"bytes\"}]},{\"name\":\"deadline\",\"type\":\"uint256\",\"indexed\":false,\"internalType\":\"uint256\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"Transact\",\"inputs\":[{\"name\":\"token\",\"type\":\"address\",\"indexed\":false,\"internalType\":\"address\"},{\"name\":\"inputTreeId\",\"type\":\"uint256\",\"indexed\":true,\"internalType\":\"uint256\"},{\"name\":\"outputTreeId\",\"type\":\"uint256\",\"indexed\":true,\"internalType\":\"uint256\"},{\"name\":\"nullifiers\",\"type\":\"bytes32[]\",\"indexed\":false,\"internalType\":\"bytes32[]\"},{\"name\":\"outputCommitments\",\"type\":\"bytes32[]\",\"indexed\":false,\"internalType\":\"bytes32[]\"},{\"name\":\"leafIndices\",\"type\":\"uint32[]\",\"indexed\":false,\"internalType\":\"uint32[]\"},{\"name\":\"deliveries\",\"type\":\"tuple[]\",\"indexed\":false,\"internalType\":\"structIInvisiProtocol.Delivery[]\",\"components\":[{\"name\":\"ciphertext\",\"type\":\"bytes\",\"internalType\":\"bytes\"},{\"name\":\"clue\",\"type\":\"bytes\",\"internalType\":\"bytes\"}]},{\"name\":\"withdrawalAddress\",\"type\":\"address\",\"indexed\":false,\"internalType\":\"address\"},{\"name\":\"withdrawalAmount\",\"type\":\"uint256\",\"indexed\":false,\"internalType\":\"uint256\"},{\"name\":\"deadline\",\"type\":\"uint256\",\"indexed\":false,\"internalType\":\"uint256\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"TransactAggregated\",\"inputs\":[{\"name\":\"proofHash\",\"type\":\"bytes32\",\"indexed\":true,\"internalType\":\"bytes32\"},{\"name\":\"requestCount\",\"type\":\"uint256\",\"indexed\":false,\"internalType\":\"uint256\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"TreeCreated\",\"inputs\":[{\"name\":\"treeId\",\"type\":\"uint256\",\"indexed\":true,\"internalType\":\"uint256\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"Unpaused\",\"inputs\":[{\"name\":\"account\",\"type\":\"address\",\"indexed\":false,\"internalType\":\"address\"}],\"anonymous\":false},{\"type\":\"error\",\"name\":\"AddressScreeningFailed\",\"inputs\":[{\"name\":\"account\",\"type\":\"address\",\"internalType\":\"address\"}]},{\"type\":\"error\",\"name\":\"ChainIdMismatch\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"CommitmentAlreadyPaid\",\"inputs\":[{\"name\":\"commitment\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}]},{\"type\":\"error\",\"name\":\"CreditDrawWindowClosed\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"DoubleSpend\",\"inputs\":[{\"name\":\"nullifier\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}]},{\"type\":\"error\",\"name\":\"EnforcedPause\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"ExpectedPause\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"ExpiryInPast\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"InexactTokenReceipt\",\"inputs\":[{\"name\":\"requested\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"received\",\"type\":\"uint256\",\"internalType\":\"uint256\"}]},{\"type\":\"error\",\"name\":\"InvalidAggregateBatch\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"InvalidAmount\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"InvalidBatchSize\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"InvalidCommitment\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"InvalidCreditExpiry\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"InvalidDelivery\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"InvalidFunding\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"InvalidIdentityCommitment\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"InvalidMerkleRoot\",\"inputs\":[{\"name\":\"root\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}]},{\"type\":\"error\",\"name\":\"InvalidNonce\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"InvalidNullifierKeyHash\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"InvalidOwnerIdentityCommitment\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"InvalidPrivateTransferCiphertext\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"InvalidPrivateTransferContext\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"InvalidPrivateTransferShape\",\"inputs\":[{\"name\":\"inputs\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"outputs\",\"type\":\"uint256\",\"internalType\":\"uint256\"}]},{\"type\":\"error\",\"name\":\"InvalidProof\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"InvalidReceivingAddress\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"InvalidShieldContext\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"InvalidShieldOutputCount\",\"inputs\":[{\"name\":\"outputs\",\"type\":\"uint256\",\"internalType\":\"uint256\"}]},{\"type\":\"error\",\"name\":\"InvalidShortString\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"InvalidSignature\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"InvalidToken\",\"inputs\":[{\"name\":\"token\",\"type\":\"address\",\"internalType\":\"address\"}]},{\"type\":\"error\",\"name\":\"InvalidTree\",\"inputs\":[{\"name\":\"treeId\",\"type\":\"uint256\",\"internalType\":\"uint256\"}]},{\"type\":\"error\",\"name\":\"LengthMismatch\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"NotEmergencyAdmin\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"NotGlobalEmergency\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"NullifierAlreadySpent\",\"inputs\":[{\"name\":\"nullifier\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}]},{\"type\":\"error\",\"name\":\"NullifiersEmpty\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"OwnableInvalidOwner\",\"inputs\":[{\"name\":\"owner\",\"type\":\"address\",\"internalType\":\"address\"}]},{\"type\":\"error\",\"name\":\"OwnableUnauthorizedAccount\",\"inputs\":[{\"name\":\"account\",\"type\":\"address\",\"internalType\":\"address\"}]},{\"type\":\"error\",\"name\":\"PrivateTransferExpired\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"ReentrancyGuardReentrantCall\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"ShieldExpired\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"SignatureExpired\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"StaleRoot\",\"inputs\":[{\"name\":\"root\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}]},{\"type\":\"error\",\"name\":\"StringTooLong\",\"inputs\":[{\"name\":\"str\",\"type\":\"string\",\"internalType\":\"string\"}]},{\"type\":\"error\",\"name\":\"TransferFailed\",\"inputs\":[{\"name\":\"token\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"to\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"amount\",\"type\":\"uint256\",\"internalType\":\"uint256\"}]},{\"type\":\"error\",\"name\":\"TreeFull\",\"inputs\":[{\"name\":\"treeId\",\"type\":\"uint256\",\"internalType\":\"uint256\"}]},{\"type\":\"error\",\"name\":\"WrongPermitToken\",\"inputs\":[{\"name\":\"provided\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"expected\",\"type\":\"address\",\"internalType\":\"address\"}]},{\"type\":\"error\",\"name\":\"ZeroNullifier\",\"inputs\":[]}]",
 }
 
 // InvisiProtocolABI is the input ABI used to generate the binding from.
@@ -680,37 +673,6 @@ func (_InvisiProtocol *InvisiProtocolCallerSession) GetNoteTreeRoot(treeId *big.
 	return _InvisiProtocol.Contract.GetNoteTreeRoot(&_InvisiProtocol.CallOpts, treeId)
 }
 
-// GetTokenConfig is a free data retrieval call binding the contract method 0xcb67e3b1.
-//
-// Solidity: function getTokenConfig(address token) view returns((bool,bool,uint256))
-func (_InvisiProtocol *InvisiProtocolCaller) GetTokenConfig(opts *bind.CallOpts, token common.Address) (IInvisiProtocolTokenConfig, error) {
-	var out []interface{}
-	err := _InvisiProtocol.contract.Call(opts, &out, "getTokenConfig", token)
-
-	if err != nil {
-		return *new(IInvisiProtocolTokenConfig), err
-	}
-
-	out0 := *abi.ConvertType(out[0], new(IInvisiProtocolTokenConfig)).(*IInvisiProtocolTokenConfig)
-
-	return out0, err
-
-}
-
-// GetTokenConfig is a free data retrieval call binding the contract method 0xcb67e3b1.
-//
-// Solidity: function getTokenConfig(address token) view returns((bool,bool,uint256))
-func (_InvisiProtocol *InvisiProtocolSession) GetTokenConfig(token common.Address) (IInvisiProtocolTokenConfig, error) {
-	return _InvisiProtocol.Contract.GetTokenConfig(&_InvisiProtocol.CallOpts, token)
-}
-
-// GetTokenConfig is a free data retrieval call binding the contract method 0xcb67e3b1.
-//
-// Solidity: function getTokenConfig(address token) view returns((bool,bool,uint256))
-func (_InvisiProtocol *InvisiProtocolCallerSession) GetTokenConfig(token common.Address) (IInvisiProtocolTokenConfig, error) {
-	return _InvisiProtocol.Contract.GetTokenConfig(&_InvisiProtocol.CallOpts, token)
-}
-
 // GetTreeCount is a free data retrieval call binding the contract method 0x5028f70b.
 //
 // Solidity: function getTreeCount() view returns(uint256 count)
@@ -864,37 +826,6 @@ func (_InvisiProtocol *InvisiProtocolSession) IsTreeFull(treeId *big.Int) (bool,
 // Solidity: function isTreeFull(uint256 treeId) view returns(bool)
 func (_InvisiProtocol *InvisiProtocolCallerSession) IsTreeFull(treeId *big.Int) (bool, error) {
 	return _InvisiProtocol.Contract.IsTreeFull(&_InvisiProtocol.CallOpts, treeId)
-}
-
-// MaxPerDeposit is a free data retrieval call binding the contract method 0xd04321db.
-//
-// Solidity: function maxPerDeposit(address token) view returns(uint256)
-func (_InvisiProtocol *InvisiProtocolCaller) MaxPerDeposit(opts *bind.CallOpts, token common.Address) (*big.Int, error) {
-	var out []interface{}
-	err := _InvisiProtocol.contract.Call(opts, &out, "maxPerDeposit", token)
-
-	if err != nil {
-		return *new(*big.Int), err
-	}
-
-	out0 := *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
-
-	return out0, err
-
-}
-
-// MaxPerDeposit is a free data retrieval call binding the contract method 0xd04321db.
-//
-// Solidity: function maxPerDeposit(address token) view returns(uint256)
-func (_InvisiProtocol *InvisiProtocolSession) MaxPerDeposit(token common.Address) (*big.Int, error) {
-	return _InvisiProtocol.Contract.MaxPerDeposit(&_InvisiProtocol.CallOpts, token)
-}
-
-// MaxPerDeposit is a free data retrieval call binding the contract method 0xd04321db.
-//
-// Solidity: function maxPerDeposit(address token) view returns(uint256)
-func (_InvisiProtocol *InvisiProtocolCallerSession) MaxPerDeposit(token common.Address) (*big.Int, error) {
-	return _InvisiProtocol.Contract.MaxPerDeposit(&_InvisiProtocol.CallOpts, token)
 }
 
 // Nonces is a free data retrieval call binding the contract method 0x7ecebe00.
@@ -1083,68 +1014,6 @@ func (_InvisiProtocol *InvisiProtocolCallerSession) Screener() (common.Address, 
 	return _InvisiProtocol.Contract.Screener(&_InvisiProtocol.CallOpts)
 }
 
-// SupportedTokens is a free data retrieval call binding the contract method 0xc6255626.
-//
-// Solidity: function supportedTokens(uint256 ) view returns(address)
-func (_InvisiProtocol *InvisiProtocolCaller) SupportedTokens(opts *bind.CallOpts, arg0 *big.Int) (common.Address, error) {
-	var out []interface{}
-	err := _InvisiProtocol.contract.Call(opts, &out, "supportedTokens", arg0)
-
-	if err != nil {
-		return *new(common.Address), err
-	}
-
-	out0 := *abi.ConvertType(out[0], new(common.Address)).(*common.Address)
-
-	return out0, err
-
-}
-
-// SupportedTokens is a free data retrieval call binding the contract method 0xc6255626.
-//
-// Solidity: function supportedTokens(uint256 ) view returns(address)
-func (_InvisiProtocol *InvisiProtocolSession) SupportedTokens(arg0 *big.Int) (common.Address, error) {
-	return _InvisiProtocol.Contract.SupportedTokens(&_InvisiProtocol.CallOpts, arg0)
-}
-
-// SupportedTokens is a free data retrieval call binding the contract method 0xc6255626.
-//
-// Solidity: function supportedTokens(uint256 ) view returns(address)
-func (_InvisiProtocol *InvisiProtocolCallerSession) SupportedTokens(arg0 *big.Int) (common.Address, error) {
-	return _InvisiProtocol.Contract.SupportedTokens(&_InvisiProtocol.CallOpts, arg0)
-}
-
-// TokenCount is a free data retrieval call binding the contract method 0x9f181b5e.
-//
-// Solidity: function tokenCount() view returns(uint256)
-func (_InvisiProtocol *InvisiProtocolCaller) TokenCount(opts *bind.CallOpts) (*big.Int, error) {
-	var out []interface{}
-	err := _InvisiProtocol.contract.Call(opts, &out, "tokenCount")
-
-	if err != nil {
-		return *new(*big.Int), err
-	}
-
-	out0 := *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
-
-	return out0, err
-
-}
-
-// TokenCount is a free data retrieval call binding the contract method 0x9f181b5e.
-//
-// Solidity: function tokenCount() view returns(uint256)
-func (_InvisiProtocol *InvisiProtocolSession) TokenCount() (*big.Int, error) {
-	return _InvisiProtocol.Contract.TokenCount(&_InvisiProtocol.CallOpts)
-}
-
-// TokenCount is a free data retrieval call binding the contract method 0x9f181b5e.
-//
-// Solidity: function tokenCount() view returns(uint256)
-func (_InvisiProtocol *InvisiProtocolCallerSession) TokenCount() (*big.Int, error) {
-	return _InvisiProtocol.Contract.TokenCount(&_InvisiProtocol.CallOpts)
-}
-
 // VerifierRouter is a free data retrieval call binding the contract method 0x849a1586.
 //
 // Solidity: function verifierRouter() view returns(address)
@@ -1195,27 +1064,6 @@ func (_InvisiProtocol *InvisiProtocolSession) AcceptOwnership() (*types.Transact
 // Solidity: function acceptOwnership() returns()
 func (_InvisiProtocol *InvisiProtocolTransactorSession) AcceptOwnership() (*types.Transaction, error) {
 	return _InvisiProtocol.Contract.AcceptOwnership(&_InvisiProtocol.TransactOpts)
-}
-
-// AddToken is a paid mutator transaction binding the contract method 0xaf81c5b9.
-//
-// Solidity: function addToken(address token, uint256 limit) returns()
-func (_InvisiProtocol *InvisiProtocolTransactor) AddToken(opts *bind.TransactOpts, token common.Address, limit *big.Int) (*types.Transaction, error) {
-	return _InvisiProtocol.contract.Transact(opts, "addToken", token, limit)
-}
-
-// AddToken is a paid mutator transaction binding the contract method 0xaf81c5b9.
-//
-// Solidity: function addToken(address token, uint256 limit) returns()
-func (_InvisiProtocol *InvisiProtocolSession) AddToken(token common.Address, limit *big.Int) (*types.Transaction, error) {
-	return _InvisiProtocol.Contract.AddToken(&_InvisiProtocol.TransactOpts, token, limit)
-}
-
-// AddToken is a paid mutator transaction binding the contract method 0xaf81c5b9.
-//
-// Solidity: function addToken(address token, uint256 limit) returns()
-func (_InvisiProtocol *InvisiProtocolTransactorSession) AddToken(token common.Address, limit *big.Int) (*types.Transaction, error) {
-	return _InvisiProtocol.Contract.AddToken(&_InvisiProtocol.TransactOpts, token, limit)
 }
 
 // CancelCredit is a paid mutator transaction binding the contract method 0x104b189f.
@@ -1281,48 +1129,6 @@ func (_InvisiProtocol *InvisiProtocolTransactorSession) CreditDraw(arg0 []byte, 
 	return _InvisiProtocol.Contract.CreditDraw(&_InvisiProtocol.TransactOpts, arg0, p, arg2)
 }
 
-// GlobalPause is a paid mutator transaction binding the contract method 0xf12d54d8.
-//
-// Solidity: function globalPause() returns()
-func (_InvisiProtocol *InvisiProtocolTransactor) GlobalPause(opts *bind.TransactOpts) (*types.Transaction, error) {
-	return _InvisiProtocol.contract.Transact(opts, "globalPause")
-}
-
-// GlobalPause is a paid mutator transaction binding the contract method 0xf12d54d8.
-//
-// Solidity: function globalPause() returns()
-func (_InvisiProtocol *InvisiProtocolSession) GlobalPause() (*types.Transaction, error) {
-	return _InvisiProtocol.Contract.GlobalPause(&_InvisiProtocol.TransactOpts)
-}
-
-// GlobalPause is a paid mutator transaction binding the contract method 0xf12d54d8.
-//
-// Solidity: function globalPause() returns()
-func (_InvisiProtocol *InvisiProtocolTransactorSession) GlobalPause() (*types.Transaction, error) {
-	return _InvisiProtocol.Contract.GlobalPause(&_InvisiProtocol.TransactOpts)
-}
-
-// GlobalUnpause is a paid mutator transaction binding the contract method 0xce190578.
-//
-// Solidity: function globalUnpause() returns()
-func (_InvisiProtocol *InvisiProtocolTransactor) GlobalUnpause(opts *bind.TransactOpts) (*types.Transaction, error) {
-	return _InvisiProtocol.contract.Transact(opts, "globalUnpause")
-}
-
-// GlobalUnpause is a paid mutator transaction binding the contract method 0xce190578.
-//
-// Solidity: function globalUnpause() returns()
-func (_InvisiProtocol *InvisiProtocolSession) GlobalUnpause() (*types.Transaction, error) {
-	return _InvisiProtocol.Contract.GlobalUnpause(&_InvisiProtocol.TransactOpts)
-}
-
-// GlobalUnpause is a paid mutator transaction binding the contract method 0xce190578.
-//
-// Solidity: function globalUnpause() returns()
-func (_InvisiProtocol *InvisiProtocolTransactorSession) GlobalUnpause() (*types.Transaction, error) {
-	return _InvisiProtocol.Contract.GlobalUnpause(&_InvisiProtocol.TransactOpts)
-}
-
 // InvalidateNonce is a paid mutator transaction binding the contract method 0x5a57b46f.
 //
 // Solidity: function invalidateNonce() returns()
@@ -1365,25 +1171,25 @@ func (_InvisiProtocol *InvisiProtocolTransactorSession) Pause() (*types.Transact
 	return _InvisiProtocol.Contract.Pause(&_InvisiProtocol.TransactOpts)
 }
 
-// PauseToken is a paid mutator transaction binding the contract method 0x7c41ad2c.
+// PauseCircuit is a paid mutator transaction binding the contract method 0x50424cd0.
 //
-// Solidity: function pauseToken(address token) returns()
-func (_InvisiProtocol *InvisiProtocolTransactor) PauseToken(opts *bind.TransactOpts, token common.Address) (*types.Transaction, error) {
-	return _InvisiProtocol.contract.Transact(opts, "pauseToken", token)
+// Solidity: function pauseCircuit() returns()
+func (_InvisiProtocol *InvisiProtocolTransactor) PauseCircuit(opts *bind.TransactOpts) (*types.Transaction, error) {
+	return _InvisiProtocol.contract.Transact(opts, "pauseCircuit")
 }
 
-// PauseToken is a paid mutator transaction binding the contract method 0x7c41ad2c.
+// PauseCircuit is a paid mutator transaction binding the contract method 0x50424cd0.
 //
-// Solidity: function pauseToken(address token) returns()
-func (_InvisiProtocol *InvisiProtocolSession) PauseToken(token common.Address) (*types.Transaction, error) {
-	return _InvisiProtocol.Contract.PauseToken(&_InvisiProtocol.TransactOpts, token)
+// Solidity: function pauseCircuit() returns()
+func (_InvisiProtocol *InvisiProtocolSession) PauseCircuit() (*types.Transaction, error) {
+	return _InvisiProtocol.Contract.PauseCircuit(&_InvisiProtocol.TransactOpts)
 }
 
-// PauseToken is a paid mutator transaction binding the contract method 0x7c41ad2c.
+// PauseCircuit is a paid mutator transaction binding the contract method 0x50424cd0.
 //
-// Solidity: function pauseToken(address token) returns()
-func (_InvisiProtocol *InvisiProtocolTransactorSession) PauseToken(token common.Address) (*types.Transaction, error) {
-	return _InvisiProtocol.Contract.PauseToken(&_InvisiProtocol.TransactOpts, token)
+// Solidity: function pauseCircuit() returns()
+func (_InvisiProtocol *InvisiProtocolTransactorSession) PauseCircuit() (*types.Transaction, error) {
+	return _InvisiProtocol.Contract.PauseCircuit(&_InvisiProtocol.TransactOpts)
 }
 
 // RenounceOwnership is a paid mutator transaction binding the contract method 0x715018a6.
@@ -1405,27 +1211,6 @@ func (_InvisiProtocol *InvisiProtocolSession) RenounceOwnership() (*types.Transa
 // Solidity: function renounceOwnership() returns()
 func (_InvisiProtocol *InvisiProtocolTransactorSession) RenounceOwnership() (*types.Transaction, error) {
 	return _InvisiProtocol.Contract.RenounceOwnership(&_InvisiProtocol.TransactOpts)
-}
-
-// SetDepositLimit is a paid mutator transaction binding the contract method 0x272d177d.
-//
-// Solidity: function setDepositLimit(address token, uint256 newMaxPerDeposit) returns()
-func (_InvisiProtocol *InvisiProtocolTransactor) SetDepositLimit(opts *bind.TransactOpts, token common.Address, newMaxPerDeposit *big.Int) (*types.Transaction, error) {
-	return _InvisiProtocol.contract.Transact(opts, "setDepositLimit", token, newMaxPerDeposit)
-}
-
-// SetDepositLimit is a paid mutator transaction binding the contract method 0x272d177d.
-//
-// Solidity: function setDepositLimit(address token, uint256 newMaxPerDeposit) returns()
-func (_InvisiProtocol *InvisiProtocolSession) SetDepositLimit(token common.Address, newMaxPerDeposit *big.Int) (*types.Transaction, error) {
-	return _InvisiProtocol.Contract.SetDepositLimit(&_InvisiProtocol.TransactOpts, token, newMaxPerDeposit)
-}
-
-// SetDepositLimit is a paid mutator transaction binding the contract method 0x272d177d.
-//
-// Solidity: function setDepositLimit(address token, uint256 newMaxPerDeposit) returns()
-func (_InvisiProtocol *InvisiProtocolTransactorSession) SetDepositLimit(token common.Address, newMaxPerDeposit *big.Int) (*types.Transaction, error) {
-	return _InvisiProtocol.Contract.SetDepositLimit(&_InvisiProtocol.TransactOpts, token, newMaxPerDeposit)
 }
 
 // SetScreener is a paid mutator transaction binding the contract method 0xc2ebd23d.
@@ -1575,25 +1360,25 @@ func (_InvisiProtocol *InvisiProtocolTransactorSession) Unpause() (*types.Transa
 	return _InvisiProtocol.Contract.Unpause(&_InvisiProtocol.TransactOpts)
 }
 
-// UnpauseToken is a paid mutator transaction binding the contract method 0x3b3bff0f.
+// UnpauseCircuit is a paid mutator transaction binding the contract method 0xa3bf4880.
 //
-// Solidity: function unpauseToken(address token) returns()
-func (_InvisiProtocol *InvisiProtocolTransactor) UnpauseToken(opts *bind.TransactOpts, token common.Address) (*types.Transaction, error) {
-	return _InvisiProtocol.contract.Transact(opts, "unpauseToken", token)
+// Solidity: function unpauseCircuit() returns()
+func (_InvisiProtocol *InvisiProtocolTransactor) UnpauseCircuit(opts *bind.TransactOpts) (*types.Transaction, error) {
+	return _InvisiProtocol.contract.Transact(opts, "unpauseCircuit")
 }
 
-// UnpauseToken is a paid mutator transaction binding the contract method 0x3b3bff0f.
+// UnpauseCircuit is a paid mutator transaction binding the contract method 0xa3bf4880.
 //
-// Solidity: function unpauseToken(address token) returns()
-func (_InvisiProtocol *InvisiProtocolSession) UnpauseToken(token common.Address) (*types.Transaction, error) {
-	return _InvisiProtocol.Contract.UnpauseToken(&_InvisiProtocol.TransactOpts, token)
+// Solidity: function unpauseCircuit() returns()
+func (_InvisiProtocol *InvisiProtocolSession) UnpauseCircuit() (*types.Transaction, error) {
+	return _InvisiProtocol.Contract.UnpauseCircuit(&_InvisiProtocol.TransactOpts)
 }
 
-// UnpauseToken is a paid mutator transaction binding the contract method 0x3b3bff0f.
+// UnpauseCircuit is a paid mutator transaction binding the contract method 0xa3bf4880.
 //
-// Solidity: function unpauseToken(address token) returns()
-func (_InvisiProtocol *InvisiProtocolTransactorSession) UnpauseToken(token common.Address) (*types.Transaction, error) {
-	return _InvisiProtocol.Contract.UnpauseToken(&_InvisiProtocol.TransactOpts, token)
+// Solidity: function unpauseCircuit() returns()
+func (_InvisiProtocol *InvisiProtocolTransactorSession) UnpauseCircuit() (*types.Transaction, error) {
+	return _InvisiProtocol.Contract.UnpauseCircuit(&_InvisiProtocol.TransactOpts)
 }
 
 // InvisiProtocolBatchOutputsIterator is returned from FilterBatchOutputs and is used to iterate over the raw logs and unpacked data for BatchOutputs events raised by the InvisiProtocol contract.
@@ -2970,151 +2755,6 @@ func (_InvisiProtocol *InvisiProtocolFilterer) ParseCrossTreeTransact(log types.
 	return event, nil
 }
 
-// InvisiProtocolDepositLimitUpdatedIterator is returned from FilterDepositLimitUpdated and is used to iterate over the raw logs and unpacked data for DepositLimitUpdated events raised by the InvisiProtocol contract.
-type InvisiProtocolDepositLimitUpdatedIterator struct {
-	Event *InvisiProtocolDepositLimitUpdated // Event containing the contract specifics and raw log
-
-	contract *bind.BoundContract // Generic contract to use for unpacking event data
-	event    string              // Event name to use for unpacking event data
-
-	logs chan types.Log        // Log channel receiving the found contract events
-	sub  ethereum.Subscription // Subscription for errors, completion and termination
-	done bool                  // Whether the subscription completed delivering logs
-	fail error                 // Occurred error to stop iteration
-}
-
-// Next advances the iterator to the subsequent event, returning whether there
-// are any more events found. In case of a retrieval or parsing error, false is
-// returned and Error() can be queried for the exact failure.
-func (it *InvisiProtocolDepositLimitUpdatedIterator) Next() bool {
-	// If the iterator failed, stop iterating
-	if it.fail != nil {
-		return false
-	}
-	// If the iterator completed, deliver directly whatever's available
-	if it.done {
-		select {
-		case log := <-it.logs:
-			it.Event = new(InvisiProtocolDepositLimitUpdated)
-			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
-				it.fail = err
-				return false
-			}
-			it.Event.Raw = log
-			return true
-
-		default:
-			return false
-		}
-	}
-	// Iterator still in progress, wait for either a data or an error event
-	select {
-	case log := <-it.logs:
-		it.Event = new(InvisiProtocolDepositLimitUpdated)
-		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
-			it.fail = err
-			return false
-		}
-		it.Event.Raw = log
-		return true
-
-	case err := <-it.sub.Err():
-		it.done = true
-		it.fail = err
-		return it.Next()
-	}
-}
-
-// Error returns any retrieval or parsing error occurred during filtering.
-func (it *InvisiProtocolDepositLimitUpdatedIterator) Error() error {
-	return it.fail
-}
-
-// Close terminates the iteration process, releasing any pending underlying
-// resources.
-func (it *InvisiProtocolDepositLimitUpdatedIterator) Close() error {
-	it.sub.Unsubscribe()
-	return nil
-}
-
-// InvisiProtocolDepositLimitUpdated represents a DepositLimitUpdated event raised by the InvisiProtocol contract.
-type InvisiProtocolDepositLimitUpdated struct {
-	Token         common.Address
-	MaxPerDeposit *big.Int
-	Raw           types.Log // Blockchain specific contextual infos
-}
-
-// FilterDepositLimitUpdated is a free log retrieval operation binding the contract event 0xeaf15143570c71834bfc4bbd80560897b6b67aaa704aeefeeb2a3fb7f6054d0e.
-//
-// Solidity: event DepositLimitUpdated(address indexed token, uint256 maxPerDeposit)
-func (_InvisiProtocol *InvisiProtocolFilterer) FilterDepositLimitUpdated(opts *bind.FilterOpts, token []common.Address) (*InvisiProtocolDepositLimitUpdatedIterator, error) {
-
-	var tokenRule []interface{}
-	for _, tokenItem := range token {
-		tokenRule = append(tokenRule, tokenItem)
-	}
-
-	logs, sub, err := _InvisiProtocol.contract.FilterLogs(opts, "DepositLimitUpdated", tokenRule)
-	if err != nil {
-		return nil, err
-	}
-	return &InvisiProtocolDepositLimitUpdatedIterator{contract: _InvisiProtocol.contract, event: "DepositLimitUpdated", logs: logs, sub: sub}, nil
-}
-
-// WatchDepositLimitUpdated is a free log subscription operation binding the contract event 0xeaf15143570c71834bfc4bbd80560897b6b67aaa704aeefeeb2a3fb7f6054d0e.
-//
-// Solidity: event DepositLimitUpdated(address indexed token, uint256 maxPerDeposit)
-func (_InvisiProtocol *InvisiProtocolFilterer) WatchDepositLimitUpdated(opts *bind.WatchOpts, sink chan<- *InvisiProtocolDepositLimitUpdated, token []common.Address) (event.Subscription, error) {
-
-	var tokenRule []interface{}
-	for _, tokenItem := range token {
-		tokenRule = append(tokenRule, tokenItem)
-	}
-
-	logs, sub, err := _InvisiProtocol.contract.WatchLogs(opts, "DepositLimitUpdated", tokenRule)
-	if err != nil {
-		return nil, err
-	}
-	return event.NewSubscription(func(quit <-chan struct{}) error {
-		defer sub.Unsubscribe()
-		for {
-			select {
-			case log := <-logs:
-				// New log arrived, parse the event and forward to the user
-				event := new(InvisiProtocolDepositLimitUpdated)
-				if err := _InvisiProtocol.contract.UnpackLog(event, "DepositLimitUpdated", log); err != nil {
-					return err
-				}
-				event.Raw = log
-
-				select {
-				case sink <- event:
-				case err := <-sub.Err():
-					return err
-				case <-quit:
-					return nil
-				}
-			case err := <-sub.Err():
-				return err
-			case <-quit:
-				return nil
-			}
-		}
-	}), nil
-}
-
-// ParseDepositLimitUpdated is a log parse operation binding the contract event 0xeaf15143570c71834bfc4bbd80560897b6b67aaa704aeefeeb2a3fb7f6054d0e.
-//
-// Solidity: event DepositLimitUpdated(address indexed token, uint256 maxPerDeposit)
-func (_InvisiProtocol *InvisiProtocolFilterer) ParseDepositLimitUpdated(log types.Log) (*InvisiProtocolDepositLimitUpdated, error) {
-	event := new(InvisiProtocolDepositLimitUpdated)
-	if err := _InvisiProtocol.contract.UnpackLog(event, "DepositLimitUpdated", log); err != nil {
-		return nil, err
-	}
-	event.Raw = log
-	return event, nil
-}
-
 // InvisiProtocolEIP712DomainChangedIterator is returned from FilterEIP712DomainChanged and is used to iterate over the raw logs and unpacked data for EIP712DomainChanged events raised by the InvisiProtocol contract.
 type InvisiProtocolEIP712DomainChangedIterator struct {
 	Event *InvisiProtocolEIP712DomainChanged // Event containing the contract specifics and raw log
@@ -4294,296 +3934,6 @@ func (_InvisiProtocol *InvisiProtocolFilterer) WatchShield(opts *bind.WatchOpts,
 func (_InvisiProtocol *InvisiProtocolFilterer) ParseShield(log types.Log) (*InvisiProtocolShield, error) {
 	event := new(InvisiProtocolShield)
 	if err := _InvisiProtocol.contract.UnpackLog(event, "Shield", log); err != nil {
-		return nil, err
-	}
-	event.Raw = log
-	return event, nil
-}
-
-// InvisiProtocolTokenAddedIterator is returned from FilterTokenAdded and is used to iterate over the raw logs and unpacked data for TokenAdded events raised by the InvisiProtocol contract.
-type InvisiProtocolTokenAddedIterator struct {
-	Event *InvisiProtocolTokenAdded // Event containing the contract specifics and raw log
-
-	contract *bind.BoundContract // Generic contract to use for unpacking event data
-	event    string              // Event name to use for unpacking event data
-
-	logs chan types.Log        // Log channel receiving the found contract events
-	sub  ethereum.Subscription // Subscription for errors, completion and termination
-	done bool                  // Whether the subscription completed delivering logs
-	fail error                 // Occurred error to stop iteration
-}
-
-// Next advances the iterator to the subsequent event, returning whether there
-// are any more events found. In case of a retrieval or parsing error, false is
-// returned and Error() can be queried for the exact failure.
-func (it *InvisiProtocolTokenAddedIterator) Next() bool {
-	// If the iterator failed, stop iterating
-	if it.fail != nil {
-		return false
-	}
-	// If the iterator completed, deliver directly whatever's available
-	if it.done {
-		select {
-		case log := <-it.logs:
-			it.Event = new(InvisiProtocolTokenAdded)
-			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
-				it.fail = err
-				return false
-			}
-			it.Event.Raw = log
-			return true
-
-		default:
-			return false
-		}
-	}
-	// Iterator still in progress, wait for either a data or an error event
-	select {
-	case log := <-it.logs:
-		it.Event = new(InvisiProtocolTokenAdded)
-		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
-			it.fail = err
-			return false
-		}
-		it.Event.Raw = log
-		return true
-
-	case err := <-it.sub.Err():
-		it.done = true
-		it.fail = err
-		return it.Next()
-	}
-}
-
-// Error returns any retrieval or parsing error occurred during filtering.
-func (it *InvisiProtocolTokenAddedIterator) Error() error {
-	return it.fail
-}
-
-// Close terminates the iteration process, releasing any pending underlying
-// resources.
-func (it *InvisiProtocolTokenAddedIterator) Close() error {
-	it.sub.Unsubscribe()
-	return nil
-}
-
-// InvisiProtocolTokenAdded represents a TokenAdded event raised by the InvisiProtocol contract.
-type InvisiProtocolTokenAdded struct {
-	Token         common.Address
-	MaxPerDeposit *big.Int
-	Raw           types.Log // Blockchain specific contextual infos
-}
-
-// FilterTokenAdded is a free log retrieval operation binding the contract event 0xf4c563a3ea86ff1f4275e8c207df0375a51963f2b831b7bf4da8be938d92876c.
-//
-// Solidity: event TokenAdded(address indexed token, uint256 maxPerDeposit)
-func (_InvisiProtocol *InvisiProtocolFilterer) FilterTokenAdded(opts *bind.FilterOpts, token []common.Address) (*InvisiProtocolTokenAddedIterator, error) {
-
-	var tokenRule []interface{}
-	for _, tokenItem := range token {
-		tokenRule = append(tokenRule, tokenItem)
-	}
-
-	logs, sub, err := _InvisiProtocol.contract.FilterLogs(opts, "TokenAdded", tokenRule)
-	if err != nil {
-		return nil, err
-	}
-	return &InvisiProtocolTokenAddedIterator{contract: _InvisiProtocol.contract, event: "TokenAdded", logs: logs, sub: sub}, nil
-}
-
-// WatchTokenAdded is a free log subscription operation binding the contract event 0xf4c563a3ea86ff1f4275e8c207df0375a51963f2b831b7bf4da8be938d92876c.
-//
-// Solidity: event TokenAdded(address indexed token, uint256 maxPerDeposit)
-func (_InvisiProtocol *InvisiProtocolFilterer) WatchTokenAdded(opts *bind.WatchOpts, sink chan<- *InvisiProtocolTokenAdded, token []common.Address) (event.Subscription, error) {
-
-	var tokenRule []interface{}
-	for _, tokenItem := range token {
-		tokenRule = append(tokenRule, tokenItem)
-	}
-
-	logs, sub, err := _InvisiProtocol.contract.WatchLogs(opts, "TokenAdded", tokenRule)
-	if err != nil {
-		return nil, err
-	}
-	return event.NewSubscription(func(quit <-chan struct{}) error {
-		defer sub.Unsubscribe()
-		for {
-			select {
-			case log := <-logs:
-				// New log arrived, parse the event and forward to the user
-				event := new(InvisiProtocolTokenAdded)
-				if err := _InvisiProtocol.contract.UnpackLog(event, "TokenAdded", log); err != nil {
-					return err
-				}
-				event.Raw = log
-
-				select {
-				case sink <- event:
-				case err := <-sub.Err():
-					return err
-				case <-quit:
-					return nil
-				}
-			case err := <-sub.Err():
-				return err
-			case <-quit:
-				return nil
-			}
-		}
-	}), nil
-}
-
-// ParseTokenAdded is a log parse operation binding the contract event 0xf4c563a3ea86ff1f4275e8c207df0375a51963f2b831b7bf4da8be938d92876c.
-//
-// Solidity: event TokenAdded(address indexed token, uint256 maxPerDeposit)
-func (_InvisiProtocol *InvisiProtocolFilterer) ParseTokenAdded(log types.Log) (*InvisiProtocolTokenAdded, error) {
-	event := new(InvisiProtocolTokenAdded)
-	if err := _InvisiProtocol.contract.UnpackLog(event, "TokenAdded", log); err != nil {
-		return nil, err
-	}
-	event.Raw = log
-	return event, nil
-}
-
-// InvisiProtocolTokenPauseUpdatedIterator is returned from FilterTokenPauseUpdated and is used to iterate over the raw logs and unpacked data for TokenPauseUpdated events raised by the InvisiProtocol contract.
-type InvisiProtocolTokenPauseUpdatedIterator struct {
-	Event *InvisiProtocolTokenPauseUpdated // Event containing the contract specifics and raw log
-
-	contract *bind.BoundContract // Generic contract to use for unpacking event data
-	event    string              // Event name to use for unpacking event data
-
-	logs chan types.Log        // Log channel receiving the found contract events
-	sub  ethereum.Subscription // Subscription for errors, completion and termination
-	done bool                  // Whether the subscription completed delivering logs
-	fail error                 // Occurred error to stop iteration
-}
-
-// Next advances the iterator to the subsequent event, returning whether there
-// are any more events found. In case of a retrieval or parsing error, false is
-// returned and Error() can be queried for the exact failure.
-func (it *InvisiProtocolTokenPauseUpdatedIterator) Next() bool {
-	// If the iterator failed, stop iterating
-	if it.fail != nil {
-		return false
-	}
-	// If the iterator completed, deliver directly whatever's available
-	if it.done {
-		select {
-		case log := <-it.logs:
-			it.Event = new(InvisiProtocolTokenPauseUpdated)
-			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
-				it.fail = err
-				return false
-			}
-			it.Event.Raw = log
-			return true
-
-		default:
-			return false
-		}
-	}
-	// Iterator still in progress, wait for either a data or an error event
-	select {
-	case log := <-it.logs:
-		it.Event = new(InvisiProtocolTokenPauseUpdated)
-		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
-			it.fail = err
-			return false
-		}
-		it.Event.Raw = log
-		return true
-
-	case err := <-it.sub.Err():
-		it.done = true
-		it.fail = err
-		return it.Next()
-	}
-}
-
-// Error returns any retrieval or parsing error occurred during filtering.
-func (it *InvisiProtocolTokenPauseUpdatedIterator) Error() error {
-	return it.fail
-}
-
-// Close terminates the iteration process, releasing any pending underlying
-// resources.
-func (it *InvisiProtocolTokenPauseUpdatedIterator) Close() error {
-	it.sub.Unsubscribe()
-	return nil
-}
-
-// InvisiProtocolTokenPauseUpdated represents a TokenPauseUpdated event raised by the InvisiProtocol contract.
-type InvisiProtocolTokenPauseUpdated struct {
-	Token  common.Address
-	Paused bool
-	Raw    types.Log // Blockchain specific contextual infos
-}
-
-// FilterTokenPauseUpdated is a free log retrieval operation binding the contract event 0x253b2f7aa4de4ccf23ab8e9c2078ab1cc589649293d26006ecdf802a5d6b451d.
-//
-// Solidity: event TokenPauseUpdated(address indexed token, bool paused)
-func (_InvisiProtocol *InvisiProtocolFilterer) FilterTokenPauseUpdated(opts *bind.FilterOpts, token []common.Address) (*InvisiProtocolTokenPauseUpdatedIterator, error) {
-
-	var tokenRule []interface{}
-	for _, tokenItem := range token {
-		tokenRule = append(tokenRule, tokenItem)
-	}
-
-	logs, sub, err := _InvisiProtocol.contract.FilterLogs(opts, "TokenPauseUpdated", tokenRule)
-	if err != nil {
-		return nil, err
-	}
-	return &InvisiProtocolTokenPauseUpdatedIterator{contract: _InvisiProtocol.contract, event: "TokenPauseUpdated", logs: logs, sub: sub}, nil
-}
-
-// WatchTokenPauseUpdated is a free log subscription operation binding the contract event 0x253b2f7aa4de4ccf23ab8e9c2078ab1cc589649293d26006ecdf802a5d6b451d.
-//
-// Solidity: event TokenPauseUpdated(address indexed token, bool paused)
-func (_InvisiProtocol *InvisiProtocolFilterer) WatchTokenPauseUpdated(opts *bind.WatchOpts, sink chan<- *InvisiProtocolTokenPauseUpdated, token []common.Address) (event.Subscription, error) {
-
-	var tokenRule []interface{}
-	for _, tokenItem := range token {
-		tokenRule = append(tokenRule, tokenItem)
-	}
-
-	logs, sub, err := _InvisiProtocol.contract.WatchLogs(opts, "TokenPauseUpdated", tokenRule)
-	if err != nil {
-		return nil, err
-	}
-	return event.NewSubscription(func(quit <-chan struct{}) error {
-		defer sub.Unsubscribe()
-		for {
-			select {
-			case log := <-logs:
-				// New log arrived, parse the event and forward to the user
-				event := new(InvisiProtocolTokenPauseUpdated)
-				if err := _InvisiProtocol.contract.UnpackLog(event, "TokenPauseUpdated", log); err != nil {
-					return err
-				}
-				event.Raw = log
-
-				select {
-				case sink <- event:
-				case err := <-sub.Err():
-					return err
-				case <-quit:
-					return nil
-				}
-			case err := <-sub.Err():
-				return err
-			case <-quit:
-				return nil
-			}
-		}
-	}), nil
-}
-
-// ParseTokenPauseUpdated is a log parse operation binding the contract event 0x253b2f7aa4de4ccf23ab8e9c2078ab1cc589649293d26006ecdf802a5d6b451d.
-//
-// Solidity: event TokenPauseUpdated(address indexed token, bool paused)
-func (_InvisiProtocol *InvisiProtocolFilterer) ParseTokenPauseUpdated(log types.Log) (*InvisiProtocolTokenPauseUpdated, error) {
-	event := new(InvisiProtocolTokenPauseUpdated)
-	if err := _InvisiProtocol.contract.UnpackLog(event, "TokenPauseUpdated", log); err != nil {
 		return nil, err
 	}
 	event.Raw = log

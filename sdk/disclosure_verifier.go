@@ -5,12 +5,10 @@ import (
 	"errors"
 	"math/big"
 
-	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/invisi-lab/invisi-sdk-go/core"
 	"github.com/invisi-lab/invisi-sdk-go/internal/receipts"
-	"github.com/invisi-lab/invisi-sdk-go/protocol/contracts"
 	protocolrpc "github.com/invisi-lab/invisi-sdk-go/rpc"
 )
 
@@ -122,17 +120,6 @@ func (v *DisclosureVerifier) ReadOutput(ctx context.Context, reference Disclosur
 	}
 	if selected == nil {
 		return result, errors.New("disclosure output not found in receipt")
-	}
-	contract, e := contracts.NewInvisiProtocolCaller(context.ProtocolAddress, v.options.Provider)
-	if e != nil {
-		return result, e
-	}
-	token, e := contract.GetTokenConfig(&bind.CallOpts{Context: ctx, BlockNumber: receipt.BlockNumber}, v.options.TokenAddress)
-	if e != nil {
-		return result, e
-	}
-	if !token.Registered {
-		return result, errors.New("unsupported disclosure token")
 	}
 	block := protocolrpc.CanonicalBlock{Number: header.Number.Uint64(), Hash: header.Hash(), ParentHash: header.ParentHash, Timestamp: header.Time}
 	confirmations, e := v.barrier(ctx, block)

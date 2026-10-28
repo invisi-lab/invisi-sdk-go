@@ -116,24 +116,6 @@
   },
   {
     "type": "function",
-    "name": "addToken",
-    "inputs": [
-      {
-        "name": "token",
-        "type": "address",
-        "internalType": "address"
-      },
-      {
-        "name": "limit",
-        "type": "uint256",
-        "internalType": "uint256"
-      }
-    ],
-    "outputs": [],
-    "stateMutability": "nonpayable"
-  },
-  {
-    "type": "function",
     "name": "cancelCredit",
     "inputs": [
       {
@@ -558,42 +540,6 @@
   },
   {
     "type": "function",
-    "name": "getTokenConfig",
-    "inputs": [
-      {
-        "name": "token",
-        "type": "address",
-        "internalType": "address"
-      }
-    ],
-    "outputs": [
-      {
-        "name": "",
-        "type": "tuple",
-        "internalType": "struct IInvisiProtocol.TokenConfig",
-        "components": [
-          {
-            "name": "registered",
-            "type": "bool",
-            "internalType": "bool"
-          },
-          {
-            "name": "paused",
-            "type": "bool",
-            "internalType": "bool"
-          },
-          {
-            "name": "maxPerDeposit",
-            "type": "uint256",
-            "internalType": "uint256"
-          }
-        ]
-      }
-    ],
-    "stateMutability": "view"
-  },
-  {
-    "type": "function",
     "name": "getTreeCount",
     "inputs": [],
     "outputs": [
@@ -617,20 +563,6 @@
       }
     ],
     "stateMutability": "view"
-  },
-  {
-    "type": "function",
-    "name": "globalPause",
-    "inputs": [],
-    "outputs": [],
-    "stateMutability": "nonpayable"
-  },
-  {
-    "type": "function",
-    "name": "globalUnpause",
-    "inputs": [],
-    "outputs": [],
-    "stateMutability": "nonpayable"
   },
   {
     "type": "function",
@@ -698,25 +630,6 @@
   },
   {
     "type": "function",
-    "name": "maxPerDeposit",
-    "inputs": [
-      {
-        "name": "token",
-        "type": "address",
-        "internalType": "address"
-      }
-    ],
-    "outputs": [
-      {
-        "name": "",
-        "type": "uint256",
-        "internalType": "uint256"
-      }
-    ],
-    "stateMutability": "view"
-  },
-  {
-    "type": "function",
     "name": "nonces",
     "inputs": [
       {
@@ -756,14 +669,8 @@
   },
   {
     "type": "function",
-    "name": "pauseToken",
-    "inputs": [
-      {
-        "name": "token",
-        "type": "address",
-        "internalType": "address"
-      }
-    ],
+    "name": "pauseCircuit",
+    "inputs": [],
     "outputs": [],
     "stateMutability": "nonpayable"
   },
@@ -836,24 +743,6 @@
       }
     ],
     "stateMutability": "view"
-  },
-  {
-    "type": "function",
-    "name": "setDepositLimit",
-    "inputs": [
-      {
-        "name": "token",
-        "type": "address",
-        "internalType": "address"
-      },
-      {
-        "name": "newMaxPerDeposit",
-        "type": "uint256",
-        "internalType": "uint256"
-      }
-    ],
-    "outputs": [],
-    "stateMutability": "nonpayable"
   },
   {
     "type": "function",
@@ -990,38 +879,6 @@
     ],
     "outputs": [],
     "stateMutability": "nonpayable"
-  },
-  {
-    "type": "function",
-    "name": "supportedTokens",
-    "inputs": [
-      {
-        "name": "",
-        "type": "uint256",
-        "internalType": "uint256"
-      }
-    ],
-    "outputs": [
-      {
-        "name": "",
-        "type": "address",
-        "internalType": "address"
-      }
-    ],
-    "stateMutability": "view"
-  },
-  {
-    "type": "function",
-    "name": "tokenCount",
-    "inputs": [],
-    "outputs": [
-      {
-        "name": "",
-        "type": "uint256",
-        "internalType": "uint256"
-      }
-    ],
-    "stateMutability": "view"
   },
   {
     "type": "function",
@@ -1527,14 +1384,8 @@
   },
   {
     "type": "function",
-    "name": "unpauseToken",
-    "inputs": [
-      {
-        "name": "token",
-        "type": "address",
-        "internalType": "address"
-      }
-    ],
+    "name": "unpauseCircuit",
+    "inputs": [],
     "outputs": [],
     "stateMutability": "nonpayable"
   },
@@ -2189,25 +2040,6 @@
   },
   {
     "type": "event",
-    "name": "DepositLimitUpdated",
-    "inputs": [
-      {
-        "name": "token",
-        "type": "address",
-        "indexed": true,
-        "internalType": "address"
-      },
-      {
-        "name": "maxPerDeposit",
-        "type": "uint256",
-        "indexed": false,
-        "internalType": "uint256"
-      }
-    ],
-    "anonymous": false
-  },
-  {
-    "type": "event",
     "name": "EIP712DomainChanged",
     "inputs": [],
     "anonymous": false
@@ -2389,44 +2221,6 @@
   },
   {
     "type": "event",
-    "name": "TokenAdded",
-    "inputs": [
-      {
-        "name": "token",
-        "type": "address",
-        "indexed": true,
-        "internalType": "address"
-      },
-      {
-        "name": "maxPerDeposit",
-        "type": "uint256",
-        "indexed": false,
-        "internalType": "uint256"
-      }
-    ],
-    "anonymous": false
-  },
-  {
-    "type": "event",
-    "name": "TokenPauseUpdated",
-    "inputs": [
-      {
-        "name": "token",
-        "type": "address",
-        "indexed": true,
-        "internalType": "address"
-      },
-      {
-        "name": "paused",
-        "type": "bool",
-        "indexed": false,
-        "internalType": "bool"
-      }
-    ],
-    "anonymous": false
-  },
-  {
-    "type": "event",
     "name": "Transact",
     "inputs": [
       {
@@ -2596,22 +2390,6 @@
     "type": "error",
     "name": "EnforcedPause",
     "inputs": []
-  },
-  {
-    "type": "error",
-    "name": "ExceedsDepositLimit",
-    "inputs": [
-      {
-        "name": "amount",
-        "type": "uint256",
-        "internalType": "uint256"
-      },
-      {
-        "name": "maxPerDeposit",
-        "type": "uint256",
-        "internalType": "uint256"
-      }
-    ]
   },
   {
     "type": "error",
@@ -2886,17 +2664,6 @@
   },
   {
     "type": "error",
-    "name": "TokenAlreadyRegistered",
-    "inputs": [
-      {
-        "name": "token",
-        "type": "address",
-        "internalType": "address"
-      }
-    ]
-  },
-  {
-    "type": "error",
     "name": "TransferFailed",
     "inputs": [
       {
@@ -2924,17 +2691,6 @@
         "name": "treeId",
         "type": "uint256",
         "internalType": "uint256"
-      }
-    ]
-  },
-  {
-    "type": "error",
-    "name": "UnsupportedToken",
-    "inputs": [
-      {
-        "name": "token",
-        "type": "address",
-        "internalType": "address"
       }
     ]
   },

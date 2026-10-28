@@ -56,11 +56,6 @@ func (p sessionProvider) CallContract(_ context.Context, message ethereum.CallMs
 	switch m.RawName {
 	case "VERSION":
 		return m.Outputs.Pack(big.NewInt(1))
-	case "getTokenConfig":
-		return m.Outputs.Pack(struct {
-			Registered, Paused bool
-			MaxPerDeposit      *big.Int
-		}{true, false, big.NewInt(1000000)})
 	case "rootHistory":
 		return m.Outputs.Pack(true)
 	case "isRegistered":
@@ -173,6 +168,55 @@ func testSession(t *testing.T) (*WalletSession, common.Address, *testProver) {
 	}
 	return session, token, backend
 }
+
+type missingTokenCodeProvider struct {
+	Provider
+	token common.Address
+}
+
+func (p missingTokenCodeProvider) CodeAt(ctx context.Context, address common.Address, block *big.Int) ([]byte, error) {
+	if address == p.token {
+		return nil, nil
+	}
+	return p.Provider.CodeAt(ctx, address, block)
+}
+
+func TestShieldAcceptsTokenWithoutRegistration(t *testing.T) {
+	session, _, _ := testSession(t)
+	address, err := session.wallet.GetAddress()
+	if err != nil {
+		t.Fatal(err)
+	}
+	asset := common.HexToAddress("0x3333333333333333333333333333333333333333")
+	prepared, err := session.PrepareShield(context.Background(), ShieldPreparation{
+		TokenAddress: asset,
+		Outputs:      []PaymentOutput{{To: address, Amount: big.NewInt(70)}},
+		Funding:      FundingSource{Payer: session.wallet.identity, Amount: big.NewInt(70)},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if prepared.Preview().OutputCount != 1 {
+		t.Fatal("shield output missing")
+	}
+}
+
+func TestPreparationRejectsTokenWithoutContractCode(t *testing.T) {
+	session, token, _ := testSession(t)
+	session.options.Provider = missingTokenCodeProvider{Provider: session.options.Provider, token: token}
+	address, err := session.wallet.GetAddress()
+	if err != nil {
+		t.Fatal(err)
+	}
+	_, err = session.PrepareTransfer(context.Background(), TransferPreparation{
+		TokenAddress: token,
+		Outputs:      []PaymentOutput{{To: address, Amount: big.NewInt(30)}},
+	})
+	if err == nil || !strings.Contains(err.Error(), "token address must have contract code") {
+		t.Fatalf("expected invalid token rejection, got %v", err)
+	}
+}
+
 func TestTransferStagesReserveInputsAndAssembleCurrentWitness(t *testing.T) {
 	ctx := context.Background()
 	session, token, backend := testSession(t)
