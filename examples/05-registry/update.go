@@ -7,18 +7,17 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/ethclient"
-	"github.com/invisi-lab/invisi-sdk-go/prover"
 	"github.com/invisi-lab/invisi-sdk-go/sdk"
 )
 
 // Update explicitly replaces an existing receiving-key registration after local owner review.
-func Update(ctx context.Context, pool *sdk.Protocol, provider *ethclient.Client, wallet *sdk.Wallet, backend sdk.Prover, signer *bind.TransactOpts) error {
+func Update(ctx context.Context, pool *sdk.Protocol, provider *ethclient.Client, wallet *sdk.Wallet, signer *bind.TransactOpts) error {
 	registry, err := sdk.NewAddressRegistry(pool, provider)
 	if err != nil {
 		return err
 	}
 	fmt.Println("1. Prepare an update against the current registration nonce")
-	prepared, err := registry.PrepareRegistration(ctx, sdk.RegistrationPreparation{Wallet: wallet, Prover: backend, Update: true})
+	prepared, err := registry.PrepareRegistration(ctx, sdk.RegistrationPreparation{Wallet: wallet, Update: true})
 	if err != nil {
 		return err
 	}
@@ -27,11 +26,7 @@ func Update(ctx context.Context, pool *sdk.Protocol, provider *ethclient.Client,
 	if err != nil {
 		return err
 	}
-	proved, err := authorized.Prove(ctx, prover.Options{OnProgress: func(event prover.Progress) { fmt.Println("Proof phase:", event.Phase) }})
-	if err != nil {
-		return err
-	}
-	call, err := proved.ExportTransaction(ctx)
+	call, err := authorized.ExportTransaction(ctx)
 	if err != nil {
 		return err
 	}
@@ -42,7 +37,7 @@ func Update(ctx context.Context, pool *sdk.Protocol, provider *ethclient.Client,
 	if err != nil {
 		return err
 	}
-	tracked, err := proved.TrackTransaction(ctx, transaction.Hash())
+	tracked, err := authorized.TrackTransaction(ctx, transaction.Hash())
 	if err != nil {
 		return err
 	}

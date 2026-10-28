@@ -7,6 +7,7 @@ import (
 	"math/big"
 	"os"
 	"reflect"
+	"strconv"
 	"strings"
 	"testing"
 
@@ -76,8 +77,12 @@ func referenceValue(input any, out reflect.Value) error {
 			}
 		}
 		return nil
-	case reflect.Uint8:
-		out.SetUint(uint64(input.(float64)))
+	case reflect.Uint8, reflect.Uint64:
+		value, err := strconv.ParseUint(fmt.Sprint(input), 10, out.Type().Bits())
+		if err != nil {
+			return err
+		}
+		out.SetUint(value)
 		return nil
 	case reflect.String:
 		out.SetString(input.(string))

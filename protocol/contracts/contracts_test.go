@@ -160,3 +160,48 @@ func TestCurrentABIArtifacts(t *testing.T) {
 		}
 	}
 }
+
+func TestFinalRegistryAndFactoryABIContract(t *testing.T) {
+	registry, err := contracts.InvisiAddressRegistryMetaData.GetAbi()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(registry.Constructor.Inputs) != 0 {
+		t.Fatal("registry constructor must take no verifier or other arguments")
+	}
+	for _, name := range []string{"registerKeys", "updateKeys"} {
+		method := registry.Methods[name]
+		if len(method.Inputs) != 2 || method.Inputs[1].Name != "signature" || method.Inputs[1].Type.String() != "bytes" {
+			t.Fatalf("unexpected signature entrypoint %s", name)
+		}
+		tuple := method.Inputs[0].Type
+		if len(tuple.TupleElems) != 4 || tuple.TupleElems[0].String() != "bytes32" || tuple.TupleElems[2].String() != "uint64" || tuple.TupleElems[3].String() != "uint64" {
+			t.Fatalf("unexpected registration tuple %s", tuple.String())
+		}
+	}
+	for _, name := range []string{"registrationVerifier", "verifier", "setRegistrationVerifier"} {
+		if _, ok := registry.Methods[name]; ok {
+			t.Fatalf("obsolete registry verifier API %s", name)
+		}
+	}
+	protocol, err := contracts.InvisiProtocolMetaData.GetAbi()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, ok := protocol.Methods["addressRegistry"]; !ok {
+		t.Fatal("missing immutable protocol registry getter")
+	}
+	if _, ok := protocol.Methods["setAddressRegistry"]; ok {
+		t.Fatal("protocol registry must be immutable")
+	}
+	factory, err := contracts.InvisiFactoryMetaData.GetAbi()
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, name := range []string{"deploy", "computeInstanceAddress"} {
+		method, ok := factory.Methods[name]
+		if !ok || len(method.Inputs) != 6 || method.Inputs[5].Type.String() != "address" || method.Inputs[5].Name != "addressRegistry_" {
+			t.Fatalf("%s must append address registry as its sixth argument", name)
+		}
+	}
+}

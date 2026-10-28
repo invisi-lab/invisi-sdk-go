@@ -16,3 +16,12 @@ func TestEVMAccountKeyRestoresCurrentWallet(t *testing.T) {
 		t.Fatal("viewing KDF differs from TS SDK")
 	}
 }
+
+func TestRegistrationIsNotPrivateWalletAuthorization(t *testing.T) {
+	for _, operation := range []WalletOperation{"register-address", "update-address"} {
+		request := WalletAuthorizationRequest{Context: ProtocolContext{ChainID: ElementFromUint64(1), ProtocolAddress: ElementFromUint64(2)}, Operation: operation}
+		if _, err := WalletAuthorizationTypedData(request); err == nil {
+			t.Fatal("registry authorization remained in private wallet operations")
+		}
+	}
+}

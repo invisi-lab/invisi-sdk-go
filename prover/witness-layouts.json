@@ -1316,34 +1316,5 @@
       "previous_credit_leaf_index",
       "previous_credit_merkle_path"
     ]
-  },
-  "wallet_registration": {
-    "artifactSha256": "65c3d429f6bc9735af3136f7c383214c2eb222cd32655791f37f7ae5dd428048",
-    "keys": {
-      "evm": "b8171bdb558489c75293ee71f64c1ac534f533ae3b3f71107378e46dbd93dd48"
-    },
-    "publicInputCount": 3,
-    "public": [
-      {
-        "name": "wallet_identity",
-        "count": 1,
-        "array": false
-      },
-      {
-        "name": "auth_digest_high",
-        "count": 1,
-        "array": false
-      },
-      {
-        "name": "auth_digest_low",
-        "count": 1,
-        "array": false
-      }
-    ],
-    "private": [
-      "public_key_x",
-      "public_key_y",
-      "signature"
-    ]
   }
 }

@@ -153,6 +153,9 @@ func (s *WalletSession) resolve(ctx context.Context, address string) (core.Recei
 		if deployment.Registry == nil {
 			return nil, errors.New("registry deployment required for short address")
 		}
+		if e := s.protocol.ValidateDeployment(ctx, s.options.Provider); e != nil {
+			return nil, e
+		}
 		code, e := s.options.Provider.CodeAt(ctx, deployment.Registry.Address, nil)
 		if e != nil {
 			return nil, e

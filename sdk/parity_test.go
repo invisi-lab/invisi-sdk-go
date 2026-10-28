@@ -120,31 +120,27 @@ func TestResumeRejectsModifiedCallAndProof(t *testing.T) {
 
 func TestRegistryStagesAndExportsFencePreviousHandles(t *testing.T) {
 	ctx := context.Background()
-	session, _, backend := testSession(t)
+	session, _, _ := testSession(t)
 	deployment := session.protocol.Deployment()
 	deployment.Registry = &protocolrpc.ContractDeployment{Address: common.HexToAddress("0x3333333333333333333333333333333333333333"), RuntimeCodeHash: hashCode([]byte{0x60, 0}), FromBlock: 1}
 	pool, err := NewProtocol(deployment)
 	if err != nil {
 		t.Fatal(err)
 	}
-	registry, err := NewAddressRegistry(pool, session.options.Provider)
+	registry, err := NewAddressRegistry(pool, fundingProvider{sessionProvider: session.options.Provider.(sessionProvider), payer: session.wallet.identity})
 	if err != nil {
 		t.Fatal(err)
 	}
-	prepared, err := registry.PrepareRegistration(ctx, RegistrationPreparation{Wallet: session.wallet, Prover: backend})
+	prepared, err := registry.PrepareRegistration(ctx, RegistrationPreparation{Wallet: session.wallet})
 	if err != nil {
 		t.Fatal(err)
 	}
-	authorized, err := prepared.Authorize(ctx)
+	ready, err := prepared.Authorize(ctx)
 	if err != nil {
 		t.Fatal(err)
 	}
 	if _, err = prepared.Authorize(ctx); err == nil {
 		t.Fatal("stale registration authorized twice")
-	}
-	ready, err := authorized.Prove(ctx)
-	if err != nil {
-		t.Fatal(err)
 	}
 	if _, err = ready.ExportTransaction(ctx); err != nil {
 		t.Fatal(err)

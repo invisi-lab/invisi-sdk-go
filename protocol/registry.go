@@ -7,13 +7,13 @@ import (
 	"github.com/consensys/gnark-crypto/ecc/bn254/fr"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/crypto"
+	ethmath "github.com/ethereum/go-ethereum/common/math"
 	"github.com/ethereum/go-ethereum/signer/core/apitypes"
 	"github.com/invisi-lab/invisi-sdk-go/core"
 	"github.com/invisi-lab/invisi-sdk-go/protocol/contracts"
 )
 
-type AddressRegistration = contracts.IInvisiAddressRegistryRegistration
+type AddressRegistration = contracts.IAddressRegistryRegistration
 type RegistryContext struct {
 	ChainID         *big.Int
 	RegistryAddress common.Address
@@ -24,10 +24,9 @@ type RegistrationOptions struct {
 	ExpectedNonce *uint64
 }
 type RegistrationCalldata struct {
-	To           common.Address
-	Data         []byte
-	Value        *big.Int
-	PublicInputs [][32]byte
+	To    common.Address
+	Data  []byte
+	Value *big.Int
 }
 
 func normalizeRegistration(c RegistryContext, r AddressRegistration, options RegistrationOptions) (AddressRegistration, error) {
@@ -38,8 +37,8 @@ func normalizeRegistration(c RegistryContext, r AddressRegistration, options Reg
 		return r, fmt.Errorf("registry address must be nonzero")
 	}
 	var identity fr.Element
-	if err := identity.SetBytesCanonical(r.WalletIdentity[:]); err != nil || identity.IsZero() {
-		return r, fmt.Errorf("invalid complete wallet identity")
+	if err := identity.SetBytesCanonical(r.WalletIdentity[:]); err != nil || identity.IsZero() || new(big.Int).SetBytes(r.WalletIdentity[:]).BitLen() > 160 {
+		return r, fmt.Errorf("wallet identity must be a nonzero zero-padded EVM owner")
 	}
 	if _, err := core.EncodeLongAddress(core.ReceivingAddress{WalletIdentity: identity, ViewingPublicKey: r.Keys.ViewingPublicKey, ClueKey: r.Keys.ClueKey[:]}); err != nil {
 		return r, err
@@ -65,54 +64,50 @@ func normalizeRegistration(c RegistryContext, r AddressRegistration, options Reg
 	return r, nil
 }
 
-// RegistrationAuthorizationRequest is the public seven-word private-wallet transcript.
-func RegistrationAuthorizationRequest(c RegistryContext, r AddressRegistration, options RegistrationOptions) (core.WalletAuthorizationRequest, error) {
-	r, err := normalizeRegistration(c, r, options)
-	if err != nil {
-		return core.WalletAuthorizationRequest{}, err
-	}
-	hash := crypto.Keccak256Hash(r.Keys.ViewingPublicKey, r.Keys.ClueKey[:])
-	high := new(big.Int).SetBytes(hash[:16])
-	low := new(big.Int).SetBytes(hash[16:])
-	var identity fr.Element
-	_ = identity.SetBytesCanonical(r.WalletIdentity[:])
-	chain := core.BigIntToElement(c.ChainID)
-	registry := core.BigIntToElement(c.RegistryAddress.Big())
-	operation := core.WalletRegisterAddress
-	if options.Update {
-		operation = core.WalletUpdateAddress
-	}
-	return core.WalletAuthorizationRequest{Context: core.ProtocolContext{ChainID: chain, ProtocolAddress: registry}, Operation: operation, Capacity: 0, Words: []fr.Element{chain, registry, identity, core.ElementFromUint64(r.Nonce), core.ElementFromUint64(r.Deadline), core.BigIntToElement(high), core.BigIntToElement(low)}}, nil
-}
+// RegistrationTypedData constructs the registry's flat EIP-712 authorization.
 func RegistrationTypedData(c RegistryContext, r AddressRegistration, options RegistrationOptions) (apitypes.TypedData, error) {
-	request, err := RegistrationAuthorizationRequest(c, r, options)
+	r, err := normalizeRegistration(c, r, options)
 	if err != nil {
 		return apitypes.TypedData{}, err
 	}
-	return core.WalletAuthorizationTypedData(request)
-}
-func RegistrationPublicInputs(c RegistryContext, r AddressRegistration, options RegistrationOptions) ([][32]byte, error) {
-	request, err := RegistrationAuthorizationRequest(c, r, options)
-	if err != nil {
-		return nil, err
+	name := "RegisterReceivingKeys"
+	if options.Update {
+		name = "UpdateReceivingKeys"
 	}
-	digest, err := core.ComputeWalletAuthorizationDigest(request)
-	if err != nil {
-		return nil, err
-	}
-	high := core.BigIntToElement(new(big.Int).SetBytes(digest[:16]))
-	low := core.BigIntToElement(new(big.Int).SetBytes(digest[16:]))
-	return [][32]byte{r.WalletIdentity, high.Bytes(), low.Bytes()}, nil
+	chain := ethmath.HexOrDecimal256(*new(big.Int).Set(c.ChainID))
+	return apitypes.TypedData{
+		Types: apitypes.Types{
+			"EIP712Domain": {{Name: "name", Type: "string"}, {Name: "version", Type: "string"}, {Name: "chainId", Type: "uint256"}, {Name: "verifyingContract", Type: "address"}},
+			name:           {{Name: "walletIdentity", Type: "bytes32"}, {Name: "viewingPublicKey", Type: "bytes"}, {Name: "clueKey", Type: "bytes32"}, {Name: "nonce", Type: "uint64"}, {Name: "deadline", Type: "uint64"}},
+		},
+		PrimaryType: name,
+		Domain:      apitypes.TypedDataDomain{Name: "InvisiAddressRegistry", Version: "1", ChainId: &chain, VerifyingContract: c.RegistryAddress.Hex()},
+		Message: apitypes.TypedDataMessage{
+			"walletIdentity":   common.Hash(r.WalletIdentity).Hex(),
+			"viewingPublicKey": "0x" + common.Bytes2Hex(r.Keys.ViewingPublicKey),
+			"clueKey":          common.Hash(r.Keys.ClueKey).Hex(),
+			"nonce":            new(big.Int).SetUint64(r.Nonce).String(),
+			"deadline":         new(big.Int).SetUint64(r.Deadline).String(),
+		},
+	}, nil
 }
 
-// BuildRegistrationCalldata prepares a proof-authorized register/update call without broadcasting.
-func BuildRegistrationCalldata(c RegistryContext, r AddressRegistration, proof []byte, options RegistrationOptions) (*RegistrationCalldata, error) {
+func ComputeRegistrationDigest(c RegistryContext, r AddressRegistration, options RegistrationOptions) (common.Hash, error) {
+	data, err := RegistrationTypedData(c, r, options)
+	if err != nil {
+		return common.Hash{}, err
+	}
+	digest, _, err := apitypes.TypedDataAndHash(data)
+	return common.BytesToHash(digest), err
+}
+
+// BuildRegistrationCalldata encodes an ordinary EIP-712 or ERC-1271 signature.
+// An empty signature is valid only when the transaction sender is the owner.
+// Signature authentication is performed by the registry at execution time.
+func BuildRegistrationCalldata(c RegistryContext, r AddressRegistration, signature []byte, options RegistrationOptions) (*RegistrationCalldata, error) {
 	r, err := normalizeRegistration(c, r, options)
 	if err != nil {
 		return nil, err
-	}
-	if len(proof) == 0 {
-		return nil, fmt.Errorf("registration proof is empty")
 	}
 	parsed, err := contracts.InvisiAddressRegistryMetaData.GetAbi()
 	if err != nil {
@@ -122,21 +117,17 @@ func BuildRegistrationCalldata(c RegistryContext, r AddressRegistration, proof [
 	if options.Update {
 		method = "updateKeys"
 	}
-	data, err := parsed.Pack(method, r, proof)
+	data, err := parsed.Pack(method, r, signature)
 	if err != nil {
 		return nil, err
 	}
-	inputs, err := RegistrationPublicInputs(c, r, options)
-	if err != nil {
-		return nil, err
-	}
-	return &RegistrationCalldata{To: c.RegistryAddress, Data: data, Value: new(big.Int), PublicInputs: inputs}, nil
+	return &RegistrationCalldata{To: c.RegistryAddress, Data: data, Value: new(big.Int)}, nil
 }
 
 // RegistryReadClient matches a generated caller bound to an explicitly selected registry.
 type RegistryReadClient interface {
 	ReceivingKeysOf(*bind.CallOpts, [32]byte) (struct {
-		Keys  contracts.IInvisiAddressRegistryReceivingKeys
+		Keys  contracts.IAddressRegistryReceivingKeys
 		Nonce uint64
 	}, error)
 }

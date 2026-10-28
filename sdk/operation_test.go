@@ -58,6 +58,8 @@ func (p sessionProvider) CallContract(_ context.Context, message ethereum.CallMs
 		return m.Outputs.Pack(big.NewInt(1))
 	case "rootHistory":
 		return m.Outputs.Pack(true)
+	case "addressRegistry":
+		return m.Outputs.Pack(common.HexToAddress("0x3333333333333333333333333333333333333333"))
 	case "isRegistered":
 		return m.Outputs.Pack(false)
 	case "nonceOf":
@@ -412,36 +414,31 @@ func TestCreditReservationCoversBothRolesOfTheSameLeaf(t *testing.T) {
 	}
 }
 
-func TestRegistryUsesOwnerAuthorizationAndIndependentNonce(t *testing.T) {
+func TestRegistryUsesOwnerSignatureAndIndependentNonce(t *testing.T) {
 	ctx := context.Background()
 	session, _, backend := testSession(t)
-	deployment := session.protocol.Deployment()
-	deployment.Registry = &protocolrpc.ContractDeployment{Address: common.HexToAddress("0x3333333333333333333333333333333333333333"), RuntimeCodeHash: hashCode([]byte{0x60, 0}), FromBlock: 1}
-	pool, e := NewProtocol(deployment)
-	if e != nil {
-		t.Fatal(e)
-	}
-	registry, e := NewAddressRegistry(pool, session.options.Provider)
-	if e != nil {
-		t.Fatal(e)
-	}
-	prepared, e := registry.PrepareRegistration(ctx, RegistrationPreparation{Wallet: session.wallet, Prover: backend})
-	if e != nil {
-		t.Fatal(e)
+	registry := testRegistry(t, session, false)
+	prepared, err := registry.PrepareRegistration(ctx, RegistrationPreparation{Wallet: session.wallet})
+	if err != nil {
+		t.Fatal(err)
 	}
 	if prepared.Preview().Nonce != 0 {
 		t.Fatal("wrong registry nonce")
 	}
-	if _, e = prepared.Prove(ctx); e == nil {
-		t.Fatal("registration proved without owner authorization")
+	if _, err = prepared.ExportTransaction(ctx); err == nil {
+		t.Fatal("unsigned registration exported")
 	}
-	if prepared, e = prepared.Authorize(ctx); e != nil {
-		t.Fatal(e)
+	ready, err := prepared.Authorize(ctx)
+	if err != nil {
+		t.Fatal(err)
 	}
-	if _, e = prepared.Prove(ctx); e != nil {
-		t.Fatal(e)
+	if ready.Status() != "ready" {
+		t.Fatal("authorization did not prepare calldata")
 	}
-	if len(backend.requests) != 1 || backend.requests[0].CircuitName != "wallet_registration" {
-		t.Fatal("wrong registry circuit")
+	if _, err = ready.ExportTransaction(ctx); err != nil {
+		t.Fatal(err)
+	}
+	if len(backend.requests) != 0 {
+		t.Fatal("registration requested a circuit proof")
 	}
 }

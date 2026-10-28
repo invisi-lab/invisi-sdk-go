@@ -7,18 +7,17 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/ethclient"
-	"github.com/invisi-lab/invisi-sdk-go/prover"
 	"github.com/invisi-lab/invisi-sdk-go/sdk"
 )
 
 // Register selects the registry from the same trusted deployment used by the Protocol.
-func Register(ctx context.Context, pool *sdk.Protocol, provider *ethclient.Client, wallet *sdk.Wallet, backend sdk.Prover, signer *bind.TransactOpts) error {
+func Register(ctx context.Context, pool *sdk.Protocol, provider *ethclient.Client, wallet *sdk.Wallet, signer *bind.TransactOpts) error {
 	registry, err := sdk.NewAddressRegistry(pool, provider)
 	if err != nil {
 		return err
 	}
 	fmt.Println("1. Prepare receiving-key registration using the registry's own nonce")
-	prepared, err := registry.PrepareRegistration(ctx, sdk.RegistrationPreparation{Wallet: wallet, Prover: backend})
+	prepared, err := registry.PrepareRegistration(ctx, sdk.RegistrationPreparation{Wallet: wallet})
 	if err != nil {
 		return err
 	}
@@ -27,11 +26,7 @@ func Register(ctx context.Context, pool *sdk.Protocol, provider *ethclient.Clien
 	if err != nil {
 		return err
 	}
-	proved, err := authorized.Prove(ctx, prover.Options{OnProgress: func(event prover.Progress) { fmt.Println("Proof phase:", event.Phase) }})
-	if err != nil {
-		return err
-	}
-	call, err := proved.ExportTransaction(ctx)
+	call, err := authorized.ExportTransaction(ctx)
 	if err != nil {
 		return err
 	}
@@ -42,7 +37,7 @@ func Register(ctx context.Context, pool *sdk.Protocol, provider *ethclient.Clien
 	if err != nil {
 		return err
 	}
-	tracked, err := proved.TrackTransaction(ctx, transaction.Hash())
+	tracked, err := authorized.TrackTransaction(ctx, transaction.Hash())
 	if err != nil {
 		return err
 	}

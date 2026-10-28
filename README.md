@@ -181,7 +181,11 @@ The default executor uses private temporary directories and permission-restricte
 
 ## Registry and disclosure
 
-`NewAddressRegistry(protocol, provider)` selects the deployment's independent registry. `Resolve` leaves full addresses offline and validates the chosen registry before resolving an EVM short address. `PrepareRegistration` uses registry nonces, local owner authorization, a wallet-registration proof and a separate EVM submitter. Register and update share review/authorize/prove/export/track/reconcile stages; geth owns sending and receipt waiting.
+`NewAddressRegistry(protocol, provider)` selects the deployment's registry and validates its immutable `Protocol.addressRegistry()` binding. `Resolve` leaves full addresses offline and validates the chosen registry before resolving an EVM short address. `PrepareRegistration` uses registry nonces and ordinary EIP-712 owner signatures. Register and update share review/authorize/export/track/reconcile stages; authorization makes the operation ready without a prover. Geth owns sending and receipt waiting, and a separate EVM account may submit signed registrations.
+
+A local private `Wallet` supplies registry signing automatically. For external signers and ERC-1271 owners, pass `RegistrationPreparation.Authorization` implementing `RegistrationAuthorizationProvider`, or obtain `operation.TypedData()` and pass collected signature bytes to `operation.Authorize(ctx, signature)`. ERC-1271 signatures remain opaque; EOA signatures use 65-byte `r || s || v` with EVM `v` values 27/28 (geth 0/1 values are normalized). The operation verifies authorization against the frozen registry message before exporting calldata. `Wallet.ExportRegistrationAuthorization()` grants registry signing independently of private circuit authorization.
+
+Low-level `protocol.BuildRegistrationCalldata` preserves arbitrary signatures and permits an empty signature for direct owner transactions. The sender must equal the nonzero EVM owner encoded in the zero-padded `bytes32` identity. High-level operations require signatures. `protocol.RegistrationTypedData` and `protocol.ComputeRegistrationDigest` use `InvisiAddressRegistry` version `1`, the actual chain ID, and selected registry address; register and update have separate flat message types.
 
 `DisclosureFromNote` opens one note. `DisclosureFromCredit` opens the Credit commitment using only its shared-key hash. `GetViewer().DiscloseNote` and `DiscloseCredit` release a selected envelope's symmetric payload key, never the wallet-wide viewing key. Credit payload disclosure reveals that envelope's shared recovery key and receiving snapshots. `DisclosureFromExport` and `Verify` interoperate with TS disclosure JSON and require an independently supplied matching output. `DisclosureVerifier` additionally authenticates canonical receipt inclusion and confirmations through Chain RPC; it establishes contents/inclusion, not payer identity, current spent state or complete history.
 
@@ -215,7 +219,7 @@ NOIR_EXECUTE_PATH=/path/to/noir-execute BB_BINARY_PATH=/path/to/bb \
     go test ./prover/native ./sdk -run TestReal -v
 ```
 
-Tests use independent current KDF, encryption and FMD vectors, TS protocol statement/calldata vectors, and TS disclosure exports. Dummy proof bytes in formatting/backend tests do not establish proof soundness. Chain/RPC tests use controlled fixtures. The opt-in `TestReal` suite executes the official Noir/BB binaries for registration, funds and Credit proofs, rejects modified signatures/public inputs, and proves a four-member recursive aggregate. These tests establish local proof generation and verification, not live deployment transaction acceptance.
+Tests use independent current KDF, encryption and FMD vectors, TS protocol statement/calldata vectors, and TS disclosure exports. Dummy proof bytes in formatting/backend tests do not establish proof soundness. Chain/RPC tests use controlled fixtures. The opt-in `TestReal` suite executes the official Noir/BB binaries for funds and Credit proofs, rejects modified signatures/public inputs, and proves a four-member recursive aggregate. These tests establish local proof generation and verification, not live deployment transaction acceptance.
 
 Maintainers update reference assets from a chosen TS SDK checkout:
 

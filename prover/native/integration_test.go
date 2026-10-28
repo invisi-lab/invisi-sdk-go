@@ -11,37 +11,69 @@ import (
 
 	"github.com/consensys/gnark-crypto/ecc/bn254/fr"
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/invisi-lab/invisi-sdk-go/core"
+	"github.com/invisi-lab/invisi-sdk-go/protocol"
 	"github.com/invisi-lab/invisi-sdk-go/prover"
 )
 
 // Public deterministic test key only; never use this account with funds.
-func registrationRequest(t *testing.T) prover.ProvingRequest {
+func creditCancellationRequest(t *testing.T) prover.ProvingRequest {
 	t.Helper()
 	wallet, err := core.DeriveWallet(bytes.Repeat([]byte{1}, 32))
 	if err != nil {
 		t.Fatal(err)
 	}
-	mask := new(big.Int).Sub(new(big.Int).Lsh(big.NewInt(1), 128), big.NewInt(1))
-	keysHash := crypto.Keccak256Hash(wallet.ViewingPublicKey, wallet.ClueKey)
-	keyNumber := keysHash.Big()
-	request := core.WalletAuthorizationRequest{
-		Context:   core.ProtocolContext{ChainID: core.ElementFromUint64(31337), ProtocolAddress: core.ElementFromUint64(4660)},
-		Operation: core.WalletRegisterAddress,
-		Words:     []fr.Element{core.ElementFromUint64(31337), core.ElementFromUint64(4660), wallet.WalletIdentity, core.ElementFromUint64(0), core.ElementFromUint64(2000000000), core.BigIntToElement(new(big.Int).Rsh(new(big.Int).Set(keyNumber), 128)), core.BigIntToElement(new(big.Int).And(keyNumber, mask))},
+	context := core.ProtocolContext{ChainID: core.ElementFromUint64(31337), ProtocolAddress: core.ElementFromUint64(4660)}
+	token, nonce, expiry, amount, shared := core.ElementFromUint64(22136), core.ElementFromUint64(123), core.ElementFromUint64(2000000000), core.ElementFromUint64(100), core.ElementFromUint64(456)
+	keyHash, err := core.ComputeCreditSharedKeyHash(shared)
+	if err != nil {
+		t.Fatal(err)
 	}
+	leaf, err := core.ComputeCreditCommitment(context.ChainID, wallet.WalletIdentity, wallet.WalletIdentity, wallet.WalletIdentity, wallet.WalletIdentity, token, amount, nonce, expiry, keyHash)
+	if err != nil {
+		t.Fatal(err)
+	}
+	root := leaf
+	path := make([]string, 16)
+	for i := range path {
+		path[i] = "0"
+		root, err = core.Poseidon2Hash(root, core.ElementFromUint64(0))
+		if err != nil {
+			t.Fatal(err)
+		}
+	}
+	nullifier, err := core.ComputeCreditNullifier(context.ChainID, shared, leaf)
+	if err != nil {
+		t.Fatal(err)
+	}
+	callContext := protocol.TransactionContext{ChainID: core.ElementToBigInt(context.ChainID), ProtocolAddress: common.BigToAddress(core.ElementToBigInt(context.ProtocolAddress)), TokenAddress: common.BigToAddress(core.ElementToBigInt(token))}
+	params := protocol.CancelCreditParams{Token: callContext.TokenAddress, Owner: common.BigToAddress(core.ElementToBigInt(wallet.WalletIdentity)), Source: protocol.InputSource{TreeId: big.NewInt(1), MerkleRoot: root.Bytes()}, Nullifier: nullifier.Bytes(), Amount: core.ElementToBigInt(amount), Deadline: big.NewInt(2000000000)}
+	base, err := protocol.CancelCreditBaseInputs(callContext, params)
+	if err != nil {
+		t.Fatal(err)
+	}
+	words := make([]fr.Element, len(base))
+	for i, value := range base {
+		words[i] = core.BigIntToElement(new(big.Int).SetBytes(value[:]))
+	}
+	request := core.WalletAuthorizationRequest{Context: context, Operation: core.WalletCancelCredit, Capacity: 1, Words: words}
 	signed, err := core.BuildWalletAuthorizationWitness(wallet, request)
 	if err != nil {
 		t.Fatal(err)
 	}
-	digest, err := core.ComputeWalletAuthorizationDigest(request)
+	inputs, err := protocol.CancelCreditPublicInputs(callContext, params)
 	if err != nil {
 		t.Fatal(err)
 	}
-	high := new(big.Int).Rsh(digest.Big(), 128)
-	low := new(big.Int).And(digest.Big(), mask)
-	proofRequest, err := prover.Request("wallet_registration", "evm", map[string]any{"public_key_x": signed.PublicKeyX, "public_key_y": signed.PublicKeyY, "signature": signed.Signature}, []common.Hash{common.BigToHash(core.ElementToBigInt(wallet.WalletIdentity)), common.BigToHash(high), common.BigToHash(low)})
+	public := make([]common.Hash, len(inputs))
+	for i, value := range inputs {
+		public[i] = value
+	}
+	proofRequest, err := prover.Request("credit_cancel", "evm", map[string]any{
+		"public_key_x": signed.PublicKeyX, "public_key_y": signed.PublicKeyY, "signature": signed.Signature,
+		"spender_payout": wallet.WalletIdentity.String(), "spender_wallet_identity": wallet.WalletIdentity.String(), "owner_wallet_identity": wallet.WalletIdentity.String(),
+		"input_nonce": nonce.String(), "expiry": expiry.String(), "credit_shared_key": shared.String(), "leaf_index": "0", "merkle_path": path,
+	}, public)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -55,7 +87,7 @@ func TestRealOfficialWitnessExecutor(t *testing.T) {
 	}
 	scratch := t.TempDir()
 	t.Setenv("TMPDIR", scratch)
-	request := registrationRequest(t)
+	request := creditCancellationRequest(t)
 	artifact, _, err := assets(request.ProofStatement)
 	if err != nil {
 		t.Fatal(err)
@@ -92,12 +124,12 @@ func TestRealOfficialWitnessExecutor(t *testing.T) {
 
 }
 
-func TestRealNativeRegistrationProof(t *testing.T) {
+func TestRealNativeCreditCancellationProof(t *testing.T) {
 	bb, noir := os.Getenv("BB_BINARY_PATH"), os.Getenv("NOIR_EXECUTE_PATH")
 	if bb == "" || noir == "" {
 		t.Skip("set BB_BINARY_PATH and NOIR_EXECUTE_PATH for genuine proving")
 	}
-	request := registrationRequest(t)
+	request := creditCancellationRequest(t)
 	backend, err := NewNativeProver(NativeOptions{BBBinary: bb, NoirBinary: noir, Threads: 4})
 	if err != nil {
 		t.Fatal(err)

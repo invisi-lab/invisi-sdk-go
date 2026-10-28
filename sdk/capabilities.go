@@ -1,6 +1,7 @@
 package sdk
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"math/big"
@@ -54,44 +55,42 @@ type FundingAuthorizationVerifier interface {
 type GethFundingVerifier struct{ Provider Provider }
 
 func (v GethFundingVerifier) VerifyTypedData(ctx context.Context, address common.Address, data apitypes.TypedData, signature []byte) (bool, error) {
-	if v.Provider == nil {
-		return false, errors.New("funding verification provider required")
+	return verifyTypedData(ctx, v.Provider, address, data, signature, "funding")
+}
+
+func verifyTypedData(ctx context.Context, provider Provider, address common.Address, data apitypes.TypedData, signature []byte, purpose string) (bool, error) {
+	if provider == nil {
+		return false, errors.New(purpose + " verification provider required")
 	}
-	chain, err := v.Provider.ChainID(ctx)
+	chain, err := provider.ChainID(ctx)
 	if err != nil {
 		return false, err
 	}
 	if data.Domain.ChainId == nil || chain.Cmp((*big.Int)(data.Domain.ChainId)) != 0 {
-		return false, errors.New("funding verification chain mismatch")
-	}
-	code, err := v.Provider.CodeAt(ctx, address, nil)
-	if err != nil {
-		return false, err
+		return false, errors.New(purpose + " verification chain mismatch")
 	}
 	digest, _, err := apitypes.TypedDataAndHash(data)
 	if err != nil {
 		return false, err
 	}
+	// SignatureChecker first tries ECDSA even when the owner has code (for
+	// example, an EIP-7702 delegated EOA), then tries ERC-1271.
+	if recovered, valid := recoverTypedDataSigner(digest, signature); valid && recovered == address {
+		return true, nil
+	}
+	code, err := provider.CodeAt(ctx, address, nil)
+	if err != nil {
+		return false, err
+	}
 	if len(code) == 0 {
-		if len(signature) != 65 {
-			return false, nil
-		}
-		sig := append([]byte(nil), signature...)
-		if sig[64] >= 27 {
-			sig[64] -= 27
-		}
-		if sig[64] > 1 || !crypto.ValidateSignatureValues(sig[64], new(big.Int).SetBytes(sig[:32]), new(big.Int).SetBytes(sig[32:64]), true) {
-			return false, nil
-		}
-		public, err := crypto.SigToPub(digest, sig)
-		return err == nil && crypto.PubkeyToAddress(*public) == address, nil
+		return false, nil
 	}
 	contractABI, _ := abi.JSON(strings.NewReader(`[{"type":"function","name":"isValidSignature","stateMutability":"view","inputs":[{"type":"bytes32"},{"type":"bytes"}],"outputs":[{"type":"bytes4"}]}]`))
 	call, err := contractABI.Pack("isValidSignature", common.BytesToHash(digest), signature)
 	if err != nil {
 		return false, err
 	}
-	result, err := v.Provider.CallContract(ctx, ethereum.CallMsg{To: &address, Data: call}, nil)
+	result, err := provider.CallContract(ctx, ethereum.CallMsg{To: &address, Data: call}, nil)
 	if err != nil {
 		// A contract rejection is an invalid signature; transport errors remain errors.
 		if strings.Contains(err.Error(), "execution reverted") {
@@ -99,12 +98,30 @@ func (v GethFundingVerifier) VerifyTypedData(ctx context.Context, address common
 		}
 		return false, err
 	}
-	values, err := contractABI.Unpack("isValidSignature", result)
-	if err != nil || len(values) != 1 {
-		return false, nil
+	// OpenZeppelin compares the complete ABI word, including zero padding.
+	// Additional return data is permitted; short or dirty words are rejected.
+	var magic [32]byte
+	copy(magic[:], []byte{0x16, 0x26, 0xba, 0x7e})
+	return len(result) >= 32 && bytes.Equal(result[:32], magic[:]), nil
+}
+
+// recoverTypedDataSigner accepts the recoverable geth and EVM signature forms.
+func recoverTypedDataSigner(digest, signature []byte) (common.Address, bool) {
+	if len(signature) != 65 {
+		return common.Address{}, false
 	}
-	magic, ok := values[0].([4]byte)
-	return ok && magic == ([4]byte{0x16, 0x26, 0xba, 0x7e}), nil
+	sig := append([]byte(nil), signature...)
+	if sig[64] >= 27 {
+		sig[64] -= 27
+	}
+	if sig[64] > 1 || !crypto.ValidateSignatureValues(sig[64], new(big.Int).SetBytes(sig[:32]), new(big.Int).SetBytes(sig[32:64]), true) {
+		return common.Address{}, false
+	}
+	public, err := crypto.SigToPub(digest, sig)
+	if err != nil {
+		return common.Address{}, false
+	}
+	return crypto.PubkeyToAddress(*public), true
 }
 
 func verifyAuthorizationWitness(identity common.Address, request core.WalletAuthorizationRequest, witness core.WalletAuthorizationWitness) error {

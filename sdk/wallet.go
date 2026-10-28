@@ -8,6 +8,8 @@ import (
 
 	"github.com/consensys/gnark-crypto/ecc/bn254/fr"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/crypto"
+	"github.com/ethereum/go-ethereum/signer/core/apitypes"
 	"github.com/invisi-lab/invisi-sdk-go/core"
 )
 
@@ -155,4 +157,72 @@ func (v *ViewingCapability) DecryptNote(envelope []byte, context core.NoteDecryp
 }
 func (v *ViewingCapability) DecryptCredit(envelope []byte, context core.CreditNoteDecryptionContext) (core.CreditDeliveryState, error) {
 	return v.decryptCredit(envelope, context)
+}
+
+// RegistrationAuthorizationProvider signs the public registry EIP-712 message.
+// ERC-1271 wallets may return arbitrary signature bytes.
+type RegistrationAuthorizationProvider interface {
+	WalletIdentity() common.Address
+	SignTypedData(context.Context, apitypes.TypedData) ([]byte, error)
+}
+
+type RegistrationAuthorizationFunc struct {
+	Owner common.Address
+	Sign  func(context.Context, apitypes.TypedData) ([]byte, error)
+}
+
+func (a RegistrationAuthorizationFunc) WalletIdentity() common.Address { return a.Owner }
+func (a RegistrationAuthorizationFunc) SignTypedData(ctx context.Context, data apitypes.TypedData) ([]byte, error) {
+	if a.Sign == nil {
+		return nil, errors.New("registration signing callback required")
+	}
+	return a.Sign(ctx, data)
+}
+
+// ExportRegistrationAuthorization grants ordinary registry signing separately
+// from private circuit authorization. The key remains local.
+func (w *Wallet) ExportRegistrationAuthorization() (*RegistrationAuthorization, error) {
+	if w.material == nil {
+		return nil, errors.New("registration authorization permission required")
+	}
+	return &RegistrationAuthorization{w.material}, nil
+}
+
+type RegistrationAuthorization struct{ material *core.InvisiWallet }
+
+func (a *RegistrationAuthorization) WalletIdentity() common.Address {
+	if a == nil || a.material == nil {
+		return common.Address{}
+	}
+	return common.BigToAddress(core.ElementToBigInt(a.material.WalletIdentity))
+}
+func (a *RegistrationAuthorization) SignTypedData(ctx context.Context, data apitypes.TypedData) ([]byte, error) {
+	if err := ctx.Err(); err != nil {
+		return nil, err
+	}
+	if a == nil || a.material == nil {
+		return nil, errors.New("registration authorization permission required")
+	}
+	if data.Domain.Name != "InvisiAddressRegistry" || data.Domain.Version != "1" || (data.PrimaryType != "RegisterReceivingKeys" && data.PrimaryType != "UpdateReceivingKeys") || data.Message["walletIdentity"] != common.BigToHash(a.WalletIdentity().Big()).Hex() {
+		return nil, errors.New("invalid registration signing request")
+	}
+	digest, _, err := apitypes.TypedDataAndHash(data)
+	if err != nil {
+		return nil, err
+	}
+	key, err := crypto.ToECDSA(a.material.SpendingPrivateKey)
+	if err != nil {
+		return nil, err
+	}
+	signature, err := crypto.Sign(digest, key)
+	if err != nil {
+		return nil, err
+	}
+	signature[64] += 27
+	return signature, nil
+}
+func (a *RegistrationAuthorization) String() string   { return "RegistrationAuthorization([redacted])" }
+func (a *RegistrationAuthorization) GoString() string { return a.String() }
+func (a *RegistrationAuthorization) MarshalJSON() ([]byte, error) {
+	return []byte(`{"registrationAuthorization":"[redacted]"}`), nil
 }

@@ -38,6 +38,11 @@
         "name": "_screener",
         "type": "address",
         "internalType": "address"
+      },
+      {
+        "name": "_addressRegistry",
+        "type": "address",
+        "internalType": "address"
       }
     ],
     "stateMutability": "nonpayable"
@@ -110,6 +115,19 @@
         "name": "",
         "type": "uint256",
         "internalType": "uint256"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "addressRegistry",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "address",
+        "internalType": "contract IAddressRegistry"
       }
     ],
     "stateMutability": "view"
@@ -307,7 +325,7 @@
           {
             "name": "permit",
             "type": "tuple",
-            "internalType": "struct IInvisiMetaTx.TokenPermit",
+            "internalType": "struct IMetaTx.TokenPermit",
             "components": [
               {
                 "name": "deadline",
@@ -850,7 +868,7 @@
           {
             "name": "permit",
             "type": "tuple",
-            "internalType": "struct IInvisiMetaTx.TokenPermit",
+            "internalType": "struct IMetaTx.TokenPermit",
             "components": [
               {
                 "name": "deadline",
@@ -1032,7 +1050,7 @@
           {
             "name": "permit",
             "type": "tuple",
-            "internalType": "struct IInvisiMetaTx.TokenPermit",
+            "internalType": "struct IMetaTx.TokenPermit",
             "components": [
               {
                 "name": "deadline",
@@ -1180,7 +1198,7 @@
               {
                 "name": "permit",
                 "type": "tuple",
-                "internalType": "struct IInvisiMetaTx.TokenPermit",
+                "internalType": "struct IMetaTx.TokenPermit",
                 "components": [
                   {
                     "name": "deadline",
@@ -1330,7 +1348,7 @@
               {
                 "name": "permit",
                 "type": "tuple",
-                "internalType": "struct IInvisiMetaTx.TokenPermit",
+                "internalType": "struct IMetaTx.TokenPermit",
                 "components": [
                   {
                     "name": "deadline",
@@ -2416,6 +2434,11 @@
         "internalType": "uint256"
       }
     ]
+  },
+  {
+    "type": "error",
+    "name": "InvalidAddressRegistry",
+    "inputs": []
   },
   {
     "type": "error",

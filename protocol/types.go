@@ -10,7 +10,7 @@ import (
 // Contract tuples use the generated, current ABI types.
 type Delivery = contracts.IInvisiProtocolDelivery
 type InputSource = contracts.IInvisiProtocolInputSource
-type TokenPermit = contracts.IInvisiMetaTxTokenPermit
+type TokenPermit = contracts.IMetaTxTokenPermit
 type FundingParams = contracts.IInvisiProtocolFundingParams
 type ShieldParams = contracts.IInvisiProtocolShieldParams
 type ShieldOutput = contracts.IInvisiProtocolShieldOutput

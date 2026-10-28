@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/invisi-lab/invisi-sdk-go/prover"
 )
 
 func (o *RegistrationOperation) stage(ctx context.Context, work func(*RegistrationOperation) error) (*RegistrationOperation, error) {
@@ -29,13 +28,9 @@ func (o *RegistrationOperation) stage(ctx context.Context, work func(*Registrati
 		return nil, err
 	}
 	next := &RegistrationOperation{lifecycle: lifecycle, generation: o.generation, registry: o.registry, wallet: o.wallet, options: o.options, registration: registration, context: contextCopy, status: o.status, data: append([]byte(nil), o.data...), transactionHash: o.transactionHash}
-	if o.authority != nil {
-		w := *o.authority
-		next.authority = &w
-	}
-	if o.bundle != nil {
-		b := prover.CloneBundle(*o.bundle)
-		next.bundle = &b
+	if o.receiptBlock != nil {
+		block := *o.receiptBlock
+		next.receiptBlock = &block
 	}
 	if err = work(next); err != nil {
 		return nil, err
@@ -49,19 +44,9 @@ func (o *RegistrationOperation) stage(ctx context.Context, work func(*Registrati
 	lifecycle.mu.Unlock()
 	return next, nil
 }
-func (o *RegistrationOperation) Authorize(ctx context.Context) (*RegistrationOperation, error) {
-	return o.stage(ctx, func(next *RegistrationOperation) error { _, err := next.authorizeInternal(ctx); return err })
-}
-func (o *RegistrationOperation) Prove(ctx context.Context, arguments ...any) (*RegistrationOperation, error) {
-	backend, options, err := provingArguments(arguments)
-	if err != nil {
-		return nil, err
-	}
+func (o *RegistrationOperation) Authorize(ctx context.Context, signature ...[]byte) (*RegistrationOperation, error) {
 	return o.stage(ctx, func(next *RegistrationOperation) error {
-		if backend != nil {
-			next.options.Prover = backend
-		}
-		_, err := next.proveInternal(ctx, options)
+		_, err := next.authorizeInternal(ctx, signature...)
 		return err
 	})
 }

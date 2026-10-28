@@ -31,7 +31,7 @@ var (
 
 // VerifierRouterMetaData contains all meta data concerning the VerifierRouter contract.
 var VerifierRouterMetaData = &bind.MetaData{
-	ABI: "[{\"type\":\"function\",\"name\":\"getCreateCreditVerifier\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"address\",\"internalType\":\"contractIVerifier\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getCreditCancelVerifier\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"address\",\"internalType\":\"contractIVerifier\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getCreditDrawVerifier\",\"inputs\":[{\"name\":\"inputs\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[{\"name\":\"\",\"type\":\"address\",\"internalType\":\"contractIVerifier\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getCreditTopUpVerifier\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"address\",\"internalType\":\"contractIVerifier\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getCrossTreeVerifier\",\"inputs\":[{\"name\":\"inputs\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"outputs\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[{\"name\":\"\",\"type\":\"address\",\"internalType\":\"contractIVerifier\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getPrivateTransferVerifier\",\"inputs\":[{\"name\":\"inputs\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"outputs\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[{\"name\":\"\",\"type\":\"address\",\"internalType\":\"contractIVerifier\"}],\"stateMutability\":\"view\"},{\"type\":\"error\",\"name\":\"UnsupportedCreditCreation\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"UnsupportedCrossTreeShape\",\"inputs\":[{\"name\":\"inputs\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"outputs\",\"type\":\"uint256\",\"internalType\":\"uint256\"}]},{\"type\":\"error\",\"name\":\"UnsupportedPrivateTransferShape\",\"inputs\":[{\"name\":\"inputs\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"outputs\",\"type\":\"uint256\",\"internalType\":\"uint256\"}]}]",
+	ABI: "[{\"type\":\"function\",\"name\":\"getCreateCreditVerifier\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"address\",\"internalType\":\"contractIVerifier\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getCreditCancelVerifier\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"address\",\"internalType\":\"contractIVerifier\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getCreditDrawVerifier\",\"inputs\":[{\"name\":\"\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[{\"name\":\"\",\"type\":\"address\",\"internalType\":\"contractIVerifier\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getCreditTopUpVerifier\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"address\",\"internalType\":\"contractIVerifier\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getCrossTreeVerifier\",\"inputs\":[{\"name\":\"inputs\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"outputs\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[{\"name\":\"\",\"type\":\"address\",\"internalType\":\"contractIVerifier\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getPrivateTransferVerifier\",\"inputs\":[{\"name\":\"inputs\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"outputs\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[{\"name\":\"\",\"type\":\"address\",\"internalType\":\"contractIVerifier\"}],\"stateMutability\":\"view\"},{\"type\":\"error\",\"name\":\"UnsupportedCreditCreation\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"UnsupportedCrossTreeShape\",\"inputs\":[{\"name\":\"inputs\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"outputs\",\"type\":\"uint256\",\"internalType\":\"uint256\"}]},{\"type\":\"error\",\"name\":\"UnsupportedPrivateTransferShape\",\"inputs\":[{\"name\":\"inputs\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"outputs\",\"type\":\"uint256\",\"internalType\":\"uint256\"}]}]",
 }
 
 // VerifierRouterABI is the input ABI used to generate the binding from.
@@ -244,10 +244,10 @@ func (_VerifierRouter *VerifierRouterCallerSession) GetCreditCancelVerifier() (c
 
 // GetCreditDrawVerifier is a free data retrieval call binding the contract method 0x86b5ceca.
 //
-// Solidity: function getCreditDrawVerifier(uint256 inputs) view returns(address)
-func (_VerifierRouter *VerifierRouterCaller) GetCreditDrawVerifier(opts *bind.CallOpts, inputs *big.Int) (common.Address, error) {
+// Solidity: function getCreditDrawVerifier(uint256 ) view returns(address)
+func (_VerifierRouter *VerifierRouterCaller) GetCreditDrawVerifier(opts *bind.CallOpts, arg0 *big.Int) (common.Address, error) {
 	var out []interface{}
-	err := _VerifierRouter.contract.Call(opts, &out, "getCreditDrawVerifier", inputs)
+	err := _VerifierRouter.contract.Call(opts, &out, "getCreditDrawVerifier", arg0)
 
 	if err != nil {
 		return *new(common.Address), err
@@ -261,16 +261,16 @@ func (_VerifierRouter *VerifierRouterCaller) GetCreditDrawVerifier(opts *bind.Ca
 
 // GetCreditDrawVerifier is a free data retrieval call binding the contract method 0x86b5ceca.
 //
-// Solidity: function getCreditDrawVerifier(uint256 inputs) view returns(address)
-func (_VerifierRouter *VerifierRouterSession) GetCreditDrawVerifier(inputs *big.Int) (common.Address, error) {
-	return _VerifierRouter.Contract.GetCreditDrawVerifier(&_VerifierRouter.CallOpts, inputs)
+// Solidity: function getCreditDrawVerifier(uint256 ) view returns(address)
+func (_VerifierRouter *VerifierRouterSession) GetCreditDrawVerifier(arg0 *big.Int) (common.Address, error) {
+	return _VerifierRouter.Contract.GetCreditDrawVerifier(&_VerifierRouter.CallOpts, arg0)
 }
 
 // GetCreditDrawVerifier is a free data retrieval call binding the contract method 0x86b5ceca.
 //
-// Solidity: function getCreditDrawVerifier(uint256 inputs) view returns(address)
-func (_VerifierRouter *VerifierRouterCallerSession) GetCreditDrawVerifier(inputs *big.Int) (common.Address, error) {
-	return _VerifierRouter.Contract.GetCreditDrawVerifier(&_VerifierRouter.CallOpts, inputs)
+// Solidity: function getCreditDrawVerifier(uint256 ) view returns(address)
+func (_VerifierRouter *VerifierRouterCallerSession) GetCreditDrawVerifier(arg0 *big.Int) (common.Address, error) {
+	return _VerifierRouter.Contract.GetCreditDrawVerifier(&_VerifierRouter.CallOpts, arg0)
 }
 
 // GetCreditTopUpVerifier is a free data retrieval call binding the contract method 0x604ee023.

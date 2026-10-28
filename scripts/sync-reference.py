@@ -14,8 +14,16 @@ for name in (
 (root / "sdk/data").mkdir(parents=True, exist_ok=True)
 shutil.copyfile(source / "packages/sdk/src/data/gas-benchmarks.json", root / "sdk/data/gas-benchmarks.json")
 shutil.copyfile(source / "packages/protocol/src/protocol-vectors.json", root / "protocol/protocol-vectors.json")
+(root / "protocol/testdata").mkdir(parents=True, exist_ok=True)
+shutil.copyfile(source / "packages/protocol/src/testdata/address-registration-vectors.json", root / "protocol/testdata/address-registration-vectors.json")
 shutil.copyfile(source / "packages/protocol/src/witness-layouts.json", root / "prover/witness-layouts.json")
-shutil.copytree(source / "packages/prover/circuits", root / "prover/native/circuits", dirs_exist_ok=True)
+# Mirror the released asset set so removed circuits cannot remain embedded.
+circuit_source = source / "packages/prover/circuits"
+circuit_target = root / "prover/native/circuits"
+shutil.copytree(circuit_source, circuit_target, dirs_exist_ok=True)
+for target in circuit_target.iterdir():
+    if target.is_file() and not (circuit_source / target.name).is_file():
+        target.unlink()
 
 import json
 entries = json.loads((source / "packages/prover/circuits/manifest.json").read_text())["entries"]

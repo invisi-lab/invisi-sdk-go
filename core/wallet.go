@@ -26,13 +26,11 @@ type InvisiWallet struct {
 type WalletOperation string
 
 const (
-	WalletTransact        WalletOperation = "transact"
-	WalletCreateCredit    WalletOperation = "create-credit"
-	WalletCreditDraw      WalletOperation = "credit-draw"
-	WalletCancelCredit    WalletOperation = "cancel-credit"
-	WalletTopUpCredit     WalletOperation = "top-up-credit"
-	WalletRegisterAddress WalletOperation = "register-address"
-	WalletUpdateAddress   WalletOperation = "update-address"
+	WalletTransact     WalletOperation = "transact"
+	WalletCreateCredit WalletOperation = "create-credit"
+	WalletCreditDraw   WalletOperation = "credit-draw"
+	WalletCancelCredit WalletOperation = "cancel-credit"
+	WalletTopUpCredit  WalletOperation = "top-up-credit"
 )
 
 // WalletAuthorizationRequest binds a private spending-key signature to the
@@ -155,12 +153,6 @@ func walletOperationName(operation WalletOperation, capacity int) (string, error
 	case WalletTopUpCredit:
 		name = "TopUpCredit"
 		allowed = capacity == 10
-	case WalletRegisterAddress:
-		name = "RegisterAddress"
-		allowed = capacity == 0
-	case WalletUpdateAddress:
-		name = "UpdateAddress"
-		allowed = capacity == 0
 	default:
 		return "", fmt.Errorf("unsupported wallet operation")
 	}

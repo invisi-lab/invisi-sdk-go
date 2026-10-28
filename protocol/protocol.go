@@ -89,6 +89,16 @@ func (p *Protocol) ValidateDeployment(ctx context.Context, provider protocolrpc.
 	if len(out) != 32 || new(big.Int).SetBytes(out).Cmp(big.NewInt(1)) != 0 {
 		return errors.New("unsupported Protocol VERSION")
 	}
+	if p.deployment.Registry != nil {
+		data := crypto.Keccak256([]byte("addressRegistry()"))[:4]
+		out, e := provider.CallContract(ctx, ethereum.CallMsg{To: &p.deployment.Protocol.Address, Data: data}, nil)
+		if e != nil {
+			return e
+		}
+		if len(out) != 32 || new(big.Int).SetBytes(out).BitLen() > 160 || common.BytesToAddress(out) != p.deployment.Registry.Address {
+			return errors.New("registry differs from immutable protocol binding")
+		}
+	}
 	return nil
 }
 func (p *Protocol) ForToken(token common.Address) (TransactionContext, error) {
