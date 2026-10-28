@@ -1,53 +1,79 @@
 package core
 
-import "github.com/consensys/gnark-crypto/ecc/bn254/fr"
+import (
+	"fmt"
 
-// DeriveNoteSecret implements the optional offchain invoice identity policy.
-// Credit shared keys must instead be independently sampled with GenerateCreditSharedKey.
-func DeriveNoteSecret(masterKey, invoiceID fr.Element) (fr.Element, error) {
-	return Poseidon2Hash(ElementFromUint64(DNoteSecret), masterKey, invoiceID)
+	"github.com/consensys/gnark-crypto/ecc/bn254/fr"
+)
+
+// ComputeNoteIdentity randomizes the complete receiving wallet identity for one note.
+func ComputeNoteIdentity(walletIdentity, nonce fr.Element) (fr.Element, error) {
+	if walletIdentity.IsZero() || ElementToBigInt(walletIdentity).BitLen() > 160 {
+		return fr.Element{}, fmt.Errorf("wallet identity must be nonzero")
+	}
+	return Poseidon2Hash(ElementFromUint64(DIdent), walletIdentity, nonce)
+}
+func ComputeNoteCommitment(chainID, identity, tokenAddress, amount fr.Element) (fr.Element, error) {
+	for _, v := range []struct {
+		x    fr.Element
+		bits int
+		name string
+	}{{chainID, 64, "chainId"}, {tokenAddress, 160, "tokenAddress"}, {amount, 128, "amount"}} {
+		if err := checkUint(v.x, v.bits, v.name); err != nil {
+			return fr.Element{}, err
+		}
+	}
+	if amount.IsZero() {
+		return fr.Element{}, fmt.Errorf("amount must be nonzero")
+	}
+	return Poseidon2Hash(ElementFromUint64(DNote), chainID, identity, tokenAddress, amount)
 }
 
-func ComputeIdentityCommitment(noteSecret, receivingAddress fr.Element) (fr.Element, error) {
-	return Poseidon2Hash(ElementFromUint64(DIdent), noteSecret, receivingAddress)
-}
-
-func ComputeNoteCommitment(chainID, identityCommitment, tokenAddress, amount, nonce fr.Element) (fr.Element, error) {
-	return Poseidon2Hash(ElementFromUint64(DNote), chainID, identityCommitment, tokenAddress, amount, nonce)
-}
-
-// ComputeChangeCommitment creates an ordinary note using caller-supplied secrets and nonce.
-func ComputeChangeCommitment(chainID, changeNoteSecret, changeReceivingAddress, tokenAddress, amount, nonce fr.Element) (fr.Element, error) {
-	identity, err := ComputeIdentityCommitment(changeNoteSecret, changeReceivingAddress)
-	if err != nil {
+// ComputeNoteNullifier binds the private note nonce and complete input leaf.
+func ComputeNoteNullifier(chainID, nonce, noteCommitment fr.Element) (fr.Element, error) {
+	if err := checkUint(chainID, 64, "chainId"); err != nil {
 		return fr.Element{}, err
 	}
-	return ComputeNoteCommitment(chainID, identity, tokenAddress, amount, nonce)
+	return Poseidon2Hash(ElementFromUint64(DNull), chainID, nonce, noteCommitment)
+}
+func ComputeCreditSharedKeyHash(key fr.Element) (fr.Element, error) {
+	if key.IsZero() {
+		return fr.Element{}, fmt.Errorf("Credit shared key must be nonzero")
+	}
+	return Poseidon2Hash(ElementFromUint64(DCreditKeyHash), key)
+}
+func ComputeCreditCommitment(chainID, spenderWalletIdentity, ownerWalletIdentity, spenderPayout, ownerPayout, tokenAddress, amount, nonce, expiry, keyHash fr.Element) (fr.Element, error) {
+	for _, v := range []struct {
+		x    fr.Element
+		bits int
+		name string
+	}{{chainID, 64, "chainId"}, {tokenAddress, 160, "tokenAddress"}, {spenderPayout, 160, "spenderPayout"}, {ownerPayout, 160, "ownerPayout"}, {amount, 126, "amount"}, {expiry, 64, "expiry"}} {
+		if err := checkUint(v.x, v.bits, v.name); err != nil {
+			return fr.Element{}, err
+		}
+	}
+	if spenderWalletIdentity.IsZero() || ownerWalletIdentity.IsZero() || spenderPayout.IsZero() || ownerPayout.IsZero() || amount.IsZero() || expiry.IsZero() {
+		return fr.Element{}, fmt.Errorf("Credit identities, payouts, amount and expiry must be positive")
+	}
+	if spenderWalletIdentity != spenderPayout || ownerWalletIdentity != ownerPayout {
+		return fr.Element{}, fmt.Errorf("Credit payout must equal its owner identity")
+	}
+	return Poseidon2Hash(ElementFromUint64(DCredit), chainID, spenderWalletIdentity, ownerWalletIdentity, spenderPayout, ownerPayout, tokenAddress, amount, nonce, expiry, keyHash)
 }
 
-// ComputeNoteNullifier binds both the private note secret and receiving address.
-func ComputeNoteNullifier(chainID, noteSecret, receivingAddress, tokenAddress, amount, nonce fr.Element) (fr.Element, error) {
-	return Poseidon2Hash(ElementFromUint64(DNull), chainID, noteSecret, receivingAddress, tokenAddress, amount, nonce)
+// ComputeCreditNullifier binds the entire grant, preventing alternate-grant shared-key collisions.
+func ComputeCreditNullifier(chainID, key, creditCommitment fr.Element) (fr.Element, error) {
+	if err := checkUint(chainID, 64, "chainId"); err != nil {
+		return fr.Element{}, err
+	}
+	if key.IsZero() {
+		return fr.Element{}, fmt.Errorf("Credit shared key must be nonzero")
+	}
+	return Poseidon2Hash(ElementFromUint64(DCNull), chainID, key, creditCommitment)
 }
-
-func ComputeCreditSharedKeyHash(creditSharedKey fr.Element) (fr.Element, error) {
-	return Poseidon2Hash(ElementFromUint64(DCreditKeyHash), creditSharedKey)
+func DeriveRemainderNonce(chainID, protocolAddress, tokenAddress, creditNullifier, key fr.Element) (fr.Element, error) {
+	return Poseidon2Hash(ElementFromUint64(DCreditRemainderNonce), chainID, protocolAddress, tokenAddress, creditNullifier, key)
 }
-
-func ComputeCreditCommitment(chainID, spenderIdentityCommitment, ownerIdentityCommitment, tokenAddress, amount, nonce, expiry, creditSharedKeyHash fr.Element) (fr.Element, error) {
-	return Poseidon2Hash(ElementFromUint64(DCredit), chainID, spenderIdentityCommitment, ownerIdentityCommitment, tokenAddress, amount, nonce, expiry, creditSharedKeyHash)
-}
-
-func ComputeCreditNullifier(chainID, creditSharedKey, tokenAddress, amount, nonce, expiry fr.Element) (fr.Element, error) {
-	return Poseidon2Hash(ElementFromUint64(DCNull), chainID, creditSharedKey, tokenAddress, amount, nonce, expiry)
-}
-
-// DeriveRemainderNonce scopes a Credit remainder nonce to the deployment and consumed note.
-func DeriveRemainderNonce(chainID, protocolAddress, tokenAddress, creditNullifier, creditSharedKey fr.Element) (fr.Element, error) {
-	return Poseidon2Hash(ElementFromUint64(DCreditRemainderNonce), chainID, protocolAddress, tokenAddress, creditNullifier, creditSharedKey)
-}
-
-// ComputeCreditRecoveryPad derives the additive pad used by Credit draw recovery.
-func ComputeCreditRecoveryPad(chainID, protocolAddress, tokenAddress, creditNullifier, creditSharedKey fr.Element) (fr.Element, error) {
-	return Poseidon2Hash(ElementFromUint64(DCreditRecovery), chainID, protocolAddress, tokenAddress, creditNullifier, creditSharedKey)
+func ComputeCreditRecoveryPad(chainID, protocolAddress, tokenAddress, creditNullifier, key fr.Element) (fr.Element, error) {
+	return Poseidon2Hash(ElementFromUint64(DCreditRecovery), chainID, protocolAddress, tokenAddress, creditNullifier, key)
 }

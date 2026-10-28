@@ -1,0 +1,26 @@
+{
+  "source": "Independent Python stdlib hashlib/hmac HKDF-SHA256 reference; inputs are public test keys.",
+  "vectors": [
+    {
+      "privateKey": "0x0000000000000000000000000000000000000000000000000000000000000001",
+      "spendingPrivateKey": "0000000000000000000000000000000000000000000000000000000000000001",
+      "viewingPrivateKey": "80d9cd50805bf2ff5f95f9a091add4515bebb62293c721362fd077891c23069f",
+      "detectionSeed": "03e8ed527326843b5c2f072c8ca1563283763d8f663b4da48797d722219e7777",
+      "detectionKey": "d8eb060942042c18ae6d75e49b92f32e51d430d7733b715a57315a6472097f02"
+    },
+    {
+      "privateKey": "0x1111111111111111111111111111111111111111111111111111111111111111",
+      "spendingPrivateKey": "1111111111111111111111111111111111111111111111111111111111111111",
+      "viewingPrivateKey": "2d084af06850328cd915e33f3da77cfaf4dab495fcbd477d98bfc4cb1cd3e658",
+      "detectionSeed": "8480a93c38b479c22119afcd01c0599aa6139617a97224212de7b2c20520b611",
+      "detectionKey": "3e5e2142ad0a8c50cc7209345621119fe48b9589e5f4cf8f97b7f23d9091ca03"
+    },
+    {
+      "privateKey": "0xfffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364140",
+      "spendingPrivateKey": "fffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364140",
+      "viewingPrivateKey": "aa2090b763b912ab42a80f86af71a30b9bf2dfcc341dea99fd20ab29cefd8c3c",
+      "detectionSeed": "15736fa2b2074efe31281cb1f3d8e859b967cf99a61f9f8b424ce114d4221432",
+      "detectionKey": "ab2d54ad65edf16b8f5e3ef399a511646bb7d2a4e43402f340d13d09ecd48602"
+    }
+  ]
+}

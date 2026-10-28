@@ -1,0 +1,1349 @@
+{
+  "transact_user_slots14": {
+    "artifactSha256": "2a6a20839e90b88b1ecd629f59a01821bad3ee11dbe04db1fd9cdce7a3de0e84",
+    "keys": {
+      "evm": "ffe0e1a4e690792ecb4eb1fc1acc9ff60f13d3b5af03cfc6ae6d6bf26e99bdea",
+      "noir-recursive": "8fd94d39491615e178a2bac38a3c125eb0ba536e7e8653a01d81d3c93b9ce788"
+    },
+    "publicInputCount": 57,
+    "public": [
+      {
+        "name": "chain_id",
+        "count": 1,
+        "array": false
+      },
+      {
+        "name": "protocol_address",
+        "count": 1,
+        "array": false
+      },
+      {
+        "name": "token_address",
+        "count": 1,
+        "array": false
+      },
+      {
+        "name": "input_count",
+        "count": 1,
+        "array": false
+      },
+      {
+        "name": "output_count",
+        "count": 1,
+        "array": false
+      },
+      {
+        "name": "source_count",
+        "count": 1,
+        "array": false
+      },
+      {
+        "name": "input_tree_ids",
+        "count": 14,
+        "array": true
+      },
+      {
+        "name": "merkle_roots",
+        "count": 14,
+        "array": true
+      },
+      {
+        "name": "slot_values",
+        "count": 14,
+        "array": true
+      },
+      {
+        "name": "delivery_hash_high",
+        "count": 1,
+        "array": false
+      },
+      {
+        "name": "delivery_hash_low",
+        "count": 1,
+        "array": false
+      },
+      {
+        "name": "withdrawal_address",
+        "count": 1,
+        "array": false
+      },
+      {
+        "name": "withdrawal_amount",
+        "count": 1,
+        "array": false
+      },
+      {
+        "name": "deadline",
+        "count": 1,
+        "array": false
+      },
+      {
+        "name": "deposit_amount",
+        "count": 1,
+        "array": false
+      },
+      {
+        "name": "deposit_payer",
+        "count": 1,
+        "array": false
+      },
+      {
+        "name": "auth_digest_high",
+        "count": 1,
+        "array": false
+      },
+      {
+        "name": "auth_digest_low",
+        "count": 1,
+        "array": false
+      }
+    ],
+    "private": [
+      "wallet_identity",
+      "public_key_x",
+      "public_key_y",
+      "signature",
+      "output_wallet_identities",
+      "amounts",
+      "nonces",
+      "leaf_indices",
+      "merkle_paths",
+      "input_source_indices"
+    ]
+  },
+  "transact_user_slots56": {
+    "artifactSha256": "ba83ec2f177d16fa88ea04bc54f2e99920f1ac195cdb05b88b9b3bbc245fd953",
+    "keys": {
+      "evm": "6ad5d3aff0c72a632fb19895658af093a6a92478a9994985e838a71e61237720"
+    },
+    "publicInputCount": 183,
+    "public": [
+      {
+        "name": "chain_id",
+        "count": 1,
+        "array": false
+      },
+      {
+        "name": "protocol_address",
+        "count": 1,
+        "array": false
+      },
+      {
+        "name": "token_address",
+        "count": 1,
+        "array": false
+      },
+      {
+        "name": "input_count",
+        "count": 1,
+        "array": false
+      },
+      {
+        "name": "output_count",
+        "count": 1,
+        "array": false
+      },
+      {
+        "name": "source_count",
+        "count": 1,
+        "array": false
+      },
+      {
+        "name": "input_tree_ids",
+        "count": 56,
+        "array": true
+      },
+      {
+        "name": "merkle_roots",
+        "count": 56,
+        "array": true
+      },
+      {
+        "name": "slot_values",
+        "count": 56,
+        "array": true
+      },
+      {
+        "name": "delivery_hash_high",
+        "count": 1,
+        "array": false
+      },
+      {
+        "name": "delivery_hash_low",
+        "count": 1,
+        "array": false
+      },
+      {
+        "name": "withdrawal_address",
+        "count": 1,
+        "array": false
+      },
+      {
+        "name": "withdrawal_amount",
+        "count": 1,
+        "array": false
+      },
+      {
+        "name": "deadline",
+        "count": 1,
+        "array": false
+      },
+      {
+        "name": "deposit_amount",
+        "count": 1,
+        "array": false
+      },
+      {
+        "name": "deposit_payer",
+        "count": 1,
+        "array": false
+      },
+      {
+        "name": "auth_digest_high",
+        "count": 1,
+        "array": false
+      },
+      {
+        "name": "auth_digest_low",
+        "count": 1,
+        "array": false
+      }
+    ],
+    "private": [
+      "wallet_identity",
+      "public_key_x",
+      "public_key_y",
+      "signature",
+      "output_wallet_identities",
+      "amounts",
+      "nonces",
+      "leaf_indices",
+      "merkle_paths",
+      "input_source_indices"
+    ]
+  },
+  "transact_user_slots112": {
+    "artifactSha256": "713b78469b6e97711122210f8497942120c1c9d66d3604bc184566c4eba59cc3",
+    "keys": {
+      "evm": "d6a46e297949c28b9a62fd9aef1f202870fdca97b8bfb15beefd27b9e9f3d86e"
+    },
+    "publicInputCount": 351,
+    "public": [
+      {
+        "name": "chain_id",
+        "count": 1,
+        "array": false
+      },
+      {
+        "name": "protocol_address",
+        "count": 1,
+        "array": false
+      },
+      {
+        "name": "token_address",
+        "count": 1,
+        "array": false
+      },
+      {
+        "name": "input_count",
+        "count": 1,
+        "array": false
+      },
+      {
+        "name": "output_count",
+        "count": 1,
+        "array": false
+      },
+      {
+        "name": "source_count",
+        "count": 1,
+        "array": false
+      },
+      {
+        "name": "input_tree_ids",
+        "count": 112,
+        "array": true
+      },
+      {
+        "name": "merkle_roots",
+        "count": 112,
+        "array": true
+      },
+      {
+        "name": "slot_values",
+        "count": 112,
+        "array": true
+      },
+      {
+        "name": "delivery_hash_high",
+        "count": 1,
+        "array": false
+      },
+      {
+        "name": "delivery_hash_low",
+        "count": 1,
+        "array": false
+      },
+      {
+        "name": "withdrawal_address",
+        "count": 1,
+        "array": false
+      },
+      {
+        "name": "withdrawal_amount",
+        "count": 1,
+        "array": false
+      },
+      {
+        "name": "deadline",
+        "count": 1,
+        "array": false
+      },
+      {
+        "name": "deposit_amount",
+        "count": 1,
+        "array": false
+      },
+      {
+        "name": "deposit_payer",
+        "count": 1,
+        "array": false
+      },
+      {
+        "name": "auth_digest_high",
+        "count": 1,
+        "array": false
+      },
+      {
+        "name": "auth_digest_low",
+        "count": 1,
+        "array": false
+      }
+    ],
+    "private": [
+      "wallet_identity",
+      "public_key_x",
+      "public_key_y",
+      "signature",
+      "output_wallet_identities",
+      "amounts",
+      "nonces",
+      "leaf_indices",
+      "merkle_paths",
+      "input_source_indices"
+    ]
+  },
+  "transact_user_slots168": {
+    "artifactSha256": "f7b3b1384e961367702f544299ca3521d8205fac31b7691c45ff84325d5a31c3",
+    "keys": {
+      "evm": "e00181533d7e35d2307570528f9e7f8f88e2909b6ae338d93373b608dea96881"
+    },
+    "publicInputCount": 519,
+    "public": [
+      {
+        "name": "chain_id",
+        "count": 1,
+        "array": false
+      },
+      {
+        "name": "protocol_address",
+        "count": 1,
+        "array": false
+      },
+      {
+        "name": "token_address",
+        "count": 1,
+        "array": false
+      },
+      {
+        "name": "input_count",
+        "count": 1,
+        "array": false
+      },
+      {
+        "name": "output_count",
+        "count": 1,
+        "array": false
+      },
+      {
+        "name": "source_count",
+        "count": 1,
+        "array": false
+      },
+      {
+        "name": "input_tree_ids",
+        "count": 168,
+        "array": true
+      },
+      {
+        "name": "merkle_roots",
+        "count": 168,
+        "array": true
+      },
+      {
+        "name": "slot_values",
+        "count": 168,
+        "array": true
+      },
+      {
+        "name": "delivery_hash_high",
+        "count": 1,
+        "array": false
+      },
+      {
+        "name": "delivery_hash_low",
+        "count": 1,
+        "array": false
+      },
+      {
+        "name": "withdrawal_address",
+        "count": 1,
+        "array": false
+      },
+      {
+        "name": "withdrawal_amount",
+        "count": 1,
+        "array": false
+      },
+      {
+        "name": "deadline",
+        "count": 1,
+        "array": false
+      },
+      {
+        "name": "deposit_amount",
+        "count": 1,
+        "array": false
+      },
+      {
+        "name": "deposit_payer",
+        "count": 1,
+        "array": false
+      },
+      {
+        "name": "auth_digest_high",
+        "count": 1,
+        "array": false
+      },
+      {
+        "name": "auth_digest_low",
+        "count": 1,
+        "array": false
+      }
+    ],
+    "private": [
+      "wallet_identity",
+      "public_key_x",
+      "public_key_y",
+      "signature",
+      "output_wallet_identities",
+      "amounts",
+      "nonces",
+      "leaf_indices",
+      "merkle_paths",
+      "input_source_indices"
+    ]
+  },
+  "transact_aggregate_14_4": {
+    "artifactSha256": "e84d04147ddd9c85c08ef60b06a05b164d2783da117a454c78d3ab869cec7205",
+    "keys": {
+      "evm": "7f890b71677e1665e523d168fb8cd70e71956dcc994449d6d4be3c0819f95bb6"
+    },
+    "publicInputCount": 229,
+    "public": [
+      {
+        "name": "statements",
+        "count": 4,
+        "array": true
+      },
+      {
+        "name": "inner_vk_commitment",
+        "count": 1,
+        "array": false
+      }
+    ],
+    "private": [
+      "verification_key",
+      "key_hash",
+      "proofs"
+    ]
+  },
+  "transact_aggregate_14_8": {
+    "artifactSha256": "59fbc35adf3e966183a7c12681b70c8f8543cfdea9d7b0693db3f8a2944bfb1f",
+    "keys": {
+      "evm": "349013353e22b705dbcfe5ff8083e7aa9b05b84cc50999688f34eb264fa20b3a"
+    },
+    "publicInputCount": 457,
+    "public": [
+      {
+        "name": "statements",
+        "count": 8,
+        "array": true
+      },
+      {
+        "name": "inner_vk_commitment",
+        "count": 1,
+        "array": false
+      }
+    ],
+    "private": [
+      "verification_key",
+      "key_hash",
+      "proofs"
+    ]
+  },
+  "transact_aggregate_14_12": {
+    "artifactSha256": "8225b3e6c5b3618c92e3d00690dc0ed7c78c7e824136a2cda71eff8520382806",
+    "keys": {
+      "evm": "6e779c52c31a0eb0eb9d519ec5eab74ecd236641b953b6d853e82209cb41f4b1"
+    },
+    "publicInputCount": 685,
+    "public": [
+      {
+        "name": "statements",
+        "count": 12,
+        "array": true
+      },
+      {
+        "name": "inner_vk_commitment",
+        "count": 1,
+        "array": false
+      }
+    ],
+    "private": [
+      "verification_key",
+      "key_hash",
+      "proofs"
+    ]
+  },
+  "create_credit": {
+    "artifactSha256": "ab97cd5a036851a9748a5cfd8e6f9834e23090c8e95db4531aabfc37d3abb353",
+    "keys": {
+      "evm": "fac0e65b768a28750323cca851990598af936611125b6cfa3f5c16b04c7d084f"
+    },
+    "publicInputCount": 46,
+    "public": [
+      {
+        "name": "chain_id",
+        "count": 1,
+        "array": false
+      },
+      {
+        "name": "protocol_address",
+        "count": 1,
+        "array": false
+      },
+      {
+        "name": "token_address",
+        "count": 1,
+        "array": false
+      },
+      {
+        "name": "owner_address",
+        "count": 1,
+        "array": false
+      },
+      {
+        "name": "actual_count",
+        "count": 1,
+        "array": false
+      },
+      {
+        "name": "source_count",
+        "count": 1,
+        "array": false
+      },
+      {
+        "name": "input_tree_ids",
+        "count": 10,
+        "array": true
+      },
+      {
+        "name": "merkle_roots",
+        "count": 10,
+        "array": true
+      },
+      {
+        "name": "nullifiers",
+        "count": 10,
+        "array": true
+      },
+      {
+        "name": "credit_commitment",
+        "count": 1,
+        "array": false
+      },
+      {
+        "name": "change_commitment",
+        "count": 1,
+        "array": false
+      },
+      {
+        "name": "delivery_hash_high",
+        "count": 1,
+        "array": false
+      },
+      {
+        "name": "delivery_hash_low",
+        "count": 1,
+        "array": false
+      },
+      {
+        "name": "expiry",
+        "count": 1,
+        "array": false
+      },
+      {
+        "name": "deadline",
+        "count": 1,
+        "array": false
+      },
+      {
+        "name": "deposit_amount",
+        "count": 1,
+        "array": false
+      },
+      {
+        "name": "deposit_payer",
+        "count": 1,
+        "array": false
+      },
+      {
+        "name": "auth_digest_high",
+        "count": 1,
+        "array": false
+      },
+      {
+        "name": "auth_digest_low",
+        "count": 1,
+        "array": false
+      }
+    ],
+    "private": [
+      "input_amounts",
+      "input_nonces",
+      "leaf_indices",
+      "merkle_paths",
+      "input_source_indices",
+      "public_key_x",
+      "public_key_y",
+      "signature",
+      "spender_payout",
+      "spender_wallet_identity",
+      "owner_wallet_identity",
+      "credit_amount",
+      "credit_nonce",
+      "credit_shared_key",
+      "change_amount",
+      "change_nonce"
+    ]
+  },
+  "credit_draw_slots1": {
+    "artifactSha256": "f5e458790948f37a61a833fad52cf2cc3b26a59515d271de32e0caaa4e229eb5",
+    "keys": {
+      "evm": "613699a440f50a0937e4c57e5152b5fdea42c31b10157d6b93226fef313df553"
+    },
+    "publicInputCount": 18,
+    "public": [
+      {
+        "name": "chain_id",
+        "count": 1,
+        "array": false
+      },
+      {
+        "name": "protocol_address",
+        "count": 1,
+        "array": false
+      },
+      {
+        "name": "token_address",
+        "count": 1,
+        "array": false
+      },
+      {
+        "name": "spender_address",
+        "count": 1,
+        "array": false
+      },
+      {
+        "name": "actual_count",
+        "count": 1,
+        "array": false
+      },
+      {
+        "name": "source_count",
+        "count": 1,
+        "array": false
+      },
+      {
+        "name": "tree_ids",
+        "count": 1,
+        "array": true
+      },
+      {
+        "name": "roots",
+        "count": 1,
+        "array": true
+      },
+      {
+        "name": "nullifiers",
+        "count": 1,
+        "array": true
+      },
+      {
+        "name": "remainder_commitments",
+        "count": 1,
+        "array": true
+      },
+      {
+        "name": "expiries",
+        "count": 1,
+        "array": true
+      },
+      {
+        "name": "total_amount",
+        "count": 1,
+        "array": false
+      },
+      {
+        "name": "deadline",
+        "count": 1,
+        "array": false
+      },
+      {
+        "name": "delivery_hash_high",
+        "count": 1,
+        "array": false
+      },
+      {
+        "name": "delivery_hash_low",
+        "count": 1,
+        "array": false
+      },
+      {
+        "name": "recovery_amounts",
+        "count": 1,
+        "array": true
+      },
+      {
+        "name": "auth_digest_high",
+        "count": 1,
+        "array": false
+      },
+      {
+        "name": "auth_digest_low",
+        "count": 1,
+        "array": false
+      }
+    ],
+    "private": [
+      "public_key_x",
+      "public_key_y",
+      "signature",
+      "spender_wallet_identity",
+      "owner_payouts",
+      "owner_wallet_identities",
+      "input_amounts",
+      "input_nonces",
+      "credit_shared_keys",
+      "leaf_indices",
+      "merkle_paths",
+      "input_source_indices",
+      "draw_amounts"
+    ]
+  },
+  "credit_draw_slots12": {
+    "artifactSha256": "049fb61010666f644fb7dfa915fff7e58d6d244abe3d8d2dae17d6614904ec28",
+    "keys": {
+      "evm": "a07e3fe772b3605121b3ece4710250f323a06a9ee2dc3e360ccaee3e82fc8013"
+    },
+    "publicInputCount": 84,
+    "public": [
+      {
+        "name": "chain_id",
+        "count": 1,
+        "array": false
+      },
+      {
+        "name": "protocol_address",
+        "count": 1,
+        "array": false
+      },
+      {
+        "name": "token_address",
+        "count": 1,
+        "array": false
+      },
+      {
+        "name": "spender_address",
+        "count": 1,
+        "array": false
+      },
+      {
+        "name": "actual_count",
+        "count": 1,
+        "array": false
+      },
+      {
+        "name": "source_count",
+        "count": 1,
+        "array": false
+      },
+      {
+        "name": "tree_ids",
+        "count": 12,
+        "array": true
+      },
+      {
+        "name": "roots",
+        "count": 12,
+        "array": true
+      },
+      {
+        "name": "nullifiers",
+        "count": 12,
+        "array": true
+      },
+      {
+        "name": "remainder_commitments",
+        "count": 12,
+        "array": true
+      },
+      {
+        "name": "expiries",
+        "count": 12,
+        "array": true
+      },
+      {
+        "name": "total_amount",
+        "count": 1,
+        "array": false
+      },
+      {
+        "name": "deadline",
+        "count": 1,
+        "array": false
+      },
+      {
+        "name": "delivery_hash_high",
+        "count": 1,
+        "array": false
+      },
+      {
+        "name": "delivery_hash_low",
+        "count": 1,
+        "array": false
+      },
+      {
+        "name": "recovery_amounts",
+        "count": 12,
+        "array": true
+      },
+      {
+        "name": "auth_digest_high",
+        "count": 1,
+        "array": false
+      },
+      {
+        "name": "auth_digest_low",
+        "count": 1,
+        "array": false
+      }
+    ],
+    "private": [
+      "public_key_x",
+      "public_key_y",
+      "signature",
+      "spender_wallet_identity",
+      "owner_payouts",
+      "owner_wallet_identities",
+      "input_amounts",
+      "input_nonces",
+      "credit_shared_keys",
+      "leaf_indices",
+      "merkle_paths",
+      "input_source_indices",
+      "draw_amounts"
+    ]
+  },
+  "credit_draw_slots50": {
+    "artifactSha256": "03323dd7f98b352593cde0541c25c06c1e2be5d2139ca43c4898b5fee51726d1",
+    "keys": {
+      "evm": "52c67c2c382e2976164c208d26a7db607878284dc15ae918a5eeb252eb8bf6fb"
+    },
+    "publicInputCount": 312,
+    "public": [
+      {
+        "name": "chain_id",
+        "count": 1,
+        "array": false
+      },
+      {
+        "name": "protocol_address",
+        "count": 1,
+        "array": false
+      },
+      {
+        "name": "token_address",
+        "count": 1,
+        "array": false
+      },
+      {
+        "name": "spender_address",
+        "count": 1,
+        "array": false
+      },
+      {
+        "name": "actual_count",
+        "count": 1,
+        "array": false
+      },
+      {
+        "name": "source_count",
+        "count": 1,
+        "array": false
+      },
+      {
+        "name": "tree_ids",
+        "count": 50,
+        "array": true
+      },
+      {
+        "name": "roots",
+        "count": 50,
+        "array": true
+      },
+      {
+        "name": "nullifiers",
+        "count": 50,
+        "array": true
+      },
+      {
+        "name": "remainder_commitments",
+        "count": 50,
+        "array": true
+      },
+      {
+        "name": "expiries",
+        "count": 50,
+        "array": true
+      },
+      {
+        "name": "total_amount",
+        "count": 1,
+        "array": false
+      },
+      {
+        "name": "deadline",
+        "count": 1,
+        "array": false
+      },
+      {
+        "name": "delivery_hash_high",
+        "count": 1,
+        "array": false
+      },
+      {
+        "name": "delivery_hash_low",
+        "count": 1,
+        "array": false
+      },
+      {
+        "name": "recovery_amounts",
+        "count": 50,
+        "array": true
+      },
+      {
+        "name": "auth_digest_high",
+        "count": 1,
+        "array": false
+      },
+      {
+        "name": "auth_digest_low",
+        "count": 1,
+        "array": false
+      }
+    ],
+    "private": [
+      "public_key_x",
+      "public_key_y",
+      "signature",
+      "spender_wallet_identity",
+      "owner_payouts",
+      "owner_wallet_identities",
+      "input_amounts",
+      "input_nonces",
+      "credit_shared_keys",
+      "leaf_indices",
+      "merkle_paths",
+      "input_source_indices",
+      "draw_amounts"
+    ]
+  },
+  "credit_draw_slots120": {
+    "artifactSha256": "ed8ada393aec762e9472923c5053d0219627d5db37301ffac7fafe10b45767bc",
+    "keys": {
+      "evm": "da562564c9ca462bee4f78a33a36b7ab5f6f5e92e5c6ba91c698e3ce2b93d7af"
+    },
+    "publicInputCount": 732,
+    "public": [
+      {
+        "name": "chain_id",
+        "count": 1,
+        "array": false
+      },
+      {
+        "name": "protocol_address",
+        "count": 1,
+        "array": false
+      },
+      {
+        "name": "token_address",
+        "count": 1,
+        "array": false
+      },
+      {
+        "name": "spender_address",
+        "count": 1,
+        "array": false
+      },
+      {
+        "name": "actual_count",
+        "count": 1,
+        "array": false
+      },
+      {
+        "name": "source_count",
+        "count": 1,
+        "array": false
+      },
+      {
+        "name": "tree_ids",
+        "count": 120,
+        "array": true
+      },
+      {
+        "name": "roots",
+        "count": 120,
+        "array": true
+      },
+      {
+        "name": "nullifiers",
+        "count": 120,
+        "array": true
+      },
+      {
+        "name": "remainder_commitments",
+        "count": 120,
+        "array": true
+      },
+      {
+        "name": "expiries",
+        "count": 120,
+        "array": true
+      },
+      {
+        "name": "total_amount",
+        "count": 1,
+        "array": false
+      },
+      {
+        "name": "deadline",
+        "count": 1,
+        "array": false
+      },
+      {
+        "name": "delivery_hash_high",
+        "count": 1,
+        "array": false
+      },
+      {
+        "name": "delivery_hash_low",
+        "count": 1,
+        "array": false
+      },
+      {
+        "name": "recovery_amounts",
+        "count": 120,
+        "array": true
+      },
+      {
+        "name": "auth_digest_high",
+        "count": 1,
+        "array": false
+      },
+      {
+        "name": "auth_digest_low",
+        "count": 1,
+        "array": false
+      }
+    ],
+    "private": [
+      "public_key_x",
+      "public_key_y",
+      "signature",
+      "spender_wallet_identity",
+      "owner_payouts",
+      "owner_wallet_identities",
+      "input_amounts",
+      "input_nonces",
+      "credit_shared_keys",
+      "leaf_indices",
+      "merkle_paths",
+      "input_source_indices",
+      "draw_amounts"
+    ]
+  },
+  "credit_cancel": {
+    "artifactSha256": "d332453a2b8c2c544747ac8d5f01912c9757f48d986226fd6a9b0e24d8321474",
+    "keys": {
+      "evm": "1f8a3c20cb081d6a90962556da3124919cc4e5675e59ad31562af39299da02fb"
+    },
+    "publicInputCount": 11,
+    "public": [
+      {
+        "name": "chain_id",
+        "count": 1,
+        "array": false
+      },
+      {
+        "name": "protocol_address",
+        "count": 1,
+        "array": false
+      },
+      {
+        "name": "token_address",
+        "count": 1,
+        "array": false
+      },
+      {
+        "name": "owner_address",
+        "count": 1,
+        "array": false
+      },
+      {
+        "name": "tree_id",
+        "count": 1,
+        "array": false
+      },
+      {
+        "name": "merkle_root",
+        "count": 1,
+        "array": false
+      },
+      {
+        "name": "nullifier",
+        "count": 1,
+        "array": false
+      },
+      {
+        "name": "amount",
+        "count": 1,
+        "array": false
+      },
+      {
+        "name": "deadline",
+        "count": 1,
+        "array": false
+      },
+      {
+        "name": "auth_digest_high",
+        "count": 1,
+        "array": false
+      },
+      {
+        "name": "auth_digest_low",
+        "count": 1,
+        "array": false
+      }
+    ],
+    "private": [
+      "public_key_x",
+      "public_key_y",
+      "signature",
+      "spender_payout",
+      "spender_wallet_identity",
+      "owner_wallet_identity",
+      "input_nonce",
+      "expiry",
+      "credit_shared_key",
+      "leaf_index",
+      "merkle_path"
+    ]
+  },
+  "credit_top_up": {
+    "artifactSha256": "ee9dbcf8be6f6c09478190996e90b1d39d4a10a00245950f69fc1d2c329c6e9b",
+    "keys": {
+      "evm": "0c369fec0469b60baebb3be650bad42f3ccae6f0ff139cce6ad9a3f451ed7513"
+    },
+    "publicInputCount": 50,
+    "public": [
+      {
+        "name": "chain_id",
+        "count": 1,
+        "array": false
+      },
+      {
+        "name": "protocol_address",
+        "count": 1,
+        "array": false
+      },
+      {
+        "name": "token_address",
+        "count": 1,
+        "array": false
+      },
+      {
+        "name": "owner_address",
+        "count": 1,
+        "array": false
+      },
+      {
+        "name": "actual_count",
+        "count": 1,
+        "array": false
+      },
+      {
+        "name": "source_count",
+        "count": 1,
+        "array": false
+      },
+      {
+        "name": "input_tree_ids",
+        "count": 10,
+        "array": true
+      },
+      {
+        "name": "merkle_roots",
+        "count": 10,
+        "array": true
+      },
+      {
+        "name": "nullifiers",
+        "count": 10,
+        "array": true
+      },
+      {
+        "name": "credit_commitment",
+        "count": 1,
+        "array": false
+      },
+      {
+        "name": "change_commitment",
+        "count": 1,
+        "array": false
+      },
+      {
+        "name": "delivery_hash_high",
+        "count": 1,
+        "array": false
+      },
+      {
+        "name": "delivery_hash_low",
+        "count": 1,
+        "array": false
+      },
+      {
+        "name": "expiry",
+        "count": 1,
+        "array": false
+      },
+      {
+        "name": "deadline",
+        "count": 1,
+        "array": false
+      },
+      {
+        "name": "deposit_amount",
+        "count": 1,
+        "array": false
+      },
+      {
+        "name": "deposit_payer",
+        "count": 1,
+        "array": false
+      },
+      {
+        "name": "credit_tree_id",
+        "count": 1,
+        "array": false
+      },
+      {
+        "name": "credit_merkle_root",
+        "count": 1,
+        "array": false
+      },
+      {
+        "name": "credit_nullifier",
+        "count": 1,
+        "array": false
+      },
+      {
+        "name": "previous_expiry",
+        "count": 1,
+        "array": false
+      },
+      {
+        "name": "auth_digest_high",
+        "count": 1,
+        "array": false
+      },
+      {
+        "name": "auth_digest_low",
+        "count": 1,
+        "array": false
+      }
+    ],
+    "private": [
+      "input_amounts",
+      "input_nonces",
+      "leaf_indices",
+      "merkle_paths",
+      "input_source_indices",
+      "public_key_x",
+      "public_key_y",
+      "signature",
+      "spender_payout",
+      "spender_wallet_identity",
+      "owner_wallet_identity",
+      "credit_amount",
+      "credit_nonce",
+      "credit_shared_key",
+      "change_amount",
+      "change_nonce",
+      "previous_credit_amount",
+      "previous_credit_nonce",
+      "previous_credit_leaf_index",
+      "previous_credit_merkle_path"
+    ]
+  },
+  "wallet_registration": {
+    "artifactSha256": "9db74eeb49ca7fef5e5f0dbe426bdb10964ac1c6ecd56fc2b7ca8d64fb77a320",
+    "keys": {
+      "evm": "b8171bdb558489c75293ee71f64c1ac534f533ae3b3f71107378e46dbd93dd48"
+    },
+    "publicInputCount": 3,
+    "public": [
+      {
+        "name": "wallet_identity",
+        "count": 1,
+        "array": false
+      },
+      {
+        "name": "auth_digest_high",
+        "count": 1,
+        "array": false
+      },
+      {
+        "name": "auth_digest_low",
+        "count": 1,
+        "array": false
+      }
+    ],
+    "private": [
+      "public_key_x",
+      "public_key_y",
+      "signature"
+    ]
+  }
+}

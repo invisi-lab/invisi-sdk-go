@@ -1,0 +1,73 @@
+{
+  "noteOpening": {
+    "version": 1,
+    "kind": "note",
+    "method": "opening",
+    "context": {
+      "chainId": "31337",
+      "protocolAddress": "4660",
+      "tokenAddress": "22136",
+      "outputCommitment": "0x2896028af6f77d679612169cfcef4831e8af4c28dd0dc00b4e60374dc80e2306"
+    },
+    "data": {
+      "walletIdentity": "0x7e5f4552091a69125d5dfcb7b8c2659029395bdf",
+      "amount": "70",
+      "nonce": "123"
+    }
+  },
+  "creditOpening": {
+    "version": 1,
+    "kind": "credit",
+    "method": "opening",
+    "context": {
+      "chainId": "31337",
+      "protocolAddress": "4660",
+      "tokenAddress": "22136",
+      "outputCommitment": "0x1c9fe62745d93c688a78e706350f125911c1e6cfa6611e936c4a2b5c2c3993b1"
+    },
+    "data": {
+      "spenderWalletIdentity": "0x2b5ad5c4795c026514f8317c7a215e218dccd6cf",
+      "ownerWalletIdentity": "0x7e5f4552091a69125d5dfcb7b8c2659029395bdf",
+      "spenderPayout": "247512291986854564435551364600938690683113101007",
+      "ownerPayout": "721457446580647751014191829380889690493307935711",
+      "amount": "100",
+      "nonce": "678",
+      "expiry": "2000000123",
+      "creditSharedKeyHash": "0x0f026f0c4b47492045883222e15ad4992de85318c229189324151b81a0552466"
+    }
+  },
+  "notePayload": {
+    "version": 1,
+    "kind": "note",
+    "method": "payload-key",
+    "context": {
+      "chainId": "31337",
+      "protocolAddress": "4660",
+      "tokenAddress": "22136",
+      "outputCommitment": "0x2896028af6f77d679612169cfcef4831e8af4c28dd0dc00b4e60374dc80e2306"
+    },
+    "data": {
+      "payloadKey": "0x7b0572dd7d63a709d4f21e30d071542ae9c836905805f1f388b3b27b76e70a87",
+      "walletIdentity": "0x7e5f4552091a69125d5dfcb7b8c2659029395bdf",
+      "role": "funds"
+    }
+  },
+  "creditPayload": {
+    "version": 1,
+    "kind": "credit",
+    "method": "payload-key",
+    "context": {
+      "chainId": "31337",
+      "protocolAddress": "4660",
+      "tokenAddress": "22136",
+      "outputCommitment": "0x1c9fe62745d93c688a78e706350f125911c1e6cfa6611e936c4a2b5c2c3993b1"
+    },
+    "data": {
+      "payloadKey": "0x9b6702d505cf4eaa6a4257ae066a369b17ff419152510e9e896efa5af512602a",
+      "walletIdentity": "0x7e5f4552091a69125d5dfcb7b8c2659029395bdf",
+      "role": "owner"
+    }
+  },
+  "noteCiphertext": "0x0102f9308a019258c31049344f85f89d5229b531c845836f99b08601f113bce036f904040404040404040404040404040404050505050505050505050505a829fa27f84c91bb4f2a8472b111ed5394e870bd0828fb369f73e84ed06f2faeedf3ea34def00f01f2854e0e8f01be00ce94bc20f7bd8f712e76ea2c41751cc905b767a9b574aa765f331f4313d5c581ac628332f300f7ee5a6f74c53dc2acf5",
+  "creditCiphertext": "0x0303fff97bd5755eeea420453a14355235d382f6472f8568a18b2f057a1460297556070707070707070707070707070707070808080808080808080808082bb49500167f47ea957676fc8427444ef591bc0813b54d496ad9bfae561d2d358df1eff2e461e050bea3fccc2a7441361bcd492565c2fb4a952adb6967233db42d133587299582872d3744431ce2c5fb00ab8899c8a87ed24b5b9abb8018b7dff53ed1ded7b53e229acea87a709b5f2adee7c018972a83d898bb0d2e5017d1f62062b4c2b2b66313f9dc37e695361dc89c4159a73953ee2c71cf2562172ed7ba2cd0d787ad1e12fb42b70d738be0c291cf98f95742ac90a66795ad7c7c8d021c9b7e01b24e1e97f15f61ca082bc3db7c95b78bf501b9d9daf4ffec78245649e02003de24d6b61f2c481bc8f251c07867e29b00599d43eb22a25dfe4b3b8f5e9ea5b8b801f6730838951e6581d7ae2a31a473ee999660cb5185cc3228efd8d299e659ee1e4b381a56c82cc964e881d9b9dee32344d7cb5602fd45f8b7cf38dce05d8705cebf849146bc47eb0b679e0bbb374f"
+}

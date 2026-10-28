@@ -1,8 +1,6 @@
 package core
 
 const (
-	// DNoteSecret is an optional offchain invoice-key policy, not a circuit derivation.
-	DNoteSecret           uint64 = 1
 	DIdent                uint64 = 2
 	DNote                 uint64 = 3
 	DNull                 uint64 = 4
@@ -11,5 +9,6 @@ const (
 	DCreditKeyHash        uint64 = 7
 	DCreditRecovery       uint64 = 9
 	DCreditRemainderNonce uint64 = 10
+	DWallet               uint64 = 11
 	TreeDepth                    = 16
 )

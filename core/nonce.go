@@ -2,8 +2,9 @@ package core
 
 import (
 	"crypto/rand"
-	"github.com/consensys/gnark-crypto/ecc/bn254/fr"
 	"math/big"
+
+	"github.com/consensys/gnark-crypto/ecc/bn254/fr"
 )
 
 // FieldModulus returns a fresh copy of the BN254 scalar field modulus.

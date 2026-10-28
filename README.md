@@ -1,82 +1,243 @@
 # Invisi Go SDK
 
-Go SDK 对齐当前 InvisiProtocol 的 Solidity / Noir 实现，模块为 github.com/invisi-lab/invisi-sdk-go。入金使用 shield；资金凭证花费、私密转账与提现使用 transact；授信使用 createCredit、creditDraw、cancelCredit 和 topUpCredit。
+The Go SDK follows the TypeScript SDK's client model: restore a wallet, select a Protocol through Protocol RPC, connect local capabilities, refresh owned notes, then prepare, review, authorize, prove and export a transaction for geth sending. The module is `github.com/invisi-lab/invisi-sdk-go` and requires Go 1.26.1 or newer.
 
-## 开发与验证
+```go
+provider, err := ethclient.DialContext(ctx, chainRPCURL)
+if err != nil { return err }
+defer provider.Close()
 
-需要 Go 1.26.1+。安装模块后可直接使用已生成的合约绑定，无需兄弟仓库。
+protocolRPC, err := sdk.NewProtocolRpcClient(protocolRPCURL)
+if err != nil { return err }
+protocol, err := sdk.ProtocolFromRPC(ctx, protocolRPC, provider)
+if err != nil { return err }
+wallet, err := sdk.WalletFromPrivateKey(accountPrivateKey)
+if err != nil { return err }
 
-~~~sh
+localProver, err := native.NewNativeProver(native.NativeOptions{})
+if err != nil { return err }
+
+invisi := sdk.NewInvisi(sdk.InvisiOptions{
+    ProtocolRPC: protocolRPC,
+    Provider: provider,
+    Store: store,
+    Signer: signer,
+    Prover: localProver,
+})
+session, err := invisi.Connect(ctx, sdk.ConnectionOptions{
+    Wallet: wallet,
+    Protocol: protocol,
+    Namespace: "my-app",
+})
+if err != nil { return err }
+```
+
+`provider` is an ordinary go-ethereum client. Applications own its connection and the EVM signer. `ProtocolFromRPC` obtains the chain ID from that provider and verifies the selected deployment's runtime code and VERSION before returning. Select a trusted Protocol RPC service; consistency checks cannot establish that a deployment is official. An independently published deployment can be pinned with `rpc.ClientOptions.Deployment`. There is no built-in deployment catalog or Factory/operator discovery.
+
+## TypeScript to Go
+
+| TypeScript | Go |
+| --- | --- |
+| `Wallet.fromPrivateKey(key)` | `sdk.WalletFromPrivateKey(key)` |
+| `Wallet.fromAddress(address)` | `sdk.WalletFromAddress(address)` |
+| `wallet.getAddress()` | `wallet.GetAddress()` |
+| `wallet.ownerAddress` | `wallet.OwnerAddress()` |
+| `wallet.getViewer()` / `getDetector()` | `wallet.GetViewer()` / `GetDetector()` |
+| `wallet.exportAuthorization()` | `wallet.ExportAuthorization()` |
+| `new ProtocolRpcClient(url)` | `sdk.NewProtocolRpcClient(url)` |
+| `Protocol.fromRpc(rpc, provider)` | `sdk.ProtocolFromRPC(ctx, rpc, provider)` |
+| `rpc.withProvider(provider)` | `rpc.WithProvider(provider)` |
+| `new Invisi(options)` | `sdk.NewInvisi(options)` |
+| `invisi.connect(options)` | `invisi.Connect(ctx, options)` |
+| `invisi.prepareTransfer(options)` | `invisi.PrepareTransfer(ctx, options)` |
+| `prepared.exportTransaction()` | `prepared.ExportTransaction(ctx)` |
+| `session.refresh(options)` | `session.Refresh(ctx, options)` |
+| `session.balance(token)` | `session.Balance(ctx, token)` |
+| `session.prepareTransfer(options)` | `session.PrepareTransfer(ctx, options)` |
+| `prepared.preview()` | `prepared.Preview()` |
+| `prepared.estimateGas()` | `prepared.EstimateGas()` |
+| `prepared.authorize()` | `prepared.Authorize(ctx)` |
+| `authorized.prove(options)` | `authorized.Prove(ctx, options)` |
+| `proved.authorizeFunding()` | `proved.AuthorizeFunding(ctx)` |
+| `ready.exportTransaction()` | `ready.ExportTransaction(ctx)` |
+| `ready.trackTransaction(hash)` | `ready.TrackTransaction(ctx, hash)` |
+| `session.sendTransaction(ready)` | `session.SendTransaction(ctx, ready)` |
+| `ready.reconcile()` | `ready.Reconcile(ctx)` |
+| `session.resume(id)` | `session.Resume(ctx, id)` |
+| `Disclosure.fromNote(note)` | `sdk.DisclosureFromNote(note)` |
+| `new DisclosureVerifier({ protocol, provider })` | `sdk.NewDisclosureVerifier(options)` |
+
+Go uses exported names, `context.Context`, explicit errors and `*big.Int` amounts. All eight direct prepare methods support both explicit and managed workflows; business roles do not change RPC or cryptographic rules. These language conventions do not change operation permissions or protocol rules. Constructors do not open databases, scan events or start background tasks.
+
+## Packages and responsibility
+
+| Package | Responsibility |
+| --- | --- |
+| `sdk` | Wallet permissions, sessions, inventory, reservations, operations, registry and disclosure |
+| `sdk/sqlite` | Explicit encrypted SQLite wallet storage; the application owns the database connection |
+| `core` | Versioned wallet KDF, checked receiving addresses, Poseidon2, note cryptography and FMD |
+| `protocol` | Protocol objects, current calldata, public statements and registry builders |
+| `protocol/contracts` | Generated bindings for the exact shared ABI |
+| `rpc` | Protocol RPC discovery, deployment metadata, candidates and authenticated membership |
+| `prover` | Local witness boundary, pinned proof statements and aggregation |
+| `prover/native` | Local BB 5.2.1 generation and verification with authenticated circuit resources |
+
+Chain RPC supplies blocks, canonical receipts, contract reads and transaction submission. Protocol RPC supplies public history, candidate filtering and membership paths. The SDK decrypts and verifies candidates, saves only its own wallet state, reserves inputs and authorizes local proofs. It has no public-tree implementation, full-chain scanner, IPP transport, payer/receiver packages or legacy compatibility layer.
+
+## Wallets and permissions
+
+The application's existing 32-byte EVM account key is the only wallet root. Invisi defines a versioned KDF, not a mnemonic or HD derivation scheme. The EVM spending owner is also the wallet identity. Viewing and detection keys derive independently using the same salts and rejection sampling as the TS SDK. No independent nullifier key is required.
+
+A complete receiving address is a strict 138-character `0i` string containing the 20-byte owner, 33-byte viewing public key and 32-byte clue key. Its custom Base32 case checksum and public keys are validated. The short form is the 42-character EVM owner address and requires a selected receiving-key registry when used as a payment destination. Full addresses resolve offline.
+
+`GetViewer` returns viewing permission; `GetDetector` returns detection permission. Exported key slices are defensive copies. A wallet restored only from an address has neither permission and cannot authorize spending. Secret-bearing wallet, capability, disclosure and witness objects redact default formatting/JSON. Explicit key or disclosure exports are sensitive and application-owned.
+
+## Refresh and local storage
+
+`Refresh` pages through Protocol RPC in ranges of at most 100 blocks, independently fetches complete candidate receipts from Chain RPC, authenticates insertion positions, decrypts owned deliveries, checks historical membership paths against chain-known roots, and updates local spent state. Candidate transaction order is reconstructed from canonical receipts. Credit recovery retains both historical receiving-key snapshots and verifies deterministic remainder recovery.
+
+```go
+result, err := session.Refresh(ctx, sdk.RefreshOptions{
+    FromBlock: protocol.Deployment().Protocol.FromBlock,
+})
+```
+
+`ToBlock`, `PageSize`, `Reset` and an explicitly exported `DetectionKey` are optional. Detection delegates candidate filtering only. Neither FMD candidates nor a saved checkpoint prove complete history; a malicious sender can provide an unrelated valid clue. Applications manage refresh scheduling and complete-history recovery. Reorgs invalidate authenticated checkpoints and require an explicit reset refresh. No scan fallback silently queries every chain log.
+
+`Balance` sums locally known, unspent funds notes for one token. `ConfirmedKnown` includes known unspent notes; `Reserved` is reported separately and `AvailableKnown` excludes those reservations. `AvailableKnown` is nil until a checked inventory exists and after a canonical-history invalidation. It is neither an ERC20 wallet balance nor the Protocol's total holdings; use standard geth/ERC20 APIs for those.
+
+`NewMemoryWalletStore` is an explicit ephemeral choice. Persistent applications use `sdk.NewEncryptedWalletCodec` with a caller-owned 32-byte AES key and `sqlite.NewWalletStore` with a caller-owned `*sql.DB`. SQLite callbacks commit atomically, roll back on failure and encrypt note preimages and operation plans with deployment/wallet/namespace-bound authenticated encryption. Private authorization signatures are not persisted. `Resume` atomically replaces the previous operation worker; stale handles cannot continue signing, proving or submitting.
+
+## Funds and Credit operations
+
+- `PrepareShield`: 1–10 public outputs; `Ready` encodes caller-funded deposits without a Noir proof.
+- `PrepareTransfer`: select stored notes, create private outputs and independent random change.
+- `PrepareWithdraw`: a public payout with private change, authorized by the wallet owner.
+- `PrepareSweep`: whole-note payouts to the bound owner with viewing permission alone; no redirection, change or fee output.
+- `PrepareCreateCredit`: private/public funding, spender/owner identities, bound payouts, expiry and shared recovery key.
+- `PrepareDrawCredit`: spender-authorized public payouts, with 1/12/50/120 draw capacities and private remainder recovery.
+- `PrepareCancelCredit`: owner-authorized complete public refund; expiry does not prohibit cancellation.
+- `PrepareTopUpCredit`: owner-authorized increase before expiry; the replacement expiry may stay unchanged or increase.
+
+The contract determines token support, pauses and limits. Registry metadata is independent of supported tokens. Ordinary proof capacity is selected automatically from combined input/output counts: 14/56/112/168. Credit creation/top-up supports up to ten funds inputs. Input reservations are atomic and cover both local roles of the same Credit leaf.
+
+`Preview` exposes recipients, amounts, change, Credit roles, expiry and required permissions without exporting note secrets or private signatures. `Authorize` signs the complete frozen operation statement. `Prove` rejects stale circuit/VK identities and different public inputs, then independently verifies the returned bundle. Proof generation and private authorization do not consume the public payer's funding nonce.
+
+ERC20 allowance, token permits, public funding grants and private wallet authorization are independent. Applications approve ERC20 allowance through standard bindings. Signed public funding uses a `FundingSigner` capability with `Address` and `SignTypedData`. `GethFundingVerifier` verifies EOAs and ERC-1271 contract wallets, including variable-length contract signatures. A custom `FundingAuthorizationVerifier` may be injected. The grant is requested after the actual proof exists. `Signer` is an ordinary `*bind.TransactOpts` and only pays gas/submits transactions. Caller-funded operations require that sender to equal the payer.
+
+`ExportTransaction` checks deployment, deadlines, accepted roots, spent state and funding nonces before marking the managed call externalized. `TrackTransaction` records a broadcast association; `Reconcile` authenticates destination, exact calldata and canonical receipt. Both return a new operation handle; inspect `Status()` or `Preview()` on that result. Missing or reverted transactions still reconcile spent state and expiry, releasing inputs only when the proof has become unusable. `WalletSession.SendTransaction(ctx, ready)` thinly delegates to the configured geth signer/backend, returns the original `*types.Transaction`, and tracks its hash. Passing a plain `TransactionCall` does not infer an operation association. Use ordinary `bind.WaitMined` for receipt waiting; the SDK has no `Submit` or `Wait` API. A tracking failure after broadcast returns the sent transaction and an error containing its hash. Recursive members reconcile their exact request inside the aggregate. Refresh indexed history after confirmation to discover and authenticate resulting outputs. A timeout never releases potentially externalized inputs. Only unexternalized prepared operations may be abandoned; expired proofs require fresh canonical spent checks before reservations are released.
+
+## Application-owned notes without a Store
+
+Applications with their own database can call `Invisi.PrepareTransfer`, `PrepareWithdraw`, `PrepareSweep`, `PrepareShield`, `PrepareCreateCredit`, `PrepareDrawCredit`, `PrepareTopUpCredit` and `PrepareCancelCredit` directly. Use the corresponding `Explicit...Preparation` type. This path never calls a configured `WalletStore` and does not create a hidden memory store or managed session.
+
+```go
+prepared, err := invisi.PrepareTransfer(ctx, sdk.ExplicitTransferPreparation{
+    TransactionIdentity: sdk.TransactionIdentity{Wallet: wallet, Protocol: protocol},
+    TransferPreparation: sdk.TransferPreparation{
+        TokenAddress: tokenAddress,
+        Outputs: []sdk.PaymentOutput{{To: recipient, Amount: big.NewInt(30)}},
+    },
+    ExplicitFunds: sdk.ExplicitFunds{Inputs: selectedNotes},
+})
+if err != nil { return err }
+fmt.Println(prepared.Preview()) // Review locally before authorization.
+authorized, err := prepared.Authorize(ctx)
+if err != nil { return err }
+proved, err := authorized.Prove(ctx)
+if err != nil { return err }
+call, err := proved.ExportTransaction(ctx)
+if err != nil { return err }
+// Submit call.To/call.Data through the application's ordinary geth transaction pipeline.
+```
+
+Each `NoteInput` supplies a private `core.Note`, commitment, tree ID and leaf index. `CreditInput` supplies the complete delivery state and its `owner` or `spender` role. The SDK checks deployment, token, owner/role, commitment preimages, canonical membership and spent state. All supplied funds inputs are consumed, including when public funding covers the requested amount. `ChangeAddress` chooses the ordinary transfer/withdrawal change recipient; Credit creation/top-up change must remain bound to the Credit owner. Sweep can explicitly select a subset by commitments. Inputs from different owners cannot be combined into one spend. A shared `Invisi` can prepare independent transactions for multiple wallets.
+
+`PreparedTransaction` exposes local `Preview`, `Authorize`, `Prove`, `Ready`, `AuthorizeFunding`, `ExportTransaction`, `ExportProof` and `ExportAggregateMember`. Successful stages return a new handle and fence the old one; errors and context cancellation allow retry on the previous frozen handle. Concurrent execution is rejected. `Authorize` can receive the matching wallet authorization explicitly for a public-only wallet. A `WalletAuthorizationProvider` can delegate signing without importing the private key. Proof backends and funding signers may be supplied through `InvisiOptions` or per call: `prepared.Prove(ctx, backend, options)` and `proved.AuthorizeFunding(ctx, signer)`. The optional proving arguments are checked at runtime because Go does not have method overloads. Default formatting and JSON redact private plans.
+
+The application owns reservations, concurrency across processes, operation persistence, broadcasting, canonical receipt reconciliation and inventory updates. Save the exact signed transaction hash before broadcasting, retain reservations across uncertain outcomes, and never interpret a timeout as permission to spend the inputs again. Detached transactions have no persistence or recovery API. Managed `WalletSession` adds atomic reservations, immutable operation stages, external transaction tracking and recovery. A failed local proof does not externalize the operation; it remains retryable. `Resume` validates saved scope, proof identity and recomputed calldata before fencing the former worker. See `examples/03-funds/transfer.go` and `examples/08-wallet-session`.
+
+## Local proving and aggregation
+
+`prover.Prover` matches the TS SDK's `prove`/`verify` boundary. Progress phases are `witness`, `proving`, `verifying` and `complete`; cancellation uses the Go context. Proofs are bound to the circuit, artifact hash, VK hash, target, exact public inputs, BB version and proof digest. Proof bundle JSON uses the same lower-camel-case fields and `proofHex` encoding as TS. Circuit resources and verification keys are authenticated against the shared TS release.
+
+`native.NewNativeProver(native.NativeOptions{})` uses the official `noir-execute` 1.0.0-rc.4 and BB 5.2.1 executables from PATH. `Prove` runs witness execution, proving and independent verification locally; applications do not need to implement a witness executor. `Verify` requires only BB. There is no Node, TS SDK or source/compiler dependency at runtime.
+
+Install the matching executables from the official [Noir release](https://github.com/noir-lang/noir/releases/tag/v1.0.0-rc.4) and [Barretenberg release](https://github.com/AztecProtocol/aztec-packages/releases/tag/v5.2.1). These are local tool dependencies, similar to the TS native prover's BB requirement. The SDK checks tool versions and authenticated release assets before execution; it never downloads or upgrades tools automatically. Existing tool installations are not modified.
+
+```go
+import "github.com/invisi-lab/invisi-sdk-go/prover/native"
+
+localProver, err := native.NewNativeProver(native.NativeOptions{
+    // Optional: omit both fields when the pinned tools are on PATH.
+    BBBinary: "/path/to/bb",
+    NoirBinary: "/path/to/noir-execute",
+})
+```
+
+The default executor uses private temporary directories and permission-restricted JSON/witness files, removes them on completion or failure, honors context cancellation/timeouts, and suppresses executor diagnostics that may contain private values. Stripped release artifacts receive empty source/debug metadata required by the official CLI; their bytecode, ABI and authenticated circuit identity remain unchanged. Advanced applications may explicitly inject another local `WitnessExecutor`. Private inputs are never sent to Protocol RPC or a remote proving service.
+
+`prover.NewAggregator` verifies 4/8/12 recursive slots14 members before constructing the outer witness. Members must share the current circuit context, have no duplicate nullifiers/commitments and use the authenticated recursive key. `ExportAggregateMember` contains only the public proof, statement and request. Exported inputs remain reserved. `Protocol.Aggregate` constructs the public atomic call; each original operation independently reconciles its exact member after submission.
+
+## Registry and disclosure
+
+`NewAddressRegistry(protocol, provider)` selects the deployment's independent registry. `Resolve` leaves full addresses offline and validates the chosen registry before resolving an EVM short address. `PrepareRegistration` uses registry nonces, local owner authorization, a wallet-registration proof and a separate EVM submitter. Register and update share review/authorize/prove/export/track/reconcile stages; geth owns sending and receipt waiting.
+
+`DisclosureFromNote` opens one note. `DisclosureFromCredit` opens the Credit commitment using only its shared-key hash. `GetViewer().DiscloseNote` and `DiscloseCredit` release a selected envelope's symmetric payload key, never the wallet-wide viewing key. Credit payload disclosure reveals that envelope's shared recovery key and receiving snapshots. `DisclosureFromExport` and `Verify` interoperate with TS disclosure JSON and require an independently supplied matching output. `DisclosureVerifier` additionally authenticates canonical receipt inclusion and confirmations through Chain RPC; it establishes contents/inclusion, not payer identity, current spent state or complete history.
+
+## Examples and validation
+
+Read numbered topics in order:
+
+| Directory | Content |
+| --- | --- |
+| `examples/00-wallet` | Executable offline account/wallet/permission example |
+| `examples/01-connect` | Executable Chain RPC + Protocol RPC deployment verification |
+| `examples/02-shield` | Caller-funded deposit walkthrough |
+| `examples/03-funds` | Explicit manual note inputs for transfer, withdraw, mixed funding and view-only sweep |
+| `examples/04-credit` | Explicit Credit inputs and receiving-key snapshots for create, draw, cancel and top-up |
+| `examples/05-registry` | Register/update independent receiving keys |
+| `examples/06-aggregation` | Explicit disjoint note inputs, recursive members and public aggregation |
+| `examples/07-disclosure` | Executable offline scoped disclosure |
+| `examples/08-wallet-session` | Encrypted SQLite, refresh, managed selection, geth sending and recovery |
+
+The connection example reads only `CHAIN_RPC_URL` and `PROTOCOL_RPC_URL`. The managed-session example additionally reads `WALLET_ACCOUNT_PRIVATE_KEY` and `WALLET_STORAGE_KEY`; its default database is `./wallet.sqlite`. Tokens are editable local-deployment constants. Business walkthrough functions take explicit connected application objects so they do not hide signer, storage or prover configuration. Go `defer` closes caller-owned resources. All comments and output are English.
+
+```sh
 go test ./...
 go test -race ./...
 go vet ./...
-~~~
+go run ./examples/00-wallet
+go run ./examples/07-disclosure
 
-重新生成 ABI 与 Go 绑定时，提供已构建的协议仓库和 abigen：
+# Genuine local witness/proof tests, including recursive aggregation:
+NOIR_EXECUTE_PATH=/path/to/noir-execute BB_BINARY_PATH=/path/to/bb \
+    go test ./prover/native ./sdk -run TestReal -v
+```
 
-~~~sh
-INVISI_PROTOCOL_ROOT=/absolute/path/to/invisi-protocol go generate ./contracts
-~~~
+Tests use independent current KDF, encryption and FMD vectors, TS protocol statement/calldata vectors, and TS disclosure exports. Dummy proof bytes in formatting/backend tests do not establish proof soundness. Chain/RPC tests use controlled fixtures. The opt-in `TestReal` suite executes the official Noir/BB binaries for registration, funds and Credit proofs, rejects modified signatures/public inputs, and proves a four-member recursive aggregate. These tests establish local proof generation and verification, not live deployment transaction acceptance.
 
-加密与交易测试使用协议实现生成的独立向量：
+Maintainers update reference assets from a chosen TS SDK checkout:
 
-~~~sh
-node core/testdata/generate_vectors.mjs /absolute/path/to/invisi-protocol
-node internal/testvectors/generate.mjs /absolute/path/to/invisi-protocol
-~~~
+```sh
+python3 scripts/sync-reference.py /absolute/path/to/invisi-sdk-ts
+INVISI_TS_SDK_ROOT=/absolute/path/to/invisi-sdk-ts go generate ./protocol/contracts
+```
 
-## 包与职责
+Published packages contain their own bindings, public test vectors and circuit assets. They do not depend on the TS SDK or Protocol RPC server at runtime.
 
-| 包 | 内容 |
-|---|---|
-| core | Poseidon2、凭证承诺、消费标记、随机 nonce / 共享密钥、凭证加解密与授信剩余恢复 |
-| contracts | 当前 Protocol、Factory、普通 / 授信验证路由和 ERC20 的生成绑定 |
-| payer | Shield、Transact、聚合、授信创建的 calldata、公开输入和授权摘要 |
-| receiver | 发票、支付请求、无签名全额提现及授信扣款、取消和追加 |
-| tree | 资金凭证树及历史树的同步、滚树发现、Merkle 路径 |
-| ipp | IPP 请求与 Voucher、HTTP 客户端、短链解析和中继 |
-| deployments | 网络元数据、Factory 实例查询 |
+## Gas reference before proving
 
-调用方提供真实 chainID、protocolAddress、tokenAddress。网络注册表只提供网络元数据；实例地址从已验证的 Factory 查询或调用方配置获取。构建 calldata、公开输入和签名摘要不会广播交易。
+Both `PreparedTransaction` and managed `Operation` support the same synchronous pre-proof reference as TypeScript:
 
-## 资金凭证
+```go
+reference, err := prepared.EstimateGas()
+if err != nil { return err }
+fmt.Println("Reference gas units:", reference.GasUnits)
+```
 
-普通凭证使用 Note，私密字段为 NoteSecret。ComputeNoteNullifier 同时绑定凭证密钥和 ReceivingAddress；生成身份承诺、重算凭证、消费标记使用同一组原始数据。
+The public result contains only `GasUnits` (`uint64`). Estimation performs no proving, Store access, network requests or chain gas estimation. All eight direct preparation methods are supported. Recursive members have no standalone transaction cost and return an error; estimate complete aggregates separately.
 
-GenerateNonce 均匀生成随机 Field。DeriveNoteSecret 是可选的发票密钥派生策略。每张输出独立提供 nonce，给自己的输出采用相同的凭证结构。实际输出树与叶位置从插入事件获取。
+The bundled receipt catalog is identical to TypeScript's catalog at `f07f53f`: 13 measured shapes with three real-verifier receipts each. Exact shapes use the rounded-up arithmetic mean. References apply across deployment addresses and tokens. Unmeasured combinations use the same upward-only workload envelope as TypeScript, which can substantially overestimate complex operations. This is not a calibrated prediction, a guaranteed upper bound or a transaction gas limit. Token behavior, address screening, tree/storage state and chain execution rules affect actual gas. The application's ordinary geth pipeline remains responsible for final estimation, fees, nonces and sending.
 
-BuildShieldCalldata 接收 1–10 个输出原像，并核对承诺、密文和入金总额。BuildTransactCalldata 始终使用含 Sources、Nullifiers、OutputCommitments、WithdrawalAddress、WithdrawalAmount、Deadline 的统一参数。Sources 在纯入金时为空，单树时一项，跨树时多项；来源树编号必须递增。合约 tuple 直接使用生成类型，字段名如 InputSource.TreeId。
-
-普通电路按输入与输出总数选择 14 / 56 / 112 / 168 档。只有 14 档支持 4 / 8 / 12 个成员的聚合。BuildTransactAggregateCalldata 使用统一请求数组，每项含 Params、Ciphertexts、Funding。
-
-有输入的私密输出、部分提现或更换提现地址，需要绑定钱包的所有者授权。BuildUnsignedWithdrawalCalldata 只允许将所有输入余额全额提现至共同绑定地址，不允许私密输出或入金。无输入的私密拆分至少生成两张凭证。
-
-TransactPublicInputs 返回业务公开语句，TransactUserPublicInputs 包含完整用户电路语句及 EIP-712 授权摘要两个 limb。AggregatePublicInputs 返回路由适配器的业务字段，每个成员 56 个 Field。
-
-## 授信
-
-CreditSharedKey 是独立随机非零 Field，通过 GenerateCreditSharedKey 生成。ComputeCreditSharedKeyHash 计算其 Tag 7 哈希。消费方身份、所有者身份和出资方分别独立；知道共享密钥不能替代消费方的凭证密钥或所有者钱包签名。VerifyCreditCommitment 从收到的共享密钥本地计算哈希并核对完整承诺。
-
-授信扣款档位为 1 / 12 / 50 / 120。部分扣款保留消费方身份、所有者身份、有效期及共享密钥。RecoverCreditRemainder 根据原凭证与已认证的 draw 事件恢复剩余金额和 nonce，并核对消费标记与输出承诺。
-
-BuildCancelCreditCalldata 取消整张授信，将余额退回绑定所有者；到期后或协议暂停时仍可取消。BuildTopUpCreditCalldata 只允许在原有效期内追加，增加余额并更换 nonce，新有效期可保持或延长。PreviousExpiry 绑定输入凭证，Creation.Expiry 绑定输出凭证；TopUpCreditPublicInputs 有 48 个公开字段。
-
-创建、取消和追加必须提供所有者钱包授权。公开入金另有出资方授权；同一钱包同时担任所有者和签名出资方时，按顺序消耗相邻 nonce，使用 CreateCreditNonceGuide / TopUpCreditNonceGuide 计算。无入金使用零值 FundingParams，由构建器展开为全零合约 tuple。
-
-## 加密与证明
-
-ViewingPublicKey、EncryptPrivateTransferNote / DecryptPrivateTransferNote、EncryptCreditNote / DecryptCreditNote 与协议的 secp256k1 ECDH、HKDF、AES-GCM 格式互通，普通凭证为 178 字节、授信为 254 字节。解密会验证上下文及承诺。
-
-Go 构建器接收当前电路生成的原始证明。普通 Transact 使用原始用户证明；授信构建器使用 EncodeCreditProof 编码 direct 模式。证明生成与密码学验证由调用方的证明后端完成。公开参数检查不能证明私密所有权或金额守恒；签名、私密见证与证明必须使用同一实例和完整公开语句。
-
-## 树同步与 IPP
-
-树同步仅以 CommitmentsInserted / BatchOutputs 为插入依据，处理滚树、重复日志与数据缺口，保留历史树路径。重组、冲突和缺失历史通过 Error / OnError 报告；失败批次不会部分修改树。没有区块头接口时，轮询通过回放历史核对已保存叶子。
-
-IPP Voucher 使用 NoteSecret，wire 为 note_secret。公开查询不携带凭证密钥。AuthorizeRequest 明确 SpenderIdentityCommitment 和 OwnerIdentityCommitment；授权结果包含 CreditSharedKeyHash。Propose / Authorize 提供承诺材料，输出位置由实际插入事件决定。
-
-Withdraw 只查询指定实例与树的公共 Merkle 数据，路径深度固定 16；服务端金额只供参考，本地按完整凭证计算余额。授信生命周期使用本地 payer / receiver 构建器。
-
-Relay 使用 shield、transact、create-credit、credit-draw、cancel-credit、top-up-credit。calldata 模式必须指定 ProtocolAddress，与构造签名和证明的实例一致。witness / prove 模式只接受当前电路及操作组合，会把私密见证交付给所选证明服务。接入的 IPP 服务须实现 SDK 定义的字段和响应结构。
-
-协议定义和基准结果位于兄弟仓库 protocol-docs。
+For trusted measurements of a private deployment, call `sdk.DefineGasBenchmarks(jsonBytes)` and set `InvisiOptions.GasBenchmarks`. `NewInvisi` snapshots those records. Exact deployment, circuit and shape matches override the bundled reference; unmatched records fall back to the standard model. Catalog validation checks format, not publisher authenticity. `scripts/sync-reference.py` copies the receipt catalog from the selected TS release. The Go tests include TS-generated comparison vectors for measured and modeled combinations.

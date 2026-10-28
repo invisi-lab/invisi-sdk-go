@@ -1,0 +1,403 @@
+package sdk
+
+import (
+	"context"
+	"crypto/sha256"
+	"encoding/hex"
+	"encoding/json"
+	"math/big"
+	"net/http"
+	"net/http/httptest"
+	"strings"
+	"sync"
+	"testing"
+
+	"github.com/ethereum/go-ethereum"
+	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/core/types"
+	"github.com/invisi-lab/invisi-sdk-go/core"
+	"github.com/invisi-lab/invisi-sdk-go/protocol"
+	"github.com/invisi-lab/invisi-sdk-go/protocol/contracts"
+	"github.com/invisi-lab/invisi-sdk-go/prover"
+	protocolrpc "github.com/invisi-lab/invisi-sdk-go/rpc"
+)
+
+type sessionProvider struct {
+	head   *types.Header
+	leaves *sync.Map
+}
+
+func (p sessionProvider) ChainID(context.Context) (*big.Int, error) { return big.NewInt(31337), nil }
+func (p sessionProvider) HeaderByNumber(context.Context, *big.Int) (*types.Header, error) {
+	return p.head, nil
+}
+func (p sessionProvider) CodeAt(context.Context, common.Address, *big.Int) ([]byte, error) {
+	return []byte{0x60, 0}, nil
+}
+func (p sessionProvider) TransactionReceipt(context.Context, common.Hash) (*types.Receipt, error) {
+	return nil, nil
+}
+func (p sessionProvider) CallContract(_ context.Context, message ethereum.CallMsg, _ *big.Int) ([]byte, error) {
+	a, e := protocol.ProtocolABI()
+	if e != nil {
+		return nil, e
+	}
+	m, e := a.MethodById(message.Data[:4])
+	if e != nil {
+		registry, x := contracts.InvisiAddressRegistryMetaData.GetAbi()
+		if x != nil {
+			return nil, x
+		}
+		m, e = registry.MethodById(message.Data[:4])
+		if e != nil {
+			return nil, e
+		}
+	}
+	switch m.RawName {
+	case "VERSION":
+		return m.Outputs.Pack(big.NewInt(1))
+	case "getTokenConfig":
+		return m.Outputs.Pack(struct {
+			Registered, Paused bool
+			MaxPerDeposit      *big.Int
+		}{true, false, big.NewInt(1000000)})
+	case "rootHistory":
+		return m.Outputs.Pack(true)
+	case "isRegistered":
+		return m.Outputs.Pack(false)
+	case "nonceOf":
+		return m.Outputs.Pack(uint64(0))
+	case "isNullifierSpent":
+		return m.Outputs.Pack(false)
+	}
+	return m.Outputs.Pack(big.NewInt(0))
+}
+
+type testProver struct {
+	alter    bool
+	requests []prover.ProvingRequest
+}
+
+func (p *testProver) Prove(_ context.Context, r prover.ProvingRequest, _ prover.Options) (prover.ProofBundle, error) {
+	p.requests = append(p.requests, r)
+	proof := make([]byte, 32)
+	proof[31] = 1
+	hash := sha256.Sum256(proof)
+	inputs := append([]common.Hash(nil), r.ExpectedPublicInputs...)
+	if p.alter {
+		inputs[0] = common.Hash{}
+	}
+	return prover.ProofBundle{FormatVersion: 1, CircuitName: r.CircuitName, Target: r.Target, BBVersion: "5.2.1", ArtifactSHA256: r.ArtifactSHA256, VKSHA256: r.VKSHA256, Proof: proof, ProofSHA256: hex.EncodeToString(hash[:]), PublicInputs: inputs}, nil
+}
+func (p *testProver) Verify(context.Context, prover.ProofBundle, prover.ProofStatement, prover.Options) (bool, error) {
+	return true, nil
+}
+func testSession(t *testing.T) (*WalletSession, common.Address, *testProver) {
+	t.Helper()
+	ctx := context.Background()
+	wallet, e := WalletFromPrivateKey("0x" + strings.Repeat("0", 63) + "1")
+	if e != nil {
+		t.Fatal(e)
+	}
+	provider := sessionProvider{head: &types.Header{Number: big.NewInt(10), Time: 100, ParentHash: common.HexToHash("0x09")}, leaves: &sync.Map{}}
+	address := common.HexToAddress("0x1111111111111111111111111111111111111111")
+	token := common.HexToAddress("0x2222222222222222222222222222222222222222")
+	deployment := protocolrpc.ProtocolDeployment{ChainID: "31337", Protocol: protocolrpc.ContractDeployment{Address: address, RuntimeCodeHash: hashCode([]byte{0x60, 0}), FromBlock: 1}}
+	block := protocolrpc.CanonicalBlock{Number: 10, Hash: provider.head.Hash(), ParentHash: provider.head.ParentHash, Timestamp: 100}
+	note := core.Note{ProtocolContext: core.ProtocolContext{ChainID: core.ElementFromUint64(31337), ProtocolAddress: core.BigIntToElement(address.Big())}, WalletIdentity: core.BigIntToElement(wallet.identity.Big()), TokenAddress: core.BigIntToElement(token.Big()), Amount: core.ElementFromUint64(100), Nonce: core.ElementFromUint64(123)}
+	identity, _ := core.ComputeNoteIdentity(note.WalletIdentity, note.Nonce)
+	leaf, _ := core.ComputeNoteCommitment(note.ChainID, identity, note.TokenAddress, note.Amount)
+	nf, _ := core.ComputeNoteNullifier(note.ChainID, note.Nonce, leaf)
+	root := leaf
+	for range 16 {
+		root, _ = core.Poseidon2Hash(root, core.ElementFromUint64(0))
+	}
+	provider.leaves.Store(uint64(1), fieldHash(leaf))
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var request struct {
+			ID     uint64
+			Method string
+			Params []json.RawMessage
+		}
+		json.NewDecoder(r.Body).Decode(&request)
+		var result any
+		switch request.Method {
+		case "invisi_getDeployment":
+			result = map[string]any{"apiVersion": "v1", "protocolVersion": "1", "deployment": deployment}
+		case "invisi_getStatus":
+			result = map[string]any{"apiVersion": "v1", "protocolVersion": "1", "deployment": deployment, "indexedHead": block, "checkedBits": 8, "detectionEnabled": true}
+		case "invisi_getRoots", "invisi_getMembership":
+			var tree uint64
+			if e := json.Unmarshal(request.Params[0], &tree); e != nil {
+				t.Error(e)
+			}
+			stored, _ := provider.leaves.Load(tree)
+			commitment := stored.(common.Hash)
+			value, _ := core.HexToElement(commitment.Hex())
+			for range 16 {
+				value, _ = core.Poseidon2Hash(value, core.ElementFromUint64(0))
+			}
+			currentAnchor := map[string]any{"treeId": tree, "root": fieldHash(value), "leafCount": 1, "block": block}
+			if request.Method == "invisi_getRoots" {
+				result = []any{currentAnchor}
+			} else {
+				result = map[string]any{"anchor": currentAnchor, "leafIndex": 0, "commitment": commitment, "siblings": make([]common.Hash, 16)}
+			}
+		default:
+			t.Error("unexpected RPC", request.Method)
+		}
+		json.NewEncoder(w).Encode(map[string]any{"jsonrpc": "2.0", "id": request.ID, "result": result})
+	}))
+	t.Cleanup(server.Close)
+	rpc, e := NewProtocolRpcClient(server.URL + "/v1")
+	if e != nil {
+		t.Fatal(e)
+	}
+	pool, e := ProtocolFromRPC(ctx, rpc, provider)
+	if e != nil {
+		t.Fatal(e)
+	}
+	store := NewMemoryWalletStore()
+	backend := &testProver{}
+	session, e := NewInvisi(InvisiOptions{ProtocolRPC: rpc, Provider: provider, Store: store, Prover: backend}).Connect(ctx, ConnectionOptions{Wallet: wallet, Protocol: pool, Namespace: "tests"})
+	if e != nil {
+		t.Fatal(e)
+	}
+	if e = store.Update(ctx, session.scope, func(state *WalletState) error {
+		state.Notes[fieldHash(leaf)] = StoredNote{Note: note, Commitment: fieldHash(leaf), Nullifier: fieldHash(nf), TreeID: 1, LeafIndex: 0}
+		state.ObservedThrough = &block
+		return nil
+	}); e != nil {
+		t.Fatal(e)
+	}
+	return session, token, backend
+}
+func TestTransferStagesReserveInputsAndAssembleCurrentWitness(t *testing.T) {
+	ctx := context.Background()
+	session, token, backend := testSession(t)
+	address, _ := session.wallet.GetAddress()
+	prepared, e := session.PrepareTransfer(ctx, TransferPreparation{TokenAddress: token, Outputs: []PaymentOutput{{To: address, Amount: big.NewInt(30)}}})
+	if e != nil {
+		t.Fatal(e)
+	}
+	preview := prepared.Preview()
+	if preview.InputCount != 1 || preview.OutputCount != 2 || !preview.NeedsWalletAuthorization {
+		t.Fatal(preview)
+	}
+	if _, e = prepared.Prove(ctx); e == nil {
+		t.Fatal("unsigned private transfer was proved")
+	}
+	balance, e := session.Balance(ctx, token)
+	if e != nil || balance.AvailableKnown.Sign() != 0 || balance.Reserved.Cmp(big.NewInt(100)) != 0 {
+		t.Fatal(balance, e)
+	}
+	if _, e = session.PrepareTransfer(ctx, TransferPreparation{TokenAddress: token, Outputs: []PaymentOutput{{To: address, Amount: big.NewInt(1)}}}); e == nil {
+		t.Fatal("reserved note selected twice")
+	}
+	authorized, e := prepared.Authorize(ctx)
+	if e != nil {
+		t.Fatal(e)
+	}
+	proved, e := authorized.Prove(ctx)
+	if e != nil || proved.Preview().Status != "ready" {
+		t.Fatal(e)
+	}
+	request := backend.requests[0]
+	if e = request.Witness.WithInputs(func(inputs map[string]any) error {
+		if inputs["wallet_identity"] != session.wallet.material.WalletIdentity.String() {
+			t.Fatal("wrong witness identity")
+		}
+		return nil
+	}); e != nil {
+		t.Fatal(e)
+	}
+	if e = proved.Abandon(ctx); e == nil {
+		t.Fatal("externalized proof released reserved notes")
+	}
+}
+func TestResumeFencesPreviousWorkerAndRequiresFreshAuthorization(t *testing.T) {
+	ctx := context.Background()
+	session, token, _ := testSession(t)
+	prepared, e := session.PrepareWithdraw(ctx, WithdrawalPreparation{TokenAddress: token, To: session.wallet.identity, Amount: big.NewInt(30)})
+	if e != nil {
+		t.Fatal(e)
+	}
+	if prepared, e = prepared.Authorize(ctx); e != nil {
+		t.Fatal(e)
+	}
+	resumed, e := session.Resume(ctx, prepared.ID())
+	if e != nil {
+		t.Fatal(e)
+	}
+	if _, e = prepared.Prove(ctx); e == nil {
+		t.Fatal("replaced worker still generated proofs")
+	}
+	if _, e = resumed.Prove(ctx); e == nil {
+		t.Fatal("private signature was persisted")
+	}
+	if resumed, e = resumed.Authorize(ctx); e != nil {
+		t.Fatal(e)
+	}
+	if _, e = resumed.Prove(ctx); e != nil {
+		t.Fatal(e)
+	}
+}
+func TestProofForAnotherStatementIsRejected(t *testing.T) {
+	ctx := context.Background()
+	session, token, backend := testSession(t)
+	backend.alter = true
+	prepared, e := session.PrepareWithdraw(ctx, WithdrawalPreparation{TokenAddress: token, To: session.wallet.identity, Amount: big.NewInt(30)})
+	if e != nil {
+		t.Fatal(e)
+	}
+	if prepared, e = prepared.Authorize(ctx); e != nil {
+		t.Fatal(e)
+	}
+	if _, e = prepared.Prove(ctx); e == nil {
+		t.Fatal("proof for another statement accepted")
+	}
+	state, _ := session.options.Store.ReadSnapshot(ctx, session.scope)
+	for _, note := range state.Notes {
+		if note.ReservedBy == "" {
+			t.Fatal("failed backend released possibly externalized proof inputs")
+		}
+	}
+}
+func TestViewOnlySweepUsesFullOwnerPayoutWithoutSignature(t *testing.T) {
+	ctx := context.Background()
+	session, token, _ := testSession(t)
+	session.authorization = nil
+	prepared, e := session.PrepareSweep(ctx, SweepPreparation{TokenAddress: token})
+	if e != nil {
+		t.Fatal(e)
+	}
+	preview := prepared.Preview()
+	if preview.NeedsWalletAuthorization || preview.OutputCount != 0 || preview.WithdrawalAddress != session.wallet.identity || preview.WithdrawalAmount.Cmp(big.NewInt(100)) != 0 {
+		t.Fatal(preview)
+	}
+	if _, e = prepared.Prove(ctx); e != nil {
+		t.Fatal(e)
+	}
+}
+func TestCreateCreditUsesSameAuthorizationAndProofStages(t *testing.T) {
+	ctx := context.Background()
+	session, token, _ := testSession(t)
+	address, _ := session.wallet.GetAddress()
+	prepared, e := session.PrepareCreateCredit(ctx, CreateCreditPreparation{TokenAddress: token, Spender: address, Amount: big.NewInt(70), Expiry: big.NewInt(1000)})
+	if e != nil {
+		t.Fatal(e)
+	}
+	if prepared, e = prepared.Authorize(ctx); e != nil {
+		t.Fatal(e)
+	}
+	if _, e = prepared.Prove(ctx); e != nil {
+		t.Fatal(e)
+	}
+}
+
+func seedCredit(t *testing.T, session *WalletSession, token common.Address) common.Hash {
+	t.Helper()
+	note := core.CreditNote{ProtocolContext: session.coreContext(), SpenderWalletIdentity: session.wallet.material.WalletIdentity, OwnerWalletIdentity: session.wallet.material.WalletIdentity, SpenderPayout: session.wallet.material.WalletIdentity, OwnerPayout: session.wallet.material.WalletIdentity, TokenAddress: core.BigIntToElement(token.Big()), Amount: core.ElementFromUint64(100), Nonce: core.ElementFromUint64(678), Expiry: core.ElementFromUint64(1000), CreditSharedKey: core.ElementFromUint64(999)}
+	leaf, e := creditCommitment(note)
+	if e != nil {
+		t.Fatal(e)
+	}
+	nf, e := core.ComputeCreditNullifier(note.ChainID, note.CreditSharedKey, core.BigIntToElement(leaf.Big()))
+	if e != nil {
+		t.Fatal(e)
+	}
+	session.options.Provider.(sessionProvider).leaves.Store(uint64(2), leaf)
+	keys := session.wallet.keys
+	state := core.CreditDeliveryState{Note: note, OwnerReceivingKeys: keys, SpenderReceivingKeys: keys}
+	e = session.options.Store.Update(context.Background(), session.scope, func(snapshot *WalletState) error {
+		for _, role := range []string{"owner", "spender"} {
+			snapshot.Credits[creditKey(leaf, role)] = StoredCredit{State: state, Commitment: leaf, Nullifier: fieldHash(nf), TreeID: 2, LeafIndex: 0, Role: role}
+		}
+		return nil
+	})
+	if e != nil {
+		t.Fatal(e)
+	}
+	return leaf
+}
+func TestCreditDrawCancelAndTopUpUseCurrentWitnessSchemas(t *testing.T) {
+	for _, kind := range []string{"draw", "cancel", "top-up"} {
+		t.Run(kind, func(t *testing.T) {
+			ctx := context.Background()
+			session, token, _ := testSession(t)
+			leaf := seedCredit(t, session, token)
+			var prepared *Operation
+			var e error
+			switch kind {
+			case "draw":
+				prepared, e = session.PrepareDrawCredit(ctx, DrawCreditPreparation{TokenAddress: token, Credits: []CreditDrawInput{{Credit: leaf, Amount: big.NewInt(30)}}})
+			case "cancel":
+				prepared, e = session.PrepareCancelCredit(ctx, CancelCreditPreparation{TokenAddress: token, Credit: leaf})
+			case "top-up":
+				prepared, e = session.PrepareTopUpCredit(ctx, TopUpCreditPreparation{TokenAddress: token, Credit: leaf, AdditionalAmount: big.NewInt(30), Expiry: big.NewInt(2000)})
+			}
+			if e != nil {
+				t.Fatal(e)
+			}
+			if prepared, e = prepared.Authorize(ctx); e != nil {
+				t.Fatal(e)
+			}
+			if _, e = prepared.Prove(ctx); e != nil {
+				t.Fatal(e)
+			}
+		})
+	}
+}
+func TestCreditReservationCoversBothRolesOfTheSameLeaf(t *testing.T) {
+	ctx := context.Background()
+	session, token, _ := testSession(t)
+	leaf := seedCredit(t, session, token)
+	cancel, e := session.PrepareCancelCredit(ctx, CancelCreditPreparation{TokenAddress: token, Credit: leaf})
+	if e != nil {
+		t.Fatal(e)
+	}
+	if _, e = session.PrepareDrawCredit(ctx, DrawCreditPreparation{TokenAddress: token, Credits: []CreditDrawInput{{Credit: leaf, Amount: big.NewInt(30)}}}); e == nil {
+		t.Fatal("same Credit reserved through its other role")
+	}
+	if e = cancel.Abandon(ctx); e != nil {
+		t.Fatal(e)
+	}
+	if _, e = session.PrepareDrawCredit(ctx, DrawCreditPreparation{TokenAddress: token, Credits: []CreditDrawInput{{Credit: leaf, Amount: big.NewInt(30)}}}); e != nil {
+		t.Fatal(e)
+	}
+}
+
+func TestRegistryUsesOwnerAuthorizationAndIndependentNonce(t *testing.T) {
+	ctx := context.Background()
+	session, _, backend := testSession(t)
+	deployment := session.protocol.Deployment()
+	deployment.Registry = &protocolrpc.ContractDeployment{Address: common.HexToAddress("0x3333333333333333333333333333333333333333"), RuntimeCodeHash: hashCode([]byte{0x60, 0}), FromBlock: 1}
+	pool, e := NewProtocol(deployment)
+	if e != nil {
+		t.Fatal(e)
+	}
+	registry, e := NewAddressRegistry(pool, session.options.Provider)
+	if e != nil {
+		t.Fatal(e)
+	}
+	prepared, e := registry.PrepareRegistration(ctx, RegistrationPreparation{Wallet: session.wallet, Prover: backend})
+	if e != nil {
+		t.Fatal(e)
+	}
+	if prepared.Preview().Nonce != 0 {
+		t.Fatal("wrong registry nonce")
+	}
+	if _, e = prepared.Prove(ctx); e == nil {
+		t.Fatal("registration proved without owner authorization")
+	}
+	if prepared, e = prepared.Authorize(ctx); e != nil {
+		t.Fatal(e)
+	}
+	if _, e = prepared.Prove(ctx); e != nil {
+		t.Fatal(e)
+	}
+	if len(backend.requests) != 1 || backend.requests[0].CircuitName != "wallet_registration" {
+		t.Fatal("wrong registry circuit")
+	}
+}

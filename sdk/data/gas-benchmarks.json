@@ -1,0 +1,613 @@
+[
+  {
+    "formatVersion": 1,
+    "id": "protocol-92ef274-osaka-real",
+    "deployment": {
+      "chainId": "31337",
+      "protocolAddress": "0x8870C63A18a9480C7de9B860b849fD293832856D",
+      "runtimeCodeHash": "0x604572c0da90ea139b774cd0d2962a2972fac46e0556c7cec6f6f9aac5deef14",
+      "tokenAddress": "0x4826533B4897376654Bb4d4AD88B7faFD0C98528"
+    },
+    "source": {
+      "protocolCommit": "92ef274c6b36d783507699a33ee20e52192c83c7",
+      "measuredAt": "2026-10-27T08:42:15.991Z",
+      "chain": "Anvil 31337",
+      "hardfork": "osaka",
+      "token": "MockERC20",
+      "verifier": "real",
+      "assumptions": [
+        "normal CREATE/Factory deployment; no code or storage injection",
+        "Solidity 0.8.27 optimizer 200; real BB 5.2.1 verifiers",
+        "one source tree; two existing leaves; no rollover or screener",
+        "funding/approval setup excluded; complete transaction receipt gas included",
+        "exact allowance for caller funding; configured benchmark payout balances",
+        "observed local samples, not a confidence interval or gas limit"
+      ]
+    },
+    "measurements": [
+      {
+        "id": "shield-1",
+        "shape": {
+          "kind": "shield",
+          "target": "evm",
+          "capacity": 0,
+          "noteInputs": 0,
+          "noteOutputs": 1,
+          "sourceTrees": 0,
+          "creditInputs": 0,
+          "creditOutputs": 0,
+          "creditRemainders": 0,
+          "funding": "caller",
+          "permit": false,
+          "deliveryBytes": 226
+        },
+        "circuit": null,
+        "samples": [
+          {
+            "gasUsed": "649286",
+            "transactionHash": "0xcc299d1780ada9a69b1d9f0f3d06a165db15fccbd2b7ff407834f02f5d563a18",
+            "blockNumber": "50",
+            "blockHash": "0xbcb868e781a20588d2fa099a4d7f87c1600044a2e5ec1e369e384d7a5f22f00a",
+            "calldataBytes": 1156
+          },
+          {
+            "gasUsed": "649322",
+            "transactionHash": "0x95139dff109725989f0769e3e6fb9bd3e7e1bf581fd475f14e822875eb90fda4",
+            "blockNumber": "50",
+            "blockHash": "0x7ace353fea4fc8c856c0fd45521d200b02619921977709ff4f910e0ff41c06fe",
+            "calldataBytes": 1156
+          },
+          {
+            "gasUsed": "649322",
+            "transactionHash": "0xef578bb38dc8ff8bfd47d2e76e3ab4273019ea9a385f5d2fd99add32ceaecb58",
+            "blockNumber": "50",
+            "blockHash": "0xded817f8ef89637e2443e3b626c0837f184ca134fe753be913d5570554c649a6",
+            "calldataBytes": 1156
+          }
+        ]
+      },
+      {
+        "id": "shield-2",
+        "shape": {
+          "kind": "shield",
+          "target": "evm",
+          "capacity": 0,
+          "noteInputs": 0,
+          "noteOutputs": 2,
+          "sourceTrees": 0,
+          "creditInputs": 0,
+          "creditOutputs": 0,
+          "creditRemainders": 0,
+          "funding": "caller",
+          "permit": false,
+          "deliveryBytes": 452
+        },
+        "circuit": null,
+        "samples": [
+          {
+            "gasUsed": "757063",
+            "transactionHash": "0x024e2dfbd6f50c368e2a4aa347e3029de668f4ebd36b80227aa003bb7ac21c74",
+            "blockNumber": "50",
+            "blockHash": "0x8ed63973c158d706ac54bb646626e4f0db5777b4bd56d179b94503af6c417c50",
+            "calldataBytes": 1668
+          },
+          {
+            "gasUsed": "757063",
+            "transactionHash": "0x898d852ab28f68adac4d30b160a3dbfee33fa7ca875f70df9eb7763b6b1cd1f0",
+            "blockNumber": "50",
+            "blockHash": "0x9bb6810de38193933a9f26fa03d3d9bad1ca0151ff5e04544c56520e09da3043",
+            "calldataBytes": 1668
+          },
+          {
+            "gasUsed": "757039",
+            "transactionHash": "0x8ff9720e3197aab2d741fbd8d0fa2969203ea8cd051d9649d1e5eb890bcc2be3",
+            "blockNumber": "50",
+            "blockHash": "0x8604c75eb6363aaae774276e638f5b749aae1f8f815eb99ab1183137eef5730e",
+            "calldataBytes": 1668
+          }
+        ]
+      },
+      {
+        "id": "shield-10",
+        "shape": {
+          "kind": "shield",
+          "target": "evm",
+          "capacity": 0,
+          "noteInputs": 0,
+          "noteOutputs": 10,
+          "sourceTrees": 0,
+          "creditInputs": 0,
+          "creditOutputs": 0,
+          "creditRemainders": 0,
+          "funding": "caller",
+          "permit": false,
+          "deliveryBytes": 2260
+        },
+        "circuit": null,
+        "samples": [
+          {
+            "gasUsed": "1692143",
+            "transactionHash": "0x6c13db8bd8a8599daf5034e56712abefbf406982fafe7647b6d22291ba4199ed",
+            "blockNumber": "50",
+            "blockHash": "0x1ab2ae514f408a79e0c40ca10cee74b2e23d7c8a5f24641b8eea3e1cf58ce700",
+            "calldataBytes": 5764
+          },
+          {
+            "gasUsed": "1692083",
+            "transactionHash": "0x5e476c9d3838b782a51332af9bf5c372d29fc411c2168a7af619c52bd5309c7b",
+            "blockNumber": "50",
+            "blockHash": "0x9c62bc72fc90f990c6711b48865ff922a1856ae05c4fef61dad5f4da7d948401",
+            "calldataBytes": 5764
+          },
+          {
+            "gasUsed": "1692203",
+            "transactionHash": "0x0092e2d9160fad95279cde586fc6c79c713244f55db8a2060a5abab9d98c176a",
+            "blockNumber": "50",
+            "blockHash": "0xac1bf780b4cc05b4dcc7ee5d741c049ba99ab4af9bdcd25104add730c2a14152",
+            "calldataBytes": 5764
+          }
+        ]
+      },
+      {
+        "id": "transfer-1x2",
+        "shape": {
+          "kind": "transfer",
+          "target": "evm",
+          "capacity": 14,
+          "noteInputs": 1,
+          "noteOutputs": 2,
+          "sourceTrees": 1,
+          "creditInputs": 0,
+          "creditOutputs": 0,
+          "creditRemainders": 0,
+          "funding": "none",
+          "permit": false,
+          "deliveryBytes": 452
+        },
+        "circuit": {
+          "circuitName": "transact_user_slots14",
+          "target": "evm",
+          "artifactSha256": "2a6a20839e90b88b1ecd629f59a01821bad3ee11dbe04db1fd9cdce7a3de0e84",
+          "vkSha256": "ffe0e1a4e690792ecb4eb1fc1acc9ff60f13d3b5af03cfc6ae6d6bf26e99bdea"
+        },
+        "samples": [
+          {
+            "gasUsed": "1617516",
+            "transactionHash": "0xf49ea3d31cc1346472172e2dee84f9360f60a3fe948a3ef6e87f727af6d42f0d",
+            "blockNumber": "49",
+            "blockHash": "0xf59c57e63ec2f03abc36d28f273b0af5290184dc97197df740b23d79a851a887",
+            "calldataBytes": 11012
+          },
+          {
+            "gasUsed": "1617516",
+            "transactionHash": "0xf8d11286f1f2a4db006ff6b06900c47d0fbf685984499e1e5d4aea49478ba8e5",
+            "blockNumber": "49",
+            "blockHash": "0xeb5a800190be3534c9e2675c97ac56d0e0be8adef55f60bd32d375776a7d150c",
+            "calldataBytes": 11012
+          },
+          {
+            "gasUsed": "1617504",
+            "transactionHash": "0x8939fcea97079a3c5118b9e94325455e2ad1cdb47310ae499a277272654b3eb6",
+            "blockNumber": "49",
+            "blockHash": "0xecffefb593e2fec5d5827cfd39d0cc4d0efb67dbff6f8dbbd0d2db2439a80cf9",
+            "calldataBytes": 11012
+          }
+        ]
+      },
+      {
+        "id": "transfer-1x14",
+        "shape": {
+          "kind": "transfer",
+          "target": "evm",
+          "capacity": 56,
+          "noteInputs": 1,
+          "noteOutputs": 14,
+          "sourceTrees": 1,
+          "creditInputs": 0,
+          "creditOutputs": 0,
+          "creditRemainders": 0,
+          "funding": "none",
+          "permit": false,
+          "deliveryBytes": 3164
+        },
+        "circuit": {
+          "circuitName": "transact_user_slots56",
+          "target": "evm",
+          "artifactSha256": "ba83ec2f177d16fa88ea04bc54f2e99920f1ac195cdb05b88b9b3bbc245fd953",
+          "vkSha256": "6ad5d3aff0c72a632fb19895658af093a6a92478a9994985e838a71e61237720"
+        },
+        "samples": [
+          {
+            "gasUsed": "2489010",
+            "transactionHash": "0x053557acea930a869d6469c91e9bc015d0893607a6ab18d2af684986f7074676",
+            "blockNumber": "49",
+            "blockHash": "0x734873097eb5e4cb66bfc2cdb61fac6753b53a4b9450fb22895281100af3aaf3",
+            "calldataBytes": 17156
+          },
+          {
+            "gasUsed": "2489106",
+            "transactionHash": "0xb3990edb994011775e275bc1eb38c527b7206a2bfadf510e8aa53e260f3594b8",
+            "blockNumber": "49",
+            "blockHash": "0xf8cb019ebb0ecd0ec5d6634198292883c63fe93a7c65c34f9f3120c6cc54f1cf",
+            "calldataBytes": 17156
+          },
+          {
+            "gasUsed": "2489094",
+            "transactionHash": "0xc97079019567ff8a79d285421351ee4bc48d14092a0e12ff634151719e991088",
+            "blockNumber": "49",
+            "blockHash": "0x5a6947839165c8961eeeb9190331415c40366a78b4a6a5771e7b8954dbb8b3c7",
+            "calldataBytes": 17156
+          }
+        ]
+      },
+      {
+        "id": "transfer-1x56",
+        "shape": {
+          "kind": "transfer",
+          "target": "evm",
+          "capacity": 112,
+          "noteInputs": 1,
+          "noteOutputs": 56,
+          "sourceTrees": 1,
+          "creditInputs": 0,
+          "creditOutputs": 0,
+          "creditRemainders": 0,
+          "funding": "none",
+          "permit": false,
+          "deliveryBytes": 12656
+        },
+        "circuit": {
+          "circuitName": "transact_user_slots112",
+          "target": "evm",
+          "artifactSha256": "713b78469b6e97711122210f8497942120c1c9d66d3604bc184566c4eba59cc3",
+          "vkSha256": "d6a46e297949c28b9a62fd9aef1f202870fdca97b8bfb15beefd27b9e9f3d86e"
+        },
+        "samples": [
+          {
+            "gasUsed": "5389227",
+            "transactionHash": "0xb820d3c358724c1d64422017f232d074e4ff1ffaf1b1ce5ee719409427cf2208",
+            "blockNumber": "49",
+            "blockHash": "0x474bd1e52457801d1a596a9f23aeb6d365a17be028ee0c8cf8fd4758eaa1106b",
+            "calldataBytes": 36356
+          },
+          {
+            "gasUsed": "5389095",
+            "transactionHash": "0x16514d8cf1136d7a7f40591859e2ea2d256af66520498e1fc81eb28837db600d",
+            "blockNumber": "49",
+            "blockHash": "0x42314a0d6eb9e765869e1b66b279444c78f919d2c28aed544d9fa7ac3bd2acb4",
+            "calldataBytes": 36356
+          },
+          {
+            "gasUsed": "5389203",
+            "transactionHash": "0xee69d565a7eafb60ad7a47afe80a49d4fa40b50660669d9141e7dc6f4c3dbe0d",
+            "blockNumber": "49",
+            "blockHash": "0x0dcdada663ee04dd63e06fcdb79dacc5623201d29b687f63deede2b4762a994e",
+            "calldataBytes": 36356
+          }
+        ]
+      },
+      {
+        "id": "transfer-1x112",
+        "shape": {
+          "kind": "transfer",
+          "target": "evm",
+          "capacity": 168,
+          "noteInputs": 1,
+          "noteOutputs": 112,
+          "sourceTrees": 1,
+          "creditInputs": 0,
+          "creditOutputs": 0,
+          "creditRemainders": 0,
+          "funding": "none",
+          "permit": false,
+          "deliveryBytes": 25312
+        },
+        "circuit": {
+          "circuitName": "transact_user_slots168",
+          "target": "evm",
+          "artifactSha256": "f7b3b1384e961367702f544299ca3521d8205fac31b7691c45ff84325d5a31c3",
+          "vkSha256": "e00181533d7e35d2307570528f9e7f8f88e2909b6ae338d93373b608dea96881"
+        },
+        "samples": [
+          {
+            "gasUsed": "9139842",
+            "transactionHash": "0x09951c4e00b868b6660429d187a482004646e4c84ef341d3b98352c249db6a06",
+            "blockNumber": "49",
+            "blockHash": "0xba9da3c08189335acff1eb33554f5f12475e4a6510324cf6ec9eadf340ce15d2",
+            "calldataBytes": 61444
+          },
+          {
+            "gasUsed": "9139650",
+            "transactionHash": "0xb06f69d1c6e5406758918d5d296ab889bab4c3814f616cc581ad312cc7ebb2f3",
+            "blockNumber": "49",
+            "blockHash": "0x5516a76b4b366f2e539a67bb848b7d232c3e6f328d34ca5bd3dba43a14c316bf",
+            "calldataBytes": 61444
+          },
+          {
+            "gasUsed": "9139530",
+            "transactionHash": "0x116c4875b7712b7cb51cdb0fcb6e66a95733dca272aa272bc0b1fd265edbe26c",
+            "blockNumber": "49",
+            "blockHash": "0xd36340fddd1eace21b73f785c6589bf73b07bef782f2e78a5e3d3d828b0b607c",
+            "calldataBytes": 61444
+          }
+        ]
+      },
+      {
+        "id": "withdraw-1x1",
+        "shape": {
+          "kind": "withdraw",
+          "target": "evm",
+          "capacity": 14,
+          "noteInputs": 1,
+          "noteOutputs": 1,
+          "sourceTrees": 1,
+          "creditInputs": 0,
+          "creditOutputs": 0,
+          "creditRemainders": 0,
+          "funding": "none",
+          "permit": false,
+          "deliveryBytes": 226
+        },
+        "circuit": {
+          "circuitName": "transact_user_slots14",
+          "target": "evm",
+          "artifactSha256": "2a6a20839e90b88b1ecd629f59a01821bad3ee11dbe04db1fd9cdce7a3de0e84",
+          "vkSha256": "ffe0e1a4e690792ecb4eb1fc1acc9ff60f13d3b5af03cfc6ae6d6bf26e99bdea"
+        },
+        "samples": [
+          {
+            "gasUsed": "1597571",
+            "transactionHash": "0x326892d32146e0bc36b396fd3973151a629312df68ed25a4ffbb6a3da23ba274",
+            "blockNumber": "49",
+            "blockHash": "0x3e0f326cba3dd019b86431b4c22145758a7f10c121a696a81a094746b04495b5",
+            "calldataBytes": 10564
+          },
+          {
+            "gasUsed": "1597715",
+            "transactionHash": "0x2e3a15157ac9c07e4717bbd4641481ce3bc0068d26157752815b6ec6b30acdd0",
+            "blockNumber": "49",
+            "blockHash": "0xab7fceac97d55e8702d1202b98d3a05c4b1e0f71e51b6d88d7e80e91cc338596",
+            "calldataBytes": 10564
+          },
+          {
+            "gasUsed": "1597595",
+            "transactionHash": "0x5052e94a67520c43416cdcb60a1365a126560861173d0eef46bcbf0a566fe947",
+            "blockNumber": "49",
+            "blockHash": "0x9a64cf76b646b5a07b72fcc61266e87f17365fec891701c331982a93e5ba9b89",
+            "calldataBytes": 10564
+          }
+        ]
+      },
+      {
+        "id": "sweep-1x0",
+        "shape": {
+          "kind": "sweep",
+          "target": "evm",
+          "capacity": 14,
+          "noteInputs": 1,
+          "noteOutputs": 0,
+          "sourceTrees": 1,
+          "creditInputs": 0,
+          "creditOutputs": 0,
+          "creditRemainders": 0,
+          "funding": "none",
+          "permit": false,
+          "deliveryBytes": 0
+        },
+        "circuit": {
+          "circuitName": "transact_user_slots14",
+          "target": "evm",
+          "artifactSha256": "2a6a20839e90b88b1ecd629f59a01821bad3ee11dbe04db1fd9cdce7a3de0e84",
+          "vkSha256": "ffe0e1a4e690792ecb4eb1fc1acc9ff60f13d3b5af03cfc6ae6d6bf26e99bdea"
+        },
+        "samples": [
+          {
+            "gasUsed": "1069308",
+            "transactionHash": "0xb1ab469d05ca5f49659f54a332cc172892dcce37e475342fbf52fa9cfb4d3927",
+            "blockNumber": "49",
+            "blockHash": "0xe5b04579149987198801f1ca19ab771d5262de2aaf9861a6c962d50d1c6baef0",
+            "calldataBytes": 10116
+          },
+          {
+            "gasUsed": "1069284",
+            "transactionHash": "0xd6adee997f7e1e19e3918f913f6ee48d94df69c09ed74e333325023089e7f6df",
+            "blockNumber": "49",
+            "blockHash": "0xcb225566f8f1ea6ae8da30158b8f1aef03d50fa4ea352a00aa42b7f41a05d63c",
+            "calldataBytes": 10116
+          },
+          {
+            "gasUsed": "1069308",
+            "transactionHash": "0xe06dd7f3a2718bc9a9412c2d6f505960ce225b2e5fe6c1c66bb5b0e8f427006f",
+            "blockNumber": "49",
+            "blockHash": "0x37a08c5918892e1c19df017c746ab0ede03c1bb195c3be593d70c1f9de91897e",
+            "calldataBytes": 10116
+          }
+        ]
+      },
+      {
+        "id": "create-credit-1x1",
+        "shape": {
+          "kind": "create-credit",
+          "target": "evm",
+          "capacity": 10,
+          "noteInputs": 1,
+          "noteOutputs": 1,
+          "sourceTrees": 1,
+          "creditInputs": 0,
+          "creditOutputs": 1,
+          "creditRemainders": 0,
+          "funding": "none",
+          "permit": false,
+          "deliveryBytes": 1162
+        },
+        "circuit": {
+          "circuitName": "create_credit",
+          "target": "evm",
+          "artifactSha256": "ab97cd5a036851a9748a5cfd8e6f9834e23090c8e95db4531aabfc37d3abb353",
+          "vkSha256": "fac0e65b768a28750323cca851990598af936611125b6cfa3f5c16b04c7d084f"
+        },
+        "samples": [
+          {
+            "gasUsed": "1627325",
+            "transactionHash": "0x7763d93a5b1e8797b5f4af2e1e5b1bb029a8b0f9f7b90bcc04f581947d826803",
+            "blockNumber": "49",
+            "blockHash": "0x93e51ae5e99c68dc642693d478e444330d8e26255ff5bb9aafc4a3f4e70d3a45",
+            "calldataBytes": 11940
+          },
+          {
+            "gasUsed": "1627385",
+            "transactionHash": "0xe246d59cafa2a26dddf21c8385dd843be4d4596388ebe23e936df84e7f906635",
+            "blockNumber": "49",
+            "blockHash": "0x3c24b2d6ed2a998562d34b49e0517515742a9b39d59aec38a9ac6b22be1b694b",
+            "calldataBytes": 11940
+          },
+          {
+            "gasUsed": "1627157",
+            "transactionHash": "0x2f7ed0b75435cc6a820d0cd90fd82d362f74787057413722b6eb3c6e37db87d3",
+            "blockNumber": "49",
+            "blockHash": "0x0a0301670b46017da772800c68bb941245ac1941c79fde9c85717632154e15ee",
+            "calldataBytes": 11940
+          }
+        ]
+      },
+      {
+        "id": "draw-credit-1-partial",
+        "shape": {
+          "kind": "draw-credit",
+          "target": "evm",
+          "capacity": 1,
+          "noteInputs": 0,
+          "noteOutputs": 0,
+          "sourceTrees": 1,
+          "creditInputs": 1,
+          "creditOutputs": 1,
+          "creditRemainders": 1,
+          "funding": "none",
+          "permit": false,
+          "deliveryBytes": 936
+        },
+        "circuit": {
+          "circuitName": "credit_draw_slots1",
+          "target": "evm",
+          "artifactSha256": "f5e458790948f37a61a833fad52cf2cc3b26a59515d271de32e0caaa4e229eb5",
+          "vkSha256": "613699a440f50a0937e4c57e5152b5fdea42c31b10157d6b93226fef313df553"
+        },
+        "samples": [
+          {
+            "gasUsed": "1581294",
+            "transactionHash": "0xd438e22b0fa07a657279f182537e4996f1936f0881d5b7d637845f8ca2808aab",
+            "blockNumber": "49",
+            "blockHash": "0x9e384a3054530b1ff237a639bca1a559afb2b73b30e21c262aac85ebf480fc9b",
+            "calldataBytes": 11396
+          },
+          {
+            "gasUsed": "1581402",
+            "transactionHash": "0xa70ac3e7284b6e98f8591a6ba88e4ddfb23ecbd05343641d0532f34920e10b56",
+            "blockNumber": "49",
+            "blockHash": "0x37c5eb34ce96a841e96c36103a7ab65c1a3e08603dc9843efb0c0752c069f1d4",
+            "calldataBytes": 11396
+          },
+          {
+            "gasUsed": "1581174",
+            "transactionHash": "0xd062494979d0bc0e284ccb070f87b48f3e8e5befb6001f15a006dd2a4a72ca24",
+            "blockNumber": "49",
+            "blockHash": "0x12840d920f14163b2d29491f28cee616e1bb9fd9514a4debe10ae35256345fc1",
+            "calldataBytes": 11396
+          }
+        ]
+      },
+      {
+        "id": "top-up-credit-1x1",
+        "shape": {
+          "kind": "top-up-credit",
+          "target": "evm",
+          "capacity": 10,
+          "noteInputs": 1,
+          "noteOutputs": 1,
+          "sourceTrees": 2,
+          "creditInputs": 1,
+          "creditOutputs": 1,
+          "creditRemainders": 0,
+          "funding": "none",
+          "permit": false,
+          "deliveryBytes": 1162
+        },
+        "circuit": {
+          "circuitName": "credit_top_up",
+          "target": "evm",
+          "artifactSha256": "ee9dbcf8be6f6c09478190996e90b1d39d4a10a00245950f69fc1d2c329c6e9b",
+          "vkSha256": "0c369fec0469b60baebb3be650bad42f3ccae6f0ff139cce6ad9a3f451ed7513"
+        },
+        "samples": [
+          {
+            "gasUsed": "1666948",
+            "transactionHash": "0x1403da01167962a4349d2655ea217bfcfc1a2390138bea0279792c44b4381dd2",
+            "blockNumber": "49",
+            "blockHash": "0xcb554ffcdb4afe5f6458e5d23ffbdd1fdbef9c23f982343065772c0b3e3dd633",
+            "calldataBytes": 12100
+          },
+          {
+            "gasUsed": "1666900",
+            "transactionHash": "0x3b5e54f29e3f888a443526cf23ab9255b3f0c7adf1d0d127c16b85f4c6a324d9",
+            "blockNumber": "49",
+            "blockHash": "0xeb304df6bdd24b249cac3197b543b0eaa6381ed75ad812dff248f914864105ed",
+            "calldataBytes": 12100
+          },
+          {
+            "gasUsed": "1666780",
+            "transactionHash": "0x81c5ef25268a719275cb3b80618c2af291e1f7b3f91d7e82cc26bc894a8c332a",
+            "blockNumber": "49",
+            "blockHash": "0xfa42070d6349fc8d559b8bd4ad0ee6b79089107540c4472b9e492b8f5a6bd3e4",
+            "calldataBytes": 12100
+          }
+        ]
+      },
+      {
+        "id": "cancel-credit-1",
+        "shape": {
+          "kind": "cancel-credit",
+          "target": "evm",
+          "capacity": 1,
+          "noteInputs": 0,
+          "noteOutputs": 0,
+          "sourceTrees": 1,
+          "creditInputs": 1,
+          "creditOutputs": 0,
+          "creditRemainders": 0,
+          "funding": "none",
+          "permit": false,
+          "deliveryBytes": 0
+        },
+        "circuit": {
+          "circuitName": "credit_cancel",
+          "target": "evm",
+          "artifactSha256": "d332453a2b8c2c544747ac8d5f01912c9757f48d986226fd6a9b0e24d8321474",
+          "vkSha256": "1f8a3c20cb081d6a90962556da3124919cc4e5675e59ad31562af39299da02fb"
+        },
+        "samples": [
+          {
+            "gasUsed": "998146",
+            "transactionHash": "0x97bc72692d241e2c344b912804f9939061db5ef59cf4bb23922d93812e382160",
+            "blockNumber": "49",
+            "blockHash": "0x2e09df4df84a1c25961386febe8404531bb5da274836d50cc15a26c91b433a98",
+            "calldataBytes": 9540
+          },
+          {
+            "gasUsed": "998134",
+            "transactionHash": "0x26c5067b12c2bc4b694070784e6b19d4855efa6e77c2422f0c6b1567f061570a",
+            "blockNumber": "49",
+            "blockHash": "0xdd3f20520c09e001374cab58387e52c82446db053539e30dad28b0de679a333c",
+            "calldataBytes": 9540
+          },
+          {
+            "gasUsed": "998230",
+            "transactionHash": "0x5dc09445a405150da1445c22f50d6dd10d8d428a6a3f41ee90db7d3574657e31",
+            "blockNumber": "49",
+            "blockHash": "0x5c8f8223a50d2c8d48188a2db28ffa33c1b150a2fb465e99db4430949db3664b",
+            "calldataBytes": 9540
+          }
+        ]
+      }
+    ]
+  }
+]

@@ -108,9 +108,9 @@ func addRoundConstants(state *[poseidon2T]fr.Element, r int) {
 // sBox computes x^5 in-place (the Poseidon2 S-box for BN254).
 func sBox(x *fr.Element) {
 	var x2, x4 fr.Element
-	x2.Mul(x, x)   // x^2
+	x2.Mul(x, x)     // x^2
 	x4.Mul(&x2, &x2) // x^4
-	x.Mul(x, &x4)  // x^5
+	x.Mul(x, &x4)    // x^5
 }
 
 // sBoxFull applies the S-box to all 4 state elements.
@@ -129,22 +129,22 @@ func matMulExternal(state *[poseidon2T]fr.Element) {
 	t0.Add(&state[0], &state[1]) // t0 = s0 + s1
 	t1.Add(&state[2], &state[3]) // t1 = s2 + s3
 
-	t2.Double(&state[1])  // t2 = 2*s1
-	t2.Add(&t2, &t1)      // t2 = 2*s1 + s2 + s3
+	t2.Double(&state[1]) // t2 = 2*s1
+	t2.Add(&t2, &t1)     // t2 = 2*s1 + s2 + s3
 
-	t3.Double(&state[3])  // t3 = 2*s3
-	t3.Add(&t3, &t0)      // t3 = s0 + s1 + 2*s3
+	t3.Double(&state[3]) // t3 = 2*s3
+	t3.Add(&t3, &t0)     // t3 = s0 + s1 + 2*s3
 
-	t4.Double(&t1)        // t4 = 2*(s2+s3)
-	t4.Double(&t4)        // t4 = 4*(s2+s3)
-	t4.Add(&t4, &t3)      // t4 = s0 + s1 + 4*s2 + 6*s3
+	t4.Double(&t1)   // t4 = 2*(s2+s3)
+	t4.Double(&t4)   // t4 = 4*(s2+s3)
+	t4.Add(&t4, &t3) // t4 = s0 + s1 + 4*s2 + 6*s3
 
-	t5.Double(&t0)        // t5 = 2*(s0+s1)
-	t5.Double(&t5)        // t5 = 4*(s0+s1)
-	t5.Add(&t5, &t2)      // t5 = 4*s0 + 6*s1 + s2 + s3
+	t5.Double(&t0)   // t5 = 2*(s0+s1)
+	t5.Double(&t5)   // t5 = 4*(s0+s1)
+	t5.Add(&t5, &t2) // t5 = 4*s0 + 6*s1 + s2 + s3
 
-	t6.Add(&t3, &t5)      // t6 = 5*s0 + 7*s1 + s2 + 3*s3
-	t7.Add(&t2, &t4)      // t7 = s0 + 3*s1 + 5*s2 + 7*s3
+	t6.Add(&t3, &t5) // t6 = 5*s0 + 7*s1 + s2 + 3*s3
+	t7.Add(&t2, &t4) // t7 = s0 + 3*s1 + 5*s2 + 7*s3
 
 	state[0].Set(&t6)
 	state[1].Set(&t5)
