@@ -25,11 +25,12 @@ func creditCancellationRequest(t *testing.T) prover.ProvingRequest {
 	}
 	context := core.ProtocolContext{ChainID: core.ElementFromUint64(31337), ProtocolAddress: core.ElementFromUint64(4660)}
 	token, nonce, expiry, amount, shared := core.ElementFromUint64(22136), core.ElementFromUint64(123), core.ElementFromUint64(2000000000), core.ElementFromUint64(100), core.ElementFromUint64(456)
+	state := core.CreditSpendingState{SingleLimit: core.ElementFromUint64(20), DailyLimit: core.ElementFromUint64(40), MonthlyLimit: core.ElementFromUint64(60), LastDay: core.ElementFromUint64(23149), DailySpent: core.ElementFromUint64(10), LastMonth: core.ElementFromUint64(761), MonthlySpent: core.ElementFromUint64(15)}
 	keyHash, err := core.ComputeCreditSharedKeyHash(shared)
 	if err != nil {
 		t.Fatal(err)
 	}
-	leaf, err := core.ComputeCreditCommitment(context.ChainID, wallet.WalletIdentity, wallet.WalletIdentity, wallet.WalletIdentity, wallet.WalletIdentity, token, amount, nonce, expiry, keyHash)
+	leaf, err := core.ComputeCreditCommitment(context.ChainID, wallet.WalletIdentity, wallet.WalletIdentity, wallet.WalletIdentity, wallet.WalletIdentity, token, amount, nonce, expiry, keyHash, state)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -72,6 +73,7 @@ func creditCancellationRequest(t *testing.T) prover.ProvingRequest {
 	proofRequest, err := prover.Request("credit_cancel", "evm", map[string]any{
 		"public_key_x": signed.PublicKeyX, "public_key_y": signed.PublicKeyY, "signature": signed.Signature,
 		"spender_payout": wallet.WalletIdentity.String(), "spender_wallet_identity": wallet.WalletIdentity.String(), "owner_wallet_identity": wallet.WalletIdentity.String(),
+		"single_limit": state.SingleLimit.String(), "daily_limit": state.DailyLimit.String(), "monthly_limit": state.MonthlyLimit.String(), "last_day": state.LastDay.String(), "daily_spent": state.DailySpent.String(), "last_month": state.LastMonth.String(), "monthly_spent": state.MonthlySpent.String(),
 		"input_nonce": nonce.String(), "expiry": expiry.String(), "credit_shared_key": shared.String(), "leaf_index": "0", "merkle_path": path,
 	}, public)
 	if err != nil {

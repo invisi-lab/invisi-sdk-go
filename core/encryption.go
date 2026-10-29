@@ -15,7 +15,7 @@ import (
 )
 
 const ordinaryNoteDomain = "Invisi.NoteDelivery.v2"
-const creditNoteDomain = "Invisi.CreditDelivery.v2"
+const creditNoteDomain = "Invisi.CreditDelivery.v3"
 
 type NoteEncryptionContext struct {
 	ProtocolContext
@@ -109,7 +109,7 @@ func verifyCredit(context NoteEncryptionContext, note CreditNote) error {
 	if err != nil {
 		return err
 	}
-	leaf, err := ComputeCreditCommitment(context.ChainID, note.SpenderWalletIdentity, note.OwnerWalletIdentity, note.SpenderPayout, note.OwnerPayout, note.TokenAddress, note.Amount, note.Nonce, note.Expiry, keyHash)
+	leaf, err := ComputeCreditCommitment(context.ChainID, note.SpenderWalletIdentity, note.OwnerWalletIdentity, note.SpenderPayout, note.OwnerPayout, note.TokenAddress, note.Amount, note.Nonce, note.Expiry, keyHash, note.CreditSpendingState)
 	if err != nil {
 		return err
 	}
@@ -203,7 +203,7 @@ func envelopeCipher(private, peerKey, salt []byte, domain string, ephemeral, rec
 }
 func sealEnvelope(viewingKey, plaintext []byte, context NoteEncryptionContext, token fr.Element, version, role byte, entropy io.Reader) ([]byte, error) {
 	domain := ordinaryNoteDomain
-	if version == 4 {
+	if version == 5 {
 		domain = creditNoteDomain
 	}
 	private := make([]byte, 32)
@@ -242,8 +242,8 @@ func sealEnvelope(viewingKey, plaintext []byte, context NoteEncryptionContext, t
 }
 func openEnvelope(private, envelope []byte, context NoteDecryptionContext, version, role byte) ([]byte, error) {
 	length, domain := 160, ordinaryNoteDomain
-	if version == 4 {
-		length, domain = 402, creditNoteDomain
+	if version == 5 {
+		length, domain = 498, creditNoteDomain
 	}
 	if len(envelope) < length || len(envelope) > length+MaxMemoBytes {
 		return nil, fmt.Errorf("expected %d..%d envelope bytes", length, length+MaxMemoBytes)
@@ -344,10 +344,18 @@ func encodeCreditState(state CreditDeliveryState) []byte {
 	out = append(out, state.OwnerReceivingKeys.ViewingPublicKey...)
 	out = append(out, state.OwnerReceivingKeys.ClueKey...)
 	out = append(out, state.SpenderReceivingKeys.ViewingPublicKey...)
-	return appendMemo(append(out, state.SpenderReceivingKeys.ClueKey...), state.Note.Memo)
+	out = append(out, state.SpenderReceivingKeys.ClueKey...)
+	for i, value := range state.Note.CreditSpendingState.Fields() {
+		size := 16
+		if i == 3 || i == 5 {
+			size = 8
+		}
+		out = appendElement(out, value, size)
+	}
+	return appendMemo(out, state.Note.Memo)
 }
 
-// EncryptCreditNote creates a version 4 role-bound envelope with complete receiving snapshots.
+// EncryptCreditNote creates a version 5 role-bound envelope with complete receiving snapshots.
 func EncryptCreditNote(viewingKey []byte, state CreditDeliveryState, context CreditNoteEncryptionContext) ([]byte, error) {
 	role, err := creditRole(context.Role)
 	if err != nil {
@@ -365,14 +373,14 @@ func EncryptCreditNote(viewingKey []byte, state CreditDeliveryState, context Cre
 	}
 	plain := encodeCreditState(state)
 	defer clear(plain)
-	return sealEnvelope(viewingKey, plain, context.NoteEncryptionContext, state.Note.TokenAddress, 4, role, rand.Reader)
+	return sealEnvelope(viewingKey, plain, context.NoteEncryptionContext, state.Note.TokenAddress, 5, role, rand.Reader)
 }
 func DecryptCreditNote(private, envelope []byte, context CreditNoteDecryptionContext) (CreditDeliveryState, error) {
 	role, err := creditRole(context.Role)
 	if err != nil {
 		return CreditDeliveryState{}, err
 	}
-	plain, err := openEnvelope(private, envelope, context.NoteDecryptionContext, 4, role)
+	plain, err := openEnvelope(private, envelope, context.NoteDecryptionContext, 5, role)
 	if err != nil {
 		return CreditDeliveryState{}, err
 	}
@@ -385,7 +393,7 @@ func DecryptCreditNote(private, envelope []byte, context CreditNoteDecryptionCon
 }
 
 func readCreditPlain(plain []byte, context CreditNoteDecryptionContext, public []byte) (CreditDeliveryState, error) {
-	memo, err := readMemo(plain, 322)
+	memo, err := readMemo(plain, 418)
 	if err != nil {
 		return CreditDeliveryState{}, fmt.Errorf("invalid Credit plaintext: %w", err)
 	}
@@ -402,6 +410,20 @@ func readCreditPlain(plain []byte, context CreditNoteDecryptionContext, public [
 			return CreditDeliveryState{}, err
 		}
 		*target = value
+	}
+	stateFields := []*fr.Element{&note.SingleLimit, &note.DailyLimit, &note.MonthlyLimit, &note.LastDay, &note.DailySpent, &note.LastMonth, &note.MonthlySpent}
+	offset := 322
+	for i, target := range stateFields {
+		size := 16
+		if i == 3 || i == 5 {
+			size = 8
+		}
+		value, e := decodeElement(plain[offset : offset+size])
+		if e != nil {
+			return CreditDeliveryState{}, e
+		}
+		*target = value
+		offset += size
 	}
 	expected := note.OwnerWalletIdentity
 	if role == 2 {

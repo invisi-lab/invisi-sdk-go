@@ -92,7 +92,7 @@ func (d *Decoder) Decode(block Block, logs []types.Log) (batch Batch, err error)
 		e, eerr := d.abi.EventByID(l.Topics[0])
 		if eerr != nil {
 			raw, _ := json.Marshal(eventJSON(map[string]any{"topics": l.Topics, "data": l.Data}))
-			batch.Events = append(batch.Events, Event{Name: "Unknown", TransactionHash: l.TxHash, LogIndex: l.Index, Data: raw})
+			batch.Events = append(batch.Events, Event{Block: block, Name: "Unknown", TransactionHash: l.TxHash, LogIndex: l.Index, Data: raw})
 			continue
 		}
 		m := map[string]any{}
@@ -115,7 +115,7 @@ func (d *Decoder) Decode(block Block, logs []types.Log) (batch Batch, err error)
 		if eerr != nil {
 			return Batch{}, eerr
 		}
-		batch.Events = append(batch.Events, Event{Name: e.Name, TransactionHash: l.TxHash, LogIndex: l.Index, Data: raw})
+		batch.Events = append(batch.Events, Event{Block: block, Name: e.Name, TransactionHash: l.TxHash, LogIndex: l.Index, Data: raw})
 		events = append(events, decoded{l, e.Name, m})
 		if e.Name == "TreeCreated" {
 			id, x := tree(m["treeId"])
@@ -151,7 +151,7 @@ func (d *Decoder) Decode(block Block, logs []types.Log) (batch Batch, err error)
 		add := func(id uint64, leaf uint32, c common.Hash, token common.Address, v delivery, credit bool) error {
 			minimum, version := 160, byte(2)
 			if credit {
-				minimum, version = 402, 4
+				minimum, version = 498, 5
 			}
 			if len(v.Ciphertext) < minimum || len(v.Ciphertext) > minimum+256 || v.Ciphertext[0] != version || len(v.Clue) != 68 || v.Clue[64] != 24 {
 				return fmt.Errorf("%s: invalid delivery envelope or clue", e.name)
@@ -159,7 +159,7 @@ func (d *Decoder) Decode(block Block, logs []types.Log) (batch Batch, err error)
 			if actual, ok := inserted[location{l.TxHash, id, leaf}]; !ok || actual != c {
 				return fmt.Errorf("%s: output does not match transaction insertion", e.name)
 			}
-			batch.Outputs = append(batch.Outputs, Output{TreeID: id, LeafIndex: leaf, Commitment: c, Token: token, Ciphertext: append([]byte(nil), v.Ciphertext...), Clue: append([]byte(nil), v.Clue...), TransactionHash: l.TxHash, LogIndex: l.Index, Kind: e.name, Role: "funds"})
+			batch.Outputs = append(batch.Outputs, Output{Block: block, TreeID: id, LeafIndex: leaf, Commitment: c, Token: token, Ciphertext: append([]byte(nil), v.Ciphertext...), Clue: append([]byte(nil), v.Clue...), TransactionHash: l.TxHash, LogIndex: l.Index, Kind: e.name, Role: "funds"})
 			return nil
 		}
 		switch e.name {

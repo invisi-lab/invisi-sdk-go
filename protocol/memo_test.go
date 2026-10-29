@@ -6,7 +6,7 @@ func TestVariableMemoEnvelopeValidation(t *testing.T) {
 	for _, credit := range []bool{false, true} {
 		minimum, version := 160, byte(2)
 		if credit {
-			minimum, version = 402, 4
+			minimum, version = 498, 5
 		}
 		clue := make([]byte, 68)
 		clue[64] = 24

@@ -157,7 +157,7 @@ func ValidateDelivery(delivery Delivery, credit, empty bool) error {
 	}
 	length, version := 160, 2
 	if credit {
-		length, version = 402, 4
+		length, version = 498, 5
 	}
 	if len(delivery.Ciphertext) < length || len(delivery.Ciphertext) > length+256 {
 		return fmt.Errorf("ciphertext must be %d..%d bytes", length, length+256)

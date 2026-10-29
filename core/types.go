@@ -15,6 +15,7 @@ type Note struct {
 
 // CreditNote binds both wallet roles, public payout addresses and the shared recovery secret.
 type CreditNote struct {
+	CreditSpendingState
 	ProtocolContext
 	SpenderWalletIdentity, OwnerWalletIdentity, SpenderPayout, OwnerPayout fr.Element
 	TokenAddress, Amount, Nonce, Expiry, CreditSharedKey                   fr.Element

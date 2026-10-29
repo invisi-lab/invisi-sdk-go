@@ -24,7 +24,7 @@ func SelectCreditDrawCircuit(count int) (CreditDrawCircuit, error) {
 	}
 	for _, n := range []int{1, 12, 50, 120} {
 		if count <= n {
-			return CreditDrawCircuit{Name: fmt.Sprintf("credit_draw_slots%d", n), MaxSize: n, PublicInputCount: 6*n + 12, TotalBits: 126 + bits.Len(uint(n-1))}, nil
+			return CreditDrawCircuit{Name: fmt.Sprintf("credit_draw_slots%d", n), MaxSize: n, PublicInputCount: 6*n + 14, TotalBits: 126 + bits.Len(uint(n-1))}, nil
 		}
 	}
 	return CreditDrawCircuit{}, fmt.Errorf("unsupported Credit draw shape")
@@ -47,6 +47,9 @@ func ValidateCreditDrawRequest(c TransactionContext, p CreditDrawParams, cs []De
 		return r, err
 	}
 	r.Profile = profile
+	if err := CheckUint(c.Now, 64, "chain timestamp"); err != nil {
+		return r, err
+	}
 	if err := ValidateNotes(p.Nullifiers); err != nil {
 		return r, err
 	}
@@ -125,6 +128,8 @@ func CreditDrawBaseInputs(c TransactionContext, p CreditDrawParams, cs []Deliver
 	v = append(v, creditPadded(p.Expiries, n)...)
 	v = append(v, p.TotalAmount, p.Deadline, new(big.Int).SetBytes(h[:16]), new(big.Int).SetBytes(h[16:]))
 	v = append(v, creditPadded(creditNumbers(p.RecoveryAmounts), n)...)
+	periods := core.CreditPeriods(c.Now.Uint64())
+	v = append(v, new(big.Int).SetUint64(periods.CurrentDay), new(big.Int).SetUint64(periods.CurrentMonth))
 	return creditWords(v), nil
 }
 

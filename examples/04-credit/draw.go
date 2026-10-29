@@ -36,7 +36,7 @@ func Draw(ctx context.Context, provider sdk.Provider, protocolRPC *sdk.ProtocolR
 		return sdk.TransactionCall{}, err
 	}
 	creditNote := creditState.Note
-	creditLeaf, err := core.ComputeCreditCommitment(creditNote.ChainID, creditNote.SpenderWalletIdentity, creditNote.OwnerWalletIdentity, creditNote.SpenderPayout, creditNote.OwnerPayout, creditNote.TokenAddress, creditNote.Amount, creditNote.Nonce, creditNote.Expiry, keyHash)
+	creditLeaf, err := core.ComputeCreditCommitment(creditNote.ChainID, creditNote.SpenderWalletIdentity, creditNote.OwnerWalletIdentity, creditNote.SpenderPayout, creditNote.OwnerPayout, creditNote.TokenAddress, creditNote.Amount, creditNote.Nonce, creditNote.Expiry, keyHash, creditNote.CreditSpendingState)
 	if err != nil {
 		return sdk.TransactionCall{}, err
 	}

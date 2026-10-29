@@ -25,7 +25,7 @@ type TransactionContext struct {
 	ChainID         *big.Int
 	ProtocolAddress common.Address
 	TokenAddress    common.Address
-	Now             *big.Int // Optional block timestamp for deadline/expiry checks.
+	Now             *big.Int // Chain block timestamp; required for Credit draw statements, optional for other deadline/expiry checks.
 }
 type Calldata struct {
 	Data          []byte

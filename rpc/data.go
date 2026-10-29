@@ -32,7 +32,7 @@ func (c *ProtocolRpcClient) canonical(ctx context.Context, remote CanonicalBlock
 	if e != nil {
 		return b, e
 	}
-	if b.Hash != remote.Hash || b.ParentHash != remote.ParentHash {
+	if b.Hash != remote.Hash || b.ParentHash != remote.ParentHash || b.Timestamp != remote.Timestamp {
 		return b, errors.New("RPC canonical block mismatch")
 	}
 	return b, nil
@@ -106,8 +106,9 @@ func (c *ProtocolRpcClient) GetUpdates(ctx context.Context, context DeploymentCo
 	// Wire field names are explicit and shared with the TS client.
 	wire := map[string]any{"fromBlock": anchor.FromBlock, "toBlock": anchor.ToBlock, "blockHash": anchor.BlockHash}
 	type ref struct {
-		TransactionHash common.Hash `json:"transactionHash"`
-		LogIndex        *uint64     `json:"logIndex"`
+		TransactionHash common.Hash     `json:"transactionHash"`
+		LogIndex        *uint64         `json:"logIndex"`
+		Block           *CanonicalBlock `json:"block"`
 	}
 	var response struct {
 		BlockHash  common.Hash `json:"blockHash"`
@@ -149,10 +150,26 @@ func (c *ProtocolRpcClient) GetUpdates(ctx context.Context, context DeploymentCo
 	}
 	seen := map[common.Hash]bool{}
 	result := ProtocolUpdates{Block: block}
+	verifiedBlocks := map[uint64]CanonicalBlock{block.Number: block}
 	for _, ref := range append(refs, response.CreditTransitions...) {
 		if ref.TransactionHash == (common.Hash{}) || ref.LogIndex == nil {
 			return ProtocolUpdates{}, errors.New("invalid transaction reference")
 		}
+		if ref.Block == nil || ref.Block.Number < r.FromBlock || ref.Block.Number > r.ToBlock {
+			return ProtocolUpdates{}, errors.New("missing or out-of-range transaction block")
+		}
+		canonical, ok := verifiedBlocks[ref.Block.Number]
+		if !ok {
+			canonical, e = c.canonical(ctx, *ref.Block)
+			if e != nil {
+				return ProtocolUpdates{}, e
+			}
+			verifiedBlocks[canonical.Number] = canonical
+		}
+		if canonical != *ref.Block {
+			return ProtocolUpdates{}, errors.New("RPC transaction block context mismatch")
+		}
+		result.References = append(result.References, TransactionReference{TransactionHash: ref.TransactionHash, LogIndex: *ref.LogIndex, Block: canonical})
 		if !seen[ref.TransactionHash] {
 			seen[ref.TransactionHash] = true
 			result.TransactionHashes = append(result.TransactionHashes, ref.TransactionHash)

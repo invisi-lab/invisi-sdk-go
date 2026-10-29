@@ -42,7 +42,7 @@ func ComputeCreditSharedKeyHash(key fr.Element) (fr.Element, error) {
 	}
 	return Poseidon2Hash(ElementFromUint64(DCreditKeyHash), key)
 }
-func ComputeCreditCommitment(chainID, spenderWalletIdentity, ownerWalletIdentity, spenderPayout, ownerPayout, tokenAddress, amount, nonce, expiry, keyHash fr.Element) (fr.Element, error) {
+func ComputeCreditCommitment(chainID, spenderWalletIdentity, ownerWalletIdentity, spenderPayout, ownerPayout, tokenAddress, amount, nonce, expiry, keyHash fr.Element, state CreditSpendingState) (fr.Element, error) {
 	for _, v := range []struct {
 		x    fr.Element
 		bits int
@@ -58,7 +58,11 @@ func ComputeCreditCommitment(chainID, spenderWalletIdentity, ownerWalletIdentity
 	if spenderWalletIdentity != spenderPayout || ownerWalletIdentity != ownerPayout {
 		return fr.Element{}, fmt.Errorf("Credit payout must equal its owner identity")
 	}
-	return Poseidon2Hash(ElementFromUint64(DCredit), chainID, spenderWalletIdentity, ownerWalletIdentity, spenderPayout, ownerPayout, tokenAddress, amount, nonce, expiry, keyHash)
+	if err := ValidateCreditSpendingState(state); err != nil {
+		return fr.Element{}, err
+	}
+	fields := []fr.Element{ElementFromUint64(DCredit), chainID, spenderWalletIdentity, ownerWalletIdentity, spenderPayout, ownerPayout, tokenAddress, amount, nonce, expiry, keyHash}
+	return Poseidon2Hash(append(fields, state.Fields()...)...)
 }
 
 // ComputeCreditNullifier binds the entire grant, preventing alternate-grant shared-key collisions.

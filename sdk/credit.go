@@ -6,6 +6,7 @@ import (
 	"math/big"
 	"sort"
 
+	"github.com/consensys/gnark-crypto/ecc/bn254/fr"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/invisi-lab/invisi-sdk-go/core"
@@ -15,12 +16,13 @@ import (
 )
 
 type CreateCreditPreparation struct {
-	Memo           []byte
-	TokenAddress   common.Address
-	Spender        string
-	Amount, Expiry *big.Int
-	Funding        *FundingSource
-	Deadline       uint64
+	Memo                                  []byte
+	TokenAddress                          common.Address
+	Spender                               string
+	Amount, Expiry                        *big.Int
+	SingleLimit, DailyLimit, MonthlyLimit *big.Int
+	Funding                               *FundingSource
+	Deadline                              uint64
 }
 type CreditDrawInput struct {
 	// Memo nil preserves the parent memo; a non-nil empty slice clears it.
@@ -44,8 +46,10 @@ type TopUpCreditPreparation struct {
 	TokenAddress             common.Address
 	Credit                   common.Hash
 	AdditionalAmount, Expiry *big.Int
-	Funding                  *FundingSource
-	Deadline                 uint64
+	// Nil inherits the existing limit; zero explicitly disables its check without clearing usage.
+	SingleLimit, DailyLimit, MonthlyLimit *big.Int
+	Funding                               *FundingSource
+	Deadline                              uint64
 }
 
 func creditCommitment(note core.CreditNote) (common.Hash, error) {
@@ -53,7 +57,7 @@ func creditCommitment(note core.CreditNote) (common.Hash, error) {
 	if e != nil {
 		return common.Hash{}, e
 	}
-	leaf, e := core.ComputeCreditCommitment(note.ChainID, note.SpenderWalletIdentity, note.OwnerWalletIdentity, note.SpenderPayout, note.OwnerPayout, note.TokenAddress, note.Amount, note.Nonce, note.Expiry, key)
+	leaf, e := core.ComputeCreditCommitment(note.ChainID, note.SpenderWalletIdentity, note.OwnerWalletIdentity, note.SpenderPayout, note.OwnerPayout, note.TokenAddress, note.Amount, note.Nonce, note.Expiry, key, note.CreditSpendingState)
 	return fieldHash(leaf), e
 }
 func creditDeliveries(state core.CreditDeliveryState) ([]protocol.Delivery, error) {
@@ -214,6 +218,17 @@ func (s *WalletSession) prepareCreditCreation(ctx context.Context, p CreateCredi
 	if e != nil {
 		return nil, e
 	}
+	for _, entry := range []struct {
+		value  *big.Int
+		target *fr.Element
+	}{{p.SingleLimit, &state.Note.SingleLimit}, {p.DailyLimit, &state.Note.DailyLimit}, {p.MonthlyLimit, &state.Note.MonthlyLimit}} {
+		if entry.value != nil {
+			if err := protocol.CheckUint(entry.value, 126, "Credit limit"); err != nil {
+				return nil, err
+			}
+			*entry.target = core.BigIntToElement(entry.value)
+		}
+	}
 	state.Note.Amount = core.BigIntToElement(amount)
 	state.Note.Nonce = nonce
 	state.Note.Expiry = core.BigIntToElement(p.Expiry)
@@ -301,7 +316,7 @@ func (s *WalletSession) PrepareTopUpCredit(ctx context.Context, p TopUpCreditPre
 	if expiry == nil {
 		expiry = core.ElementToBigInt(old.State.Note.Expiry)
 	}
-	return s.prepareCreditCreation(ctx, CreateCreditPreparation{TokenAddress: p.TokenAddress, Amount: amount, Expiry: expiry, Funding: p.Funding, Deadline: p.Deadline, Memo: p.Memo}, &old, &membership)
+	return s.prepareCreditCreation(ctx, CreateCreditPreparation{TokenAddress: p.TokenAddress, Amount: amount, Expiry: expiry, Funding: p.Funding, Deadline: p.Deadline, Memo: p.Memo, SingleLimit: p.SingleLimit, DailyLimit: p.DailyLimit, MonthlyLimit: p.MonthlyLimit}, &old, &membership)
 }
 func (s *WalletSession) PrepareCancelCredit(ctx context.Context, p CancelCreditPreparation) (*Operation, error) {
 	c, block, deadline, e := s.frame(ctx, p.TokenAddress, p.Deadline)
@@ -355,6 +370,10 @@ func (s *WalletSession) PrepareDrawCredit(ctx context.Context, p DrawCreditPrepa
 		if core.ElementToBigInt(note.Expiry).Uint64() <= block.Timestamp || entry.Amount.Cmp(core.ElementToBigInt(note.Amount)) > 0 {
 			return nil, errors.New("draw exceeds an unexpired Credit")
 		}
+		updated, e := core.ApplyCreditDrawUsage(note, core.BigIntToElement(entry.Amount), block.Timestamp)
+		if e != nil {
+			return nil, e
+		}
 		remaining := new(big.Int).Sub(core.ElementToBigInt(note.Amount), entry.Amount)
 		remainder := common.Hash{}
 		recovery := common.Hash{}
@@ -364,7 +383,7 @@ func (s *WalletSession) PrepareDrawCredit(ctx context.Context, p DrawCreditPrepa
 				return nil, e
 			}
 			child := old.State
-			child.Note = child.Note.Clone()
+			child.Note = updated
 			if entry.Memo != nil {
 				child.Note.Memo = core.CloneMemo(entry.Memo)
 			}
@@ -416,6 +435,7 @@ func (o *Operation) creditPrivateInputs(private map[string]any) (map[string]any,
 		private["input_nonce"] = note.Nonce.String()
 		private["expiry"] = note.Expiry.String()
 		private["credit_shared_key"] = note.CreditSharedKey.String()
+		addCreditStateWitness(private, note.CreditSpendingState)
 		private["leaf_index"] = new(big.Int).SetUint64(uint64(m.LeafIndex)).String()
 		path := []string{}
 		for _, h := range m.Path {
@@ -459,6 +479,13 @@ func (o *Operation) creditPrivateInputs(private map[string]any) (map[string]any,
 		private["owner_wallet_identities"] = padStrings(identities, capacity)
 		private["credit_shared_keys"] = padStrings(keys, capacity)
 		private["draw_amounts"] = padStrings(draws, capacity)
+		for column, name := range []string{"single_limits", "daily_limits", "monthly_limits", "last_days", "daily_spents", "last_months", "monthly_spents"} {
+			values := []string{}
+			for _, input := range o.plan.CreditInputs {
+				values = append(values, input.State.Note.CreditSpendingState.Fields()[column].String())
+			}
+			private[name] = padStrings(values, capacity)
+		}
 	} else {
 		for i, input := range o.plan.Inputs {
 			amounts = append(amounts, input.Note.Amount.String())
@@ -487,6 +514,13 @@ func (o *Operation) creditPrivateInputs(private map[string]any) (map[string]any,
 		private["credit_amount"] = note.Amount.String()
 		private["credit_nonce"] = note.Nonce.String()
 		private["credit_shared_key"] = note.CreditSharedKey.String()
+		if o.plan.Kind == "create-credit" {
+			private["single_limit"] = note.SingleLimit.String()
+			private["daily_limit"] = note.DailyLimit.String()
+			private["monthly_limit"] = note.MonthlyLimit.String()
+		} else {
+			addCreditStateWitness(private, note.CreditSpendingState)
+		}
 		private["change_amount"] = "0"
 		private["change_nonce"] = "0"
 		if len(o.plan.Outputs) > 0 {
@@ -495,6 +529,9 @@ func (o *Operation) creditPrivateInputs(private map[string]any) (map[string]any,
 		}
 		if o.plan.Kind == "top-up-credit" {
 			previous := o.plan.CreditInputs[0]
+			private["previous_single_limit"] = previous.State.Note.SingleLimit.String()
+			private["previous_daily_limit"] = previous.State.Note.DailyLimit.String()
+			private["previous_monthly_limit"] = previous.State.Note.MonthlyLimit.String()
 			private["previous_credit_amount"] = previous.State.Note.Amount.String()
 			private["previous_credit_nonce"] = previous.State.Note.Nonce.String()
 			private["previous_credit_leaf_index"] = new(big.Int).SetUint64(uint64(previous.LeafIndex)).String()
@@ -527,4 +564,10 @@ func (o *Operation) encodeCredit(proof []byte, caller *common.Address) (*protoco
 		return protocol.BuildTopUpCreditCalldata(protocol.BuildTopUpCreditCalldataParams{Context: o.plan.Context, Proof: proof, Params: *o.plan.TopUpCredit, Deliveries: o.deliveries(), Funding: o.plan.Funding, Caller: caller})
 	}
 	return nil, errors.New("unsupported Credit operation")
+}
+
+func addCreditStateWitness(private map[string]any, state core.CreditSpendingState) {
+	for i, name := range []string{"single_limit", "daily_limit", "monthly_limit", "last_day", "daily_spent", "last_month", "monthly_spent"} {
+		private[name] = state.Fields()[i].String()
+	}
 }

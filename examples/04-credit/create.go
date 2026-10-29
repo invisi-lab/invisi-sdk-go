@@ -43,7 +43,7 @@ func Create(ctx context.Context, provider sdk.Provider, protocolRPC *sdk.Protoco
 	}
 	prepared, err := invisi.PrepareCreateCredit(ctx, sdk.ExplicitCreateCreditPreparation{
 		TransactionIdentity: sdk.TransactionIdentity{Wallet: wallet, Protocol: pool}, ExplicitFunds: sdk.ExplicitFunds{Inputs: inputs},
-		CreateCreditPreparation: sdk.CreateCreditPreparation{TokenAddress: tokenAddress, Spender: spenderAddress, Amount: big.NewInt(70), Expiry: big.NewInt(1900000000)}})
+		CreateCreditPreparation: sdk.CreateCreditPreparation{TokenAddress: tokenAddress, Spender: spenderAddress, Amount: big.NewInt(70), SingleLimit: big.NewInt(20), DailyLimit: big.NewInt(40), MonthlyLimit: big.NewInt(60), Expiry: big.NewInt(1900000000)}})
 
 	if err != nil {
 		return sdk.TransactionCall{}, err

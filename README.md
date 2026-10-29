@@ -34,6 +34,14 @@ if err != nil { return err }
 
 `provider` is an ordinary go-ethereum client. Applications own its connection and the EVM signer. `ProtocolFromRPC` obtains the chain ID from that provider and verifies the selected deployment's runtime code and VERSION before returning. Select a trusted Protocol RPC service; consistency checks cannot establish that a deployment is official. An independently published deployment can be pinned with `rpc.ClientOptions.Deployment`. There is no built-in deployment catalog or Factory/operator discovery.
 
+## Per-Credit spending limits
+
+`CreateCreditPreparation.SingleLimit`, `DailyLimit` and `MonthlyLimit` are optional `*big.Int` amounts below 2^126; nil or zero disables a limit. Each input Credit independently checks its debit, including full consumption. Owners may set any of the three limits during top-up. Nil top-up limits inherit their previous value; an explicit zero disables the check. All four usage fields are preserved exactly, including across period boundaries. Lowering a daily or monthly limit below current usage freezes further draws in that period; the next UTC period starts fresh.
+
+`core.CreditNote` embeds `core.CreditSpendingState`, containing those three limits and `LastDay`, `DailySpent`, `LastMonth`, `MonthlySpent`. Daily/monthly spent totals are checked uint128 values and record every debit, even with a zero limit. Disabling or re-enabling a check never clears usage. The low-level `ComputeCreditCommitment` requires that explicit state; `ComputeCreditNoteCommitment(note)` hashes the complete note. Omitting new JSON fields initializes unrestricted state, while commitments and Credit delivery always use the current 18-field/v5 formats.
+
+Credit draw preparation reads the Chain RPC header timestamp. UTC Gregorian day/month identifiers are proof-bound public inputs reconstructed by the contract, with no caller date fields in `CreditDrawParams`. A prepared operation crossing a UTC period must be prepared and authorized again. `core.RecoverCreditRemainder(context, previous, event, confirmedTimestamp)` requires the confirmed receipt block timestamp; managed refresh verifies its block hash against the Chain RPC and reconstructs both usage counters without relying on ciphertext. No period computation defaults to the computer's clock.
+
 ## Encrypted output memos
 
 `core.Note` and `core.CreditNote` carry optional `Memo []byte` metadata. Set `Memo` on a `sdk.PaymentOutput` or `sdk.CreateCreditPreparation` to encrypt it with that output. Text is UTF-8 by convention; `core.MemoFromText(text)` validates UTF-8 and the 256-byte limit, while `core.MemoText(memo)` explicitly decodes text. Raw bytes may contain NUL or invalid UTF-8 and are never automatically parsed as JSON.
@@ -47,7 +55,7 @@ output := sdk.PaymentOutput{To: recipient, Amount: big.NewInt(50), Memo: memo}
 
 `TopUpCreditPreparation.Memo` and each `CreditDrawInput.Memo` preserve the parent memo when nil. A non-nil empty slice (`[]byte{}`) clears it; another slice replaces it in both owner and spender deliveries. Preparation and storage copy memo bytes. Proof-only Credit remainder recovery restores financial fields with no memo when the child delivery cannot be authenticated. Commitment-only disclosures omit memos; payload-key disclosures authenticate and reveal them (`GetScope().RevealsMemo`). Memos do not change commitments or nullifiers.
 
-Factory and Protocol share protocol version 1 (`ProtocolVersion.CURRENT = 1`); the Go SDK requires Protocol `VERSION = 1` and Protocol RPC `/v1` with protocol version 1 metadata. Funds envelopes use version 2 (160–416 bytes); Credit envelopes use version 4 (402–658 bytes). Historical deployments are incompatible and their records remain unchanged.
+Factory and Protocol share protocol version 1 (`ProtocolVersion.CURRENT = 1`); the Go SDK requires Protocol `VERSION = 1` and Protocol RPC `/v1` with protocol version 1 metadata. Funds envelopes use version 2 (160–416 bytes); Credit envelopes use version 5 (498–754 bytes). Historical deployments are incompatible and their records remain unchanged.
 
 ## TypeScript to Go
 
@@ -236,11 +244,13 @@ NOIR_EXECUTE_PATH=/path/to/noir-execute BB_BINARY_PATH=/path/to/bb \
 
 Tests use independent current KDF, encryption and FMD vectors, TS protocol statement/calldata vectors, and TS disclosure exports. Dummy proof bytes in formatting/backend tests do not establish proof soundness. Chain/RPC tests use controlled fixtures. The opt-in `TestReal` suite executes the official Noir/BB binaries for funds and Credit proofs, rejects modified signatures/public inputs, and proves a four-member recursive aggregate. These tests establish local proof generation and verification, not live deployment transaction acceptance.
 
-Maintainers update reference assets from a chosen TS SDK checkout:
+Maintainers authenticate the selected protocol checkout before importing its proving assets and TS reference vectors:
 
 ```sh
-python3 scripts/sync-reference.py /absolute/path/to/invisi-sdk-ts
-INVISI_TS_SDK_ROOT=/absolute/path/to/invisi-sdk-ts go generate ./protocol/contracts
+python3 scripts/sync-reference.py /absolute/path/to/invisi-sdk-ts /absolute/path/to/invisi-protocol
+INVISI_PROTOCOL_ROOT=/absolute/path/to/invisi-protocol go generate ./protocol/contracts
+node scripts/generate-disclosure-vectors.mjs /absolute/path/to/invisi-sdk-ts /absolute/path/to/protocol-docs
+python3 scripts/test-sync-reference.py
 ```
 
 Published packages contain their own bindings, public test vectors and circuit assets. They do not depend on the TS SDK or Protocol RPC server at runtime.
@@ -257,6 +267,6 @@ fmt.Println("Reference gas units:", reference.GasUnits)
 
 The public result contains only `GasUnits` (`uint64`). Estimation performs no proving, Store access, network requests or chain gas estimation. All eight direct preparation methods are supported. Recursive members have no standalone transaction cost and return an error; estimate complete aggregates separately.
 
-The bundled receipt catalog is identical to TypeScript's catalog at `f07f53f`: 13 measured shapes with three real-verifier receipts each. Exact shapes use the rounded-up arithmetic mean. References apply across deployment addresses and tokens. Unmeasured combinations use the same upward-only workload envelope as TypeScript, which can substantially overestimate complex operations. This is not a calibrated prediction, a guaranteed upper bound or a transaction gas limit. Token behavior, address screening, tree/storage state and chain execution rules affect actual gas. The application's ordinary geth pipeline remains responsible for final estimation, fees, nonces and sending.
+The bundled receipt catalog matches TypeScript's catalog: 13 current Credit shapes measured with three real-verifier receipts each on isolated Anvil (Solidity 0.8.38, BB 6.0.0, Prague), alongside nine preserved historical Funds shapes. Credit provenance records protocol HEAD base `42f2546`, dirty source SHA-256 `621cbef5f84a133ca96674a2dba39b21b5f9fbc022977d4d2ab296d9d6e685e0`, and deployed runtime code hashes. Those Credit transactions used a 500,000,000 local block gas limit; network transaction and block limits can make large draws unmineable. The 120-input partial-draw mean is 17,458,420 gas, above the 16,777,216 transaction gas cap on chains enabling [EIP-7825](https://eips.ethereum.org/EIPS/eip-7825); that measured shape cannot execute there even with a larger block gas limit. Credit records require the same circuit artifact and verification key; historical Funds receipts remain available for Funds references. Exact shapes use the rounded-up arithmetic mean, taking the higher mean when policy variants share a public shape. References apply across deployment addresses and tokens. Unmeasured combinations first combine the highest observed gas across variants with the same public shape, then use the same upward-only workload envelope as TypeScript, which can substantially overestimate complex operations. This is not a calibrated prediction, a guaranteed upper bound or a transaction gas limit. Token behavior, address screening, tree/storage state and chain execution rules affect actual gas. The application's ordinary geth pipeline remains responsible for final estimation, fees, nonces and sending.
 
-For trusted measurements of a private deployment, call `sdk.DefineGasBenchmarks(jsonBytes)` and set `InvisiOptions.GasBenchmarks`. `NewInvisi` snapshots those records. Exact deployment, circuit and shape matches override the bundled reference; unmatched records fall back to the standard model. Catalog validation checks format, not publisher authenticity. `scripts/sync-reference.py` copies the receipt catalog from the selected TS release. The Go tests include TS-generated comparison vectors for measured and modeled combinations.
+For trusted measurements of a private deployment, call `sdk.DefineGasBenchmarks(jsonBytes)` and set `InvisiOptions.GasBenchmarks`. `NewInvisi` snapshots those records. Exact deployment, circuit and shape matches override the bundled reference; unmatched records fall back to the standard model. Catalog validation checks format, not publisher authenticity. `scripts/sync-reference.py` checks Credit receipt circuit identities against the selected protocol release and copies the catalog with its SHA-256-bound TypeScript comparison vectors. Current receipt provenance includes source fingerprints, compiler and prover versions, block gas limit, and deployed runtime code hashes. The Go tests include TS-generated comparison vectors for measured and modeled combinations.

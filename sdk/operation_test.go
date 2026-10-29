@@ -89,18 +89,22 @@ func (p *testProver) Prove(_ context.Context, r prover.ProvingRequest, _ prover.
 func (p *testProver) Verify(context.Context, prover.ProofBundle, prover.ProofStatement, prover.Options) (bool, error) {
 	return true, nil
 }
-func testSession(t *testing.T) (*WalletSession, common.Address, *testProver) {
+func testSession(t *testing.T, timestamps ...uint64) (*WalletSession, common.Address, *testProver) {
+	timestamp := uint64(100)
+	if len(timestamps) > 0 {
+		timestamp = timestamps[0]
+	}
 	t.Helper()
 	ctx := context.Background()
 	wallet, e := WalletFromPrivateKey("0x" + strings.Repeat("0", 63) + "1")
 	if e != nil {
 		t.Fatal(e)
 	}
-	provider := sessionProvider{head: &types.Header{Number: big.NewInt(10), Time: 100, ParentHash: common.HexToHash("0x09")}, leaves: &sync.Map{}}
+	provider := sessionProvider{head: &types.Header{Number: big.NewInt(10), Time: timestamp, ParentHash: common.HexToHash("0x09")}, leaves: &sync.Map{}}
 	address := common.HexToAddress("0x1111111111111111111111111111111111111111")
 	token := common.HexToAddress("0x2222222222222222222222222222222222222222")
 	deployment := protocolrpc.ProtocolDeployment{ChainID: "31337", Protocol: protocolrpc.ContractDeployment{Address: address, RuntimeCodeHash: hashCode([]byte{0x60, 0}), FromBlock: 1}}
-	block := protocolrpc.CanonicalBlock{Number: 10, Hash: provider.head.Hash(), ParentHash: provider.head.ParentHash, Timestamp: 100}
+	block := protocolrpc.CanonicalBlock{Number: 10, Hash: provider.head.Hash(), ParentHash: provider.head.ParentHash, Timestamp: timestamp}
 	note := core.Note{ProtocolContext: core.ProtocolContext{ChainID: core.ElementFromUint64(31337), ProtocolAddress: core.BigIntToElement(address.Big())}, WalletIdentity: core.BigIntToElement(wallet.identity.Big()), TokenAddress: core.BigIntToElement(token.Big()), Amount: core.ElementFromUint64(100), Nonce: core.ElementFromUint64(123)}
 	identity, _ := core.ComputeNoteIdentity(note.WalletIdentity, note.Nonce)
 	leaf, _ := core.ComputeNoteCommitment(note.ChainID, identity, note.TokenAddress, note.Amount)

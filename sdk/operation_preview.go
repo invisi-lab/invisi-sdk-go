@@ -28,8 +28,10 @@ type PaymentPreview struct {
 	Change bool
 }
 type CreditPreview struct {
-	Owner, Spender, OwnerPayout, SpenderPayout common.Address
-	Amount, Expiry                             *big.Int
+	Owner, Spender, OwnerPayout, SpenderPayout                      common.Address
+	Amount, Expiry                                                  *big.Int
+	SingleLimit, DailyLimit, MonthlyLimit, DailySpent, MonthlySpent *big.Int
+	LastDay, LastMonth                                              uint64
 }
 
 func publicOperationKind(p operationPlan) string {
@@ -81,7 +83,7 @@ func (o *Operation) Preview() OperationPreview {
 	}
 	appendCredit := func(note core.CreditNote) {
 		result.CreditOutputs = append(result.CreditOutputs, CreditPreview{Owner: common.BigToAddress(core.ElementToBigInt(note.OwnerWalletIdentity)), Spender: common.BigToAddress(core.ElementToBigInt(note.SpenderWalletIdentity)),
-			OwnerPayout: common.BigToAddress(core.ElementToBigInt(note.OwnerPayout)), SpenderPayout: common.BigToAddress(core.ElementToBigInt(note.SpenderPayout)), Amount: core.ElementToBigInt(note.Amount), Expiry: core.ElementToBigInt(note.Expiry)})
+			OwnerPayout: common.BigToAddress(core.ElementToBigInt(note.OwnerPayout)), SpenderPayout: common.BigToAddress(core.ElementToBigInt(note.SpenderPayout)), Amount: core.ElementToBigInt(note.Amount), Expiry: core.ElementToBigInt(note.Expiry), SingleLimit: core.ElementToBigInt(note.SingleLimit), DailyLimit: core.ElementToBigInt(note.DailyLimit), MonthlyLimit: core.ElementToBigInt(note.MonthlyLimit), DailySpent: core.ElementToBigInt(note.DailySpent), MonthlySpent: core.ElementToBigInt(note.MonthlySpent), LastDay: core.ElementToBigInt(note.LastDay).Uint64(), LastMonth: core.ElementToBigInt(note.LastMonth).Uint64()})
 	}
 	if p.CreditOutput != nil {
 		appendCredit(p.CreditOutput.Note)
@@ -90,6 +92,9 @@ func (o *Operation) Preview() OperationPreview {
 		for i, hash := range p.DrawCredit.RemainderCommitments {
 			if hash != ([32]byte{}) {
 				child := p.CreditInputs[i].State.Note
+				if updated, err := core.ApplyCreditDrawUsage(child, core.BigIntToElement(p.DrawAmounts[i]), p.Block.Timestamp); err == nil {
+					child = updated
+				}
 				amount := new(big.Int).Sub(core.ElementToBigInt(child.Amount), p.DrawAmounts[i])
 				child.Amount = core.BigIntToElement(amount)
 				appendCredit(child)

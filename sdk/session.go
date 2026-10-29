@@ -236,7 +236,7 @@ func (s *WalletSession) Refresh(ctx context.Context, options RefreshOptions) (Re
 		}
 		notes := []StoredNote{}
 		credits := []StoredCredit{}
-		draws := []*contracts.InvisiProtocolCreditDraw{}
+		draws := []*authenticatedCreditDraw{}
 		// Process complete receipts in canonical transaction order, independently of service ordering.
 		type receiptOrder struct {
 			hash  common.Hash
@@ -291,7 +291,7 @@ func (s *WalletSession) Refresh(ctx context.Context, options RefreshOptions) (Re
 					if previous.Nullifier != common.Hash(nf) {
 						continue
 					}
-					recovered, e := core.RecoverCreditRemainder(s.coreContext(), previous.State.Note, core.CreditRemainderRecovery{CreditNullifier: core.BigIntToElement(new(big.Int).SetBytes(nf[:])), RemainderCommitment: core.BigIntToElement(new(big.Int).SetBytes(draw.Params.RemainderCommitments[j][:])), RecoveryAmount: core.BigIntToElement(new(big.Int).SetBytes(draw.Params.RecoveryAmounts[j][:]))})
+					recovered, e := core.RecoverCreditRemainder(s.coreContext(), previous.State.Note, core.CreditRemainderRecovery{CreditNullifier: core.BigIntToElement(new(big.Int).SetBytes(nf[:])), RemainderCommitment: core.BigIntToElement(new(big.Int).SetBytes(draw.Params.RemainderCommitments[j][:])), RecoveryAmount: core.BigIntToElement(new(big.Int).SetBytes(draw.Params.RecoveryAmounts[j][:]))}, draw.Timestamp)
 					if e != nil {
 						return result, e
 					}
@@ -310,7 +310,7 @@ func (s *WalletSession) Refresh(ctx context.Context, options RefreshOptions) (Re
 					child.State.Note = *recovered
 					child.Commitment = commitment
 					keyHash, _ := core.ComputeCreditSharedKeyHash(recovered.CreditSharedKey)
-					leaf, e := core.ComputeCreditCommitment(recovered.ChainID, recovered.SpenderWalletIdentity, recovered.OwnerWalletIdentity, recovered.SpenderPayout, recovered.OwnerPayout, recovered.TokenAddress, recovered.Amount, recovered.Nonce, recovered.Expiry, keyHash)
+					leaf, e := core.ComputeCreditCommitment(recovered.ChainID, recovered.SpenderWalletIdentity, recovered.OwnerWalletIdentity, recovered.SpenderPayout, recovered.OwnerPayout, recovered.TokenAddress, recovered.Amount, recovered.Nonce, recovered.Expiry, keyHash, recovered.CreditSpendingState)
 					if e != nil {
 						return result, e
 					}
@@ -414,7 +414,13 @@ func (s *WalletSession) Refresh(ctx context.Context, options RefreshOptions) (Re
 	return result, nil
 }
 func creditKey(hash common.Hash, role string) string { return hash.Hex() + ":" + role }
-func (s *WalletSession) readTransaction(ctx context.Context, hash common.Hash, anchor protocolrpc.CanonicalBlock) ([]StoredNote, []StoredCredit, []*contracts.InvisiProtocolCreditDraw, error) {
+
+type authenticatedCreditDraw struct {
+	*contracts.InvisiProtocolCreditDraw
+	Timestamp uint64
+}
+
+func (s *WalletSession) readTransaction(ctx context.Context, hash common.Hash, anchor protocolrpc.CanonicalBlock) ([]StoredNote, []StoredCredit, []*authenticatedCreditDraw, error) {
 	receipt, e := s.options.Provider.TransactionReceipt(ctx, hash)
 	if e != nil {
 		return nil, nil, nil, e
@@ -446,20 +452,20 @@ func (s *WalletSession) readTransaction(ctx context.Context, hash common.Hash, a
 	if e != nil {
 		return nil, nil, nil, e
 	}
-	batch, e := decoder.Decode(receipts.Block{Number: receipt.BlockNumber.Uint64(), Hash: receipt.BlockHash, ParentHash: header.ParentHash}, logs)
+	batch, e := decoder.Decode(receipts.Block{Number: receipt.BlockNumber.Uint64(), Hash: receipt.BlockHash, ParentHash: header.ParentHash, Timestamp: header.Time}, logs)
 	if e != nil {
 		return nil, nil, nil, e
 	}
 	notes := []StoredNote{}
 	credits := []StoredCredit{}
-	draws := []*contracts.InvisiProtocolCreditDraw{}
+	draws := []*authenticatedCreditDraw{}
 	filter, e := contracts.NewInvisiProtocolFilterer(s.scope.ProtocolAddress, nil)
 	if e != nil {
 		return nil, nil, nil, e
 	}
 	for _, l := range logs {
 		if draw, e := filter.ParseCreditDraw(l); e == nil {
-			draws = append(draws, draw)
+			draws = append(draws, &authenticatedCreditDraw{draw, header.Time})
 		}
 	}
 	for _, output := range batch.Outputs {

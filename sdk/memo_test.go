@@ -276,7 +276,7 @@ func TestRefreshKeepsAuthenticatedChildMemoAndOmitsUnknownMemo(t *testing.T) {
 				case "invisi_getStatus":
 					result = map[string]any{"apiVersion": "v1", "protocolVersion": "1", "deployment": deployment, "indexedHead": block, "checkedBits": 8, "detectionEnabled": true}
 				case "invisi_getUpdates":
-					result = map[string]any{"blockHash": block.Hash, "creditTransitions": []any{map[string]any{"transactionHash": tx, "logIndex": 1}}}
+					result = map[string]any{"blockHash": block.Hash, "creditTransitions": []any{map[string]any{"transactionHash": tx, "logIndex": 1, "block": block}}}
 				case "invisi_getRoots", "invisi_getMembership":
 					var tree uint64
 					if err := json.Unmarshal(request.Params[0], &tree); err != nil {

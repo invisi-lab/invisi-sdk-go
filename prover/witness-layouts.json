@@ -517,9 +517,9 @@
     ]
   },
   "create_credit": {
-    "artifactSha256": "078c6d2da1ed2d6bd27fab28af9970261fe626a0b22ae56ad170e5d15b1b05ba",
+    "artifactSha256": "3ed6cfdee4f5fd840f023580f76c208768777fea79737f2511377e5c55be0230",
     "keys": {
-      "evm": "8285456447e92833a4fa9c330b9c667a3a1b9e48649578082041b9738f037c8f"
+      "evm": "56f663c6053be0d158a271022d200c732597efd3a2e0be48fe94549d0b1795e0"
     },
     "publicInputCount": 46,
     "public": [
@@ -634,16 +634,19 @@
       "credit_amount",
       "credit_nonce",
       "credit_shared_key",
+      "single_limit",
+      "daily_limit",
+      "monthly_limit",
       "change_amount",
       "change_nonce"
     ]
   },
   "credit_draw_slots1": {
-    "artifactSha256": "2b9da9d3d1dbd411d9be1bbe2b34305ac5dce7c7d18e3857d8e2be7dd9bf7c21",
+    "artifactSha256": "4542b227e0552b45c302f1dace21cadeba4962c96244e021472f1f7531cff8d1",
     "keys": {
-      "evm": "613699a440f50a0937e4c57e5152b5fdea42c31b10157d6b93226fef313df553"
+      "evm": "43c051a2bedf9454c12e70b10156361e414944823ba23e80662c16c7ced0a2ce"
     },
-    "publicInputCount": 18,
+    "publicInputCount": 20,
     "public": [
       {
         "name": "chain_id",
@@ -726,6 +729,16 @@
         "array": true
       },
       {
+        "name": "current_day",
+        "count": 1,
+        "array": false
+      },
+      {
+        "name": "current_month",
+        "count": 1,
+        "array": false
+      },
+      {
         "name": "auth_digest_high",
         "count": 1,
         "array": false
@@ -749,15 +762,22 @@
       "leaf_indices",
       "merkle_paths",
       "input_source_indices",
-      "draw_amounts"
+      "draw_amounts",
+      "single_limits",
+      "daily_limits",
+      "monthly_limits",
+      "last_days",
+      "daily_spents",
+      "last_months",
+      "monthly_spents"
     ]
   },
   "credit_draw_slots12": {
-    "artifactSha256": "92b741e161a99c05b8810bc24cee6bafc1cebc85347ea47fe511ee6c8f7065be",
+    "artifactSha256": "dd72b0867fc3be7cd90de263bd2d0892075cb18eb4f6dd671b13111710f10369",
     "keys": {
-      "evm": "a5ae214784fe6e523977ef4e283a6d217fc3f4ec0c5a40effb275693a74ee5ce"
+      "evm": "5e31d771e6294993736078596d9c69f21fe7595eda50e3cce6d7406b65cf1443"
     },
-    "publicInputCount": 84,
+    "publicInputCount": 86,
     "public": [
       {
         "name": "chain_id",
@@ -840,6 +860,16 @@
         "array": true
       },
       {
+        "name": "current_day",
+        "count": 1,
+        "array": false
+      },
+      {
+        "name": "current_month",
+        "count": 1,
+        "array": false
+      },
+      {
         "name": "auth_digest_high",
         "count": 1,
         "array": false
@@ -863,15 +893,22 @@
       "leaf_indices",
       "merkle_paths",
       "input_source_indices",
-      "draw_amounts"
+      "draw_amounts",
+      "single_limits",
+      "daily_limits",
+      "monthly_limits",
+      "last_days",
+      "daily_spents",
+      "last_months",
+      "monthly_spents"
     ]
   },
   "credit_draw_slots50": {
-    "artifactSha256": "9c6a23d5dbca3a1aeed461c908f228e89642550775cbc519d633bb1c984a3d04",
+    "artifactSha256": "09c7469866748b4c0c4bbf2b040844771948a170999f6dc7a38fe5c0ecda4054",
     "keys": {
-      "evm": "f0b192e2cb312148c7a16fae3acaed9efb01b0c6a1b381ce03468f00b4ef0f2a"
+      "evm": "7b613225b6f32a077011d4196c356e836d22dcd116efe687fde53144fbd8db9f"
     },
-    "publicInputCount": 312,
+    "publicInputCount": 314,
     "public": [
       {
         "name": "chain_id",
@@ -954,6 +991,16 @@
         "array": true
       },
       {
+        "name": "current_day",
+        "count": 1,
+        "array": false
+      },
+      {
+        "name": "current_month",
+        "count": 1,
+        "array": false
+      },
+      {
         "name": "auth_digest_high",
         "count": 1,
         "array": false
@@ -977,15 +1024,22 @@
       "leaf_indices",
       "merkle_paths",
       "input_source_indices",
-      "draw_amounts"
+      "draw_amounts",
+      "single_limits",
+      "daily_limits",
+      "monthly_limits",
+      "last_days",
+      "daily_spents",
+      "last_months",
+      "monthly_spents"
     ]
   },
   "credit_draw_slots120": {
-    "artifactSha256": "69686a4f0a8a98d8cef06485b0de1804ca2e8f47ce0244287a03ceef4d67625a",
+    "artifactSha256": "6ccd0366a669c50fd5da875c3eae194fe8aa4c36d35a5f9ebfd64636ea599b48",
     "keys": {
-      "evm": "6f32ca89775f332a9193af9b1e25641ef14fda9fbdd2685c33ee775d3c170b92"
+      "evm": "d715848afc5c1ecdfcef5ed5026865abef5040a3bc232fd65330a5ffee8475fb"
     },
-    "publicInputCount": 732,
+    "publicInputCount": 734,
     "public": [
       {
         "name": "chain_id",
@@ -1068,6 +1122,16 @@
         "array": true
       },
       {
+        "name": "current_day",
+        "count": 1,
+        "array": false
+      },
+      {
+        "name": "current_month",
+        "count": 1,
+        "array": false
+      },
+      {
         "name": "auth_digest_high",
         "count": 1,
         "array": false
@@ -1091,13 +1155,20 @@
       "leaf_indices",
       "merkle_paths",
       "input_source_indices",
-      "draw_amounts"
+      "draw_amounts",
+      "single_limits",
+      "daily_limits",
+      "monthly_limits",
+      "last_days",
+      "daily_spents",
+      "last_months",
+      "monthly_spents"
     ]
   },
   "credit_cancel": {
-    "artifactSha256": "ff278a04f22d2886c9f27f7785a0b8fc317dd242fd4aa9d0d9398d18b7513daf",
+    "artifactSha256": "b4459c2cf756d096e37291cf4d7cd129866b6d420b6d03c928f383b057112ccb",
     "keys": {
-      "evm": "1f8a3c20cb081d6a90962556da3124919cc4e5675e59ad31562af39299da02fb"
+      "evm": "fc8ad196ef15f3328afcc8f01d867a3ebefd15451c2813948442fab1923b73b2"
     },
     "publicInputCount": 11,
     "public": [
@@ -1167,14 +1238,21 @@
       "input_nonce",
       "expiry",
       "credit_shared_key",
+      "single_limit",
+      "daily_limit",
+      "monthly_limit",
+      "last_day",
+      "daily_spent",
+      "last_month",
+      "monthly_spent",
       "leaf_index",
       "merkle_path"
     ]
   },
   "credit_top_up": {
-    "artifactSha256": "fbe662363d9814983f7940f74369117cd6c84783945fbf527b0ed48d011b58a4",
+    "artifactSha256": "2ffebd5753ec1b0c050204d4f97498765fe61ea01a793a9b2466c2f97536345c",
     "keys": {
-      "evm": "44436f31414497a708355426da051ee48ba63fdebcb6cfd72347c37c34c98c50"
+      "evm": "40b02a9d2e7eb7b49daaac4b7760328537b7982fd5a225cc065bb74cd5ef44b3"
     },
     "publicInputCount": 50,
     "public": [
@@ -1309,6 +1387,16 @@
       "credit_amount",
       "credit_nonce",
       "credit_shared_key",
+      "single_limit",
+      "daily_limit",
+      "monthly_limit",
+      "previous_single_limit",
+      "previous_daily_limit",
+      "previous_monthly_limit",
+      "last_day",
+      "daily_spent",
+      "last_month",
+      "monthly_spent",
       "change_amount",
       "change_nonce",
       "previous_credit_amount",

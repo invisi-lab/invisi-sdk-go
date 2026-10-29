@@ -192,6 +192,9 @@ func (o *Operation) authorizeInternal(ctx context.Context) (*Operation, error) {
 	if e := o.checkLease(ctx); e != nil {
 		return nil, e
 	}
+	if e := o.checkDrawPeriod(ctx); e != nil {
+		return nil, e
+	}
 	if o.status != "prepared" {
 		return nil, errors.New("operation must be prepared before authorization")
 	}
@@ -305,6 +308,9 @@ func (o *Operation) proveInternal(ctx context.Context, options ...ProverOptions)
 	o.mu.Lock()
 	defer o.mu.Unlock()
 	if e := o.checkLease(ctx); e != nil {
+		return nil, e
+	}
+	if e := o.checkDrawPeriod(ctx); e != nil {
 		return nil, e
 	}
 	if len(options) > 1 {

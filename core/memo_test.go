@@ -125,7 +125,7 @@ func TestCreditMemoRoundTripAndRecoveryOmitsUnknownMemo(t *testing.T) {
 	keys := ReceivingKeys{ViewingPublicKey: public, ClueKey: wallet.ClueKey}
 	credit := CreditNote{ProtocolContext: note.ProtocolContext, SpenderWalletIdentity: note.WalletIdentity, OwnerWalletIdentity: note.WalletIdentity, SpenderPayout: note.WalletIdentity, OwnerPayout: note.WalletIdentity, TokenAddress: note.TokenAddress, Amount: ElementFromUint64(100), Nonce: note.Nonce, Expiry: ElementFromUint64(1000), CreditSharedKey: ElementFromUint64(7), Memo: bytes.Repeat([]byte{0xff}, 256)}
 	keyHash, _ := ComputeCreditSharedKeyHash(credit.CreditSharedKey)
-	leaf, _ := ComputeCreditCommitment(credit.ChainID, credit.SpenderWalletIdentity, credit.OwnerWalletIdentity, credit.SpenderPayout, credit.OwnerPayout, credit.TokenAddress, credit.Amount, credit.Nonce, credit.Expiry, keyHash)
+	leaf, _ := ComputeCreditCommitment(credit.ChainID, credit.SpenderWalletIdentity, credit.OwnerWalletIdentity, credit.SpenderPayout, credit.OwnerPayout, credit.TokenAddress, credit.Amount, credit.Nonce, credit.Expiry, keyHash, credit.CreditSpendingState)
 	state := CreditDeliveryState{Note: credit, OwnerReceivingKeys: keys, SpenderReceivingKeys: keys}
 	for _, role := range []CreditDeliveryRole{CreditOwner, CreditSpender} {
 		context := CreditNoteDecryptionContext{NoteDecryptionContext: noteContext, Role: role}
@@ -134,7 +134,7 @@ func TestCreditMemoRoundTripAndRecoveryOmitsUnknownMemo(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		if len(ciphertext) != 658 || ciphertext[0] != 4 {
+		if len(ciphertext) != 754 || ciphertext[0] != 5 {
 			t.Fatal("Credit envelope width/version")
 		}
 		decoded, err := DecryptCreditNote(private, ciphertext, context)
@@ -163,14 +163,17 @@ func TestCreditMemoRoundTripAndRecoveryOmitsUnknownMemo(t *testing.T) {
 		}
 	}
 	nf, _ := ComputeCreditNullifier(credit.ChainID, credit.CreditSharedKey, leaf)
-	child := credit
+	child, err := ApplyCreditDrawUsage(credit, ElementFromUint64(30), 100)
+	if err != nil {
+		t.Fatal(err)
+	}
 	child.Amount = ElementFromUint64(70)
 	child.Nonce, _ = DeriveRemainderNonce(credit.ChainID, credit.ProtocolAddress, credit.TokenAddress, nf, credit.CreditSharedKey)
-	childLeaf, _ := ComputeCreditCommitment(child.ChainID, child.SpenderWalletIdentity, child.OwnerWalletIdentity, child.SpenderPayout, child.OwnerPayout, child.TokenAddress, child.Amount, child.Nonce, child.Expiry, keyHash)
+	childLeaf, _ := ComputeCreditCommitment(child.ChainID, child.SpenderWalletIdentity, child.OwnerWalletIdentity, child.SpenderPayout, child.OwnerPayout, child.TokenAddress, child.Amount, child.Nonce, child.Expiry, keyHash, child.CreditSpendingState)
 	pad, _ := ComputeCreditRecoveryPad(credit.ChainID, credit.ProtocolAddress, credit.TokenAddress, nf, credit.CreditSharedKey)
 	amount := child.Amount
 	amount.Add(&amount, &pad)
-	recovered, err := RecoverCreditRemainder(credit.ProtocolContext, credit, CreditRemainderRecovery{nf, childLeaf, amount})
+	recovered, err := RecoverCreditRemainder(credit.ProtocolContext, credit, CreditRemainderRecovery{nf, childLeaf, amount}, 100)
 	if err != nil || recovered == nil || recovered.Amount != child.Amount {
 		t.Fatal("financial recovery failed", err)
 	}
@@ -188,7 +191,7 @@ func TestCreditMemoRoundTripAndRecoveryOmitsUnknownMemo(t *testing.T) {
 	creditContext := CreditNoteDecryptionContext{NoteDecryptionContext: noteContext, Role: CreditOwner}
 	creditContext.OutputCommitment = leaf
 	for _, tail := range [][]byte{{}, {0}, {1, 1}, {0, 0, 1}, append([]byte{1, 1}, make([]byte, 257)...)} {
-		plain := append(encodeCreditState(state)[:322], tail...)
+		plain := append(encodeCreditState(state)[:418], tail...)
 		ciphertext, err := sealEnvelope(public, plain, creditContext.NoteEncryptionContext, credit.TokenAddress, 4, 1, bytes.NewReader(bytes.Repeat([]byte{1}, 100)))
 		if err != nil {
 			t.Fatal(err)

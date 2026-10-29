@@ -25,6 +25,9 @@ func validateProtocolContext(context ProtocolContext, tokenAddress fr.Element) e
 	return nil
 }
 func validateCredit(note CreditNote) error {
+	if err := ValidateCreditSpendingState(note.CreditSpendingState); err != nil {
+		return err
+	}
 	if err := ValidateMemo(note.Memo); err != nil {
 		return err
 	}
@@ -51,7 +54,7 @@ func validateCredit(note CreditNote) error {
 // RecoverCreditRemainder requires a previously authenticated note and authenticated
 // draw event. It verifies the consumed nullifier, recovered amount and commitment.
 // A full draw returns nil only when both remainder fields are zero.
-func RecoverCreditRemainder(context ProtocolContext, previous CreditNote, recovery CreditRemainderRecovery) (*CreditNote, error) {
+func RecoverCreditRemainder(context ProtocolContext, previous CreditNote, recovery CreditRemainderRecovery, timestamp uint64) (*CreditNote, error) {
 	if err := validateProtocolContext(context, previous.TokenAddress); err != nil {
 		return nil, err
 	}
@@ -65,7 +68,7 @@ func RecoverCreditRemainder(context ProtocolContext, previous CreditNote, recove
 	if err != nil {
 		return nil, err
 	}
-	leaf, err := ComputeCreditCommitment(context.ChainID, previous.SpenderWalletIdentity, previous.OwnerWalletIdentity, previous.SpenderPayout, previous.OwnerPayout, previous.TokenAddress, previous.Amount, previous.Nonce, previous.Expiry, keyHash)
+	leaf, err := ComputeCreditCommitment(context.ChainID, previous.SpenderWalletIdentity, previous.OwnerWalletIdentity, previous.SpenderPayout, previous.OwnerPayout, previous.TokenAddress, previous.Amount, previous.Nonce, previous.Expiry, keyHash, previous.CreditSpendingState)
 	if err != nil {
 		return nil, err
 	}
@@ -79,6 +82,9 @@ func RecoverCreditRemainder(context ProtocolContext, previous CreditNote, recove
 	if recovery.RemainderCommitment.IsZero() {
 		if !recovery.RecoveryAmount.IsZero() {
 			return nil, fmt.Errorf("full draw requires zero recovery amount")
+		}
+		if _, err := ApplyCreditDrawUsage(previous, previous.Amount, timestamp); err != nil {
+			return nil, err
 		}
 		return nil, nil
 	}
@@ -98,21 +104,21 @@ func RecoverCreditRemainder(context ProtocolContext, previous CreditNote, recove
 	if nonce == previous.Nonce {
 		return nil, fmt.Errorf("remainder nonce must change")
 	}
-	keyHash, err = ComputeCreditSharedKeyHash(previous.CreditSharedKey)
+	debit := ElementToBigInt(previous.Amount)
+	debit.Sub(debit, ElementToBigInt(amount))
+	result, err := ApplyCreditDrawUsage(previous, BigIntToElement(debit), timestamp)
 	if err != nil {
 		return nil, err
 	}
-	commitment, err := ComputeCreditCommitment(context.ChainID, previous.SpenderWalletIdentity, previous.OwnerWalletIdentity, previous.SpenderPayout, previous.OwnerPayout, previous.TokenAddress, amount, nonce, previous.Expiry, keyHash)
+	result.Memo = nil
+	result.Amount = amount
+	result.Nonce = nonce
+	commitment, err := ComputeCreditNoteCommitment(result)
 	if err != nil {
 		return nil, err
 	}
 	if commitment != recovery.RemainderCommitment {
 		return nil, fmt.Errorf("recovered credit commitment mismatch")
 	}
-	// The proof binds financial fields only; the child memo is unknown without its authenticated envelope.
-	result := previous
-	result.Memo = nil
-	result.Amount = amount
-	result.Nonce = nonce
 	return &result, nil
 }

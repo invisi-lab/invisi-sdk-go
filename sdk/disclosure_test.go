@@ -1,7 +1,9 @@
 package sdk
 
 import (
+	"context"
 	"encoding/json"
+	"math/big"
 	"os"
 	"strings"
 	"testing"
@@ -72,5 +74,30 @@ func TestDisclosuresInteroperateWithCurrentTSExports(t *testing.T) {
 				t.Fatal("disclosure accepted a different output")
 			}
 		})
+	}
+}
+
+func TestCreditOpeningSupportsFrozenUint128Usage(t *testing.T) {
+	session, token, _ := testSession(t)
+	wide := core.BigIntToElement(new(big.Int).Add(new(big.Int).Lsh(big.NewInt(1), 127), big.NewInt(3)))
+	state := core.CreditSpendingState{DailyLimit: core.ElementFromUint64(1), LastDay: core.ElementFromUint64(1), DailySpent: wide, LastMonth: core.ElementFromUint64(1), MonthlySpent: wide}
+	leaf := seedLimitedCredit(t, session, token, state)
+	snapshot, err := session.options.Store.ReadSnapshot(context.Background(), session.scope)
+	if err != nil {
+		t.Fatal(err)
+	}
+	note := snapshot.Credits[creditKey(leaf, "owner")].State.Note
+	disclosure, err := DisclosureFromCredit(note)
+	if err != nil {
+		t.Fatal(err)
+	}
+	output := DisclosureOutput{ProtocolContext: note.ProtocolContext, TokenAddress: note.TokenAddress, OutputCommitment: leaf, Role: "owner"}
+	result, err := disclosure.Verify(output)
+	if err != nil || result.Credit.DailySpent != wide || result.Credit.MonthlySpent != wide {
+		t.Fatal("frozen uint128 opening rejected", err)
+	}
+	disclosure.material.Data["dailySpent"] = new(big.Int).Lsh(big.NewInt(1), 128).String()
+	if _, err = disclosure.Verify(output); err == nil {
+		t.Fatal("uint128 overflow opening accepted")
 	}
 }

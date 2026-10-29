@@ -55,14 +55,34 @@ func (n *Note) UnmarshalJSON(data []byte) error {
 	return e
 }
 func (n CreditNote) MarshalJSON() ([]byte, error) {
-	return fieldsJSON(map[string]fr.Element{"chainId": n.ChainID, "protocolAddress": n.ProtocolAddress, "spenderWalletIdentity": n.SpenderWalletIdentity, "ownerWalletIdentity": n.OwnerWalletIdentity, "spenderPayout": n.SpenderPayout, "ownerPayout": n.OwnerPayout, "tokenAddress": n.TokenAddress, "amount": n.Amount, "nonce": n.Nonce, "expiry": n.Expiry, "creditSharedKey": n.CreditSharedKey}, n.Memo)
+	return fieldsJSON(map[string]fr.Element{"chainId": n.ChainID, "protocolAddress": n.ProtocolAddress, "spenderWalletIdentity": n.SpenderWalletIdentity, "ownerWalletIdentity": n.OwnerWalletIdentity, "spenderPayout": n.SpenderPayout, "ownerPayout": n.OwnerPayout, "tokenAddress": n.TokenAddress, "amount": n.Amount, "nonce": n.Nonce, "expiry": n.Expiry, "creditSharedKey": n.CreditSharedKey, "singleLimit": n.SingleLimit, "dailyLimit": n.DailyLimit, "monthlyLimit": n.MonthlyLimit, "lastDay": n.LastDay, "dailySpent": n.DailySpent, "lastMonth": n.LastMonth, "monthlySpent": n.MonthlySpent}, n.Memo)
 }
 func (n *CreditNote) UnmarshalJSON(data []byte) error {
 	v, e := parseFields(data, "chainId", "protocolAddress", "spenderWalletIdentity", "ownerWalletIdentity", "spenderPayout", "ownerPayout", "tokenAddress", "amount", "nonce", "expiry", "creditSharedKey")
 	if e != nil {
 		return e
 	}
-	*n = CreditNote{ProtocolContext{v["chainId"], v["protocolAddress"]}, v["spenderWalletIdentity"], v["ownerWalletIdentity"], v["spenderPayout"], v["ownerPayout"], v["tokenAddress"], v["amount"], v["nonce"], v["expiry"], v["creditSharedKey"], nil}
+	var raw map[string]string
+	if e = json.Unmarshal(data, &raw); e != nil {
+		return e
+	}
+	for _, name := range []string{"singleLimit", "dailyLimit", "monthlyLimit", "lastDay", "dailySpent", "lastMonth", "monthlySpent"} {
+		if _, ok := raw[name]; !ok {
+			raw[name] = "0"
+		}
+	}
+	canonical, e := json.Marshal(raw)
+	if e != nil {
+		return e
+	}
+	state, e := parseFields(canonical, "singleLimit", "dailyLimit", "monthlyLimit", "lastDay", "dailySpent", "lastMonth", "monthlySpent")
+	if e != nil {
+		return e
+	}
+	*n = CreditNote{ProtocolContext: ProtocolContext{v["chainId"], v["protocolAddress"]}, SpenderWalletIdentity: v["spenderWalletIdentity"], OwnerWalletIdentity: v["ownerWalletIdentity"], SpenderPayout: v["spenderPayout"], OwnerPayout: v["ownerPayout"], TokenAddress: v["tokenAddress"], Amount: v["amount"], Nonce: v["nonce"], Expiry: v["expiry"], CreditSharedKey: v["creditSharedKey"], CreditSpendingState: CreditSpendingState{state["singleLimit"], state["dailyLimit"], state["monthlyLimit"], state["lastDay"], state["dailySpent"], state["lastMonth"], state["monthlySpent"]}}
+	if e = ValidateCreditSpendingState(n.CreditSpendingState); e != nil {
+		return e
+	}
 	n.Memo, e = parseMemoJSON(data)
 	return e
 }

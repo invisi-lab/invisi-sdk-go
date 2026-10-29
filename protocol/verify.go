@@ -41,6 +41,7 @@ func VerifyNoteCommitment(p VerifyNoteCommitmentParams) (bool, error) {
 }
 
 type VerifyCreditCommitmentParams struct {
+	core.CreditSpendingState
 	ChainID, SpenderWalletIdentity, OwnerWalletIdentity, SpenderPayout, OwnerPayout, TokenAddress, Amount, Nonce, Expiry, CreditSharedKey, CreditCommitment fr.Element
 }
 
@@ -52,7 +53,7 @@ func VerifyCreditCommitment(p VerifyCreditCommitmentParams) (bool, error) {
 	if err != nil {
 		return false, err
 	}
-	expected, err := core.ComputeCreditCommitment(p.ChainID, p.SpenderWalletIdentity, p.OwnerWalletIdentity, p.SpenderPayout, p.OwnerPayout, p.TokenAddress, p.Amount, p.Nonce, p.Expiry, keyHash)
+	expected, err := core.ComputeCreditCommitment(p.ChainID, p.SpenderWalletIdentity, p.OwnerWalletIdentity, p.SpenderPayout, p.OwnerPayout, p.TokenAddress, p.Amount, p.Nonce, p.Expiry, keyHash, p.CreditSpendingState)
 	if err != nil {
 		return false, err
 	}

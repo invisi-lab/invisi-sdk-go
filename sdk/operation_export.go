@@ -7,6 +7,7 @@ import (
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/invisi-lab/invisi-sdk-go/core"
 	"github.com/invisi-lab/invisi-sdk-go/protocol"
 	"github.com/invisi-lab/invisi-sdk-go/protocol/contracts"
 )
@@ -141,6 +142,9 @@ func operationExpired(p operationPlan, now uint64) bool {
 		return true
 	}
 	if p.DrawCredit != nil {
+		if core.CreditPeriods(now) != core.CreditPeriods(p.Block.Timestamp) {
+			return true
+		}
 		for _, expiry := range p.DrawCredit.Expiries {
 			if timestamp.Cmp(expiry) >= 0 {
 				return true
@@ -148,4 +152,21 @@ func operationExpired(p operationPlan, now uint64) bool {
 		}
 	}
 	return false
+}
+
+func (o *Operation) checkDrawPeriod(ctx context.Context) error {
+	if o.plan.DrawCredit == nil {
+		return nil
+	}
+	header, err := o.session.options.Provider.HeaderByNumber(ctx, nil)
+	if err != nil {
+		return err
+	}
+	if header == nil || header.Number == nil {
+		return errors.New("latest block unavailable")
+	}
+	if core.CreditPeriods(header.Time) != core.CreditPeriods(o.plan.Block.Timestamp) {
+		return errors.New("Credit draw crossed a UTC period; prepare again")
+	}
+	return nil
 }

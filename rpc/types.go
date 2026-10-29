@@ -67,7 +67,13 @@ type ProtocolUpdateRange struct {
 	FromBlock, ToBlock uint64
 	DetectionKey       []byte
 }
+type TransactionReference struct {
+	TransactionHash common.Hash    `json:"transactionHash"`
+	LogIndex        uint64         `json:"logIndex"`
+	Block           CanonicalBlock `json:"block"`
+}
 type ProtocolUpdates struct {
+	References        []TransactionReference
 	Block             CanonicalBlock
 	TransactionHashes []common.Hash
 }

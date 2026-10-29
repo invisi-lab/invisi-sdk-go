@@ -11,7 +11,7 @@ import (
 func ExportPayloadKey(private, envelope []byte, credit bool) ([]byte, error) {
 	length, version, domain := 160, byte(2), ordinaryNoteDomain
 	if credit {
-		length, version, domain = 402, 4, creditNoteDomain
+		length, version, domain = 498, 5, creditNoteDomain
 	}
 	if (len(envelope) < length || len(envelope) > length+MaxMemoBytes) || envelope[0] != version {
 		return nil, fmt.Errorf("unsupported delivery envelope")
@@ -24,8 +24,8 @@ func ExportPayloadKey(private, envelope []byte, credit bool) ([]byte, error) {
 }
 func openPayload(key, envelope []byte, context NoteDecryptionContext, version, role byte) ([]byte, error) {
 	length, domain := 160, ordinaryNoteDomain
-	if version == 4 {
-		length, domain = 402, creditNoteDomain
+	if version == 5 {
+		length, domain = 498, creditNoteDomain
 	}
 	if len(key) != 32 || (len(envelope) < length || len(envelope) > length+MaxMemoBytes) || envelope[0] != version {
 		return nil, fmt.Errorf("invalid payload key or envelope")
@@ -57,7 +57,7 @@ func DecryptCreditPayload(key, envelope []byte, context CreditNoteDecryptionCont
 	if e != nil {
 		return CreditDeliveryState{}, e
 	}
-	plain, e := openPayload(key, envelope, context.NoteDecryptionContext, 4, role)
+	plain, e := openPayload(key, envelope, context.NoteDecryptionContext, 5, role)
 	if e != nil {
 		return CreditDeliveryState{}, e
 	}

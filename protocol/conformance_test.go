@@ -104,6 +104,7 @@ func TestCurrentTSProtocolStatementsAndCalldata(t *testing.T) {
 	}
 	var context TransactionContext
 	decodeReference(t, all.Context, &context)
+	context.Now = numberFromReference(t, all.Context["timestamp"])
 	for _, name := range []string{"transact1", "transact15", "transact57", "transact113", "create", "draw1", "draw2", "draw13", "draw51", "cancel", "topUp", "shield", "single", "crossTwo"} {
 		t.Run(name, func(t *testing.T) {
 			f := all.Fixtures[name]
@@ -213,4 +214,13 @@ func cloneFixture(v map[string]any) map[string]any {
 		r[k] = v
 	}
 	return r
+}
+
+func numberFromReference(t *testing.T, value any) *big.Int {
+	t.Helper()
+	n, ok := new(big.Int).SetString(fmt.Sprint(value), 10)
+	if !ok {
+		t.Fatal("invalid reference timestamp")
+	}
+	return n
 }

@@ -9,6 +9,7 @@ import (
 )
 
 type Block struct {
+	Timestamp  uint64      `json:"timestamp"`
 	Number     uint64      `json:"number"`
 	Hash       common.Hash `json:"hash"`
 	ParentHash common.Hash `json:"parentHash"`
@@ -20,6 +21,7 @@ type Insertion struct {
 	LogIndex    uint          `json:"logIndex"`
 }
 type Output struct {
+	Block           Block          `json:"block"`
 	TreeID          uint64         `json:"treeId"`
 	LeafIndex       uint32         `json:"leafIndex"`
 	Commitment      common.Hash    `json:"commitment"`
@@ -32,6 +34,7 @@ type Output struct {
 	Role            string         `json:"role"`
 }
 type Event struct {
+	Block           Block           `json:"block"`
 	Name            string          `json:"name"`
 	TransactionHash common.Hash     `json:"transactionHash"`
 	LogIndex        uint            `json:"logIndex"`

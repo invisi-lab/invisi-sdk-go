@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"os"
 	"reflect"
+	"strconv"
 	"strings"
 	"testing"
 
@@ -83,8 +84,8 @@ func TestCurrentNoteAndCreditDeliveryVectors(t *testing.T) {
 		Owner   map[string]string
 		Note    map[string]string
 		Credit  struct {
-			SpenderWalletIdentity, OwnerWalletIdentity, SpenderPayout, OwnerPayout, Amount, Nonce, Expiry, CreditSharedKey, Commitment, Nullifier, OwnerCiphertext string
-			Remainder                                                                                                                                              struct{ Nullifier, RemainderCommitment, RecoveryAmount string }
+			SpenderWalletIdentity, OwnerWalletIdentity, SpenderPayout, OwnerPayout, Amount, Nonce, Expiry, CreditSharedKey, Commitment, Nullifier, OwnerCiphertext, SingleLimit, DailyLimit, MonthlyLimit, LastDay, DailySpent, LastMonth, MonthlySpent string
+			Remainder                                                                                                                                                                                                                                   struct{ Nullifier, RemainderCommitment, RecoveryAmount string }
 		}
 	}
 	currentJSON(t, "wallet-note-vectors.json", &v)
@@ -114,12 +115,12 @@ func TestCurrentNoteAndCreditDeliveryVectors(t *testing.T) {
 		t.Fatal("modified envelope accepted")
 	}
 	c := v.Credit
-	credit := CreditNote{ctx, currentField(t, c.SpenderWalletIdentity), currentField(t, c.OwnerWalletIdentity), currentField(t, c.SpenderPayout), currentField(t, c.OwnerPayout), token, currentField(t, c.Amount), currentField(t, c.Nonce), currentField(t, c.Expiry), currentField(t, c.CreditSharedKey), nil}
+	credit := CreditNote{CreditSpendingState{currentField(t, c.SingleLimit), currentField(t, c.DailyLimit), currentField(t, c.MonthlyLimit), currentField(t, c.LastDay), currentField(t, c.DailySpent), currentField(t, c.LastMonth), currentField(t, c.MonthlySpent)}, ctx, currentField(t, c.SpenderWalletIdentity), currentField(t, c.OwnerWalletIdentity), currentField(t, c.SpenderPayout), currentField(t, c.OwnerPayout), token, currentField(t, c.Amount), currentField(t, c.Nonce), currentField(t, c.Expiry), currentField(t, c.CreditSharedKey), nil}
 	keyHash, e := ComputeCreditSharedKeyHash(credit.CreditSharedKey)
 	if e != nil {
 		t.Fatal(e)
 	}
-	cl, e := ComputeCreditCommitment(ctx.ChainID, credit.SpenderWalletIdentity, credit.OwnerWalletIdentity, credit.SpenderPayout, credit.OwnerPayout, token, credit.Amount, credit.Nonce, credit.Expiry, keyHash)
+	cl, e := ComputeCreditCommitment(ctx.ChainID, credit.SpenderWalletIdentity, credit.OwnerWalletIdentity, credit.SpenderPayout, credit.OwnerPayout, token, credit.Amount, credit.Nonce, credit.Expiry, keyHash, credit.CreditSpendingState)
 	if e != nil || cl != currentField(t, c.Commitment) {
 		t.Fatal("Credit commitment mismatch", e)
 	}
@@ -131,8 +132,8 @@ func TestCurrentNoteAndCreditDeliveryVectors(t *testing.T) {
 	if e != nil || !reflect.DeepEqual(state.Note, credit) {
 		t.Fatal("TS Credit decryption failed", e)
 	}
-	remainder, e := RecoverCreditRemainder(ctx, credit, CreditRemainderRecovery{currentField(t, c.Remainder.Nullifier), currentField(t, c.Remainder.RemainderCommitment), currentField(t, c.Remainder.RecoveryAmount)})
-	if e != nil || remainder == nil || remainder.Amount != ElementFromUint64(70) {
+	remainder, e := RecoverCreditRemainder(ctx, credit, CreditRemainderRecovery{currentField(t, c.Remainder.Nullifier), currentField(t, c.Remainder.RemainderCommitment), currentField(t, c.Remainder.RecoveryAmount)}, 2000000000)
+	if e != nil || remainder == nil || remainder.Amount != ElementFromUint64(70) || remainder.DailySpent != ElementFromUint64(40) || remainder.MonthlySpent != ElementFromUint64(50) {
 		t.Fatal("Credit remainder mismatch", e)
 	}
 }
@@ -206,10 +207,50 @@ func TestCurrentMemoDeliveryVectors(t *testing.T) {
 				if err != nil {
 					t.Fatal(err)
 				}
-				expected := CreditNote{context, creditField("spenderWalletIdentity"), creditField("ownerWalletIdentity"), creditField("spenderPayout"), creditField("ownerPayout"), token, creditField("amount"), creditField("nonce"), creditField("expiry"), creditField("creditSharedKey"), memo}
+				expected := CreditNote{CreditSpendingState{creditField("singleLimit"), creditField("dailyLimit"), creditField("monthlyLimit"), creditField("lastDay"), creditField("dailySpent"), creditField("lastMonth"), creditField("monthlySpent")}, context, creditField("spenderWalletIdentity"), creditField("ownerWalletIdentity"), creditField("spenderPayout"), creditField("ownerPayout"), token, creditField("amount"), creditField("nonce"), creditField("expiry"), creditField("creditSharedKey"), memo}
 				if !reflect.DeepEqual(state.Note, expected) {
 					t.Fatal("memo vector changed Credit preimage or memo")
 				}
+			}
+		})
+	}
+}
+
+func TestCanonicalCreditPolicyCases(t *testing.T) {
+	var vectors struct {
+		CreditPolicyCases []struct {
+			Name                          string
+			Policy                        map[string]string
+			Amount, DrawAmount, Timestamp string
+			Expected                      map[string]string
+			Reject                        bool
+		}
+	}
+	currentJSON(t, "wallet-note-vectors.json", &vectors)
+	if len(vectors.CreditPolicyCases) != 9 {
+		t.Fatalf("expected 9 canonical policy cases, got %d", len(vectors.CreditPolicyCases))
+	}
+	state := func(values map[string]string) CreditSpendingState {
+		return CreditSpendingState{currentField(t, values["singleLimit"]), currentField(t, values["dailyLimit"]), currentField(t, values["monthlyLimit"]), currentField(t, values["lastDay"]), currentField(t, values["dailySpent"]), currentField(t, values["lastMonth"]), currentField(t, values["monthlySpent"])}
+	}
+	for _, row := range vectors.CreditPolicyCases {
+		t.Run(row.Name, func(t *testing.T) {
+			note := limitedCredit()
+			note.Amount = currentField(t, row.Amount)
+			note.CreditSpendingState = state(row.Policy)
+			timestamp, err := strconv.ParseUint(row.Timestamp, 10, 64)
+			if err != nil {
+				t.Fatal(err)
+			}
+			result, err := ApplyCreditDrawUsage(note, currentField(t, row.DrawAmount), timestamp)
+			if row.Reject {
+				if err == nil {
+					t.Fatal("canonical rejected debit accepted")
+				}
+				return
+			}
+			if err != nil || result.CreditSpendingState != state(row.Expected) {
+				t.Fatal("canonical usage mismatch", err)
 			}
 		})
 	}
