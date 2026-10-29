@@ -2,6 +2,7 @@ package sdk
 
 import (
 	"context"
+	"encoding/binary"
 	"math/big"
 	"testing"
 
@@ -58,7 +59,9 @@ func TestOwnedReceiptRequiresCanonicalInsertionAndMembership(t *testing.T) {
 		case "tokens":
 			value = []common.Address{token}
 		case "packedDeliveries":
-			value = append(ciphertext, make([]byte, 68)...)
+			clue := make([]byte, 68)
+			clue[64] = 24
+			value = append(append(binary.BigEndian.AppendUint16(nil, uint16(len(ciphertext))), ciphertext...), clue...)
 		default:
 			t.Fatalf("unexpected BatchOutputs field %s", arg.Name)
 		}

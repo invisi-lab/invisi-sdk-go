@@ -2,6 +2,7 @@ package receipts
 
 import (
 	"bytes"
+	"encoding/binary"
 	"encoding/json"
 	"fmt"
 	"math/big"
@@ -147,7 +148,14 @@ func (d *Decoder) Decode(block Block, logs []types.Log) (batch Batch, err error)
 	for _, e := range events {
 		m, l := e.values, e.log
 		addNull := func(v any) { batch.Nullifiers = append(batch.Nullifiers, hashes(v)...) }
-		add := func(id uint64, leaf uint32, c common.Hash, token common.Address, v delivery) error {
+		add := func(id uint64, leaf uint32, c common.Hash, token common.Address, v delivery, credit bool) error {
+			minimum, version := 160, byte(2)
+			if credit {
+				minimum, version = 402, 4
+			}
+			if len(v.Ciphertext) < minimum || len(v.Ciphertext) > minimum+256 || v.Ciphertext[0] != version || len(v.Clue) != 68 || v.Clue[64] != 24 {
+				return fmt.Errorf("%s: invalid delivery envelope or clue", e.name)
+			}
 			if actual, ok := inserted[location{l.TxHash, id, leaf}]; !ok || actual != c {
 				return fmt.Errorf("%s: output does not match transaction insertion", e.name)
 			}
@@ -163,14 +171,27 @@ func (d *Decoder) Decode(block Block, logs []types.Log) (batch Batch, err error)
 			cs := hashes(m["commitments"])
 			ts := m["tokens"].([]common.Address)
 			p := m["packedDeliveries"].([]byte)
-			if len(ts) != len(cs) || len(p) != 226*len(cs) {
+			if len(ts) != len(cs) {
 				return Batch{}, fmt.Errorf("BatchOutputs: array lengths differ")
 			}
 			for i, c := range cs {
-				if err = add(id, m["startLeafIndex"].(uint32)+uint32(i), c, ts[i], delivery{p[226*i : 226*i+158], p[226*i+158 : 226*(i+1)]}); err != nil {
+				if len(p) < 2 {
+					return Batch{}, fmt.Errorf("BatchOutputs: missing ciphertext length")
+				}
+				length := int(binary.BigEndian.Uint16(p[:2]))
+				p = p[2:]
+				if length < 160 || length > 416 || len(p) < length+68 {
+					return Batch{}, fmt.Errorf("BatchOutputs: invalid or truncated delivery length")
+				}
+				if err = add(id, m["startLeafIndex"].(uint32)+uint32(i), c, ts[i], delivery{p[:length], p[length : length+68]}, false); err != nil {
 					return Batch{}, err
 				}
+				p = p[length+68:]
 			}
+			if len(p) != 0 {
+				return Batch{}, fmt.Errorf("BatchOutputs: trailing delivery bytes")
+			}
+
 		case "Shield":
 			id, x := tree(m["treeId"])
 			if x != nil {
@@ -187,7 +208,7 @@ func (d *Decoder) Decode(block Block, logs []types.Log) (batch Batch, err error)
 				if !ok {
 					return Batch{}, fmt.Errorf("Shield: missing transaction insertion")
 				}
-				if err = add(id, leaf, c, m["token"].(common.Address), v); err != nil {
+				if err = add(id, leaf, c, m["token"].(common.Address), v, false); err != nil {
 					return Batch{}, err
 				}
 			}
@@ -204,7 +225,7 @@ func (d *Decoder) Decode(block Block, logs []types.Log) (batch Batch, err error)
 				return Batch{}, fmt.Errorf("%s: array lengths differ", e.name)
 			}
 			for i, c := range cs {
-				if err = add(id, ls[i], c, m["token"].(common.Address), vs[i]); err != nil {
+				if err = add(id, ls[i], c, m["token"].(common.Address), vs[i], false); err != nil {
 					return Batch{}, err
 				}
 			}
@@ -236,13 +257,13 @@ func (d *Decoder) Decode(block Block, logs []types.Log) (batch Batch, err error)
 				return Batch{}, fmt.Errorf("%s: array lengths differ", e.name)
 			}
 			for i := 0; i < 2; i++ {
-				if err = add(id, ls[0], credit, p["token"].(common.Address), vs[i]); err != nil {
+				if err = add(id, ls[0], credit, p["token"].(common.Address), vs[i], true); err != nil {
 					return Batch{}, err
 				}
 				batch.Outputs[len(batch.Outputs)-1].Role = []string{"owner", "spender"}[i]
 			}
 			if want == 2 {
-				if err = add(id, ls[1], change, p["token"].(common.Address), vs[2]); err != nil {
+				if err = add(id, ls[1], change, p["token"].(common.Address), vs[2], false); err != nil {
 					return Batch{}, err
 				}
 			} else if len(vs[2].Ciphertext) != 0 || len(vs[2].Clue) != 0 {
@@ -271,7 +292,7 @@ func (d *Decoder) Decode(block Block, logs []types.Log) (batch Batch, err error)
 						}
 						continue
 					}
-					if err = add(id, ls[i], c, p["token"].(common.Address), v); err != nil {
+					if err = add(id, ls[i], c, p["token"].(common.Address), v, true); err != nil {
 						return Batch{}, err
 					}
 					batch.Outputs[len(batch.Outputs)-1].Role = []string{"owner", "spender"}[j]

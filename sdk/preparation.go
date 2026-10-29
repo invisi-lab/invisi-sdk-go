@@ -18,6 +18,8 @@ import (
 )
 
 type PaymentOutput struct {
+	// Memo is optional encrypted output metadata (at most 256 bytes).
+	Memo   []byte
 	To     string
 	Amount *big.Int
 }
@@ -172,6 +174,9 @@ func (s *WalletSession) resolve(ctx context.Context, address string) (core.Recei
 }
 func (s *WalletSession) output(ctx context.Context, token common.Address, output PaymentOutput) (preparedOutput, error) {
 	var result preparedOutput
+	if e := core.ValidateMemo(output.Memo); e != nil {
+		return result, e
+	}
 	if e := positive(output.Amount, 128); e != nil {
 		return result, e
 	}
@@ -183,7 +188,7 @@ func (s *WalletSession) output(ctx context.Context, token common.Address, output
 	if e != nil {
 		return result, e
 	}
-	note := core.Note{ProtocolContext: s.coreContext(), WalletIdentity: recipient.WalletIdentity, TokenAddress: core.BigIntToElement(token.Big()), Amount: core.BigIntToElement(output.Amount), Nonce: nonce}
+	note := core.Note{ProtocolContext: s.coreContext(), WalletIdentity: recipient.WalletIdentity, TokenAddress: core.BigIntToElement(token.Big()), Amount: core.BigIntToElement(output.Amount), Nonce: nonce, Memo: core.CloneMemo(output.Memo)}
 	identity, e := core.ComputeNoteIdentity(note.WalletIdentity, note.Nonce)
 	if e != nil {
 		return result, e
@@ -362,7 +367,7 @@ func (s *WalletSession) prepareFunds(ctx context.Context, p TransferPreparation,
 		if s.changeAddress != "" {
 			address = s.changeAddress
 		}
-		o, e := s.output(ctx, p.TokenAddress, PaymentOutput{address, change})
+		o, e := s.output(ctx, p.TokenAddress, PaymentOutput{To: address, Amount: change})
 		if e != nil {
 			return nil, e
 		}
@@ -401,6 +406,11 @@ func (s *WalletSession) prepareFunds(ctx context.Context, p TransferPreparation,
 	return s.persistPlan(ctx, plan)
 }
 func (s *WalletSession) PrepareTransfer(ctx context.Context, p TransferPreparation) (*Operation, error) {
+	var err error
+	p, err = frozen(p)
+	if err != nil {
+		return nil, err
+	}
 	return s.prepareFunds(ctx, p, common.Address{}, nil, false, nil)
 }
 func (s *WalletSession) PrepareWithdraw(ctx context.Context, p WithdrawalPreparation) (*Operation, error) {
@@ -413,6 +423,11 @@ func (s *WalletSession) PrepareSweep(ctx context.Context, p SweepPreparation) (*
 	return s.prepareFunds(ctx, TransferPreparation{TokenAddress: p.TokenAddress, Deadline: p.Deadline, Target: p.Target}, s.wallet.identity, nil, true, p.Commitments)
 }
 func (s *WalletSession) PrepareShield(ctx context.Context, p ShieldPreparation) (*Operation, error) {
+	var err error
+	p, err = frozen(p)
+	if err != nil {
+		return nil, err
+	}
 	c, block, deadline, e := s.frame(ctx, p.TokenAddress, p.Deadline)
 	if e != nil {
 		return nil, e

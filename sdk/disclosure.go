@@ -37,6 +37,8 @@ type DisclosureOutput struct {
 	Ciphertext       []byte
 }
 type CreditOpening struct {
+	// Memo is present only after authenticating a payload-key disclosure.
+	Memo []byte
 	core.ProtocolContext
 	SpenderWalletIdentity, OwnerWalletIdentity, SpenderPayout, OwnerPayout, TokenAddress, Amount, Nonce, Expiry fr.Element
 	CreditSharedKeyHash                                                                                         common.Hash
@@ -47,6 +49,7 @@ type DisclosureResult struct {
 	Credit *CreditOpening
 }
 type DisclosureScope struct {
+	RevealsMemo                                                                             bool
 	Version                                                                                 int
 	Kind, Method                                                                            string
 	PermitsOwnerSweep, RevealsNoteConsumption, RevealsCreditSharedKey, RevealsReceivingKeys bool
@@ -56,7 +59,13 @@ func (d *Disclosure) String() string               { return "Disclosure([redacte
 func (d *Disclosure) GoString() string             { return d.String() }
 func (d *Disclosure) MarshalJSON() ([]byte, error) { return json.Marshal(d.GetScope()) }
 func (d *Disclosure) GetScope() DisclosureScope {
-	return DisclosureScope{1, d.material.Kind, d.material.Method, d.material.Kind == "note", d.material.Kind == "note", d.material.Kind == "credit" && d.material.Method == "payload-key", d.material.Kind == "credit" && d.material.Method == "payload-key"}
+	return DisclosureScope{
+		Version: 1, Kind: d.material.Kind, Method: d.material.Method,
+		PermitsOwnerSweep: d.material.Kind == "note", RevealsNoteConsumption: d.material.Kind == "note",
+		RevealsCreditSharedKey: d.material.Kind == "credit" && d.material.Method == "payload-key",
+		RevealsReceivingKeys:   d.material.Kind == "credit" && d.material.Method == "payload-key",
+		RevealsMemo:            d.material.Method == "payload-key",
+	}
 }
 func (d *Disclosure) Export() DisclosureExport {
 	m := d.material
@@ -285,7 +294,7 @@ func (d *Disclosure) Verify(output DisclosureOutput) (DisclosureResult, error) {
 }
 func creditOpening(note core.CreditNote) (CreditOpening, error) {
 	hash, e := core.ComputeCreditSharedKeyHash(note.CreditSharedKey)
-	return CreditOpening{note.ProtocolContext, note.SpenderWalletIdentity, note.OwnerWalletIdentity, note.SpenderPayout, note.OwnerPayout, note.TokenAddress, note.Amount, note.Nonce, note.Expiry, fieldHash(hash)}, e
+	return CreditOpening{ProtocolContext: note.ProtocolContext, SpenderWalletIdentity: note.SpenderWalletIdentity, OwnerWalletIdentity: note.OwnerWalletIdentity, SpenderPayout: note.SpenderPayout, OwnerPayout: note.OwnerPayout, TokenAddress: note.TokenAddress, Amount: note.Amount, Nonce: note.Nonce, Expiry: note.Expiry, CreditSharedKeyHash: fieldHash(hash), Memo: core.CloneMemo(note.Memo)}, e
 }
 func (v *ViewingCapability) DiscloseNote(envelope []byte, context core.NoteDecryptionContext) (*Disclosure, error) {
 	if _, e := v.decryptNote(envelope, context); e != nil {

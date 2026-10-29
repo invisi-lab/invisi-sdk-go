@@ -1,0 +1,90 @@
+package receipts
+
+import (
+	"encoding/binary"
+	"math/big"
+	"testing"
+
+	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/core/types"
+)
+
+func TestBatchOutputsVariableMemoFrames(t *testing.T) {
+	decoder, err := NewDecoder()
+	if err != nil {
+		t.Fatal(err)
+	}
+	event := decoder.abi.Events["BatchOutputs"]
+	ciphertexts := [][]byte{make([]byte, 160), make([]byte, 416), make([]byte, 167)}
+	var packed []byte
+	for i, ciphertext := range ciphertexts {
+		ciphertext[0] = 2
+		ciphertext[1] = byte(i)
+		packed = binary.BigEndian.AppendUint16(packed, uint16(len(ciphertext)))
+		packed = append(packed, ciphertext...)
+		clue := make([]byte, 68)
+		clue[0] = byte(i)
+		clue[64] = 24
+		packed = append(packed, clue...)
+	}
+	decode := func(p []byte) (Batch, error) {
+		values := []any{}
+		topics := []common.Hash{event.ID}
+		for _, arg := range event.Inputs {
+			var value any
+			switch arg.Name {
+			case "treeId":
+				value = big.NewInt(1)
+			case "firstOutputOffset":
+				value = big.NewInt(0)
+			case "startLeafIndex":
+				value = uint32(4)
+			case "commitments":
+				value = [][32]byte{{1}, {2}, {3}}
+			case "tokens":
+				value = []common.Address{{1}, {2}, {3}}
+			case "packedDeliveries":
+				value = p
+			default:
+				t.Fatal(arg.Name)
+			}
+			if arg.Indexed {
+				switch n := value.(type) {
+				case *big.Int:
+					topics = append(topics, common.BigToHash(n))
+				case uint32:
+					topics = append(topics, common.BigToHash(new(big.Int).SetUint64(uint64(n))))
+				}
+			} else {
+				values = append(values, value)
+			}
+		}
+		data, err := event.Inputs.NonIndexed().Pack(values...)
+		if err != nil {
+			t.Fatal(err)
+		}
+		return decoder.Decode(Block{}, []types.Log{{Topics: topics, Data: data}})
+	}
+	batch, err := decode(packed)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(batch.Outputs) != 3 {
+		t.Fatal("lost output")
+	}
+	for i, output := range batch.Outputs {
+		if len(output.Ciphertext) != len(ciphertexts[i]) || output.Ciphertext[1] != byte(i) || output.Clue[0] != byte(i) || output.LeafIndex != uint32(4+i) {
+			t.Fatal("frame mapping mismatch")
+		}
+	}
+	for _, bad := range [][]byte{nil, {0}, packed[:len(packed)-1], append(append([]byte(nil), packed...), 0), append([]byte{0, 159}, packed[2:]...), append([]byte{1, 161}, packed[2:]...)} {
+		if _, err := decode(bad); err == nil {
+			t.Fatal("invalid framing accepted")
+		}
+	}
+	bad := append([]byte(nil), packed...)
+	bad[2] = 1
+	if _, err := decode(bad); err == nil {
+		t.Fatal("retired version accepted")
+	}
+}

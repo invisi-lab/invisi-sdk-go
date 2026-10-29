@@ -34,6 +34,21 @@ if err != nil { return err }
 
 `provider` is an ordinary go-ethereum client. Applications own its connection and the EVM signer. `ProtocolFromRPC` obtains the chain ID from that provider and verifies the selected deployment's runtime code and VERSION before returning. Select a trusted Protocol RPC service; consistency checks cannot establish that a deployment is official. An independently published deployment can be pinned with `rpc.ClientOptions.Deployment`. There is no built-in deployment catalog or Factory/operator discovery.
 
+## Encrypted output memos
+
+`core.Note` and `core.CreditNote` carry optional `Memo []byte` metadata. Set `Memo` on a `sdk.PaymentOutput` or `sdk.CreateCreditPreparation` to encrypt it with that output. Text is UTF-8 by convention; `core.MemoFromText(text)` validates UTF-8 and the 256-byte limit, while `core.MemoText(memo)` explicitly decodes text. Raw bytes may contain NUL or invalid UTF-8 and are never automatically parsed as JSON.
+
+```go
+memo, err := core.MemoFromText("Invoice 123")
+if err != nil { return err }
+output := sdk.PaymentOutput{To: recipient, Amount: big.NewInt(50), Memo: memo}
+// Use output in ShieldPreparation.Outputs or TransferPreparation.Outputs.
+```
+
+`TopUpCreditPreparation.Memo` and each `CreditDrawInput.Memo` preserve the parent memo when nil. A non-nil empty slice (`[]byte{}`) clears it; another slice replaces it in both owner and spender deliveries. Preparation and storage copy memo bytes. Proof-only Credit remainder recovery restores financial fields with no memo when the child delivery cannot be authenticated. Commitment-only disclosures omit memos; payload-key disclosures authenticate and reveal them (`GetScope().RevealsMemo`). Memos do not change commitments or nullifiers.
+
+Factory and Protocol share protocol version 1 (`ProtocolVersion.CURRENT = 1`); the Go SDK requires Protocol `VERSION = 1` and Protocol RPC `/v1` with protocol version 1 metadata. Funds envelopes use version 2 (160–416 bytes); Credit envelopes use version 4 (402–658 bytes). Historical deployments are incompatible and their records remain unchanged.
+
 ## TypeScript to Go
 
 | TypeScript | Go |

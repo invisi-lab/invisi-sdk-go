@@ -92,7 +92,7 @@ func (s *WalletSession) persistPlan(ctx context.Context, plan operationPlan) (*O
 			if !ok || current.Spent || current.ReservedBy != "" {
 				return errors.New("input already spent or reserved")
 			}
-			if current.Note != n.Note || current.TreeID != n.TreeID || current.LeafIndex != n.LeafIndex {
+			if !current.Note.Equal(n.Note) || current.TreeID != n.TreeID || current.LeafIndex != n.LeafIndex {
 				return errors.New("input changed during preparation")
 			}
 		}

@@ -299,6 +299,10 @@ func (s *WalletSession) Refresh(ctx context.Context, options RefreshOptions) (Re
 						continue
 					}
 					commitment := common.Hash(draw.Params.RemainderCommitments[j])
+					// An authenticated child envelope carries metadata that proof-only recovery cannot reconstruct.
+					if _, ok := before.Credits[creditKey(commitment, previous.Role)]; ok {
+						continue
+					}
 					if _, e = s.rpc.GetMembership(ctx, s.protocol.Context(), protocolrpc.MembershipInput{TreeID: draw.OutputTreeId.Uint64(), LeafIndex: draw.RemainderLeafIndices[j], Commitment: commitment}, finalBlock); e != nil {
 						return result, e
 					}

@@ -4,6 +4,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"os"
+	"reflect"
 	"strings"
 	"testing"
 
@@ -89,7 +90,7 @@ func TestCurrentNoteAndCreditDeliveryVectors(t *testing.T) {
 	currentJSON(t, "wallet-note-vectors.json", &v)
 	ctx := ProtocolContext{currentField(t, v.Context["chainId"]), currentField(t, v.Context["protocolAddress"])}
 	token := currentField(t, v.Context["tokenAddress"])
-	note := Note{ctx, currentField(t, v.Note["walletIdentity"]), token, currentField(t, v.Note["amount"]), currentField(t, v.Note["nonce"])}
+	note := Note{ctx, currentField(t, v.Note["walletIdentity"]), token, currentField(t, v.Note["amount"]), currentField(t, v.Note["nonce"]), nil}
 	identity, e := ComputeNoteIdentity(note.WalletIdentity, note.Nonce)
 	if e != nil || identity != currentField(t, v.Note["identity"]) {
 		t.Fatal("identity mismatch", e)
@@ -104,7 +105,7 @@ func TestCurrentNoteAndCreditDeliveryVectors(t *testing.T) {
 	}
 	enc := NoteDecryptionContext{NoteEncryptionContext{ctx, leaf}, token, note.WalletIdentity}
 	plain, e := DecryptPrivateTransferNote(currentBytes(t, v.Owner["viewingPrivateKey"]), currentBytes(t, v.Note["ciphertext"]), enc)
-	if e != nil || plain != note {
+	if e != nil || !reflect.DeepEqual(plain, note) {
 		t.Fatal("TS note decryption failed", e)
 	}
 	ciphertext := currentBytes(t, v.Note["ciphertext"])
@@ -113,7 +114,7 @@ func TestCurrentNoteAndCreditDeliveryVectors(t *testing.T) {
 		t.Fatal("modified envelope accepted")
 	}
 	c := v.Credit
-	credit := CreditNote{ctx, currentField(t, c.SpenderWalletIdentity), currentField(t, c.OwnerWalletIdentity), currentField(t, c.SpenderPayout), currentField(t, c.OwnerPayout), token, currentField(t, c.Amount), currentField(t, c.Nonce), currentField(t, c.Expiry), currentField(t, c.CreditSharedKey)}
+	credit := CreditNote{ctx, currentField(t, c.SpenderWalletIdentity), currentField(t, c.OwnerWalletIdentity), currentField(t, c.SpenderPayout), currentField(t, c.OwnerPayout), token, currentField(t, c.Amount), currentField(t, c.Nonce), currentField(t, c.Expiry), currentField(t, c.CreditSharedKey), nil}
 	keyHash, e := ComputeCreditSharedKeyHash(credit.CreditSharedKey)
 	if e != nil {
 		t.Fatal(e)
@@ -127,7 +128,7 @@ func TestCurrentNoteAndCreditDeliveryVectors(t *testing.T) {
 		t.Fatal("Credit nullifier mismatch", e)
 	}
 	state, e := DecryptCreditNote(currentBytes(t, v.Owner["viewingPrivateKey"]), currentBytes(t, c.OwnerCiphertext), CreditNoteDecryptionContext{NoteDecryptionContext{NoteEncryptionContext{ctx, cl}, token, credit.OwnerWalletIdentity}, CreditOwner})
-	if e != nil || state.Note != credit {
+	if e != nil || !reflect.DeepEqual(state.Note, credit) {
 		t.Fatal("TS Credit decryption failed", e)
 	}
 	remainder, e := RecoverCreditRemainder(ctx, credit, CreditRemainderRecovery{currentField(t, c.Remainder.Nullifier), currentField(t, c.Remainder.RemainderCommitment), currentField(t, c.Remainder.RecoveryAmount)})
@@ -156,5 +157,60 @@ func TestCurrentAuthorizationVectors(t *testing.T) {
 		if e != nil || digest.Hex() != row.Digest {
 			t.Fatalf("%s authorization mismatch: %v", row.Operation, e)
 		}
+	}
+}
+
+func TestCurrentMemoDeliveryVectors(t *testing.T) {
+	var vectors struct {
+		Context        map[string]string
+		Owner, Spender map[string]string
+		Note           map[string]string
+		Credit         map[string]json.RawMessage
+		MemoVectors    []struct{ Name, Kind, Role, Memo, Ciphertext string }
+	}
+	currentJSON(t, "wallet-note-vectors.json", &vectors)
+	if len(vectors.MemoVectors) != 12 {
+		t.Fatalf("expected 12 cross-language memo vectors, got %d", len(vectors.MemoVectors))
+	}
+	context := ProtocolContext{currentField(t, vectors.Context["chainId"]), currentField(t, vectors.Context["protocolAddress"])}
+	token := currentField(t, vectors.Context["tokenAddress"])
+	creditField := func(name string) fr.Element {
+		var value string
+		if err := json.Unmarshal(vectors.Credit[name], &value); err != nil {
+			t.Fatal(err)
+		}
+		return currentField(t, value)
+	}
+	for _, row := range vectors.MemoVectors {
+		t.Run(row.Kind+"/"+row.Role+"/"+row.Name, func(t *testing.T) {
+			recipient := vectors.Owner
+			if row.Role == "spender" {
+				recipient = vectors.Spender
+			}
+			private := currentBytes(t, recipient["viewingPrivateKey"])
+			memo := currentBytes(t, row.Memo)
+			ciphertext := currentBytes(t, row.Ciphertext)
+			if row.Kind == "funds" {
+				dec := NoteDecryptionContext{NoteEncryptionContext{context, currentField(t, vectors.Note["commitment"])}, token, currentField(t, recipient["walletIdentity"])}
+				note, err := DecryptPrivateTransferNote(private, ciphertext, dec)
+				if err != nil {
+					t.Fatal(err)
+				}
+				expected := Note{context, currentField(t, vectors.Note["walletIdentity"]), token, currentField(t, vectors.Note["amount"]), currentField(t, vectors.Note["nonce"]), memo}
+				if !reflect.DeepEqual(note, expected) {
+					t.Fatal("memo vector changed note preimage or memo")
+				}
+			} else {
+				dec := CreditNoteDecryptionContext{NoteDecryptionContext{NoteEncryptionContext{context, creditField("commitment")}, token, currentField(t, recipient["walletIdentity"])}, CreditDeliveryRole(row.Role)}
+				state, err := DecryptCreditNote(private, ciphertext, dec)
+				if err != nil {
+					t.Fatal(err)
+				}
+				expected := CreditNote{context, creditField("spenderWalletIdentity"), creditField("ownerWalletIdentity"), creditField("spenderPayout"), creditField("ownerPayout"), token, creditField("amount"), creditField("nonce"), creditField("expiry"), creditField("creditSharedKey"), memo}
+				if !reflect.DeepEqual(state.Note, expected) {
+					t.Fatal("memo vector changed Credit preimage or memo")
+				}
+			}
+		})
 	}
 }

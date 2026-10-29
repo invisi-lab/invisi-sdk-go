@@ -22,7 +22,7 @@ func TestPreparedGasReferenceBeforeProvingWithoutStore(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if reference.GasUnits != 1617516 {
+	if reference.GasUnits != 1631799 {
 		t.Fatalf("TS reference mismatch: %+v", reference)
 	}
 	if len(backend.requests) != 0 {
@@ -44,7 +44,7 @@ func TestManagedGasReferenceMatchesExplicit(t *testing.T) {
 		t.Fatal(err)
 	}
 	reference, err := operation.EstimateGas()
-	if err != nil || reference.GasUnits != 1617516 {
+	if err != nil || reference.GasUnits != 1631799 {
 		t.Fatalf("%+v %v", reference, err)
 	}
 }
@@ -207,7 +207,7 @@ func TestCustomGasProfileIsSnapshottedAndUsedOnlyForExactMatch(t *testing.T) {
 		t.Fatal(err)
 	}
 	again, err = prepared.EstimateGas()
-	if err != nil || again.GasUnits != 1617516 {
+	if err != nil || again.GasUnits != 1631799 {
 		t.Fatalf("unmatched team profile used: %+v %v", again, err)
 	}
 }

@@ -155,12 +155,15 @@ func ValidateDelivery(delivery Delivery, credit, empty bool) error {
 		}
 		return nil
 	}
-	length, version := 158, 1
+	length, version := 160, 2
 	if credit {
-		length, version = 400, 3
+		length, version = 402, 4
 	}
-	if err := ValidateCiphertext(delivery.Ciphertext, length, version); err != nil {
-		return err
+	if len(delivery.Ciphertext) < length || len(delivery.Ciphertext) > length+256 {
+		return fmt.Errorf("ciphertext must be %d..%d bytes", length, length+256)
+	}
+	if int(delivery.Ciphertext[0]) != version {
+		return fmt.Errorf("unsupported ciphertext envelope version")
 	}
 	if len(delivery.Clue) != 68 || delivery.Clue[64] != 24 {
 		return fmt.Errorf("delivery clue must be 68 bytes with precision 24")
