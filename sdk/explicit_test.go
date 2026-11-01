@@ -8,7 +8,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/signer/core/apitypes"
@@ -38,9 +37,9 @@ func explicitFixture(t *testing.T) (*Invisi, ExplicitTransferPreparation, *testP
 		inputs = append(inputs, NoteInput{Note: n.Note, Commitment: n.Commitment, TreeID: n.TreeID, LeafIndex: n.LeafIndex})
 	}
 	address, _ := s.wallet.GetAddress()
-	opts := s.options
+	opts := s.options.InvisiOptions
 	opts.Store = forbiddenStore{}
-	return NewInvisi(opts), ExplicitTransferPreparation{TransactionIdentity: TransactionIdentity{Wallet: s.wallet, Protocol: s.protocol}, TransferPreparation: TransferPreparation{TokenAddress: token, Outputs: []PaymentOutput{{To: address, Amount: big.NewInt(30)}}}, ExplicitFunds: ExplicitFunds{Inputs: inputs}}, backend
+	return NewInvisi(opts), ExplicitTransferPreparation{TransactionIdentity: TransactionIdentity{Wallet: s.wallet.PublicWallet, Protocol: s.protocol}, TransferPreparation: TransferPreparation{TokenAddress: token, Outputs: []PaymentOutput{{To: address, Amount: big.NewInt(30)}}}, ExplicitFunds: ExplicitFunds{Inputs: inputs}}, backend
 }
 func TestExplicitTransferNeverUsesStore(t *testing.T) {
 	ctx := context.Background()
@@ -53,11 +52,11 @@ func TestExplicitTransferNeverUsesStore(t *testing.T) {
 	if p := prepared.Preview(); p.InputCount != 1 || p.OutputCount != 2 || p.Outputs[0].Amount.Int64() != 30 {
 		t.Fatal(p)
 	}
-	authorized, err := prepared.Authorize(ctx)
+	authorized, err := externallyAuthorize(ctx, prepared)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if _, err = prepared.Authorize(ctx); err == nil {
+	if _, err = externallyAuthorize(ctx, prepared); err == nil {
 		t.Fatal("stale handle accepted")
 	}
 	proved, err := authorized.Prove(ctx)
@@ -96,7 +95,7 @@ func TestExplicitFailedProofCanRetry(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	authorized, err := prepared.Authorize(ctx)
+	authorized, err := externallyAuthorize(ctx, prepared)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -135,13 +134,13 @@ func TestExplicitOtherFundsRoutes(t *testing.T) {
 			var err error
 			switch kind {
 			case "withdraw":
-				p, err = invisi.PrepareWithdraw(ctx, ExplicitWithdrawalPreparation{TransactionIdentity: input.TransactionIdentity, ExplicitFunds: input.ExplicitFunds, WithdrawalPreparation: WithdrawalPreparation{TokenAddress: input.TokenAddress, To: input.Wallet.identity, Amount: big.NewInt(30)}})
+				p, err = invisi.PrepareTransfer(ctx, ExplicitTransferPreparation{TransactionIdentity: input.TransactionIdentity, ExplicitFunds: input.ExplicitFunds, TransferPreparation: TransferPreparation{TokenAddress: input.TokenAddress, Withdrawal: &Withdrawal{To: input.Wallet.identity, Amount: big.NewInt(30)}}})
 			case "sweep":
-				input.Wallet, err = WalletFromAddress(input.Outputs[0].To)
+				input.Wallet, err = PublicWalletFromAddress(input.Outputs[0].To)
 				if err != nil {
 					t.Fatal(err)
 				}
-				p, err = invisi.PrepareSweep(ctx, ExplicitSweepPreparation{TransactionIdentity: input.TransactionIdentity, ExplicitFunds: input.ExplicitFunds, SweepPreparation: SweepPreparation{TokenAddress: input.TokenAddress}})
+				p, err = invisi.PrepareTransfer(ctx, ExplicitTransferPreparation{TransactionIdentity: input.TransactionIdentity, ExplicitFunds: input.ExplicitFunds, TransferPreparation: TransferPreparation{TokenAddress: input.TokenAddress, Withdrawal: &Withdrawal{To: input.Wallet.identity, Amount: big.NewInt(100)}}})
 			case "shield":
 				p, err = invisi.PrepareShield(ctx, ExplicitShieldPreparation{TransactionIdentity: input.TransactionIdentity, ShieldPreparation: ShieldPreparation{TokenAddress: input.TokenAddress, Outputs: input.Outputs, Funding: FundingSource{Payer: input.Wallet.identity, Amount: big.NewInt(30), Authorization: "signature"}}})
 			case "create-credit":
@@ -157,7 +156,7 @@ func TestExplicitOtherFundsRoutes(t *testing.T) {
 				return
 			}
 			if p.Preview().NeedsWalletAuthorization {
-				p, err = p.Authorize(ctx)
+				p, err = externallyAuthorize(ctx, p)
 				if err != nil {
 					t.Fatal(err)
 				}
@@ -192,10 +191,10 @@ func TestExplicitCreditLifecycle(t *testing.T) {
 			for _, n := range state.Notes {
 				funds.Inputs = append(funds.Inputs, NoteInput{Note: n.Note, Commitment: n.Commitment, TreeID: n.TreeID, LeafIndex: n.LeafIndex})
 			}
-			opts := session.options
+			opts := session.options.InvisiOptions
 			opts.Store = forbiddenStore{}
 			invisi := NewInvisi(opts)
-			identity := TransactionIdentity{Wallet: session.wallet, Protocol: session.protocol}
+			identity := TransactionIdentity{Wallet: session.wallet.PublicWallet, Protocol: session.protocol}
 			var p *PreparedTransaction
 			switch kind {
 			case "draw":
@@ -208,7 +207,7 @@ func TestExplicitCreditLifecycle(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			p, err = p.Authorize(ctx)
+			p, err = externallyAuthorize(ctx, p)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -264,7 +263,7 @@ func TestExplicitConcurrentProofIsFenced(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	authorized, err := prepared.Authorize(ctx)
+	authorized, err := externallyAuthorize(ctx, prepared)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -316,7 +315,7 @@ func TestRealNativeExplicitTransfer(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	p, err = p.Authorize(context.Background())
+	p, err = externallyAuthorize(context.Background(), p)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -332,7 +331,6 @@ func TestRealNativeExplicitTransfer(t *testing.T) {
 func TestExplicitCallerFundedShieldNeedsNoProof(t *testing.T) {
 	ctx := context.Background()
 	invisi, input, backend := explicitFixture(t)
-	invisi.options.Signer = &bind.TransactOpts{From: input.Wallet.identity}
 	p, err := invisi.PrepareShield(ctx, ExplicitShieldPreparation{TransactionIdentity: input.TransactionIdentity, ShieldPreparation: ShieldPreparation{TokenAddress: input.TokenAddress, Outputs: input.Outputs, Funding: FundingSource{Payer: input.Wallet.identity, Amount: big.NewInt(30), Authorization: "caller"}}})
 	if err != nil {
 		t.Fatal(err)
@@ -355,20 +353,28 @@ func TestExplicitFundingCannotMutateFrozenStatement(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	invisi.options.FundingSigner = FundingSignerFunc{Payer: input.Wallet.identity, Sign: func(ctx context.Context, typed apitypes.TypedData) ([]byte, error) {
-		// The callback is untrusted with respect to the already reviewed funding statement.
-		typed.Domain.VerifyingContract = "0x3333333333333333333333333333333333333333"
-		digest, _, err := apitypes.TypedDataAndHash(typed)
-		if err != nil {
-			return nil, err
-		}
-		return crypto.Sign(digest, key)
-	}}
 	p, err := invisi.PrepareShield(ctx, ExplicitShieldPreparation{TransactionIdentity: input.TransactionIdentity, ShieldPreparation: ShieldPreparation{TokenAddress: input.TokenAddress, Outputs: input.Outputs, Funding: FundingSource{Payer: input.Wallet.identity, Amount: big.NewInt(30)}}})
 	if err != nil {
 		t.Fatal(err)
 	}
-	if _, err = p.AuthorizeFunding(ctx); err == nil {
+	request, err := p.ExportFundingAuthorization(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	typed, err := request.TypedData()
+	if err != nil {
+		t.Fatal(err)
+	}
+	typed.Domain.VerifyingContract = "0x3333333333333333333333333333333333333333"
+	digest, _, err := apitypes.TypedDataAndHash(typed)
+	if err != nil {
+		t.Fatal(err)
+	}
+	signature, err := crypto.Sign(digest, key)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err = p.WithFundingSignature(ctx, signature); err == nil {
 		t.Fatal("mutated funding statement accepted")
 	}
 }

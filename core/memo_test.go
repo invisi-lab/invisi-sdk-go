@@ -25,8 +25,8 @@ func TestEmptyMemoUsesCurrentEnvelope(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(ciphertext) != 160 || ciphertext[0] != 2 {
-		t.Fatalf("expected version 2 and 160 bytes, got version %d and %d bytes", ciphertext[0], len(ciphertext))
+	if len(ciphertext) != 160 || ciphertext[0] != 1 {
+		t.Fatalf("expected version 1 and 160 bytes, got version %d and %d bytes", ciphertext[0], len(ciphertext))
 	}
 	if _, err = DecryptPrivateTransferNote(private, ciphertext, context); err != nil {
 		t.Fatal(err)
@@ -34,8 +34,8 @@ func TestEmptyMemoUsesCurrentEnvelope(t *testing.T) {
 }
 func TestMemoRoundTripAndPayloadKey(t *testing.T) {
 	note, private, public, context := memoNote(t)
-	for _, memo := range [][]byte{nil, []byte("你好\x00"), {0xff, 0xfe, 0, 1}, bytes.Repeat([]byte{0xab}, 256)} {
-		note.Memo = memo
+	for _, memo := range [][]byte{nil, []byte("hello\x00"), {0xff, 0xfe, 0, 1}, bytes.Repeat([]byte{0xab}, 256)} {
+		note.Payload = memo
 		ciphertext, err := EncryptPrivateTransferNote(public, note, context.NoteEncryptionContext)
 		if err != nil {
 			t.Fatal(err)
@@ -44,7 +44,7 @@ func TestMemoRoundTripAndPayloadKey(t *testing.T) {
 			t.Fatal("unexpected envelope size")
 		}
 		decoded, err := DecryptPrivateTransferNote(private, ciphertext, context)
-		if err != nil || !bytes.Equal(decoded.Memo, memo) {
+		if err != nil || !bytes.Equal(decoded.Payload, memo) {
 			t.Fatal("memo roundtrip", err)
 		}
 		key, err := ExportPayloadKey(private, ciphertext, false)
@@ -52,7 +52,7 @@ func TestMemoRoundTripAndPayloadKey(t *testing.T) {
 			t.Fatal(err)
 		}
 		opened, err := DecryptNotePayload(key, ciphertext, context)
-		if err != nil || !bytes.Equal(opened.Memo, memo) {
+		if err != nil || !bytes.Equal(opened.Payload, memo) {
 			t.Fatal("payload memo", err)
 		}
 		encoded, err := json.Marshal(note)
@@ -60,23 +60,23 @@ func TestMemoRoundTripAndPayloadKey(t *testing.T) {
 			t.Fatal(err)
 		}
 		var restored Note
-		if err = json.Unmarshal(encoded, &restored); err != nil || !bytes.Equal(restored.Memo, memo) {
+		if err = json.Unmarshal(encoded, &restored); err != nil || !bytes.Equal(restored.Payload, memo) {
 			t.Fatal("memo storage", err)
 		}
-		if len(decoded.Memo) > 0 {
-			decoded.Memo[0] ^= 1
-			if !bytes.Equal(note.Memo, memo) {
+		if len(decoded.Payload) > 0 {
+			decoded.Payload[0] ^= 1
+			if !bytes.Equal(note.Payload, memo) {
 				t.Fatal("memo alias")
 			}
 		}
 	}
-	note.Memo = make([]byte, 257)
+	note.Payload = make([]byte, MaxCiphertextBytes)
 	if _, err := EncryptPrivateTransferNote(public, note, context.NoteEncryptionContext); err == nil {
 		t.Fatal("oversize memo accepted")
 	}
 }
 func TestMemoTextValidation(t *testing.T) {
-	text := "你好"
+	text := "hello"
 	memo, err := MemoFromText(text)
 	if err != nil {
 		t.Fatal(err)
@@ -96,9 +96,9 @@ func TestMemoTextValidation(t *testing.T) {
 }
 func TestMalformedMemoLengthsAndRetiredVersions(t *testing.T) {
 	note, private, public, context := memoNote(t)
-	for _, tail := range [][]byte{{}, {0}, {1, 1}, {0, 0, 1}, append([]byte{1, 1}, make([]byte, 257)...)} {
+	for _, tail := range [][]byte{{}, {0}, {1, 1}, {0, 0, 1}} {
 		plain := append(encodeNote(note)[:80], tail...)
-		ciphertext, err := sealEnvelope(public, plain, context.NoteEncryptionContext, note.TokenAddress, 2, 0, bytes.NewReader(bytes.Repeat([]byte{1}, 100)))
+		ciphertext, err := sealEnvelope(public, plain, context.NoteEncryptionContext, note.TokenAddress, 0x01, 0, bytes.NewReader(bytes.Repeat([]byte{1}, 100)))
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -110,7 +110,7 @@ func TestMalformedMemoLengthsAndRetiredVersions(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	ciphertext[0] = 1
+	ciphertext[0] = 2
 	if _, err = DecryptPrivateTransferNote(private, ciphertext, context); err == nil {
 		t.Fatal("retired version accepted")
 	}
@@ -123,7 +123,7 @@ func TestCreditMemoRoundTripAndRecoveryOmitsUnknownMemo(t *testing.T) {
 		t.Fatal(err)
 	}
 	keys := ReceivingKeys{ViewingPublicKey: public, ClueKey: wallet.ClueKey}
-	credit := CreditNote{ProtocolContext: note.ProtocolContext, SpenderWalletIdentity: note.WalletIdentity, OwnerWalletIdentity: note.WalletIdentity, SpenderPayout: note.WalletIdentity, OwnerPayout: note.WalletIdentity, TokenAddress: note.TokenAddress, Amount: ElementFromUint64(100), Nonce: note.Nonce, Expiry: ElementFromUint64(1000), CreditSharedKey: ElementFromUint64(7), Memo: bytes.Repeat([]byte{0xff}, 256)}
+	credit := CreditNote{ProtocolContext: note.ProtocolContext, SpenderWalletIdentity: note.WalletIdentity, OwnerWalletIdentity: note.WalletIdentity, SpenderPayout: note.WalletIdentity, OwnerPayout: note.WalletIdentity, TokenAddress: note.TokenAddress, Amount: ElementFromUint64(100), Nonce: note.Nonce, Expiry: ElementFromUint64(1000), CreditSharedKey: ElementFromUint64(7), Payload: bytes.Repeat([]byte{0xff}, 256)}
 	keyHash, _ := ComputeCreditSharedKeyHash(credit.CreditSharedKey)
 	leaf, _ := ComputeCreditCommitment(credit.ChainID, credit.SpenderWalletIdentity, credit.OwnerWalletIdentity, credit.SpenderPayout, credit.OwnerPayout, credit.TokenAddress, credit.Amount, credit.Nonce, credit.Expiry, keyHash, credit.CreditSpendingState)
 	state := CreditDeliveryState{Note: credit, OwnerReceivingKeys: keys, SpenderReceivingKeys: keys}
@@ -134,15 +134,15 @@ func TestCreditMemoRoundTripAndRecoveryOmitsUnknownMemo(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		if len(ciphertext) != 754 || ciphertext[0] != 5 {
+		if len(ciphertext) != 754 || ciphertext[0] != 0x81 {
 			t.Fatal("Credit envelope width/version")
 		}
 		decoded, err := DecryptCreditNote(private, ciphertext, context)
-		if err != nil || !bytes.Equal(decoded.Note.Memo, credit.Memo) {
+		if err != nil || !bytes.Equal(decoded.Note.Payload, credit.Payload) {
 			t.Fatal("Credit memo", err)
 		}
-		decoded.Note.Memo[0] = 0
-		if credit.Memo[0] != 0xff {
+		decoded.Note.Payload[0] = 0
+		if credit.Payload[0] != 0xff {
 			t.Fatal("Credit memo aliased")
 		}
 		key, err := ExportPayloadKey(private, ciphertext, true)
@@ -150,7 +150,7 @@ func TestCreditMemoRoundTripAndRecoveryOmitsUnknownMemo(t *testing.T) {
 			t.Fatal(err)
 		}
 		decoded, err = DecryptCreditPayload(key, ciphertext, context)
-		if err != nil || !bytes.Equal(decoded.Note.Memo, credit.Memo) {
+		if err != nil || !bytes.Equal(decoded.Note.Payload, credit.Payload) {
 			t.Fatal("Credit payload memo", err)
 		}
 		if role == CreditOwner {
@@ -177,22 +177,22 @@ func TestCreditMemoRoundTripAndRecoveryOmitsUnknownMemo(t *testing.T) {
 	if err != nil || recovered == nil || recovered.Amount != child.Amount {
 		t.Fatal("financial recovery failed", err)
 	}
-	if len(recovered.Memo) != 0 {
+	if len(recovered.Payload) != 0 {
 		t.Fatal("financial recovery fabricated child memo")
 	}
 	normalized, err := NormalizeCreditDeliveryState(state)
 	if err != nil {
 		t.Fatal(err)
 	}
-	normalized.Note.Memo[0] = 0
-	if credit.Memo[0] != 0xff {
+	normalized.Note.Payload[0] = 0
+	if credit.Payload[0] != 0xff {
 		t.Fatal("normalized memo alias")
 	}
 	creditContext := CreditNoteDecryptionContext{NoteDecryptionContext: noteContext, Role: CreditOwner}
 	creditContext.OutputCommitment = leaf
-	for _, tail := range [][]byte{{}, {0}, {1, 1}, {0, 0, 1}, append([]byte{1, 1}, make([]byte, 257)...)} {
+	for _, tail := range [][]byte{{}, {0}, {1, 1}, {0, 0, 1}} {
 		plain := append(encodeCreditState(state)[:418], tail...)
-		ciphertext, err := sealEnvelope(public, plain, creditContext.NoteEncryptionContext, credit.TokenAddress, 4, 1, bytes.NewReader(bytes.Repeat([]byte{1}, 100)))
+		ciphertext, err := sealEnvelope(public, plain, creditContext.NoteEncryptionContext, credit.TokenAddress, 0x81, 1, bytes.NewReader(bytes.Repeat([]byte{1}, 100)))
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -200,7 +200,7 @@ func TestCreditMemoRoundTripAndRecoveryOmitsUnknownMemo(t *testing.T) {
 			t.Fatal("malformed Credit memo accepted")
 		}
 	}
-	state.Note.Memo = make([]byte, 257)
+	state.Note.Payload = make([]byte, MaxCiphertextBytes)
 	if _, err := EncryptCreditNote(public, state, CreditNoteEncryptionContext{NoteEncryptionContext: NoteEncryptionContext{credit.ProtocolContext, leaf}, Role: CreditOwner}); err == nil {
 		t.Fatal("257 byte Credit memo accepted")
 	}

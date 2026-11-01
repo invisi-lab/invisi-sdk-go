@@ -146,7 +146,7 @@ func args(names ...string) abi.Arguments {
 	return out
 }
 
-// ValidateDelivery validates the current envelope shape and fixed 24-bit detection clue.
+// ValidateDelivery validates opaque transport bytes and the fixed 24-bit detection clue.
 // Empty output slots must have both fields empty.
 func ValidateDelivery(delivery Delivery, credit, empty bool) error {
 	if empty {
@@ -155,15 +155,8 @@ func ValidateDelivery(delivery Delivery, credit, empty bool) error {
 		}
 		return nil
 	}
-	length, version := 160, 2
-	if credit {
-		length, version = 498, 5
-	}
-	if len(delivery.Ciphertext) < length || len(delivery.Ciphertext) > length+256 {
-		return fmt.Errorf("ciphertext must be %d..%d bytes", length, length+256)
-	}
-	if int(delivery.Ciphertext[0]) != version {
-		return fmt.Errorf("unsupported ciphertext envelope version")
+	if len(delivery.Ciphertext) == 0 || len(delivery.Ciphertext) > 4096 {
+		return fmt.Errorf("ciphertext must be 1..4096 bytes")
 	}
 	if len(delivery.Clue) != 68 || delivery.Clue[64] != 24 {
 		return fmt.Errorf("delivery clue must be 68 bytes with precision 24")

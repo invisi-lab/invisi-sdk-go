@@ -29,6 +29,8 @@ func (s WalletScope) Key() string {
 }
 
 type StoredNote struct {
+	TransactionHash       common.Hash
+	Block                 *protocolrpc.CanonicalBlock
 	Note                  core.Note
 	Commitment, Nullifier common.Hash
 	TreeID                uint64
@@ -58,12 +60,14 @@ type OperationRecord struct {
 	Externalized     bool
 }
 type WalletState struct {
-	Notes           map[common.Hash]StoredNote
-	Credits         map[string]StoredCredit
-	Operations      map[string]OperationRecord
-	ObservedThrough *protocolrpc.CanonicalBlock
-	Invalidated     bool
-	CheckedThrough  *protocolrpc.CanonicalBlock
+	Revision         uint64
+	DiscoveryThrough *protocolrpc.CanonicalBlock
+	Notes            map[common.Hash]StoredNote
+	Credits          map[string]StoredCredit
+	Operations       map[string]OperationRecord
+	ObservedThrough  *protocolrpc.CanonicalBlock
+	Invalidated      bool
+	CheckedThrough   *protocolrpc.CanonicalBlock
 }
 
 func emptyState() WalletState {
@@ -118,6 +122,13 @@ func (m *MemoryWalletStore) Update(ctx context.Context, scope WalletScope, updat
 		return e
 	}
 	if e = update(&clone); e != nil {
+		return e
+	}
+	if s.Revision >= 1<<63-1 {
+		return errors.New("wallet revision exhausted")
+	}
+	clone.Revision = s.Revision + 1
+	if e := ctx.Err(); e != nil {
 		return e
 	}
 	saved, e := CloneState(clone)

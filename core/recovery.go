@@ -28,7 +28,7 @@ func validateCredit(note CreditNote) error {
 	if err := ValidateCreditSpendingState(note.CreditSpendingState); err != nil {
 		return err
 	}
-	if err := ValidateMemo(note.Memo); err != nil {
+	if err := ValidatePayload(note.Payload); err != nil {
 		return err
 	}
 	for _, v := range []fr.Element{note.SpenderPayout, note.OwnerPayout} {
@@ -110,7 +110,7 @@ func RecoverCreditRemainder(context ProtocolContext, previous CreditNote, recove
 	if err != nil {
 		return nil, err
 	}
-	result.Memo = nil
+	result.Payload = nil
 	result.Amount = amount
 	result.Nonce = nonce
 	commitment, err := ComputeCreditNoteCommitment(result)

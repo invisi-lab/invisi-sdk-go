@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"reflect"
 	"strings"
 	"testing"
 
@@ -62,11 +63,11 @@ func TestWalletPermissionsAndSecretRedaction(t *testing.T) {
 	if e != nil || len(address) != 138 {
 		t.Fatal(address, e)
 	}
-	public, e := WalletFromAddress(address)
+	public, e := PublicWalletFromAddress(address)
 	if e != nil {
 		t.Fatal(e)
 	}
-	if _, e = public.GetViewer(); e == nil {
+	if _, exists := reflect.TypeOf(public).MethodByName("GetViewer"); exists {
 		t.Fatal("public address granted viewing permission")
 	}
 	viewer, e := wallet.GetViewer()

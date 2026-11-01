@@ -46,6 +46,11 @@ func (a *Aggregator) Aggregate(ctx context.Context, members []AggregateMember, o
 	if len(options) == 1 {
 		opt = options[0]
 	}
+	frozen := make([]AggregateMember, len(members))
+	for i, member := range members {
+		frozen[i] = AggregateMember{Bundle: CloneBundle(member.Bundle), Statement: CloneStatement(member.Statement)}
+	}
+	members = frozen
 	var key struct {
 		VerificationKeyFields []string    `json:"verificationKeyFields"`
 		KeyHash               string      `json:"keyHash"`
@@ -88,13 +93,6 @@ func (a *Aggregator) Aggregate(ctx context.Context, members []AggregateMember, o
 			}
 			seen[v] = true
 		}
-		valid, e := a.backend.Verify(ctx, CloneBundle(bundle), CloneStatement(statement), opt)
-		if e != nil {
-			return result, e
-		}
-		if !valid {
-			return result, errors.New("aggregate member verification failed")
-		}
 		p := []string{}
 		for j := 0; j < 458; j++ {
 			p = append(p, common.BytesToHash(bundle.Proof[j*32:(j+1)*32]).Hex())
@@ -106,6 +104,16 @@ func (a *Aggregator) Aggregate(ctx context.Context, members []AggregateMember, o
 		}
 		statements = append(statements, row)
 		words = append(words, bundle.PublicInputs...)
+	}
+	for _, member := range members {
+		bundle, statement := member.Bundle, member.Statement
+		valid, e := a.backend.Verify(ctx, CloneBundle(bundle), CloneStatement(statement), opt)
+		if e != nil {
+			return result, e
+		}
+		if !valid {
+			return result, errors.New("aggregate member verification failed")
+		}
 	}
 	words = append(words, key.InnerVKCommitment)
 	expected, e := Statement(fmt.Sprintf("transact_aggregate_14_%d", len(members)), "evm", words)

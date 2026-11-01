@@ -80,48 +80,25 @@ func (p *PreparedTransaction) stage(ctx context.Context, perform func(*Operation
 	l.mu.Unlock()
 	return &PreparedTransaction{operation: next, lifecycle: l, generation: generation}, nil
 }
-func (p *PreparedTransaction) Authorize(ctx context.Context, authority ...WalletAuthorizationProvider) (*PreparedTransaction, error) {
-	if len(authority) > 1 {
-		return nil, errors.New("expected at most one wallet authorization")
+func (p *PreparedTransaction) Prove(ctx context.Context, options ...TransactionProveOptions) (*PreparedTransaction, error) {
+	if len(options) > 1 {
+		return nil, errors.New("expected at most one transaction prove options value")
 	}
-	return p.stage(ctx, func(o *Operation) error {
-		if len(authority) == 1 {
-			if authority[0] == nil || authority[0].WalletIdentity() != o.session.wallet.identity {
-				return errors.New("authorization identity mismatch")
-			}
-			o.session.authorization = authority[0]
+	opt := TransactionProveOptions{}
+	if len(options) == 1 {
+		opt = options[0]
+	}
+	return p.stage(ctx, func(next *Operation) error {
+		if opt.Prover != nil {
+			next.session.options.Prover = opt.Prover
 		}
-		_, err := o.authorizeInternal(ctx)
+		_, err := next.proveInternal(ctx, opt)
 		return err
 	})
 }
-func (p *PreparedTransaction) Prove(ctx context.Context, arguments ...any) (*PreparedTransaction, error) {
-	backend, options, err := provingArguments(arguments)
-	if err != nil {
-		return nil, err
-	}
-	return p.stage(ctx, func(o *Operation) error {
-		if backend != nil {
-			o.session.options.Prover = backend
-		}
-		_, err := o.proveInternal(ctx, options)
-		return err
-	})
-}
+
 func (p *PreparedTransaction) Ready(ctx context.Context) (*PreparedTransaction, error) {
 	return p.stage(ctx, func(o *Operation) error { _, err := o.readyInternal(ctx); return err })
-}
-func (p *PreparedTransaction) AuthorizeFunding(ctx context.Context, signer ...FundingSigner) (*PreparedTransaction, error) {
-	if len(signer) > 1 {
-		return nil, errors.New("expected at most one funding signer")
-	}
-	return p.stage(ctx, func(o *Operation) error {
-		if len(signer) == 1 {
-			o.session.options.FundingSigner = signer[0]
-		}
-		_, err := o.authorizeFundingInternal(ctx)
-		return err
-	})
 }
 func (p *PreparedTransaction) current(ctx context.Context) error {
 	if err := ctx.Err(); err != nil {

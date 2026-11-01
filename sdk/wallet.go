@@ -8,18 +8,26 @@ import (
 
 	"github.com/consensys/gnark-crypto/ecc/bn254/fr"
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/crypto"
-	"github.com/ethereum/go-ethereum/signer/core/apitypes"
 	"github.com/invisi-lab/invisi-sdk-go/core"
 )
 
 // Wallet holds permissions locally. Formatting and JSON never export private material.
-type Wallet struct {
+type PublicWallet struct {
 	identity common.Address
 	address  string
 	keys     core.ReceivingKeys
+}
+
+// Wallet keeps private capabilities separate from address-only identity.
+type Wallet struct {
+	*PublicWallet
 	material *core.InvisiWallet
 }
+
+// WalletIdentity is implemented only by SDK public and private wallet identities.
+type WalletIdentity interface{ publicWallet() *PublicWallet }
+
+func (w *PublicWallet) publicWallet() *PublicWallet { return w }
 
 func WalletFromPrivateKey(privateKey string) (*Wallet, error) {
 	raw, e := core.DecodePrivateKey(privateKey)
@@ -35,27 +43,27 @@ func WalletFromPrivateKey(privateKey string) (*Wallet, error) {
 	if e != nil {
 		return nil, e
 	}
-	return &Wallet{common.BigToAddress(core.ElementToBigInt(m.WalletIdentity)), a, core.ReceivingKeys{ViewingPublicKey: append([]byte(nil), m.ViewingPublicKey...), ClueKey: append([]byte(nil), m.ClueKey...)}, m}, nil
+	return &Wallet{&PublicWallet{common.BigToAddress(core.ElementToBigInt(m.WalletIdentity)), a, core.ReceivingKeys{ViewingPublicKey: append([]byte(nil), m.ViewingPublicKey...), ClueKey: append([]byte(nil), m.ClueKey...)}}, m}, nil
 }
-func WalletFromAddress(address string) (*Wallet, error) {
+func PublicWalletFromAddress(address string) (*PublicWallet, error) {
 	d, e := core.DecodeAddress(address)
 	if e != nil {
 		return nil, e
 	}
-	return &Wallet{identity: common.BigToAddress(core.ElementToBigInt(d.WalletIdentity)), address: address, keys: core.ReceivingKeys{ViewingPublicKey: d.ViewingPublicKey, ClueKey: d.ClueKey}}, nil
+	return &PublicWallet{identity: common.BigToAddress(core.ElementToBigInt(d.WalletIdentity)), address: address, keys: core.ReceivingKeys{ViewingPublicKey: d.ViewingPublicKey, ClueKey: d.ClueKey}}, nil
 }
-func (w *Wallet) WalletIdentity() common.Address { return w.identity }
-func (w *Wallet) OwnerAddress() common.Address   { return w.identity }
-func (w *Wallet) GetAddress() (string, error) {
+func (w *PublicWallet) WalletIdentity() common.Address { return w.identity }
+func (w *PublicWallet) OwnerAddress() common.Address   { return w.identity }
+func (w *PublicWallet) GetAddress() (string, error) {
 	if len(w.keys.ViewingPublicKey) != 33 {
 		return "", errors.New("resolved receiving keys required")
 	}
 	return w.address, nil
 }
-func (w *Wallet) GetShortAddress() string { return w.identity.Hex() }
-func (w *Wallet) String() string          { return fmt.Sprintf("Wallet(%s)", w.identity.Hex()) }
-func (w *Wallet) GoString() string        { return w.String() }
-func (w *Wallet) MarshalJSON() ([]byte, error) {
+func (w *PublicWallet) GetShortAddress() string { return w.identity.Hex() }
+func (w *PublicWallet) String() string          { return fmt.Sprintf("Wallet(%s)", w.identity.Hex()) }
+func (w *PublicWallet) GoString() string        { return w.String() }
+func (w *PublicWallet) MarshalJSON() ([]byte, error) {
 	return []byte(`{"walletIdentity":"` + w.identity.Hex() + `"}`), nil
 }
 func (w *Wallet) GetViewer() (*ViewingCapability, error) {
@@ -76,7 +84,9 @@ func (w *Wallet) ExportAuthorization() (*WalletAuthorization, error) {
 	}
 	return &WalletAuthorization{w.material}, nil
 }
-func (w *Wallet) ExportNullifier() *NullifierCapability { return &NullifierCapability{w.identity} }
+func (w *PublicWallet) ExportNullifier() *NullifierCapability {
+	return &NullifierCapability{w.identity}
+}
 
 type ViewingCapability struct {
 	identity    common.Address
@@ -150,79 +160,13 @@ func (v *ViewingCapability) decryptCredit(data []byte, context core.CreditNoteDe
 }
 func fieldHash(e fr.Element) common.Hash { return common.Hash(e.Bytes()) }
 
-func (w *Wallet) ViewingPublicKey() []byte { return append([]byte(nil), w.keys.ViewingPublicKey...) }
-func (w *Wallet) ClueKey() []byte          { return append([]byte(nil), w.keys.ClueKey...) }
+func (w *PublicWallet) ViewingPublicKey() []byte {
+	return append([]byte(nil), w.keys.ViewingPublicKey...)
+}
+func (w *PublicWallet) ClueKey() []byte { return append([]byte(nil), w.keys.ClueKey...) }
 func (v *ViewingCapability) DecryptNote(envelope []byte, context core.NoteDecryptionContext) (core.Note, error) {
 	return v.decryptNote(envelope, context)
 }
 func (v *ViewingCapability) DecryptCredit(envelope []byte, context core.CreditNoteDecryptionContext) (core.CreditDeliveryState, error) {
 	return v.decryptCredit(envelope, context)
-}
-
-// RegistrationAuthorizationProvider signs the public registry EIP-712 message.
-// ERC-1271 wallets may return arbitrary signature bytes.
-type RegistrationAuthorizationProvider interface {
-	WalletIdentity() common.Address
-	SignTypedData(context.Context, apitypes.TypedData) ([]byte, error)
-}
-
-type RegistrationAuthorizationFunc struct {
-	Owner common.Address
-	Sign  func(context.Context, apitypes.TypedData) ([]byte, error)
-}
-
-func (a RegistrationAuthorizationFunc) WalletIdentity() common.Address { return a.Owner }
-func (a RegistrationAuthorizationFunc) SignTypedData(ctx context.Context, data apitypes.TypedData) ([]byte, error) {
-	if a.Sign == nil {
-		return nil, errors.New("registration signing callback required")
-	}
-	return a.Sign(ctx, data)
-}
-
-// ExportRegistrationAuthorization grants ordinary registry signing separately
-// from private circuit authorization. The key remains local.
-func (w *Wallet) ExportRegistrationAuthorization() (*RegistrationAuthorization, error) {
-	if w.material == nil {
-		return nil, errors.New("registration authorization permission required")
-	}
-	return &RegistrationAuthorization{w.material}, nil
-}
-
-type RegistrationAuthorization struct{ material *core.InvisiWallet }
-
-func (a *RegistrationAuthorization) WalletIdentity() common.Address {
-	if a == nil || a.material == nil {
-		return common.Address{}
-	}
-	return common.BigToAddress(core.ElementToBigInt(a.material.WalletIdentity))
-}
-func (a *RegistrationAuthorization) SignTypedData(ctx context.Context, data apitypes.TypedData) ([]byte, error) {
-	if err := ctx.Err(); err != nil {
-		return nil, err
-	}
-	if a == nil || a.material == nil {
-		return nil, errors.New("registration authorization permission required")
-	}
-	if data.Domain.Name != "InvisiAddressRegistry" || data.Domain.Version != "1" || (data.PrimaryType != "RegisterReceivingKeys" && data.PrimaryType != "UpdateReceivingKeys") || data.Message["walletIdentity"] != common.BigToHash(a.WalletIdentity().Big()).Hex() {
-		return nil, errors.New("invalid registration signing request")
-	}
-	digest, _, err := apitypes.TypedDataAndHash(data)
-	if err != nil {
-		return nil, err
-	}
-	key, err := crypto.ToECDSA(a.material.SpendingPrivateKey)
-	if err != nil {
-		return nil, err
-	}
-	signature, err := crypto.Sign(digest, key)
-	if err != nil {
-		return nil, err
-	}
-	signature[64] += 27
-	return signature, nil
-}
-func (a *RegistrationAuthorization) String() string   { return "RegistrationAuthorization([redacted])" }
-func (a *RegistrationAuthorization) GoString() string { return a.String() }
-func (a *RegistrationAuthorization) MarshalJSON() ([]byte, error) {
-	return []byte(`{"registrationAuthorization":"[redacted]"}`), nil
 }

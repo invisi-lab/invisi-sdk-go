@@ -36,14 +36,22 @@ func NewWalletStore(ctx context.Context, db *sql.DB, codec *sdk.EncryptedWalletC
 }
 func (s *WalletStore) ReadSnapshot(ctx context.Context, scope sdk.WalletScope) (sdk.WalletState, error) {
 	var data []byte
-	e := s.db.QueryRowContext(ctx, "SELECT data FROM invisi_wallet_state WHERE scope_key=?", scope.Key()).Scan(&data)
+	var revision int64
+	e := s.db.QueryRowContext(ctx, "SELECT revision,data FROM invisi_wallet_state WHERE scope_key=?", scope.Key()).Scan(&revision, &data)
 	if errors.Is(e, sql.ErrNoRows) {
 		return sdk.NewMemoryWalletStore().ReadSnapshot(ctx, scope)
 	}
 	if e != nil {
 		return sdk.WalletState{}, e
 	}
-	return s.codec.Open(scope, data)
+	state, err := s.codec.Open(scope, data)
+	if err != nil {
+		return sdk.WalletState{}, err
+	}
+	if revision < 1 || state.Revision != uint64(revision) {
+		return sdk.WalletState{}, errors.New("stored wallet revision mismatch")
+	}
+	return state, nil
 }
 func (s *WalletStore) Update(ctx context.Context, scope sdk.WalletScope, update func(*sdk.WalletState) error) error {
 	s.mu.Lock()
@@ -65,7 +73,17 @@ func (s *WalletStore) Update(ctx context.Context, scope sdk.WalletScope, update 
 	if e != nil {
 		return e
 	}
+	if revision < 0 || state.Revision != uint64(revision) {
+		return errors.New("stored wallet revision mismatch")
+	}
+	if revision == 1<<63-1 {
+		return errors.New("wallet revision exhausted")
+	}
 	if e = update(&state); e != nil {
+		return e
+	}
+	state.Revision = uint64(revision) + 1
+	if e := ctx.Err(); e != nil {
 		return e
 	}
 	data, e = s.codec.Seal(scope, state)

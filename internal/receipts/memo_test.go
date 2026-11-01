@@ -9,16 +9,16 @@ import (
 	"github.com/ethereum/go-ethereum/core/types"
 )
 
-func TestBatchOutputsVariableMemoFrames(t *testing.T) {
+func TestBatchOutputsOpaqueApplicationFrames(t *testing.T) {
 	decoder, err := NewDecoder()
 	if err != nil {
 		t.Fatal(err)
 	}
 	event := decoder.abi.Events["BatchOutputs"]
-	ciphertexts := [][]byte{make([]byte, 160), make([]byte, 416), make([]byte, 167)}
+	ciphertexts := [][]byte{make([]byte, 2), make([]byte, 4096), make([]byte, 167)}
 	var packed []byte
 	for i, ciphertext := range ciphertexts {
-		ciphertext[0] = 2
+		ciphertext[0] = []byte{0x01, 0x81, 0xfe}[i]
 		ciphertext[1] = byte(i)
 		packed = binary.BigEndian.AppendUint16(packed, uint16(len(ciphertext)))
 		packed = append(packed, ciphertext...)
@@ -77,14 +77,18 @@ func TestBatchOutputsVariableMemoFrames(t *testing.T) {
 			t.Fatal("frame mapping mismatch")
 		}
 	}
-	for _, bad := range [][]byte{nil, {0}, packed[:len(packed)-1], append(append([]byte(nil), packed...), 0), append([]byte{0, 159}, packed[2:]...), append([]byte{1, 161}, packed[2:]...)} {
+	for _, bad := range [][]byte{nil, {0}, packed[:len(packed)-1], append(append([]byte(nil), packed...), 0), append([]byte{0, 0}, packed[2:]...), append([]byte{16, 1}, packed[2:]...)} {
 		if _, err := decode(bad); err == nil {
 			t.Fatal("invalid framing accepted")
 		}
 	}
 	bad := append([]byte(nil), packed...)
-	bad[2] = 1
+	bad[2] = 0x99
+	if _, err := decode(bad); err != nil {
+		t.Fatal("opaque version rejected", err)
+	}
+	bad[2+len(ciphertexts[0])+64] = 23
 	if _, err := decode(bad); err == nil {
-		t.Fatal("retired version accepted")
+		t.Fatal("invalid clue precision accepted")
 	}
 }

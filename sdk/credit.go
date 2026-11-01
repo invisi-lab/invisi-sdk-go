@@ -16,7 +16,7 @@ import (
 )
 
 type CreateCreditPreparation struct {
-	Memo                                  []byte
+	Payload                               []byte
 	TokenAddress                          common.Address
 	Spender                               string
 	Amount, Expiry                        *big.Int
@@ -25,10 +25,10 @@ type CreateCreditPreparation struct {
 	Deadline                              uint64
 }
 type CreditDrawInput struct {
-	// Memo nil preserves the parent memo; a non-nil empty slice clears it.
-	Memo   []byte
-	Credit common.Hash
-	Amount *big.Int
+	// Omission creates an empty payload; consumed metadata is never inherited.
+	Payload []byte
+	Credit  common.Hash
+	Amount  *big.Int
 }
 type DrawCreditPreparation struct {
 	TokenAddress common.Address
@@ -41,8 +41,8 @@ type CancelCreditPreparation struct {
 	Deadline     uint64
 }
 type TopUpCreditPreparation struct {
-	// Memo nil preserves the parent memo; a non-nil empty slice clears it.
-	Memo                     []byte
+	// Omission creates an empty payload; consumed metadata is never inherited.
+	Payload                  []byte
 	TokenAddress             common.Address
 	Credit                   common.Hash
 	AdditionalAmount, Expiry *big.Int
@@ -140,7 +140,7 @@ func (s *WalletSession) creditInput(ctx context.Context, token common.Address, h
 	return credit, membership, e
 }
 func (s *WalletSession) prepareCreditCreation(ctx context.Context, p CreateCreditPreparation, previous *StoredCredit, previousMembership *protocolrpc.Membership) (*Operation, error) {
-	if err := core.ValidateMemo(p.Memo); err != nil {
+	if err := validatePayload(p.Payload); err != nil {
 		return nil, err
 	}
 	c, block, deadline, e := s.frame(ctx, p.TokenAddress, p.Deadline)
@@ -153,7 +153,7 @@ func (s *WalletSession) prepareCreditCreation(ctx context.Context, p CreateCredi
 	if p.Expiry == nil || !p.Expiry.IsUint64() || p.Expiry.Uint64() <= block.Timestamp {
 		return nil, errors.New("Credit expiry must be in the future")
 	}
-	funding, mode, e := s.funding(p.Funding)
+	funding, mode, e := s.funding(ctx, p.Funding, block, deadline)
 	if e != nil {
 		return nil, e
 	}
@@ -198,16 +198,12 @@ func (s *WalletSession) prepareCreditCreation(ctx context.Context, p CreateCredi
 		}
 		state = core.CreditDeliveryState{Note: core.CreditNote{ProtocolContext: s.coreContext(), SpenderWalletIdentity: spender.WalletIdentity, OwnerWalletIdentity: owner.WalletIdentity, SpenderPayout: spender.WalletIdentity, OwnerPayout: owner.WalletIdentity, TokenAddress: core.BigIntToElement(p.TokenAddress.Big()), CreditSharedKey: key}, OwnerReceivingKeys: core.ReceivingKeys{ViewingPublicKey: owner.ViewingPublicKey, ClueKey: owner.ClueKey}, SpenderReceivingKeys: core.ReceivingKeys{ViewingPublicKey: spender.ViewingPublicKey, ClueKey: spender.ClueKey}}
 	}
-	if previous == nil || p.Memo != nil {
-		state.Note.Memo = core.CloneMemo(p.Memo)
-	} else {
-		state.Note.Memo = core.CloneMemo(state.Note.Memo)
-	}
+	state.Note.Payload = clonePayload(p.Payload)
 	need := new(big.Int).Sub(spending, funding.Amount)
 	if need.Sign() < 0 {
 		return nil, errors.New("funding exceeds Credit addition")
 	}
-	inputs, memberships, e := s.selectInputs(ctx, p.TokenAddress, need, false, nil, block)
+	inputs, memberships, e := s.selectInputs(ctx, p.TokenAddress, need, nil, block)
 	if e != nil {
 		return nil, e
 	}
@@ -286,7 +282,8 @@ func (s *WalletSession) prepareCreditCreation(ctx context.Context, p CreateCredi
 	}
 	return s.persistPlan(ctx, plan)
 }
-func (s *WalletSession) PrepareCreateCredit(ctx context.Context, p CreateCreditPreparation) (*Operation, error) {
+func (s *WalletSession) PrepareCreateCredit(ctx context.Context, p CreateCreditPreparation) (result *Operation, failure error) {
+	defer func() { failure = wrapPreparation("prepareCreateCredit", failure) }()
 	var err error
 	p, err = frozen(p)
 	if err != nil {
@@ -294,7 +291,8 @@ func (s *WalletSession) PrepareCreateCredit(ctx context.Context, p CreateCreditP
 	}
 	return s.prepareCreditCreation(ctx, p, nil, nil)
 }
-func (s *WalletSession) PrepareTopUpCredit(ctx context.Context, p TopUpCreditPreparation) (*Operation, error) {
+func (s *WalletSession) PrepareTopUpCredit(ctx context.Context, p TopUpCreditPreparation) (result *Operation, failure error) {
+	defer func() { failure = wrapPreparation("prepareTopUpCredit", failure) }()
 	var err error
 	p, err = frozen(p)
 	if err != nil {
@@ -316,9 +314,10 @@ func (s *WalletSession) PrepareTopUpCredit(ctx context.Context, p TopUpCreditPre
 	if expiry == nil {
 		expiry = core.ElementToBigInt(old.State.Note.Expiry)
 	}
-	return s.prepareCreditCreation(ctx, CreateCreditPreparation{TokenAddress: p.TokenAddress, Amount: amount, Expiry: expiry, Funding: p.Funding, Deadline: p.Deadline, Memo: p.Memo, SingleLimit: p.SingleLimit, DailyLimit: p.DailyLimit, MonthlyLimit: p.MonthlyLimit}, &old, &membership)
+	return s.prepareCreditCreation(ctx, CreateCreditPreparation{TokenAddress: p.TokenAddress, Amount: amount, Expiry: expiry, Funding: p.Funding, Deadline: p.Deadline, Payload: p.Payload, SingleLimit: p.SingleLimit, DailyLimit: p.DailyLimit, MonthlyLimit: p.MonthlyLimit}, &old, &membership)
 }
-func (s *WalletSession) PrepareCancelCredit(ctx context.Context, p CancelCreditPreparation) (*Operation, error) {
+func (s *WalletSession) PrepareCancelCredit(ctx context.Context, p CancelCreditPreparation) (result *Operation, failure error) {
+	defer func() { failure = wrapPreparation("prepareCancelCredit", failure) }()
 	c, block, deadline, e := s.frame(ctx, p.TokenAddress, p.Deadline)
 	if e != nil {
 		return nil, e
@@ -331,7 +330,8 @@ func (s *WalletSession) PrepareCancelCredit(ctx context.Context, p CancelCreditP
 	funding, _ := protocol.NormalizeFunding(protocol.FundingParams{})
 	return s.persistPlan(ctx, operationPlan{Kind: "cancel-credit", Target: "evm", Context: c, Block: block, Deadline: deadline, Funding: funding, FundingMode: "none", Capacity: 1, NeedsAuthorization: true, CreditInputs: []StoredCredit{old}, CreditMemberships: []protocolrpc.Membership{m}, CancelCredit: &params})
 }
-func (s *WalletSession) PrepareDrawCredit(ctx context.Context, p DrawCreditPreparation) (*Operation, error) {
+func (s *WalletSession) PrepareDrawCredit(ctx context.Context, p DrawCreditPreparation) (result *Operation, failure error) {
+	defer func() { failure = wrapPreparation("prepareDrawCredit", failure) }()
 	var err error
 	p, err = frozen(p)
 	if err != nil {
@@ -352,7 +352,7 @@ func (s *WalletSession) PrepareDrawCredit(ctx context.Context, p DrawCreditPrepa
 	amounts := []*big.Int{}
 	seen := map[common.Hash]bool{}
 	for _, entry := range p.Credits {
-		if err := core.ValidateMemo(entry.Memo); err != nil {
+		if err := validatePayload(entry.Payload); err != nil {
 			return nil, err
 		}
 		if seen[entry.Credit] {
@@ -384,9 +384,7 @@ func (s *WalletSession) PrepareDrawCredit(ctx context.Context, p DrawCreditPrepa
 			}
 			child := old.State
 			child.Note = updated
-			if entry.Memo != nil {
-				child.Note.Memo = core.CloneMemo(entry.Memo)
-			}
+			child.Note.Payload = clonePayload(entry.Payload)
 			child.Note.Amount = core.BigIntToElement(remaining)
 			child.Note.Nonce = nonce
 			remainder, e = creditCommitment(child.Note)

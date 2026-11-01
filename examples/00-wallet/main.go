@@ -1,7 +1,8 @@
-// Restore the same EVM owner and Invisi receiving address from one account key.
+// Derive an offline wallet and expose only its public identity and viewing capabilities.
 package main
 
 import (
+	"encoding/hex"
 	"fmt"
 	"log"
 
@@ -10,51 +11,34 @@ import (
 )
 
 func main() {
-	if err := run(); err != nil {
+	// Generate a fresh ephemeral key for this offline demonstration; no local account file is read.
+	key, err := crypto.GenerateKey()
+	if err != nil {
 		log.Fatal(err)
 	}
-}
-func run() error {
-	// This public test key must never hold real funds. Applications own mnemonic/account derivation.
-	privateKey := "0000000000000000000000000000000000000000000000000000000000000001"
-	account, err := crypto.HexToECDSA(privateKey)
+	wallet, err := sdk.WalletFromPrivateKey("0x" + hex.EncodeToString(crypto.FromECDSA(key)))
 	if err != nil {
-		return err
-	}
-	evmAddress := crypto.PubkeyToAddress(account.PublicKey)
-
-	wallet, err := sdk.WalletFromPrivateKey("0x" + privateKey)
-	if err != nil {
-		return err
+		log.Fatal(err)
 	}
 	address, err := wallet.GetAddress()
 	if err != nil {
-		return err
+		log.Fatal(err)
 	}
-	fmt.Println("1. EVM owner:", evmAddress.Hex())
-	fmt.Println("2. Invisi receiving address:", address, len(address), "characters")
-	fmt.Println("3. Short address:", wallet.GetShortAddress())
-
-	publicWallet, err := sdk.WalletFromAddress(address)
+	publicWallet, err := sdk.PublicWalletFromAddress(address)
 	if err != nil {
-		return err
+		log.Fatal(err)
 	}
-	fmt.Println("4. Address-only wallet owner:", publicWallet.OwnerAddress())
 	viewer, err := wallet.GetViewer()
 	if err != nil {
-		return err
+		log.Fatal(err)
 	}
 	detector, err := wallet.GetDetector()
 	if err != nil {
-		return err
+		log.Fatal(err)
 	}
-	fmt.Printf("5. Public viewing key: 0x%x\n", viewer.GetPublicKey())
-	fmt.Printf("6. Public clue key: 0x%x\n", detector.GetClueKey())
-
-	// Only explicitly exported copies leave the capability object; never print them.
-	viewingPrivateKey := viewer.ExportKey()
-	detectionKey := detector.ExportKey()
-	clear(viewingPrivateKey)
-	clear(detectionKey)
-	return nil
+	fmt.Println("EVM owner:", publicWallet.OwnerAddress())
+	fmt.Println("Long receiving address:", address)
+	fmt.Println("Short receiving address:", publicWallet.GetShortAddress())
+	fmt.Printf("Public viewing key: 0x%x\nPublic clue key: 0x%x\n", viewer.GetPublicKey(), detector.GetClueKey())
+	fmt.Println("Private capabilities remain local:", viewer, detector)
 }

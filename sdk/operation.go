@@ -10,14 +10,12 @@ import (
 
 	"github.com/consensys/gnark-crypto/ecc/bn254/fr"
 	"github.com/ethereum/go-ethereum"
-	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/signer/core/apitypes"
 	"github.com/invisi-lab/invisi-sdk-go/core"
 	"github.com/invisi-lab/invisi-sdk-go/protocol"
-	"github.com/invisi-lab/invisi-sdk-go/protocol/contracts"
 	"github.com/invisi-lab/invisi-sdk-go/prover"
 	protocolrpc "github.com/invisi-lab/invisi-sdk-go/rpc"
 )
@@ -57,9 +55,7 @@ func clonePlan(plan operationPlan) (operationPlan, error) {
 	return result, e
 }
 func (s *WalletSession) persistPlan(ctx context.Context, plan operationPlan) (*Operation, error) {
-	if s.explicitInventory == nil && plan.NeedsAuthorization && s.authorization == nil {
-		return nil, errors.New("wallet authorization permission required")
-	}
+
 	if e := s.canonical(ctx, plan.Block); e != nil {
 		return nil, e
 	}
@@ -304,7 +300,7 @@ func (o *Operation) circuitName() string {
 	}
 	return ""
 }
-func (o *Operation) proveInternal(ctx context.Context, options ...ProverOptions) (*Operation, error) {
+func (o *Operation) proveInternal(ctx context.Context, options ...TransactionProveOptions) (*Operation, error) {
 	o.mu.Lock()
 	defer o.mu.Unlock()
 	if e := o.checkLease(ctx); e != nil {
@@ -316,7 +312,7 @@ func (o *Operation) proveInternal(ctx context.Context, options ...ProverOptions)
 	if len(options) > 1 {
 		return nil, errors.New("expected at most one prover option")
 	}
-	opt := ProverOptions{}
+	opt := TransactionProveOptions{}
 	if len(options) == 1 {
 		opt = options[0]
 	}
@@ -331,6 +327,20 @@ func (o *Operation) proveInternal(ctx context.Context, options ...ProverOptions)
 	}
 	if o.session.options.Prover == nil {
 		return nil, errors.New("local prover required")
+	}
+	execution := opt.Execution
+	if execution == "" {
+		execution = "single"
+	}
+	if execution != "single" && execution != "aggregate" {
+		return nil, errors.New("execution must be single or aggregate")
+	}
+	if execution == "aggregate" && (o.plan.Kind != "transact" || o.plan.Capacity != 14) {
+		return nil, errors.New("aggregate execution requires a 14-slot transfer")
+	}
+	o.plan.Target = "evm"
+	if execution == "aggregate" {
+		o.plan.Target = "noir-recursive"
 	}
 	words, e := o.words()
 	if e != nil {
@@ -349,7 +359,7 @@ func (o *Operation) proveInternal(ctx context.Context, options ...ProverOptions)
 		return nil, e
 	}
 	expected := prover.CloneStatement(request.ProofStatement)
-	bundle, e := o.session.options.Prover.Prove(ctx, request, opt)
+	bundle, e := o.session.options.Prover.Prove(ctx, request, opt.Options)
 	if e != nil {
 		return nil, e
 	}
@@ -357,7 +367,7 @@ func (o *Operation) proveInternal(ctx context.Context, options ...ProverOptions)
 	if e = prover.AssertProofBundle(bundle, expected); e != nil {
 		return nil, e
 	}
-	valid, e := o.session.options.Prover.Verify(ctx, prover.CloneBundle(bundle), prover.CloneStatement(expected), opt)
+	valid, e := o.session.options.Prover.Verify(ctx, prover.CloneBundle(bundle), prover.CloneStatement(expected), opt.Options)
 	if e != nil {
 		return nil, e
 	}
@@ -418,72 +428,29 @@ func (o *Operation) fundingTypedData() (apitypes.TypedData, error) {
 func (o *Operation) authorizeFundingInternal(ctx context.Context) (*Operation, error) {
 	o.mu.Lock()
 	defer o.mu.Unlock()
-	if e := o.checkLease(ctx); e != nil {
-		return nil, e
-	}
-	if o.plan.Kind != "shield" && o.status != "proved" {
-		return nil, errors.New("prove before funding authorization")
-	}
-	if o.plan.Kind == "shield" && o.status != "prepared" {
-		return nil, errors.New("shield must be prepared")
-	}
-	if o.plan.FundingMode != "signature" {
-		if e := o.encode(); e != nil {
-			return nil, e
-		}
-		o.status = "ready"
-		return o, o.persist(ctx, o.status)
-	}
-	if o.session.options.FundingSigner == nil {
-		return nil, errors.New("EVM funding signer required")
-	}
-	caller, e := contracts.NewInvisiProtocolCaller(o.plan.Context.ProtocolAddress, o.session.options.Provider)
-	if e != nil {
-		return nil, e
-	}
-	nonce, e := caller.Nonces(&bind.CallOpts{Context: ctx}, o.plan.Funding.Payer)
-	if e != nil {
-		return nil, e
-	}
-	o.plan.Funding.SigNonce = nonce
-	o.plan.Funding.Deadline = new(big.Int).SetUint64(o.plan.Deadline)
-	typed, e := o.fundingTypedData()
-	if e != nil {
-		return nil, e
+	typed, err := o.fundingRequest(ctx)
+	if err != nil {
+		return nil, err
 	}
 	signer := o.session.options.FundingSigner
+	if signer == nil {
+		return nil, &MissingCapabilityError{Capability: "EVM funding signer"}
+	}
 	if signer.Address() != o.plan.Funding.Payer {
 		return nil, errors.New("funding signer differs from payer")
 	}
-	signingData, e := frozen(typed)
-	if e != nil {
-		return nil, e
+	copied, err := frozen(typed)
+	if err != nil {
+		return nil, err
 	}
-	signature, e := signer.SignTypedData(ctx, signingData)
-	if e != nil {
-		return nil, e
+	signature, err := signer.SignTypedData(ctx, copied)
+	if err != nil {
+		return nil, err
 	}
-	verifier := o.session.options.FundingVerifier
-	if verifier == nil {
-		verifier = GethFundingVerifier{Provider: o.session.options.Provider}
+	if err = o.attachFunding(ctx, signature); err != nil {
+		return nil, err
 	}
-	verificationData, e := frozen(typed)
-	if e != nil {
-		return nil, e
-	}
-	valid, e := verifier.VerifyTypedData(ctx, o.plan.Funding.Payer, verificationData, append([]byte(nil), signature...))
-	if e != nil {
-		return nil, e
-	}
-	if !valid {
-		return nil, errors.New("invalid EVM funding signature")
-	}
-	o.plan.Funding.Signature = append([]byte(nil), signature...)
-	if e = o.encode(); e != nil {
-		return nil, e
-	}
-	o.status = "ready"
-	return o, o.persist(ctx, o.status)
+	return o, nil
 }
 func (o *Operation) shieldParams() protocol.BuildShieldCalldataParams {
 	outputs := []protocol.ShieldOutput{}

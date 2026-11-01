@@ -6,14 +6,15 @@ import (
 	"fmt"
 )
 
-// ExportPayloadKey discloses only the selected envelope's symmetric key.
+// ExportPayloadKey discloses the selected output's full plaintext, including its amount and payload.
+// Funds disclosure also enables spend tracking and a full sweep back to the original owner.
 // Callers must authenticate that envelope with the viewing key before exporting it.
 func ExportPayloadKey(private, envelope []byte, credit bool) ([]byte, error) {
-	length, version, domain := 160, byte(2), ordinaryNoteDomain
+	length, version, domain := 160, byte(0x01), ordinaryNoteDomain
 	if credit {
-		length, version, domain = 498, 5, creditNoteDomain
+		length, version, domain = 498, 0x81, creditNoteDomain
 	}
-	if (len(envelope) < length || len(envelope) > length+MaxMemoBytes) || envelope[0] != version {
+	if (len(envelope) < length || len(envelope) > MaxCiphertextBytes) || envelope[0] != version {
 		return nil, fmt.Errorf("unsupported delivery envelope")
 	}
 	public, e := ViewingPublicKey(private)
@@ -24,10 +25,10 @@ func ExportPayloadKey(private, envelope []byte, credit bool) ([]byte, error) {
 }
 func openPayload(key, envelope []byte, context NoteDecryptionContext, version, role byte) ([]byte, error) {
 	length, domain := 160, ordinaryNoteDomain
-	if version == 5 {
+	if version == 0x81 {
 		length, domain = 498, creditNoteDomain
 	}
-	if len(key) != 32 || (len(envelope) < length || len(envelope) > length+MaxMemoBytes) || envelope[0] != version {
+	if len(key) != 32 || (len(envelope) < length || len(envelope) > MaxCiphertextBytes) || envelope[0] != version {
 		return nil, fmt.Errorf("invalid payload key or envelope")
 	}
 	aad, e := envelopeAAD(domain, context.NoteEncryptionContext, context.TokenAddress, envelope[:62], role)
@@ -45,7 +46,7 @@ func openPayload(key, envelope []byte, context NoteDecryptionContext, version, r
 	return aead.Open(nil, envelope[50:62], envelope[62:], aad)
 }
 func DecryptNotePayload(key, envelope []byte, context NoteDecryptionContext) (Note, error) {
-	plain, e := openPayload(key, envelope, context, 2, 0)
+	plain, e := openPayload(key, envelope, context, 0x01, 0)
 	if e != nil {
 		return Note{}, e
 	}
@@ -57,7 +58,7 @@ func DecryptCreditPayload(key, envelope []byte, context CreditNoteDecryptionCont
 	if e != nil {
 		return CreditDeliveryState{}, e
 	}
-	plain, e := openPayload(key, envelope, context.NoteDecryptionContext, 5, role)
+	plain, e := openPayload(key, envelope, context.NoteDecryptionContext, 0x81, role)
 	if e != nil {
 		return CreditDeliveryState{}, e
 	}

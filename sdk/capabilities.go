@@ -107,6 +107,13 @@ func verifyTypedData(ctx context.Context, provider Provider, address common.Addr
 
 // recoverTypedDataSigner accepts the recoverable geth and EVM signature forms.
 func recoverTypedDataSigner(digest, signature []byte) (common.Address, bool) {
+	if len(signature) == 64 {
+		expanded := make([]byte, 65)
+		copy(expanded, signature)
+		expanded[64] = expanded[32] >> 7
+		expanded[32] &= 0x7f
+		signature = expanded
+	}
 	if len(signature) != 65 {
 		return common.Address{}, false
 	}

@@ -10,13 +10,13 @@ import (
 )
 
 // Explicit canonical field serialization avoids exposing gnark's internal Montgomery limbs.
-func fieldsJSON(values map[string]fr.Element, memo []byte) ([]byte, error) {
-	if err := ValidateMemo(memo); err != nil {
+func fieldsJSON(values map[string]fr.Element, payload []byte) ([]byte, error) {
+	if err := ValidatePayload(payload); err != nil {
 		return nil, err
 	}
 	out := map[string]string{}
-	if len(memo) > 0 {
-		out["memo"] = base64.StdEncoding.EncodeToString(memo)
+	if len(payload) > 0 {
+		out["payload"] = base64.StdEncoding.EncodeToString(payload)
 	}
 	for name, value := range values {
 		out[name] = value.String()
@@ -43,7 +43,7 @@ func parseFields(data []byte, names ...string) (map[string]fr.Element, error) {
 	return result, nil
 }
 func (n Note) MarshalJSON() ([]byte, error) {
-	return fieldsJSON(map[string]fr.Element{"chainId": n.ChainID, "protocolAddress": n.ProtocolAddress, "walletIdentity": n.WalletIdentity, "tokenAddress": n.TokenAddress, "amount": n.Amount, "nonce": n.Nonce}, n.Memo)
+	return fieldsJSON(map[string]fr.Element{"chainId": n.ChainID, "protocolAddress": n.ProtocolAddress, "walletIdentity": n.WalletIdentity, "tokenAddress": n.TokenAddress, "amount": n.Amount, "nonce": n.Nonce}, n.Payload)
 }
 func (n *Note) UnmarshalJSON(data []byte) error {
 	v, e := parseFields(data, "chainId", "protocolAddress", "walletIdentity", "tokenAddress", "amount", "nonce")
@@ -51,11 +51,11 @@ func (n *Note) UnmarshalJSON(data []byte) error {
 		return e
 	}
 	*n = Note{ProtocolContext{v["chainId"], v["protocolAddress"]}, v["walletIdentity"], v["tokenAddress"], v["amount"], v["nonce"], nil}
-	n.Memo, e = parseMemoJSON(data)
+	n.Payload, e = parsePayloadJSON(data)
 	return e
 }
 func (n CreditNote) MarshalJSON() ([]byte, error) {
-	return fieldsJSON(map[string]fr.Element{"chainId": n.ChainID, "protocolAddress": n.ProtocolAddress, "spenderWalletIdentity": n.SpenderWalletIdentity, "ownerWalletIdentity": n.OwnerWalletIdentity, "spenderPayout": n.SpenderPayout, "ownerPayout": n.OwnerPayout, "tokenAddress": n.TokenAddress, "amount": n.Amount, "nonce": n.Nonce, "expiry": n.Expiry, "creditSharedKey": n.CreditSharedKey, "singleLimit": n.SingleLimit, "dailyLimit": n.DailyLimit, "monthlyLimit": n.MonthlyLimit, "lastDay": n.LastDay, "dailySpent": n.DailySpent, "lastMonth": n.LastMonth, "monthlySpent": n.MonthlySpent}, n.Memo)
+	return fieldsJSON(map[string]fr.Element{"chainId": n.ChainID, "protocolAddress": n.ProtocolAddress, "spenderWalletIdentity": n.SpenderWalletIdentity, "ownerWalletIdentity": n.OwnerWalletIdentity, "spenderPayout": n.SpenderPayout, "ownerPayout": n.OwnerPayout, "tokenAddress": n.TokenAddress, "amount": n.Amount, "nonce": n.Nonce, "expiry": n.Expiry, "creditSharedKey": n.CreditSharedKey, "singleLimit": n.SingleLimit, "dailyLimit": n.DailyLimit, "monthlyLimit": n.MonthlyLimit, "lastDay": n.LastDay, "dailySpent": n.DailySpent, "lastMonth": n.LastMonth, "monthlySpent": n.MonthlySpent}, n.Payload)
 }
 func (n *CreditNote) UnmarshalJSON(data []byte) error {
 	v, e := parseFields(data, "chainId", "protocolAddress", "spenderWalletIdentity", "ownerWalletIdentity", "spenderPayout", "ownerPayout", "tokenAddress", "amount", "nonce", "expiry", "creditSharedKey")
@@ -83,19 +83,19 @@ func (n *CreditNote) UnmarshalJSON(data []byte) error {
 	if e = ValidateCreditSpendingState(n.CreditSpendingState); e != nil {
 		return e
 	}
-	n.Memo, e = parseMemoJSON(data)
+	n.Payload, e = parsePayloadJSON(data)
 	return e
 }
 
-func parseMemoJSON(data []byte) ([]byte, error) {
+func parsePayloadJSON(data []byte) ([]byte, error) {
 	var input struct {
-		Memo []byte `json:"memo"`
+		Payload []byte `json:"payload"`
 	}
 	if err := json.Unmarshal(data, &input); err != nil {
 		return nil, err
 	}
-	if err := ValidateMemo(input.Memo); err != nil {
+	if err := ValidatePayload(input.Payload); err != nil {
 		return nil, err
 	}
-	return CloneMemo(input.Memo), nil
+	return CloneMemo(input.Payload), nil
 }

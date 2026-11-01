@@ -38,8 +38,8 @@ type DisclosureOutput struct {
 }
 type CreditOpening struct {
 	core.CreditSpendingState
-	// Memo is present only after authenticating a payload-key disclosure.
-	Memo []byte
+	// Payload is present only after authenticating a payload-key disclosure.
+	Payload []byte
 	core.ProtocolContext
 	SpenderWalletIdentity, OwnerWalletIdentity, SpenderPayout, OwnerPayout, TokenAddress, Amount, Nonce, Expiry fr.Element
 	CreditSharedKeyHash                                                                                         common.Hash
@@ -50,7 +50,7 @@ type DisclosureResult struct {
 	Credit *CreditOpening
 }
 type DisclosureScope struct {
-	RevealsMemo                                                                             bool
+	RevealsPayload                                                                          bool
 	Version                                                                                 int
 	Kind, Method                                                                            string
 	PermitsOwnerSweep, RevealsNoteConsumption, RevealsCreditSharedKey, RevealsReceivingKeys bool
@@ -65,7 +65,7 @@ func (d *Disclosure) GetScope() DisclosureScope {
 		PermitsOwnerSweep: d.material.Kind == "note", RevealsNoteConsumption: d.material.Kind == "note",
 		RevealsCreditSharedKey: d.material.Kind == "credit" && d.material.Method == "payload-key",
 		RevealsReceivingKeys:   d.material.Kind == "credit" && d.material.Method == "payload-key",
-		RevealsMemo:            d.material.Method == "payload-key",
+		RevealsPayload:         d.material.Method == "payload-key",
 	}
 }
 func (d *Disclosure) Export() DisclosureExport {
@@ -295,7 +295,7 @@ func (d *Disclosure) Verify(output DisclosureOutput) (DisclosureResult, error) {
 }
 func creditOpening(note core.CreditNote) (CreditOpening, error) {
 	hash, e := core.ComputeCreditSharedKeyHash(note.CreditSharedKey)
-	return CreditOpening{CreditSpendingState: note.CreditSpendingState, ProtocolContext: note.ProtocolContext, SpenderWalletIdentity: note.SpenderWalletIdentity, OwnerWalletIdentity: note.OwnerWalletIdentity, SpenderPayout: note.SpenderPayout, OwnerPayout: note.OwnerPayout, TokenAddress: note.TokenAddress, Amount: note.Amount, Nonce: note.Nonce, Expiry: note.Expiry, CreditSharedKeyHash: fieldHash(hash), Memo: core.CloneMemo(note.Memo)}, e
+	return CreditOpening{CreditSpendingState: note.CreditSpendingState, ProtocolContext: note.ProtocolContext, SpenderWalletIdentity: note.SpenderWalletIdentity, OwnerWalletIdentity: note.OwnerWalletIdentity, SpenderPayout: note.SpenderPayout, OwnerPayout: note.OwnerPayout, TokenAddress: note.TokenAddress, Amount: note.Amount, Nonce: note.Nonce, Expiry: note.Expiry, CreditSharedKeyHash: fieldHash(hash), Payload: clonePayload(note.Payload)}, e
 }
 func (v *ViewingCapability) DiscloseNote(envelope []byte, context core.NoteDecryptionContext) (*Disclosure, error) {
 	if _, e := v.decryptNote(envelope, context); e != nil {

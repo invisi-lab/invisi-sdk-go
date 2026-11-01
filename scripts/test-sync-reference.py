@@ -13,6 +13,27 @@ PROTOCOL = ROOT.parent / "invisi-protocol"
 TS = ROOT.parent / "invisi-sdk-ts"
 
 class SynchronizationTests(unittest.TestCase):
+    def test_wallet_vectors_require_current_authenticated_envelopes(self):
+        before = (ROOT / "prover/native/circuits/manifest.json").read_bytes()
+        with tempfile.TemporaryDirectory(prefix="invisi-envelope-sync-test-") as directory:
+            checkout = pathlib.Path(directory)
+            for relative in ("packages/prover/circuits", "packages/sdk/src/data", "packages/protocol/src"):
+                destination = checkout / relative
+                destination.parent.mkdir(parents=True, exist_ok=True)
+                destination.symlink_to(TS / relative, target_is_directory=True)
+            destination = checkout / "packages/core/src/testdata"
+            destination.mkdir(parents=True)
+            for path in (TS / "packages/core/src/testdata").iterdir():
+                if path.name != "wallet-note-vectors.json":
+                    (destination / path.name).symlink_to(path)
+            vectors = json.loads((TS / "packages/core/src/testdata/wallet-note-vectors.json").read_text())
+            vectors["credit"]["deliverySource"]["envelopeVersion"] = 5
+            (destination / "wallet-note-vectors.json").write_text(json.dumps(vectors))
+            result = subprocess.run([sys.executable, "-O", str(ROOT / "scripts/sync-reference.py"), str(checkout), str(PROTOCOL)], capture_output=True)
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn(b"retired/unauthenticated delivery vector", result.stderr)
+        self.assertEqual(before, (ROOT / "prover/native/circuits/manifest.json").read_bytes())
+
     def test_stale_credit_gas_fingerprint_rejected_before_writes(self):
         before = (ROOT / "sdk/data/gas-benchmarks.json").read_bytes()
         with tempfile.TemporaryDirectory(prefix="invisi-gas-sync-test-") as directory:

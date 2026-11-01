@@ -78,6 +78,9 @@ type testProver struct {
 func (p *testProver) Prove(_ context.Context, r prover.ProvingRequest, _ prover.Options) (prover.ProofBundle, error) {
 	p.requests = append(p.requests, r)
 	proof := make([]byte, 32)
+	if r.Target == "noir-recursive" {
+		proof = make([]byte, 458*32)
+	}
 	proof[31] = 1
 	hash := sha256.Sum256(proof)
 	inputs := append([]common.Hash(nil), r.ExpectedPublicInputs...)
@@ -269,7 +272,7 @@ func TestTransferStagesReserveInputsAndAssembleCurrentWitness(t *testing.T) {
 func TestResumeFencesPreviousWorkerAndRequiresFreshAuthorization(t *testing.T) {
 	ctx := context.Background()
 	session, token, _ := testSession(t)
-	prepared, e := session.PrepareWithdraw(ctx, WithdrawalPreparation{TokenAddress: token, To: session.wallet.identity, Amount: big.NewInt(30)})
+	prepared, e := session.PrepareTransfer(ctx, TransferPreparation{TokenAddress: token, Withdrawal: &Withdrawal{To: session.wallet.identity, Amount: big.NewInt(30)}})
 	if e != nil {
 		t.Fatal(e)
 	}
@@ -297,7 +300,7 @@ func TestProofForAnotherStatementIsRejected(t *testing.T) {
 	ctx := context.Background()
 	session, token, backend := testSession(t)
 	backend.alter = true
-	prepared, e := session.PrepareWithdraw(ctx, WithdrawalPreparation{TokenAddress: token, To: session.wallet.identity, Amount: big.NewInt(30)})
+	prepared, e := session.PrepareTransfer(ctx, TransferPreparation{TokenAddress: token, Withdrawal: &Withdrawal{To: session.wallet.identity, Amount: big.NewInt(30)}})
 	if e != nil {
 		t.Fatal(e)
 	}
@@ -318,7 +321,7 @@ func TestViewOnlySweepUsesFullOwnerPayoutWithoutSignature(t *testing.T) {
 	ctx := context.Background()
 	session, token, _ := testSession(t)
 	session.authorization = nil
-	prepared, e := session.PrepareSweep(ctx, SweepPreparation{TokenAddress: token})
+	prepared, e := session.PrepareTransfer(ctx, TransferPreparation{TokenAddress: token, Withdrawal: &Withdrawal{To: session.wallet.identity, Amount: big.NewInt(100)}})
 	if e != nil {
 		t.Fatal(e)
 	}
@@ -422,7 +425,7 @@ func TestRegistryUsesOwnerSignatureAndIndependentNonce(t *testing.T) {
 	ctx := context.Background()
 	session, _, backend := testSession(t)
 	registry := testRegistry(t, session, false)
-	prepared, err := registry.PrepareRegistration(ctx, RegistrationPreparation{Wallet: session.wallet})
+	prepared, err := registry.PrepareRegistration(ctx, RegistrationPreparation{Wallet: session.wallet.PublicWallet})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -432,7 +435,7 @@ func TestRegistryUsesOwnerSignatureAndIndependentNonce(t *testing.T) {
 	if _, err = prepared.ExportTransaction(ctx); err == nil {
 		t.Fatal("unsigned registration exported")
 	}
-	ready, err := prepared.Authorize(ctx)
+	ready, err := prepared.WithSignature(ctx, signRegistry(t, prepared, session.wallet))
 	if err != nil {
 		t.Fatal(err)
 	}

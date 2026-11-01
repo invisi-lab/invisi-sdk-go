@@ -1,0 +1,6 @@
+accounts.json
+accounts.*.json
+!accounts.example.json
+wallet.sqlite*
+*.sqlite*
+bin/

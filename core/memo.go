@@ -49,27 +49,27 @@ func CloneMemo(memo []byte) []byte {
 	return append(make([]byte, 0, len(memo)), memo...)
 }
 
-// Clone returns an independent note including its memo.
-func (n Note) Clone() Note { n.Memo = CloneMemo(n.Memo); return n }
+// Clone returns an independent note including its opaque payload.
+func (n Note) Clone() Note { n.Payload = CloneMemo(n.Payload); return n }
 
-// Clone returns an independent Credit note including its memo.
-func (n CreditNote) Clone() CreditNote { n.Memo = CloneMemo(n.Memo); return n }
+// Clone returns an independent Credit note including its opaque payload.
+func (n CreditNote) Clone() CreditNote { n.Payload = CloneMemo(n.Payload); return n }
 
 // Equal compares the preimage and optional delivery metadata.
 func (n Note) Equal(other Note) bool {
-	return n.ProtocolContext == other.ProtocolContext && n.WalletIdentity == other.WalletIdentity && n.TokenAddress == other.TokenAddress && n.Amount == other.Amount && n.Nonce == other.Nonce && bytes.Equal(n.Memo, other.Memo)
+	return n.ProtocolContext == other.ProtocolContext && n.WalletIdentity == other.WalletIdentity && n.TokenAddress == other.TokenAddress && n.Amount == other.Amount && n.Nonce == other.Nonce && bytes.Equal(n.Payload, other.Payload)
 }
-func appendMemo(plain, memo []byte) []byte {
-	plain = binary.BigEndian.AppendUint16(plain, uint16(len(memo)))
-	return append(plain, memo...)
+func appendPayload(plain, payload []byte) []byte {
+	plain = binary.BigEndian.AppendUint16(plain, uint16(len(payload)))
+	return append(plain, payload...)
 }
-func readMemo(plain []byte, base int) ([]byte, error) {
+func readPayload(plain []byte, base int) ([]byte, error) {
 	if len(plain) < base+2 {
-		return nil, fmt.Errorf("missing memo length")
+		return nil, fmt.Errorf("missing payload length")
 	}
 	length := int(binary.BigEndian.Uint16(plain[base : base+2]))
-	if length > MaxMemoBytes || len(plain) != base+2+length {
-		return nil, fmt.Errorf("invalid memo length")
+	if len(plain) != base+2+length {
+		return nil, fmt.Errorf("invalid payload length")
 	}
 	if length == 0 {
 		return nil, nil

@@ -149,11 +149,9 @@ func (d *Decoder) Decode(block Block, logs []types.Log) (batch Batch, err error)
 		m, l := e.values, e.log
 		addNull := func(v any) { batch.Nullifiers = append(batch.Nullifiers, hashes(v)...) }
 		add := func(id uint64, leaf uint32, c common.Hash, token common.Address, v delivery, credit bool) error {
-			minimum, version := 160, byte(2)
-			if credit {
-				minimum, version = 498, 5
-			}
-			if len(v.Ciphertext) < minimum || len(v.Ciphertext) > minimum+256 || v.Ciphertext[0] != version || len(v.Clue) != 68 || v.Clue[64] != 24 {
+			// Receipt transport preserves opaque envelopes. The selected wallet
+			// authenticates its own fixed envelope version when decrypting.
+			if len(v.Ciphertext) == 0 || len(v.Ciphertext) > 4096 || len(v.Clue) != 68 || v.Clue[64] != 24 {
 				return fmt.Errorf("%s: invalid delivery envelope or clue", e.name)
 			}
 			if actual, ok := inserted[location{l.TxHash, id, leaf}]; !ok || actual != c {
@@ -180,7 +178,7 @@ func (d *Decoder) Decode(block Block, logs []types.Log) (batch Batch, err error)
 				}
 				length := int(binary.BigEndian.Uint16(p[:2]))
 				p = p[2:]
-				if length < 160 || length > 416 || len(p) < length+68 {
+				if length < 1 || length > 4096 || len(p) < length+68 {
 					return Batch{}, fmt.Errorf("BatchOutputs: invalid or truncated delivery length")
 				}
 				if err = add(id, m["startLeafIndex"].(uint32)+uint32(i), c, ts[i], delivery{p[:length], p[length : length+68]}, false); err != nil {

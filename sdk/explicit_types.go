@@ -24,7 +24,7 @@ type CreditInput struct {
 	Role       string
 }
 type TransactionIdentity struct {
-	Wallet   *Wallet
+	Wallet   *PublicWallet
 	Protocol *protocol.Protocol
 }
 type ExplicitFunds struct {
@@ -34,16 +34,6 @@ type ExplicitFunds struct {
 type ExplicitTransferPreparation struct {
 	TransactionIdentity
 	TransferPreparation
-	ExplicitFunds
-}
-type ExplicitWithdrawalPreparation struct {
-	TransactionIdentity
-	WithdrawalPreparation
-	ExplicitFunds
-}
-type ExplicitSweepPreparation struct {
-	TransactionIdentity
-	SweepPreparation
 	ExplicitFunds
 }
 type ExplicitShieldPreparation struct {

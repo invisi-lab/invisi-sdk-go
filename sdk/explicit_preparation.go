@@ -66,7 +66,8 @@ func (i *Invisi) explicit(ctx context.Context, identity TransactionIdentity, fun
 	return session, nil
 }
 
-func (i *Invisi) PrepareTransfer(ctx context.Context, input ExplicitTransferPreparation) (*PreparedTransaction, error) {
+func (i *Invisi) PrepareTransfer(ctx context.Context, input ExplicitTransferPreparation) (result *PreparedTransaction, failure error) {
+	defer func() { failure = wrapPreparation("prepareTransfer", failure) }()
 	identity := input.TransactionIdentity
 	input.TransactionIdentity = TransactionIdentity{}
 	input, err := frozen(input)
@@ -80,35 +81,8 @@ func (i *Invisi) PrepareTransfer(ctx context.Context, input ExplicitTransferPrep
 	return detached(session.PrepareTransfer(ctx, input.TransferPreparation))
 }
 
-func (i *Invisi) PrepareWithdraw(ctx context.Context, input ExplicitWithdrawalPreparation) (*PreparedTransaction, error) {
-	identity := input.TransactionIdentity
-	input.TransactionIdentity = TransactionIdentity{}
-	input, err := frozen(input)
-	if err != nil {
-		return nil, err
-	}
-	session, err := i.explicit(ctx, identity, input.ExplicitFunds, nil)
-	if err != nil {
-		return nil, err
-	}
-	return detached(session.PrepareWithdraw(ctx, input.WithdrawalPreparation))
-}
-
-func (i *Invisi) PrepareSweep(ctx context.Context, input ExplicitSweepPreparation) (*PreparedTransaction, error) {
-	identity := input.TransactionIdentity
-	input.TransactionIdentity = TransactionIdentity{}
-	input, err := frozen(input)
-	if err != nil {
-		return nil, err
-	}
-	session, err := i.explicit(ctx, identity, input.ExplicitFunds, nil)
-	if err != nil {
-		return nil, err
-	}
-	return detached(session.PrepareSweep(ctx, input.SweepPreparation))
-}
-
-func (i *Invisi) PrepareShield(ctx context.Context, input ExplicitShieldPreparation) (*PreparedTransaction, error) {
+func (i *Invisi) PrepareShield(ctx context.Context, input ExplicitShieldPreparation) (result *PreparedTransaction, failure error) {
+	defer func() { failure = wrapPreparation("prepareShield", failure) }()
 	identity := input.TransactionIdentity
 	input.TransactionIdentity = TransactionIdentity{}
 	input, err := frozen(input)
@@ -122,7 +96,8 @@ func (i *Invisi) PrepareShield(ctx context.Context, input ExplicitShieldPreparat
 	return detached(session.PrepareShield(ctx, input.ShieldPreparation))
 }
 
-func (i *Invisi) PrepareCreateCredit(ctx context.Context, input ExplicitCreateCreditPreparation) (*PreparedTransaction, error) {
+func (i *Invisi) PrepareCreateCredit(ctx context.Context, input ExplicitCreateCreditPreparation) (result *PreparedTransaction, failure error) {
+	defer func() { failure = wrapPreparation("prepareCreateCredit", failure) }()
 	identity := input.TransactionIdentity
 	input.TransactionIdentity = TransactionIdentity{}
 	input, err := frozen(input)
@@ -136,7 +111,8 @@ func (i *Invisi) PrepareCreateCredit(ctx context.Context, input ExplicitCreateCr
 	return detached(session.PrepareCreateCredit(ctx, input.CreateCreditPreparation))
 }
 
-func (i *Invisi) PrepareDrawCredit(ctx context.Context, input ExplicitDrawCreditPreparation) (*PreparedTransaction, error) {
+func (i *Invisi) PrepareDrawCredit(ctx context.Context, input ExplicitDrawCreditPreparation) (result *PreparedTransaction, failure error) {
+	defer func() { failure = wrapPreparation("prepareDrawCredit", failure) }()
 	identity := input.TransactionIdentity
 	input.TransactionIdentity = TransactionIdentity{}
 	input, err := frozen(input)
@@ -150,7 +126,8 @@ func (i *Invisi) PrepareDrawCredit(ctx context.Context, input ExplicitDrawCredit
 	return detached(session.PrepareDrawCredit(ctx, input.DrawCreditPreparation))
 }
 
-func (i *Invisi) PrepareTopUpCredit(ctx context.Context, input ExplicitTopUpCreditPreparation) (*PreparedTransaction, error) {
+func (i *Invisi) PrepareTopUpCredit(ctx context.Context, input ExplicitTopUpCreditPreparation) (result *PreparedTransaction, failure error) {
+	defer func() { failure = wrapPreparation("prepareTopUpCredit", failure) }()
 	identity := input.TransactionIdentity
 	input.TransactionIdentity = TransactionIdentity{}
 	input, err := frozen(input)
@@ -164,7 +141,8 @@ func (i *Invisi) PrepareTopUpCredit(ctx context.Context, input ExplicitTopUpCred
 	return detached(session.PrepareTopUpCredit(ctx, input.TopUpCreditPreparation))
 }
 
-func (i *Invisi) PrepareCancelCredit(ctx context.Context, input ExplicitCancelCreditPreparation) (*PreparedTransaction, error) {
+func (i *Invisi) PrepareCancelCredit(ctx context.Context, input ExplicitCancelCreditPreparation) (result *PreparedTransaction, failure error) {
+	defer func() { failure = wrapPreparation("prepareCancelCredit", failure) }()
 	identity := input.TransactionIdentity
 	input.TransactionIdentity = TransactionIdentity{}
 	input, err := frozen(input)

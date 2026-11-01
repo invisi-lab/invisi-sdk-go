@@ -11,7 +11,10 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 )
 
-type aggregateBackend struct{ calls int }
+type aggregateBackend struct {
+	calls    int
+	onVerify func()
+}
 
 func (b *aggregateBackend) Prove(_ context.Context, r ProvingRequest, _ Options) (ProofBundle, error) {
 	b.calls++
@@ -21,6 +24,11 @@ func (b *aggregateBackend) Prove(_ context.Context, r ProvingRequest, _ Options)
 	return ProofBundle{FormatVersion: 1, CircuitName: r.CircuitName, Target: r.Target, BBVersion: "6.0.0", ArtifactSHA256: r.ArtifactSHA256, VKSHA256: r.VKSHA256, Proof: proof, ProofSHA256: hex.EncodeToString(hash[:]), PublicInputs: append([]common.Hash(nil), r.ExpectedPublicInputs...)}, nil
 }
 func (b *aggregateBackend) Verify(context.Context, ProofBundle, ProofStatement, Options) (bool, error) {
+	if b.onVerify != nil {
+		f := b.onVerify
+		b.onVerify = nil
+		f()
+	}
 	return true, nil
 }
 func TestAggregateAssemblesAuthenticatedRecursiveSchemaAndRejectsDuplicateSpends(t *testing.T) {
@@ -53,10 +61,13 @@ func TestAggregateAssemblesAuthenticatedRecursiveSchemaAndRejectsDuplicateSpends
 		hash := sha256.Sum256(proof)
 		members = append(members, AggregateMember{Statement: statement, Bundle: ProofBundle{FormatVersion: 1, CircuitName: statement.CircuitName, Target: statement.Target, BBVersion: "6.0.0", ArtifactSHA256: statement.ArtifactSHA256, VKSHA256: statement.VKSHA256, PublicInputs: row, Proof: proof, ProofSHA256: hex.EncodeToString(hash[:])}})
 	}
+	original := members[1].Bundle.Proof[0]
+	backend.onVerify = func() { members[1].Bundle.Proof[0] = 255 }
 	result, e := aggregator.Aggregate(context.Background(), members)
 	if e != nil || len(result.PublicInputs) != 229 || backend.calls != 1 {
 		t.Fatal(result.CircuitName, e)
 	}
+	members[1].Bundle.Proof[0] = original
 	members[1] = members[0]
 	if _, e = aggregator.Aggregate(context.Background(), members); e == nil {
 		t.Fatal("duplicate spend aggregated")

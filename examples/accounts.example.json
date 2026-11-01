@@ -1,0 +1,74 @@
+{
+  "accounts": [
+    {
+      "name": "Alice",
+      "privateKey": "REPLACE_WITH_0x_PREFIXED_32_BYTE_ACCOUNT_KEY",
+      "address": "REPLACE_WITH_MATCHING_EVM_OWNER_ADDRESS",
+      "receivingAddress": "REPLACE_WITH_MATCHING_LONG_INVISI_RECEIVING_ADDRESS",
+      "viewingPrivateKey": "REPLACE_WITH_MATCHING_0x_PREFIXED_32_BYTE_VIEWING_KEY"
+    },
+    {
+      "name": "Bob",
+      "privateKey": "REPLACE_WITH_0x_PREFIXED_32_BYTE_ACCOUNT_KEY",
+      "address": "REPLACE_WITH_MATCHING_EVM_OWNER_ADDRESS",
+      "receivingAddress": "REPLACE_WITH_MATCHING_LONG_INVISI_RECEIVING_ADDRESS",
+      "viewingPrivateKey": "REPLACE_WITH_MATCHING_0x_PREFIXED_32_BYTE_VIEWING_KEY"
+    },
+    {
+      "name": "Charlie",
+      "privateKey": "REPLACE_WITH_0x_PREFIXED_32_BYTE_ACCOUNT_KEY",
+      "address": "REPLACE_WITH_MATCHING_EVM_OWNER_ADDRESS",
+      "receivingAddress": "REPLACE_WITH_MATCHING_LONG_INVISI_RECEIVING_ADDRESS",
+      "viewingPrivateKey": "REPLACE_WITH_MATCHING_0x_PREFIXED_32_BYTE_VIEWING_KEY"
+    },
+    {
+      "name": "Dave",
+      "privateKey": "REPLACE_WITH_0x_PREFIXED_32_BYTE_ACCOUNT_KEY",
+      "address": "REPLACE_WITH_MATCHING_EVM_OWNER_ADDRESS",
+      "receivingAddress": "REPLACE_WITH_MATCHING_LONG_INVISI_RECEIVING_ADDRESS",
+      "viewingPrivateKey": "REPLACE_WITH_MATCHING_0x_PREFIXED_32_BYTE_VIEWING_KEY"
+    },
+    {
+      "name": "Eve",
+      "privateKey": "REPLACE_WITH_0x_PREFIXED_32_BYTE_ACCOUNT_KEY",
+      "address": "REPLACE_WITH_MATCHING_EVM_OWNER_ADDRESS",
+      "receivingAddress": "REPLACE_WITH_MATCHING_LONG_INVISI_RECEIVING_ADDRESS",
+      "viewingPrivateKey": "REPLACE_WITH_MATCHING_0x_PREFIXED_32_BYTE_VIEWING_KEY"
+    },
+    {
+      "name": "Frank",
+      "privateKey": "REPLACE_WITH_0x_PREFIXED_32_BYTE_ACCOUNT_KEY",
+      "address": "REPLACE_WITH_MATCHING_EVM_OWNER_ADDRESS",
+      "receivingAddress": "REPLACE_WITH_MATCHING_LONG_INVISI_RECEIVING_ADDRESS",
+      "viewingPrivateKey": "REPLACE_WITH_MATCHING_0x_PREFIXED_32_BYTE_VIEWING_KEY"
+    },
+    {
+      "name": "Grace",
+      "privateKey": "REPLACE_WITH_0x_PREFIXED_32_BYTE_ACCOUNT_KEY",
+      "address": "REPLACE_WITH_MATCHING_EVM_OWNER_ADDRESS",
+      "receivingAddress": "REPLACE_WITH_MATCHING_LONG_INVISI_RECEIVING_ADDRESS",
+      "viewingPrivateKey": "REPLACE_WITH_MATCHING_0x_PREFIXED_32_BYTE_VIEWING_KEY"
+    },
+    {
+      "name": "Heidi",
+      "privateKey": "REPLACE_WITH_0x_PREFIXED_32_BYTE_ACCOUNT_KEY",
+      "address": "REPLACE_WITH_MATCHING_EVM_OWNER_ADDRESS",
+      "receivingAddress": "REPLACE_WITH_MATCHING_LONG_INVISI_RECEIVING_ADDRESS",
+      "viewingPrivateKey": "REPLACE_WITH_MATCHING_0x_PREFIXED_32_BYTE_VIEWING_KEY"
+    },
+    {
+      "name": "Ivan",
+      "privateKey": "REPLACE_WITH_0x_PREFIXED_32_BYTE_ACCOUNT_KEY",
+      "address": "REPLACE_WITH_MATCHING_EVM_OWNER_ADDRESS",
+      "receivingAddress": "REPLACE_WITH_MATCHING_LONG_INVISI_RECEIVING_ADDRESS",
+      "viewingPrivateKey": "REPLACE_WITH_MATCHING_0x_PREFIXED_32_BYTE_VIEWING_KEY"
+    },
+    {
+      "name": "Judy",
+      "privateKey": "REPLACE_WITH_0x_PREFIXED_32_BYTE_ACCOUNT_KEY",
+      "address": "REPLACE_WITH_MATCHING_EVM_OWNER_ADDRESS",
+      "receivingAddress": "REPLACE_WITH_MATCHING_LONG_INVISI_RECEIVING_ADDRESS",
+      "viewingPrivateKey": "REPLACE_WITH_MATCHING_0x_PREFIXED_32_BYTE_VIEWING_KEY"
+    }
+  ]
+}

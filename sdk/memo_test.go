@@ -24,23 +24,23 @@ func TestMemoPreparationCopiesAndPersists(t *testing.T) {
 	session, token, _ := testSession(t)
 	address, _ := session.wallet.GetAddress()
 	memo := []byte{0xff, 0, 1}
-	prepared, err := session.PrepareTransfer(context.Background(), TransferPreparation{TokenAddress: token, Outputs: []PaymentOutput{{To: address, Amount: big.NewInt(30), Memo: memo}}})
+	prepared, err := session.PrepareTransfer(context.Background(), TransferPreparation{TokenAddress: token, Outputs: []PaymentOutput{{To: address, Amount: big.NewInt(30), Payload: memo}}})
 	if err != nil {
 		t.Fatal(err)
 	}
 	memo[0] = 0
-	if !bytes.Equal(prepared.plan.Outputs[0].Note.Memo, []byte{0xff, 0, 1}) {
+	if !bytes.Equal(prepared.plan.Outputs[0].Note.Payload, []byte{0xff, 0, 1}) {
 		t.Fatal("caller memo mutation changed prepared note")
 	}
 	resumed, err := session.Resume(context.Background(), prepared.ID())
 	if err != nil {
 		t.Fatal(err)
 	}
-	if !bytes.Equal(resumed.plan.Outputs[0].Note.Memo, []byte{0xff, 0, 1}) {
+	if !bytes.Equal(resumed.plan.Outputs[0].Note.Payload, []byte{0xff, 0, 1}) {
 		t.Fatal("memo lost on resume")
 	}
 }
-func TestCreditMemosPreserveOverrideAndClear(t *testing.T) {
+func TestCreditPayloadsDoNotInheritConsumedMetadata(t *testing.T) {
 	for _, kind := range []string{"draw", "topup"} {
 		for _, override := range [][]byte{nil, {}, []byte("changed")} {
 			t.Run(kind+string(override), func(t *testing.T) {
@@ -49,7 +49,7 @@ func TestCreditMemosPreserveOverrideAndClear(t *testing.T) {
 				ctx := context.Background()
 				if err := session.options.Store.Update(ctx, session.scope, func(state *WalletState) error {
 					for key, credit := range state.Credits {
-						credit.State.Note.Memo = []byte("parent")
+						credit.State.Note.Payload = []byte("parent")
 						state.Credits[key] = credit
 					}
 					return nil
@@ -59,17 +59,14 @@ func TestCreditMemosPreserveOverrideAndClear(t *testing.T) {
 				var operation *Operation
 				var err error
 				if kind == "draw" {
-					operation, err = session.PrepareDrawCredit(ctx, DrawCreditPreparation{TokenAddress: token, Credits: []CreditDrawInput{{Credit: leaf, Amount: big.NewInt(30), Memo: override}}})
+					operation, err = session.PrepareDrawCredit(ctx, DrawCreditPreparation{TokenAddress: token, Credits: []CreditDrawInput{{Credit: leaf, Amount: big.NewInt(30), Payload: override}}})
 				} else {
-					operation, err = session.PrepareTopUpCredit(ctx, TopUpCreditPreparation{TokenAddress: token, Credit: leaf, AdditionalAmount: big.NewInt(10), Memo: override})
+					operation, err = session.PrepareTopUpCredit(ctx, TopUpCreditPreparation{TokenAddress: token, Credit: leaf, AdditionalAmount: big.NewInt(10), Payload: override})
 				}
 				if err != nil {
 					t.Fatal(err)
 				}
 				expected := override
-				if override == nil {
-					expected = []byte("parent")
-				}
 				for i, role := range []core.CreditDeliveryRole{core.CreditOwner, core.CreditSpender} {
 					commitment := leaf
 					if kind == "draw" {
@@ -78,8 +75,8 @@ func TestCreditMemosPreserveOverrideAndClear(t *testing.T) {
 						commitment = operation.plan.CreateCredit.CreditCommitment
 					}
 					decoded, err := session.viewing.DecryptCredit(operation.plan.Deliveries[i].Ciphertext, core.CreditNoteDecryptionContext{NoteDecryptionContext: core.NoteDecryptionContext{NoteEncryptionContext: core.NoteEncryptionContext{ProtocolContext: session.coreContext(), OutputCommitment: core.BigIntToElement(commitment.Big())}, TokenAddress: core.BigIntToElement(token.Big()), WalletIdentity: session.wallet.material.WalletIdentity}, Role: role})
-					if err != nil || !bytes.Equal(decoded.Note.Memo, expected) {
-						t.Fatal("memo inheritance", err, decoded.Note.Memo, expected)
+					if err != nil || !bytes.Equal(decoded.Note.Payload, expected) {
+						t.Fatal("memo inheritance", err, decoded.Note.Payload, expected)
 					}
 				}
 			})
@@ -90,13 +87,13 @@ func TestCreditCreationAndDisclosureMemoBoundary(t *testing.T) {
 	session, token, _ := testSession(t)
 	address, _ := session.wallet.GetAddress()
 	memo := []byte("invoice")
-	operation, err := session.PrepareCreateCredit(context.Background(), CreateCreditPreparation{TokenAddress: token, Spender: address, Amount: big.NewInt(70), Expiry: big.NewInt(1000), Memo: memo})
+	operation, err := session.PrepareCreateCredit(context.Background(), CreateCreditPreparation{TokenAddress: token, Spender: address, Amount: big.NewInt(70), Expiry: big.NewInt(1000), Payload: memo})
 	if err != nil {
 		t.Fatal(err)
 	}
 	memo[0] = 'x'
 	note := operation.plan.CreditOutput.Note
-	if string(note.Memo) != "invoice" {
+	if string(note.Payload) != "invoice" {
 		t.Fatal("credit memo alias")
 	}
 	opening, err := DisclosureFromCredit(note)
@@ -109,7 +106,7 @@ func TestCreditCreationAndDisclosureMemoBoundary(t *testing.T) {
 	}
 	output := DisclosureOutput{ProtocolContext: note.ProtocolContext, TokenAddress: note.TokenAddress, OutputCommitment: operation.plan.CreateCredit.CreditCommitment, Role: "owner", Ciphertext: operation.plan.Deliveries[0].Ciphertext}
 	result, err := opening.Verify(output)
-	if err != nil || len(result.Credit.Memo) != 0 {
+	if err != nil || len(result.Credit.Payload) != 0 {
 		t.Fatal("opening claimed memo", err)
 	}
 	payload, err := session.viewing.DiscloseCredit(output.Ciphertext, core.CreditNoteDecryptionContext{NoteDecryptionContext: core.NoteDecryptionContext{NoteEncryptionContext: core.NoteEncryptionContext{ProtocolContext: note.ProtocolContext, OutputCommitment: core.BigIntToElement(output.OutputCommitment.Big())}, TokenAddress: note.TokenAddress, WalletIdentity: note.OwnerWalletIdentity}, Role: core.CreditOwner})
@@ -117,7 +114,7 @@ func TestCreditCreationAndDisclosureMemoBoundary(t *testing.T) {
 		t.Fatal(err)
 	}
 	result, err = payload.Verify(output)
-	if err != nil || string(result.Credit.Memo) != "invoice" {
+	if err != nil || string(result.Credit.Payload) != "invoice" {
 		t.Fatal("payload memo lost", err)
 	}
 }
@@ -133,16 +130,16 @@ func TestMemoStoreCloneAndFundsDisclosureBoundary(t *testing.T) {
 	for _, current := range snapshot.Notes {
 		stored = current
 	}
-	stored.Note.Memo = []byte{0xff, 0, 1}
+	stored.Note.Payload = []byte{0xff, 0, 1}
 	if err := session.options.Store.Update(ctx, session.scope, func(state *WalletState) error { state.Notes[stored.Commitment] = stored; return nil }); err != nil {
 		t.Fatal(err)
 	}
-	stored.Note.Memo[0] = 1
+	stored.Note.Payload[0] = 1
 	snapshot, err = session.options.Store.ReadSnapshot(ctx, session.scope)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if snapshot.Notes[stored.Commitment].Note.Memo[0] != 0xff {
+	if snapshot.Notes[stored.Commitment].Note.Payload[0] != 0xff {
 		t.Fatal("store retained caller memo")
 	}
 	codec, err := NewEncryptedWalletCodec(make([]byte, 32))
@@ -157,9 +154,9 @@ func TestMemoStoreCloneAndFundsDisclosureBoundary(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	snapshot.Notes[stored.Commitment].Note.Memo[0] = 2
+	snapshot.Notes[stored.Commitment].Note.Payload[0] = 2
 	note := restored.Notes[stored.Commitment].Note
-	if note.Memo[0] != 0xff {
+	if note.Payload[0] != 0xff {
 		t.Fatal("encrypted storage lost or aliased memo")
 	}
 	opening, err := DisclosureFromNote(note)
@@ -168,7 +165,7 @@ func TestMemoStoreCloneAndFundsDisclosureBoundary(t *testing.T) {
 	}
 	output := DisclosureOutput{ProtocolContext: note.ProtocolContext, TokenAddress: core.BigIntToElement(token.Big()), OutputCommitment: stored.Commitment, Role: "funds"}
 	result, err := opening.Verify(output)
-	if err != nil || len(result.Note.Memo) != 0 || opening.GetScope().RevealsMemo {
+	if err != nil || len(result.Note.Payload) != 0 || opening.GetScope().RevealsPayload {
 		t.Fatal("opening claimed memo authenticity", err)
 	}
 	output.Ciphertext, err = core.EncryptPrivateTransferNote(session.viewing.GetPublicKey(), note, core.NoteEncryptionContext{ProtocolContext: note.ProtocolContext, OutputCommitment: core.BigIntToElement(stored.Commitment.Big())})
@@ -180,7 +177,7 @@ func TestMemoStoreCloneAndFundsDisclosureBoundary(t *testing.T) {
 		t.Fatal(err)
 	}
 	result, err = payload.Verify(output)
-	if err != nil || !bytes.Equal(result.Note.Memo, note.Memo) || !payload.GetScope().RevealsMemo {
+	if err != nil || !bytes.Equal(result.Note.Payload, note.Payload) || !payload.GetScope().RevealsPayload {
 		t.Fatal("payload memo not authenticated", err)
 	}
 }
@@ -215,7 +212,7 @@ func TestRefreshKeepsAuthenticatedChildMemoAndOmitsUnknownMemo(t *testing.T) {
 			leaf := seedCredit(t, session, token)
 			err := session.options.Store.Update(ctx, session.scope, func(state *WalletState) error {
 				for key, credit := range state.Credits {
-					credit.State.Note.Memo = []byte("parent")
+					credit.State.Note.Payload = []byte("parent")
 					state.Credits[key] = credit
 				}
 				return nil
@@ -223,7 +220,7 @@ func TestRefreshKeepsAuthenticatedChildMemoAndOmitsUnknownMemo(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			operation, err := session.PrepareDrawCredit(ctx, DrawCreditPreparation{TokenAddress: token, Credits: []CreditDrawInput{{Credit: leaf, Amount: big.NewInt(30), Memo: []byte("child")}}})
+			operation, err := session.PrepareDrawCredit(ctx, DrawCreditPreparation{TokenAddress: token, Credits: []CreditDrawInput{{Credit: leaf, Amount: big.NewInt(30), Payload: []byte("child")}}})
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -329,8 +326,8 @@ func TestRefreshKeepsAuthenticatedChildMemoAndOmitsUnknownMemo(t *testing.T) {
 				if corrupt {
 					expected = ""
 				}
-				if string(child.State.Note.Memo) != expected {
-					t.Fatal("wrong child memo", string(child.State.Note.Memo), expected)
+				if string(child.State.Note.Payload) != expected {
+					t.Fatal("wrong child memo", string(child.State.Note.Payload), expected)
 				}
 			}
 		})
@@ -365,7 +362,7 @@ func TestMemoPreparationSnapshotsBeforeNetworkWait(t *testing.T) {
 	}
 	result := make(chan preparedResult, 1)
 	go func() {
-		operation, err := session.PrepareTransfer(context.Background(), TransferPreparation{TokenAddress: token, Outputs: []PaymentOutput{{To: address, Amount: big.NewInt(30), Memo: memo}}})
+		operation, err := session.PrepareTransfer(context.Background(), TransferPreparation{TokenAddress: token, Outputs: []PaymentOutput{{To: address, Amount: big.NewInt(30), Payload: memo}}})
 		result <- preparedResult{operation, err}
 	}()
 	<-provider.entered
@@ -375,7 +372,7 @@ func TestMemoPreparationSnapshotsBeforeNetworkWait(t *testing.T) {
 	if prepared.err != nil {
 		t.Fatal(prepared.err)
 	}
-	if string(prepared.operation.plan.Outputs[0].Note.Memo) != "original" {
+	if string(prepared.operation.plan.Outputs[0].Note.Payload) != "original" {
 		t.Fatal("caller changed memo during network wait")
 	}
 }

@@ -131,15 +131,16 @@ func TestRegistryStagesAndExportsFencePreviousHandles(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	prepared, err := registry.PrepareRegistration(ctx, RegistrationPreparation{Wallet: session.wallet})
+	prepared, err := registry.PrepareRegistration(ctx, RegistrationPreparation{Wallet: session.wallet.PublicWallet})
 	if err != nil {
 		t.Fatal(err)
 	}
-	ready, err := prepared.Authorize(ctx)
+	signature := signRegistry(t, prepared, session.wallet)
+	ready, err := prepared.WithSignature(ctx, signature)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if _, err = prepared.Authorize(ctx); err == nil {
+	if _, err = prepared.WithSignature(ctx, signature); err == nil {
 		t.Fatal("stale registration authorized twice")
 	}
 	if _, err = ready.ExportTransaction(ctx); err != nil {

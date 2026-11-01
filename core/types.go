@@ -9,8 +9,8 @@ type ProtocolContext struct{ ChainID, ProtocolAddress fr.Element }
 type Note struct {
 	ProtocolContext
 	WalletIdentity, TokenAddress, Amount, Nonce fr.Element
-	// Memo is optional authenticated delivery metadata, excluded from commitments.
-	Memo []byte
+	// Payload is opaque authenticated application data, excluded from commitments.
+	Payload []byte
 }
 
 // CreditNote binds both wallet roles, public payout addresses and the shared recovery secret.
@@ -19,8 +19,8 @@ type CreditNote struct {
 	ProtocolContext
 	SpenderWalletIdentity, OwnerWalletIdentity, SpenderPayout, OwnerPayout fr.Element
 	TokenAddress, Amount, Nonce, Expiry, CreditSharedKey                   fr.Element
-	// Memo is optional authenticated delivery metadata, excluded from commitments.
-	Memo []byte
+	// Payload is opaque authenticated application data, excluded from commitments.
+	Payload []byte
 }
 
 // CreditRemainderRecovery contains circuit-bound fields from an authenticated draw event.

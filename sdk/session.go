@@ -24,13 +24,12 @@ type Provider interface {
 	TransactionReceipt(context.Context, common.Hash) (*types.Receipt, error)
 }
 type InvisiOptions struct {
+	AddressLookup   string
 	GasBenchmarks   []GasBenchmarkProfile
 	ProtocolRPC     *protocolrpc.ProtocolRpcClient
 	Provider        Provider
-	Signer          *bind.TransactOpts
 	Store           WalletStore
 	Prover          Prover
-	FundingSigner   FundingSigner
 	FundingVerifier FundingAuthorizationVerifier
 }
 type Invisi struct{ options InvisiOptions }
@@ -41,15 +40,25 @@ func NewInvisi(options InvisiOptions) *Invisi {
 }
 
 type ConnectionOptions struct {
-	Wallet        *Wallet
+	Signer        *bind.TransactOpts
+	FundingSigner FundingSigner
+	Wallet        WalletIdentity
 	Protocol      *protocol.Protocol
 	Namespace     string
 	Viewing       *ViewingCapability
 	Authorization WalletAuthorizationProvider
 }
+type sessionOptions struct {
+	InvisiOptions
+	Signer        *bind.TransactOpts
+	FundingSigner FundingSigner
+}
+
 type WalletSession struct {
+	history           *sessionNotifications
+	refreshGate       chan struct{}
 	sends             *sessionSendState
-	options           InvisiOptions
+	options           sessionOptions
 	wallet            *Wallet
 	protocol          *protocol.Protocol
 	scope             WalletScope
@@ -64,36 +73,55 @@ func (i *Invisi) Connect(ctx context.Context, options ConnectionOptions) (*Walle
 	if i.options.Store == nil {
 		return nil, errors.New("store required for a managed wallet session")
 	}
-	return i.resolve(ctx, options)
+	session, err := i.resolve(ctx, options)
+	if err != nil {
+		return nil, err
+	}
+	session.history = newSessionNotifications()
+	session.options.Store = &notifyingWalletStore{base: session.options.Store, notifications: session.history}
+	return session, nil
 }
 func (i *Invisi) resolve(ctx context.Context, options ConnectionOptions) (*WalletSession, error) {
 	if e := ctx.Err(); e != nil {
 		return nil, e
 	}
 	if options.Wallet == nil || options.Protocol == nil || i.options.Provider == nil || i.options.ProtocolRPC == nil {
-		return nil, errors.New("wallet, protocol, Chain RPC and Protocol RPC required")
+		return nil, &MissingCapabilityError{Capability: "wallet, protocol, Chain RPC and Protocol RPC"}
+	}
+	if local, ok := options.Wallet.(*Wallet); ok && local == nil {
+		return nil, &MissingCapabilityError{Capability: "wallet"}
+	}
+	public := options.Wallet.publicWallet()
+	if public == nil {
+		return nil, &MissingCapabilityError{Capability: "public wallet"}
+	}
+	selectedWallet := &Wallet{PublicWallet: &PublicWallet{identity: public.identity, address: public.address, keys: core.ReceivingKeys{ViewingPublicKey: append([]byte(nil), public.keys.ViewingPublicKey...), ClueKey: append([]byte(nil), public.keys.ClueKey...)}}}
+	if local, ok := options.Wallet.(*Wallet); ok {
+		selectedWallet.material = local.material
 	}
 	if e := options.Protocol.ValidateDeployment(ctx, i.options.Provider); e != nil {
 		return nil, e
 	}
-	scope := WalletScope{ChainID: options.Protocol.Context().ChainID, ProtocolAddress: options.Protocol.Context().ProtocolAddress, WalletIdentity: options.Wallet.identity, Namespace: options.Namespace}
+	scope := WalletScope{ChainID: options.Protocol.Context().ChainID, ProtocolAddress: options.Protocol.Context().ProtocolAddress, WalletIdentity: selectedWallet.identity, Namespace: options.Namespace}
 	if scope.Namespace == "" {
 		scope.Namespace = "default"
 	}
 	viewer := options.Viewing
 	if viewer == nil {
-		viewer, _ = options.Wallet.GetViewer()
+		if selectedWallet.material != nil {
+			viewer, _ = selectedWallet.GetViewer()
+		}
 	}
-	if viewer != nil && viewer.identity != options.Wallet.identity {
+	if viewer != nil && viewer.identity != selectedWallet.identity {
 		return nil, errors.New("viewing identity mismatch")
 	}
 	authority := options.Authorization
 	if authority == nil {
-		if local, err := options.Wallet.ExportAuthorization(); err == nil {
-			authority = local
+		if selectedWallet.material != nil {
+			authority, _ = selectedWallet.ExportAuthorization()
 		}
 	}
-	if authority != nil && authority.WalletIdentity() != options.Wallet.identity {
+	if authority != nil && authority.WalletIdentity() != selectedWallet.identity {
 		return nil, errors.New("authorization identity mismatch")
 	}
 	// Load and compare RPC pins even when the Protocol was constructed from a private deployment record.
@@ -106,7 +134,7 @@ func (i *Invisi) resolve(ctx context.Context, options ConnectionOptions) (*Walle
 	if string(expectedProfile) != string(actualProfile) {
 		return nil, errors.New("Protocol RPC deployment mismatch")
 	}
-	return &WalletSession{sends: &sessionSendState{sending: map[string]bool{}}, options: i.options, wallet: options.Wallet, protocol: options.Protocol, scope: scope, viewing: viewer, authorization: authority, rpc: i.options.ProtocolRPC.WithProvider(i.options.Provider)}, nil
+	return &WalletSession{refreshGate: make(chan struct{}, 1), sends: &sessionSendState{sending: map[string]bool{}}, options: sessionOptions{i.options, options.Signer, options.FundingSigner}, wallet: selectedWallet, protocol: options.Protocol, scope: scope, viewing: viewer, authorization: authority, rpc: i.options.ProtocolRPC.WithProvider(i.options.Provider)}, nil
 }
 func (s *WalletSession) Scope() WalletScope           { return s.scope }
 func (s *WalletSession) Protocol() *protocol.Protocol { return s.protocol }
@@ -152,6 +180,18 @@ type RefreshResult struct {
 }
 
 func (s *WalletSession) Refresh(ctx context.Context, options RefreshOptions) (RefreshResult, error) {
+	options.DetectionKey = append([]byte(nil), options.DetectionKey...)
+	if options.ToBlock != nil {
+		height := *options.ToBlock
+		options.ToBlock = &height
+	}
+	select {
+	case s.refreshGate <- struct{}{}:
+		defer func() { <-s.refreshGate }()
+	case <-ctx.Done():
+		return RefreshResult{}, ctx.Err()
+	}
+
 	var result RefreshResult
 	if s.viewing == nil {
 		return result, errors.New("viewing permission required")
@@ -160,6 +200,7 @@ func (s *WalletSession) Refresh(ctx context.Context, options RefreshOptions) (Re
 	if e != nil {
 		return result, e
 	}
+	expectedRevision := state.Revision
 	if state.ObservedThrough != nil && !options.Reset {
 		if e = s.canonical(ctx, *state.ObservedThrough); e != nil {
 			_ = s.invalidate(ctx)
@@ -170,6 +211,12 @@ func (s *WalletSession) Refresh(ctx context.Context, options RefreshOptions) (Re
 		if e = s.canonical(ctx, *state.CheckedThrough); e != nil {
 			_ = s.invalidate(ctx)
 			return result, e
+		}
+	}
+	if state.DiscoveryThrough != nil && !options.Reset {
+		if err := s.canonical(ctx, *state.DiscoveryThrough); err != nil {
+			_ = s.invalidate(ctx)
+			return result, err
 		}
 	}
 	if state.Invalidated && !options.Reset {
@@ -215,15 +262,20 @@ func (s *WalletSession) Refresh(ctx context.Context, options RefreshOptions) (Re
 	}
 	if options.Reset {
 		if e = s.options.Store.Update(ctx, s.scope, func(state *WalletState) error {
+			if state.Revision != expectedRevision {
+				return errors.New("wallet inventory changed before reset; retry refresh")
+			}
 			state.Notes = map[common.Hash]StoredNote{}
 			state.Credits = map[string]StoredCredit{}
 			state.ObservedThrough = nil
 			state.CheckedThrough = nil
+			state.DiscoveryThrough = nil
 			state.Invalidated = true
 			return nil
 		}); e != nil {
 			return result, e
 		}
+		expectedRevision++
 	}
 	for from := options.FromBlock; from <= end; {
 		to := from + size - 1
@@ -281,6 +333,9 @@ func (s *WalletSession) Refresh(ctx context.Context, options RefreshOptions) (Re
 		before, e := s.options.Store.ReadSnapshot(ctx, s.scope)
 		if e != nil {
 			return result, e
+		}
+		if before.Revision != expectedRevision {
+			return result, errors.New("wallet inventory changed during refresh; retry")
 		}
 		for _, c := range credits {
 			before.Credits[creditKey(c.Commitment, c.Role)] = c
@@ -359,6 +414,9 @@ func (s *WalletSession) Refresh(ctx context.Context, options RefreshOptions) (Re
 			return result, e
 		}
 		e = s.options.Store.Update(ctx, s.scope, func(state *WalletState) error {
+			if state.Revision != expectedRevision {
+				return errors.New("wallet inventory changed before refresh commit; retry")
+			}
 			if (state.ObservedThrough != nil && state.ObservedThrough.Number > end) || (state.CheckedThrough != nil && state.CheckedThrough.Number > end) {
 				return errors.New("concurrent refresh advanced beyond this anchor")
 			}
@@ -383,12 +441,18 @@ func (s *WalletSession) Refresh(ctx context.Context, options RefreshOptions) (Re
 				state.Credits[k] = c
 			}
 			for hash, spent := range spentNotes {
-				n := state.Notes[hash]
+				n, ok := state.Notes[hash]
+				if !ok {
+					return errors.New("refresh note disappeared before spent-state commit")
+				}
 				n.Spent = spent
 				state.Notes[hash] = n
 			}
 			for key, spent := range spentCredits {
-				c := state.Credits[key]
+				c, ok := state.Credits[key]
+				if !ok {
+					return errors.New("refresh Credit disappeared before spent-state commit")
+				}
 				c.Spent = spent
 				state.Credits[key] = c
 			}
@@ -405,11 +469,31 @@ func (s *WalletSession) Refresh(ctx context.Context, options RefreshOptions) (Re
 		if e != nil {
 			return result, e
 		}
+		expectedRevision++
 		result.Block = &page.Block
 		if to == end {
 			break
 		}
 		from = to + 1
+	}
+	if result.Block != nil {
+		err := s.options.Store.Update(ctx, s.scope, func(current *WalletState) error {
+			if current.Revision != expectedRevision {
+				return errors.New("wallet inventory changed before discovery checkpoint commit; retry")
+			}
+			start := s.protocol.Deployment().Protocol.FromBlock
+			if current.DiscoveryThrough != nil {
+				start = current.DiscoveryThrough.Number + 1
+			}
+			if options.FromBlock <= start && (current.DiscoveryThrough == nil || result.Block.Number >= current.DiscoveryThrough.Number) {
+				copy := *result.Block
+				current.DiscoveryThrough = &copy
+			}
+			return nil
+		})
+		if err != nil {
+			return result, err
+		}
 	}
 	return result, nil
 }
@@ -478,7 +562,7 @@ func (s *WalletSession) readTransaction(ctx context.Context, hash common.Hash, a
 			if e != nil {
 				return nil, nil, nil, e
 			}
-			notes = append(notes, StoredNote{Note: note, Commitment: output.Commitment, Nullifier: nf, TreeID: output.TreeID, LeafIndex: output.LeafIndex})
+			notes = append(notes, StoredNote{Note: note, Commitment: output.Commitment, Nullifier: nf, TreeID: output.TreeID, LeafIndex: output.LeafIndex, TransactionHash: hash, Block: &protocolrpc.CanonicalBlock{Number: header.Number.Uint64(), Hash: header.Hash(), ParentHash: header.ParentHash, Timestamp: header.Time}})
 			continue
 		}
 		for _, role := range []core.CreditDeliveryRole{core.CreditOwner, core.CreditSpender} {

@@ -56,3 +56,39 @@ func TestSQLiteEncryptedStateReopensAndRollsBack(t *testing.T) {
 		t.Fatal("wallet stored plaintext JSON")
 	}
 }
+
+func TestSQLiteRevisionMatchesAuthenticatedStateAndRejectsMismatch(t *testing.T) {
+	ctx := context.Background()
+	db, err := sql.Open("sqlite", filepath.Join(t.TempDir(), "revision.sqlite"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer db.Close()
+	codec, err := sdk.NewEncryptedWalletCodec(make([]byte, 32))
+	if err != nil {
+		t.Fatal(err)
+	}
+	store, err := NewWalletStore(ctx, db, codec)
+	if err != nil {
+		t.Fatal(err)
+	}
+	scope := sdk.WalletScope{ChainID: 97}
+	for expected := uint64(1); expected <= 2; expected++ {
+		if err = store.Update(ctx, scope, func(state *sdk.WalletState) error { state.Revision = 999; return nil }); err != nil {
+			t.Fatal(err)
+		}
+		state, e := store.ReadSnapshot(ctx, scope)
+		if e != nil || state.Revision != expected {
+			t.Fatalf("revision mismatch: %d, %v", state.Revision, e)
+		}
+	}
+	if _, err = db.ExecContext(ctx, "UPDATE invisi_wallet_state SET revision=3 WHERE scope_key=?", scope.Key()); err != nil {
+		t.Fatal(err)
+	}
+	if _, err = store.ReadSnapshot(ctx, scope); err == nil {
+		t.Fatal("unauthenticated revision mismatch accepted")
+	}
+	if err = store.Update(ctx, scope, func(state *sdk.WalletState) error { return nil }); err == nil {
+		t.Fatal("updated from mismatched revision")
+	}
+}

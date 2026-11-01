@@ -39,7 +39,7 @@ func (r *AddressRegistry) ValidateDeployment(ctx context.Context) error {
 	if e != nil {
 		return e
 	}
-	if chain.Cmp(r.context.ChainID) != 0 {
+	if chain == nil || chain.Cmp(r.context.ChainID) != 0 {
 		return errors.New("registry chain mismatch")
 	}
 	code, e := r.provider.CodeAt(ctx, r.deployment.Address, nil)
@@ -80,10 +80,9 @@ func (r *AddressRegistry) Resolve(ctx context.Context, address string) (string, 
 }
 
 type RegistrationPreparation struct {
-	Wallet        *Wallet
-	Update        bool
-	Deadline      uint64
-	Authorization RegistrationAuthorizationProvider
+	Wallet   *PublicWallet
+	Update   bool
+	Deadline uint64
 }
 type RegistrationPreview struct {
 	RegistryAddress, WalletIdentity common.Address
@@ -98,30 +97,24 @@ type RegistrationOperation struct {
 	generation      uint64
 	mu              sync.Mutex
 	registry        *AddressRegistry
-	wallet          *Wallet
+	wallet          *PublicWallet
 	options         RegistrationPreparation
 	registration    protocol.AddressRegistration
 	context         protocol.RegistryContext
 	status          string
 	data            []byte
 	transactionHash common.Hash
+	direct          bool
 	receiptBlock    *protocolrpc.CanonicalBlock
 }
 
-func (r *AddressRegistry) PrepareRegistration(ctx context.Context, options RegistrationPreparation) (*RegistrationOperation, error) {
+func (r *AddressRegistry) PrepareRegistration(ctx context.Context, options RegistrationPreparation) (operation *RegistrationOperation, failure error) {
+	defer func() { failure = wrapPreparation("prepareRegistration", failure) }()
 	if options.Wallet == nil {
 		return nil, errors.New("wallet required")
 	}
 	if e := r.ValidateDeployment(ctx); e != nil {
 		return nil, e
-	}
-	if options.Authorization == nil {
-		if local, err := options.Wallet.ExportRegistrationAuthorization(); err == nil {
-			options.Authorization = local
-		}
-	}
-	if options.Authorization != nil && options.Authorization.WalletIdentity() != options.Wallet.identity {
-		return nil, errors.New("registry authorization owner mismatch")
 	}
 	if len(options.Wallet.keys.ViewingPublicKey) != 33 || len(options.Wallet.keys.ClueKey) != 32 {
 		return nil, errors.New("complete receiving keys required")
@@ -135,6 +128,9 @@ func (r *AddressRegistry) PrepareRegistration(ctx context.Context, options Regis
 	}
 	deadline := options.Deadline
 	if deadline == 0 {
+		if head.Time > ^uint64(0)-300 {
+			return nil, errors.New("registration deadline exceeds uint64")
+		}
 		deadline = head.Time + 300
 	}
 	if deadline < head.Time {
@@ -152,7 +148,10 @@ func (r *AddressRegistry) PrepareRegistration(ctx context.Context, options Regis
 		return nil, e
 	}
 	if registered != options.Update {
-		return nil, errors.New("registry registration/update state mismatch")
+		if options.Update {
+			return nil, errors.New("wallet is not registered")
+		}
+		return nil, errors.New("wallet is already registered; prepare an update")
 	}
 	nonce, e := caller.NonceOf(opts, identity)
 	if e != nil {
@@ -166,7 +165,11 @@ func (r *AddressRegistry) PrepareRegistration(ctx context.Context, options Regis
 	if _, e = protocol.RegistrationTypedData(context, registration, protocol.RegistrationOptions{Update: options.Update}); e != nil {
 		return nil, e
 	}
-	return &RegistrationOperation{lifecycle: &transactionLifecycle{}, registry: r, wallet: options.Wallet, options: options, registration: registration, context: context, status: "prepared"}, nil
+	operation = &RegistrationOperation{lifecycle: &transactionLifecycle{}, registry: r, wallet: options.Wallet, options: options, registration: registration, context: context, status: "prepared"}
+	if _, err := operation.currentContext(ctx); err != nil {
+		return nil, err
+	}
+	return operation, nil
 }
 func (o *RegistrationOperation) Preview() RegistrationPreview {
 	o.mu.Lock()
@@ -190,14 +193,11 @@ func (o *RegistrationOperation) TypedData() (apitypes.TypedData, error) {
 	return protocol.RegistrationTypedData(o.context, o.registration, protocol.RegistrationOptions{Update: o.options.Update})
 }
 
-func (o *RegistrationOperation) authorizeInternal(ctx context.Context, signatures ...[]byte) (*RegistrationOperation, error) {
+func (o *RegistrationOperation) withSignatureInternal(ctx context.Context, suppliedSignature []byte) (*RegistrationOperation, error) {
 	o.mu.Lock()
 	defer o.mu.Unlock()
 	if o.status != "prepared" {
 		return nil, errors.New("registration must be prepared")
-	}
-	if len(signatures) > 1 {
-		return nil, errors.New("expected at most one registration signature")
 	}
 	current, err := o.currentContext(ctx)
 	if err != nil {
@@ -207,26 +207,9 @@ func (o *RegistrationOperation) authorizeInternal(ctx context.Context, signature
 	if err != nil {
 		return nil, err
 	}
-	var signature []byte
-	if len(signatures) == 1 {
-		signature = append([]byte(nil), signatures[0]...)
-	} else {
-		if o.options.Authorization == nil {
-			return nil, errors.New("registration signer or signature required")
-		}
-		// Signers receive a fresh transcript; they cannot mutate the frozen request.
-		copy, err := protocol.RegistrationTypedData(current, o.registration, protocol.RegistrationOptions{Update: o.options.Update})
-		if err != nil {
-			return nil, err
-		}
-		signature, err = o.options.Authorization.SignTypedData(ctx, copy)
-		if err != nil {
-			return nil, err
-		}
-		signature = append([]byte(nil), signature...)
-	}
+	signature := append([]byte(nil), suppliedSignature...)
 	if len(signature) == 0 {
-		return nil, errors.New("registration signature required; direct owner calls use the low-level calldata builder")
+		return nil, errors.New("registration signature required; use AuthorizeDirect for an owner-submitted call")
 	}
 	// Normalize geth recovery IDs only after recovering this exact owner.
 	// Other contract signatures are opaque and remain byte-for-byte unchanged.
@@ -388,6 +371,12 @@ func (o *RegistrationOperation) reconcileInternal(ctx context.Context) (operatio
 	}
 	if pending || transaction == nil || transaction.Hash() != o.transactionHash || transaction.To() == nil || *transaction.To() != o.registry.deployment.Address || !bytes.Equal(transaction.Data(), o.data) || transaction.Value().Sign() != 0 {
 		return result, errors.New("registration transaction mismatch")
+	}
+	if o.direct {
+		sender, err := types.Sender(types.LatestSignerForChainID(o.context.ChainID), transaction)
+		if err != nil || sender != o.wallet.identity {
+			return result, errors.New("direct registration sender differs from owner")
+		}
 	}
 	status := "failed"
 	if receipt.Status == types.ReceiptStatusSuccessful {

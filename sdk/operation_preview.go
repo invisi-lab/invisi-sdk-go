@@ -41,12 +41,6 @@ func publicOperationKind(p operationPlan) string {
 	if p.Kind != "transact" {
 		return p.Kind
 	}
-	if p.Params.WithdrawalAmount != nil && p.Params.WithdrawalAmount.Sign() > 0 {
-		if !p.NeedsAuthorization {
-			return "sweep"
-		}
-		return "withdraw"
-	}
 	return "transfer"
 }
 func (o *Operation) Kind() string           { return publicOperationKind(o.plan) }

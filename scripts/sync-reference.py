@@ -18,7 +18,6 @@ def require(condition, message):
         raise ValueError(message)
 source = pathlib.Path(sys.argv[1]).resolve() if len(sys.argv) > 1 else root.parent / 'invisi-sdk-ts'
 protocol = pathlib.Path(sys.argv[2]).resolve() if len(sys.argv) > 2 else root.parent / 'invisi-protocol'
-canonical = root.parent / 'protocol-docs/conformance'
 
 def digest(data):
     return hashlib.sha256(data).hexdigest()
@@ -82,6 +81,21 @@ for profile in json.loads(gas_catalog):
         require(release and key and circuit.get('artifactSha256') == release['artifactSha256'] and circuit.get('vkSha256') == key['vkSha256'], 'stale Credit gas circuit')
 gas_vectors = (source / 'packages/sdk/src/data/gas-reference-vectors.json').read_bytes()
 require(json.loads(gas_vectors).get('catalogSha256') == digest(gas_catalog), 'stale gas reference vectors')
+# Authenticate transport fixtures before publishing any files. Never fall back to retired docs vectors.
+vector_root = source / 'packages/core/src/testdata'
+wallet_vectors = json.loads((vector_root / 'wallet-note-vectors.json').read_text())
+for name, header, client in (('note', 1, 'private-transfer-client.mjs'), ('credit', 129, 'create-credit-client.mjs')):
+    value = wallet_vectors[name]
+    provenance = value.get('deliverySource', {})
+    ciphertexts = [value['ciphertext']] if name == 'note' else [value['ownerCiphertext'], value['spenderCiphertext']]
+    require(provenance.get('envelopeVersion') == 1 and provenance.get('envelopeType') == header >> 7 and provenance.get('header') == header,
+            'retired/unauthenticated delivery vector')
+    require(provenance.get('protocolClientSha256') == digest((protocol / 'scripts' / client).read_bytes()),
+            'retired/unauthenticated delivery vector source')
+    for ciphertext in ciphertexts:
+        raw = bytes.fromhex(ciphertext[2:])
+        require(raw[0] == header and len(raw) == provenance.get('ciphertextBytes') and len(raw) <= 4096,
+                'retired/unauthenticated delivery vector bytes')
 target = root / 'prover/native/circuits'
 with tempfile.TemporaryDirectory(prefix='invisi-prover-sync-', dir=target.parent) as staging:
     stage = pathlib.Path(staging)
@@ -95,9 +109,9 @@ with tempfile.TemporaryDirectory(prefix='invisi-prover-sync-', dir=target.parent
 (root / 'prover/witness-layouts.json').write_text(json.dumps(layouts, indent=2) + '\n')
 (root / 'prover/recursive-key.json').write_text(json.dumps(recursive, indent=2) + '\n')
 for name in ('wallet-note-vectors.json', 'wallet-authorization-vectors.json', 'wallet-kdf-vectors.json', 'fmd-rust-vectors.json', 'decaf377-clue-keys.json'):
-    origin = canonical / name if (canonical / name).exists() else source / 'packages/core/src/testdata' / name
+    origin = vector_root / name
     shutil.copyfile(origin, root / 'core/testdata' / name)
-shutil.copyfile(canonical / 'address-registration-vectors.json', root / 'protocol/testdata/address-registration-vectors.json')
+shutil.copyfile(source / 'packages/protocol/src/testdata/address-registration-vectors.json', root / 'protocol/testdata/address-registration-vectors.json')
 (root / 'sdk/data/gas-benchmarks.json').write_bytes(gas_catalog)
 (root / 'sdk/testdata/gas-reference-vectors.json').write_bytes(gas_vectors)
 shutil.copyfile(source / 'packages/protocol/src/protocol-vectors.json', root / 'protocol/protocol-vectors.json')

@@ -12,6 +12,23 @@ import (
 	"github.com/consensys/gnark-crypto/ecc/bn254/fr"
 )
 
+// vectorFields reads financial string fields while retaining richer source metadata in the fixture.
+type vectorFields map[string]string
+
+func (v *vectorFields) UnmarshalJSON(data []byte) error {
+	var raw map[string]json.RawMessage
+	if err := json.Unmarshal(data, &raw); err != nil {
+		return err
+	}
+	*v = vectorFields{}
+	for name, value := range raw {
+		var text string
+		if json.Unmarshal(value, &text) == nil {
+			(*v)[name] = text
+		}
+	}
+	return nil
+}
 func currentField(t *testing.T, s string) fr.Element {
 	t.Helper()
 	var n fr.Element
@@ -82,7 +99,7 @@ func TestCurrentNoteAndCreditDeliveryVectors(t *testing.T) {
 	var v struct {
 		Context map[string]string
 		Owner   map[string]string
-		Note    map[string]string
+		Note    vectorFields
 		Credit  struct {
 			SpenderWalletIdentity, OwnerWalletIdentity, SpenderPayout, OwnerPayout, Amount, Nonce, Expiry, CreditSharedKey, Commitment, Nullifier, OwnerCiphertext, SingleLimit, DailyLimit, MonthlyLimit, LastDay, DailySpent, LastMonth, MonthlySpent string
 			Remainder                                                                                                                                                                                                                                   struct{ Nullifier, RemainderCommitment, RecoveryAmount string }
@@ -165,7 +182,7 @@ func TestCurrentMemoDeliveryVectors(t *testing.T) {
 	var vectors struct {
 		Context        map[string]string
 		Owner, Spender map[string]string
-		Note           map[string]string
+		Note           vectorFields
 		Credit         map[string]json.RawMessage
 		MemoVectors    []struct{ Name, Kind, Role, Memo, Ciphertext string }
 	}
@@ -190,6 +207,10 @@ func TestCurrentMemoDeliveryVectors(t *testing.T) {
 			}
 			private := currentBytes(t, recipient["viewingPrivateKey"])
 			memo := currentBytes(t, row.Memo)
+			payload, err := FundsV1.Encode(PayloadDataV1{Memo: memo})
+			if err != nil {
+				t.Fatal(err)
+			}
 			ciphertext := currentBytes(t, row.Ciphertext)
 			if row.Kind == "funds" {
 				dec := NoteDecryptionContext{NoteEncryptionContext{context, currentField(t, vectors.Note["commitment"])}, token, currentField(t, recipient["walletIdentity"])}
@@ -197,7 +218,7 @@ func TestCurrentMemoDeliveryVectors(t *testing.T) {
 				if err != nil {
 					t.Fatal(err)
 				}
-				expected := Note{context, currentField(t, vectors.Note["walletIdentity"]), token, currentField(t, vectors.Note["amount"]), currentField(t, vectors.Note["nonce"]), memo}
+				expected := Note{context, currentField(t, vectors.Note["walletIdentity"]), token, currentField(t, vectors.Note["amount"]), currentField(t, vectors.Note["nonce"]), payload}
 				if !reflect.DeepEqual(note, expected) {
 					t.Fatal("memo vector changed note preimage or memo")
 				}
@@ -207,7 +228,7 @@ func TestCurrentMemoDeliveryVectors(t *testing.T) {
 				if err != nil {
 					t.Fatal(err)
 				}
-				expected := CreditNote{CreditSpendingState{creditField("singleLimit"), creditField("dailyLimit"), creditField("monthlyLimit"), creditField("lastDay"), creditField("dailySpent"), creditField("lastMonth"), creditField("monthlySpent")}, context, creditField("spenderWalletIdentity"), creditField("ownerWalletIdentity"), creditField("spenderPayout"), creditField("ownerPayout"), token, creditField("amount"), creditField("nonce"), creditField("expiry"), creditField("creditSharedKey"), memo}
+				expected := CreditNote{CreditSpendingState{creditField("singleLimit"), creditField("dailyLimit"), creditField("monthlyLimit"), creditField("lastDay"), creditField("dailySpent"), creditField("lastMonth"), creditField("monthlySpent")}, context, creditField("spenderWalletIdentity"), creditField("ownerWalletIdentity"), creditField("spenderPayout"), creditField("ownerPayout"), token, creditField("amount"), creditField("nonce"), creditField("expiry"), creditField("creditSharedKey"), payload}
 				if !reflect.DeepEqual(state.Note, expected) {
 					t.Fatal("memo vector changed Credit preimage or memo")
 				}

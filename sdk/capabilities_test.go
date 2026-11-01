@@ -29,22 +29,34 @@ func (d delegatedAuthorization) Authorize(ctx context.Context, request core.Wall
 }
 func TestExplicitPerCallAuthorizationAndProver(t *testing.T) {
 	invisi, input, backend := explicitFixture(t)
-	authority, _ := input.Wallet.ExportAuthorization()
-	address, _ := input.Wallet.GetAddress()
-	input.Wallet, _ = WalletFromAddress(address)
 	invisi.options.Prover = nil
 	prepared, err := invisi.PrepareTransfer(context.Background(), input)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if _, err = prepared.Authorize(context.Background(), delegatedAuthorization{authority, true}); err == nil {
-		t.Fatal("changed external authorization accepted")
-	}
-	authorized, err := prepared.Authorize(context.Background(), delegatedAuthorization{source: authority})
+	request, err := prepared.ExportWalletAuthorization(context.Background())
 	if err != nil {
 		t.Fatal(err)
 	}
-	if _, err = authorized.Prove(context.Background(), backend, ProverOptions{}); err != nil {
+	typed, err := request.TypedData()
+	if err != nil {
+		t.Fatal(err)
+	}
+	typed.Message["statementHash"] = common.HexToHash("0x1234").Hex()
+	digest, _, err := apitypes.TypedDataAndHash(typed)
+	if err != nil {
+		t.Fatal(err)
+	}
+	key, _ := crypto.HexToECDSA(strings.Repeat("0", 63) + "1")
+	altered, _ := crypto.Sign(digest, key)
+	if _, err = prepared.WithWalletSignature(context.Background(), altered); err == nil {
+		t.Fatal("changed external authorization accepted")
+	}
+	authorized, err := externallyAuthorize(context.Background(), prepared)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err = authorized.Prove(context.Background(), TransactionProveOptions{Prover: backend}); err != nil {
 		t.Fatal(err)
 	}
 }
@@ -115,7 +127,7 @@ func TestPerCallContractFundingSigner(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	ready, err := prepared.AuthorizeFunding(context.Background(), FundingSignerFunc{Payer: input.Wallet.identity, Sign: func(context.Context, apitypes.TypedData) ([]byte, error) { return []byte{1, 2, 3}, nil }})
+	ready, err := prepared.WithFundingSignature(context.Background(), []byte{1, 2, 3})
 	if err != nil {
 		t.Fatal(err)
 	}

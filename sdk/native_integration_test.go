@@ -35,15 +35,11 @@ func TestRealNativeOperationProofs(t *testing.T) {
 			var prepared *Operation
 			switch kind {
 			case "transfer", "recursive":
-				target := "evm"
-				if kind == "recursive" {
-					target = "noir-recursive"
-				}
-				prepared, err = session.PrepareTransfer(ctx, TransferPreparation{TokenAddress: token, Outputs: []PaymentOutput{{To: address, Amount: big.NewInt(30)}}, Target: target})
+				prepared, err = session.PrepareTransfer(ctx, TransferPreparation{TokenAddress: token, Outputs: []PaymentOutput{{To: address, Amount: big.NewInt(30)}}})
 			case "withdraw":
-				prepared, err = session.PrepareWithdraw(ctx, WithdrawalPreparation{TokenAddress: token, To: session.wallet.identity, Amount: big.NewInt(30)})
+				prepared, err = session.PrepareTransfer(ctx, TransferPreparation{TokenAddress: token, Withdrawal: &Withdrawal{To: session.wallet.identity, Amount: big.NewInt(30)}})
 			case "sweep":
-				prepared, err = session.PrepareSweep(ctx, SweepPreparation{TokenAddress: token})
+				prepared, err = session.PrepareTransfer(ctx, TransferPreparation{TokenAddress: token, Withdrawal: &Withdrawal{To: session.wallet.identity, Amount: big.NewInt(100)}})
 			case "create-credit":
 				prepared, err = session.PrepareCreateCredit(ctx, CreateCreditPreparation{TokenAddress: token, Spender: address, Amount: big.NewInt(70), Expiry: big.NewInt(1000)})
 			case "draw-credit":
@@ -65,7 +61,7 @@ func TestRealNativeOperationProofs(t *testing.T) {
 				}
 			}
 			phases := []string{}
-			if _, err = prepared.Prove(ctx, prover.Options{OnProgress: func(event prover.Progress) { phases = append(phases, event.Phase) }}); err != nil {
+			if _, err = prepared.Prove(ctx, TransactionProveOptions{Options: prover.Options{OnProgress: func(event prover.Progress) { phases = append(phases, event.Phase) }}, Execution: map[bool]string{true: "aggregate", false: "single"}[kind == "recursive"]}); err != nil {
 				t.Fatal(err)
 			}
 			if len(phases) < 4 || phases[0] != "witness" || phases[len(phases)-1] != "complete" {
@@ -122,14 +118,14 @@ func TestRealNativeAggregation(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		prepared, err := session.PrepareTransfer(ctx, TransferPreparation{TokenAddress: token, Outputs: []PaymentOutput{{To: address, Amount: big.NewInt(30)}}, Target: "noir-recursive"})
+		prepared, err := session.PrepareTransfer(ctx, TransferPreparation{TokenAddress: token, Outputs: []PaymentOutput{{To: address, Amount: big.NewInt(30)}}})
 		if err != nil {
 			t.Fatal(err)
 		}
 		if prepared, err = prepared.Authorize(ctx); err != nil {
 			t.Fatal(err)
 		}
-		if prepared, err = prepared.Prove(ctx); err != nil {
+		if prepared, err = prepared.Prove(ctx, TransactionProveOptions{Execution: "aggregate"}); err != nil {
 			t.Fatal(err)
 		}
 		member, err := prepared.ExportAggregateMember(ctx)

@@ -79,56 +79,28 @@ func (o *Operation) stage(ctx context.Context, work func(*Operation) error, comm
 func (o *Operation) Authorize(ctx context.Context) (*Operation, error) {
 	return o.stage(ctx, func(next *Operation) error { _, err := next.authorizeInternal(ctx); return err })
 }
-func (o *Operation) Prove(ctx context.Context, arguments ...any) (*Operation, error) {
-	backend, options, err := provingArguments(arguments)
-	if err != nil {
-		return nil, err
+func (o *Operation) Prove(ctx context.Context, options ...TransactionProveOptions) (*Operation, error) {
+	if len(options) > 1 {
+		return nil, errors.New("expected at most one transaction prove options value")
+	}
+	opt := TransactionProveOptions{}
+	if len(options) == 1 {
+		opt = options[0]
 	}
 	return o.stage(ctx, func(next *Operation) error {
-		if backend != nil {
-			next.session.options.Prover = backend
+		if opt.Prover != nil {
+			next.session.options.Prover = opt.Prover
 		}
-		_, err := next.proveInternal(ctx, options)
-		return err
-	})
-}
-func (o *Operation) Ready(ctx context.Context) (*Operation, error) {
-	return o.stage(ctx, func(next *Operation) error { _, err := next.readyInternal(ctx); return err })
-}
-func (o *Operation) AuthorizeFunding(ctx context.Context, signer ...FundingSigner) (*Operation, error) {
-	if len(signer) > 1 {
-		return nil, errors.New("expected at most one funding signer")
-	}
-	return o.stage(ctx, func(next *Operation) error {
-		if len(signer) == 1 {
-			next.session.options.FundingSigner = signer[0]
-		}
-		_, err := next.authorizeFundingInternal(ctx)
+		_, err := next.proveInternal(ctx, opt)
 		return err
 	})
 }
 
-func provingArguments(arguments []any) (Prover, ProverOptions, error) {
-	var backend Prover
-	var options ProverOptions
-	seenOptions := false
-	for _, argument := range arguments {
-		switch value := argument.(type) {
-		case Prover:
-			if backend != nil || seenOptions {
-				return nil, options, errors.New("expected prover followed by options")
-			}
-			backend = value
-		case ProverOptions:
-			if seenOptions {
-				return nil, options, errors.New("expected at most one prover options value")
-			}
-			options, seenOptions = value, true
-		default:
-			return nil, options, errors.New("expected prover or prover options")
-		}
-	}
-	return backend, options, nil
+func (o *Operation) Ready(ctx context.Context) (*Operation, error) {
+	return o.stage(ctx, func(next *Operation) error { _, err := next.readyInternal(ctx); return err })
+}
+func (o *Operation) AuthorizeFunding(ctx context.Context) (*Operation, error) {
+	return o.stage(ctx, func(next *Operation) error { _, err := next.authorizeFundingInternal(ctx); return err })
 }
 
 func (o *Operation) Reconcile(ctx context.Context, options ...ReconcileOptions) (*Operation, error) {

@@ -149,9 +149,9 @@ func TestGasRequestMappingForEveryPrepareMethod(t *testing.T) {
 			case "transfer":
 				operation, err = session.PrepareTransfer(ctx, TransferPreparation{TokenAddress: token, Outputs: []PaymentOutput{{To: address, Amount: big.NewInt(30)}}})
 			case "withdraw":
-				operation, err = session.PrepareWithdraw(ctx, WithdrawalPreparation{TokenAddress: token, To: session.wallet.identity, Amount: big.NewInt(30)})
+				operation, err = session.PrepareTransfer(ctx, TransferPreparation{TokenAddress: token, Withdrawal: &Withdrawal{To: session.wallet.identity, Amount: big.NewInt(30)}})
 			case "sweep":
-				operation, err = session.PrepareSweep(ctx, SweepPreparation{TokenAddress: token})
+				operation, err = session.PrepareTransfer(ctx, TransferPreparation{TokenAddress: token, Withdrawal: &Withdrawal{To: session.wallet.identity, Amount: big.NewInt(100)}})
 			case "create-credit":
 				operation, err = session.PrepareCreateCredit(ctx, CreateCreditPreparation{TokenAddress: token, Spender: address, Amount: big.NewInt(30), Expiry: big.NewInt(1000)})
 			default:

@@ -261,7 +261,7 @@ func TestCreditV5PayloadCarriesUint128UsageAboveLimits(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(ciphertext) != 498 || ciphertext[0] != 5 {
+	if len(ciphertext) != 498 || ciphertext[0] != 0x81 {
 		t.Fatal("v5 wire changed")
 	}
 	decoded, err := DecryptCreditNote(private, ciphertext, CreditNoteDecryptionContext{NoteDecryptionContext: context, Role: CreditOwner})

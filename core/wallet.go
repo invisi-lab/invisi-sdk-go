@@ -5,6 +5,7 @@ import (
 	"crypto/hkdf"
 	"crypto/sha256"
 	"encoding/binary"
+	"encoding/json"
 	"fmt"
 	"math/big"
 
@@ -23,6 +24,22 @@ type InvisiWallet struct {
 	DetectionSeed, DetectionKey, ClueKey  []byte
 	WalletIdentity                        fr.Element
 }
+
+// String exposes only the public owner identity, never the derived key group.
+func (w InvisiWallet) String() string {
+	return fmt.Sprintf("InvisiWallet(%s)", common.BigToAddress(ElementToBigInt(w.WalletIdentity)).Hex())
+}
+
+// GoString keeps detailed formatting subject to the same private-material boundary.
+func (w InvisiWallet) GoString() string { return w.String() }
+
+// MarshalJSON is intentionally a public view; exporting keys requires explicit field access.
+func (w InvisiWallet) MarshalJSON() ([]byte, error) {
+	return json.Marshal(struct {
+		WalletIdentity string `json:"walletIdentity"`
+	}{common.BigToAddress(ElementToBigInt(w.WalletIdentity)).Hex()})
+}
+
 type WalletOperation string
 
 const (
