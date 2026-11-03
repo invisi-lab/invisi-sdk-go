@@ -10,6 +10,16 @@ import (
 
 type Protocol = protocol.Protocol
 type ProtocolRpcClient = protocolrpc.ProtocolRpcClient
+type ProtocolTransactionUpdates = protocolrpc.ProtocolTransactionUpdates
+type ProtocolCreditTransition = protocolrpc.ProtocolCreditTransition
+type TransactionUpdateStatus = protocolrpc.TransactionUpdateStatus
+
+const (
+	TransactionNotFound     = protocolrpc.TransactionNotFound
+	TransactionPendingIndex = protocolrpc.TransactionPendingIndex
+	TransactionIndexed      = protocolrpc.TransactionIndexed
+)
+
 type Prover = prover.Prover
 type ProverOptions = prover.Options
 type ProofBundle = prover.ProofBundle

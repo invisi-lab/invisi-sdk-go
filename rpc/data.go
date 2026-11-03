@@ -38,6 +38,9 @@ func (c *ProtocolRpcClient) canonical(ctx context.Context, remote CanonicalBlock
 	return b, nil
 }
 func (c *ProtocolRpcClient) GetStatus(ctx context.Context, context DeploymentContext) (ProtocolDataStatus, error) {
+	return c.readStatus(ctx, context, true)
+}
+func (c *ProtocolRpcClient) readStatus(ctx context.Context, context DeploymentContext, checkCanonical bool) (ProtocolDataStatus, error) {
 	if c.provider == nil {
 		return ProtocolDataStatus{}, errors.New("Chain RPC provider required")
 	}
@@ -68,7 +71,7 @@ func (c *ProtocolRpcClient) GetStatus(ctx context.Context, context DeploymentCon
 	if response.APIVersion != "v1" || response.ProtocolVersion != "1" || string(a) != string(b) || response.CheckedBits < 1 || response.CheckedBits > 24 || response.DetectionEnabled == nil {
 		return ProtocolDataStatus{}, errors.New("invalid indexed status")
 	}
-	if response.IndexedHead != nil {
+	if checkCanonical && response.IndexedHead != nil {
 		canonical, e := c.canonical(ctx, *response.IndexedHead)
 		if e != nil {
 			return ProtocolDataStatus{}, e

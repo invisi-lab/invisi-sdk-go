@@ -281,11 +281,15 @@ func (c *ProtocolRpcClient) readOutputs(ctx context.Context, d DeploymentContext
 	if json.Unmarshal(m["creditTransitions"], &transitions) != nil || transitions == nil {
 		return result, errors.New("invalid credit transitions")
 	}
+	return c.parseOutputRows(ctx, block, rows, r, mode)
+}
+
+func (c *ProtocolRpcClient) parseOutputRows(ctx context.Context, block CanonicalBlock, rows []json.RawMessage, r ProtocolUpdateRange, mode int) (ProtocolOutputs, error) {
 	seen := map[string]bool{}
 	positions := map[string]string{}
 	commitments := map[common.Hash]string{}
 	envelopes := map[common.Hash]map[string]string{}
-	result = ProtocolOutputs{Block: block, Outputs: []ProtocolOutput{}}
+	result := ProtocolOutputs{Block: block, Outputs: []ProtocolOutput{}}
 	for _, raw := range rows {
 		o, e := parseOutput(raw)
 		if e != nil {

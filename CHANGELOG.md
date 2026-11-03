@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.1.5
+
+- Add `ProtocolRpcClient.GetTransactionUpdates` for Protocol RPC service 1.1.4+, matching the TypeScript SDK 1.1.5 availability semantics.
+- Return typed index status, canonical mined block, EVM receipt status, encrypted outputs and public Credit transitions without range scanning or Store updates.
+- Preserve stale observed checkpoints for pending indexing, retain strict checks for indexed results, and reject mismatched transactions, invalid fields, conflicting deliveries and reorganizations.
+- Export result types and status constants from both RPC and SDK packages.
+
 ## 1.1.4
 
 This release aligns Go with TypeScript SDK 1.1.4 and the current Protocol RPC interface.

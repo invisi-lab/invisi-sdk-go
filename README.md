@@ -1,9 +1,9 @@
 # Invisi Go SDK
 
-Go client for Invisi Protocol, aligned with TypeScript SDK 1.1.4. Requires Go 1.26.1 or newer.
+Go client for Invisi Protocol, aligned with TypeScript SDK 1.1.5. Requires Go 1.26.1 or newer.
 
 ```sh
-go get github.com/invisi-lab/invisi-sdk-go@v1.1.4
+go get github.com/invisi-lab/invisi-sdk-go@v1.1.5
 ```
 
 Start with the [configurable examples](examples/README.md). They cover offline wallets, address registration, transparent payments, hidden transfers and withdrawals, Credit, managed wallet sessions, and selective disclosure. Example settings expose the network, native currency, token, RPC endpoints and prover paths. A local initializer creates ten fresh accounts without overwriting existing keys; no funded account is included.
@@ -72,6 +72,25 @@ A timeout does not release potentially externalized inputs. Persist a broadcast 
 | `prover/native` | Local witness execution, generation and independent verification |
 
 Chain RPC supplies contract reads, canonical blocks/receipts and submission. Protocol RPC supplies indexed public records and candidate filtering. Detection keys only delegate filtering; they do not decrypt notes or authorize spending. Applications remain responsible for trusted endpoints, keys, reservations in detached workflows and durable broadcast tracking.
+
+## Single-transaction indexed updates
+
+Protocol RPC service 1.1.4+ supports one-transaction lookup with an independently configured Chain RPC provider:
+
+```go
+updates, err := protocolRPC.GetTransactionUpdates(ctx, protocol.Context(), transactionHash)
+if err != nil { return err }
+if updates.Status == sdk.TransactionIndexed {
+    fmt.Println(updates.Block.Number, *updates.ReceiptStatus)
+    fmt.Println(updates.Outputs, updates.CreditTransitions)
+}
+```
+
+`ProtocolTransactionUpdates` distinguishes `not_found` (no mined receipt; unknown or still pending), `pending_index` and `indexed`. Outputs and Credit transitions stay nil until indexed; indexed empty slices mean no matching updates. `Block` and `ReceiptStatus` are nil only for `not_found`. Receipt status 0/1 independently describes EVM reversion/success.
+
+For unavailable data, `IndexedHead` is an observed checkpoint and may remain on a stale fork. Mined transaction blocks are checked through the caller's Chain RPC; indexed results additionally require canonical checkpoint/output references and a final block recheck. The ordinary `GetStatus` call retains its strict canonical checks. Opaque outputs preserve both Credit role envelopes and deduplicate exact deliveries. Transition `Data` contains raw public JSON fields without floating-point conversion; decode it explicitly and authenticate receipts before applying financial state.
+
+The method does not poll, fall back to ranges, decrypt payloads or mutate a wallet Store. Context controls cancellation. Result types and availability constants are exported from both `rpc` and `sdk`.
 
 ## Proving and verification
 
