@@ -1,6 +1,11 @@
 # Changelog
 
-## Unreleased
+## 1.1.7
+
+- Add canonical cross-language IPR payment requests and fixed-size IPN Note delivery.
+- Rename NoteOutputOptions to PaymentRequest and preserve original IPR through nonce selection and output snapshots.
+- Add commitment-based RPC lookup, confirmed Note verification and owner spendability verification without signing.
+- Export final Note outputs and generated change as IPN, while rejecting identity-only and Credit exports.
 
 - Organize public SDK entry files by capability, isolate cryptographic and gas implementations, and split transaction, Credit, RPC and session workflows into focused source files.
 - Align reference synchronization and fixture generators with the current TypeScript functional module layout.
