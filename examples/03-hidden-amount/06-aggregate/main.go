@@ -1,3 +1,4 @@
+// Authorize four independent transfers and submit their aggregate.
 package main
 
 import (
@@ -28,13 +29,19 @@ func main() {
 	if !*execute {
 		log.Fatal("Review settings and code, then add --execute; no network request or transaction was made")
 	}
-
 	ctx := context.Background()
+
+	// 1. Load local demonstration accounts.
 	accounts, err := shared.GetAccounts(shared.Settings.AccountsFile)
 	if err != nil {
 		log.Fatal(err)
 	}
+	if len(accounts) < 2 {
+		log.Fatal("this example requires at least 2 initialized accounts")
+	}
 	alice := accounts[0]
+
+	// 2. Connect to the chain and pin the Protocol RPC deployment.
 	provider, err := ethclient.DialContext(ctx, shared.Settings.ChainRPCURL)
 	if err != nil {
 		log.Fatal(err)
@@ -60,12 +67,13 @@ func main() {
 		log.Fatal(err)
 	}
 	signer.Context = ctx
+
+	// 3. Create the local prover; private witnesses stay on this machine.
 	localProver, err := native.NewNativeProver(shared.Settings.Prover)
 	if err != nil {
 		log.Fatal(err)
 	}
 	invisi := sdk.NewInvisi(sdk.InvisiOptions{Provider: provider, ProtocolRPC: client, Prover: localProver})
-
 	if len(accounts) < 3 {
 		log.Fatal("aggregate example requires Alice, Bob and Charlie")
 	}
@@ -77,6 +85,9 @@ func main() {
 	token := common.HexToAddress(shared.Settings.TokenAddress)
 	members := []prover.AggregateMember{}
 	requests := []protocol.TransactRequest{}
+
+	// 4. Bob and Charlie each sign and prove two distinct transfers.
+	// Each proof has one owner; the aggregate combines four independent members.
 	for _, owner := range accounts[1:3] {
 		candidates, err := shared.DiscoverNotes(ctx, provider, client, pool, owner.PublicWallet, owner.ViewingKey, token)
 		if err != nil {
@@ -99,16 +110,22 @@ func main() {
 			log.Fatal(err)
 		}
 		for _, input := range selected {
-			// The two notes are distinct. Applications must reserve them while this aggregate is unresolved.
 			amount := new(big.Int).Div(core.ElementToBigInt(input.Note.Amount), big.NewInt(2))
 			output, err := sdk.NewNoteOutput(sdk.NoteOutputOptions{
-				ChainID: chain, ProtocolAddress: pool.Context().ProtocolAddress, TokenAddress: token,
-				Amount: amount, Recipient: sdk.InvisiRecipient{Address: destination},
+				ChainID:         chain,
+				ProtocolAddress: pool.Context().ProtocolAddress,
+				TokenAddress:    token,
+				Amount:          amount,
+				Recipient:       sdk.InvisiRecipient{Address: destination},
 			})
 			if err != nil {
 				log.Fatal(err)
 			}
-			prepared, err := invisi.PrepareTransfer(ctx, sdk.ExplicitTransferPreparation{TransactionIdentity: sdk.TransactionIdentity{Wallet: owner.PublicWallet, Protocol: pool}, ExplicitFunds: sdk.ExplicitFunds{Inputs: []sdk.NoteInput{input}}, TransferPreparation: sdk.TransferPreparation{TokenAddress: token, Outputs: []sdk.NoteOutput{output}, Deadline: deadline}})
+			prepared, err := invisi.PrepareTransfer(ctx, sdk.ExplicitTransferPreparation{
+				TransactionIdentity: sdk.TransactionIdentity{Wallet: owner.PublicWallet, Protocol: pool},
+				ExplicitFunds:       sdk.ExplicitFunds{Inputs: []sdk.NoteInput{input}},
+				TransferPreparation: sdk.TransferPreparation{TokenAddress: token, Outputs: []sdk.NoteOutput{output}, Deadline: deadline},
+			})
 			if err != nil {
 				log.Fatal(err)
 			}
@@ -133,7 +150,9 @@ func main() {
 			if err != nil {
 				log.Fatal(err)
 			}
-			ready, err := authorized.Prove(ctx, sdk.TransactionProveOptions{Options: prover.Options{OnProgress: func(p prover.Progress) { fmt.Println("Member proof phase:", p.Phase) }}, Execution: "aggregate"})
+			ready, err := authorized.Prove(ctx, sdk.TransactionProveOptions{Options: prover.Options{OnProgress: func(p prover.Progress) {
+				fmt.Println("Member proof phase:", p.Phase)
+			}}, Execution: "aggregate"})
 			if err != nil {
 				log.Fatal(err)
 			}
@@ -141,7 +160,6 @@ func main() {
 			if err != nil {
 				log.Fatal(err)
 			}
-			// Participants share only these public proof/request records, never private NoteInput or account keys.
 			members = append(members, prover.AggregateMember{Bundle: member.Bundle, Statement: member.Statement})
 			requests = append(requests, member.Request)
 		}
@@ -150,7 +168,9 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	bundle, err := aggregator.Aggregate(ctx, members, prover.Options{OnProgress: func(p prover.Progress) { fmt.Println("Aggregate phase:", p.Phase) }})
+	bundle, err := aggregator.Aggregate(ctx, members, prover.Options{OnProgress: func(p prover.Progress) {
+		fmt.Println("Aggregate phase:", p.Phase)
+	}})
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -158,7 +178,6 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	// Ordinary geth owns gas, nonce selection and submission. This branch requires --execute.
 	transaction, err := bind.NewBoundContract(call.To, abi.ABI{}, provider, provider, provider).RawTransact(signer, call.Data)
 	if err != nil {
 		log.Fatal(err)
@@ -179,6 +198,4 @@ func main() {
 		log.Fatal("transaction receipt is no longer canonical; preserve the transaction hash and reconcile")
 	}
 	fmt.Println("Mined block:", receipt.BlockNumber)
-	// Persist the transaction hash before waiting in a production application, then reconcile canonical state.
-
 }

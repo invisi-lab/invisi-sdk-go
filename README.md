@@ -74,7 +74,7 @@ Transfer, Shield, Credit creation, top-up and cancellation support this flow. Cr
 
 Managed sessions reserve additional quoted inputs atomically; failed quotes restore the original reservations. Potentially externalized submissions remain uncertain until canonical receipt reconciliation. Both managed Operation and detached PreparedTransaction expose quote/intent exports and the same broadcaster attachment stages.
 
-See the complete [Shield broadcaster example](examples/02-transparent-amount/broadcaster/main.go) and the [offline output variants](examples/00-wallet/note-output/main.go).
+See the complete [Shield broadcaster example](examples/02-transparent-amount/05-shield-via-broadcaster/main.go) and the [offline output variants](examples/00-wallet/02-note-output/main.go).
 
 ## Envelopes and application payloads
 

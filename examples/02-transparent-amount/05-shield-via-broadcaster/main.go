@@ -1,4 +1,4 @@
-// Quote a Shield payment, sign its final public funding, and delegate submission.
+// Discover broadcasters, quote a shield, sign its final funding and submit.
 package main
 
 import (
@@ -33,13 +33,18 @@ func main() {
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
 	defer cancel()
+
+	// 1. Load local demonstration accounts.
 	accounts, err := shared.GetAccounts(shared.Settings.AccountsFile)
 	if err != nil {
 		log.Fatal(err)
 	}
+	if len(accounts) < 2 {
+		log.Fatal("this example requires at least 2 initialized accounts")
+	}
 	alice, bob := accounts[0], accounts[1]
 
-	// 1. Discover and validate one Protocol. The SDK owns no Alice signing key.
+	// 2. Connect to the chain and pin the Protocol RPC deployment.
 	provider, err := ethclient.DialContext(ctx, shared.Settings.ChainRPCURL)
 	if err != nil {
 		log.Fatal(err)
@@ -65,29 +70,38 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	// 3. Build the complete output with its deployment, token, amount and recipient.
 	output, err := sdk.NewNoteOutput(sdk.NoteOutputOptions{
-		ChainID: chain, ProtocolAddress: pool.Context().ProtocolAddress,
-		TokenAddress: tokenAddress, Amount: big.NewInt(10),
-		Recipient: sdk.InvisiRecipient{Address: bobAddress},
+		ChainID:         chain,
+		ProtocolAddress: pool.Context().ProtocolAddress,
+		TokenAddress:    tokenAddress,
+		Amount:          big.NewInt(10),
+		Recipient:       sdk.InvisiRecipient{Address: bobAddress},
 	})
 	if err != nil {
 		log.Fatal(err)
 	}
 	invisi := sdk.NewInvisi(sdk.InvisiOptions{Provider: provider, ProtocolRPC: rpc})
 
-	// 2. Prepare the business intent. The fee is not known yet.
+	// 4. Prepare and freeze the transaction intent.
 	prepared, err := invisi.PrepareShield(ctx, sdk.ExplicitShieldPreparation{
 		TransactionIdentity: sdk.TransactionIdentity{Wallet: alice.PublicWallet, Protocol: pool},
 		ShieldPreparation: sdk.ShieldPreparation{
-			TokenAddress: tokenAddress, Outputs: []sdk.NoteOutput{output},
-			Funding: sdk.FundingSource{Payer: alice.PublicWallet.OwnerAddress(), Amount: big.NewInt(10), Authorization: "signature"},
+			TokenAddress: tokenAddress,
+			Outputs:      []sdk.NoteOutput{output},
+			Funding: sdk.FundingSource{
+				Payer:         alice.PublicWallet.OwnerAddress(),
+				Amount:        big.NewInt(10),
+				Authorization: "signature",
+			},
 		},
 	})
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	// 3. Obtain registered services that currently support this token.
+	// 5. Discover services that support this token; compare several quotes if needed.
 	clients, err := pool.GetBroadcasters(ctx, sdk.BroadcasterOptions{TokenAddress: tokenAddress})
 	if err != nil {
 		log.Fatal(err)
@@ -95,19 +109,14 @@ func main() {
 	if len(clients) == 0 {
 		log.Fatal("no compatible broadcaster")
 	}
-	// Applications may request quotes from several clients and choose the cheapest.
 	client := clients[0]
+
+	// 6. Rebuild the prepared transaction with the selected broadcaster fee.
 	quoted, err := prepared.WithBroadcaster(ctx, client, sdk.WithBroadcasterOptions{MaxFeeAmount: maxFee})
 	if err != nil {
 		log.Fatal(err)
 	}
 	fmt.Println("Broadcaster fee (base units):", quoted.Preview().FeeAmount)
-	// The same attachment flow supports Transfer, Credit creation, top-up and cancellation.
-	// Credit draw and registration do not support broadcasters. Private change can pay
-	// fees; otherwise existing public funding increases. Cancellation uses its refund.
-
-	// 4. Alice approves the final gross funding amount, including the fixed fee.
-	// Approval and the EIP-712 funding authorization are separate permissions.
 	signer, err := bind.NewKeyedTransactorWithChainID(alice.Key, chain)
 	if err != nil {
 		log.Fatal(err)
@@ -117,6 +126,8 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	// 7. Approve the final gross funding, including the fee, before signing.
 	gross := quoted.Preview().FundingAmount
 	allowance, err := token.Allowance(&bind.CallOpts{Context: ctx}, signer.From, pool.Context().ProtocolAddress)
 	if err != nil {
@@ -149,8 +160,7 @@ func main() {
 		}
 	}
 
-	// 5. Sign the final request externally. Shield does not need a ZK proof.
-	// For private operations, owner authorization and proving precede funding signing.
+	// 8. Sign the frozen fee-bearing funding request externally.
 	request, err := quoted.ExportFundingAuthorization(ctx)
 	if err != nil {
 		log.Fatal(err)
@@ -171,10 +181,9 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-
-	// 6. Submit the bound transaction. Keep the ID even if a request times out:
-	// query client.Status(ctx, id) rather than constructing another spend.
 	fmt.Println("Keep this request ID before submitting:", ready.ID())
+
+	// 9. Persist the request ID before submission so an uncertain result can be recovered.
 	status, err := ready.SubmitBroadcaster(ctx, client)
 	if err != nil {
 		log.Fatal("Preserve the prepared transaction ID and recover its status: ", err)

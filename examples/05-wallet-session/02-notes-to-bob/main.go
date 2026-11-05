@@ -23,15 +23,23 @@ import (
 
 func main() {
 	execute := flag.Bool("execute", false, "authorize signing, proving and chain submission")
-	recoverID := flag.String("recover", "", "resume a persisted operation ID")
-	transactionHash := flag.String("transaction", "", "previously submitted transaction hash for recovery")
 	flag.Parse()
+	if !*execute {
+		log.Fatal("Review settings and code, then add --execute; no network request or transaction was made")
+	}
 	ctx := context.Background()
+
+	// 1. Load local demonstration accounts.
 	accounts, err := shared.GetAccounts(shared.Settings.AccountsFile)
 	if err != nil {
 		log.Fatal(err)
 	}
+	if len(accounts) < 2 {
+		log.Fatal("this example requires at least 2 initialized accounts")
+	}
 	alice, bob := accounts[0], accounts[1]
+
+	// 2. Connect to the chain and pin the Protocol RPC deployment.
 	provider, err := ethclient.DialContext(ctx, shared.Settings.ChainRPCURL)
 	if err != nil {
 		log.Fatal(err)
@@ -63,11 +71,13 @@ func main() {
 		log.Fatal(err)
 	}
 
+	// 3. Create the local prover; private witnesses stay on this machine.
 	localProver, err := native.NewNativeProver(shared.Settings.Prover)
 	if err != nil {
 		log.Fatal(err)
 	}
-	// This example derives a separate application storage key locally; production applications can use a key manager.
+
+	// 4. Open the encrypted wallet inventory with an application-owned storage key.
 	storageKey := crypto.Keccak256([]byte("Invisi.GoExamples.Storage.v1"), crypto.FromECDSA(alice.Key))
 	defer clear(storageKey)
 	codec, err := sdk.NewEncryptedWalletCodec(storageKey)
@@ -88,32 +98,14 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	// Private capabilities and the geth sender are injected only into the managed connection.
+
+	// 5. Create the managed wallet session.
 	session, err := invisi.Connect(ctx, sdk.ConnectionOptions{Wallet: localWallet, Protocol: pool, Signer: signer, Namespace: "go-examples"})
 	if err != nil {
 		log.Fatal(err)
 	}
-	if *recoverID != "" {
-		operation, err := session.Resume(ctx, *recoverID)
-		if err != nil {
-			log.Fatal(err)
-		}
-		if *transactionHash != "" {
-			if len(*transactionHash) != 66 {
-				log.Fatal("transaction must be a 32-byte hex hash")
-			}
-			operation, err = operation.TrackTransaction(ctx, common.HexToHash(*transactionHash))
-			if err != nil {
-				log.Fatal(err)
-			}
-		}
-		result, err := operation.Reconcile(ctx)
-		if err != nil {
-			log.Fatal(err)
-		}
-		fmt.Println("Recovered operation status:", result.Status())
-		return
-	}
+
+	// 6. Refresh authenticated wallet state and inspect the token balance.
 	refreshed, err := session.Refresh(ctx, sdk.RefreshOptions{FromBlock: pool.Deployment().Protocol.FromBlock})
 	if err != nil {
 		log.Fatal(err)
@@ -123,31 +115,37 @@ func main() {
 		log.Fatal(err)
 	}
 	fmt.Println("Refreshed through block:", refreshed.Block.Number, "Available funds:", balance.AvailableKnown)
-	if !*execute {
-		fmt.Println("Read-only restore complete. Add --execute to prepare and submit a transfer.")
-		return
-	}
+
+	// 7. Build the complete output with its deployment, token, amount and recipient.
 	output, err := sdk.NewNoteOutput(sdk.NoteOutputOptions{
-		ChainID: new(big.Int).SetUint64(pool.Context().ChainID), ProtocolAddress: pool.Context().ProtocolAddress,
-		TokenAddress: token, Amount: big.NewInt(10), Recipient: sdk.InvisiRecipient{Address: recipient},
+		ChainID:         new(big.Int).SetUint64(pool.Context().ChainID),
+		ProtocolAddress: pool.Context().ProtocolAddress,
+		TokenAddress:    token,
+		Amount:          big.NewInt(10),
+		Recipient:       sdk.InvisiRecipient{Address: recipient},
 	})
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	// 8. Prepare the managed transaction and reserve its inputs.
 	prepared, err := session.PrepareTransfer(ctx, sdk.TransferPreparation{TokenAddress: token, Outputs: []sdk.NoteOutput{output}})
 	if err != nil {
 		log.Fatal(err)
 	}
 	fmt.Println("Review:", prepared.Preview())
+
+	// 9. Authorize spending through the managed session.
 	authorized, err := prepared.Authorize(ctx)
 	if err != nil {
 		log.Fatal(err)
 	}
-	ready, err := authorized.Prove(ctx, sdk.TransactionProveOptions{Options: prover.Options{OnProgress: func(p prover.Progress) { fmt.Println("Proof phase:", p.Phase) }}})
+	ready, err := authorized.Prove(ctx, sdk.TransactionProveOptions{Options: prover.Options{OnProgress: func(p prover.Progress) {
+		fmt.Println("Proof phase:", p.Phase)
+	}}})
 	if err != nil {
 		log.Fatal(err)
 	}
-	// A session reserves notes and persists the operation before its geth delegate sends.
 	transaction, err := session.SendTransaction(ctx, ready)
 	if err != nil {
 		log.Fatal(err)
@@ -169,5 +167,4 @@ func main() {
 		log.Fatal(err)
 	}
 	fmt.Println("Canonical status:", confirmed.Status())
-
 }

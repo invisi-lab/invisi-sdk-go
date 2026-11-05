@@ -1,4 +1,4 @@
-// Derive an offline wallet and expose only its public identity and viewing capabilities.
+// Derive an offline wallet and inspect its public addresses and capabilities.
 package main
 
 import (
@@ -11,7 +11,6 @@ import (
 )
 
 func main() {
-	// Generate a fresh ephemeral key for this offline demonstration; no local account file is read.
 	key, err := crypto.GenerateKey()
 	if err != nil {
 		log.Fatal(err)

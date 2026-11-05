@@ -1,3 +1,4 @@
+// 01 cash to bob with change.
 package main
 
 import (
@@ -12,34 +13,33 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
-	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
-	"github.com/ethereum/go-ethereum/signer/core/apitypes"
 	"github.com/invisi-lab/invisi-sdk-go/core"
 	"github.com/invisi-lab/invisi-sdk-go/examples/shared"
+	"github.com/invisi-lab/invisi-sdk-go/prover"
+	"github.com/invisi-lab/invisi-sdk-go/prover/native"
 	"github.com/invisi-lab/invisi-sdk-go/sdk"
 )
 
 func main() {
 	execute := flag.Bool("execute", false, "authorize signing, proving and chain submission")
-	signatureFunding := flag.Bool("signature-funding", false, "sign a public funding grant")
-	count := flag.Int("outputs", 2, "number of transparent funded outputs, from 1 to 10")
-	actor := flag.Int("actor", 0, "funding/spending account index")
-	recipientIndex := flag.Int("recipient", 1, "receiving account index; set equal to actor for own notes")
 	flag.Parse()
 	if !*execute {
 		log.Fatal("Review settings and code, then add --execute; no network request or transaction was made")
 	}
-
 	ctx := context.Background()
+
+	// 1. Load local demonstration accounts.
 	accounts, err := shared.GetAccounts(shared.Settings.AccountsFile)
 	if err != nil {
 		log.Fatal(err)
 	}
-	if *actor < 0 || *actor >= len(accounts) || *recipientIndex < 0 || *recipientIndex >= len(accounts) {
-		log.Fatal("account index out of range")
+	if len(accounts) < 2 {
+		log.Fatal("this example requires at least 2 initialized accounts")
 	}
-	alice, bob := accounts[*actor], accounts[*recipientIndex]
+	alice, bob := accounts[0], accounts[1]
+
+	// 2. Connect to the chain and pin the Protocol RPC deployment.
 	provider, err := ethclient.DialContext(ctx, shared.Settings.ChainRPCURL)
 	if err != nil {
 		log.Fatal(err)
@@ -71,35 +71,49 @@ func main() {
 		log.Fatal(err)
 	}
 
-	if *count < 1 || *count > 10 {
-		log.Fatal("outputs must be 1..10")
-	}
-	invisi := sdk.NewInvisi(sdk.InvisiOptions{Provider: provider, ProtocolRPC: client})
-	payload, err := core.FundsV1.Encode(core.PayloadDataV1{Memo: []byte("Transparent funded payment")})
+	// 3. Create the local prover; private witnesses stay on this machine.
+	localProver, err := native.NewNativeProver(shared.Settings.Prover)
 	if err != nil {
 		log.Fatal(err)
 	}
-	outputs := make([]sdk.NoteOutput, *count)
-	for i := range outputs {
-		outputs[i], err = sdk.NewNoteOutput(sdk.NoteOutputOptions{
-			ChainID: chain, ProtocolAddress: pool.Context().ProtocolAddress, TokenAddress: token,
-			Amount: big.NewInt(10), Recipient: sdk.InvisiRecipient{Address: recipient}, Payload: payload,
-		})
-		if err != nil {
-			log.Fatal(err)
-		}
+	invisi := sdk.NewInvisi(sdk.InvisiOptions{Provider: provider, ProtocolRPC: client, Prover: localProver})
+	amount := big.NewInt(10)
+
+	payload, err := core.FundsV1.Encode(core.PayloadDataV1{Memo: []byte("Hidden amount payment")})
+	if err != nil {
+		log.Fatal(err)
 	}
-	amount := big.NewInt(int64(*count) * 10)
+
+	// 4. Build the complete output with its deployment, token, amount and recipient.
+	output, err := sdk.NewNoteOutput(sdk.NoteOutputOptions{
+		ChainID:         chain,
+		ProtocolAddress: pool.Context().ProtocolAddress,
+		TokenAddress:    token,
+		Amount:          amount,
+		Recipient:       sdk.InvisiRecipient{Address: recipient},
+		Payload:         payload,
+	})
+	if err != nil {
+		log.Fatal(err)
+	}
+	params := sdk.TransferPreparation{TokenAddress: token, Outputs: []sdk.NoteOutput{output}}
 	authorization := "caller"
-	if *signatureFunding {
-		authorization = "signature"
+	fundingAmount := new(big.Int).Set(amount)
+	params.Funding = &sdk.FundingSource{
+		Payer:         alice.PublicWallet.OwnerAddress(),
+		Amount:        fundingAmount,
+		Authorization: authorization,
 	}
-	// Token approval is public and separate from private wallet authorization.
 	tokenABI, err := abi.JSON(strings.NewReader(`[{"type":"function","name":"approve","stateMutability":"nonpayable","inputs":[{"name":"spender","type":"address"},{"name":"amount","type":"uint256"}],"outputs":[{"type":"bool"}]}]`))
 	if err != nil {
 		log.Fatal(err)
 	}
-	approval, err := bind.NewBoundContract(token, tokenABI, provider, provider, provider).Transact(signer, "approve", pool.Context().ProtocolAddress, amount)
+	fundingSigner, err := bind.NewKeyedTransactorWithChainID(alice.Key, chain)
+	if err != nil {
+		log.Fatal(err)
+	}
+	fundingSigner.Context = ctx
+	approval, err := bind.NewBoundContract(token, tokenABI, provider, provider, provider).Transact(fundingSigner, "approve", pool.Context().ProtocolAddress, fundingAmount)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -110,47 +124,31 @@ func main() {
 	if receipt.Status != types.ReceiptStatusSuccessful {
 		log.Fatal("approval reverted")
 	}
-	prepared, err := invisi.PrepareShield(ctx, sdk.ExplicitShieldPreparation{TransactionIdentity: sdk.TransactionIdentity{Wallet: alice.PublicWallet, Protocol: pool}, ShieldPreparation: sdk.ShieldPreparation{TokenAddress: token, Outputs: outputs, Funding: sdk.FundingSource{Payer: alice.PublicWallet.OwnerAddress(), Amount: amount, Authorization: authorization}}})
+
+	// 5. Prepare and freeze the transaction intent.
+	prepared, err := invisi.PrepareTransfer(ctx, sdk.ExplicitTransferPreparation{
+		TransactionIdentity: sdk.TransactionIdentity{Wallet: alice.PublicWallet, Protocol: pool},
+		TransferPreparation: params,
+		ExplicitFunds:       sdk.ExplicitFunds{Inputs: nil},
+	})
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Println("Review frozen shield:", prepared.Preview())
-	if !*signatureFunding {
-		prepared, err = prepared.Ready(ctx)
-		if err != nil {
-			log.Fatal(err)
-		}
+	fmt.Println("Review frozen operation:", prepared.Preview())
+
+	// 6. Generate and verify the transaction proof locally.
+	prepared, err = prepared.Prove(ctx, sdk.TransactionProveOptions{Options: prover.Options{OnProgress: func(p prover.Progress) {
+		fmt.Println("Proof phase:", p.Phase)
+	}}, Execution: "single"})
+	if err != nil {
+		log.Fatal(err)
 	}
 
-	if *signatureFunding {
-		// Funding authorization follows proof generation and binds its final proof bytes.
-		request, err := prepared.ExportFundingAuthorization(ctx)
-		if err != nil {
-			log.Fatal(err)
-		}
-		typed, err := request.TypedData()
-		if err != nil {
-			log.Fatal(err)
-		}
-		digest, _, err := apitypes.TypedDataAndHash(typed)
-		if err != nil {
-			log.Fatal(err)
-		}
-		signature, err := crypto.Sign(digest, alice.Key)
-		if err != nil {
-			log.Fatal(err)
-		}
-		prepared, err = prepared.WithFundingSignature(ctx, signature)
-		if err != nil {
-			log.Fatal(err)
-		}
-	}
-
+	// 7. Export calldata for ordinary geth submission.
 	call, err := prepared.ExportTransaction(ctx)
 	if err != nil {
 		log.Fatal(err)
 	}
-	// Ordinary geth owns gas, nonce selection and submission. This branch requires --execute.
 	transaction, err := bind.NewBoundContract(call.To, abi.ABI{}, provider, provider, provider).RawTransact(signer, call.Data)
 	if err != nil {
 		log.Fatal(err)
@@ -171,6 +169,4 @@ func main() {
 		log.Fatal("transaction receipt is no longer canonical; preserve the transaction hash and reconcile")
 	}
 	fmt.Println("Mined block:", receipt.BlockNumber)
-	// Persist the transaction hash before waiting in a production application, then reconcile canonical state.
-
 }
