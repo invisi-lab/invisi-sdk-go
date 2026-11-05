@@ -2,7 +2,7 @@
 
 Each numbered directory is one runnable example with one `main.go`. Read it from top to bottom: configuration, connection, inputs and outputs, preparation, authorization, proof, submission, and confirmation are shown directly. Setup code is intentionally repeated so a reader does not need to follow a shared business workflow or choose a `--mode`.
 
-Run commands from the repository root. Transaction examples require `--execute` before loading accounts or making network requests. Wallet and output examples are offline. Session restore, operation reconciliation, and disclosures read chain/RPC state but do not submit transactions.
+Run commands from the repository root. Transaction examples require `--execute` before loading accounts or making network requests. Wallet and output examples are offline. Session restore, operation reconciliation, and disclosures read chain/RPC state but do not submit transactions. Only category 05 imports `session` and `session/sqlite`; other workflows use stateless `sdk` preparation.
 
 ## Setup
 

@@ -15,10 +15,10 @@ TS = pathlib.Path(os.environ.get("INVISI_TS_ROOT", str(ROOT.parent / "invisi-sdk
 
 class SynchronizationTests(unittest.TestCase):
     def test_proving_only_import_does_not_publish_gas_catalog(self):
-        before = (ROOT / "sdk/data/gas-benchmarks.json").read_bytes()
+        before = (ROOT / "internal/transaction/data/gas-benchmarks.json").read_bytes()
         result = subprocess.run([sys.executable, str(ROOT / "scripts/sync-reference.py"), "--proving-only", str(TS), str(PROTOCOL)], capture_output=True)
         self.assertEqual(result.returncode, 0, result.stderr.decode())
-        self.assertEqual(before, (ROOT / "sdk/data/gas-benchmarks.json").read_bytes())
+        self.assertEqual(before, (ROOT / "internal/transaction/data/gas-benchmarks.json").read_bytes())
         layouts = json.loads((ROOT / "prover/witness-layouts.json").read_text())
         self.assertIn("input_owner_address", layouts["transact_user_slots14"]["private"])
         self.assertIn("output_identities", layouts["transact_user_slots14"]["private"])
@@ -45,7 +45,7 @@ class SynchronizationTests(unittest.TestCase):
         self.assertEqual(before, (ROOT / "prover/native/circuits/manifest.json").read_bytes())
 
     def test_stale_credit_gas_fingerprint_rejected_before_writes(self):
-        before = (ROOT / "sdk/data/gas-benchmarks.json").read_bytes()
+        before = (ROOT / "internal/transaction/data/gas-benchmarks.json").read_bytes()
         with tempfile.TemporaryDirectory(prefix="invisi-gas-sync-test-") as directory:
             checkout = pathlib.Path(directory)
             for relative in ("packages/prover/circuits", "packages/core/src/testdata", "packages/protocol/src"):
@@ -61,7 +61,7 @@ class SynchronizationTests(unittest.TestCase):
             result = subprocess.run([sys.executable, "-O", str(ROOT / "scripts/sync-reference.py"), str(checkout), str(PROTOCOL)], capture_output=True)
             self.assertNotEqual(result.returncode, 0, "stale Credit gas catalog was published")
             self.assertIn(b"stale Credit gas circuit", result.stderr)
-        self.assertEqual(before, (ROOT / "sdk/data/gas-benchmarks.json").read_bytes())
+        self.assertEqual(before, (ROOT / "internal/transaction/data/gas-benchmarks.json").read_bytes())
 
     def test_retired_credit_manifest_rejected_even_when_optimized(self):
         before = (ROOT / "prover/native/circuits/manifest.json").read_bytes()

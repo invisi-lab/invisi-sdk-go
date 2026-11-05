@@ -86,11 +86,13 @@ Top-up and draw payload overrides preserve the parent payload when nil; a non-ni
 
 ## Managed wallet sessions
 
+The stateless SDK does not import the session package or a database driver. Both paths use one internal transaction engine; managed persistence and lease checks are injected by the session package. There is no separate Go module or independently versioned session release.
+
 `sdk.WalletFromPrivateKey` restores a complete local wallet for a managed session. It derives separate viewing and detection capabilities from the application's existing EVM key; mnemonic derivation remains the application's responsibility. Private wallet and capability objects redact default formatting and JSON.
 
-Supply private capabilities, a geth signer and optional funding signer at `Connect`, not on the shared `Invisi` constructor. Session operations provide local authorization, input reservations, submission tracking, reconciliation and recovery. Only this workflow uses a Store.
+Import `github.com/invisi-lab/invisi-sdk-go/session` for managed wallets. Compose `session.Connect(ctx, session.Options{Invisi: invisi, Wallet: wallet, Protocol: pool, Store: store})`. Supply private capabilities, a geth signer and optional funding signer on these session options; the shared `sdk.InvisiOptions` contains infrastructure only. Session operations provide local authorization, input reservations, submission tracking, reconciliation and recovery. Only this workflow uses a Store.
 
-`NewMemoryWalletStore` is ephemeral. For persistence, combine `sdk.NewEncryptedWalletCodec` with `sdk/sqlite.NewWalletStore` and an application-owned database and encryption key. Successful atomic commits advance a revision; failed commits do not. SQLite authenticates the stored revision. Private authorization signatures are not persisted.
+`session.NewMemoryWalletStore` is ephemeral. For persistence, combine `session.NewEncryptedWalletCodec` with `session/sqlite.NewWalletStore` and an application-owned database and encryption key. Successful atomic commits advance a revision; failed commits do not. SQLite authenticates the stored revision. Private authorization signatures are not persisted.
 
 Refresh defaults to `sdk.MaxUpdateBlocks` / `rpc.MaxUpdateBlocks` (10000 inclusive blocks); `PageSize` may reduce that limit. Empty intermediate pages skip repeated inventory work, while an entirely empty range retains one final spent-state check. Every page still checks its block anchor, and output count, response size and detection delivery limits remain separate.
 
@@ -104,8 +106,9 @@ A timeout does not release potentially externalized inputs. Persist a broadcast 
 
 | Package | Responsibility |
 | --- | --- |
-| `sdk` | Public identities, preparation, signing requests, sessions, history, registry and disclosure |
-| `sdk/sqlite` | Encrypted persistent wallet state |
+| `sdk` | Stateless wallets, preparation, signing requests, registry and disclosure |
+| `session` | Managed operations, inventory, history, refresh, reservations and recovery |
+| `session/sqlite` | Encrypted persistent wallet state |
 | `core` | Wallet KDF, addresses, note encryption, payload codecs and FMD |
 | `protocol` | Deployment context, statements, calldata and generated contract bindings |
 | `rpc` | Deployment discovery, registered keys, broadcaster profiles, outputs, candidates and membership |

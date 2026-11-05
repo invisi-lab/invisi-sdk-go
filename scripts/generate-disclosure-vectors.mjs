@@ -32,5 +32,5 @@ const creditOpening=(await Disclosure.fromCredit(credit)).export();
 assert.equal(creditOpening.data.singleLimit,v.credit.singleLimit,'build the current TS core first');
 const notePayload=(await Disclosure.fromEncryptedNote(v.owner.viewingPrivateKey,v.note.ciphertext,noteContext)).export();
 const creditPayload=(await Disclosure.fromEncryptedCredit(v.owner.viewingPrivateKey,v.credit.ownerCiphertext,creditContext)).export();
-writeFileSync(join(root,'sdk/testdata/disclosure-vectors.json'),JSON.stringify({noteOpening,creditOpening,notePayload,creditPayload,noteCiphertext:v.note.ciphertext,creditCiphertext:v.credit.ownerCiphertext},null,2)+'\n');
+writeFileSync(join(root,'internal/transaction/testdata/disclosure-vectors.json'),JSON.stringify({noteOpening,creditOpening,notePayload,creditPayload,noteCiphertext:v.note.ciphertext,creditCiphertext:v.credit.ownerCiphertext},null,2)+'\n');
 console.log('Generated authenticated current TS envelope v1 disclosure vectors');

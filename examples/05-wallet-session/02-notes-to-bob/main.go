@@ -18,7 +18,8 @@ import (
 	"github.com/invisi-lab/invisi-sdk-go/prover"
 	"github.com/invisi-lab/invisi-sdk-go/prover/native"
 	"github.com/invisi-lab/invisi-sdk-go/sdk"
-	walletsqlite "github.com/invisi-lab/invisi-sdk-go/sdk/sqlite"
+	walletsession "github.com/invisi-lab/invisi-sdk-go/session"
+	walletsqlite "github.com/invisi-lab/invisi-sdk-go/session/sqlite"
 )
 
 func main() {
@@ -80,7 +81,7 @@ func main() {
 	// 4. Open the encrypted wallet inventory with an application-owned storage key.
 	storageKey := crypto.Keccak256([]byte("Invisi.GoExamples.Storage.v1"), crypto.FromECDSA(alice.Key))
 	defer clear(storageKey)
-	codec, err := sdk.NewEncryptedWalletCodec(storageKey)
+	codec, err := walletsession.NewEncryptedWalletCodec(storageKey)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -93,20 +94,20 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	invisi := sdk.NewInvisi(sdk.InvisiOptions{Provider: provider, ProtocolRPC: client, Prover: localProver, Store: store})
+	invisi := sdk.NewInvisi(sdk.InvisiOptions{Provider: provider, ProtocolRPC: client, Prover: localProver})
 	localWallet, err := sdk.WalletFromPrivateKey("0x" + hex.EncodeToString(crypto.FromECDSA(alice.Key)))
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	// 5. Create the managed wallet session.
-	session, err := invisi.Connect(ctx, sdk.ConnectionOptions{Wallet: localWallet, Protocol: pool, Signer: signer, Namespace: "go-examples"})
+	session, err := walletsession.Connect(ctx, walletsession.Options{Invisi: invisi, Store: store, Wallet: localWallet, Protocol: pool, Signer: signer, Namespace: "go-examples"})
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	// 6. Refresh authenticated wallet state and inspect the token balance.
-	refreshed, err := session.Refresh(ctx, sdk.RefreshOptions{FromBlock: pool.Deployment().Protocol.FromBlock})
+	refreshed, err := session.Refresh(ctx, walletsession.RefreshOptions{FromBlock: pool.Deployment().Protocol.FromBlock})
 	if err != nil {
 		log.Fatal(err)
 	}

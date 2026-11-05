@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+- Separate managed wallet sessions, history, inventory, operations and storage into `session` and `session/sqlite`.
+- Keep `sdk` preparation stateless, remove `Invisi.Connect` and the infrastructure Store option, and share transaction algorithms through an internal engine.
+- Preserve numbered flat examples with explicit session composition and external transaction submission.
+
 ## 1.1.6
 
 - Align note outputs, optional encrypted delivery and EVM receiving-key resolution with the current contracts.

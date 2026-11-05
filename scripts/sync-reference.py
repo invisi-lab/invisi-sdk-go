@@ -123,7 +123,7 @@ for name in ('wallet-note-vectors.json', 'wallet-authorization-vectors.json', 'w
     origin = vector_root / name
     shutil.copyfile(origin, root / 'core/testdata' / name)
 shutil.copyfile(source / 'packages/protocol/src/testdata/address-registration-vectors.json', root / 'protocol/testdata/address-registration-vectors.json')
-(root / 'sdk/data/gas-benchmarks.json').write_bytes(gas_catalog)
-(root / 'sdk/testdata/gas-reference-vectors.json').write_bytes(gas_vectors)
+(root / 'internal/transaction/data/gas-benchmarks.json').write_bytes(gas_catalog)
+(root / 'session/testdata/gas-reference-vectors.json').write_bytes(gas_vectors)
 shutil.copyfile(source / 'packages/protocol/src/protocol-vectors.json', root / 'protocol/protocol-vectors.json')
 print('Synced authenticated current protocol assets, layouts and SDK reference vectors')
