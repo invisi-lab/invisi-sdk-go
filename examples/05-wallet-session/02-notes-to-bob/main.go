@@ -118,7 +118,7 @@ func main() {
 	fmt.Println("Refreshed through block:", refreshed.Block.Number, "Available funds:", balance.AvailableKnown)
 
 	// 7. Build the complete output with its deployment, token, amount and recipient.
-	output, err := sdk.NewNoteOutput(sdk.NoteOutputOptions{
+	output, err := sdk.NewNoteOutput(sdk.PaymentRequest{
 		ChainID:         new(big.Int).SetUint64(pool.Context().ChainID),
 		ProtocolAddress: pool.Context().ProtocolAddress,
 		TokenAddress:    token,

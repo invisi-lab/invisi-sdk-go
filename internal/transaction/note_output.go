@@ -33,7 +33,7 @@ func (InvisiRecipient) noteRecipient() {}
 
 func (IdentityRecipient) noteRecipient() {}
 
-type NoteOutputOptions struct {
+type PaymentRequest struct {
 	ChainID                       *big.Int
 	ProtocolAddress, TokenAddress common.Address
 	Amount                        *big.Int
@@ -45,6 +45,7 @@ type NoteOutputOptions struct {
 type NoteOutput struct{ saved *OutputIntent }
 
 type OutputIntent struct {
+	IPP                  string
 	Context              core.ProtocolContext
 	Token                common.Address
 	Amount               *big.Int
@@ -53,6 +54,14 @@ type OutputIntent struct {
 	Identity, Commitment common.Hash
 	Delivery             protocol.Delivery
 	Pending              bool
+}
+
+// IPP returns the original canonical request, without execution-selected nonces or lookup choices.
+func (n NoteOutput) IPP() string {
+	if n.saved == nil {
+		return ""
+	}
+	return n.saved.IPP
 }
 
 func (n NoteOutput) Amount() *big.Int {

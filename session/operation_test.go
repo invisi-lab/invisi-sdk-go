@@ -206,7 +206,7 @@ func TestShieldAcceptsTokenWithoutRegistration(t *testing.T) {
 		t.Fatal(err)
 	}
 	asset := common.HexToAddress("0x3333333333333333333333333333333333333333")
-	output, err := sdk.NewNoteOutput(sdk.NoteOutputOptions{ChainID: new(big.Int).SetUint64(session.scope.ChainID), ProtocolAddress: session.scope.ProtocolAddress, TokenAddress: asset, Amount: big.NewInt(70), Recipient: sdk.InvisiRecipient{Address: address}})
+	output, err := sdk.NewNoteOutput(sdk.PaymentRequest{ChainID: new(big.Int).SetUint64(session.scope.ChainID), ProtocolAddress: session.scope.ProtocolAddress, TokenAddress: asset, Amount: big.NewInt(70), Recipient: sdk.InvisiRecipient{Address: address}})
 	if err != nil {
 		t.Fatal(err)
 	}

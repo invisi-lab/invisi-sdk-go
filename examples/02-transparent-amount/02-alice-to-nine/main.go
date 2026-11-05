@@ -72,7 +72,7 @@ func main() {
 		if err != nil {
 			log.Fatal(err)
 		}
-		outputs[i], err = sdk.NewNoteOutput(sdk.NoteOutputOptions{
+		outputs[i], err = sdk.NewNoteOutput(sdk.PaymentRequest{
 			ChainID:         chain,
 			ProtocolAddress: pool.Context().ProtocolAddress,
 			TokenAddress:    token,

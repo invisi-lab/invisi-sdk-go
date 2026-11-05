@@ -42,7 +42,7 @@ Registry preparation is exposed through `Invisi.PrepareRegistration`. Export the
 Every Shield/Transfer business output is a `NoteOutput` created with `sdk.NewNoteOutput`; raw payment objects and zero-value outputs are rejected. The factory requires chain, Protocol, token and amount up front. Preparation rejects a different context instead of rewriting the output.
 
 ```go
-output, err := sdk.NewNoteOutput(sdk.NoteOutputOptions{
+output, err := sdk.NewNoteOutput(sdk.PaymentRequest{
     ChainID: chainID, ProtocolAddress: pool.Context().ProtocolAddress,
     TokenAddress: token, Amount: amount,
     Recipient: sdk.InvisiRecipient{Address: bobAddress, Nonce: nonce},
@@ -56,7 +56,7 @@ Recipients are sealed typed variants:
 - `EVMRecipient{Address, Nonce, Envelope, AddressLookup}` accepts an EVM owner. A nil Envelope defaults to true. `DeliveryPending()` is true on the offline intent; preparation uses `"protocol-rpc"` (default) or `"chain"` to resolve registered keys and freezes delivery. Unregistered destinations or lookup failures reject preparation. A pointer to false skips registration and delivery entirely.
 - `IdentityRecipient{Identity}` accepts a nonzero canonical per-note identity (`common.Hash`), with no nonce, wallet opening or envelope. `Note()` returns nil; the recipient must retain its own opening. Verify a merchant-supplied commitment independently with `output.AssertCommitment(expected)`.
 
-Payload is an outer `NoteOutputOptions` field allowed only with envelopes. Getter results are detached copies. Factory objects are in-memory intents; retain business parameters/complete notes to recreate them after a process restart. Managed operation plans use durable Store snapshots independently of factory objects. Empty Funds delivery always means both ciphertext and clue are empty. Decryption skips these slots without changing sibling leaf positions; active Credit owner/spender envelopes remain mandatory.
+Payload is an outer `PaymentRequest` field allowed only with envelopes. Getter results are detached copies. Factory objects are in-memory intents; retain business parameters/complete notes to recreate them after a process restart. Managed operation plans use durable Store snapshots independently of factory objects. Empty Funds delivery always means both ciphertext and clue are empty. Decryption skips these slots without changing sibling leaf positions; active Credit owner/spender envelopes remain mandatory.
 
 ## Optional broadcaster submission
 
@@ -166,3 +166,19 @@ go vet ./...
 ```
 
 Real native integration tests additionally use `BB_BINARY_PATH` and `NOIR_EXECUTE_PATH`. Cross-language fixtures check current TypeScript signing, wallet, encryption and disclosure formats. [CHANGELOG.md](CHANGELOG.md) describes the breaking migration from 1.1.3.
+
+## Portable Note payment requests (IPR)
+
+`PaymentRequest` describes Note output creation. `EncodePaymentRequest` and `DecodePaymentRequest` are offline operations. The canonical wire format is identical to the TypeScript SDK: `ipr:` followed by unpadded Base64URL, version 1 in the binary header, unsigned big-endian fields and strict range/length checks. Shared fixtures are in `internal/transaction/testdata/payment_requests.json`.
+
+```go
+ipr, err := sdk.EncodePaymentRequest(request)
+if err != nil { return err }
+output, err := sdk.NewNoteOutput(ipr)
+if err != nil { return err }
+// The original request remains unchanged when a nonce is selected.
+original := output.IPP()
+_ = original
+```
+
+`NewNoteOutput` accepts a `PaymentRequest` or an encoded IPR, with at most one `NoteOutputExecutionOptions`. Its `Nonce` overrides only an omitted nonce (or matches a fixed one); `AddressLookup` selects `"chain"` or `"protocol-rpc"` only for encrypted EVM recipients. Local lookup preferences are never encoded. Invisi recipients always have an envelope. Identity recipients have no envelope, nonce or payload. Missing nonces are independently randomized per output. Request bytes are retained through protected output snapshots and validated again during preparation. Application payload is bounded to 3936 bytes; unsupported versions, flags, trailing bytes and noncanonical Base64URL are rejected. Credit is outside this codec.

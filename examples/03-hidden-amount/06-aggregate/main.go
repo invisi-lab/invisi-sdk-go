@@ -111,7 +111,7 @@ func main() {
 		}
 		for _, input := range selected {
 			amount := new(big.Int).Div(core.ElementToBigInt(input.Note.Amount), big.NewInt(2))
-			output, err := sdk.NewNoteOutput(sdk.NoteOutputOptions{
+			output, err := sdk.NewNoteOutput(sdk.PaymentRequest{
 				ChainID:         chain,
 				ProtocolAddress: pool.Context().ProtocolAddress,
 				TokenAddress:    token,

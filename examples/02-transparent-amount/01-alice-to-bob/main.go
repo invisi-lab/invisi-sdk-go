@@ -70,7 +70,7 @@ func main() {
 	invisi := sdk.NewInvisi(sdk.InvisiOptions{Provider: provider, ProtocolRPC: client})
 
 	// 3. Build the complete output with its deployment, token, amount and recipient.
-	output, err := sdk.NewNoteOutput(sdk.NoteOutputOptions{
+	output, err := sdk.NewNoteOutput(sdk.PaymentRequest{
 		ChainID:         chain,
 		ProtocolAddress: pool.Context().ProtocolAddress,
 		TokenAddress:    token,

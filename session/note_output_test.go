@@ -15,7 +15,7 @@ import (
 
 func TestNoteOutputFactoryIdentityAndImmutability(t *testing.T) {
 	amount := big.NewInt(5)
-	out, err := sdk.NewNoteOutput(sdk.NoteOutputOptions{ChainID: big.NewInt(31337), ProtocolAddress: common.HexToAddress("0x01"), TokenAddress: common.HexToAddress("0x02"), Amount: amount, Recipient: sdk.IdentityRecipient{Identity: common.HexToHash("0x03")}})
+	out, err := sdk.NewNoteOutput(sdk.PaymentRequest{ChainID: big.NewInt(31337), ProtocolAddress: common.HexToAddress("0x01"), TokenAddress: common.HexToAddress("0x02"), Amount: amount, Recipient: sdk.IdentityRecipient{Identity: common.HexToHash("0x03")}})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -52,7 +52,7 @@ func testOutputs(s *WalletSession, outputs []testPaymentOutput) []sdk.NoteOutput
 		if common.IsHexAddress(o.To) {
 			r = sdk.EVMRecipient{Address: common.HexToAddress(o.To)}
 		}
-		n, e := sdk.NewNoteOutput(sdk.NoteOutputOptions{ChainID: core.ElementToBigInt(s.coreContext().ChainID), ProtocolAddress: s.scope.ProtocolAddress, TokenAddress: common.HexToAddress("0x2222222222222222222222222222222222222222"), Amount: o.Amount, Recipient: r, Payload: o.Payload})
+		n, e := sdk.NewNoteOutput(sdk.PaymentRequest{ChainID: core.ElementToBigInt(s.coreContext().ChainID), ProtocolAddress: s.scope.ProtocolAddress, TokenAddress: common.HexToAddress("0x2222222222222222222222222222222222222222"), Amount: o.Amount, Recipient: r, Payload: o.Payload})
 		if e != nil {
 			panic(e)
 		}
@@ -62,7 +62,7 @@ func testOutputs(s *WalletSession, outputs []testPaymentOutput) []sdk.NoteOutput
 }
 
 func TestNoteOutputCanonicalNonceAndOpaqueModes(t *testing.T) {
-	base := sdk.NoteOutputOptions{ChainID: big.NewInt(31337), ProtocolAddress: common.HexToAddress("0x01"), TokenAddress: common.HexToAddress("0x02"), Amount: big.NewInt(5)}
+	base := sdk.PaymentRequest{ChainID: big.NewInt(31337), ProtocolAddress: common.HexToAddress("0x01"), TokenAddress: common.HexToAddress("0x02"), Amount: big.NewInt(5)}
 	base.Recipient = sdk.EVMRecipient{Address: common.HexToAddress("0x03"), Nonce: big.NewInt(0)}
 	out, err := sdk.NewNoteOutput(base)
 	if err != nil {
@@ -96,7 +96,7 @@ func TestNoteOutputCanonicalNonceAndOpaqueModes(t *testing.T) {
 }
 func TestNoteOutputPreparationUsesDirectIdentityAndChecksContext(t *testing.T) {
 	session, token, _ := testSession(t)
-	base := sdk.NoteOutputOptions{ChainID: core.ElementToBigInt(session.coreContext().ChainID), ProtocolAddress: session.scope.ProtocolAddress, TokenAddress: token, Amount: big.NewInt(30), Recipient: sdk.IdentityRecipient{Identity: common.HexToHash("0x03")}}
+	base := sdk.PaymentRequest{ChainID: core.ElementToBigInt(session.coreContext().ChainID), ProtocolAddress: session.scope.ProtocolAddress, TokenAddress: token, Amount: big.NewInt(30), Recipient: sdk.IdentityRecipient{Identity: common.HexToHash("0x03")}}
 	out, err := sdk.NewNoteOutput(base)
 	if err != nil {
 		t.Fatal(err)

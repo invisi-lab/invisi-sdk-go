@@ -26,7 +26,7 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	options := sdk.NoteOutputOptions{
+	options := sdk.PaymentRequest{
 		ChainID:         big.NewInt(31337),
 		ProtocolAddress: common.HexToAddress("0x1111111111111111111111111111111111111111"),
 		TokenAddress:    common.HexToAddress("0x2222222222222222222222222222222222222222"),

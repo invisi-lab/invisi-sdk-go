@@ -25,6 +25,9 @@ func (s *Runtime) Output(ctx context.Context, token common.Address, n NoteOutput
 		return PreparedOutput{}, errors.New("outputs must be created with NewNoteOutput")
 	}
 	p := n.saved
+	if e := matchPaymentRequest(p); e != nil {
+		return PreparedOutput{}, e
+	}
 	if p.Context != s.CoreContext() || p.Token != token {
 		return PreparedOutput{}, errors.New("note output chain, protocol or token mismatch")
 	}
@@ -51,7 +54,7 @@ func (s *Runtime) ChangeOutput(ctx context.Context, token common.Address, addres
 	if common.IsHexAddress(address) {
 		r = EVMRecipient{Address: common.HexToAddress(address)}
 	}
-	n, e := NewNoteOutput(NoteOutputOptions{ChainID: core.ElementToBigInt(s.CoreContext().ChainID), ProtocolAddress: s.Scope.ProtocolAddress, TokenAddress: token, Amount: amount, Recipient: r})
+	n, e := NewNoteOutput(PaymentRequest{ChainID: core.ElementToBigInt(s.CoreContext().ChainID), ProtocolAddress: s.Scope.ProtocolAddress, TokenAddress: token, Amount: amount, Recipient: r})
 	if e != nil {
 		return PreparedOutput{}, e
 	}

@@ -12,7 +12,7 @@ import (
 
 func CanonicalField(v *big.Int) bool { return v != nil && v.Sign() >= 0 && v.Cmp(fr.Modulus()) < 0 }
 
-func NewNoteOutput(o NoteOutputOptions) (NoteOutput, error) {
+func createNoteOutput(o PaymentRequest) (NoteOutput, error) {
 	fail := func(e error) (NoteOutput, error) { return NoteOutput{}, e }
 	if o.ChainID == nil || o.ChainID.Sign() <= 0 || o.ChainID.BitLen() > 64 || o.ProtocolAddress == (common.Address{}) {
 		return fail(errors.New("invalid note output context"))
