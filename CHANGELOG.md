@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.1.6
+
+- Align note outputs, optional encrypted delivery and EVM receiving-key resolution with the current contracts.
+- Support broadcaster discovery, quotes, fee-funded preparation and transaction submission workflows.
+- Refresh authenticated circuit artifacts, gas references and cross-language workflow coverage.
+
 ## 1.1.5
 
 - Add `ProtocolRpcClient.GetTransactionUpdates` for Protocol RPC service 1.1.4+, matching the TypeScript SDK 1.1.5 availability semantics.
