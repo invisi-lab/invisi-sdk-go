@@ -13,15 +13,41 @@ import (
 
 func (o *Operation) validateRecovered() error {
 	p := o.plan
-	if p.Version != 1 || p.WalletIdentity != o.session.wallet.identity || p.Namespace != o.session.scope.Namespace {
+	if p.Version != 1 || p.OwnerAddress != o.session.wallet.identity || p.Namespace != o.session.scope.Namespace {
 		return errors.New("recovered wallet scope mismatch")
+	}
+	if err := o.validateBroadcasterPlan(); err != nil {
+		return err
+	}
+	for _, output := range p.Outputs {
+		if err := positive(output.Amount, 128); err != nil {
+			return err
+		}
+		identity := core.BigIntToElement(output.Identity.Big())
+		leaf, err := core.ComputeNoteCommitment(o.session.coreContext().ChainID, identity, core.BigIntToElement(p.Context.TokenAddress.Big()), core.BigIntToElement(output.Amount))
+		if err != nil || fieldHash(leaf) != output.Commitment {
+			return errors.New("recovered output commitment mismatch")
+		}
+		if output.Note != nil {
+			note := output.Note
+			if note.ProtocolContext != o.session.coreContext() || note.TokenAddress != core.BigIntToElement(p.Context.TokenAddress.Big()) || core.ElementToBigInt(note.Amount).Cmp(output.Amount) != 0 {
+				return errors.New("recovered output scope mismatch")
+			}
+			expected, err := core.ComputeNoteIdentity(note.OwnerAddress, note.Nonce)
+			if err != nil || fieldHash(expected) != output.Identity {
+				return errors.New("recovered output opening mismatch")
+			}
+		}
+		if (len(output.Delivery.Ciphertext) == 0) != (len(output.Delivery.Clue) == 0) {
+			return errors.New("recovered output delivery mismatch")
+		}
 	}
 	for _, input := range p.Inputs {
 		note := input.Note
-		if note.ProtocolContext != o.session.coreContext() || note.WalletIdentity != core.BigIntToElement(p.WalletIdentity.Big()) || note.TokenAddress != core.BigIntToElement(p.Context.TokenAddress.Big()) {
+		if note.ProtocolContext != o.session.coreContext() || note.OwnerAddress != core.BigIntToElement(p.OwnerAddress.Big()) || note.TokenAddress != core.BigIntToElement(p.Context.TokenAddress.Big()) {
 			return errors.New("recovered note scope mismatch")
 		}
-		identity, err := core.ComputeNoteIdentity(note.WalletIdentity, note.Nonce)
+		identity, err := core.ComputeNoteIdentity(note.OwnerAddress, note.Nonce)
 		if err != nil {
 			return err
 		}
@@ -42,7 +68,7 @@ func (o *Operation) validateRecovered() error {
 		} else if input.Role != "owner" {
 			return errors.New("invalid recovered Credit role")
 		}
-		if note.ProtocolContext != o.session.coreContext() || actor != core.BigIntToElement(p.WalletIdentity.Big()) || note.TokenAddress != core.BigIntToElement(p.Context.TokenAddress.Big()) {
+		if note.ProtocolContext != o.session.coreContext() || actor != core.BigIntToElement(p.OwnerAddress.Big()) || note.TokenAddress != core.BigIntToElement(p.Context.TokenAddress.Big()) {
 			return errors.New("recovered Credit scope mismatch")
 		}
 		leaf, err := creditCommitment(note)

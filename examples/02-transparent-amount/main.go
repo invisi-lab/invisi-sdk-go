@@ -23,7 +23,7 @@ import (
 func main() {
 	execute := flag.Bool("execute", false, "authorize signing, proving and chain submission")
 	signatureFunding := flag.Bool("signature-funding", false, "sign a public funding grant")
-	count := flag.Int("outputs", 2, "number of transparent funded outputs, from 1 to 14")
+	count := flag.Int("outputs", 2, "number of transparent funded outputs, from 1 to 10")
 	actor := flag.Int("actor", 0, "funding/spending account index")
 	recipientIndex := flag.Int("recipient", 1, "receiving account index; set equal to actor for own notes")
 	flag.Parse()
@@ -71,17 +71,23 @@ func main() {
 		log.Fatal(err)
 	}
 
-	if *count < 1 || *count > 14 {
-		log.Fatal("outputs must be 1..14")
+	if *count < 1 || *count > 10 {
+		log.Fatal("outputs must be 1..10")
 	}
 	invisi := sdk.NewInvisi(sdk.InvisiOptions{Provider: provider, ProtocolRPC: client})
 	payload, err := core.FundsV1.Encode(core.PayloadDataV1{Memo: []byte("Transparent funded payment")})
 	if err != nil {
 		log.Fatal(err)
 	}
-	outputs := make([]sdk.PaymentOutput, *count)
+	outputs := make([]sdk.NoteOutput, *count)
 	for i := range outputs {
-		outputs[i] = sdk.PaymentOutput{To: recipient, Amount: big.NewInt(10), Payload: payload}
+		outputs[i], err = sdk.NewNoteOutput(sdk.NoteOutputOptions{
+			ChainID: chain, ProtocolAddress: pool.Context().ProtocolAddress, TokenAddress: token,
+			Amount: big.NewInt(10), Recipient: sdk.InvisiRecipient{Address: recipient}, Payload: payload,
+		})
+		if err != nil {
+			log.Fatal(err)
+		}
 	}
 	amount := big.NewInt(int64(*count) * 10)
 	authorization := "caller"

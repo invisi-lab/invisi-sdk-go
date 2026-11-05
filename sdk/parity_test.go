@@ -22,7 +22,7 @@ func TestManagedStagesAreImmutableAndProofFailureIsRetryable(t *testing.T) {
 	ctx := context.Background()
 	session, token, backend := testSession(t)
 	address, _ := session.wallet.GetAddress()
-	prepared, err := session.PrepareTransfer(ctx, TransferPreparation{TokenAddress: token, Outputs: []PaymentOutput{{To: address, Amount: big.NewInt(30)}}})
+	prepared, err := session.PrepareTransfer(ctx, TransferPreparation{TokenAddress: token, Outputs: testOutputs(session, []testPaymentOutput{{To: address, Amount: big.NewInt(30)}})})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -77,7 +77,7 @@ func TestResumeRejectsModifiedCallAndProof(t *testing.T) {
 			ctx := context.Background()
 			session, token, _ := testSession(t)
 			address, _ := session.wallet.GetAddress()
-			operation, err := session.PrepareTransfer(ctx, TransferPreparation{TokenAddress: token, Outputs: []PaymentOutput{{To: address, Amount: big.NewInt(30)}}})
+			operation, err := session.PrepareTransfer(ctx, TransferPreparation{TokenAddress: token, Outputs: testOutputs(session, []testPaymentOutput{{To: address, Amount: big.NewInt(30)}})})
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -102,7 +102,7 @@ func TestResumeRejectsModifiedCallAndProof(t *testing.T) {
 				case "owner":
 					var plan operationPlan
 					_ = json.Unmarshal(record.Plan, &plan)
-					plan.Inputs[0].Note.WalletIdentity.SetUint64(123)
+					plan.Inputs[0].Note.OwnerAddress.SetUint64(123)
 					record.Plan, _ = json.Marshal(plan)
 				}
 				state.Operations[operation.ID()] = record

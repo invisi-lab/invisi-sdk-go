@@ -35,7 +35,7 @@ func TestRealNativeOperationProofs(t *testing.T) {
 			var prepared *Operation
 			switch kind {
 			case "transfer", "recursive":
-				prepared, err = session.PrepareTransfer(ctx, TransferPreparation{TokenAddress: token, Outputs: []PaymentOutput{{To: address, Amount: big.NewInt(30)}}})
+				prepared, err = session.PrepareTransfer(ctx, TransferPreparation{TokenAddress: token, Outputs: testOutputs(session, []testPaymentOutput{{To: address, Amount: big.NewInt(30)}})})
 			case "withdraw":
 				prepared, err = session.PrepareTransfer(ctx, TransferPreparation{TokenAddress: token, Withdrawal: &Withdrawal{To: session.wallet.identity, Amount: big.NewInt(30)}})
 			case "sweep":
@@ -94,7 +94,7 @@ func TestRealNativeAggregation(t *testing.T) {
 			input = note
 		}
 		input.Note.Nonce = core.ElementFromUint64(uint64(123 + i))
-		identity, err := core.ComputeNoteIdentity(input.Note.WalletIdentity, input.Note.Nonce)
+		identity, err := core.ComputeNoteIdentity(input.Note.OwnerAddress, input.Note.Nonce)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -118,7 +118,7 @@ func TestRealNativeAggregation(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		prepared, err := session.PrepareTransfer(ctx, TransferPreparation{TokenAddress: token, Outputs: []PaymentOutput{{To: address, Amount: big.NewInt(30)}}})
+		prepared, err := session.PrepareTransfer(ctx, TransferPreparation{TokenAddress: token, Outputs: testOutputs(session, []testPaymentOutput{{To: address, Amount: big.NewInt(30)}})})
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -142,7 +142,7 @@ func TestRealNativeAggregation(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if result.CircuitName != "transact_aggregate_14_4" || len(result.PublicInputs) != 4*57+1 {
+	if result.CircuitName != "transact_aggregate_14_4" || len(result.PublicInputs) != 4*59+1 {
 		t.Fatal("incorrect aggregate statement")
 	}
 }

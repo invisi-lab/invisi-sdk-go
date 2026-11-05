@@ -18,6 +18,11 @@ type NormalizedCreditCreation struct {
 
 func ValidateCreateCreditRequest(c TransactionContext, p CreateCreditParams, cs []Delivery, f FundingParams) (NormalizedCreditCreation, error) {
 	r := NormalizedCreditCreation{Params: p}
+	var feeErr error
+	r.Params.FeeAmount, feeErr = normalizeFee(p.FeeRecipient, p.FeeAmount)
+	if feeErr != nil {
+		return r, feeErr
+	}
 	if err := ValidateContext(c); err != nil {
 		return r, err
 	}
@@ -86,7 +91,7 @@ func CreateCreditBaseInputs(c TransactionContext, p CreateCreditParams, cs []Del
 	v = append(v, padded(ids, 10)...)
 	v = append(v, padded(roots, 10)...)
 	v = append(v, padded(ns, 10)...)
-	v = append(v, number(p.CreditCommitment), number(p.ChangeCommitment), high, low, p.Expiry, p.Deadline, r.Funding.Amount, r.Funding.Payer.Big())
+	v = append(v, number(p.CreditCommitment), number(p.ChangeCommitment), high, low, p.Expiry, p.Deadline, r.Funding.Amount, r.Funding.Payer.Big(), r.Params.FeeRecipient.Big(), r.Params.FeeAmount)
 	return words(v), nil
 }
 func CreateCreditPublicInputs(c TransactionContext, p CreateCreditParams, cs []Delivery, f FundingParams) ([][32]byte, error) {

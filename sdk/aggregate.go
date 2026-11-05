@@ -24,6 +24,9 @@ func (o *Operation) ExportAggregateMember(ctx context.Context) (OperationAggrega
 	if e := o.checkLease(ctx); e != nil {
 		return OperationAggregateMember{}, e
 	}
+	if o.plan.Broadcaster != nil {
+		return OperationAggregateMember{}, errors.New("broadcaster operations cannot be aggregate members")
+	}
 	if (o.status != "proved" && o.status != "ready") || o.plan.Kind != "transact" || o.plan.Target != "noir-recursive" || o.plan.Capacity != 14 || o.bundle == nil || len(o.bundle.Proof) != 458*32 {
 		return OperationAggregateMember{}, errors.New("ready recursive slots14 member required")
 	}

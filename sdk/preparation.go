@@ -17,12 +17,6 @@ import (
 	protocolrpc "github.com/invisi-lab/invisi-sdk-go/rpc"
 )
 
-type PaymentOutput struct {
-	// Payload is opaque application data bounded by the fixed encrypted envelope.
-	Payload []byte
-	To      string
-	Amount  *big.Int
-}
 type FundingSource struct {
 	SigNonce      *big.Int
 	Deadline      uint64
@@ -33,13 +27,13 @@ type FundingSource struct {
 }
 type ShieldPreparation struct {
 	TokenAddress common.Address
-	Outputs      []PaymentOutput
+	Outputs      []NoteOutput
 	Funding      FundingSource
 	Deadline     uint64
 }
 type TransferPreparation struct {
 	TokenAddress common.Address
-	Outputs      []PaymentOutput
+	Outputs      []NoteOutput
 	Funding      *FundingSource
 	Deadline     uint64
 	Withdrawal   *Withdrawal
@@ -51,7 +45,8 @@ type Withdrawal struct {
 }
 type preparedOutput struct {
 	Address    string
-	Note       core.Note
+	Note       *core.Note
+	Amount     *big.Int
 	Identity   common.Hash
 	Commitment common.Hash
 	Delivery   protocol.Delivery
@@ -59,7 +54,7 @@ type preparedOutput struct {
 }
 type operationPlan struct {
 	Version            int
-	WalletIdentity     common.Address
+	OwnerAddress       common.Address
 	Namespace          string
 	Kind, ID, Target   string
 	Context            protocol.TransactionContext
@@ -83,6 +78,7 @@ type operationPlan struct {
 	CreditOutput       *core.CreditDeliveryState
 	Deliveries         []protocol.Delivery
 	DrawAmounts        []*big.Int
+	Broadcaster        *broadcasterPlan
 }
 
 func validatePayload(payload []byte) error { return core.ValidatePayload(payload) }
@@ -146,6 +142,9 @@ func (s *WalletSession) frame(ctx context.Context, token common.Address, deadlin
 	return c, block, deadline, nil
 }
 func (s *WalletSession) resolve(ctx context.Context, address string) (core.ReceivingAddress, error) {
+	return s.resolveWithLookup(ctx, address, "protocol-rpc")
+}
+func (s *WalletSession) resolveWithLookup(ctx context.Context, address string, mode string) (core.ReceivingAddress, error) {
 	decoded, err := core.DecodeAddress(address)
 	if err != nil {
 		return core.ReceivingAddress{}, &InvisiError{Code: InvalidRecipient, Address: address, Field: "to", Cause: err}
@@ -164,19 +163,18 @@ func (s *WalletSession) resolve(ctx context.Context, address string) (core.Recei
 		return core.ReceivingAddress{}, &MissingCapabilityError{Capability: "receiving-key registry deployment"}
 	}
 	var keys *core.ReceivingKeys
-	mode := s.options.AddressLookup
 	if mode == "" {
 		mode = "protocol-rpc"
 	}
 	switch mode {
 	case "protocol-rpc":
-		registered, err := s.rpc.GetReceivingAddress(ctx, common.BigToAddress(core.ElementToBigInt(decoded.WalletIdentity)))
+		registered, err := s.rpc.GetReceivingAddress(ctx, common.BigToAddress(core.ElementToBigInt(decoded.OwnerAddress)))
 		if err != nil {
 			return lookupFailure(err)
 		}
 		if registered != nil {
 			found, err := core.DecodeAddress(registered.ReceivingAddress)
-			if err != nil || found.Kind != "long" || found.WalletIdentity != decoded.WalletIdentity {
+			if err != nil || found.Kind != "long" || found.OwnerAddress != decoded.OwnerAddress {
 				if err == nil {
 					err = errors.New("registered receiving identity mismatch")
 				}
@@ -196,7 +194,7 @@ func (s *WalletSession) resolve(ctx context.Context, address string) (core.Recei
 		if err != nil {
 			return lookupFailure(err)
 		}
-		keys, err = protocol.CreateRegistryReceivingKeyLookup(caller, &bind.CallOpts{Context: ctx})(decoded.WalletIdentity)
+		keys, err = protocol.CreateRegistryReceivingKeyLookup(caller, &bind.CallOpts{Context: ctx})(decoded.OwnerAddress)
 		if err != nil {
 			return lookupFailure(err)
 		}
@@ -211,41 +209,6 @@ func (s *WalletSession) resolve(ctx context.Context, address string) (core.Recei
 		return lookupFailure(err)
 	}
 	return result, nil
-}
-func (s *WalletSession) output(ctx context.Context, token common.Address, output PaymentOutput) (preparedOutput, error) {
-	var result preparedOutput
-	if e := validatePayload(output.Payload); e != nil {
-		return result, e
-	}
-	if e := positive(output.Amount, 128); e != nil {
-		return result, e
-	}
-	recipient, e := s.resolve(ctx, output.To)
-	if e != nil {
-		return result, e
-	}
-	nonce, e := core.GenerateNonce()
-	if e != nil {
-		return result, e
-	}
-	note := core.Note{ProtocolContext: s.coreContext(), WalletIdentity: recipient.WalletIdentity, TokenAddress: core.BigIntToElement(token.Big()), Amount: core.BigIntToElement(output.Amount), Nonce: nonce, Payload: append([]byte(nil), output.Payload...)}
-	identity, e := core.ComputeNoteIdentity(note.WalletIdentity, note.Nonce)
-	if e != nil {
-		return result, e
-	}
-	commitment, e := core.ComputeNoteCommitment(note.ChainID, identity, note.TokenAddress, note.Amount)
-	if e != nil {
-		return result, e
-	}
-	cipher, e := core.EncryptPrivateTransferNote(recipient.ViewingPublicKey, note, core.NoteEncryptionContext{ProtocolContext: note.ProtocolContext, OutputCommitment: commitment})
-	if e != nil {
-		return result, e
-	}
-	clue, e := core.CreateClue(recipient.ClueKey)
-	if e != nil {
-		return result, e
-	}
-	return preparedOutput{Address: output.To, Note: note, Identity: fieldHash(identity), Commitment: fieldHash(commitment), Delivery: protocol.Delivery{Ciphertext: cipher, Clue: clue}}, nil
 }
 func (s *WalletSession) funding(ctx context.Context, source *FundingSource, block protocolrpc.CanonicalBlock, deadline uint64) (protocol.FundingParams, string, error) {
 	if source == nil {
@@ -320,14 +283,14 @@ func (s *WalletSession) selectInputs(ctx context.Context, token common.Address, 
 		selected[hash] = true
 	}
 	for _, n := range orderedNotes(state, token) {
-		if n.Note.ProtocolContext != s.coreContext() || n.Note.WalletIdentity != core.BigIntToElement(s.wallet.identity.Big()) {
+		if n.Note.ProtocolContext != s.coreContext() || n.Note.OwnerAddress != core.BigIntToElement(s.wallet.identity.Big()) {
 			return nil, nil, errors.New("stored note deployment or owner mismatch")
 		}
 		expected, e := s.wallet.ExportNullifier().ForNote(n.Note)
 		if e != nil || expected != n.Nullifier {
 			return nil, nil, errors.New("stored note nullifier mismatch")
 		}
-		identity, e := core.ComputeNoteIdentity(n.Note.WalletIdentity, n.Note.Nonce)
+		identity, e := core.ComputeNoteIdentity(n.Note.OwnerAddress, n.Note.Nonce)
 		if e != nil {
 			return nil, nil, e
 		}
@@ -378,10 +341,10 @@ func (s *WalletSession) prepareFunds(ctx context.Context, p TransferPreparation,
 	target := "evm"
 	total := new(big.Int)
 	for index, out := range p.Outputs {
-		if e := positive(out.Amount, 128); e != nil {
-			return nil, outputFailure(e, index, out.To, "amount")
+		if e := positive(out.Amount(), 128); e != nil {
+			return nil, outputFailure(e, index, out.To(), "amount")
 		}
-		total.Add(total, out.Amount)
+		total.Add(total, out.Amount())
 	}
 	if withdrawAmount == nil {
 		withdrawAmount = new(big.Int)
@@ -408,7 +371,7 @@ func (s *WalletSession) prepareFunds(ctx context.Context, p TransferPreparation,
 	for index, out := range p.Outputs {
 		o, e := s.output(ctx, p.TokenAddress, out)
 		if e != nil {
-			return nil, outputFailure(e, index, out.To, "")
+			return nil, outputFailure(e, index, out.To(), "")
 		}
 		outputs = append(outputs, o)
 	}
@@ -421,7 +384,7 @@ func (s *WalletSession) prepareFunds(ctx context.Context, p TransferPreparation,
 		if s.changeAddress != "" {
 			address = s.changeAddress
 		}
-		o, e := s.output(ctx, p.TokenAddress, PaymentOutput{To: address, Amount: change})
+		o, e := s.changeOutput(ctx, p.TokenAddress, address, change)
 		if e != nil {
 			return nil, e
 		}
@@ -496,11 +459,11 @@ func (s *WalletSession) PrepareShield(ctx context.Context, p ShieldPreparation) 
 	for index, out := range p.Outputs {
 		o, e := s.output(ctx, p.TokenAddress, out)
 		if e != nil {
-			return nil, outputFailure(e, index, out.To, "")
+			return nil, outputFailure(e, index, out.To(), "")
 		}
 		plan.Outputs = append(plan.Outputs, o)
 		plan.Shield.OutputCommitments = append(plan.Shield.OutputCommitments, o.Commitment)
-		sum.Add(sum, out.Amount)
+		sum.Add(sum, out.Amount())
 	}
 	if sum.Cmp(funding.Amount) != 0 {
 		return nil, errors.New("shield funding must equal output sum")

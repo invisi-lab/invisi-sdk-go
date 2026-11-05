@@ -24,7 +24,7 @@ func TestHistoryDetachedBusinessRecordsAndIndependentDiscovery(t *testing.T) {
 	commitment := common.HexToHash("0x1234")
 	block := protocolrpc.CanonicalBlock{Number: 12, Hash: common.HexToHash("0x12")}
 	plan := operationPlan{ID: "operation-1", Kind: "shield", Context: protocol.TransactionContext{TokenAddress: token}, Block: block, FundingMode: "caller",
-		Funding: protocol.FundingParams{Amount: big.NewInt(7)}, Outputs: []preparedOutput{{Address: "recipient", Note: core.Note{Amount: core.ElementFromUint64(7), Payload: []byte{1, 2, 3}}}}}
+		Funding: protocol.FundingParams{Amount: big.NewInt(7)}, Outputs: []preparedOutput{{Address: "recipient", Amount: big.NewInt(7), Note: &core.Note{Amount: core.ElementFromUint64(7), Payload: []byte{1, 2, 3}}}}}
 	raw, err := json.Marshal(plan)
 	if err != nil {
 		t.Fatal(err)
@@ -169,7 +169,7 @@ func TestHistorySnapshotsAssetFilterBeforeReadingStore(t *testing.T) {
 
 func TestSubscriptionMayReadTheOperationBeingCommitted(t *testing.T) {
 	session, token, _ := testSession(t)
-	prepared, err := session.PrepareTransfer(context.Background(), TransferPreparation{TokenAddress: token, Outputs: []PaymentOutput{{To: session.wallet.address, Amount: big.NewInt(1)}}})
+	prepared, err := session.PrepareTransfer(context.Background(), TransferPreparation{TokenAddress: token, Outputs: testOutputs(session, []testPaymentOutput{{To: session.wallet.address, Amount: big.NewInt(1)}})})
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -13,7 +13,12 @@ import (
 	"github.com/invisi-lab/invisi-sdk-go/protocol/contracts"
 )
 
-type AddressRegistration = contracts.IAddressRegistryRegistration
+type AddressRegistration struct {
+	OwnerAddress [32]byte `json:"ownerAddress"`
+	Keys         contracts.IAddressRegistryReceivingKeys
+	Nonce        uint64
+	Deadline     uint64
+}
 type RegistryContext struct {
 	ChainID         *big.Int
 	RegistryAddress common.Address
@@ -37,10 +42,10 @@ func normalizeRegistration(c RegistryContext, r AddressRegistration, options Reg
 		return r, fmt.Errorf("registry address must be nonzero")
 	}
 	var identity fr.Element
-	if err := identity.SetBytesCanonical(r.WalletIdentity[:]); err != nil || identity.IsZero() || new(big.Int).SetBytes(r.WalletIdentity[:]).BitLen() > 160 {
-		return r, fmt.Errorf("wallet identity must be a nonzero zero-padded EVM owner")
+	if err := identity.SetBytesCanonical(r.OwnerAddress[:]); err != nil || identity.IsZero() || new(big.Int).SetBytes(r.OwnerAddress[:]).BitLen() > 160 {
+		return r, fmt.Errorf("ownerAddress must be a nonzero zero-padded EVM owner")
 	}
-	if _, err := core.EncodeLongAddress(core.ReceivingAddress{WalletIdentity: identity, ViewingPublicKey: r.Keys.ViewingPublicKey, ClueKey: r.Keys.ClueKey[:]}); err != nil {
+	if _, err := core.EncodeLongAddress(core.ReceivingAddress{OwnerAddress: identity, ViewingPublicKey: r.Keys.ViewingPublicKey, ClueKey: r.Keys.ClueKey[:]}); err != nil {
 		return r, err
 	}
 	if r.Nonce == ^uint64(0) {
@@ -83,7 +88,7 @@ func RegistrationTypedData(c RegistryContext, r AddressRegistration, options Reg
 		PrimaryType: name,
 		Domain:      apitypes.TypedDataDomain{Name: "InvisiAddressRegistry", Version: "1", ChainId: &chain, VerifyingContract: c.RegistryAddress.Hex()},
 		Message: apitypes.TypedDataMessage{
-			"walletIdentity":   common.Hash(r.WalletIdentity).Hex(),
+			"walletIdentity":   common.Hash(r.OwnerAddress).Hex(),
 			"viewingPublicKey": "0x" + common.Bytes2Hex(r.Keys.ViewingPublicKey),
 			"clueKey":          common.Hash(r.Keys.ClueKey).Hex(),
 			"nonce":            new(big.Int).SetUint64(r.Nonce).String(),
@@ -117,7 +122,7 @@ func BuildRegistrationCalldata(c RegistryContext, r AddressRegistration, signatu
 	if options.Update {
 		method = "updateKeys"
 	}
-	data, err := parsed.Pack(method, r, signature)
+	data, err := parsed.Pack(method, contracts.IAddressRegistryRegistration{WalletIdentity: r.OwnerAddress, Keys: r.Keys, Nonce: r.Nonce, Deadline: r.Deadline}, signature)
 	if err != nil {
 		return nil, err
 	}
@@ -158,7 +163,7 @@ func CreateRegistryReceivingKeyLookup(client RegistryReadClient, options *bind.C
 		}
 		viewing := append([]byte(nil), result.Keys.ViewingPublicKey...)
 		clue := append([]byte(nil), result.Keys.ClueKey[:]...)
-		if _, err = core.EncodeLongAddress(core.ReceivingAddress{WalletIdentity: identity, ViewingPublicKey: viewing, ClueKey: clue}); err != nil {
+		if _, err = core.EncodeLongAddress(core.ReceivingAddress{OwnerAddress: identity, ViewingPublicKey: viewing, ClueKey: clue}); err != nil {
 			return nil, err
 		}
 		return &core.ReceivingKeys{ViewingPublicKey: viewing, ClueKey: clue}, nil

@@ -55,7 +55,7 @@ func TestExternalWalletSignatureAndJSONRequest(t *testing.T) {
 	}
 	key, _ := ethcrypto.ToECDSA(private)
 	signature, _ := ethcrypto.Sign(digest[:], key)
-	external, err := BuildWalletAuthorizationWitnessFromSignature(wallet.WalletIdentity, request, signature)
+	external, err := BuildWalletAuthorizationWitnessFromSignature(wallet.OwnerAddress, request, signature)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -64,11 +64,11 @@ func TestExternalWalletSignatureAndJSONRequest(t *testing.T) {
 		t.Fatal("external witness differs", err)
 	}
 	signature[64] += 27
-	if _, err = BuildWalletAuthorizationWitnessFromSignature(wallet.WalletIdentity, request, signature); err != nil {
+	if _, err = BuildWalletAuthorizationWitnessFromSignature(wallet.OwnerAddress, request, signature); err != nil {
 		t.Fatal(err)
 	}
 	for _, bad := range [][]byte{nil, bytes.Repeat([]byte{0}, 64), bytes.Repeat([]byte{0}, 65)} {
-		if _, err = BuildWalletAuthorizationWitnessFromSignature(wallet.WalletIdentity, request, bad); err == nil {
+		if _, err = BuildWalletAuthorizationWitnessFromSignature(wallet.OwnerAddress, request, bad); err == nil {
 			t.Fatal("invalid signature accepted")
 		}
 	}
@@ -76,7 +76,7 @@ func TestExternalWalletSignatureAndJSONRequest(t *testing.T) {
 		t.Fatal("wrong owner accepted")
 	}
 	request.Words[2] = ElementFromUint64(10)
-	if _, err = BuildWalletAuthorizationWitnessFromSignature(wallet.WalletIdentity, request, signature); err == nil {
+	if _, err = BuildWalletAuthorizationWitnessFromSignature(wallet.OwnerAddress, request, signature); err == nil {
 		t.Fatal("wrong statement accepted")
 	}
 }
@@ -123,7 +123,7 @@ func TestExternalWalletSignatureRejectsHighS(t *testing.T) {
 	high := new(big.Int).Sub(ethcrypto.S256().Params().N, new(big.Int).SetBytes(signature[32:64]))
 	high.FillBytes(signature[32:64])
 	signature[64] ^= 1
-	if _, err := BuildWalletAuthorizationWitnessFromSignature(wallet.WalletIdentity, request, signature); err == nil {
+	if _, err := BuildWalletAuthorizationWitnessFromSignature(wallet.OwnerAddress, request, signature); err == nil {
 		t.Fatal("high-s accepted")
 	}
 }
@@ -137,11 +137,11 @@ func TestExternalWalletSignatureAcceptsCompactEncoding(t *testing.T) {
 	signature, _ := ethcrypto.Sign(digest[:], key)
 	compact := bytes.Clone(signature[:64])
 	compact[32] |= signature[64] << 7
-	witness, err := BuildWalletAuthorizationWitnessFromSignature(wallet.WalletIdentity, request, compact)
+	witness, err := BuildWalletAuthorizationWitnessFromSignature(wallet.OwnerAddress, request, compact)
 	if err != nil {
 		t.Fatal(err)
 	}
-	expected, err := BuildWalletAuthorizationWitnessFromSignature(wallet.WalletIdentity, request, signature)
+	expected, err := BuildWalletAuthorizationWitnessFromSignature(wallet.OwnerAddress, request, signature)
 	if err != nil || witness != expected {
 		t.Fatal("compact witness differs", err)
 	}

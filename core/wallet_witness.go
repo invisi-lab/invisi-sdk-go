@@ -38,12 +38,12 @@ func BuildWalletAuthorizationWitness(wallet *InvisiWallet, request WalletAuthori
 	if !bytes.Equal(encoded, ethcrypto.FromECDSAPub(&key.PublicKey)) {
 		return witness, fmt.Errorf("spending key pair mismatch")
 	}
-	identity, err := ComputeWalletIdentity(encoded)
+	identity, err := ComputeOwnerAddress(encoded)
 	if err != nil {
 		return witness, err
 	}
-	if identity != wallet.WalletIdentity {
-		return witness, fmt.Errorf("wallet identity mismatch")
+	if identity != wallet.OwnerAddress {
+		return witness, fmt.Errorf("owner address mismatch")
 	}
 	signature, err := SignWalletAuthorization(private, request)
 	if err != nil {
@@ -83,12 +83,12 @@ func BuildWalletAuthorizationWitnessFromSignature(identity fr.Element, request W
 		return witness, fmt.Errorf("invalid wallet signature: %w", err)
 	}
 	encoded := ethcrypto.FromECDSAPub(public)
-	owner, err := ComputeWalletIdentity(encoded)
+	owner, err := ComputeOwnerAddress(encoded)
 	if err != nil {
 		return witness, err
 	}
 	if owner != identity {
-		return witness, fmt.Errorf("wallet signature identity mismatch")
+		return witness, fmt.Errorf("wallet signature owner address mismatch")
 	}
 	copy(witness.PublicKeyX[:], encoded[1:33])
 	copy(witness.PublicKeyY[:], encoded[33:])

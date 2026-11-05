@@ -10,7 +10,7 @@
       "outputCommitment": "0x2896028af6f77d679612169cfcef4831e8af4c28dd0dc00b4e60374dc80e2306"
     },
     "data": {
-      "walletIdentity": "0x7e5f4552091a69125d5dfcb7b8c2659029395bdf",
+      "ownerAddress": "0x7e5f4552091a69125d5dfcb7b8c2659029395bdf",
       "amount": "70",
       "nonce": "123"
     }
@@ -55,7 +55,7 @@
     },
     "data": {
       "payloadKey": "0xeeadb04e59e6e0428bffe367f3221c6ccf3984077036b81327c573ee46e94c91",
-      "walletIdentity": "0x7e5f4552091a69125d5dfcb7b8c2659029395bdf",
+      "ownerAddress": "0x7e5f4552091a69125d5dfcb7b8c2659029395bdf",
       "role": "funds"
     }
   },
@@ -71,7 +71,7 @@
     },
     "data": {
       "payloadKey": "0xa725a4bf6ff21504ab9828db5362d09e20f65af64c13cfdbd53bfe9c59d94051",
-      "walletIdentity": "0x7e5f4552091a69125d5dfcb7b8c2659029395bdf",
+      "ownerAddress": "0x7e5f4552091a69125d5dfcb7b8c2659029395bdf",
       "role": "owner"
     }
   },

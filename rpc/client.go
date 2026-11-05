@@ -71,7 +71,7 @@ func NewProtocolRpcClient(endpoint string, options ...ClientOptions) (*ProtocolR
 		if e := opt.Deployment.Validate(); e != nil {
 			return nil, e
 		}
-		d := *opt.Deployment
+		d := cloneDeployment(*opt.Deployment)
 		if d.Registry != nil {
 			r := *d.Registry
 			d.Registry = &r
@@ -236,6 +236,10 @@ func cloneDeployment(d ProtocolDeployment) ProtocolDeployment {
 	if d.Registry != nil {
 		registry := *d.Registry
 		d.Registry = &registry
+	}
+	if d.BroadcasterRegistry != nil {
+		r := *d.BroadcasterRegistry
+		d.BroadcasterRegistry = &r
 	}
 	return d
 }

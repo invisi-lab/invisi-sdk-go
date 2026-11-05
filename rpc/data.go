@@ -14,6 +14,8 @@ import (
 	"github.com/invisi-lab/invisi-sdk-go/core"
 )
 
+const MaxUpdateBlocks uint64 = 10000
+
 func (c *ProtocolRpcClient) block(ctx context.Context, number uint64) (CanonicalBlock, error) {
 	if c.provider == nil {
 		return CanonicalBlock{}, errors.New("Chain RPC provider required")
@@ -71,6 +73,9 @@ func (c *ProtocolRpcClient) readStatus(ctx context.Context, context DeploymentCo
 	if response.APIVersion != "v1" || response.ProtocolVersion != "1" || string(a) != string(b) || response.CheckedBits < 1 || response.CheckedBits > 24 || response.DetectionEnabled == nil {
 		return ProtocolDataStatus{}, errors.New("invalid indexed status")
 	}
+	if response.IndexedHead != nil && (response.IndexedHead.Number < d.Protocol.FromBlock || response.IndexedHead.Number > 1<<53-1 || response.IndexedHead.Timestamp > 1<<53-1) {
+		return ProtocolDataStatus{}, errors.New("invalid indexed head bounds")
+	}
 	if checkCanonical && response.IndexedHead != nil {
 		canonical, e := c.canonical(ctx, *response.IndexedHead)
 		if e != nil {
@@ -88,10 +93,10 @@ func (c *ProtocolRpcClient) GetUpdates(ctx context.Context, context DeploymentCo
 	if e != nil {
 		return ProtocolUpdates{}, e
 	}
-	if r.FromBlock < d.Protocol.FromBlock || r.ToBlock < r.FromBlock || r.ToBlock-r.FromBlock > 99 || r.ToBlock > 1<<53-1 {
-		return ProtocolUpdates{}, errors.New("updates require at most 100 deployment blocks")
+	if r.FromBlock < d.Protocol.FromBlock || r.ToBlock < r.FromBlock || r.ToBlock-r.FromBlock >= MaxUpdateBlocks || r.ToBlock > 1<<53-1 {
+		return ProtocolUpdates{}, errors.New("updates require at most 10000 deployment blocks")
 	}
-	status, e := c.GetStatus(ctx, context)
+	status, e := c.readStatus(ctx, context, false)
 	if e != nil {
 		return ProtocolUpdates{}, e
 	}
@@ -101,6 +106,10 @@ func (c *ProtocolRpcClient) GetUpdates(ctx context.Context, context DeploymentCo
 	block, e := c.block(ctx, r.ToBlock)
 	if e != nil {
 		return ProtocolUpdates{}, e
+	}
+	// Reuse the range anchor to reject a stale indexer without another chain read.
+	if status.IndexedHead.Number == block.Number && *status.IndexedHead != block {
+		return ProtocolUpdates{}, errors.New("RPC canonical block mismatch")
 	}
 	anchor := struct {
 		FromBlock, ToBlock uint64
@@ -177,9 +186,6 @@ func (c *ProtocolRpcClient) GetUpdates(ctx context.Context, context DeploymentCo
 			seen[ref.TransactionHash] = true
 			result.TransactionHashes = append(result.TransactionHashes, ref.TransactionHash)
 		}
-	}
-	if _, e = c.canonical(ctx, block); e != nil {
-		return ProtocolUpdates{}, e
 	}
 	return result, nil
 }

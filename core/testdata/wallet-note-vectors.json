@@ -9,15 +9,15 @@
   "owner": {
     "viewingPrivateKey": "0x80d9cd50805bf2ff5f95f9a091add4515bebb62293c721362fd077891c23069f",
     "viewingPublicKey": "0x0396f42bb298c8a0e74539294780d709799f9838c0b69a134f38c6d968f2921397",
-    "walletIdentity": "721457446580647751014191829380889690493307935711"
+    "ownerAddress": "721457446580647751014191829380889690493307935711"
   },
   "spender": {
     "viewingPrivateKey": "0x5613f6a18f143c1b79ce20c6ed92262243be54d39a4c4ecc0c724221ae277f7d",
     "viewingPublicKey": "0x027eb25acef93b6d40d19a5349282bd5769e7a439e1c356cce1f83078545b8a7e1",
-    "walletIdentity": "247512291986854564435551364600938690683113101007"
+    "ownerAddress": "247512291986854564435551364600938690683113101007"
   },
   "note": {
-    "walletIdentity": "721457446580647751014191829380889690493307935711",
+    "ownerAddress": "721457446580647751014191829380889690493307935711",
     "amount": "70",
     "nonce": "123",
     "identity": "6926912196397698361902183095122882995874769628766014824017090475773870789036",
@@ -29,7 +29,7 @@
       "envelopeVersion": 1,
       "header": 1,
       "ciphertextBytes": 160,
-      "protocolClientSha256": "1bee7cd42a5834d663baf920989ce6d7f6d7a2418391faa10a8b72b3817d95c3"
+      "protocolClientSha256": "a8ef853309d3819df986020627ab18eff182f0ad1dbd3831b3535ca618d0e8e6"
     }
   },
   "credit": {
@@ -87,7 +87,7 @@
       "envelopeVersion": 1,
       "header": 129,
       "ciphertextBytes": 498,
-      "protocolClientSha256": "0d0ae1dfda7207b1d4565f4ba5a9333376b4371647e9f29645398b6d91e4df9e",
+      "protocolClientSha256": "ea8ce61a6c4e026f90fcaf57fb5e56bd684ccc75b3c0d12f8988ac367a07ce2e",
       "purpose": "Independent Node crypto delivery vectors; canonical fixture clue points do not claim FMD detectability."
     }
   },

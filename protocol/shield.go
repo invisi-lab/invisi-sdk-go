@@ -15,6 +15,9 @@ func ValidateShieldRequest(p BuildShieldCalldataParams) (FundingParams, error) {
 	if err := ValidateContext(p.Context); err != nil {
 		return FundingParams{}, err
 	}
+	if _, err := normalizeFee(p.Params.FeeRecipient, p.Params.FeeAmount); err != nil {
+		return FundingParams{}, err
+	}
 	if err := CheckDeadline(p.Context, p.Params.Deadline); err != nil {
 		return FundingParams{}, err
 	}
@@ -52,12 +55,17 @@ func ValidateShieldRequest(p BuildShieldCalldataParams) (FundingParams, error) {
 		}
 		total.Add(total, o.Amount)
 	}
-	if total.Cmp(f.Amount) != 0 {
-		return f, fmt.Errorf("funding must equal output total")
+	if new(big.Int).Add(total, feeAmount(p.Params.FeeAmount)).Cmp(f.Amount) != 0 {
+		return f, fmt.Errorf("funding must equal output total plus fee")
 	}
 	return f, nil
 }
 func ShieldFundingRequestHash(p ShieldParams, outputs []ShieldOutput, cs []Delivery) (common.Hash, error) {
+	var feeErr error
+	p.FeeAmount, feeErr = normalizeFee(p.FeeRecipient, p.FeeAmount)
+	if feeErr != nil {
+		return common.Hash{}, feeErr
+	}
 	if err := CheckUint(p.Deadline, 64, "deadline"); err != nil {
 		return common.Hash{}, err
 	}
@@ -102,6 +110,7 @@ func BuildShieldCalldata(p BuildShieldCalldataParams) (*Calldata, error) {
 	if err := ValidateFundingSubmission(f, p.Caller, p.Context.Now); err != nil {
 		return nil, err
 	}
+	p.Params.FeeAmount = feeAmount(p.Params.FeeAmount)
 	data, err := PackProtocolCalldata("shield", p.Params, p.Outputs, p.Deliveries, f)
 	if err != nil {
 		return nil, err

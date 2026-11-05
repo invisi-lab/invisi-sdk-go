@@ -64,7 +64,7 @@ func TestAggregateAssemblesAuthenticatedRecursiveSchemaAndRejectsDuplicateSpends
 	original := members[1].Bundle.Proof[0]
 	backend.onVerify = func() { members[1].Bundle.Proof[0] = 255 }
 	result, e := aggregator.Aggregate(context.Background(), members)
-	if e != nil || len(result.PublicInputs) != 229 || backend.calls != 1 {
+	if e != nil || len(result.PublicInputs) != 237 || backend.calls != 1 {
 		t.Fatal(result.CircuitName, e)
 	}
 	members[1].Bundle.Proof[0] = original

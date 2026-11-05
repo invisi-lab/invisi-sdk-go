@@ -14,6 +14,7 @@ import (
 // Protocol describes one multi-token deployment. It owns no connections or keys.
 type Protocol struct {
 	deployment protocolrpc.ProtocolDeployment
+	rpc        *protocolrpc.ProtocolRpcClient
 }
 
 func NewProtocol(deployment protocolrpc.ProtocolDeployment) (*Protocol, error) {
@@ -24,7 +25,11 @@ func NewProtocol(deployment protocolrpc.ProtocolDeployment) (*Protocol, error) {
 		r := *deployment.Registry
 		deployment.Registry = &r
 	}
-	return &Protocol{deployment}, nil
+	if deployment.BroadcasterRegistry != nil {
+		r := *deployment.BroadcasterRegistry
+		deployment.BroadcasterRegistry = &r
+	}
+	return &Protocol{deployment: deployment}, nil
 }
 func ProtocolFromRPC(ctx context.Context, rpc *protocolrpc.ProtocolRpcClient, provider protocolrpc.ChainProvider) (*Protocol, error) {
 	if rpc == nil || provider == nil {
@@ -45,6 +50,7 @@ func ProtocolFromRPC(ctx context.Context, rpc *protocolrpc.ProtocolRpcClient, pr
 	if e != nil {
 		return nil, e
 	}
+	p.rpc = rpc
 	if e = p.ValidateDeployment(ctx, provider); e != nil {
 		return nil, e
 	}
@@ -55,6 +61,10 @@ func (p *Protocol) Deployment() protocolrpc.ProtocolDeployment {
 	if d.Registry != nil {
 		r := *d.Registry
 		d.Registry = &r
+	}
+	if d.BroadcasterRegistry != nil {
+		r := *d.BroadcasterRegistry
+		d.BroadcasterRegistry = &r
 	}
 	return d
 }

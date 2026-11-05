@@ -101,7 +101,14 @@ func main() {
 		for _, input := range selected {
 			// The two notes are distinct. Applications must reserve them while this aggregate is unresolved.
 			amount := new(big.Int).Div(core.ElementToBigInt(input.Note.Amount), big.NewInt(2))
-			prepared, err := invisi.PrepareTransfer(ctx, sdk.ExplicitTransferPreparation{TransactionIdentity: sdk.TransactionIdentity{Wallet: owner.PublicWallet, Protocol: pool}, ExplicitFunds: sdk.ExplicitFunds{Inputs: []sdk.NoteInput{input}}, TransferPreparation: sdk.TransferPreparation{TokenAddress: token, Outputs: []sdk.PaymentOutput{{To: destination, Amount: amount}}, Deadline: deadline}})
+			output, err := sdk.NewNoteOutput(sdk.NoteOutputOptions{
+				ChainID: chain, ProtocolAddress: pool.Context().ProtocolAddress, TokenAddress: token,
+				Amount: amount, Recipient: sdk.InvisiRecipient{Address: destination},
+			})
+			if err != nil {
+				log.Fatal(err)
+			}
+			prepared, err := invisi.PrepareTransfer(ctx, sdk.ExplicitTransferPreparation{TransactionIdentity: sdk.TransactionIdentity{Wallet: owner.PublicWallet, Protocol: pool}, ExplicitFunds: sdk.ExplicitFunds{Inputs: []sdk.NoteInput{input}}, TransferPreparation: sdk.TransferPreparation{TokenAddress: token, Outputs: []sdk.NoteOutput{output}, Deadline: deadline}})
 			if err != nil {
 				log.Fatal(err)
 			}

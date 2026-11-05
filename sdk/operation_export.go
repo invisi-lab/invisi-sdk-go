@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"math/big"
+	"time"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
@@ -38,6 +39,12 @@ func (o *Operation) validateExport(ctx context.Context) error {
 	}
 	if head == nil || head.Number == nil {
 		return errors.New("latest block unavailable")
+	}
+	if o.plan.Broadcaster != nil {
+		deadline, ok := new(big.Int).SetString(o.plan.Broadcaster.Signed.Quote.Deadline, 10)
+		if !ok || deadline.Cmp(new(big.Int).SetUint64(head.Time)) < 0 || deadline.Cmp(big.NewInt(time.Now().Unix())) < 0 {
+			return errors.New("broadcaster quote expired")
+		}
 	}
 	if operationExpired(o.plan, head.Time) {
 		return errors.New("operation has expired")

@@ -20,7 +20,7 @@ type delegatedAuthorization struct {
 	mutate bool
 }
 
-func (d delegatedAuthorization) WalletIdentity() common.Address { return d.source.WalletIdentity() }
+func (d delegatedAuthorization) OwnerAddress() common.Address { return d.source.OwnerAddress() }
 func (d delegatedAuthorization) Authorize(ctx context.Context, request core.WalletAuthorizationRequest) (core.WalletAuthorizationWitness, error) {
 	if d.mutate {
 		request.Words[0].SetUint64(123)

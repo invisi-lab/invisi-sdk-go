@@ -57,7 +57,7 @@ func (n CreditNote) Clone() CreditNote { n.Payload = CloneMemo(n.Payload); retur
 
 // Equal compares the preimage and optional delivery metadata.
 func (n Note) Equal(other Note) bool {
-	return n.ProtocolContext == other.ProtocolContext && n.WalletIdentity == other.WalletIdentity && n.TokenAddress == other.TokenAddress && n.Amount == other.Amount && n.Nonce == other.Nonce && bytes.Equal(n.Payload, other.Payload)
+	return n.ProtocolContext == other.ProtocolContext && n.OwnerAddress == other.OwnerAddress && n.TokenAddress == other.TokenAddress && n.Amount == other.Amount && n.Nonce == other.Nonce && bytes.Equal(n.Payload, other.Payload)
 }
 func appendPayload(plain, payload []byte) []byte {
 	plain = binary.BigEndian.AppendUint16(plain, uint16(len(payload)))

@@ -129,10 +129,14 @@ func parseOutput(raw json.RawMessage) (ProtocolOutput, error) {
 	if o.TokenAddress == (common.Address{}) {
 		return o, errors.New("invalid output token")
 	}
-	if o.Ciphertext, e = wireBytes(m["ciphertext"], 1, 4096); e != nil {
+	if o.Ciphertext, e = wireBytes(m["ciphertext"], 0, 4096); e != nil {
 		return o, e
 	}
-	if o.Clue, e = wireBytes(m["clue"], 68, 68); e != nil {
+	clueSize := 68
+	if len(o.Ciphertext) == 0 {
+		clueSize = 0
+	}
+	if o.Clue, e = wireBytes(m["clue"], clueSize, clueSize); e != nil {
 		return o, e
 	}
 	if o.TransactionHash, e = wireHash(m["transactionHash"]); e != nil {
@@ -176,7 +180,7 @@ func (c *ProtocolRpcClient) GetReceivingAddress(ctx context.Context, owner commo
 	if e != nil {
 		return nil, e
 	}
-	identity, e := wireBytes(m["walletIdentity"], 20, 20)
+	identity, e := wireBytes(m["ownerAddress"], 20, 20)
 	if e != nil || common.BytesToAddress(identity) != owner {
 		return nil, errors.New("RPC receiving-address identity mismatch")
 	}
@@ -188,7 +192,7 @@ func (c *ProtocolRpcClient) GetReceivingAddress(ctx context.Context, owner commo
 	if e != nil {
 		return nil, e
 	}
-	address, e := core.EncodeLongAddress(core.ReceivingAddress{WalletIdentity: core.BigIntToElement(owner.Big()), ViewingPublicKey: view, ClueKey: clue})
+	address, e := core.EncodeLongAddress(core.ReceivingAddress{OwnerAddress: core.BigIntToElement(owner.Big()), ViewingPublicKey: view, ClueKey: clue})
 	if e != nil {
 		return nil, e
 	}
@@ -220,15 +224,23 @@ func (c *ProtocolRpcClient) readOutputs(ctx context.Context, d DeploymentContext
 	if e != nil {
 		return result, e
 	}
-	if r.FromBlock < deployment.Protocol.FromBlock || r.ToBlock < r.FromBlock || r.ToBlock-r.FromBlock > 99 || r.ToBlock > 1<<53-1 {
-		return result, errors.New("updates require at most 100 deployment blocks")
+	if r.FromBlock < deployment.Protocol.FromBlock || r.ToBlock < r.FromBlock || r.ToBlock-r.FromBlock >= MaxUpdateBlocks || r.ToBlock > 1<<53-1 {
+		return result, errors.New("updates require at most 10000 deployment blocks")
 	}
-	if _, e = c.GetStatus(ctx, d); e != nil {
+	status, e := c.readStatus(ctx, d, false)
+	if e != nil {
 		return result, e
+	}
+	if status.IndexedHead == nil || status.IndexedHead.Number < r.ToBlock {
+		return result, errors.New("Protocol RPC is behind requested range")
 	}
 	block, e := c.block(ctx, r.ToBlock)
 	if e != nil {
 		return result, e
+	}
+	// Reuse the range anchor to reject a stale indexer without another chain read.
+	if status.IndexedHead.Number == block.Number && *status.IndexedHead != block {
+		return result, errors.New("RPC canonical block mismatch")
 	}
 	wire := map[string]any{"fromBlock": r.FromBlock, "toBlock": r.ToBlock, "blockHash": block.Hash}
 	method := "invisi_getUpdates"
@@ -290,25 +302,34 @@ func (c *ProtocolRpcClient) parseOutputRows(ctx context.Context, block Canonical
 	commitments := map[common.Hash]string{}
 	envelopes := map[common.Hash]map[string]string{}
 	result := ProtocolOutputs{Block: block, Outputs: []ProtocolOutput{}}
+	verified := map[uint64]CanonicalBlock{block.Number: block}
 	for _, raw := range rows {
 		o, e := parseOutput(raw)
 		if e != nil {
 			return ProtocolOutputs{}, e
 		}
-		if _, e = c.canonical(ctx, o.Block); e != nil {
-			return ProtocolOutputs{}, e
+		known, ok := verified[o.Block.Number]
+		if !ok {
+			known, e = c.canonical(ctx, o.Block)
+			if e != nil {
+				return ProtocolOutputs{}, e
+			}
+			verified[o.Block.Number] = known
+		}
+		if known != o.Block {
+			return ProtocolOutputs{}, errors.New("RPC output block mismatch")
 		}
 		if o.Block.Number < r.FromBlock || o.Block.Number > r.ToBlock {
 			return ProtocolOutputs{}, errors.New("RPC output outside update range")
 		}
 		creditEvent := o.Kind == "CreditCreated" || o.Kind == "CreditToppedUp" || o.Kind == "CreditDraw"
-		credit := creditEvent && o.Ciphertext[0]&0x80 != 0
+		credit := creditEvent && len(o.Ciphertext) > 0 && o.Ciphertext[0]&0x80 != 0
 		if mode != 2 && credit != (mode == 1) {
 			continue
 		}
 		paired := credit
 		if mode == 2 {
-			paired = creditEvent
+			paired = creditEvent && len(o.Ciphertext) > 0
 		}
 		bytes, _ := json.Marshal(o)
 		fingerprint := string(bytes)

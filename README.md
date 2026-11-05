@@ -1,16 +1,16 @@
 # Invisi Go SDK
 
-Go client for Invisi Protocol, aligned with TypeScript SDK 1.1.5. Requires Go 1.26.1 or newer.
+Go client for Invisi Protocol, aligned with the current TypeScript SDK workflows. Requires Go 1.26.1 or newer.
 
 ```sh
-go get github.com/invisi-lab/invisi-sdk-go@v1.1.5
+go get github.com/invisi-lab/invisi-sdk-go
 ```
 
 Start with the [configurable examples](examples/README.md). They cover offline wallets, address registration, transparent payments, hidden transfers and withdrawals, Credit, managed wallet sessions, and selective disclosure. Example settings expose the network, native currency, token, RPC endpoints and prover paths. A local initializer creates ten fresh accounts without overwriting existing keys; no funded account is included.
 
 ## Public wallets and external signing
 
-Use `sdk.PublicWalletFromAddress(receivingAddress)` for a public identity. A complete `0i` address contains the owner, viewing public key and clue key and resolves offline. An EVM destination needs registered receiving keys. Address lookup defaults to Protocol RPC; Chain RPC lookup is also available. Public wallets contain no spending or viewing secrets.
+Use `sdk.PublicWalletFromAddress(receivingAddress)` for a public identity. A complete `0i` address contains the owner, viewing public key and clue key and resolves offline. An EVM destination needs registered receiving keys only when it requests an envelope. The output recipient selects Protocol RPC (default) or Chain RPC lookup during preparation; `InvisiOptions` accepts neither a global lookup selector nor caller resolver injection. Public wallets contain no spending or viewing secrets.
 
 Create an `sdk.Invisi` with `Provider`, `ProtocolRPC` and optionally `Prover`. `sdk.ProtocolFromRPC` validates the selected deployment against Chain RPC. Applications select a trusted Protocol RPC and can pin deployment metadata independently.
 
@@ -37,6 +37,45 @@ Credit supports creation, draw, top-up and cancellation, including private-note 
 
 Registry preparation is exposed through `Invisi.PrepareRegistration`. Export the registration signing request and attach its signature, or explicitly use the direct owner-caller route. Registration updates are explicit; an existing registration does not silently become a first registration.
 
+## Independent note outputs
+
+Every Shield/Transfer business output is a `NoteOutput` created with `sdk.NewNoteOutput`; raw payment objects and zero-value outputs are rejected. The factory requires chain, Protocol, token and amount up front. Preparation rejects a different context instead of rewriting the output.
+
+```go
+output, err := sdk.NewNoteOutput(sdk.NoteOutputOptions{
+    ChainID: chainID, ProtocolAddress: pool.Context().ProtocolAddress,
+    TokenAddress: token, Amount: amount,
+    Recipient: sdk.InvisiRecipient{Address: bobAddress, Nonce: nonce},
+})
+// Check err, then pass Outputs: []sdk.NoteOutput{output} to preparation.
+```
+
+Recipients are sealed typed variants:
+
+- `InvisiRecipient{Address, Nonce}` accepts a complete `0i` address and encrypts offline. Nonce is optional; nil securely samples a canonical field element, including zero as a valid explicit value.
+- `EVMRecipient{Address, Nonce, Envelope, AddressLookup}` accepts an EVM owner. A nil Envelope defaults to true. `DeliveryPending()` is true on the offline intent; preparation uses `"protocol-rpc"` (default) or `"chain"` to resolve registered keys and freezes delivery. Unregistered destinations or lookup failures reject preparation. A pointer to false skips registration and delivery entirely.
+- `IdentityRecipient{Identity}` accepts a nonzero canonical per-note identity (`common.Hash`), with no nonce, wallet opening or envelope. `Note()` returns nil; the recipient must retain its own opening. Verify a merchant-supplied commitment independently with `output.AssertCommitment(expected)`.
+
+Payload is an outer `NoteOutputOptions` field allowed only with envelopes. Getter results are detached copies. Factory objects are in-memory intents; retain business parameters/complete notes to recreate them after a process restart. Managed operation plans use durable Store snapshots independently of factory objects. Empty Funds delivery always means both ciphertext and clue are empty. Decryption skips these slots without changing sibling leaf positions; active Credit owner/spender envelopes remain mandatory.
+
+## Optional broadcaster submission
+
+Discover registered operators through `pool.GetBroadcasters(ctx, sdk.BroadcasterOptions{TokenAddress: token})`. It returns clients that advertise support for that token; unreachable or unsupported operators are skipped. Discovery uses the Protocol's pinned registry and Protocol RPC index, not an endorsement of an operator. `sdk.NewBroadcasterClient` also accepts an explicit public registration configuration. The service uses JSON-RPC 2.0 positional parameters, matching Protocol RPC.
+
+The stage sequence matches TypeScript:
+
+1. Prepare business intent, then inspect `Preview()` or `EstimateGas()`.
+2. Call `prepared.WithBroadcaster(ctx, client, sdk.WithBroadcasterOptions{MaxFeeAmount: limit})` before signing/proving. The returned handle contains the fee-bearing frozen plan and authenticated quote.
+3. Review `quoted.Preview().FeeAmount`; existing private change pays first when sufficient. Otherwise an explicitly selected public payer authorizes the gross funding amount. Private-only managed sessions may select additional available notes; detached inputs remain explicit. Cancellation deducts the fee from its public refund.
+4. Complete wallet authorization and proving when required, then sign the final EIP-712 public funding request externally. Shield requires no ZK proof.
+5. Call `ready.SubmitBroadcaster(ctx, client)`, retaining the operation/request ID before sending. On timeout, recover through the same client's status API rather than issuing a conflicting spend. Quote and final calldata remain bound to chain, Protocol, token, registered signer, fee recipient and deadline.
+
+Transfer, Shield, Credit creation, top-up and cancellation support this flow. Credit draw, registration and aggregates do not. Fee estimation rebuilds the plan in bounded attempts and rejects a non-converging or over-limit fee. An optional `FundingPermit` callback signs a permit for the final gross amount; funding signatures do not replace ERC20 allowance/permit. Business output identities and delivery stay frozen during repricing. Existing self-submission via geth remains available. Successful fees accrue in Protocol custody; generated contract bindings expose the balance and withdrawal methods.
+
+Managed sessions reserve additional quoted inputs atomically; failed quotes restore the original reservations. Potentially externalized submissions remain uncertain until canonical receipt reconciliation. Both managed Operation and detached PreparedTransaction expose quote/intent exports and the same broadcaster attachment stages.
+
+See the complete [Shield broadcaster example](examples/02-transparent-amount/broadcaster/main.go) and the [offline output variants](examples/00-wallet/note-output/main.go).
+
 ## Envelopes and application payloads
 
 Funds and Credit deliveries use current version-1 envelopes, identified by header `0x01` and `0x81`. Deliveries are bounded by 4096 bytes. Historical formats are rejected by local decryption. Protocol RPC transports opaque deliveries rather than interpreting application payloads.
@@ -53,6 +92,8 @@ Supply private capabilities, a geth signer and optional funding signer at `Conne
 
 `NewMemoryWalletStore` is ephemeral. For persistence, combine `sdk.NewEncryptedWalletCodec` with `sdk/sqlite.NewWalletStore` and an application-owned database and encryption key. Successful atomic commits advance a revision; failed commits do not. SQLite authenticates the stored revision. Private authorization signatures are not persisted.
 
+Refresh defaults to `sdk.MaxUpdateBlocks` / `rpc.MaxUpdateBlocks` (10000 inclusive blocks); `PageSize` may reduce that limit. Empty intermediate pages skip repeated inventory work, while an entirely empty range retains one final spent-state check. Every page still checks its block anchor, and output count, response size and detection delivery limits remain separate.
+
 Refresh authenticates RPC candidates against canonical receipts, membership and spent state. Complete discovery coverage is separate from blocks observed during reconciliation. Partial or failed scans do not claim complete coverage. Refresh is serialized per session; revision checks prevent a stale scan from overwriting another session's reset. Reorganizations require an explicit reset refresh.
 
 `GetHistory` returns copied incoming notes and outgoing business summaries, including public funding, private outputs and withdrawals, without proof witnesses or recovery secrets. `Subscribe` queues notifications only after successful commits. Callbacks run serially outside operation locks and may read the session; unsubscribe cancels pending callbacks. Notifications are local to that session instance. Applications own refresh scheduling and UI updates.
@@ -67,7 +108,8 @@ A timeout does not release potentially externalized inputs. Persist a broadcast 
 | `sdk/sqlite` | Encrypted persistent wallet state |
 | `core` | Wallet KDF, addresses, note encryption, payload codecs and FMD |
 | `protocol` | Deployment context, statements, calldata and generated contract bindings |
-| `rpc` | Deployment discovery, registered keys, outputs, candidates and membership |
+| `rpc` | Deployment discovery, registered keys, broadcaster profiles, outputs, candidates and membership |
+| `broadcaster` | Token capability probes, bound fee quotes, delegated submission and status |
 | `prover` | Authenticated proof statements and recursive aggregation |
 | `prover/native` | Local witness execution, generation and independent verification |
 

@@ -39,7 +39,7 @@ func explicitFixture(t *testing.T) (*Invisi, ExplicitTransferPreparation, *testP
 	address, _ := s.wallet.GetAddress()
 	opts := s.options.InvisiOptions
 	opts.Store = forbiddenStore{}
-	return NewInvisi(opts), ExplicitTransferPreparation{TransactionIdentity: TransactionIdentity{Wallet: s.wallet.PublicWallet, Protocol: s.protocol}, TransferPreparation: TransferPreparation{TokenAddress: token, Outputs: []PaymentOutput{{To: address, Amount: big.NewInt(30)}}}, ExplicitFunds: ExplicitFunds{Inputs: inputs}}, backend
+	return NewInvisi(opts), ExplicitTransferPreparation{TransactionIdentity: TransactionIdentity{Wallet: s.wallet.PublicWallet, Protocol: s.protocol}, TransferPreparation: TransferPreparation{TokenAddress: token, Outputs: testOutputs(s, []testPaymentOutput{{To: address, Amount: big.NewInt(30)}})}, ExplicitFunds: ExplicitFunds{Inputs: inputs}}, backend
 }
 func TestExplicitTransferNeverUsesStore(t *testing.T) {
 	ctx := context.Background()
@@ -48,7 +48,7 @@ func TestExplicitTransferNeverUsesStore(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	input.Outputs[0].Amount.SetInt64(99)
+	input.Outputs[0].Amount().SetInt64(99)
 	if p := prepared.Preview(); p.InputCount != 1 || p.OutputCount != 2 || p.Outputs[0].Amount.Int64() != 30 {
 		t.Fatal(p)
 	}
@@ -136,7 +136,7 @@ func TestExplicitOtherFundsRoutes(t *testing.T) {
 			case "withdraw":
 				p, err = invisi.PrepareTransfer(ctx, ExplicitTransferPreparation{TransactionIdentity: input.TransactionIdentity, ExplicitFunds: input.ExplicitFunds, TransferPreparation: TransferPreparation{TokenAddress: input.TokenAddress, Withdrawal: &Withdrawal{To: input.Wallet.identity, Amount: big.NewInt(30)}}})
 			case "sweep":
-				input.Wallet, err = PublicWalletFromAddress(input.Outputs[0].To)
+				input.Wallet, err = PublicWalletFromAddress(input.Outputs[0].To())
 				if err != nil {
 					t.Fatal(err)
 				}
@@ -144,7 +144,7 @@ func TestExplicitOtherFundsRoutes(t *testing.T) {
 			case "shield":
 				p, err = invisi.PrepareShield(ctx, ExplicitShieldPreparation{TransactionIdentity: input.TransactionIdentity, ShieldPreparation: ShieldPreparation{TokenAddress: input.TokenAddress, Outputs: input.Outputs, Funding: FundingSource{Payer: input.Wallet.identity, Amount: big.NewInt(30), Authorization: "signature"}}})
 			case "create-credit":
-				p, err = invisi.PrepareCreateCredit(ctx, ExplicitCreateCreditPreparation{TransactionIdentity: input.TransactionIdentity, ExplicitFunds: input.ExplicitFunds, CreateCreditPreparation: CreateCreditPreparation{TokenAddress: input.TokenAddress, Spender: input.Outputs[0].To, Amount: big.NewInt(70), Expiry: big.NewInt(1000)}})
+				p, err = invisi.PrepareCreateCredit(ctx, ExplicitCreateCreditPreparation{TransactionIdentity: input.TransactionIdentity, ExplicitFunds: input.ExplicitFunds, CreateCreditPreparation: CreateCreditPreparation{TokenAddress: input.TokenAddress, Spender: input.Outputs[0].To(), Amount: big.NewInt(70), Expiry: big.NewInt(1000)}})
 			}
 			if err != nil {
 				t.Fatal(err)
@@ -245,7 +245,7 @@ func TestExplicitRejectsWrongTokenOwnerAndPosition(t *testing.T) {
 			case "token":
 				input.TokenAddress = common.HexToAddress("0x3333333333333333333333333333333333333333")
 			case "owner":
-				input.Inputs[0].Note.WalletIdentity = core.ElementFromUint64(7)
+				input.Inputs[0].Note.OwnerAddress = core.ElementFromUint64(7)
 			case "position":
 				input.Inputs[0].LeafIndex = 1
 			}

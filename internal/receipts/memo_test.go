@@ -77,6 +77,15 @@ func TestBatchOutputsOpaqueApplicationFrames(t *testing.T) {
 			t.Fatal("frame mapping mismatch")
 		}
 	}
+	// A zero-length slot contains only its uint16 prefix, with no clue bytes.
+	mixed := append([]byte{0, 0}, packed[2+len(ciphertexts[0])+68:]...)
+	emptyBatch, err := decode(mixed)
+	if err != nil || len(emptyBatch.Outputs) != 3 {
+		t.Fatalf("empty slot: %v", err)
+	}
+	if len(emptyBatch.Outputs[0].Ciphertext) != 0 || len(emptyBatch.Outputs[0].Clue) != 0 || emptyBatch.Outputs[1].LeafIndex != 5 || emptyBatch.Outputs[1].Ciphertext[1] != 1 {
+		t.Fatal("empty slot shifted delivery positions")
+	}
 	for _, bad := range [][]byte{nil, {0}, packed[:len(packed)-1], append(append([]byte(nil), packed...), 0), append([]byte{0, 0}, packed[2:]...), append([]byte{16, 1}, packed[2:]...)} {
 		if _, err := decode(bad); err == nil {
 			t.Fatal("invalid framing accepted")

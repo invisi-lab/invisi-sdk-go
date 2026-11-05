@@ -85,7 +85,7 @@ func main() {
 			if e != nil {
 				log.Fatal(e)
 			}
-			disclosure, err = viewer.DiscloseNote(selected.Output.Ciphertext, core.NoteDecryptionContext{NoteEncryptionContext: core.NoteEncryptionContext{ProtocolContext: selected.Input.Note.ProtocolContext, OutputCommitment: core.BigIntToElement(selected.Input.Commitment.Big())}, TokenAddress: selected.Input.Note.TokenAddress, WalletIdentity: selected.Input.Note.WalletIdentity})
+			disclosure, err = viewer.DiscloseNote(selected.Output.Ciphertext, core.NoteDecryptionContext{NoteEncryptionContext: core.NoteEncryptionContext{ProtocolContext: selected.Input.Note.ProtocolContext, OutputCommitment: core.BigIntToElement(selected.Input.Commitment.Big())}, TokenAddress: selected.Input.Note.TokenAddress, OwnerAddress: selected.Input.Note.OwnerAddress})
 		default:
 			log.Fatal("unknown disclosure mode")
 		}

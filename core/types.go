@@ -8,7 +8,7 @@ type ProtocolContext struct{ ChainID, ProtocolAddress fr.Element }
 // Note contains the private preimage of a deployment-scoped funds leaf, without spending keys.
 type Note struct {
 	ProtocolContext
-	WalletIdentity, TokenAddress, Amount, Nonce fr.Element
+	OwnerAddress, TokenAddress, Amount, Nonce fr.Element
 	// Payload is opaque authenticated application data, excluded from commitments.
 	Payload []byte
 }

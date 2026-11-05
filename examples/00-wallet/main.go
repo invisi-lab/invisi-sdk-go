@@ -38,7 +38,7 @@ func main() {
 	}
 	fmt.Println("EVM owner:", publicWallet.OwnerAddress())
 	fmt.Println("Long receiving address:", address)
-	fmt.Println("Short receiving address:", publicWallet.GetShortAddress())
+	fmt.Println("EVM owner address length:", len(publicWallet.OwnerAddress().Hex()))
 	fmt.Printf("Public viewing key: 0x%x\nPublic clue key: 0x%x\n", viewer.GetPublicKey(), detector.GetClueKey())
 	fmt.Println("Private capabilities remain local:", viewer, detector)
 }

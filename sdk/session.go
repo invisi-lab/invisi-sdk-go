@@ -24,7 +24,6 @@ type Provider interface {
 	TransactionReceipt(context.Context, common.Hash) (*types.Receipt, error)
 }
 type InvisiOptions struct {
-	AddressLookup   string
 	GasBenchmarks   []GasBenchmarkProfile
 	ProtocolRPC     *protocolrpc.ProtocolRpcClient
 	Provider        Provider
@@ -42,7 +41,7 @@ func NewInvisi(options InvisiOptions) *Invisi {
 type ConnectionOptions struct {
 	Signer        *bind.TransactOpts
 	FundingSigner FundingSigner
-	Wallet        WalletIdentity
+	Wallet        WalletReference
 	Protocol      *protocol.Protocol
 	Namespace     string
 	Viewing       *ViewingCapability
@@ -102,7 +101,7 @@ func (i *Invisi) resolve(ctx context.Context, options ConnectionOptions) (*Walle
 	if e := options.Protocol.ValidateDeployment(ctx, i.options.Provider); e != nil {
 		return nil, e
 	}
-	scope := WalletScope{ChainID: options.Protocol.Context().ChainID, ProtocolAddress: options.Protocol.Context().ProtocolAddress, WalletIdentity: selectedWallet.identity, Namespace: options.Namespace}
+	scope := WalletScope{ChainID: options.Protocol.Context().ChainID, ProtocolAddress: options.Protocol.Context().ProtocolAddress, OwnerAddress: selectedWallet.identity, Namespace: options.Namespace}
 	if scope.Namespace == "" {
 		scope.Namespace = "default"
 	}
@@ -121,7 +120,7 @@ func (i *Invisi) resolve(ctx context.Context, options ConnectionOptions) (*Walle
 			authority, _ = selectedWallet.ExportAuthorization()
 		}
 	}
-	if authority != nil && authority.WalletIdentity() != selectedWallet.identity {
+	if authority != nil && authority.OwnerAddress() != selectedWallet.identity {
 		return nil, errors.New("authorization identity mismatch")
 	}
 	// Load and compare RPC pins even when the Protocol was constructed from a private deployment record.
@@ -255,10 +254,10 @@ func (s *WalletSession) Refresh(ctx context.Context, options RefreshOptions) (Re
 	}
 	size := options.PageSize
 	if size == 0 {
-		size = 100
+		size = protocolrpc.MaxUpdateBlocks
 	}
-	if size > 100 {
-		return result, errors.New("pageSize must be 1..100")
+	if size > protocolrpc.MaxUpdateBlocks {
+		return result, errors.New("pageSize must be 1..10000")
 	}
 	if options.Reset {
 		if e = s.options.Store.Update(ctx, s.scope, func(state *WalletState) error {
@@ -285,6 +284,14 @@ func (s *WalletSession) Refresh(ctx context.Context, options RefreshOptions) (Re
 		page, e := s.rpc.GetUpdates(ctx, s.protocol.Context(), protocolrpc.ProtocolUpdateRange{FromBlock: from, ToBlock: to, DetectionKey: options.DetectionKey})
 		if e != nil {
 			return result, e
+		}
+		// Empty intermediate pages need no local reconciliation; the final page still checks every spent flag.
+		if len(page.TransactionHashes) == 0 && to < end {
+			if err := ctx.Err(); err != nil {
+				return result, err
+			}
+			from = to + 1
+			continue
 		}
 		notes := []StoredNote{}
 		credits := []StoredCredit{}
@@ -553,7 +560,11 @@ func (s *WalletSession) readTransaction(ctx context.Context, hash common.Hash, a
 		}
 	}
 	for _, output := range batch.Outputs {
-		context := core.NoteDecryptionContext{NoteEncryptionContext: core.NoteEncryptionContext{ProtocolContext: s.coreContext(), OutputCommitment: core.BigIntToElement(output.Commitment.Big())}, TokenAddress: core.BigIntToElement(output.Token.Big()), WalletIdentity: core.BigIntToElement(s.wallet.identity.Big())}
+		// Omitted Funds delivery keeps its tree position but has no envelope to decrypt.
+		if len(output.Ciphertext) == 0 && len(output.Clue) == 0 {
+			continue
+		}
+		context := core.NoteDecryptionContext{NoteEncryptionContext: core.NoteEncryptionContext{ProtocolContext: s.coreContext(), OutputCommitment: core.BigIntToElement(output.Commitment.Big())}, TokenAddress: core.BigIntToElement(output.Token.Big()), OwnerAddress: core.BigIntToElement(s.wallet.identity.Big())}
 		if note, e := s.viewing.decryptNote(output.Ciphertext, context); e == nil {
 			if _, e = s.rpc.GetMembership(ctx, s.protocol.Context(), protocolrpc.MembershipInput{TreeID: output.TreeID, LeafIndex: output.LeafIndex, Commitment: output.Commitment}, anchor); e != nil {
 				return nil, nil, nil, e

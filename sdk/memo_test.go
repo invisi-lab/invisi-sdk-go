@@ -24,7 +24,7 @@ func TestMemoPreparationCopiesAndPersists(t *testing.T) {
 	session, token, _ := testSession(t)
 	address, _ := session.wallet.GetAddress()
 	memo := []byte{0xff, 0, 1}
-	prepared, err := session.PrepareTransfer(context.Background(), TransferPreparation{TokenAddress: token, Outputs: []PaymentOutput{{To: address, Amount: big.NewInt(30), Payload: memo}}})
+	prepared, err := session.PrepareTransfer(context.Background(), TransferPreparation{TokenAddress: token, Outputs: testOutputs(session, []testPaymentOutput{{To: address, Amount: big.NewInt(30), Payload: memo}})})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -74,7 +74,7 @@ func TestCreditPayloadsDoNotInheritConsumedMetadata(t *testing.T) {
 					} else {
 						commitment = operation.plan.CreateCredit.CreditCommitment
 					}
-					decoded, err := session.viewing.DecryptCredit(operation.plan.Deliveries[i].Ciphertext, core.CreditNoteDecryptionContext{NoteDecryptionContext: core.NoteDecryptionContext{NoteEncryptionContext: core.NoteEncryptionContext{ProtocolContext: session.coreContext(), OutputCommitment: core.BigIntToElement(commitment.Big())}, TokenAddress: core.BigIntToElement(token.Big()), WalletIdentity: session.wallet.material.WalletIdentity}, Role: role})
+					decoded, err := session.viewing.DecryptCredit(operation.plan.Deliveries[i].Ciphertext, core.CreditNoteDecryptionContext{NoteDecryptionContext: core.NoteDecryptionContext{NoteEncryptionContext: core.NoteEncryptionContext{ProtocolContext: session.coreContext(), OutputCommitment: core.BigIntToElement(commitment.Big())}, TokenAddress: core.BigIntToElement(token.Big()), OwnerAddress: session.wallet.material.OwnerAddress}, Role: role})
 					if err != nil || !bytes.Equal(decoded.Note.Payload, expected) {
 						t.Fatal("memo inheritance", err, decoded.Note.Payload, expected)
 					}
@@ -109,7 +109,7 @@ func TestCreditCreationAndDisclosureMemoBoundary(t *testing.T) {
 	if err != nil || len(result.Credit.Payload) != 0 {
 		t.Fatal("opening claimed memo", err)
 	}
-	payload, err := session.viewing.DiscloseCredit(output.Ciphertext, core.CreditNoteDecryptionContext{NoteDecryptionContext: core.NoteDecryptionContext{NoteEncryptionContext: core.NoteEncryptionContext{ProtocolContext: note.ProtocolContext, OutputCommitment: core.BigIntToElement(output.OutputCommitment.Big())}, TokenAddress: note.TokenAddress, WalletIdentity: note.OwnerWalletIdentity}, Role: core.CreditOwner})
+	payload, err := session.viewing.DiscloseCredit(output.Ciphertext, core.CreditNoteDecryptionContext{NoteDecryptionContext: core.NoteDecryptionContext{NoteEncryptionContext: core.NoteEncryptionContext{ProtocolContext: note.ProtocolContext, OutputCommitment: core.BigIntToElement(output.OutputCommitment.Big())}, TokenAddress: note.TokenAddress, OwnerAddress: note.OwnerWalletIdentity}, Role: core.CreditOwner})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -362,7 +362,7 @@ func TestMemoPreparationSnapshotsBeforeNetworkWait(t *testing.T) {
 	}
 	result := make(chan preparedResult, 1)
 	go func() {
-		operation, err := session.PrepareTransfer(context.Background(), TransferPreparation{TokenAddress: token, Outputs: []PaymentOutput{{To: address, Amount: big.NewInt(30), Payload: memo}}})
+		operation, err := session.PrepareTransfer(context.Background(), TransferPreparation{TokenAddress: token, Outputs: testOutputs(session, []testPaymentOutput{{To: address, Amount: big.NewInt(30), Payload: memo}})})
 		result <- preparedResult{operation, err}
 	}()
 	<-provider.entered

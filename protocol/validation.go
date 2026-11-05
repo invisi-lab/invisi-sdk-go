@@ -149,6 +149,9 @@ func args(names ...string) abi.Arguments {
 // ValidateDelivery validates opaque transport bytes and the fixed 24-bit detection clue.
 // Empty output slots must have both fields empty.
 func ValidateDelivery(delivery Delivery, credit, empty bool) error {
+	if !credit && len(delivery.Ciphertext) == 0 && len(delivery.Clue) == 0 {
+		return nil
+	}
 	if empty {
 		if len(delivery.Ciphertext) != 0 || len(delivery.Clue) != 0 {
 			return fmt.Errorf("empty delivery must have no ciphertext or clue")

@@ -85,12 +85,12 @@ type RegistrationPreparation struct {
 	Deadline uint64
 }
 type RegistrationPreview struct {
-	RegistryAddress, WalletIdentity common.Address
-	Update                          bool
-	Nonce, Deadline                 uint64
-	Status                          string
-	ReceivingKeys                   core.ReceivingKeys
-	ReceiptBlock                    *protocolrpc.CanonicalBlock
+	RegistryAddress, OwnerAddress common.Address
+	Update                        bool
+	Nonce, Deadline               uint64
+	Status                        string
+	ReceivingKeys                 core.ReceivingKeys
+	ReceiptBlock                  *protocolrpc.CanonicalBlock
 }
 type RegistrationOperation struct {
 	lifecycle       *transactionLifecycle
@@ -159,7 +159,7 @@ func (r *AddressRegistry) PrepareRegistration(ctx context.Context, options Regis
 	}
 	var clue [32]byte
 	copy(clue[:], options.Wallet.keys.ClueKey)
-	registration := protocol.AddressRegistration{WalletIdentity: identity, Keys: contracts.IAddressRegistryReceivingKeys{ViewingPublicKey: append([]byte(nil), options.Wallet.keys.ViewingPublicKey...), ClueKey: clue}, Nonce: nonce, Deadline: deadline}
+	registration := protocol.AddressRegistration{OwnerAddress: identity, Keys: contracts.IAddressRegistryReceivingKeys{ViewingPublicKey: append([]byte(nil), options.Wallet.keys.ViewingPublicKey...), ClueKey: clue}, Nonce: nonce, Deadline: deadline}
 	context := r.context
 	context.Now = new(big.Int).SetUint64(head.Time)
 	if _, e = protocol.RegistrationTypedData(context, registration, protocol.RegistrationOptions{Update: options.Update}); e != nil {
@@ -174,7 +174,7 @@ func (r *AddressRegistry) PrepareRegistration(ctx context.Context, options Regis
 func (o *RegistrationOperation) Preview() RegistrationPreview {
 	o.mu.Lock()
 	defer o.mu.Unlock()
-	preview := RegistrationPreview{RegistryAddress: o.registry.deployment.Address, WalletIdentity: o.wallet.identity, Update: o.options.Update, Nonce: o.registration.Nonce, Deadline: o.registration.Deadline, Status: o.status, ReceivingKeys: core.ReceivingKeys{ViewingPublicKey: append([]byte(nil), o.registration.Keys.ViewingPublicKey...), ClueKey: append([]byte(nil), o.registration.Keys.ClueKey[:]...)}}
+	preview := RegistrationPreview{RegistryAddress: o.registry.deployment.Address, OwnerAddress: o.wallet.identity, Update: o.options.Update, Nonce: o.registration.Nonce, Deadline: o.registration.Deadline, Status: o.status, ReceivingKeys: core.ReceivingKeys{ViewingPublicKey: append([]byte(nil), o.registration.Keys.ViewingPublicKey...), ClueKey: append([]byte(nil), o.registration.Keys.ClueKey[:]...)}}
 	if o.receiptBlock != nil {
 		block := *o.receiptBlock
 		preview.ReceiptBlock = &block
@@ -284,7 +284,7 @@ func (o *RegistrationOperation) currentContext(ctx context.Context) (protocol.Re
 	if err != nil {
 		return current, err
 	}
-	nonce, err := caller.NonceOf(&bind.CallOpts{Context: ctx, BlockNumber: head.Number}, o.registration.WalletIdentity)
+	nonce, err := caller.NonceOf(&bind.CallOpts{Context: ctx, BlockNumber: head.Number}, o.registration.OwnerAddress)
 	if err != nil {
 		return current, err
 	}
@@ -424,7 +424,7 @@ func (o *RegistrationOperation) verifyReceivingKeysEvent(receipt *types.Receipt)
 		if err != nil {
 			return err
 		}
-		if event.WalletIdentity != o.registration.WalletIdentity || !bytes.Equal(event.ViewingPublicKey, o.registration.Keys.ViewingPublicKey) || event.ClueKey != o.registration.Keys.ClueKey || event.NextNonce != o.registration.Nonce+1 {
+		if event.WalletIdentity != o.registration.OwnerAddress || !bytes.Equal(event.ViewingPublicKey, o.registration.Keys.ViewingPublicKey) || event.ClueKey != o.registration.Keys.ClueKey || event.NextNonce != o.registration.Nonce+1 {
 			return errors.New("registration event differs from authorized keys")
 		}
 		count++

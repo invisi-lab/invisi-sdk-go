@@ -14,10 +14,10 @@ func memoNote(t *testing.T) (Note, []byte, []byte, NoteDecryptionContext) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	note := Note{ProtocolContext: ProtocolContext{ElementFromUint64(1), ElementFromUint64(2)}, WalletIdentity: ElementFromUint64(3), TokenAddress: ElementFromUint64(4), Amount: ElementFromUint64(5), Nonce: ElementFromUint64(6)}
-	identity, _ := ComputeNoteIdentity(note.WalletIdentity, note.Nonce)
+	note := Note{ProtocolContext: ProtocolContext{ElementFromUint64(1), ElementFromUint64(2)}, OwnerAddress: ElementFromUint64(3), TokenAddress: ElementFromUint64(4), Amount: ElementFromUint64(5), Nonce: ElementFromUint64(6)}
+	identity, _ := ComputeNoteIdentity(note.OwnerAddress, note.Nonce)
 	leaf, _ := ComputeNoteCommitment(note.ChainID, identity, note.TokenAddress, note.Amount)
-	return note, private, public, NoteDecryptionContext{NoteEncryptionContext{note.ProtocolContext, leaf}, note.TokenAddress, note.WalletIdentity}
+	return note, private, public, NoteDecryptionContext{NoteEncryptionContext{note.ProtocolContext, leaf}, note.TokenAddress, note.OwnerAddress}
 }
 func TestEmptyMemoUsesCurrentEnvelope(t *testing.T) {
 	note, private, public, context := memoNote(t)
@@ -123,7 +123,7 @@ func TestCreditMemoRoundTripAndRecoveryOmitsUnknownMemo(t *testing.T) {
 		t.Fatal(err)
 	}
 	keys := ReceivingKeys{ViewingPublicKey: public, ClueKey: wallet.ClueKey}
-	credit := CreditNote{ProtocolContext: note.ProtocolContext, SpenderWalletIdentity: note.WalletIdentity, OwnerWalletIdentity: note.WalletIdentity, SpenderPayout: note.WalletIdentity, OwnerPayout: note.WalletIdentity, TokenAddress: note.TokenAddress, Amount: ElementFromUint64(100), Nonce: note.Nonce, Expiry: ElementFromUint64(1000), CreditSharedKey: ElementFromUint64(7), Payload: bytes.Repeat([]byte{0xff}, 256)}
+	credit := CreditNote{ProtocolContext: note.ProtocolContext, SpenderWalletIdentity: note.OwnerAddress, OwnerWalletIdentity: note.OwnerAddress, SpenderPayout: note.OwnerAddress, OwnerPayout: note.OwnerAddress, TokenAddress: note.TokenAddress, Amount: ElementFromUint64(100), Nonce: note.Nonce, Expiry: ElementFromUint64(1000), CreditSharedKey: ElementFromUint64(7), Payload: bytes.Repeat([]byte{0xff}, 256)}
 	keyHash, _ := ComputeCreditSharedKeyHash(credit.CreditSharedKey)
 	leaf, _ := ComputeCreditCommitment(credit.ChainID, credit.SpenderWalletIdentity, credit.OwnerWalletIdentity, credit.SpenderPayout, credit.OwnerPayout, credit.TokenAddress, credit.Amount, credit.Nonce, credit.Expiry, keyHash, credit.CreditSpendingState)
 	state := CreditDeliveryState{Note: credit, OwnerReceivingKeys: keys, SpenderReceivingKeys: keys}

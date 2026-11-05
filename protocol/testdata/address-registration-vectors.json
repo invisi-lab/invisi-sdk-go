@@ -8,13 +8,13 @@
         "registryAddress": "0x0000000000000000000000000000000000001234"
       },
       "registration": {
-        "walletIdentity": "0x0000000000000000000000007e5f4552091a69125d5dfcb7b8c2659029395bdf",
         "keys": {
           "viewingPublicKey": "0x0396f42bb298c8a0e74539294780d709799f9838c0b69a134f38c6d968f2921397",
           "clueKey": "0x0800000000000000000000000000000000000000000000000000000000000000"
         },
         "nonce": "0",
-        "deadline": "2000000000"
+        "deadline": "2000000000",
+        "ownerAddress": "0x0000000000000000000000007e5f4552091a69125d5dfcb7b8c2659029395bdf"
       },
       "update": false,
       "typedData": {
@@ -68,13 +68,13 @@
         "registryAddress": "0x0000000000000000000000000000000000001234"
       },
       "registration": {
-        "walletIdentity": "0x0000000000000000000000007e5f4552091a69125d5dfcb7b8c2659029395bdf",
         "keys": {
           "viewingPublicKey": "0x0396f42bb298c8a0e74539294780d709799f9838c0b69a134f38c6d968f2921397",
           "clueKey": "0xb2ecf9b9082d6306538be73b0d6ee741141f3222152da78685d6596efc8c1506"
         },
         "nonce": "7",
-        "deadline": "2000000000"
+        "deadline": "2000000000",
+        "ownerAddress": "0x0000000000000000000000007e5f4552091a69125d5dfcb7b8c2659029395bdf"
       },
       "update": true,
       "typedData": {
@@ -128,13 +128,13 @@
         "registryAddress": "0x0000000000000000000000000000000000005678"
       },
       "registration": {
-        "walletIdentity": "0x0000000000000000000000007e5f4552091a69125d5dfcb7b8c2659029395bdf",
         "keys": {
           "viewingPublicKey": "0x0396f42bb298c8a0e74539294780d709799f9838c0b69a134f38c6d968f2921397",
           "clueKey": "0x0800000000000000000000000000000000000000000000000000000000000000"
         },
         "nonce": "0",
-        "deadline": "2000000000"
+        "deadline": "2000000000",
+        "ownerAddress": "0x0000000000000000000000007e5f4552091a69125d5dfcb7b8c2659029395bdf"
       },
       "update": false,
       "typedData": {
@@ -188,13 +188,13 @@
         "registryAddress": "0x0000000000000000000000000000000000005678"
       },
       "registration": {
-        "walletIdentity": "0x0000000000000000000000007e5f4552091a69125d5dfcb7b8c2659029395bdf",
         "keys": {
           "viewingPublicKey": "0x0396f42bb298c8a0e74539294780d709799f9838c0b69a134f38c6d968f2921397",
           "clueKey": "0xb2ecf9b9082d6306538be73b0d6ee741141f3222152da78685d6596efc8c1506"
         },
         "nonce": "7",
-        "deadline": "2000000000"
+        "deadline": "2000000000",
+        "ownerAddress": "0x0000000000000000000000007e5f4552091a69125d5dfcb7b8c2659029395bdf"
       },
       "update": true,
       "typedData": {

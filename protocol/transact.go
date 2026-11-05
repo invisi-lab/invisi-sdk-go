@@ -33,6 +33,11 @@ type NormalizedTransact struct {
 
 func NormalizeTransactRequest(c TransactionContext, p CrossTreeTransactParams, cs []Delivery, f FundingParams) (NormalizedTransact, error) {
 	r := NormalizedTransact{Params: p}
+	var feeErr error
+	r.Params.FeeAmount, feeErr = normalizeFee(p.FeeRecipient, p.FeeAmount)
+	if feeErr != nil {
+		return r, feeErr
+	}
 	if err := ValidateContext(c); err != nil {
 		return r, err
 	}
@@ -103,7 +108,7 @@ func transactWords(c TransactionContext, r NormalizedTransact) []*big.Int {
 	out = append(out, r.InputTreeIDs...)
 	out = append(out, r.MerkleRoots...)
 	out = append(out, r.SlotValues...)
-	return append(out, high, low, p.WithdrawalAddress.Big(), p.WithdrawalAmount, p.Deadline, r.Funding.Amount, r.Funding.Payer.Big())
+	return append(out, high, low, p.WithdrawalAddress.Big(), p.WithdrawalAmount, p.Deadline, r.Funding.Amount, r.Funding.Payer.Big(), p.FeeRecipient.Big(), p.FeeAmount)
 }
 func TransactPublicInputs(c TransactionContext, p CrossTreeTransactParams, cs []Delivery, f FundingParams) ([][32]byte, error) {
 	r, err := NormalizeTransactRequest(c, p, cs, f)
@@ -149,6 +154,11 @@ func transactMethod(aggregate bool) (abi.Method, error) {
 	return abi.Method{}, fmt.Errorf("current transact overload unavailable")
 }
 func TransactFundingRequestHash(proof []byte, p CrossTreeTransactParams, cs []Delivery) (common.Hash, error) {
+	var feeErr error
+	p.FeeAmount, feeErr = normalizeFee(p.FeeRecipient, p.FeeAmount)
+	if feeErr != nil {
+		return common.Hash{}, feeErr
+	}
 	if err := CheckUint(p.WithdrawalAmount, 128, "withdrawal amount"); err != nil {
 		return common.Hash{}, err
 	}
@@ -171,7 +181,7 @@ func TransactFundingRequestHash(proof []byte, p CrossTreeTransactParams, cs []De
 	if len(p.Sources) > 1 {
 		return HashABI(abi.Arguments{{Type: mustType("bytes32")}, {Type: mustType("bytes32")}, {Type: *method.Inputs[1].Type.TupleElems[0]}, {Type: mustType("bytes32")}}, crypto.Keccak256Hash([]byte("InvisiCrossTreeTransact")), crypto.Keccak256Hash(proof), p, deliveryHash)
 	}
-	components := []abi.ArgumentMarshaling{{Name: "token", Type: "address"}, {Name: "merkleRoot", Type: "bytes32"}, {Name: "nullifiers", Type: "bytes32[]"}, {Name: "outputCommitments", Type: "bytes32[]"}, {Name: "inputTreeId", Type: "uint256"}, {Name: "withdrawalAddress", Type: "address"}, {Name: "withdrawalAmount", Type: "uint256"}, {Name: "deadline", Type: "uint256"}}
+	components := []abi.ArgumentMarshaling{{Name: "token", Type: "address"}, {Name: "merkleRoot", Type: "bytes32"}, {Name: "nullifiers", Type: "bytes32[]"}, {Name: "outputCommitments", Type: "bytes32[]"}, {Name: "inputTreeId", Type: "uint256"}, {Name: "withdrawalAddress", Type: "address"}, {Name: "withdrawalAmount", Type: "uint256"}, {Name: "deadline", Type: "uint256"}, {Name: "feeRecipient", Type: "address"}, {Name: "feeAmount", Type: "uint256"}}
 	singleType, err := abi.NewType("tuple", "", components)
 	if err != nil {
 		return common.Hash{}, err
@@ -183,8 +193,10 @@ func TransactFundingRequestHash(proof []byte, p CrossTreeTransactParams, cs []De
 		InputTreeId                   *big.Int
 		WithdrawalAddress             common.Address
 		WithdrawalAmount, Deadline    *big.Int
+		FeeRecipient                  common.Address
+		FeeAmount                     *big.Int
 	}{
-		Token: p.Token, Nullifiers: p.Nullifiers, OutputCommitments: p.OutputCommitments, InputTreeId: new(big.Int), WithdrawalAddress: p.WithdrawalAddress, WithdrawalAmount: p.WithdrawalAmount, Deadline: p.Deadline}
+		Token: p.Token, Nullifiers: p.Nullifiers, OutputCommitments: p.OutputCommitments, InputTreeId: new(big.Int), WithdrawalAddress: p.WithdrawalAddress, WithdrawalAmount: p.WithdrawalAmount, Deadline: p.Deadline, FeeRecipient: p.FeeRecipient, FeeAmount: p.FeeAmount}
 	if len(p.Sources) == 1 {
 		single.MerkleRoot = p.Sources[0].MerkleRoot
 		single.InputTreeId = p.Sources[0].TreeId

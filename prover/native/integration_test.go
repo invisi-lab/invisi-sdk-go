@@ -30,7 +30,7 @@ func creditCancellationRequest(t *testing.T) prover.ProvingRequest {
 	if err != nil {
 		t.Fatal(err)
 	}
-	leaf, err := core.ComputeCreditCommitment(context.ChainID, wallet.WalletIdentity, wallet.WalletIdentity, wallet.WalletIdentity, wallet.WalletIdentity, token, amount, nonce, expiry, keyHash, state)
+	leaf, err := core.ComputeCreditCommitment(context.ChainID, wallet.OwnerAddress, wallet.OwnerAddress, wallet.OwnerAddress, wallet.OwnerAddress, token, amount, nonce, expiry, keyHash, state)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -48,7 +48,7 @@ func creditCancellationRequest(t *testing.T) prover.ProvingRequest {
 		t.Fatal(err)
 	}
 	callContext := protocol.TransactionContext{ChainID: core.ElementToBigInt(context.ChainID), ProtocolAddress: common.BigToAddress(core.ElementToBigInt(context.ProtocolAddress)), TokenAddress: common.BigToAddress(core.ElementToBigInt(token))}
-	params := protocol.CancelCreditParams{Token: callContext.TokenAddress, Owner: common.BigToAddress(core.ElementToBigInt(wallet.WalletIdentity)), Source: protocol.InputSource{TreeId: big.NewInt(1), MerkleRoot: root.Bytes()}, Nullifier: nullifier.Bytes(), Amount: core.ElementToBigInt(amount), Deadline: big.NewInt(2000000000)}
+	params := protocol.CancelCreditParams{Token: callContext.TokenAddress, Owner: common.BigToAddress(core.ElementToBigInt(wallet.OwnerAddress)), Source: protocol.InputSource{TreeId: big.NewInt(1), MerkleRoot: root.Bytes()}, Nullifier: nullifier.Bytes(), Amount: core.ElementToBigInt(amount), Deadline: big.NewInt(2000000000)}
 	base, err := protocol.CancelCreditBaseInputs(callContext, params)
 	if err != nil {
 		t.Fatal(err)
@@ -72,7 +72,7 @@ func creditCancellationRequest(t *testing.T) prover.ProvingRequest {
 	}
 	proofRequest, err := prover.Request("credit_cancel", "evm", map[string]any{
 		"public_key_x": signed.PublicKeyX, "public_key_y": signed.PublicKeyY, "signature": signed.Signature,
-		"spender_payout": wallet.WalletIdentity.String(), "spender_wallet_identity": wallet.WalletIdentity.String(), "owner_wallet_identity": wallet.WalletIdentity.String(),
+		"spender_payout": wallet.OwnerAddress.String(), "spender_wallet_identity": wallet.OwnerAddress.String(), "owner_wallet_identity": wallet.OwnerAddress.String(),
 		"single_limit": state.SingleLimit.String(), "daily_limit": state.DailyLimit.String(), "monthly_limit": state.MonthlyLimit.String(), "last_day": state.LastDay.String(), "daily_spent": state.DailySpent.String(), "last_month": state.LastMonth.String(), "monthly_spent": state.MonthlySpent.String(),
 		"input_nonce": nonce.String(), "expiry": expiry.String(), "credit_shared_key": shared.String(), "leaf_index": "0", "merkle_path": path,
 	}, public)

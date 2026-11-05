@@ -127,7 +127,7 @@ func TestManagedExplicitCommitmentsConsumeEntireSelectedSubset(t *testing.T) {
 	second := first
 	second.TreeID = 2
 	second.Note.Nonce = core.ElementFromUint64(124)
-	identity, _ := core.ComputeNoteIdentity(second.Note.WalletIdentity, second.Note.Nonce)
+	identity, _ := core.ComputeNoteIdentity(second.Note.OwnerAddress, second.Note.Nonce)
 	leaf, err := core.ComputeNoteCommitment(second.Note.ChainID, identity, second.Note.TokenAddress, second.Note.Amount)
 	if err != nil {
 		t.Fatal(err)
@@ -142,7 +142,7 @@ func TestManagedExplicitCommitmentsConsumeEntireSelectedSubset(t *testing.T) {
 		t.Fatal(err)
 	}
 	address, _ := session.wallet.GetAddress()
-	prepared, err := session.PrepareTransfer(ctx, TransferPreparation{TokenAddress: token, Commitments: []common.Hash{first.Commitment, second.Commitment}, Outputs: []PaymentOutput{{To: address, Amount: big.NewInt(30)}}})
+	prepared, err := session.PrepareTransfer(ctx, TransferPreparation{TokenAddress: token, Commitments: []common.Hash{first.Commitment, second.Commitment}, Outputs: testOutputs(session, []testPaymentOutput{{To: address, Amount: big.NewInt(30)}})})
 	if err != nil {
 		t.Fatal(err)
 	}

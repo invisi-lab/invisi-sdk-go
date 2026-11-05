@@ -35,7 +35,7 @@ func TestDerivedWalletDefaultRepresentationsHidePrivateMaterial(t *testing.T) {
 	if err = json.Unmarshal(encoded, &public); err != nil {
 		t.Fatal(err)
 	}
-	if len(public) != 1 || public["walletIdentity"] == "" {
+	if len(public) != 1 || public["ownerAddress"] == "" {
 		t.Fatal("expected public identity only")
 	}
 }

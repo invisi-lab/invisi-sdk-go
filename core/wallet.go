@@ -22,12 +22,12 @@ type InvisiWallet struct {
 	SpendingPrivateKey, SpendingPublicKey []byte
 	ViewingPrivateKey, ViewingPublicKey   []byte
 	DetectionSeed, DetectionKey, ClueKey  []byte
-	WalletIdentity                        fr.Element
+	OwnerAddress                          fr.Element
 }
 
 // String exposes only the public owner identity, never the derived key group.
 func (w InvisiWallet) String() string {
-	return fmt.Sprintf("InvisiWallet(%s)", common.BigToAddress(ElementToBigInt(w.WalletIdentity)).Hex())
+	return fmt.Sprintf("InvisiWallet(%s)", common.BigToAddress(ElementToBigInt(w.OwnerAddress)).Hex())
 }
 
 // GoString keeps detailed formatting subject to the same private-material boundary.
@@ -36,8 +36,8 @@ func (w InvisiWallet) GoString() string { return w.String() }
 // MarshalJSON is intentionally a public view; exporting keys requires explicit field access.
 func (w InvisiWallet) MarshalJSON() ([]byte, error) {
 	return json.Marshal(struct {
-		WalletIdentity string `json:"walletIdentity"`
-	}{common.BigToAddress(ElementToBigInt(w.WalletIdentity)).Hex()})
+		OwnerAddress string `json:"ownerAddress"`
+	}{common.BigToAddress(ElementToBigInt(w.OwnerAddress)).Hex()})
 }
 
 type WalletOperation string
@@ -116,7 +116,7 @@ func DeriveWallet(privateKey []byte) (*InvisiWallet, error) {
 		return nil, err
 	}
 	public := ethcrypto.FromECDSAPub(&spendKey.PublicKey)
-	identity, err := ComputeWalletIdentity(public)
+	identity, err := ComputeOwnerAddress(public)
 	if err != nil {
 		return nil, err
 	}
@@ -124,7 +124,7 @@ func DeriveWallet(privateKey []byte) (*InvisiWallet, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &InvisiWallet{SpendingPrivateKey: spend, SpendingPublicKey: public, ViewingPrivateKey: view, ViewingPublicKey: ethcrypto.CompressPubkey(&viewKey.PublicKey), DetectionSeed: seed, DetectionKey: detection, ClueKey: clue, WalletIdentity: identity}, nil
+	return &InvisiWallet{SpendingPrivateKey: spend, SpendingPublicKey: public, ViewingPrivateKey: view, ViewingPublicKey: ethcrypto.CompressPubkey(&viewKey.PublicKey), DetectionSeed: seed, DetectionKey: detection, ClueKey: clue, OwnerAddress: identity}, nil
 }
 func walletPublicKey(input []byte) (*ecdsa.PublicKey, error) {
 	switch len(input) {
@@ -143,8 +143,8 @@ func walletPublicKey(input []byte) (*ecdsa.PublicKey, error) {
 	}
 }
 
-// ComputeWalletIdentity is the EVM owner of the spending public key.
-func ComputeWalletIdentity(publicKey []byte) (fr.Element, error) {
+// ComputeOwnerAddress is the EVM owner of the spending public key.
+func ComputeOwnerAddress(publicKey []byte) (fr.Element, error) {
 	point, err := walletPublicKey(publicKey)
 	if err != nil {
 		return fr.Element{}, err
@@ -249,7 +249,7 @@ func VerifyWalletAuthorization(identity fr.Element, publicKey, signature []byte,
 	if len(signature) != 64 {
 		return false, fmt.Errorf("wallet signature must contain exactly 64 bytes")
 	}
-	derived, e := ComputeWalletIdentity(publicKey)
+	derived, e := ComputeOwnerAddress(publicKey)
 	if e != nil {
 		return false, e
 	}

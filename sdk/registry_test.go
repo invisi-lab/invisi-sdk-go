@@ -269,7 +269,7 @@ func TestProtocolDeploymentValidatesImmutableRegistryBinding(t *testing.T) {
 	}
 	session.protocol = pool
 	session.options.Provider = provider
-	if _, err = session.resolve(context.Background(), session.wallet.GetShortAddress()); err == nil || !strings.Contains(err.Error(), "immutable") {
+	if _, err = session.resolve(context.Background(), session.wallet.OwnerAddress().Hex()); err == nil || !strings.Contains(err.Error(), "immutable") {
 		t.Fatal("default resolver did not enforce immutable registry binding", err)
 	}
 }
@@ -324,7 +324,7 @@ func registeredOperationFixture(t *testing.T) (*RegistrationOperation, *registra
 	if err != nil {
 		t.Fatal(err)
 	}
-	log := &types.Log{Address: call.To, Topics: []common.Hash{event.ID, ready.registration.WalletIdentity}, Data: data, BlockHash: head.Hash(), BlockNumber: head.Number.Uint64(), TxHash: tx.Hash()}
+	log := &types.Log{Address: call.To, Topics: []common.Hash{event.ID, ready.registration.OwnerAddress}, Data: data, BlockHash: head.Hash(), BlockNumber: head.Number.Uint64(), TxHash: tx.Hash()}
 	receipt := &types.Receipt{TxHash: tx.Hash(), Status: types.ReceiptStatusSuccessful, BlockNumber: new(big.Int).Set(head.Number), BlockHash: head.Hash(), Logs: []*types.Log{log}}
 	provider := &registrationReceiptProvider{Provider: registry.provider, transaction: tx, receipt: receipt, header: head}
 	registry.provider = provider

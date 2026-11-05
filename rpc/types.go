@@ -18,9 +18,10 @@ type ContractDeployment struct {
 	FromBlock       uint64         `json:"fromBlock"`
 }
 type ProtocolDeployment struct {
-	ChainID  string              `json:"chainId"`
-	Protocol ContractDeployment  `json:"protocol"`
-	Registry *ContractDeployment `json:"registry,omitempty"`
+	ChainID             string              `json:"chainId"`
+	Protocol            ContractDeployment  `json:"protocol"`
+	Registry            *ContractDeployment `json:"registry,omitempty"`
+	BroadcasterRegistry *ContractDeployment `json:"broadcasterRegistry,omitempty"`
 }
 
 func (d ProtocolDeployment) ChainNumber() (*big.Int, error) {
@@ -34,7 +35,7 @@ func (d ProtocolDeployment) Validate() error {
 	if _, e := d.ChainNumber(); e != nil {
 		return e
 	}
-	for _, c := range []*ContractDeployment{&d.Protocol, d.Registry} {
+	for _, c := range []*ContractDeployment{&d.Protocol, d.Registry, d.BroadcasterRegistry} {
 		if c != nil && (c.Address == (common.Address{}) || c.RuntimeCodeHash == (common.Hash{}) || c.FromBlock > 1<<53-1) {
 			return fmt.Errorf("invalid contract deployment")
 		}

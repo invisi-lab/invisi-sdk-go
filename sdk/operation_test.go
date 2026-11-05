@@ -108,8 +108,8 @@ func testSession(t *testing.T, timestamps ...uint64) (*WalletSession, common.Add
 	token := common.HexToAddress("0x2222222222222222222222222222222222222222")
 	deployment := protocolrpc.ProtocolDeployment{ChainID: "31337", Protocol: protocolrpc.ContractDeployment{Address: address, RuntimeCodeHash: hashCode([]byte{0x60, 0}), FromBlock: 1}}
 	block := protocolrpc.CanonicalBlock{Number: 10, Hash: provider.head.Hash(), ParentHash: provider.head.ParentHash, Timestamp: timestamp}
-	note := core.Note{ProtocolContext: core.ProtocolContext{ChainID: core.ElementFromUint64(31337), ProtocolAddress: core.BigIntToElement(address.Big())}, WalletIdentity: core.BigIntToElement(wallet.identity.Big()), TokenAddress: core.BigIntToElement(token.Big()), Amount: core.ElementFromUint64(100), Nonce: core.ElementFromUint64(123)}
-	identity, _ := core.ComputeNoteIdentity(note.WalletIdentity, note.Nonce)
+	note := core.Note{ProtocolContext: core.ProtocolContext{ChainID: core.ElementFromUint64(31337), ProtocolAddress: core.BigIntToElement(address.Big())}, OwnerAddress: core.BigIntToElement(wallet.identity.Big()), TokenAddress: core.BigIntToElement(token.Big()), Amount: core.ElementFromUint64(100), Nonce: core.ElementFromUint64(123)}
+	identity, _ := core.ComputeNoteIdentity(note.OwnerAddress, note.Nonce)
 	leaf, _ := core.ComputeNoteCommitment(note.ChainID, identity, note.TokenAddress, note.Amount)
 	nf, _ := core.ComputeNoteNullifier(note.ChainID, note.Nonce, leaf)
 	root := leaf
@@ -197,9 +197,13 @@ func TestShieldAcceptsTokenWithoutRegistration(t *testing.T) {
 		t.Fatal(err)
 	}
 	asset := common.HexToAddress("0x3333333333333333333333333333333333333333")
+	output, err := NewNoteOutput(NoteOutputOptions{ChainID: new(big.Int).SetUint64(session.scope.ChainID), ProtocolAddress: session.scope.ProtocolAddress, TokenAddress: asset, Amount: big.NewInt(70), Recipient: InvisiRecipient{Address: address}})
+	if err != nil {
+		t.Fatal(err)
+	}
 	prepared, err := session.PrepareShield(context.Background(), ShieldPreparation{
 		TokenAddress: asset,
-		Outputs:      []PaymentOutput{{To: address, Amount: big.NewInt(70)}},
+		Outputs:      []NoteOutput{output},
 		Funding:      FundingSource{Payer: session.wallet.identity, Amount: big.NewInt(70)},
 	})
 	if err != nil {
@@ -219,7 +223,7 @@ func TestPreparationRejectsTokenWithoutContractCode(t *testing.T) {
 	}
 	_, err = session.PrepareTransfer(context.Background(), TransferPreparation{
 		TokenAddress: token,
-		Outputs:      []PaymentOutput{{To: address, Amount: big.NewInt(30)}},
+		Outputs:      testOutputs(session, []testPaymentOutput{{To: address, Amount: big.NewInt(30)}}),
 	})
 	if err == nil || !strings.Contains(err.Error(), "token address must have contract code") {
 		t.Fatalf("expected invalid token rejection, got %v", err)
@@ -230,7 +234,7 @@ func TestTransferStagesReserveInputsAndAssembleCurrentWitness(t *testing.T) {
 	ctx := context.Background()
 	session, token, backend := testSession(t)
 	address, _ := session.wallet.GetAddress()
-	prepared, e := session.PrepareTransfer(ctx, TransferPreparation{TokenAddress: token, Outputs: []PaymentOutput{{To: address, Amount: big.NewInt(30)}}})
+	prepared, e := session.PrepareTransfer(ctx, TransferPreparation{TokenAddress: token, Outputs: testOutputs(session, []testPaymentOutput{{To: address, Amount: big.NewInt(30)}})})
 	if e != nil {
 		t.Fatal(e)
 	}
@@ -245,7 +249,7 @@ func TestTransferStagesReserveInputsAndAssembleCurrentWitness(t *testing.T) {
 	if e != nil || balance.AvailableKnown.Sign() != 0 || balance.Reserved.Cmp(big.NewInt(100)) != 0 {
 		t.Fatal(balance, e)
 	}
-	if _, e = session.PrepareTransfer(ctx, TransferPreparation{TokenAddress: token, Outputs: []PaymentOutput{{To: address, Amount: big.NewInt(1)}}}); e == nil {
+	if _, e = session.PrepareTransfer(ctx, TransferPreparation{TokenAddress: token, Outputs: testOutputs(session, []testPaymentOutput{{To: address, Amount: big.NewInt(1)}})}); e == nil {
 		t.Fatal("reserved note selected twice")
 	}
 	authorized, e := prepared.Authorize(ctx)
@@ -258,7 +262,7 @@ func TestTransferStagesReserveInputsAndAssembleCurrentWitness(t *testing.T) {
 	}
 	request := backend.requests[0]
 	if e = request.Witness.WithInputs(func(inputs map[string]any) error {
-		if inputs["wallet_identity"] != session.wallet.material.WalletIdentity.String() {
+		if inputs["input_owner_address"] != session.wallet.material.OwnerAddress.String() {
 			t.Fatal("wrong witness identity")
 		}
 		return nil
@@ -351,7 +355,7 @@ func TestCreateCreditUsesSameAuthorizationAndProofStages(t *testing.T) {
 
 func seedCredit(t *testing.T, session *WalletSession, token common.Address) common.Hash {
 	t.Helper()
-	note := core.CreditNote{ProtocolContext: session.coreContext(), SpenderWalletIdentity: session.wallet.material.WalletIdentity, OwnerWalletIdentity: session.wallet.material.WalletIdentity, SpenderPayout: session.wallet.material.WalletIdentity, OwnerPayout: session.wallet.material.WalletIdentity, TokenAddress: core.BigIntToElement(token.Big()), Amount: core.ElementFromUint64(100), Nonce: core.ElementFromUint64(678), Expiry: core.ElementFromUint64(1000), CreditSharedKey: core.ElementFromUint64(999)}
+	note := core.CreditNote{ProtocolContext: session.coreContext(), SpenderWalletIdentity: session.wallet.material.OwnerAddress, OwnerWalletIdentity: session.wallet.material.OwnerAddress, SpenderPayout: session.wallet.material.OwnerAddress, OwnerPayout: session.wallet.material.OwnerAddress, TokenAddress: core.BigIntToElement(token.Big()), Amount: core.ElementFromUint64(100), Nonce: core.ElementFromUint64(678), Expiry: core.ElementFromUint64(1000), CreditSharedKey: core.ElementFromUint64(999)}
 	leaf, e := creditCommitment(note)
 	if e != nil {
 		t.Fatal(e)

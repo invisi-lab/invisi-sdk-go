@@ -83,7 +83,7 @@ func ownerText(identity fr.Element) string {
 	return strings.ToLower(common.BigToAddress(core.ElementToBigInt(identity)).Hex())
 }
 func DisclosureFromNote(note core.Note) (*Disclosure, error) {
-	identity, e := core.ComputeNoteIdentity(note.WalletIdentity, note.Nonce)
+	identity, e := core.ComputeNoteIdentity(note.OwnerAddress, note.Nonce)
 	if e != nil {
 		return nil, e
 	}
@@ -91,7 +91,7 @@ func DisclosureFromNote(note core.Note) (*Disclosure, error) {
 	if e != nil {
 		return nil, e
 	}
-	m := DisclosureExport{1, "note", "opening", disclosedContext(note.ProtocolContext, note.TokenAddress, fieldHash(leaf)), map[string]string{"walletIdentity": ownerText(note.WalletIdentity), "amount": note.Amount.String(), "nonce": note.Nonce.String()}}
+	m := DisclosureExport{1, "note", "opening", disclosedContext(note.ProtocolContext, note.TokenAddress, fieldHash(leaf)), map[string]string{"ownerAddress": ownerText(note.OwnerAddress), "amount": note.Amount.String(), "nonce": note.Nonce.String()}}
 	return &Disclosure{m}, nil
 }
 func DisclosureFromCredit(note core.CreditNote) (*Disclosure, error) {
@@ -159,12 +159,12 @@ func DisclosureFromExport(data []byte) (*Disclosure, error) {
 	if material.Version != 1 || (material.Kind != "note" && material.Kind != "credit") || (material.Method != "opening" && material.Method != "payload-key") {
 		return nil, errors.New("unsupported disclosure format")
 	}
-	expected := []string{"walletIdentity", "amount", "nonce"}
+	expected := []string{"ownerAddress", "amount", "nonce"}
 	if material.Kind == "credit" {
 		expected = []string{"spenderWalletIdentity", "ownerWalletIdentity", "spenderPayout", "ownerPayout", "amount", "nonce", "expiry", "creditSharedKeyHash", "singleLimit", "dailyLimit", "monthlyLimit", "lastDay", "dailySpent", "lastMonth", "monthlySpent"}
 	}
 	if material.Method == "payload-key" {
-		expected = []string{"payloadKey", "walletIdentity", "role"}
+		expected = []string{"payloadKey", "ownerAddress", "role"}
 	}
 	if len(material.Data) != len(expected) {
 		return nil, errors.New("unexpected disclosure fields")
@@ -184,7 +184,7 @@ func DisclosureFromExport(data []byte) (*Disclosure, error) {
 			return nil, e
 		}
 	} else {
-		if len(material.Data["payloadKey"]) != 66 || !common.IsHexAddress(material.Data["walletIdentity"]) {
+		if len(material.Data["payloadKey"]) != 66 || !common.IsHexAddress(material.Data["ownerAddress"]) {
 			return nil, errors.New("invalid payload disclosure")
 		}
 		if _, e = core.DecodePrivateKey(material.Data["payloadKey"]); e != nil {
@@ -218,11 +218,11 @@ func (d *Disclosure) Verify(output DisclosureOutput) (DisclosureResult, error) {
 			return DisclosureResult{}, e
 		}
 		defer clear(key)
-		identity, e := disclosedOwner(data["walletIdentity"])
+		identity, e := disclosedOwner(data["ownerAddress"])
 		if e != nil {
 			return DisclosureResult{}, e
 		}
-		context := core.NoteDecryptionContext{NoteEncryptionContext: core.NoteEncryptionContext{ProtocolContext: output.ProtocolContext, OutputCommitment: core.BigIntToElement(output.OutputCommitment.Big())}, TokenAddress: output.TokenAddress, WalletIdentity: identity}
+		context := core.NoteDecryptionContext{NoteEncryptionContext: core.NoteEncryptionContext{ProtocolContext: output.ProtocolContext, OutputCommitment: core.BigIntToElement(output.OutputCommitment.Big())}, TokenAddress: output.TokenAddress, OwnerAddress: identity}
 		if d.material.Kind == "note" {
 			note, e := core.DecryptNotePayload(key, output.Ciphertext, context)
 			return DisclosureResult{Kind: "note", Note: &note}, e
@@ -235,7 +235,7 @@ func (d *Disclosure) Verify(output DisclosureOutput) (DisclosureResult, error) {
 		return DisclosureResult{Kind: "credit", Credit: &opening}, e
 	}
 	if d.material.Kind == "note" {
-		owner, e := disclosedOwner(data["walletIdentity"])
+		owner, e := disclosedOwner(data["ownerAddress"])
 		if e != nil {
 			return DisclosureResult{}, e
 		}
@@ -247,7 +247,7 @@ func (d *Disclosure) Verify(output DisclosureOutput) (DisclosureResult, error) {
 		if e != nil {
 			return DisclosureResult{}, e
 		}
-		note := core.Note{ProtocolContext: output.ProtocolContext, WalletIdentity: owner, TokenAddress: output.TokenAddress, Amount: amount, Nonce: nonce}
+		note := core.Note{ProtocolContext: output.ProtocolContext, OwnerAddress: owner, TokenAddress: output.TokenAddress, Amount: amount, Nonce: nonce}
 		identity, e := core.ComputeNoteIdentity(owner, nonce)
 		if e != nil {
 			return DisclosureResult{}, e
@@ -306,7 +306,7 @@ func (v *ViewingCapability) DiscloseNote(envelope []byte, context core.NoteDecry
 		return nil, e
 	}
 	defer clear(key)
-	return &Disclosure{DisclosureExport{1, "note", "payload-key", disclosedContext(context.ProtocolContext, context.TokenAddress, fieldHash(context.OutputCommitment)), map[string]string{"payloadKey": "0x" + common.Bytes2Hex(key), "walletIdentity": strings.ToLower(v.identity.Hex()), "role": "funds"}}}, nil
+	return &Disclosure{DisclosureExport{1, "note", "payload-key", disclosedContext(context.ProtocolContext, context.TokenAddress, fieldHash(context.OutputCommitment)), map[string]string{"payloadKey": "0x" + common.Bytes2Hex(key), "ownerAddress": strings.ToLower(v.identity.Hex()), "role": "funds"}}}, nil
 }
 func (v *ViewingCapability) DiscloseCredit(envelope []byte, context core.CreditNoteDecryptionContext) (*Disclosure, error) {
 	if _, e := v.decryptCredit(envelope, context); e != nil {
@@ -317,5 +317,5 @@ func (v *ViewingCapability) DiscloseCredit(envelope []byte, context core.CreditN
 		return nil, e
 	}
 	defer clear(key)
-	return &Disclosure{DisclosureExport{1, "credit", "payload-key", disclosedContext(context.ProtocolContext, context.TokenAddress, fieldHash(context.OutputCommitment)), map[string]string{"payloadKey": "0x" + common.Bytes2Hex(key), "walletIdentity": strings.ToLower(v.identity.Hex()), "role": string(context.Role)}}}, nil
+	return &Disclosure{DisclosureExport{1, "credit", "payload-key", disclosedContext(context.ProtocolContext, context.TokenAddress, fieldHash(context.OutputCommitment)), map[string]string{"payloadKey": "0x" + common.Bytes2Hex(key), "ownerAddress": strings.ToLower(v.identity.Hex()), "role": string(context.Role)}}}, nil
 }

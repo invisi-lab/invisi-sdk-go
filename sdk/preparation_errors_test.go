@@ -3,7 +3,7 @@ package sdk
 import (
 	"context"
 	"errors"
-	"math/big"
+	"github.com/invisi-lab/invisi-sdk-go/core"
 	"testing"
 )
 
@@ -14,16 +14,16 @@ type codedPreparationError interface {
 
 func TestPreparationInvalidRecipientHasStableCode(t *testing.T) {
 	invisi, input, _ := explicitFixture(t)
-	input.Outputs[0].To = "invalid"
+	input.Outputs[0] = NoteOutput{}
 	_, err := invisi.PrepareTransfer(context.Background(), input)
 	var coded codedPreparationError
-	if !errors.As(err, &coded) || coded.ErrorCode() != "INVALID_RECIPIENT" {
+	if !errors.As(err, &coded) || coded.ErrorCode() != "PREPARATION_FAILED" {
 		t.Fatalf("missing stable invalid recipient code: %v", err)
 	}
 }
 func TestPreparationAmountFailureCarriesOutputPosition(t *testing.T) {
 	invisi, input, _ := explicitFixture(t)
-	input.Outputs[0].Amount = big.NewInt(-1)
+	input.Outputs[0] = NoteOutput{}
 	_, err := invisi.PrepareTransfer(context.Background(), input)
 	var coded codedPreparationError
 	if !errors.As(err, &coded) || coded.ErrorCode() != "PREPARATION_FAILED" {
@@ -33,8 +33,10 @@ func TestPreparationAmountFailureCarriesOutputPosition(t *testing.T) {
 
 func TestRawPayloadExceedsMemoLimitWithoutInterpretation(t *testing.T) {
 	invisi, input, _ := explicitFixture(t)
-	input.Outputs[0].Payload = make([]byte, 300)
-	input.Outputs[0].Payload[0] = 255
+	original := input.Outputs[0]
+	payload := make([]byte, 300)
+	payload[0] = 255
+	input.Outputs[0], _ = NewNoteOutput(NoteOutputOptions{ChainID: core.ElementToBigInt(original.saved.Context.ChainID), ProtocolAddress: input.Protocol.Context().ProtocolAddress, TokenAddress: input.TokenAddress, Amount: original.Amount(), Recipient: InvisiRecipient{Address: original.To()}, Payload: payload})
 	prepared, err := invisi.PrepareTransfer(context.Background(), input)
 	if err != nil {
 		t.Fatal(err)

@@ -19,6 +19,8 @@ type OperationPreview struct {
 	NeedsWalletAuthorization        bool
 	Permissions                     OperationPermissions
 	Deadline                        uint64
+	FeeRecipient                    common.Address
+	FeeAmount                       *big.Int
 	Outputs                         []PaymentPreview
 	CreditOutputs                   []CreditPreview
 }
@@ -63,6 +65,10 @@ func (o *Operation) Preview() OperationPreview {
 		amount.Set(p.CancelCredit.Amount)
 		address = p.CancelCredit.Owner
 	}
+	feeRecipient, fee := planFee(p)
+	if p.CancelCredit != nil {
+		amount.Sub(amount, fee)
+	}
 	context, _ := frozen(p.Context)
 	funding := new(big.Int)
 	if p.Funding.Amount != nil {
@@ -70,10 +76,10 @@ func (o *Operation) Preview() OperationPreview {
 	}
 	result := OperationPreview{ID: p.ID, Kind: publicOperationKind(p), Status: o.status, Target: p.Target, Context: context, TokenAddress: p.Context.TokenAddress, Capacity: p.Capacity,
 		InputCount: len(p.Inputs) + len(p.CreditInputs), OutputCount: len(p.Outputs), FundingAmount: funding, FundingPayer: p.Funding.Payer,
-		WithdrawalAmount: amount, WithdrawalAddress: address, NeedsWalletAuthorization: p.NeedsAuthorization, Deadline: p.Deadline,
+		WithdrawalAmount: amount, WithdrawalAddress: address, NeedsWalletAuthorization: p.NeedsAuthorization, Deadline: p.Deadline, FeeRecipient: feeRecipient, FeeAmount: fee,
 		Permissions: OperationPermissions{p.NeedsAuthorization, p.Kind != "shield", p.FundingMode == "signature"}}
 	for _, out := range p.Outputs {
-		result.Outputs = append(result.Outputs, PaymentPreview{out.Address, core.ElementToBigInt(out.Note.Amount), out.Change})
+		result.Outputs = append(result.Outputs, PaymentPreview{out.Address, new(big.Int).Set(out.Amount), out.Change})
 	}
 	appendCredit := func(note core.CreditNote) {
 		result.CreditOutputs = append(result.CreditOutputs, CreditPreview{Owner: common.BigToAddress(core.ElementToBigInt(note.OwnerWalletIdentity)), Spender: common.BigToAddress(core.ElementToBigInt(note.SpenderWalletIdentity)),

@@ -127,7 +127,14 @@ func main() {
 		fmt.Println("Read-only restore complete. Add --execute to prepare and submit a transfer.")
 		return
 	}
-	prepared, err := session.PrepareTransfer(ctx, sdk.TransferPreparation{TokenAddress: token, Outputs: []sdk.PaymentOutput{{To: recipient, Amount: big.NewInt(10)}}})
+	output, err := sdk.NewNoteOutput(sdk.NoteOutputOptions{
+		ChainID: new(big.Int).SetUint64(pool.Context().ChainID), ProtocolAddress: pool.Context().ProtocolAddress,
+		TokenAddress: token, Amount: big.NewInt(10), Recipient: sdk.InvisiRecipient{Address: recipient},
+	})
+	if err != nil {
+		log.Fatal(err)
+	}
+	prepared, err := session.PrepareTransfer(ctx, sdk.TransferPreparation{TokenAddress: token, Outputs: []sdk.NoteOutput{output}})
 	if err != nil {
 		log.Fatal(err)
 	}

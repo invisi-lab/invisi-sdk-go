@@ -196,7 +196,7 @@ func (s *WalletSession) prepareCreditCreation(ctx context.Context, p CreateCredi
 		if e != nil {
 			return nil, e
 		}
-		state = core.CreditDeliveryState{Note: core.CreditNote{ProtocolContext: s.coreContext(), SpenderWalletIdentity: spender.WalletIdentity, OwnerWalletIdentity: owner.WalletIdentity, SpenderPayout: spender.WalletIdentity, OwnerPayout: owner.WalletIdentity, TokenAddress: core.BigIntToElement(p.TokenAddress.Big()), CreditSharedKey: key}, OwnerReceivingKeys: core.ReceivingKeys{ViewingPublicKey: owner.ViewingPublicKey, ClueKey: owner.ClueKey}, SpenderReceivingKeys: core.ReceivingKeys{ViewingPublicKey: spender.ViewingPublicKey, ClueKey: spender.ClueKey}}
+		state = core.CreditDeliveryState{Note: core.CreditNote{ProtocolContext: s.coreContext(), SpenderWalletIdentity: spender.OwnerAddress, OwnerWalletIdentity: owner.OwnerAddress, SpenderPayout: spender.OwnerAddress, OwnerPayout: owner.OwnerAddress, TokenAddress: core.BigIntToElement(p.TokenAddress.Big()), CreditSharedKey: key}, OwnerReceivingKeys: core.ReceivingKeys{ViewingPublicKey: owner.ViewingPublicKey, ClueKey: owner.ClueKey}, SpenderReceivingKeys: core.ReceivingKeys{ViewingPublicKey: spender.ViewingPublicKey, ClueKey: spender.ClueKey}}
 	}
 	state.Note.Payload = clonePayload(p.Payload)
 	need := new(big.Int).Sub(spending, funding.Amount)
@@ -260,10 +260,10 @@ func (s *WalletSession) prepareCreditCreation(ctx context.Context, p CreateCredi
 		if err != nil {
 			return nil, err
 		}
-		if recipient.WalletIdentity != core.BigIntToElement(s.wallet.identity.Big()) {
+		if recipient.OwnerAddress != core.BigIntToElement(s.wallet.identity.Big()) {
 			return nil, errors.New("Credit change must belong to the owner")
 		}
-		out, e := s.output(ctx, p.TokenAddress, PaymentOutput{To: address, Amount: change})
+		out, e := s.changeOutput(ctx, p.TokenAddress, address, change)
 		if e != nil {
 			return nil, e
 		}

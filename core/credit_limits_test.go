@@ -239,10 +239,10 @@ func TestCreditV5PayloadCarriesUint128UsageAboveLimits(t *testing.T) {
 	credit := limitedCredit()
 	credit.ProtocolContext = note.ProtocolContext
 	credit.TokenAddress = note.TokenAddress
-	credit.SpenderWalletIdentity = note.WalletIdentity
-	credit.OwnerWalletIdentity = note.WalletIdentity
-	credit.SpenderPayout = note.WalletIdentity
-	credit.OwnerPayout = note.WalletIdentity
+	credit.SpenderWalletIdentity = note.OwnerAddress
+	credit.OwnerWalletIdentity = note.OwnerAddress
+	credit.SpenderPayout = note.OwnerAddress
+	credit.OwnerPayout = note.OwnerAddress
 	credit.SingleLimit = ElementFromUint64(1)
 	credit.DailyLimit = ElementFromUint64(1)
 	credit.MonthlyLimit = fr.Element{}

@@ -42,7 +42,7 @@ func TestPreparedGasReferenceBeforeProvingWithoutStore(t *testing.T) {
 func TestManagedGasReferenceMatchesExplicit(t *testing.T) {
 	session, token, _ := testSession(t)
 	address, _ := session.wallet.GetAddress()
-	operation, err := session.PrepareTransfer(context.Background(), TransferPreparation{TokenAddress: token, Outputs: []PaymentOutput{{To: address, Amount: big.NewInt(30)}}})
+	operation, err := session.PrepareTransfer(context.Background(), TransferPreparation{TokenAddress: token, Outputs: testOutputs(session, []testPaymentOutput{{To: address, Amount: big.NewInt(30)}})})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -145,9 +145,9 @@ func TestGasRequestMappingForEveryPrepareMethod(t *testing.T) {
 			var err error
 			switch kind {
 			case "shield":
-				operation, err = session.PrepareShield(ctx, ShieldPreparation{TokenAddress: token, Outputs: []PaymentOutput{{To: address, Amount: big.NewInt(30)}}, Funding: FundingSource{Payer: session.wallet.identity, Amount: big.NewInt(30), Authorization: "caller"}})
+				operation, err = session.PrepareShield(ctx, ShieldPreparation{TokenAddress: token, Outputs: testOutputs(session, []testPaymentOutput{{To: address, Amount: big.NewInt(30)}}), Funding: FundingSource{Payer: session.wallet.identity, Amount: big.NewInt(30), Authorization: "caller"}})
 			case "transfer":
-				operation, err = session.PrepareTransfer(ctx, TransferPreparation{TokenAddress: token, Outputs: []PaymentOutput{{To: address, Amount: big.NewInt(30)}}})
+				operation, err = session.PrepareTransfer(ctx, TransferPreparation{TokenAddress: token, Outputs: testOutputs(session, []testPaymentOutput{{To: address, Amount: big.NewInt(30)}})})
 			case "withdraw":
 				operation, err = session.PrepareTransfer(ctx, TransferPreparation{TokenAddress: token, Withdrawal: &Withdrawal{To: session.wallet.identity, Amount: big.NewInt(30)}})
 			case "sweep":
@@ -342,7 +342,7 @@ func TestCurrentCreditGasMatrixAndMemoScaling(t *testing.T) {
 			}
 		}
 	}
-	if counts["create-credit"] < 1 || counts["draw-credit"] != 8 || counts["top-up-credit"] != 2 || counts["cancel-credit"] != 1 || !reflect.DeepEqual(draws, map[int]int{1: 2, 12: 2, 50: 2, 120: 2}) {
+	if counts["create-credit"] != 4 || counts["draw-credit"] != 8 || counts["top-up-credit"] != 4 || counts["cancel-credit"] != 2 || !reflect.DeepEqual(draws, map[int]int{1: 2, 12: 2, 50: 2, 120: 2}) {
 		t.Fatalf("incomplete current Credit receipt matrix: counts=%v draw capacities=%v", counts, draws)
 	}
 }

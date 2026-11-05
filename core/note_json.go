@@ -43,14 +43,14 @@ func parseFields(data []byte, names ...string) (map[string]fr.Element, error) {
 	return result, nil
 }
 func (n Note) MarshalJSON() ([]byte, error) {
-	return fieldsJSON(map[string]fr.Element{"chainId": n.ChainID, "protocolAddress": n.ProtocolAddress, "walletIdentity": n.WalletIdentity, "tokenAddress": n.TokenAddress, "amount": n.Amount, "nonce": n.Nonce}, n.Payload)
+	return fieldsJSON(map[string]fr.Element{"chainId": n.ChainID, "protocolAddress": n.ProtocolAddress, "ownerAddress": n.OwnerAddress, "tokenAddress": n.TokenAddress, "amount": n.Amount, "nonce": n.Nonce}, n.Payload)
 }
 func (n *Note) UnmarshalJSON(data []byte) error {
-	v, e := parseFields(data, "chainId", "protocolAddress", "walletIdentity", "tokenAddress", "amount", "nonce")
+	v, e := parseFields(data, "chainId", "protocolAddress", "ownerAddress", "tokenAddress", "amount", "nonce")
 	if e != nil {
 		return e
 	}
-	*n = Note{ProtocolContext{v["chainId"], v["protocolAddress"]}, v["walletIdentity"], v["tokenAddress"], v["amount"], v["nonce"], nil}
+	*n = Note{ProtocolContext{v["chainId"], v["protocolAddress"]}, v["ownerAddress"], v["tokenAddress"], v["amount"], v["nonce"], nil}
 	n.Payload, e = parsePayloadJSON(data)
 	return e
 }

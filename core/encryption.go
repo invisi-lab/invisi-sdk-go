@@ -23,7 +23,7 @@ type NoteEncryptionContext struct {
 }
 type NoteDecryptionContext struct {
 	NoteEncryptionContext
-	TokenAddress, WalletIdentity fr.Element
+	TokenAddress, OwnerAddress fr.Element
 }
 type CreditDeliveryRole string
 
@@ -64,8 +64,8 @@ func validateNote(note Note) error {
 	if err := ValidatePayload(note.Payload); err != nil {
 		return err
 	}
-	if note.WalletIdentity.IsZero() || note.Amount.IsZero() {
-		return fmt.Errorf("wallet identity and amount must be nonzero")
+	if note.OwnerAddress.IsZero() || note.Amount.IsZero() {
+		return fmt.Errorf("owner address and amount must be nonzero")
 	}
 	if err := checkUint(note.Amount, 128, "amount"); err != nil {
 		return err
@@ -82,7 +82,7 @@ func verifyNote(context NoteEncryptionContext, note Note) error {
 	if err := validateNote(note); err != nil {
 		return err
 	}
-	identity, err := ComputeNoteIdentity(note.WalletIdentity, note.Nonce)
+	identity, err := ComputeNoteIdentity(note.OwnerAddress, note.Nonce)
 	if err != nil {
 		return err
 	}
@@ -123,7 +123,7 @@ func appendElement(out []byte, value fr.Element, length int) []byte {
 	return append(out, b[32-length:]...)
 }
 func encodeNote(note Note) []byte {
-	out := appendElement(nil, note.WalletIdentity, 32)
+	out := appendElement(nil, note.OwnerAddress, 32)
 	out = appendElement(out, note.Amount, 16)
 	return appendPayload(appendElement(out, note.Nonce, 32), note.Payload)
 }
@@ -299,7 +299,7 @@ func readNotePlain(plain []byte, context NoteDecryptionContext) (Note, error) {
 		return Note{}, fmt.Errorf("invalid note plaintext: %w", err)
 	}
 	note := Note{ProtocolContext: context.ProtocolContext, TokenAddress: context.TokenAddress, Payload: memo}
-	fields := []*fr.Element{&note.WalletIdentity, &note.Amount, &note.Nonce}
+	fields := []*fr.Element{&note.OwnerAddress, &note.Amount, &note.Nonce}
 	offsets := []int{0, 32, 48, 80}
 	for i, target := range fields {
 		value, err := decodeElement(plain[offsets[i]:offsets[i+1]])
@@ -308,8 +308,8 @@ func readNotePlain(plain []byte, context NoteDecryptionContext) (Note, error) {
 		}
 		*target = value
 	}
-	if note.WalletIdentity != context.WalletIdentity {
-		return Note{}, fmt.Errorf("recipient wallet identity mismatch")
+	if note.OwnerAddress != context.OwnerAddress {
+		return Note{}, fmt.Errorf("recipient owner address mismatch")
 	}
 	if err = verifyNote(context.NoteEncryptionContext, note); err != nil {
 		return Note{}, err
@@ -435,8 +435,8 @@ func readCreditPlain(plain []byte, context CreditNoteDecryptionContext, public [
 	if role == 2 {
 		expected = note.SpenderWalletIdentity
 	}
-	if expected != context.WalletIdentity {
-		return CreditDeliveryState{}, fmt.Errorf("recipient wallet identity mismatch")
+	if expected != context.OwnerAddress {
+		return CreditDeliveryState{}, fmt.Errorf("recipient owner address mismatch")
 	}
 	if err = verifyCredit(context.NoteEncryptionContext, note); err != nil {
 		return CreditDeliveryState{}, err

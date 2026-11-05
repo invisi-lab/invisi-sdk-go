@@ -75,7 +75,7 @@ func TestCurrentKDFAndAddress(t *testing.T) {
 		if hex.EncodeToString(w.SpendingPrivateKey) != v.SpendingPrivateKey || hex.EncodeToString(w.ViewingPrivateKey) != v.ViewingPrivateKey || hex.EncodeToString(w.DetectionKey) != v.DetectionKey {
 			t.Fatal("KDF differs from independent TS fixture")
 		}
-		a, e := EncodeLongAddress(ReceivingAddress{w.WalletIdentity, w.ViewingPublicKey, w.ClueKey})
+		a, e := EncodeLongAddress(ReceivingAddress{w.OwnerAddress, w.ViewingPublicKey, w.ClueKey})
 		if e != nil {
 			t.Fatal(e)
 		}
@@ -83,10 +83,10 @@ func TestCurrentKDFAndAddress(t *testing.T) {
 			t.Fatal("address width")
 		}
 		decoded, e := DecodeAddress(a)
-		if e != nil || decoded.WalletIdentity != w.WalletIdentity {
+		if e != nil || decoded.OwnerAddress != w.OwnerAddress {
 			t.Fatal("address round trip", e)
 		}
-		short, e := EncodeShortAddress(w.WalletIdentity)
+		short, e := EncodeShortAddress(w.OwnerAddress)
 		if e != nil || len(short) != 42 {
 			t.Fatal("EVM short address", e)
 		}
@@ -108,8 +108,8 @@ func TestCurrentNoteAndCreditDeliveryVectors(t *testing.T) {
 	currentJSON(t, "wallet-note-vectors.json", &v)
 	ctx := ProtocolContext{currentField(t, v.Context["chainId"]), currentField(t, v.Context["protocolAddress"])}
 	token := currentField(t, v.Context["tokenAddress"])
-	note := Note{ctx, currentField(t, v.Note["walletIdentity"]), token, currentField(t, v.Note["amount"]), currentField(t, v.Note["nonce"]), nil}
-	identity, e := ComputeNoteIdentity(note.WalletIdentity, note.Nonce)
+	note := Note{ctx, currentField(t, v.Note["ownerAddress"]), token, currentField(t, v.Note["amount"]), currentField(t, v.Note["nonce"]), nil}
+	identity, e := ComputeNoteIdentity(note.OwnerAddress, note.Nonce)
 	if e != nil || identity != currentField(t, v.Note["identity"]) {
 		t.Fatal("identity mismatch", e)
 	}
@@ -121,7 +121,7 @@ func TestCurrentNoteAndCreditDeliveryVectors(t *testing.T) {
 	if e != nil || nf != currentField(t, v.Note["nullifier"]) {
 		t.Fatal("nullifier mismatch", e)
 	}
-	enc := NoteDecryptionContext{NoteEncryptionContext{ctx, leaf}, token, note.WalletIdentity}
+	enc := NoteDecryptionContext{NoteEncryptionContext{ctx, leaf}, token, note.OwnerAddress}
 	plain, e := DecryptPrivateTransferNote(currentBytes(t, v.Owner["viewingPrivateKey"]), currentBytes(t, v.Note["ciphertext"]), enc)
 	if e != nil || !reflect.DeepEqual(plain, note) {
 		t.Fatal("TS note decryption failed", e)
@@ -213,17 +213,17 @@ func TestCurrentMemoDeliveryVectors(t *testing.T) {
 			}
 			ciphertext := currentBytes(t, row.Ciphertext)
 			if row.Kind == "funds" {
-				dec := NoteDecryptionContext{NoteEncryptionContext{context, currentField(t, vectors.Note["commitment"])}, token, currentField(t, recipient["walletIdentity"])}
+				dec := NoteDecryptionContext{NoteEncryptionContext{context, currentField(t, vectors.Note["commitment"])}, token, currentField(t, recipient["ownerAddress"])}
 				note, err := DecryptPrivateTransferNote(private, ciphertext, dec)
 				if err != nil {
 					t.Fatal(err)
 				}
-				expected := Note{context, currentField(t, vectors.Note["walletIdentity"]), token, currentField(t, vectors.Note["amount"]), currentField(t, vectors.Note["nonce"]), payload}
+				expected := Note{context, currentField(t, vectors.Note["ownerAddress"]), token, currentField(t, vectors.Note["amount"]), currentField(t, vectors.Note["nonce"]), payload}
 				if !reflect.DeepEqual(note, expected) {
 					t.Fatal("memo vector changed note preimage or memo")
 				}
 			} else {
-				dec := CreditNoteDecryptionContext{NoteDecryptionContext{NoteEncryptionContext{context, creditField("commitment")}, token, currentField(t, recipient["walletIdentity"])}, CreditDeliveryRole(row.Role)}
+				dec := CreditNoteDecryptionContext{NoteDecryptionContext{NoteEncryptionContext{context, creditField("commitment")}, token, currentField(t, recipient["ownerAddress"])}, CreditDeliveryRole(row.Role)}
 				state, err := DecryptCreditNote(private, ciphertext, dec)
 				if err != nil {
 					t.Fatal(err)

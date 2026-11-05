@@ -130,7 +130,14 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	params := sdk.TransferPreparation{TokenAddress: token, Outputs: []sdk.PaymentOutput{{To: recipient, Amount: amount, Payload: payload}}}
+	output, err := sdk.NewNoteOutput(sdk.NoteOutputOptions{
+		ChainID: chain, ProtocolAddress: pool.Context().ProtocolAddress, TokenAddress: token,
+		Amount: amount, Recipient: sdk.InvisiRecipient{Address: recipient}, Payload: payload,
+	})
+	if err != nil {
+		log.Fatal(err)
+	}
+	params := sdk.TransferPreparation{TokenAddress: token, Outputs: []sdk.NoteOutput{output}}
 	switch *mode {
 	case "notes":
 	case "cash", "mixed":

@@ -6,12 +6,12 @@ import (
 	"github.com/consensys/gnark-crypto/ecc/bn254/fr"
 )
 
-// ComputeNoteIdentity randomizes the complete receiving wallet identity for one note.
-func ComputeNoteIdentity(walletIdentity, nonce fr.Element) (fr.Element, error) {
-	if walletIdentity.IsZero() || ElementToBigInt(walletIdentity).BitLen() > 160 {
-		return fr.Element{}, fmt.Errorf("wallet identity must be nonzero")
+// ComputeNoteIdentity randomizes the receiving owner address for one note.
+func ComputeNoteIdentity(ownerAddress, nonce fr.Element) (fr.Element, error) {
+	if ownerAddress.IsZero() || ElementToBigInt(ownerAddress).BitLen() > 160 {
+		return fr.Element{}, fmt.Errorf("owner address must be nonzero")
 	}
-	return Poseidon2Hash(ElementFromUint64(DIdent), walletIdentity, nonce)
+	return Poseidon2Hash(ElementFromUint64(DIdent), ownerAddress, nonce)
 }
 func ComputeNoteCommitment(chainID, identity, tokenAddress, amount fr.Element) (fr.Element, error) {
 	for _, v := range []struct {

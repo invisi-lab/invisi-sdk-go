@@ -33,7 +33,7 @@ func (i *Invisi) explicit(ctx context.Context, identity TransactionIdentity, fun
 		if _, exists := state.Notes[n.Commitment]; exists {
 			return nil, errors.New("duplicate note input")
 		}
-		if n.Note.ProtocolContext != session.coreContext() || n.Note.WalletIdentity != core.BigIntToElement(identity.Wallet.identity.Big()) {
+		if n.Note.ProtocolContext != session.coreContext() || n.Note.OwnerAddress != core.BigIntToElement(identity.Wallet.identity.Big()) {
 			return nil, errors.New("note deployment or owner mismatch")
 		}
 		nf, err := identity.Wallet.ExportNullifier().ForNote(n.Note)

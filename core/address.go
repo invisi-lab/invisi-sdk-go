@@ -12,7 +12,7 @@ import (
 
 type ReceivingKeys struct{ ViewingPublicKey, ClueKey []byte }
 type ReceivingAddress struct {
-	WalletIdentity            fr.Element
+	OwnerAddress              fr.Element
 	ViewingPublicKey, ClueKey []byte
 }
 type DecodedAddress struct {
@@ -46,14 +46,14 @@ func walletAddressChecksum(prefix, data string) string {
 	return prefix + string(out)
 }
 func EncodeLongAddress(recipient ReceivingAddress) (string, error) {
-	if recipient.WalletIdentity.IsZero() || ElementToBigInt(recipient.WalletIdentity).BitLen() > 160 {
-		return "", fmt.Errorf("invalid wallet identity")
+	if recipient.OwnerAddress.IsZero() || ElementToBigInt(recipient.OwnerAddress).BitLen() > 160 {
+		return "", fmt.Errorf("invalid owner address")
 	}
 	keys, err := walletAddressKeys(ReceivingKeys{recipient.ViewingPublicKey, recipient.ClueKey})
 	if err != nil {
 		return "", err
 	}
-	identity := recipient.WalletIdentity.Bytes()
+	identity := recipient.OwnerAddress.Bytes()
 	payload := append(append(append([]byte{}, identity[12:]...), keys.ViewingPublicKey...), keys.ClueKey...)
 	var buffer uint32
 	bits := uint(0)
@@ -74,7 +74,7 @@ func EncodeLongAddress(recipient ReceivingAddress) (string, error) {
 }
 func EncodeShortAddress(identity fr.Element) (string, error) {
 	if identity.IsZero() || ElementToBigInt(identity).BitLen() > 160 {
-		return "", fmt.Errorf("invalid wallet identity")
+		return "", fmt.Errorf("invalid owner address")
 	}
 	return common.BigToAddress(ElementToBigInt(identity)).Hex(), nil
 }
@@ -89,8 +89,8 @@ func DecodeAddress(address string) (DecodedAddress, error) {
 			return result, fmt.Errorf("invalid EVM address checksum")
 		}
 		result.Kind = "short"
-		result.WalletIdentity = BigIntToElement(common.HexToAddress(address).Big())
-		if result.WalletIdentity.IsZero() {
+		result.OwnerAddress = BigIntToElement(common.HexToAddress(address).Big())
+		if result.OwnerAddress.IsZero() {
 			return DecodedAddress{}, fmt.Errorf("zero owner")
 		}
 		return result, nil
@@ -127,7 +127,7 @@ func DecodeAddress(address string) (DecodedAddress, error) {
 	}
 	result.Kind = "long"
 	result.ReceivingAddress = ReceivingAddress{BigIntToElement(common.BytesToAddress(payload[:20]).Big()), keys.ViewingPublicKey, keys.ClueKey}
-	if result.WalletIdentity.IsZero() {
+	if result.OwnerAddress.IsZero() {
 		return DecodedAddress{}, fmt.Errorf("zero owner")
 	}
 	return result, nil
@@ -143,7 +143,7 @@ func ResolveAddress(address string, lookup ReceivingKeyLookup) (ReceivingAddress
 	if lookup == nil {
 		return ReceivingAddress{}, fmt.Errorf("registry lookup required")
 	}
-	keys, err := lookup(decoded.WalletIdentity)
+	keys, err := lookup(decoded.OwnerAddress)
 	if err != nil {
 		return ReceivingAddress{}, err
 	}
@@ -154,7 +154,7 @@ func ResolveAddress(address string, lookup ReceivingKeyLookup) (ReceivingAddress
 	if err != nil {
 		return ReceivingAddress{}, err
 	}
-	return ReceivingAddress{decoded.WalletIdentity, validated.ViewingPublicKey, validated.ClueKey}, nil
+	return ReceivingAddress{decoded.OwnerAddress, validated.ViewingPublicKey, validated.ClueKey}, nil
 }
 func DecodePrivateKey(text string) ([]byte, error) {
 	if !strings.HasPrefix(text, "0x") || len(text) != 66 {

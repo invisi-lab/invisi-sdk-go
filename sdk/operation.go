@@ -65,7 +65,7 @@ func (s *WalletSession) persistPlan(ctx context.Context, plan operationPlan) (*O
 	}
 	plan.ID = id
 	plan.Version = 1
-	plan.WalletIdentity = s.wallet.identity
+	plan.OwnerAddress = s.wallet.identity
 	plan.Namespace = s.scope.Namespace
 	plan, e = clonePlan(plan)
 	if e != nil {
@@ -241,9 +241,9 @@ func (o *Operation) privateInputs() (map[string]any, error) {
 	if o.plan.Kind != "transact" {
 		return o.creditPrivateInputs(private)
 	}
-	private["wallet_identity"] = "0"
+	private["input_owner_address"] = "0"
 	if len(o.plan.Inputs) > 0 {
-		private["wallet_identity"] = o.plan.Inputs[0].Note.WalletIdentity.String()
+		private["input_owner_address"] = o.plan.Inputs[0].Note.OwnerAddress.String()
 	}
 	identities, amounts, nonces, indices, sources := []string{}, []string{}, []string{}, []string{}, []string{}
 	paths := [][]string{}
@@ -270,14 +270,14 @@ func (o *Operation) privateInputs() (map[string]any, error) {
 		sources = append(sources, big.NewInt(int64(index)).String())
 	}
 	for _, out := range o.plan.Outputs {
-		identities = append(identities, out.Note.WalletIdentity.String())
-		amounts = append(amounts, out.Note.Amount.String())
-		nonces = append(nonces, out.Note.Nonce.String())
+		identities = append(identities, out.Identity.Big().String())
+		amounts = append(amounts, out.Amount.String())
+		nonces = append(nonces, "0")
 	}
 	for len(paths) < o.plan.Capacity {
 		paths = append(paths, zeroPath())
 	}
-	private["output_wallet_identities"] = padStrings(identities, o.plan.Capacity)
+	private["output_identities"] = padStrings(identities, o.plan.Capacity)
 	private["amounts"] = padStrings(amounts, o.plan.Capacity)
 	private["nonces"] = padStrings(nonces, o.plan.Capacity)
 	private["leaf_indices"] = padStrings(indices, o.plan.Capacity)
@@ -334,6 +334,9 @@ func (o *Operation) proveInternal(ctx context.Context, options ...TransactionPro
 	}
 	if execution != "single" && execution != "aggregate" {
 		return nil, errors.New("execution must be single or aggregate")
+	}
+	if execution == "aggregate" && o.plan.Broadcaster != nil {
+		return nil, errors.New("broadcaster operations cannot target aggregate proofs")
 	}
 	if execution == "aggregate" && (o.plan.Kind != "transact" || o.plan.Capacity != 14) {
 		return nil, errors.New("aggregate execution requires a 14-slot transfer")
@@ -455,7 +458,7 @@ func (o *Operation) authorizeFundingInternal(ctx context.Context) (*Operation, e
 func (o *Operation) shieldParams() protocol.BuildShieldCalldataParams {
 	outputs := []protocol.ShieldOutput{}
 	for _, out := range o.plan.Outputs {
-		outputs = append(outputs, protocol.ShieldOutput{Identity: out.Identity, Amount: core.ElementToBigInt(out.Note.Amount)})
+		outputs = append(outputs, protocol.ShieldOutput{Identity: out.Identity, Amount: new(big.Int).Set(out.Amount)})
 	}
 	var caller *common.Address
 	if o.session.options.Signer != nil {

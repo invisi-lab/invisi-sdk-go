@@ -161,6 +161,14 @@ type NormalizedCancelCredit struct{ Params CancelCreditParams }
 // Cancellation has no Credit expiry condition: the owner may cancel anytime.
 func ValidateCancelCreditRequest(c TransactionContext, p CancelCreditParams) (NormalizedCancelCredit, error) {
 	r := NormalizedCancelCredit{Params: p}
+	var feeErr error
+	r.Params.FeeAmount, feeErr = normalizeFee(p.FeeRecipient, p.FeeAmount)
+	if feeErr != nil {
+		return r, feeErr
+	}
+	if p.Amount != nil && r.Params.FeeAmount.Cmp(p.Amount) >= 0 {
+		return r, fmt.Errorf("fee must leave positive owner refund")
+	}
 	if err := ValidateContext(c); err != nil {
 		return r, err
 	}
@@ -189,7 +197,7 @@ func CancelCreditBaseInputs(c TransactionContext, p CancelCreditParams) ([][32]b
 		return nil, err
 	}
 	p = r.Params
-	return creditWords([]*big.Int{c.ChainID, c.ProtocolAddress.Big(), c.TokenAddress.Big(), p.Owner.Big(), p.Source.TreeId, creditNumber(p.Source.MerkleRoot), creditNumber(p.Nullifier), p.Amount, p.Deadline}), nil
+	return creditWords([]*big.Int{c.ChainID, c.ProtocolAddress.Big(), c.TokenAddress.Big(), p.Owner.Big(), p.Source.TreeId, creditNumber(p.Source.MerkleRoot), creditNumber(p.Nullifier), p.Amount, p.Deadline, p.FeeRecipient.Big(), p.FeeAmount}), nil
 }
 
 func CancelCreditPublicInputs(c TransactionContext, p CancelCreditParams) ([][32]byte, error) {

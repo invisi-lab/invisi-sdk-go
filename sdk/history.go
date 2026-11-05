@@ -108,7 +108,7 @@ func (s *WalletSession) GetHistory(ctx context.Context, options HistoryOptions) 
 			CreditOutputs: preview.CreditOutputs, Outputs: []HistoryOutput{},
 		}
 		for _, output := range plan.Outputs {
-			entry.Outputs = append(entry.Outputs, HistoryOutput{To: output.Address, Amount: core.ElementToBigInt(output.Note.Amount), Payload: append([]byte(nil), output.Note.Payload...), Change: output.Change})
+			entry.Outputs = append(entry.Outputs, HistoryOutput{To: output.Address, Amount: new(big.Int).Set(output.Amount), Payload: outputPayload(output), Change: output.Change})
 		}
 		result.Outgoing = append(result.Outgoing, entry)
 	}
@@ -236,4 +236,11 @@ func (s *notifyingWalletStore) Update(ctx context.Context, scope WalletScope, up
 	}
 	s.notifications.notify()
 	return nil
+}
+
+func outputPayload(o preparedOutput) []byte {
+	if o.Note == nil {
+		return nil
+	}
+	return append([]byte(nil), o.Note.Payload...)
 }

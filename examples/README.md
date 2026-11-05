@@ -89,7 +89,7 @@ go run ./examples/05-wallet-session --recover OPERATION_ID --transaction 0xTRANS
 
 Disclosure modes are `note-opening`, `note-payload`, and `credit-opening`; select the owner with `--actor`. Payload decoding is explicit through `core.FundsV1`, separate from envelope decryption. The sensitive export is round-tripped locally and never printed. A canonical receipt and confirmation check verifies the selected output.
 
-Discovery helpers page genuine RPC outputs in ranges of at most 100 blocks, authenticate owner/role, token and commitment during decryption, reject conflicting records, and check spent nullifiers. Credit discovery additionally binds role ciphertext and historical key snapshots to canonical receipts. Preparation independently rechecks current spent state and membership before proving. Stateless examples leave durable reservations and transaction-hash persistence to the application; their geth submission is visible directly in each `main` function.
+Discovery helpers page genuine RPC outputs in ranges of at most `sdk.MaxUpdateBlocks` (10000 blocks), authenticate owner/role, token and commitment during decryption, reject conflicting records, and check spent nullifiers. Credit discovery additionally binds role ciphertext and historical key snapshots to canonical receipts. Preparation independently rechecks current spent state and membership before proving. Stateless examples leave durable reservations and transaction-hash persistence to the application; their geth submission is visible directly in each `main` function.
 
 ## Local verification
 
@@ -99,3 +99,9 @@ go run ./examples/00-wallet
 ```
 
 The initializer tests use temporary fresh accounts and verify ten-account metadata, file permissions, identity binding, and refusal to overwrite. No funded account file or network is needed for these checks.
+
+## Output factories and broadcaster submission
+
+Every payment example constructs complete outputs with `sdk.NewNoteOutput` before preparation. Run `go run ./examples/00-wallet/note-output` for the fully offline `0i`, lazy registered `0x`, precomputed identity and explicit no-envelope variants. Default EVM envelope resolution happens during preparation; no application resolver function is needed.
+
+The full broadcaster walkthrough is `go run ./examples/02-transparent-amount/broadcaster --execute --max-fee 1000`. Set the fee limit in token base units for your deployment. It discovers compatible services from Protocol RPC, prepares Shield, obtains the fee-bearing quote, approves final gross funding, signs EIP-712 externally, and submits through the chosen broadcaster. It does not create a signer inside Invisi or require a proof for Shield. You may quote multiple discovered clients before selecting an operator. The same attachment stages apply to private transfers, Credit creation/top-up/cancellation; Credit draw and registration remain self-submitted.

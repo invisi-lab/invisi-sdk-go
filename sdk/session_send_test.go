@@ -63,7 +63,7 @@ func readySendingOperation(t *testing.T) (*WalletSession, *Operation, *sendingPr
 	key, _ := crypto.HexToECDSA(strings.Repeat("0", 63) + "1")
 	session.options.Signer, _ = bind.NewKeyedTransactorWithChainID(key, big.NewInt(31337))
 	address, _ := session.wallet.GetAddress()
-	operation, err := session.PrepareTransfer(ctx, TransferPreparation{TokenAddress: token, Outputs: []PaymentOutput{{To: address, Amount: big.NewInt(30)}}})
+	operation, err := session.PrepareTransfer(ctx, TransferPreparation{TokenAddress: token, Outputs: testOutputs(session, []testPaymentOutput{{To: address, Amount: big.NewInt(30)}})})
 	if err != nil {
 		t.Fatal(err)
 	}

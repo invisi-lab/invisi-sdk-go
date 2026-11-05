@@ -99,7 +99,7 @@ func TestOutputPagesAuthenticateAndPreserveCreditRoles(t *testing.T) {
 func TestReceivingAddressBindsOwnerRegistryAndCanonicalMetadataShape(t *testing.T) {
 	owner := common.HexToAddress("0x1111111111111111111111111111111111111111")
 	deployment := ProtocolDeployment{ChainID: "31337", Protocol: ContractDeployment{owner, common.HexToHash("0x01"), 1}, Registry: &ContractDeployment{owner, common.HexToHash("0x02"), 2}}
-	result := any(map[string]any{"walletIdentity": owner, "viewingPublicKey": "0x0396f42bb298c8a0e74539294780d709799f9838c0b69a134f38c6d968f2921397", "clueKey": "0xc69480518ea88f8cb925fbcd8f5100b1ebc46cc4d8cbe19e0478936567e6b211", "nonce": "1", "block": map[string]any{"number": "2", "hash": common.HexToHash("0x03"), "parentHash": common.HexToHash("0x04"), "timestamp": "5"}})
+	result := any(map[string]any{"ownerAddress": owner, "viewingPublicKey": "0x0396f42bb298c8a0e74539294780d709799f9838c0b69a134f38c6d968f2921397", "clueKey": "0xc69480518ea88f8cb925fbcd8f5100b1ebc46cc4d8cbe19e0478936567e6b211", "nonce": "1", "block": map[string]any{"number": "2", "hash": common.HexToHash("0x03"), "parentHash": common.HexToHash("0x04"), "timestamp": "5"}})
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		var req struct {
 			ID     uint64
@@ -121,7 +121,7 @@ func TestReceivingAddressBindsOwnerRegistryAndCanonicalMetadataShape(t *testing.
 	if e != nil || address == nil || address.Block.Timestamp != 5 || address.Nonce != 1 {
 		t.Fatal(address, e)
 	}
-	result.(map[string]any)["walletIdentity"] = common.HexToAddress("0x2222222222222222222222222222222222222222")
+	result.(map[string]any)["ownerAddress"] = common.HexToAddress("0x2222222222222222222222222222222222222222")
 	if _, e = c.GetReceivingAddress(context.Background(), owner); e == nil {
 		t.Fatal("wrong owner accepted")
 	}

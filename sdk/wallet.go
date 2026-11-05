@@ -24,8 +24,8 @@ type Wallet struct {
 	material *core.InvisiWallet
 }
 
-// WalletIdentity is implemented only by SDK public and private wallet identities.
-type WalletIdentity interface{ publicWallet() *PublicWallet }
+// OwnerAddress is implemented only by SDK public and private wallet identities.
+type WalletReference interface{ publicWallet() *PublicWallet }
 
 func (w *PublicWallet) publicWallet() *PublicWallet { return w }
 
@@ -39,32 +39,30 @@ func WalletFromPrivateKey(privateKey string) (*Wallet, error) {
 	if e != nil {
 		return nil, e
 	}
-	a, e := core.EncodeLongAddress(core.ReceivingAddress{WalletIdentity: m.WalletIdentity, ViewingPublicKey: m.ViewingPublicKey, ClueKey: m.ClueKey})
+	a, e := core.EncodeLongAddress(core.ReceivingAddress{OwnerAddress: m.OwnerAddress, ViewingPublicKey: m.ViewingPublicKey, ClueKey: m.ClueKey})
 	if e != nil {
 		return nil, e
 	}
-	return &Wallet{&PublicWallet{common.BigToAddress(core.ElementToBigInt(m.WalletIdentity)), a, core.ReceivingKeys{ViewingPublicKey: append([]byte(nil), m.ViewingPublicKey...), ClueKey: append([]byte(nil), m.ClueKey...)}}, m}, nil
+	return &Wallet{&PublicWallet{common.BigToAddress(core.ElementToBigInt(m.OwnerAddress)), a, core.ReceivingKeys{ViewingPublicKey: append([]byte(nil), m.ViewingPublicKey...), ClueKey: append([]byte(nil), m.ClueKey...)}}, m}, nil
 }
 func PublicWalletFromAddress(address string) (*PublicWallet, error) {
 	d, e := core.DecodeAddress(address)
 	if e != nil {
 		return nil, e
 	}
-	return &PublicWallet{identity: common.BigToAddress(core.ElementToBigInt(d.WalletIdentity)), address: address, keys: core.ReceivingKeys{ViewingPublicKey: d.ViewingPublicKey, ClueKey: d.ClueKey}}, nil
+	return &PublicWallet{identity: common.BigToAddress(core.ElementToBigInt(d.OwnerAddress)), address: address, keys: core.ReceivingKeys{ViewingPublicKey: d.ViewingPublicKey, ClueKey: d.ClueKey}}, nil
 }
-func (w *PublicWallet) WalletIdentity() common.Address { return w.identity }
-func (w *PublicWallet) OwnerAddress() common.Address   { return w.identity }
+func (w *PublicWallet) OwnerAddress() common.Address { return w.identity }
 func (w *PublicWallet) GetAddress() (string, error) {
 	if len(w.keys.ViewingPublicKey) != 33 {
 		return "", errors.New("resolved receiving keys required")
 	}
 	return w.address, nil
 }
-func (w *PublicWallet) GetShortAddress() string { return w.identity.Hex() }
-func (w *PublicWallet) String() string          { return fmt.Sprintf("Wallet(%s)", w.identity.Hex()) }
-func (w *PublicWallet) GoString() string        { return w.String() }
+func (w *PublicWallet) String() string   { return fmt.Sprintf("Wallet(%s)", w.identity.Hex()) }
+func (w *PublicWallet) GoString() string { return w.String() }
 func (w *PublicWallet) MarshalJSON() ([]byte, error) {
-	return []byte(`{"walletIdentity":"` + w.identity.Hex() + `"}`), nil
+	return []byte(`{"ownerAddress":"` + w.identity.Hex() + `"}`), nil
 }
 func (w *Wallet) GetViewer() (*ViewingCapability, error) {
 	if w.material == nil {
@@ -136,10 +134,10 @@ func (a *WalletAuthorization) MarshalJSON() ([]byte, error) {
 type NullifierCapability struct{ identity common.Address }
 
 func (n *NullifierCapability) ForNote(note core.Note) (common.Hash, error) {
-	if note.WalletIdentity != core.BigIntToElement(n.identity.Big()) {
+	if note.OwnerAddress != core.BigIntToElement(n.identity.Big()) {
 		return common.Hash{}, errors.New("note owner mismatch")
 	}
-	id, e := core.ComputeNoteIdentity(note.WalletIdentity, note.Nonce)
+	id, e := core.ComputeNoteIdentity(note.OwnerAddress, note.Nonce)
 	if e != nil {
 		return common.Hash{}, e
 	}
@@ -151,11 +149,11 @@ func (n *NullifierCapability) ForNote(note core.Note) (common.Hash, error) {
 	return common.Hash(nf.Bytes()), e
 }
 func (v *ViewingCapability) decryptNote(data []byte, context core.NoteDecryptionContext) (core.Note, error) {
-	context.WalletIdentity = core.BigIntToElement(v.identity.Big())
+	context.OwnerAddress = core.BigIntToElement(v.identity.Big())
 	return core.DecryptPrivateTransferNote(v.key, data, context)
 }
 func (v *ViewingCapability) decryptCredit(data []byte, context core.CreditNoteDecryptionContext) (core.CreditDeliveryState, error) {
-	context.WalletIdentity = core.BigIntToElement(v.identity.Big())
+	context.OwnerAddress = core.BigIntToElement(v.identity.Big())
 	return core.DecryptCreditNote(v.key, data, context)
 }
 func fieldHash(e fr.Element) common.Hash { return common.Hash(e.Bytes()) }

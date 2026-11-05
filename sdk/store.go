@@ -17,9 +17,9 @@ import (
 )
 
 type WalletScope struct {
-	ChainID                         uint64
-	ProtocolAddress, WalletIdentity common.Address
-	Namespace                       string
+	ChainID                       uint64
+	ProtocolAddress, OwnerAddress common.Address
+	Namespace                     string
 }
 
 func (s WalletScope) Key() string {

@@ -24,7 +24,7 @@ type CreditCandidate struct {
 	Output rpc.ProtocolOutput
 }
 
-// DiscoverNotes scans genuine indexed outputs in 100-block pages, authenticates decryption,
+// DiscoverNotes scans genuine indexed outputs in MaxUpdateBlocks-bounded pages, authenticates decryption,
 // rejects conflicting records and filters spent nullifiers against the chain. Preparation
 // independently validates membership and the latest spent state; callers own reservations.
 func DiscoverNotes(ctx context.Context, provider sdk.Provider, client *sdk.ProtocolRpcClient, pool *sdk.Protocol, wallet *sdk.PublicWallet, viewingKey []byte, token common.Address) ([]NoteCandidate, error) {
@@ -50,7 +50,7 @@ func DiscoverNotes(ctx context.Context, provider sdk.Provider, client *sdk.Proto
 	positions := map[string]string{}
 	result := []NoteCandidate{}
 	for from := pool.Deployment().Protocol.FromBlock; from <= status.IndexedHead.Number; {
-		to := min(from+99, status.IndexedHead.Number)
+		to := min(from+rpc.MaxUpdateBlocks-1, status.IndexedHead.Number)
 		page, err := client.GetOutputs(ctx, deployment, rpc.ProtocolUpdateRange{FromBlock: from, ToBlock: to})
 		if err != nil {
 			return nil, err
@@ -73,7 +73,7 @@ func DiscoverNotes(ctx context.Context, provider sdk.Provider, client *sdk.Proto
 			if output.TokenAddress != token {
 				continue
 			}
-			note, err := viewer.DecryptNote(output.Ciphertext, core.NoteDecryptionContext{NoteEncryptionContext: core.NoteEncryptionContext{ProtocolContext: core.ProtocolContext{ChainID: core.ElementFromUint64(d.ChainID), ProtocolAddress: core.BigIntToElement(d.ProtocolAddress.Big())}, OutputCommitment: core.BigIntToElement(output.Commitment.Big())}, TokenAddress: core.BigIntToElement(token.Big()), WalletIdentity: core.BigIntToElement(wallet.WalletIdentity().Big())})
+			note, err := viewer.DecryptNote(output.Ciphertext, core.NoteDecryptionContext{NoteEncryptionContext: core.NoteEncryptionContext{ProtocolContext: core.ProtocolContext{ChainID: core.ElementFromUint64(d.ChainID), ProtocolAddress: core.BigIntToElement(d.ProtocolAddress.Big())}, OutputCommitment: core.BigIntToElement(output.Commitment.Big())}, TokenAddress: core.BigIntToElement(token.Big()), OwnerAddress: core.BigIntToElement(wallet.OwnerAddress().Big())})
 			if err != nil {
 				continue
 			}
@@ -131,7 +131,7 @@ func DiscoverCredits(ctx context.Context, provider sdk.Provider, client *sdk.Pro
 	positions := map[string]string{}
 	result := []CreditCandidate{}
 	for from := pool.Deployment().Protocol.FromBlock; from <= status.IndexedHead.Number; {
-		to := min(from+99, status.IndexedHead.Number)
+		to := min(from+rpc.MaxUpdateBlocks-1, status.IndexedHead.Number)
 		page, err := client.GetCreditOutputs(ctx, deployment, rpc.ProtocolUpdateRange{FromBlock: from, ToBlock: to})
 		if err != nil {
 			return nil, err
@@ -140,7 +140,7 @@ func DiscoverCredits(ctx context.Context, provider sdk.Provider, client *sdk.Pro
 			if output.TokenAddress != token {
 				continue
 			}
-			state, err := viewer.DecryptCredit(output.Ciphertext, core.CreditNoteDecryptionContext{NoteDecryptionContext: core.NoteDecryptionContext{NoteEncryptionContext: core.NoteEncryptionContext{ProtocolContext: core.ProtocolContext{ChainID: core.ElementFromUint64(d.ChainID), ProtocolAddress: core.BigIntToElement(d.ProtocolAddress.Big())}, OutputCommitment: core.BigIntToElement(output.Commitment.Big())}, TokenAddress: core.BigIntToElement(token.Big()), WalletIdentity: core.BigIntToElement(wallet.WalletIdentity().Big())}, Role: core.CreditDeliveryRole(role)})
+			state, err := viewer.DecryptCredit(output.Ciphertext, core.CreditNoteDecryptionContext{NoteDecryptionContext: core.NoteDecryptionContext{NoteEncryptionContext: core.NoteEncryptionContext{ProtocolContext: core.ProtocolContext{ChainID: core.ElementFromUint64(d.ChainID), ProtocolAddress: core.BigIntToElement(d.ProtocolAddress.Big())}, OutputCommitment: core.BigIntToElement(output.Commitment.Big())}, TokenAddress: core.BigIntToElement(token.Big()), OwnerAddress: core.BigIntToElement(wallet.OwnerAddress().Big())}, Role: core.CreditDeliveryRole(role)})
 			if err != nil {
 				continue
 			}

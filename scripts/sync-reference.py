@@ -16,8 +16,11 @@ root = pathlib.Path(__file__).resolve().parents[1]
 def require(condition, message):
     if not condition:
         raise ValueError(message)
-source = pathlib.Path(sys.argv[1]).resolve() if len(sys.argv) > 1 else root.parent / 'invisi-sdk-ts'
-protocol = pathlib.Path(sys.argv[2]).resolve() if len(sys.argv) > 2 else root.parent / 'invisi-protocol'
+arguments = sys.argv[1:]
+proving_only = '--proving-only' in arguments
+arguments = [value for value in arguments if value != '--proving-only']
+source = pathlib.Path(arguments[0]).resolve() if arguments else root.parent / 'invisi-sdk-ts'
+protocol = pathlib.Path(arguments[1]).resolve() if len(arguments) > 1 else root.parent / 'invisi-protocol'
 
 def digest(data):
     return hashlib.sha256(data).hexdigest()
@@ -70,6 +73,25 @@ require(expected == set(release_entries), 'obsolete/missing SDK circuit')
 files['manifest.json'] = (json.dumps(published, indent=2) + '\n').encode()
 inner = release_entries['transact_user_slots14']['keys']['noir-recursive']
 recursive = {'verificationKeyFields': inner['vkFields'], 'keyHash': inner['vkHash'], 'innerVkCommitment': inner['innerVkCommitment']}
+def publish_proving():
+    target = root / 'prover/native/circuits'
+    with tempfile.TemporaryDirectory(prefix='invisi-prover-sync-', dir=target.parent) as staging:
+        stage = pathlib.Path(staging)
+        for name, data in files.items():
+            (stage / name).write_bytes(data)
+        for name in files:
+            (stage / name).replace(target / name)
+        for path in target.iterdir():
+            if path.is_file() and path.name not in files:
+                path.unlink()
+    (root / 'prover/witness-layouts.json').write_text(json.dumps(layouts, indent=2) + '\n')
+    (root / 'prover/recursive-key.json').write_text(json.dumps(recursive, indent=2) + '\n')
+
+if proving_only:
+    publish_proving()
+    print("Synced authenticated current protocol proving assets and layouts; gas and SDK vectors unchanged")
+    sys.exit(0)
+
 gas_catalog = (source / 'packages/sdk/src/data/gas-benchmarks.json').read_bytes()
 for profile in json.loads(gas_catalog):
     for measurement in profile['measurements']:
@@ -96,18 +118,7 @@ for name, header, client in (('note', 1, 'private-transfer-client.mjs'), ('credi
         raw = bytes.fromhex(ciphertext[2:])
         require(raw[0] == header and len(raw) == provenance.get('ciphertextBytes') and len(raw) <= 4096,
                 'retired/unauthenticated delivery vector bytes')
-target = root / 'prover/native/circuits'
-with tempfile.TemporaryDirectory(prefix='invisi-prover-sync-', dir=target.parent) as staging:
-    stage = pathlib.Path(staging)
-    for name, data in files.items():
-        (stage / name).write_bytes(data)
-    for name in files:
-        (stage / name).replace(target / name)
-    for path in target.iterdir():
-        if path.is_file() and path.name not in files:
-            path.unlink()
-(root / 'prover/witness-layouts.json').write_text(json.dumps(layouts, indent=2) + '\n')
-(root / 'prover/recursive-key.json').write_text(json.dumps(recursive, indent=2) + '\n')
+publish_proving()
 for name in ('wallet-note-vectors.json', 'wallet-authorization-vectors.json', 'wallet-kdf-vectors.json', 'fmd-rust-vectors.json', 'decaf377-clue-keys.json'):
     origin = vector_root / name
     shutil.copyfile(origin, root / 'core/testdata' / name)

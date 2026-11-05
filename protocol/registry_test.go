@@ -24,7 +24,7 @@ func registrationCase(t *testing.T) (RegistryContext, AddressRegistration) {
 	}
 	var clue [32]byte
 	copy(clue[:], wallet.ClueKey)
-	return RegistryContext{ChainID: big.NewInt(31337), RegistryAddress: common.HexToAddress("0x1234"), Now: big.NewInt(100)}, AddressRegistration{WalletIdentity: wallet.WalletIdentity.Bytes(), Keys: contracts.IAddressRegistryReceivingKeys{ViewingPublicKey: wallet.ViewingPublicKey, ClueKey: clue}, Deadline: 200}
+	return RegistryContext{ChainID: big.NewInt(31337), RegistryAddress: common.HexToAddress("0x1234"), Now: big.NewInt(100)}, AddressRegistration{OwnerAddress: wallet.OwnerAddress.Bytes(), Keys: contracts.IAddressRegistryReceivingKeys{ViewingPublicKey: wallet.ViewingPublicKey, ClueKey: clue}, Deadline: 200}
 }
 
 func TestRegistrationUsesFlatRegistryTypedData(t *testing.T) {
@@ -95,9 +95,9 @@ func TestRegistrationValidatesMaterialAndFreshnessOnEveryPath(t *testing.T) {
 			options := RegistrationOptions{}
 			switch name {
 			case "zero owner":
-				registration.WalletIdentity = [32]byte{}
+				registration.OwnerAddress = [32]byte{}
 			case "wide owner":
-				registration.WalletIdentity[0] = 1
+				registration.OwnerAddress[0] = 1
 			case "invalid viewing":
 				registration.Keys.ViewingPublicKey = make([]byte, 33)
 			case "invalid clue":

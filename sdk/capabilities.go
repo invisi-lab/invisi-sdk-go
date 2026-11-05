@@ -18,15 +18,15 @@ import (
 // WalletAuthorizationProvider can delegate private statement signing without
 // disclosing an account private key to the SDK.
 type WalletAuthorizationProvider interface {
-	WalletIdentity() common.Address
+	OwnerAddress() common.Address
 	Authorize(context.Context, core.WalletAuthorizationRequest) (core.WalletAuthorizationWitness, error)
 }
 
-func (a *WalletAuthorization) WalletIdentity() common.Address {
+func (a *WalletAuthorization) OwnerAddress() common.Address {
 	if a == nil || a.material == nil {
 		return common.Address{}
 	}
-	return common.BigToAddress(core.ElementToBigInt(a.material.WalletIdentity))
+	return common.BigToAddress(core.ElementToBigInt(a.material.OwnerAddress))
 }
 
 // FundingSigner grants public ERC20 funding independently of private note spending.

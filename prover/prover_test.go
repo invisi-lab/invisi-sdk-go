@@ -67,7 +67,7 @@ func TestProofBundleUsesTypeScriptExchangeFormat(t *testing.T) {
 }
 
 func TestProofBundleRejectsPreviousBBVersion(t *testing.T) {
-	statement, err := Statement("credit_cancel", "evm", make([]common.Hash, 11))
+	statement, err := Statement("credit_cancel", "evm", make([]common.Hash, 13))
 	if err != nil {
 		t.Fatal(err)
 	}
