@@ -3,12 +3,13 @@ package core
 import (
 	"bytes"
 	"encoding/json"
+	"math/big"
+	"testing"
+
 	"github.com/consensys/gnark-crypto/ecc/bn254/fr"
 	ethmath "github.com/ethereum/go-ethereum/common/math"
 	ethcrypto "github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/signer/core/apitypes"
-	"math/big"
-	"testing"
 )
 
 func TestExternalWalletSignatureAndJSONRequest(t *testing.T) {

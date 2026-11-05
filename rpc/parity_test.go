@@ -3,13 +3,14 @@ package rpc
 import (
 	"context"
 	"encoding/json"
-	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/core/types"
-	"github.com/ethereum/go-ethereum/crypto"
 	"math/big"
 	"net/http"
 	"net/http/httptest"
 	"testing"
+
+	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/core/types"
+	"github.com/ethereum/go-ethereum/crypto"
 )
 
 func TestMaxUpdateBlocksExactBoundaryAndEmptyPage(t *testing.T) {

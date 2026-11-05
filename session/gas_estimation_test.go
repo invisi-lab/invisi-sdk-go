@@ -12,6 +12,7 @@ import (
 	"strings"
 	"testing"
 
+	gasmodel "github.com/invisi-lab/invisi-sdk-go/internal/gas"
 	transaction "github.com/invisi-lab/invisi-sdk-go/internal/transaction"
 	sdk "github.com/invisi-lab/invisi-sdk-go/sdk"
 )
@@ -56,7 +57,7 @@ func TestManagedGasReferenceMatchesExplicit(t *testing.T) {
 }
 
 func TestGasReceiptCatalogAndAllDirectKinds(t *testing.T) {
-	profiles, err := sdk.DefineGasBenchmarks(transaction.GasBenchmarkJSON)
+	profiles, err := sdk.DefineGasBenchmarks(gasmodel.GasBenchmarkJSON)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -67,8 +68,8 @@ func TestGasReceiptCatalogAndAllDirectKinds(t *testing.T) {
 			if len(m.Samples) != 3 {
 				t.Fatal("incomplete receipt evidence")
 			}
-			request := transaction.GasEstimateRequest{Deployment: profile.Deployment, Shape: m.Shape, Circuit: m.Circuit}
-			got, err := transaction.EstimateGasShape(request, profiles)
+			request := gasmodel.GasEstimateRequest{Deployment: profile.Deployment, Shape: m.Shape, Circuit: m.Circuit}
+			got, err := gasmodel.EstimateGasShape(request, profiles)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -80,8 +81,8 @@ func TestGasReceiptCatalogAndAllDirectKinds(t *testing.T) {
 			expected := (sum + 2) / 3
 			for _, candidateProfile := range profiles {
 				for _, candidate := range candidateProfile.Measurements {
-					if candidate.Shape == m.Shape && transaction.SameGasCircuit(candidate.Circuit, m.Circuit) {
-						mean, _ := transaction.MeasuredGas(candidate)
+					if candidate.Shape == m.Shape && gasmodel.SameGasCircuit(candidate.Circuit, m.Circuit) {
+						mean, _ := gasmodel.MeasuredGas(candidate)
 						if mean.GasUnits > expected {
 							expected = mean.GasUnits
 						}
@@ -92,12 +93,12 @@ func TestGasReceiptCatalogAndAllDirectKinds(t *testing.T) {
 				t.Fatalf("%s: %+v", m.ID, got)
 			}
 			request.Deployment.ChainID = "42161"
-			next, err := transaction.EstimateGasShape(request, profiles)
+			next, err := gasmodel.EstimateGasShape(request, profiles)
 			if err != nil || !reflect.DeepEqual(got, next) {
 				t.Fatalf("deployment affected reference: %+v %v", next, err)
 			}
 			request.Shape.NoteInputs += 2
-			larger, err := transaction.EstimateGasShape(request, profiles)
+			larger, err := gasmodel.EstimateGasShape(request, profiles)
 			if err != nil || larger.GasUnits < got.GasUnits {
 				t.Fatalf("invalid larger reference: %+v %v", larger, err)
 			}
@@ -117,20 +118,20 @@ func TestGasReferencesMatchTypeScriptVectors(t *testing.T) {
 		TSCommit      string `json:"tsCommit"`
 		CatalogSHA256 string `json:"catalogSha256"`
 		Cases         []struct {
-			ID       string                         `json:"id"`
-			Request  transaction.GasEstimateRequest `json:"request"`
-			GasUnits string                         `json:"gasUnits"`
+			ID       string                      `json:"id"`
+			Request  gasmodel.GasEstimateRequest `json:"request"`
+			GasUnits string                      `json:"gasUnits"`
 		} `json:"cases"`
 	}
 	if err := json.Unmarshal(raw, &vectors); err != nil {
 		t.Fatal(err)
 	}
-	if !transaction.GasCommit.MatchString(vectors.TSCommit) || vectors.CatalogSHA256 != fmt.Sprintf("%x", sha256.Sum256(transaction.GasBenchmarkJSON)) || len(vectors.Cases) < 22 {
+	if !gasmodel.GasCommit.MatchString(vectors.TSCommit) || vectors.CatalogSHA256 != fmt.Sprintf("%x", sha256.Sum256(gasmodel.GasBenchmarkJSON)) || len(vectors.Cases) < 22 {
 		t.Fatal("unexpected TS vector source")
 	}
 	for _, vector := range vectors.Cases {
 		t.Run(vector.ID, func(t *testing.T) {
-			got, err := transaction.EstimateGasShape(vector.Request, transaction.DefaultGasProfiles)
+			got, err := gasmodel.EstimateGasShape(vector.Request, gasmodel.DefaultGasProfiles)
 			if err != nil || strconv.FormatUint(got.GasUnits, 10) != vector.GasUnits {
 				t.Fatalf("TS=%s Go=%+v error=%v", vector.GasUnits, got, err)
 			}
@@ -196,7 +197,7 @@ func TestCustomGasProfileIsSnapshottedAndUsedOnlyForExactMatch(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	profiles := transaction.CopyGasProfiles(transaction.DefaultGasProfiles[:1])
+	profiles := gasmodel.CopyGasProfiles(gasmodel.DefaultGasProfiles[:1])
 	profiles[0].Deployment = request.Deployment
 	measurement := profiles[0].Measurements[3]
 	measurement.Shape, measurement.Circuit = request.Shape, request.Circuit
@@ -240,24 +241,24 @@ func TestGasCatalogValidationAndUnsupportedTargets(t *testing.T) {
 			t.Fatal("invalid catalog accepted")
 		}
 	}
-	profiles := transaction.CopyGasProfiles(transaction.DefaultGasProfiles)
+	profiles := gasmodel.CopyGasProfiles(gasmodel.DefaultGasProfiles)
 	profiles[0].Measurements[0].Samples[0].GasUsed = "-1"
 	raw, _ := json.Marshal(profiles)
 	if _, err := sdk.DefineGasBenchmarks(raw); err == nil {
 		t.Fatal("negative gas accepted")
 	}
-	m := transaction.DefaultGasProfiles[0].Measurements[3]
-	request := transaction.GasEstimateRequest{Shape: m.Shape, Circuit: m.Circuit}
+	m := gasmodel.DefaultGasProfiles[0].Measurements[3]
+	request := gasmodel.GasEstimateRequest{Shape: m.Shape, Circuit: m.Circuit}
 	for _, target := range []string{"noir-recursive", "unknown"} {
 		request.Shape.Target = target
-		if _, err := transaction.EstimateGasShape(request, transaction.DefaultGasProfiles); err == nil {
+		if _, err := gasmodel.EstimateGasShape(request, gasmodel.DefaultGasProfiles); err == nil {
 			t.Fatal("unsupported target accepted")
 		}
 	}
 }
 
 func TestExactGasReferenceUsesHighestMatchingReceiptMean(t *testing.T) {
-	profiles := transaction.CopyGasProfiles(transaction.DefaultGasProfiles[:1])
+	profiles := gasmodel.CopyGasProfiles(gasmodel.DefaultGasProfiles[:1])
 	measurement := profiles[0].Measurements[0]
 	profiles[0].Measurements = []sdk.GasBenchmarkMeasurement{measurement, measurement}
 	for i := range profiles[0].Measurements {
@@ -266,28 +267,28 @@ func TestExactGasReferenceUsesHighestMatchingReceiptMean(t *testing.T) {
 			profiles[0].Measurements[i].Samples[j].GasUsed = strconv.Itoa(100 + i*100)
 		}
 	}
-	request := transaction.GasEstimateRequest{Shape: measurement.Shape, Circuit: measurement.Circuit}
-	got, err := transaction.EstimateGasShape(request, profiles)
+	request := gasmodel.GasEstimateRequest{Shape: measurement.Shape, Circuit: measurement.Circuit}
+	got, err := gasmodel.EstimateGasShape(request, profiles)
 	if err != nil || got.GasUnits != 200 {
 		t.Fatalf("exact reference depends on lower first record: %+v %v", got, err)
 	}
 	profiles[0].Measurements[0], profiles[0].Measurements[1] = profiles[0].Measurements[1], profiles[0].Measurements[0]
-	next, err := transaction.EstimateGasShape(request, profiles)
+	next, err := gasmodel.EstimateGasShape(request, profiles)
 	if err != nil || next != got {
 		t.Fatalf("exact reference depends on record order: %+v %v", next, err)
 	}
 }
 
 func TestCreditGasNeverFallsBackToDifferentCircuit(t *testing.T) {
-	for _, profile := range transaction.DefaultGasProfiles {
+	for _, profile := range gasmodel.DefaultGasProfiles {
 		for _, measurement := range profile.Measurements {
 			if measurement.Circuit == nil || !strings.Contains(measurement.Shape.Kind, "credit") {
 				continue
 			}
 			circuit := *measurement.Circuit
 			circuit.ArtifactSHA256 = strings.Repeat("f", 64)
-			request := transaction.GasEstimateRequest{Shape: measurement.Shape, Circuit: &circuit}
-			if _, err := transaction.EstimateGasShape(request, transaction.DefaultGasProfiles); err == nil {
+			request := gasmodel.GasEstimateRequest{Shape: measurement.Shape, Circuit: &circuit}
+			if _, err := gasmodel.EstimateGasShape(request, gasmodel.DefaultGasProfiles); err == nil {
 				t.Fatalf("%s reused another circuit's Credit receipts", measurement.ID)
 			}
 		}
@@ -295,7 +296,7 @@ func TestCreditGasNeverFallsBackToDifferentCircuit(t *testing.T) {
 }
 
 func TestGasFingerprintMetadataRoundtripAndSnapshot(t *testing.T) {
-	profiles := transaction.CopyGasProfiles(transaction.DefaultGasProfiles[:1])
+	profiles := gasmodel.CopyGasProfiles(gasmodel.DefaultGasProfiles[:1])
 	source := &profiles[0].Source
 	source.Fingerprints = &sdk.GasBenchmarkFingerprints{ProtocolSourceSHA256: strings.Repeat("1", 64), DirtyDiffSHA256: strings.Repeat("2", 64), CompiledArtifactsSHA256: strings.Repeat("3", 64), CreditManifestSHA256: strings.Repeat("4", 64), UserManifestSHA256: strings.Repeat("5", 64), SDKSourceSHA256: strings.Repeat("6", 64)}
 	source.Toolchain = &sdk.GasBenchmarkToolchain{Solidity: "0.8.38", Barretenberg: "6.0.0", Noir: "1.0.0-rc.6", EVMVersion: "osaka", OptimizerRuns: 200, Anvil: "test"}
@@ -309,7 +310,7 @@ func TestGasFingerprintMetadataRoundtripAndSnapshot(t *testing.T) {
 	if err != nil || !reflect.DeepEqual(profiles, decoded) {
 		t.Fatalf("measurement provenance changed: %v", err)
 	}
-	snapshot := transaction.CopyGasProfiles(decoded)
+	snapshot := gasmodel.CopyGasProfiles(decoded)
 	decoded[0].Source.Fingerprints.DirtyDiffSHA256 = "mutated"
 	decoded[0].Source.Toolchain.Solidity = "mutated"
 	delete(decoded[0].Source.RuntimeContracts, "Protocol")
@@ -321,7 +322,7 @@ func TestGasFingerprintMetadataRoundtripAndSnapshot(t *testing.T) {
 func TestCurrentCreditGasMatrixAndMemoScaling(t *testing.T) {
 	counts := map[string]int{}
 	draws := map[int]int{}
-	for _, profile := range transaction.DefaultGasProfiles {
+	for _, profile := range gasmodel.DefaultGasProfiles {
 		for _, measurement := range profile.Measurements {
 			if !strings.Contains(measurement.Shape.Kind, "credit") {
 				continue
@@ -330,14 +331,14 @@ func TestCurrentCreditGasMatrixAndMemoScaling(t *testing.T) {
 			if profile.Source.Fingerprints == nil || profile.Source.Toolchain == nil || profile.Source.Toolchain.Solidity != "0.8.38" || profile.Source.Toolchain.Barretenberg != "6.0.0" {
 				t.Fatalf("current receipt provenance missing: %s", measurement.ID)
 			}
-			request := transaction.GasEstimateRequest{Shape: measurement.Shape, Circuit: measurement.Circuit}
-			base, err := transaction.EstimateGasShape(request, transaction.DefaultGasProfiles)
+			request := gasmodel.GasEstimateRequest{Shape: measurement.Shape, Circuit: measurement.Circuit}
+			base, err := gasmodel.EstimateGasShape(request, gasmodel.DefaultGasProfiles)
 			if err != nil {
 				t.Fatal(err)
 			}
 			if request.Shape.DeliveryBytes > 0 {
 				request.Shape.DeliveryBytes += 256
-				memo, err := transaction.EstimateGasShape(request, transaction.DefaultGasProfiles)
+				memo, err := gasmodel.EstimateGasShape(request, gasmodel.DefaultGasProfiles)
 				if err != nil || memo.GasUnits <= base.GasUnits {
 					t.Fatalf("memo did not scale upward: %s base=%d memo=%d err=%v", measurement.ID, base.GasUnits, memo.GasUnits, err)
 				}
@@ -353,7 +354,7 @@ func TestCurrentCreditGasMatrixAndMemoScaling(t *testing.T) {
 }
 
 func TestModeledGasUsesHighestSampleAcrossSameShapeVariants(t *testing.T) {
-	profiles := transaction.CopyGasProfiles(transaction.DefaultGasProfiles[:1])
+	profiles := gasmodel.CopyGasProfiles(gasmodel.DefaultGasProfiles[:1])
 	measurement := profiles[0].Measurements[0]
 	profiles[0].Measurements = []sdk.GasBenchmarkMeasurement{measurement, measurement}
 	for i := range profiles[0].Measurements {
@@ -362,14 +363,14 @@ func TestModeledGasUsesHighestSampleAcrossSameShapeVariants(t *testing.T) {
 			profiles[0].Measurements[i].Samples[j].GasUsed = strconv.Itoa(100 + i*100)
 		}
 	}
-	request := transaction.GasEstimateRequest{Shape: measurement.Shape, Circuit: measurement.Circuit}
+	request := gasmodel.GasEstimateRequest{Shape: measurement.Shape, Circuit: measurement.Circuit}
 	request.Shape.Funding = "signature"
-	got, err := transaction.EstimateGasShape(request, profiles)
+	got, err := gasmodel.EstimateGasShape(request, profiles)
 	if err != nil || got.GasUnits != 400 {
 		t.Fatalf("modeled reference picked cheaper duplicate baseline: %+v %v", got, err)
 	}
 	profiles[0].Measurements[0], profiles[0].Measurements[1] = profiles[0].Measurements[1], profiles[0].Measurements[0]
-	next, err := transaction.EstimateGasShape(request, profiles)
+	next, err := gasmodel.EstimateGasShape(request, profiles)
 	if err != nil || next != got {
 		t.Fatalf("modeled reference depends on order: %+v %v", next, err)
 	}
@@ -384,7 +385,7 @@ func TestGasCatalogRejectsMalformedOptionalProvenance(t *testing.T) {
 			source.RuntimeContracts = map[string]sdk.GasBenchmarkRuntimeContract{"Protocol": {Address: "invalid", RuntimeCodeHash: "invalid"}}
 		},
 	} {
-		profiles := transaction.CopyGasProfiles(transaction.DefaultGasProfiles[:1])
+		profiles := gasmodel.CopyGasProfiles(gasmodel.DefaultGasProfiles[:1])
 		mutate(&profiles[0].Source)
 		raw, _ := json.Marshal(profiles)
 		if _, err := sdk.DefineGasBenchmarks(raw); err == nil {
@@ -395,7 +396,7 @@ func TestGasCatalogRejectsMalformedOptionalProvenance(t *testing.T) {
 
 func TestHistoricalFundsGasReceiptsRemainUnchanged(t *testing.T) {
 	var measurements []sdk.GasBenchmarkMeasurement
-	for _, profile := range transaction.DefaultGasProfiles {
+	for _, profile := range gasmodel.DefaultGasProfiles {
 		for _, measurement := range profile.Measurements {
 			if !strings.Contains(measurement.Shape.Kind, "credit") {
 				measurements = append(measurements, measurement)

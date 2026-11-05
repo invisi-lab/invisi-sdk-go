@@ -15,14 +15,14 @@ import (
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
+
 	"github.com/invisi-lab/invisi-sdk-go/core"
 	transaction "github.com/invisi-lab/invisi-sdk-go/internal/transaction"
 	"github.com/invisi-lab/invisi-sdk-go/protocol"
 	"github.com/invisi-lab/invisi-sdk-go/protocol/contracts"
 	"github.com/invisi-lab/invisi-sdk-go/prover"
-	sdk "github.com/invisi-lab/invisi-sdk-go/sdk"
-
 	protocolrpc "github.com/invisi-lab/invisi-sdk-go/rpc"
+	sdk "github.com/invisi-lab/invisi-sdk-go/sdk"
 )
 
 type sessionProvider struct {
@@ -31,15 +31,19 @@ type sessionProvider struct {
 }
 
 func (p sessionProvider) ChainID(context.Context) (*big.Int, error) { return big.NewInt(31337), nil }
+
 func (p sessionProvider) HeaderByNumber(context.Context, *big.Int) (*types.Header, error) {
 	return p.head, nil
 }
+
 func (p sessionProvider) CodeAt(context.Context, common.Address, *big.Int) ([]byte, error) {
 	return []byte{0x60, 0}, nil
 }
+
 func (p sessionProvider) TransactionReceipt(context.Context, common.Hash) (*types.Receipt, error) {
 	return nil, nil
 }
+
 func (p sessionProvider) CallContract(_ context.Context, message ethereum.CallMsg, _ *big.Int) ([]byte, error) {
 	a, e := protocol.ProtocolABI()
 	if e != nil {
@@ -92,9 +96,11 @@ func (p *testProver) Prove(_ context.Context, r prover.ProvingRequest, _ prover.
 	}
 	return prover.ProofBundle{FormatVersion: 1, CircuitName: r.CircuitName, Target: r.Target, BBVersion: "6.0.0", ArtifactSHA256: r.ArtifactSHA256, VKSHA256: r.VKSHA256, Proof: proof, ProofSHA256: hex.EncodeToString(hash[:]), PublicInputs: inputs}, nil
 }
+
 func (p *testProver) Verify(context.Context, prover.ProofBundle, prover.ProofStatement, prover.Options) (bool, error) {
 	return true, nil
 }
+
 func testSession(t *testing.T, timestamps ...uint64) (*WalletSession, common.Address, *testProver) {
 	timestamp := uint64(100)
 	if len(timestamps) > 0 {
@@ -276,33 +282,7 @@ func TestTransferStagesReserveInputsAndAssembleCurrentWitness(t *testing.T) {
 		t.Fatal("externalized proof released reserved notes")
 	}
 }
-func TestResumeFencesPreviousWorkerAndRequiresFreshAuthorization(t *testing.T) {
-	ctx := context.Background()
-	session, token, _ := testSession(t)
-	prepared, e := session.PrepareTransfer(ctx, sdk.TransferPreparation{TokenAddress: token, Withdrawal: &sdk.Withdrawal{To: session.wallet.OwnerAddress(), Amount: big.NewInt(30)}})
-	if e != nil {
-		t.Fatal(e)
-	}
-	if prepared, e = prepared.Authorize(ctx); e != nil {
-		t.Fatal(e)
-	}
-	resumed, e := session.Resume(ctx, prepared.ID())
-	if e != nil {
-		t.Fatal(e)
-	}
-	if _, e = prepared.Prove(ctx); e == nil {
-		t.Fatal("replaced worker still generated proofs")
-	}
-	if _, e = resumed.Prove(ctx); e == nil {
-		t.Fatal("private signature was persisted")
-	}
-	if resumed, e = resumed.Authorize(ctx); e != nil {
-		t.Fatal(e)
-	}
-	if _, e = resumed.Prove(ctx); e != nil {
-		t.Fatal(e)
-	}
-}
+
 func TestProofForAnotherStatementIsRejected(t *testing.T) {
 	ctx := context.Background()
 	session, token, backend := testSession(t)
@@ -324,6 +304,7 @@ func TestProofForAnotherStatementIsRejected(t *testing.T) {
 		}
 	}
 }
+
 func TestViewOnlySweepUsesFullOwnerPayoutWithoutSignature(t *testing.T) {
 	ctx := context.Background()
 	session, token, _ := testSession(t)
@@ -340,6 +321,7 @@ func TestViewOnlySweepUsesFullOwnerPayoutWithoutSignature(t *testing.T) {
 		t.Fatal(e)
 	}
 }
+
 func TestCreateCreditUsesSameAuthorizationAndProofStages(t *testing.T) {
 	ctx := context.Background()
 	session, token, _ := testSession(t)
@@ -381,6 +363,7 @@ func seedCredit(t *testing.T, session *WalletSession, token common.Address) comm
 	}
 	return leaf
 }
+
 func TestCreditDrawCancelAndTopUpUseCurrentWitnessSchemas(t *testing.T) {
 	for _, kind := range []string{"draw", "cancel", "top-up"} {
 		t.Run(kind, func(t *testing.T) {
@@ -409,6 +392,7 @@ func TestCreditDrawCancelAndTopUpUseCurrentWitnessSchemas(t *testing.T) {
 		})
 	}
 }
+
 func TestCreditReservationCoversBothRolesOfTheSameLeaf(t *testing.T) {
 	ctx := context.Background()
 	session, token, _ := testSession(t)

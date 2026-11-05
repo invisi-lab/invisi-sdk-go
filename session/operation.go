@@ -8,8 +8,8 @@ import (
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
-	transaction "github.com/invisi-lab/invisi-sdk-go/internal/transaction"
 
+	transaction "github.com/invisi-lab/invisi-sdk-go/internal/transaction"
 	protocolrpc "github.com/invisi-lab/invisi-sdk-go/rpc"
 )
 

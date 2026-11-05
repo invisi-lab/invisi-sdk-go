@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/ethereum/go-ethereum/common"
+
 	"github.com/invisi-lab/invisi-sdk-go/core"
 	transaction "github.com/invisi-lab/invisi-sdk-go/internal/transaction"
 	"github.com/invisi-lab/invisi-sdk-go/prover"

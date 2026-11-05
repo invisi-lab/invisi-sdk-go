@@ -6,6 +6,7 @@ import (
 	"math/big"
 
 	"github.com/ethereum/go-ethereum/common"
+
 	sdk "github.com/invisi-lab/invisi-sdk-go/sdk"
 )
 

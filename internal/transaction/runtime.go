@@ -6,9 +6,10 @@ import (
 	"errors"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
-
 	"github.com/ethereum/go-ethereum/common"
+
 	"github.com/invisi-lab/invisi-sdk-go/core"
+	gasmodel "github.com/invisi-lab/invisi-sdk-go/internal/gas"
 	"github.com/invisi-lab/invisi-sdk-go/protocol"
 	protocolrpc "github.com/invisi-lab/invisi-sdk-go/rpc"
 )
@@ -49,7 +50,7 @@ type Runtime struct {
 
 func (i *Invisi) GetInfrastructure() InvisiOptions {
 	o := i.options
-	o.GasBenchmarks = CopyGasProfiles(o.GasBenchmarks)
+	o.GasBenchmarks = gasmodel.CopyGasProfiles(o.GasBenchmarks)
 	return o
 }
 func SnapshotWallet(ref WalletReference) (*Wallet, error) {

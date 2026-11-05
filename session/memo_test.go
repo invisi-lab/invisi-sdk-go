@@ -5,23 +5,22 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-
-	"github.com/ethereum/go-ethereum"
-	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/core/types"
-	"github.com/ethereum/go-ethereum/crypto"
-	transaction "github.com/invisi-lab/invisi-sdk-go/internal/transaction"
-	"github.com/invisi-lab/invisi-sdk-go/protocol"
-	sdk "github.com/invisi-lab/invisi-sdk-go/sdk"
-
 	"math/big"
 	"net/http"
 	"net/http/httptest"
 	"sync"
 	"testing"
 
+	"github.com/ethereum/go-ethereum"
+	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/core/types"
+	"github.com/ethereum/go-ethereum/crypto"
+
 	"github.com/invisi-lab/invisi-sdk-go/core"
+	transaction "github.com/invisi-lab/invisi-sdk-go/internal/transaction"
+	"github.com/invisi-lab/invisi-sdk-go/protocol"
 	protocolrpc "github.com/invisi-lab/invisi-sdk-go/rpc"
+	sdk "github.com/invisi-lab/invisi-sdk-go/sdk"
 )
 
 func TestMemoPreparationCopiesAndPersists(t *testing.T) {

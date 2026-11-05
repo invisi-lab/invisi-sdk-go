@@ -4,8 +4,9 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"github.com/ethereum/go-ethereum/common"
 	"strings"
+
+	"github.com/ethereum/go-ethereum/common"
 )
 
 type RegisteredBroadcaster struct {

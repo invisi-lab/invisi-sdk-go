@@ -3,14 +3,13 @@ package session
 import (
 	"context"
 	"errors"
+	"math/big"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
+
 	transaction "github.com/invisi-lab/invisi-sdk-go/internal/transaction"
 	"github.com/invisi-lab/invisi-sdk-go/protocol/contracts"
-
-	"math/big"
-
 	protocolrpc "github.com/invisi-lab/invisi-sdk-go/rpc"
 )
 

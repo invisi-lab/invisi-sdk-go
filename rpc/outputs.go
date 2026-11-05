@@ -6,218 +6,24 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"strconv"
-	"strings"
 
 	"github.com/ethereum/go-ethereum/common"
+
 	"github.com/invisi-lab/invisi-sdk-go/core"
 )
 
-// ProtocolOutput is an indexed opaque delivery. Authenticate decryption and membership before spending.
-type ProtocolOutput struct {
-	Block            CanonicalBlock
-	TreeID           uint64
-	LeafIndex        uint32
-	Commitment       common.Hash
-	TokenAddress     common.Address
-	Ciphertext, Clue []byte
-	TransactionHash  common.Hash
-	LogIndex         uint32
-	Kind             string
-}
-type ProtocolOutputs struct {
-	Block   CanonicalBlock
-	Outputs []ProtocolOutput
-}
-type RegisteredReceivingAddress struct {
-	ReceivingAddress string
-	Nonce            uint64
-	Block            CanonicalBlock
-}
-
-func wireObject(raw json.RawMessage) (map[string]json.RawMessage, error) {
-	var m map[string]json.RawMessage
-	e := json.Unmarshal(raw, &m)
-	if e != nil || m == nil {
-		return nil, errors.New("expected RPC object")
-	}
-	return m, nil
-}
-func wireUint(raw json.RawMessage, bits int) (uint64, error) {
-	s := string(raw)
-	quoted := strings.HasPrefix(s, "\"")
-	if quoted {
-		if json.Unmarshal(raw, &s) != nil {
-			return 0, errors.New("invalid RPC integer")
-		}
-	}
-	if s == "" || (len(s) > 1 && s[0] == '0') {
-		return 0, errors.New("invalid RPC integer")
-	}
-	for _, c := range s {
-		if c < '0' || c > '9' {
-			return 0, errors.New("invalid RPC integer")
-		}
-	}
-	n, e := strconv.ParseUint(s, 10, bits)
-	if e == nil && !quoted && n > 1<<53-1 {
-		e = errors.New("unsafe RPC integer")
-	}
-	return n, e
-}
-func wireBytes(raw json.RawMessage, min, max int) ([]byte, error) {
-	var s string
-	if json.Unmarshal(raw, &s) != nil || !strings.HasPrefix(s, "0x") {
-		return nil, errors.New("invalid RPC hex")
-	}
-	b, e := hex.DecodeString(s[2:])
-	if e != nil || len(b) < min || len(b) > max {
-		return nil, errors.New("invalid RPC bytes")
-	}
-	return b, nil
-}
-func wireHash(raw json.RawMessage) (common.Hash, error) {
-	b, e := wireBytes(raw, 32, 32)
-	return common.BytesToHash(b), e
-}
-func wireBlock(raw json.RawMessage) (CanonicalBlock, error) {
-	m, e := wireObject(raw)
-	if e != nil {
-		return CanonicalBlock{}, e
-	}
-	var b CanonicalBlock
-	if b.Number, e = wireUint(m["number"], 64); e != nil {
-		return b, e
-	}
-	if b.Timestamp, e = wireUint(m["timestamp"], 64); e != nil {
-		return b, e
-	}
-	if b.Hash, e = wireHash(m["hash"]); e != nil {
-		return b, e
-	}
-	b.ParentHash, e = wireHash(m["parentHash"])
-	return b, e
-}
-func parseOutput(raw json.RawMessage) (ProtocolOutput, error) {
-	var o ProtocolOutput
-	m, e := wireObject(raw)
-	if e != nil {
-		return o, e
-	}
-	if o.Block, e = wireBlock(m["block"]); e != nil {
-		return o, e
-	}
-	if o.TreeID, e = wireUint(m["treeId"], 64); e != nil || o.TreeID == 0 {
-		return o, errors.New("invalid output tree")
-	}
-	n, e := wireUint(m["leafIndex"], 16)
-	if e != nil {
-		return o, e
-	}
-	o.LeafIndex = uint32(n)
-	if o.Commitment, e = wireHash(m["commitment"]); e != nil {
-		return o, e
-	}
-	if _, e = core.HexToElement(o.Commitment.Hex()); e != nil {
-		return o, e
-	}
-	b, e := wireBytes(m["token"], 20, 20)
-	if e != nil {
-		return o, e
-	}
-	o.TokenAddress = common.BytesToAddress(b)
-	if o.TokenAddress == (common.Address{}) {
-		return o, errors.New("invalid output token")
-	}
-	if o.Ciphertext, e = wireBytes(m["ciphertext"], 0, 4096); e != nil {
-		return o, e
-	}
-	clueSize := 68
-	if len(o.Ciphertext) == 0 {
-		clueSize = 0
-	}
-	if o.Clue, e = wireBytes(m["clue"], clueSize, clueSize); e != nil {
-		return o, e
-	}
-	if o.TransactionHash, e = wireHash(m["transactionHash"]); e != nil {
-		return o, e
-	}
-	n, e = wireUint(m["logIndex"], 32)
-	if e != nil {
-		return o, e
-	}
-	o.LogIndex = uint32(n)
-	if json.Unmarshal(m["kind"], &o.Kind) != nil || o.Kind == "" {
-		return o, errors.New("invalid output kind")
-	}
-	return o, nil
-}
-func (c *ProtocolRpcClient) GetReceivingAddress(ctx context.Context, owner common.Address) (*RegisteredReceivingAddress, error) {
-	if owner == (common.Address{}) {
-		return nil, errors.New("invalid receiving-address owner")
-	}
-	c.mu.Lock()
-	var d ProtocolDeployment
-	if c.deployment != nil {
-		d = cloneDeployment(*c.deployment)
-	}
-	c.mu.Unlock()
-	if d.Registry == nil {
-		return nil, errors.New("deployment has no receiving-key registry")
-	}
-	chain, e := d.ChainNumber()
-	if e != nil {
-		return nil, e
-	}
-	var raw json.RawMessage
-	if e = c.call(ctx, chain.Uint64(), "invisi_getReceivingAddress", []any{owner.Hex()}, &raw); e != nil {
-		return nil, e
-	}
-	if string(raw) == "null" {
-		return nil, nil
-	}
-	m, e := wireObject(raw)
-	if e != nil {
-		return nil, e
-	}
-	identity, e := wireBytes(m["ownerAddress"], 20, 20)
-	if e != nil || common.BytesToAddress(identity) != owner {
-		return nil, errors.New("RPC receiving-address identity mismatch")
-	}
-	view, e := wireBytes(m["viewingPublicKey"], 33, 33)
-	if e != nil {
-		return nil, e
-	}
-	clue, e := wireBytes(m["clueKey"], 32, 32)
-	if e != nil {
-		return nil, e
-	}
-	address, e := core.EncodeLongAddress(core.ReceivingAddress{OwnerAddress: core.BigIntToElement(owner.Big()), ViewingPublicKey: view, ClueKey: clue})
-	if e != nil {
-		return nil, e
-	}
-	block, e := wireBlock(m["block"])
-	if e != nil {
-		return nil, e
-	}
-	if block.Number < d.Registry.FromBlock {
-		return nil, errors.New("registry index predates deployment")
-	}
-	nonce, e := wireUint(m["nonce"], 64)
-	if e != nil {
-		return nil, e
-	}
-	return &RegisteredReceivingAddress{address, nonce, block}, nil
-}
 func (c *ProtocolRpcClient) GetOutputs(ctx context.Context, d DeploymentContext, r ProtocolUpdateRange) (ProtocolOutputs, error) {
 	return c.readOutputs(ctx, d, r, 0)
 }
+
 func (c *ProtocolRpcClient) GetCreditOutputs(ctx context.Context, d DeploymentContext, r ProtocolUpdateRange) (ProtocolOutputs, error) {
 	return c.readOutputs(ctx, d, r, 1)
 }
+
 func (c *ProtocolRpcClient) GetEncryptedOutputs(ctx context.Context, d DeploymentContext, r ProtocolUpdateRange) (ProtocolOutputs, error) {
 	return c.readOutputs(ctx, d, r, 2)
 }
+
 func (c *ProtocolRpcClient) readOutputs(ctx context.Context, d DeploymentContext, r ProtocolUpdateRange, mode int) (ProtocolOutputs, error) {
 	var result ProtocolOutputs
 	deployment, e := c.context(d)

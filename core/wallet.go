@@ -14,6 +14,8 @@ import (
 	ethmath "github.com/ethereum/go-ethereum/common/math"
 	ethcrypto "github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/signer/core/apitypes"
+
+	"github.com/invisi-lab/invisi-sdk-go/internal/cryptography/fmd"
 )
 
 // InvisiWallet is a private key group. Never serialize it into payment requests,
@@ -68,18 +70,15 @@ func walletScalar(key []byte, salt string, littleEndian bool) ([]byte, error) {
 		if e != nil {
 			return nil, e
 		}
-		var n *big.Int
 		if littleEndian {
 			candidate[31] &= 7
-			n = decafReadLE(candidate)
-		} else {
-			n = new(big.Int).SetBytes(candidate)
+			if fmd.IsCanonicalDetectionKey(candidate) {
+				return candidate, nil
+			}
+			continue
 		}
-		modulus := ethcrypto.S256().Params().N
-		if littleEndian {
-			modulus = decafScalarOrder
-		}
-		if n.Sign() > 0 && n.Cmp(modulus) < 0 {
+		n := new(big.Int).SetBytes(candidate)
+		if n.Sign() > 0 && n.Cmp(ethcrypto.S256().Params().N) < 0 {
 			return candidate, nil
 		}
 	}

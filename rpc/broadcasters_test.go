@@ -3,11 +3,12 @@ package rpc
 import (
 	"context"
 	"encoding/json"
-	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/crypto"
 	"net/http"
 	"net/http/httptest"
 	"testing"
+
+	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/crypto"
 )
 
 func TestBroadcasterDiscoveryPinsPagesAndRegistration(t *testing.T) {

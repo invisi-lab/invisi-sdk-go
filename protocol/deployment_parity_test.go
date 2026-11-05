@@ -1,9 +1,11 @@
 package protocol
 
 import (
-	"github.com/ethereum/go-ethereum/common"
-	"github.com/invisi-lab/invisi-sdk-go/rpc"
 	"testing"
+
+	"github.com/ethereum/go-ethereum/common"
+
+	"github.com/invisi-lab/invisi-sdk-go/rpc"
 )
 
 func TestBroadcasterRegistryDeploymentSnapshot(t *testing.T) {

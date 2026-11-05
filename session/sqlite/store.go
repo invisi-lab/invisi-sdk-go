@@ -7,8 +7,9 @@ import (
 	"errors"
 	"sync"
 
-	"github.com/invisi-lab/invisi-sdk-go/session"
 	_ "modernc.org/sqlite"
+
+	"github.com/invisi-lab/invisi-sdk-go/session"
 )
 
 type WalletStore struct {

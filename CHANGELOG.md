@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Organize public SDK entry files by capability, isolate cryptographic and gas implementations, and split transaction, Credit, RPC and session workflows into focused source files.
+- Align reference synchronization and fixture generators with the current TypeScript functional module layout.
+
 - Separate managed wallet sessions, history, inventory, operations and storage into `session` and `session/sqlite`.
 - Keep `sdk` preparation stateless, remove `Invisi.Connect` and the infrastructure Store option, and share transaction algorithms through an internal engine.
 - Preserve numbered flat examples with explicit session composition and external transaction submission.

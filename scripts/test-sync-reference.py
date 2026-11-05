@@ -15,10 +15,10 @@ TS = pathlib.Path(os.environ.get("INVISI_TS_ROOT", str(ROOT.parent / "invisi-sdk
 
 class SynchronizationTests(unittest.TestCase):
     def test_proving_only_import_does_not_publish_gas_catalog(self):
-        before = (ROOT / "internal/transaction/data/gas-benchmarks.json").read_bytes()
+        before = (ROOT / "internal/gas/data/gas-benchmarks.json").read_bytes()
         result = subprocess.run([sys.executable, str(ROOT / "scripts/sync-reference.py"), "--proving-only", str(TS), str(PROTOCOL)], capture_output=True)
         self.assertEqual(result.returncode, 0, result.stderr.decode())
-        self.assertEqual(before, (ROOT / "internal/transaction/data/gas-benchmarks.json").read_bytes())
+        self.assertEqual(before, (ROOT / "internal/gas/data/gas-benchmarks.json").read_bytes())
         layouts = json.loads((ROOT / "prover/witness-layouts.json").read_text())
         self.assertIn("input_owner_address", layouts["transact_user_slots14"]["private"])
         self.assertIn("output_identities", layouts["transact_user_slots14"]["private"])
@@ -27,16 +27,16 @@ class SynchronizationTests(unittest.TestCase):
         before = (ROOT / "prover/native/circuits/manifest.json").read_bytes()
         with tempfile.TemporaryDirectory(prefix="invisi-envelope-sync-test-") as directory:
             checkout = pathlib.Path(directory)
-            for relative in ("packages/prover/circuits", "packages/sdk/src/data", "packages/protocol/src"):
+            for relative in ("packages/prover/circuits", "packages/sdk/src/gas/data", "packages/protocol/src", "packages/core/src/fmd/testdata"):
                 destination = checkout / relative
                 destination.parent.mkdir(parents=True, exist_ok=True)
                 destination.symlink_to(TS / relative, target_is_directory=True)
-            destination = checkout / "packages/core/src/testdata"
+            destination = checkout / "packages/core/src/wallet/testdata"
             destination.mkdir(parents=True)
-            for path in (TS / "packages/core/src/testdata").iterdir():
+            for path in (TS / "packages/core/src/wallet/testdata").iterdir():
                 if path.name != "wallet-note-vectors.json":
                     (destination / path.name).symlink_to(path)
-            vectors = json.loads((TS / "packages/core/src/testdata/wallet-note-vectors.json").read_text())
+            vectors = json.loads((TS / "packages/core/src/wallet/testdata/wallet-note-vectors.json").read_text())
             vectors["credit"]["deliverySource"]["envelopeVersion"] = 5
             (destination / "wallet-note-vectors.json").write_text(json.dumps(vectors))
             result = subprocess.run([sys.executable, "-O", str(ROOT / "scripts/sync-reference.py"), str(checkout), str(PROTOCOL)], capture_output=True)
@@ -45,23 +45,23 @@ class SynchronizationTests(unittest.TestCase):
         self.assertEqual(before, (ROOT / "prover/native/circuits/manifest.json").read_bytes())
 
     def test_stale_credit_gas_fingerprint_rejected_before_writes(self):
-        before = (ROOT / "internal/transaction/data/gas-benchmarks.json").read_bytes()
+        before = (ROOT / "internal/gas/data/gas-benchmarks.json").read_bytes()
         with tempfile.TemporaryDirectory(prefix="invisi-gas-sync-test-") as directory:
             checkout = pathlib.Path(directory)
-            for relative in ("packages/prover/circuits", "packages/core/src/testdata", "packages/protocol/src"):
+            for relative in ("packages/prover/circuits", "packages/core/src/wallet/testdata", "packages/core/src/fmd/testdata", "packages/protocol/src"):
                 destination = checkout / relative
                 destination.parent.mkdir(parents=True, exist_ok=True)
                 destination.symlink_to(TS / relative, target_is_directory=True)
-            destination = checkout / "packages/sdk/src/data"
+            destination = checkout / "packages/sdk/src/gas/data"
             destination.mkdir(parents=True)
-            profiles = json.loads((TS / "packages/sdk/src/data/gas-benchmarks.json").read_text())
+            profiles = json.loads((TS / "packages/sdk/src/gas/data/gas-benchmarks.json").read_text())
             credit = next(measurement for profile in profiles for measurement in profile["measurements"] if "credit" in measurement["shape"]["kind"])
             credit["circuit"]["artifactSha256"] = "0" * 64
             (destination / "gas-benchmarks.json").write_text(json.dumps(profiles))
             result = subprocess.run([sys.executable, "-O", str(ROOT / "scripts/sync-reference.py"), str(checkout), str(PROTOCOL)], capture_output=True)
             self.assertNotEqual(result.returncode, 0, "stale Credit gas catalog was published")
             self.assertIn(b"stale Credit gas circuit", result.stderr)
-        self.assertEqual(before, (ROOT / "internal/transaction/data/gas-benchmarks.json").read_bytes())
+        self.assertEqual(before, (ROOT / "internal/gas/data/gas-benchmarks.json").read_bytes())
 
     def test_retired_credit_manifest_rejected_even_when_optimized(self):
         before = (ROOT / "prover/native/circuits/manifest.json").read_bytes()

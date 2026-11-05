@@ -11,12 +11,12 @@ import (
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
+
 	"github.com/invisi-lab/invisi-sdk-go/core"
 	transaction "github.com/invisi-lab/invisi-sdk-go/internal/transaction"
 	"github.com/invisi-lab/invisi-sdk-go/protocol"
-	sdk "github.com/invisi-lab/invisi-sdk-go/sdk"
-
 	protocolrpc "github.com/invisi-lab/invisi-sdk-go/rpc"
+	sdk "github.com/invisi-lab/invisi-sdk-go/sdk"
 )
 
 func TestHistoryDetachedBusinessRecordsAndIndependentDiscovery(t *testing.T) {

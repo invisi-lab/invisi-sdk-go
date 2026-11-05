@@ -1,7 +1,5 @@
 package protocol
 
-import ()
-
 // BuildApproveCalldata encodes an ERC20 approve(spender, amount) call.
 // Returns the token contract address as `To` and the encoded calldata.
 func BuildApproveCalldata(params ApproveParams) (*ApproveCalldata, error) {

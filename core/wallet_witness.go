@@ -3,9 +3,9 @@ package core
 import (
 	"bytes"
 	"fmt"
-	"github.com/consensys/gnark-crypto/ecc/bn254/fr"
 	"math/big"
 
+	"github.com/consensys/gnark-crypto/ecc/bn254/fr"
 	ethcrypto "github.com/ethereum/go-ethereum/crypto"
 )
 

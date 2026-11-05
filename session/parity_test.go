@@ -8,11 +8,11 @@ import (
 	"testing"
 
 	"github.com/ethereum/go-ethereum/common"
+
 	transaction "github.com/invisi-lab/invisi-sdk-go/internal/transaction"
 	"github.com/invisi-lab/invisi-sdk-go/prover"
-	sdk "github.com/invisi-lab/invisi-sdk-go/sdk"
-
 	protocolrpc "github.com/invisi-lab/invisi-sdk-go/rpc"
+	sdk "github.com/invisi-lab/invisi-sdk-go/sdk"
 )
 
 type failingLocalProver struct{ *testProver }

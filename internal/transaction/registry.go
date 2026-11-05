@@ -1,18 +1,16 @@
 package transaction
 
 import (
-	"bytes"
 	"context"
 	"errors"
 	"math/big"
 	"sync"
 
 	"github.com/consensys/gnark-crypto/ecc/bn254/fr"
-	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/signer/core/apitypes"
+
 	"github.com/invisi-lab/invisi-sdk-go/core"
 	"github.com/invisi-lab/invisi-sdk-go/protocol"
 	"github.com/invisi-lab/invisi-sdk-go/protocol/contracts"
@@ -176,17 +174,6 @@ func (r *AddressRegistry) PrepareRegistration(ctx context.Context, options Regis
 	return operation, nil
 }
 
-func (o *RegistrationOperation) Preview() RegistrationPreview {
-	o.mu.Lock()
-	defer o.mu.Unlock()
-	preview := RegistrationPreview{RegistryAddress: o.registry.deployment.Address, OwnerAddress: o.wallet.identity, Update: o.options.Update, Nonce: o.registration.Nonce, Deadline: o.registration.Deadline, Status: o.status, ReceivingKeys: core.ReceivingKeys{ViewingPublicKey: append([]byte(nil), o.registration.Keys.ViewingPublicKey...), ClueKey: append([]byte(nil), o.registration.Keys.ClueKey[:]...)}}
-	if o.receiptBlock != nil {
-		block := *o.receiptBlock
-		preview.ReceiptBlock = &block
-	}
-	return preview
-}
-
 func (o *RegistrationOperation) String() string {
 	return "RegistrationOperation([authorization redacted])"
 }
@@ -249,197 +236,4 @@ func (o *RegistrationOperation) withSignatureInternal(ctx context.Context, suppl
 	o.data = append([]byte(nil), call.Data...)
 	o.status = "ready"
 	return o, nil
-}
-
-func (o *RegistrationOperation) ExportTransaction(ctx context.Context) (TransactionCall, error) {
-	if err := ctx.Err(); err != nil {
-		return TransactionCall{}, err
-	}
-	o.lifecycle.mu.Lock()
-	defer o.lifecycle.mu.Unlock()
-	if o.lifecycle.busy || o.lifecycle.generation != o.generation {
-		return TransactionCall{}, errors.New("registration handle is busy or stale")
-	}
-
-	o.mu.Lock()
-	defer o.mu.Unlock()
-	if len(o.data) == 0 || o.status == "prepared" {
-		return TransactionCall{}, errors.New("authorized registration required")
-	}
-	if _, err := o.currentContext(ctx); err != nil {
-		return TransactionCall{}, err
-	}
-	return TransactionCall{To: o.registry.deployment.Address, Data: append([]byte(nil), o.data...), Value: new(big.Int)}, nil
-}
-
-// currentContext rejects a stale signature before signing or exporting it.
-func (o *RegistrationOperation) currentContext(ctx context.Context) (protocol.RegistryContext, error) {
-	current := o.context
-	if err := o.registry.ValidateDeployment(ctx); err != nil {
-		return current, err
-	}
-	head, err := o.registry.provider.HeaderByNumber(ctx, nil)
-	if err != nil {
-		return current, err
-	}
-	if head == nil || head.Number == nil || !head.Number.IsUint64() {
-		return current, errors.New("latest block unavailable")
-	}
-	if head.Time > o.registration.Deadline {
-		return current, errors.New("registration expired")
-	}
-	caller, err := contracts.NewInvisiAddressRegistryCaller(o.registry.deployment.Address, o.registry.provider)
-	if err != nil {
-		return current, err
-	}
-	nonce, err := caller.NonceOf(&bind.CallOpts{Context: ctx, BlockNumber: head.Number}, o.registration.OwnerAddress)
-	if err != nil {
-		return current, err
-	}
-	if nonce != o.registration.Nonce {
-		return current, errors.New("registry nonce changed; prepare again")
-	}
-	canonical, err := o.registry.provider.HeaderByNumber(ctx, head.Number)
-	if err != nil {
-		return current, err
-	}
-	if canonical == nil || canonical.Number == nil || canonical.Number.Cmp(head.Number) != 0 || canonical.Hash() != head.Hash() {
-		return current, errors.New("registration read block is not canonical")
-	}
-	current.Now = new(big.Int).SetUint64(head.Time)
-	return current, nil
-}
-
-func (o *RegistrationOperation) trackInternal(ctx context.Context, hash common.Hash) (*RegistrationOperation, error) {
-	o.mu.Lock()
-	defer o.mu.Unlock()
-	if err := ctx.Err(); err != nil {
-		return nil, err
-	}
-	if hash == (common.Hash{}) || (o.status != "ready" && o.status != "uncertain") {
-		return nil, errors.New("ready registration and transaction hash required")
-	}
-	o.transactionHash, o.status = hash, "uncertain"
-	o.receiptBlock = nil
-	return o, nil
-}
-
-func (o *RegistrationOperation) reconcileInternal(ctx context.Context) (Confirmation, error) {
-	o.mu.Lock()
-	defer o.mu.Unlock()
-	result := Confirmation{o.status, o.transactionHash}
-	if o.transactionHash == (common.Hash{}) {
-		return result, errors.New("registration is not submitted")
-	}
-	uncertain := func() (Confirmation, error) {
-		o.status = "uncertain"
-		o.receiptBlock = nil
-		return Confirmation{o.status, o.transactionHash}, nil
-	}
-	receipt, err := o.registry.provider.TransactionReceipt(ctx, o.transactionHash)
-	if errors.Is(err, ethereum.NotFound) {
-		return uncertain()
-	}
-	if err != nil {
-		return result, err
-	}
-	if receipt == nil {
-		return uncertain()
-	}
-	if receipt.TxHash != o.transactionHash || receipt.BlockNumber == nil || !receipt.BlockNumber.IsUint64() {
-		return result, errors.New("registration receipt transaction or block mismatch")
-	}
-	var receiptHeader *types.Header
-	canonical := func() (bool, error) {
-		header, err := o.registry.provider.HeaderByNumber(ctx, receipt.BlockNumber)
-		if err != nil {
-			return false, err
-		}
-		valid := header != nil && header.Number != nil && header.Number.Cmp(receipt.BlockNumber) == 0 && header.Hash() == receipt.BlockHash
-		if valid {
-			receiptHeader = types.CopyHeader(header)
-		}
-		return valid, nil
-	}
-	valid, err := canonical()
-	if err != nil {
-		return result, err
-	}
-	if !valid {
-		return uncertain()
-	}
-	reader, ok := o.registry.provider.(interface {
-		TransactionByHash(context.Context, common.Hash) (*types.Transaction, bool, error)
-	})
-	if !ok {
-		return result, errors.New("provider must authenticate registration calldata")
-	}
-	transaction, pending, err := reader.TransactionByHash(ctx, o.transactionHash)
-	if err != nil {
-		return result, err
-	}
-	if pending || transaction == nil || transaction.Hash() != o.transactionHash || transaction.To() == nil || *transaction.To() != o.registry.deployment.Address || !bytes.Equal(transaction.Data(), o.data) || transaction.Value().Sign() != 0 {
-		return result, errors.New("registration transaction mismatch")
-	}
-	if o.direct {
-		sender, err := types.Sender(types.LatestSignerForChainID(o.context.ChainID), transaction)
-		if err != nil || sender != o.wallet.identity {
-			return result, errors.New("direct registration sender differs from owner")
-		}
-	}
-	status := "failed"
-	if receipt.Status == types.ReceiptStatusSuccessful {
-		if err = o.registry.ValidateDeployment(ctx); err != nil {
-			return result, err
-		}
-		if err = o.verifyReceivingKeysEvent(receipt); err != nil {
-			return result, err
-		}
-		status = "confirmed"
-	}
-	// RPC calls above can cross a reorganization. Recheck the receipt anchor
-	// after authenticating calldata and the transaction's own event.
-	valid, err = canonical()
-	if err != nil {
-		return result, err
-	}
-	if !valid {
-		return uncertain()
-	}
-	o.status = status
-	o.receiptBlock = &protocolrpc.CanonicalBlock{Number: receipt.BlockNumber.Uint64(), Hash: receipt.BlockHash, ParentHash: receiptHeader.ParentHash, Timestamp: receiptHeader.Time}
-	return Confirmation{o.status, o.transactionHash}, nil
-}
-
-func (o *RegistrationOperation) verifyReceivingKeysEvent(receipt *types.Receipt) error {
-	parsed, err := contracts.InvisiAddressRegistryMetaData.GetAbi()
-	if err != nil {
-		return err
-	}
-	filterer, err := contracts.NewInvisiAddressRegistryFilterer(o.registry.deployment.Address, nil)
-	if err != nil {
-		return err
-	}
-	count := 0
-	eventID := parsed.Events["ReceivingKeysSet"].ID
-	for _, log := range receipt.Logs {
-		if log == nil || log.Address != o.registry.deployment.Address || len(log.Topics) == 0 || log.Topics[0] != eventID {
-			continue
-		}
-		if log.Removed || log.BlockHash != receipt.BlockHash || log.BlockNumber != receipt.BlockNumber.Uint64() || log.TxHash != receipt.TxHash || log.TxIndex != receipt.TransactionIndex || len(log.Topics) != 2 {
-			return errors.New("registration event transaction or block mismatch")
-		}
-		event, err := filterer.ParseReceivingKeysSet(*log)
-		if err != nil {
-			return err
-		}
-		if event.WalletIdentity != o.registration.OwnerAddress || !bytes.Equal(event.ViewingPublicKey, o.registration.Keys.ViewingPublicKey) || event.ClueKey != o.registration.Keys.ClueKey || event.NextNonce != o.registration.Nonce+1 {
-			return errors.New("registration event differs from authorized keys")
-		}
-		count++
-	}
-	if count != 1 {
-		return errors.New("exactly one authorized receiving-key event required")
-	}
-	return nil
 }

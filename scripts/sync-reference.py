@@ -92,7 +92,7 @@ if proving_only:
     print("Synced authenticated current protocol proving assets and layouts; gas and SDK vectors unchanged")
     sys.exit(0)
 
-gas_catalog = (source / 'packages/sdk/src/data/gas-benchmarks.json').read_bytes()
+gas_catalog = (source / 'packages/sdk/src/gas/data/gas-benchmarks.json').read_bytes()
 for profile in json.loads(gas_catalog):
     for measurement in profile['measurements']:
         if 'credit' not in measurement['shape']['kind']:
@@ -101,10 +101,10 @@ for profile in json.loads(gas_catalog):
         release = release_entries.get(circuit.get('circuitName'))
         key = release.get('keys', {}).get(circuit.get('target')) if release else None
         require(release and key and circuit.get('artifactSha256') == release['artifactSha256'] and circuit.get('vkSha256') == key['vkSha256'], 'stale Credit gas circuit')
-gas_vectors = (source / 'packages/sdk/src/data/gas-reference-vectors.json').read_bytes()
+gas_vectors = (source / 'packages/sdk/src/gas/data/gas-reference-vectors.json').read_bytes()
 require(json.loads(gas_vectors).get('catalogSha256') == digest(gas_catalog), 'stale gas reference vectors')
 # Authenticate transport fixtures before publishing any files. Never fall back to retired docs vectors.
-vector_root = source / 'packages/core/src/testdata'
+vector_root = source / 'packages/core/src/wallet/testdata'
 wallet_vectors = json.loads((vector_root / 'wallet-note-vectors.json').read_text())
 for name, header, client in (('note', 1, 'private-transfer-client.mjs'), ('credit', 129, 'create-credit-client.mjs')):
     value = wallet_vectors[name]
@@ -119,11 +119,13 @@ for name, header, client in (('note', 1, 'private-transfer-client.mjs'), ('credi
         require(raw[0] == header and len(raw) == provenance.get('ciphertextBytes') and len(raw) <= 4096,
                 'retired/unauthenticated delivery vector bytes')
 publish_proving()
-for name in ('wallet-note-vectors.json', 'wallet-authorization-vectors.json', 'wallet-kdf-vectors.json', 'fmd-rust-vectors.json', 'decaf377-clue-keys.json'):
+for name in ('wallet-note-vectors.json', 'wallet-authorization-vectors.json', 'wallet-kdf-vectors.json'):
     origin = vector_root / name
     shutil.copyfile(origin, root / 'core/testdata' / name)
-shutil.copyfile(source / 'packages/protocol/src/testdata/address-registration-vectors.json', root / 'protocol/testdata/address-registration-vectors.json')
-(root / 'internal/transaction/data/gas-benchmarks.json').write_bytes(gas_catalog)
+for name in ('fmd-rust-vectors.json', 'decaf377-clue-keys.json'):
+    shutil.copyfile(source / 'packages/core/src/fmd/testdata' / name, root / 'internal/cryptography/fmd/testdata' / name)
+shutil.copyfile(source / 'packages/protocol/src/registry/testdata/address-registration-vectors.json', root / 'protocol/testdata/address-registration-vectors.json')
+(root / 'internal/gas/data/gas-benchmarks.json').write_bytes(gas_catalog)
 (root / 'session/testdata/gas-reference-vectors.json').write_bytes(gas_vectors)
 shutil.copyfile(source / 'packages/protocol/src/protocol-vectors.json', root / 'protocol/protocol-vectors.json')
 print('Synced authenticated current protocol assets, layouts and SDK reference vectors')

@@ -8,8 +8,10 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/signer/core/apitypes"
+
 	"github.com/invisi-lab/invisi-sdk-go/broadcaster"
 	"github.com/invisi-lab/invisi-sdk-go/core"
+	gasmodel "github.com/invisi-lab/invisi-sdk-go/internal/gas"
 	transaction "github.com/invisi-lab/invisi-sdk-go/internal/transaction"
 	"github.com/invisi-lab/invisi-sdk-go/protocol"
 	sdk "github.com/invisi-lab/invisi-sdk-go/sdk"
@@ -132,7 +134,7 @@ func (o *Operation) EstimateGas() (sdk.GasReference, error) {
 	result0, result1 := execution.EstimateGas()
 	return result0, result1
 }
-func (o *Operation) gasRequest() (transaction.GasEstimateRequest, error) {
+func (o *Operation) gasRequest() (gasmodel.GasEstimateRequest, error) {
 	execution := o.execution()
 	result0, result1 := execution.GasRequest()
 	return result0, result1

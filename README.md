@@ -118,6 +118,24 @@ A timeout does not release potentially externalized inputs. Persist a broadcast 
 
 Chain RPC supplies contract reads, canonical blocks/receipts and submission. Protocol RPC supplies indexed public records and candidate filtering. Detection keys only delegate filtering; they do not decrypt notes or authorize spending. Applications remain responsible for trusted endpoints, keys, reservations in detached workflows and durable broadcast tracking.
 
+## Source organization
+
+Public Go import paths remain stable. The `sdk` package is a capability entrypoint, with focused client, wallet, note, funding, transaction, Credit, registry, broadcaster, gas and disclosure files. It owns no managed wallet state.
+
+Go receiver methods and private state stay in their owning package. Related files use descriptive feature names instead of introducing subpackages that depend on each other:
+
+| Package | Implementation responsibilities |
+| --- | --- |
+| `core` | Wallet authorization, receiving addresses, note/Credit commitments, delivery types, envelope cryptography, payloads and recovery |
+| `protocol` | Funds/Shield/aggregate requests, separate Credit create/draw/cancel/top-up encoders, registry and contract readers |
+| `rpc` | Client configuration, HTTP transport, service discovery, response values, output validation and indexed queries |
+| `prover` | Public interfaces, private witness access, authenticated statements, proof verification and aggregation |
+| `prover/native` | Explicit local proving backend and authenticated resources |
+| `session` | Composition, inventory, canonical synchronization, history, operation stages, reservations, recovery and storage |
+| `broadcaster` | Bound intents, quotes, submissions and status |
+
+Independent implementations live under `internal/cryptography/{field,poseidon,fmd}` and `internal/gas`. The shared `internal/transaction` engine separates funds/Credit preparation, recipient lookup, signing, proving, calldata, fee rebuilding and registry reconciliation into focused files. Applications use public package entries rather than internal implementations. Tests stay with the capability they verify; fixtures and their generators move together. Generated bindings, circuit artifacts and wire-vector bytes are preserved.
+
 ## Single-transaction indexed updates
 
 Protocol RPC service 1.1.4+ supports one-transaction lookup with an independently configured Chain RPC provider:

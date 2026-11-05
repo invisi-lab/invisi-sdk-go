@@ -9,9 +9,9 @@ import (
 	"errors"
 	"sync"
 
-	transaction "github.com/invisi-lab/invisi-sdk-go/internal/transaction"
-
 	"github.com/ethereum/go-ethereum/common"
+
+	transaction "github.com/invisi-lab/invisi-sdk-go/internal/transaction"
 	protocolrpc "github.com/invisi-lab/invisi-sdk-go/rpc"
 )
 

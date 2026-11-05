@@ -2,8 +2,9 @@ package protocol
 
 import (
 	"fmt"
-	"github.com/ethereum/go-ethereum/common"
 	"math/big"
+
+	"github.com/ethereum/go-ethereum/common"
 )
 
 func normalizeFee(recipient common.Address, amount *big.Int) (*big.Int, error) {

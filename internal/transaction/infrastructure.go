@@ -8,7 +8,9 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
+
 	"github.com/invisi-lab/invisi-sdk-go/core"
+	gasmodel "github.com/invisi-lab/invisi-sdk-go/internal/gas"
 	protocolrpc "github.com/invisi-lab/invisi-sdk-go/rpc"
 )
 
@@ -18,7 +20,7 @@ type Provider interface {
 }
 
 type InvisiOptions struct {
-	GasBenchmarks   []GasBenchmarkProfile
+	GasBenchmarks   []gasmodel.GasBenchmarkProfile
 	ProtocolRPC     *protocolrpc.ProtocolRpcClient
 	Provider        Provider
 	Prover          Prover
@@ -28,7 +30,7 @@ type InvisiOptions struct {
 type Invisi struct{ options InvisiOptions }
 
 func NewInvisi(options InvisiOptions) *Invisi {
-	options.GasBenchmarks = CopyGasProfiles(options.GasBenchmarks)
+	options.GasBenchmarks = gasmodel.CopyGasProfiles(options.GasBenchmarks)
 	return &Invisi{options}
 }
 

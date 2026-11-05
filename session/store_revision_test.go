@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/ethereum/go-ethereum/common"
+
 	protocolrpc "github.com/invisi-lab/invisi-sdk-go/rpc"
 )
 

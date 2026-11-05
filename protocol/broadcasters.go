@@ -3,7 +3,9 @@ package protocol
 import (
 	"context"
 	"errors"
+
 	"github.com/ethereum/go-ethereum/common"
+
 	"github.com/invisi-lab/invisi-sdk-go/broadcaster"
 	protocolrpc "github.com/invisi-lab/invisi-sdk-go/rpc"
 )

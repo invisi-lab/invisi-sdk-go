@@ -8,7 +8,7 @@ const root=resolve(fileURLToPath(new URL('..',import.meta.url)));
 const ts=resolve(process.argv[2]??join(root,'../invisi-sdk-ts'));
 const protocol=resolve(process.argv[3]??join(root,'../invisi-protocol'));
 const {Disclosure}=await import(pathToFileURL(join(ts,'packages/core/dist/index.js')).href);
-const v=JSON.parse(readFileSync(join(ts,'packages/core/src/testdata/wallet-note-vectors.json'),'utf8'));
+const v=JSON.parse(readFileSync(join(ts,'packages/core/src/wallet/testdata/wallet-note-vectors.json'),'utf8'));
 for(const [kind,header,client] of [['note',1,'private-transfer-client.mjs'],['credit',129,'create-credit-client.mjs']]) {
  const value=v[kind], provenance=value.deliverySource;
  assert.equal(provenance.envelopeVersion,1,'current authenticated envelope v1 vectors required');

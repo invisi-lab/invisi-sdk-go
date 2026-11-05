@@ -3,13 +3,15 @@ package protocol
 import (
 	"context"
 	"encoding/json"
-	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/crypto"
-	"github.com/invisi-lab/invisi-sdk-go/broadcaster"
-	protocolrpc "github.com/invisi-lab/invisi-sdk-go/rpc"
 	"net/http"
 	"net/http/httptest"
 	"testing"
+
+	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/crypto"
+
+	"github.com/invisi-lab/invisi-sdk-go/broadcaster"
+	protocolrpc "github.com/invisi-lab/invisi-sdk-go/rpc"
 )
 
 func TestDiscoveryReturnsTokenCompatibleRegisteredClient(t *testing.T) {
