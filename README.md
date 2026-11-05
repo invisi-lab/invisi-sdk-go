@@ -182,3 +182,39 @@ _ = original
 ```
 
 `NewNoteOutput` accepts a `PaymentRequest` or an encoded IPR, with at most one `NoteOutputExecutionOptions`. Its `Nonce` overrides only an omitted nonce (or matches a fixed one); `AddressLookup` selects `"chain"` or `"protocol-rpc"` only for encrypted EVM recipients. Local lookup preferences are never encoded. Invisi recipients always have an envelope. Identity recipients have no envelope, nonce or payload. Missing nonces are independently randomized per output. Request bytes are retained through protected output snapshots and validated again during preparation. Application payload is bounded to 3936 bytes; unsupported versions, flags, trailing bytes and noncanonical Base64URL are rejected. Credit is outside this codec.
+
+## Offline payment Notes (IPN)
+
+IPN privately delivers one definite funds Note opening. The canonical wire format is `ipn:` plus unpadded Base64URL, exactly 149 binary bytes and 203 text characters. Fields are version (1 byte), chainId (8), protocol address (20), token address (20), amount (16), owner address (20), nonce (32) and commitment (32), in that order. All integers are unsigned big-endian. There is no payload, ciphertext, clue, viewing key, spending key or signature. `EncodePaymentNote`/`DecodePaymentNote` validate structure; `PaymentNoteFromIPN` also recomputes identity and commitment. Independent cross-language vectors are in `internal/transaction/testdata/payment_notes.json`.
+
+```go
+// Export from the final prepared/quoted plan, which includes generated change.
+outputs := prepared.GetOutputs()
+ipn, err := outputs[0].ExportPaymentNote()
+if err != nil { return err }
+// Privately deliver only this recipient's IPN after confirmation.
+note, err := sdk.PaymentNoteFromIPN(ipn)
+if err != nil { return err }
+
+// Correct opening and confirmed on-chain membership; spent Notes may pass.
+verified, err := note.Verify(ctx, pool)
+if err != nil { return err }
+_ = verified.CheckedAt()
+
+// Requires the actual owner's spending Wallet and a currently unspent nullifier.
+// This does not sign or submit a transaction.
+spendable, err := note.VerifySpendable(ctx, pool, ownerWallet)
+if err != nil { return err }
+input, err := spendable.ToInput()
+if err != nil { return err }
+_ = input
+_ = spendable.SpendabilityCheckedAt()
+```
+
+`NoteOutput.ExportPaymentNote()` exports a created output directly. Stateless `PreparedTransaction.GetOutputs()` and managed `Operation.GetOutputs()` return detached final `TransactionOutput` snapshots, including change. Identity-only outputs have no recoverable owner/nonce opening and reject IPN export. Credit openings have no IPN export. Export alone does not assert payment; match the token and amount to your business request and verify on-chain receipt.
+
+`Verify` checks deployment context/code, canonical confirmed blocks, commitment membership and a chain-accepted root, without checking spent status. `VerifySpendable` additionally requires a private `Wallet` whose actual signing material matches the Note owner, then checks the latest chain nullifier/root state. Returned Note data, proof paths and inputs are copied. `ToInput` is available only on a successful spendable result; a zero-valued result is rejected.
+
+`ProtocolFromRPC` retains public provider/RPC connections for these checks. Manually constructed Protocols can supply `PaymentNoteVerificationOptions{ProtocolRPC: rpc, Provider: provider, Confirmations: 3}` to either method. Zero/omitted confirmations use 1. The confirmed verification anchor is the indexed head or the confirmation-depth block, whichever is earlier. Detailed spent status is checked at the latest chain block. Spendability is a point-in-time observation; subsequent preparation/simulation still checks the chosen operation's restrictions.
+
+The RPC client exposes `GetNote(ctx, context, commitment, block)`, backed by `invisi_getNote`. The client obtains and verifies canonical output metadata and a Merkle proof through the existing membership APIs, independently checking accepted roots through Chain RPC. A null result means absent from the selected index snapshot, not proof of absence from the chain. No Note nonce or wallet key is sent to Protocol RPC.

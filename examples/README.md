@@ -112,3 +112,52 @@ go run ./examples/00-wallet/02-note-output
 ```
 
 These checks do not execute chain transactions. Account initializer tests use temporary fresh files and verify metadata, permissions, identity binding and overwrite refusal.
+
+## Payment requests and offline Note delivery
+
+IPR describes a requested output. IPN delivers one actual Note opening. These are independent data steps around the existing payment workflows; no additional executable example is needed. Continue using the existing transparent-payment or hidden-amount example for external signing, proving and transaction submission.
+
+```go
+// Recipient: publish a reusable request, for example as a QR code.
+ipr, err := sdk.EncodePaymentRequest(sdk.PaymentRequest{
+    ChainID: chainID, ProtocolAddress: protocolAddress, TokenAddress: token,
+    Amount: amount, Recipient: sdk.InvisiRecipient{Address: bobAddress},
+})
+if err != nil { return err }
+
+// Payer: use this output in the existing PrepareShield/PrepareTransfer workflow.
+output, err := sdk.NewNoteOutput(ipr)
+if err != nil { return err }
+// Omitted request nonce means a fresh nonce is selected per payment.
+// Keep the final prepared handle after any broadcaster fee/change reconstruction.
+
+// Payer: export only Bob's output, identified by its commitment.
+var ipn string
+for _, final := range prepared.GetOutputs() {
+    if final.Commitment() == output.Commitment() {
+        ipn, err = final.ExportPaymentNote()
+        if err != nil { return err }
+        break
+    }
+}
+if ipn == "" { return fmt.Errorf("payment output is missing from the final plan") }
+// Submit through the existing workflow, then privately deliver ipn after confirmation.
+// Generated change belongs to the payer and is not delivered to Bob.
+
+// Bob: reconstruct and verify the exact requested payment.
+note, err := sdk.PaymentNoteFromIPN(ipn)
+if err != nil { return err }
+if note.TokenAddress() != token || note.Amount().Cmp(amount) != 0 {
+    return fmt.Errorf("payment does not match the requested token and amount")
+}
+verified, err := note.Verify(ctx, pool) // Correct opening and confirmed membership.
+if err != nil { return err }
+_ = verified
+spendable, err := note.VerifySpendable(ctx, pool, bobWallet) // Also owner capability and current unspent state.
+if err != nil { return err }
+input, err := spendable.ToInput()
+if err != nil { return err }
+_ = input // Use in the next explicit PrepareTransfer; authorization remains separate.
+```
+
+The sections are separate recipient/payer steps, using the chosen protocol, token and amount from the existing examples. `pool` comes from `sdk.ProtocolFromRPC(ctx, rpc, provider)`. Simple verification also accepts spent Notes; detailed verification does not. Neither method signs. EVM recipients may export IPN with or without a chain envelope; identity recipients cannot. See the root README for wire layouts, nonce execution overrides and explicit verification connections.

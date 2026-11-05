@@ -12,10 +12,11 @@ import (
 	protocolrpc "github.com/invisi-lab/invisi-sdk-go/rpc"
 )
 
-// Protocol describes one multi-token deployment. It owns no connections or keys.
+// Protocol describes one multi-token deployment and optional public connections. It owns no wallet keys.
 type Protocol struct {
 	deployment protocolrpc.ProtocolDeployment
 	rpc        *protocolrpc.ProtocolRpcClient
+	provider   protocolrpc.ChainProvider
 }
 
 func NewProtocol(deployment protocolrpc.ProtocolDeployment) (*Protocol, error) {
@@ -52,6 +53,7 @@ func ProtocolFromRPC(ctx context.Context, rpc *protocolrpc.ProtocolRpcClient, pr
 		return nil, e
 	}
 	p.rpc = rpc
+	p.provider = provider
 	if e = p.ValidateDeployment(ctx, provider); e != nil {
 		return nil, e
 	}
@@ -118,4 +120,12 @@ func (p *Protocol) ForToken(token common.Address) (TransactionContext, error) {
 	}
 	chain, _ := p.deployment.ChainNumber()
 	return TransactionContext{ChainID: chain, ProtocolAddress: p.deployment.Protocol.Address, TokenAddress: token}, nil
+}
+
+// VerificationConnections returns public connections remembered by ProtocolFromRPC.
+func (p *Protocol) VerificationConnections() (*protocolrpc.ProtocolRpcClient, protocolrpc.ChainProvider, error) {
+	if p == nil || p.rpc == nil || p.provider == nil {
+		return nil, nil, errors.New("ProtocolFromRPC connections are not available")
+	}
+	return p.rpc, p.provider, nil
 }

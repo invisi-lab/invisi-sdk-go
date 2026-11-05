@@ -256,3 +256,10 @@ func (o *Operation) validateRecovered() error {
 	o.apply(execution)
 	return result0
 }
+
+// GetOutputs returns detached final Note outputs, including change, without exporting Credit openings.
+func (o *Operation) GetOutputs() []sdk.TransactionOutput {
+	o.mu.Lock()
+	defer o.mu.Unlock()
+	return o.execution().GetOutputs()
+}

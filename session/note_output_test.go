@@ -117,3 +117,32 @@ func TestNoteOutputPreparationUsesDirectIdentityAndChecksContext(t *testing.T) {
 		t.Fatal("mismatched token accepted")
 	}
 }
+
+func TestFinalOutputsExportPaymentNotesIncludingChange(t *testing.T) {
+	s, token, _ := testSession(t)
+	address, _ := s.wallet.GetAddress()
+	op, e := s.PrepareTransfer(context.Background(), sdk.TransferPreparation{TokenAddress: token, Outputs: testOutputs(s, []testPaymentOutput{{To: address, Amount: big.NewInt(30)}})})
+	if e != nil {
+		t.Fatal(e)
+	}
+	outputs := op.GetOutputs()
+	if len(outputs) != 2 {
+		t.Fatalf("outputs: %d", len(outputs))
+	}
+	for _, output := range outputs {
+		ipn, e := output.ExportPaymentNote()
+		if e != nil {
+			t.Fatal(e)
+		}
+		note, e := sdk.PaymentNoteFromIPN(ipn)
+		if e != nil {
+			t.Fatal(e)
+		}
+		if note.Commitment() != output.Commitment() || note.Amount().Cmp(output.Amount()) != 0 {
+			t.Fatal("final output export differs")
+		}
+	}
+	if outputs[1].Amount().Cmp(big.NewInt(70)) != 0 || !outputs[1].Change() {
+		t.Fatal("missing change")
+	}
+}
