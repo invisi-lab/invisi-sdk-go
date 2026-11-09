@@ -17,6 +17,9 @@ import (
 )
 
 func RecoverySubmissionKey(base string, sidecar ProofSidecar) (string, error) {
+	if strings.HasPrefix(base, "internal/") {
+		return "", errors.New("reserved idempotency key prefix")
+	}
 	if base == "" || len(base) > 63 {
 		return "", errors.New("invalid recovery idempotency key")
 	}
@@ -52,6 +55,8 @@ type FrozenProvenanceIntent struct {
 	SignedRequestHash string   `json:"signedRequestHash"`
 }
 type RecoveryRecord struct {
+	DeliveryMode       string                 `json:"deliveryMode"`
+	TrackingID         string                 `json:"trackingId,omitempty"`
 	ProofJobStatus     string                 `json:"proofJobStatus,omitempty"`
 	ProofValid         bool                   `json:"proofValid,omitempty"`
 	SourceState        string                 `json:"sourceState,omitempty"`
@@ -182,6 +187,8 @@ type LocalRecoveryReprover interface {
 	LocalReprove(context.Context, RecoveryRecord, string) (ProofSidecar, error)
 }
 type RecoveryService interface {
+	EvaluateTransaction(context.Context, any, []ProofSidecar) (Result, error)
+	GetTracking(context.Context, string) (Result, error)
 	SubmitProof(context.Context, map[string]any, ProofBundle, string) (Result, error)
 	GetProofJob(context.Context, string) (Result, error)
 	GetOperationRecognition(context.Context, map[string]any) (Result, error)
@@ -214,6 +221,9 @@ func calldataHash(data string) (string, error) {
 func (c *RecoveryCoordinator) validate(ctx context.Context, r RecoveryRecord) error {
 	if r.Format != "invisi-provenance-recovery-v1" || r.ID == "" || r.IdempotencyKey == "" || len(r.IdempotencyKey) > 63 || c.Store == nil || c.Host == nil || c.Service == nil {
 		return errors.New("invalid recovery configuration")
+	}
+	if (r.DeliveryMode != "tracked" && r.DeliveryMode != "direct") || (r.Revision > 0 && r.DeliveryMode == "tracked" && r.TrackingID == "" && r.State != "needs_reproof") {
+		return errors.New("recovery tracking mode/identity missing")
 	}
 	if _, e := RecoverySubmissionKey(r.IdempotencyKey, r.Sidecar); e != nil {
 		return e
@@ -284,7 +294,14 @@ func (c *RecoveryCoordinator) save(ctx context.Context, r RecoveryRecord, previo
 	return recoveryClone(r), nil
 }
 func (c *RecoveryCoordinator) Prepare(ctx context.Context, id string, intent FrozenProvenanceIntent, sidecar ProofSidecar, key string) (RecoveryRecord, error) {
-	r := RecoveryRecord{Format: "invisi-provenance-recovery-v1", ID: id, Intent: intent, ManifestSHA256: c.Trust.ManifestSHA256, ChainGeneration: c.Trust.ChainGeneration, Sidecar: sidecar, IdempotencyKey: key, State: "broadcast_possible"}
+	return c.prepareMode(ctx, id, intent, sidecar, key, "tracked")
+}
+func (c *RecoveryCoordinator) PrepareDirect(ctx context.Context, id string, intent FrozenProvenanceIntent, sidecar ProofSidecar, key string) (RecoveryRecord, error) {
+	return c.prepareMode(ctx, id, intent, sidecar, key, "direct")
+}
+func (c *RecoveryCoordinator) prepareMode(ctx context.Context, id string, intent FrozenProvenanceIntent, sidecar ProofSidecar, key, mode string) (RecoveryRecord, error) {
+	r := RecoveryRecord{DeliveryMode: mode, Format: "invisi-provenance-recovery-v1", ID: id, Intent: intent, ManifestSHA256: c.Trust.ManifestSHA256, ChainGeneration: c.Trust.ChainGeneration, Sidecar: sidecar, IdempotencyKey: key, State: "broadcast_possible"}
+	r = recoveryClone(r)
 	if e := c.validate(ctx, r); e != nil {
 		return r, e
 	}
@@ -293,6 +310,17 @@ func (c *RecoveryCoordinator) Prepare(ctx context.Context, id string, intent Fro
 			e = errors.New("recovery id already exists")
 		}
 		return r, e
+	}
+	if mode == "tracked" {
+		evaluated, e := c.Service.EvaluateTransaction(ctx, r.Intent.Calldata, []ProofSidecar{recoveryClone(r).Sidecar})
+		if e != nil {
+			return r, e
+		}
+		tracking, e := PreflightTracking(evaluated, r.Intent.OperationIndex, r.Intent.OperationDigest)
+		if e != nil {
+			return r, e
+		}
+		r.TrackingID = tracking.ID
 	}
 	return c.save(ctx, r, 0)
 }
@@ -336,6 +364,13 @@ func (c *RecoveryCoordinator) Resume(ctx context.Context, id string, reprove boo
 	if e != nil {
 		return r, e
 	}
+	if fact.Locator != nil {
+		copied := map[string]string{}
+		for k, v := range fact.Locator {
+			copied[k] = v
+		}
+		fact.Locator = copied
+	}
 	if e = ctx.Err(); e != nil {
 		return r, e
 	}
@@ -351,6 +386,7 @@ func (c *RecoveryCoordinator) Resume(ctx context.Context, id string, reprove boo
 	previous := r.Revision
 	if r.ChainGeneration != fact.ChainGeneration || fact.Status == "reorged" || !equalNumber(fact.ChainGeneration, c.Trust.ChainGeneration) || r.State == "needs_reproof" || (reprove && r.State == "proof_rejected") {
 		r.State = "needs_reproof"
+		r.TrackingID = ""
 		r.JobID = ""
 		r.ProofValid = false
 		r.ProofJobStatus = ""
@@ -366,39 +402,94 @@ func (c *RecoveryCoordinator) Resume(ctx context.Context, id string, reprove boo
 		if e != nil {
 			return r, e
 		}
-		r.Sidecar = next
+		r.Sidecar = recoveryClone(RecoveryRecord{Sidecar: next}).Sidecar
 		r.ChainGeneration = fact.ChainGeneration
-		if e = c.validate(ctx, r); e != nil {
+		check := recoveryClone(r)
+		check.Revision = 0
+		if e = c.validate(ctx, check); e != nil {
 			return r, e
 		}
 		r.State = "pending"
+		if r.DeliveryMode == "tracked" {
+			evaluated, e := c.Service.EvaluateTransaction(ctx, r.Intent.Calldata, []ProofSidecar{recoveryClone(r).Sidecar})
+			if e != nil {
+				return r, e
+			}
+			tracking, e := PreflightTracking(evaluated, r.Intent.OperationIndex, r.Intent.OperationDigest)
+			if e != nil {
+				return r, e
+			}
+			r.TrackingID = tracking.ID
+		}
+	}
+	if fact.Status == "confirmed" {
+		if fact.TransactionHash == "" || len(fact.Locator) == 0 {
+			return r, errors.New("missing authenticated mined locator")
+		}
+		for k := range fact.Locator {
+			if k != "blockHash" && k != "txHash" && k != "operationIndex" {
+				return r, errors.New("invalid authenticated locator")
+			}
+		}
+		if _, e := decodeFixed(fact.TransactionHash, 32); e != nil {
+			return r, e
+		}
+		if _, e := decodeFixed(fact.Locator["blockHash"], 32); e != nil {
+			return r, e
+		}
+		if fact.Locator["txHash"] != fact.TransactionHash || !equalNumber(fact.Locator["operationIndex"], r.Intent.OperationIndex) {
+			return r, errors.New("invalid authenticated locator")
+		}
+		r.TransactionHash = fact.TransactionHash
+		r.Locator = fact.Locator
+	}
+	if r.DeliveryMode == "tracked" {
+		if r.TrackingID == "" {
+			return r, errors.New("recovery tracking id required")
+		}
+		result, e := c.Service.GetTracking(ctx, r.TrackingID)
+		if errors.Is(e, ErrTrackingStaleGeneration) {
+			r.State = "needs_reproof"
+			return c.save(ctx, r, previous)
+		}
+		if e != nil {
+			return r, e
+		}
+		tracking, e := TrackingFromResult(result, r.TrackingID)
+		if e != nil {
+			return r, e
+		}
+		if !equalNumber(tracking.OperationDigest, r.Intent.OperationDigest) {
+			return r, errors.New("tracking statement mismatch")
+		}
+		r.ReasonCode = tracking.ReasonCode
+		if tracking.Status == "expired" || tracking.Status == "superseded" {
+			r.State = "tracking_" + tracking.Status
+			r.ReasonCode = tracking.ReasonCode
+			return c.save(ctx, r, previous)
+		}
+		if fact.Status != "confirmed" || tracking.Status == "pending_confirmation" {
+			r.State = "pending"
+			return c.save(ctx, r, previous)
+		}
+		if tracking.Matched == nil || fact.Locator == nil || tracking.Matched.TxHash != fact.TransactionHash || tracking.Matched.BlockHash != fact.Locator["blockHash"] || tracking.Matched.OperationIndex != fact.Locator["operationIndex"] {
+			return r, errors.New("tracking matched another transaction")
+		}
+		if tracking.Status == "pending_source" {
+			r.State = "pending_source"
+			r.SourceState = "pending_source"
+			r.TransactionHash = fact.TransactionHash
+			r.Locator = fact.Locator
+			return c.save(ctx, r, previous)
+		}
 	}
 	if fact.Status != "confirmed" {
 		return r, nil
 	}
-	if fact.TransactionHash == "" || len(fact.Locator) == 0 {
-		return r, errors.New("missing authenticated mined locator")
-	}
-	for k := range fact.Locator {
-		if k != "blockHash" && k != "txHash" && k != "operationIndex" {
-			return r, errors.New("invalid authenticated locator")
-		}
-	}
-	if _, e := decodeFixed(fact.TransactionHash, 32); e != nil {
-		return r, e
-	}
-	if _, e := decodeFixed(fact.Locator["blockHash"], 32); e != nil {
-		return r, e
-	}
-	if fact.Locator["txHash"] != fact.TransactionHash || !equalNumber(fact.Locator["operationIndex"], r.Intent.OperationIndex) {
-		return r, errors.New("invalid authenticated locator")
-	}
-	r.TransactionHash = fact.TransactionHash
-	r.Locator = fact.Locator
 	if r.State == "recognized" || r.State == "proof_rejected" {
 		return r, nil
 	}
-	if r.JobID == "" {
+	if r.DeliveryMode == "direct" && r.JobID == "" {
 		r, e = c.save(ctx, r, previous)
 		if e != nil {
 			return r, e
@@ -427,7 +518,7 @@ func (c *RecoveryCoordinator) Resume(ctx context.Context, id string, reprove boo
 			return r, e
 		}
 	}
-	if !r.ProofValid {
+	if r.DeliveryMode == "direct" && !r.ProofValid {
 		result, e := c.Service.GetProofJob(ctx, r.JobID)
 		if e != nil {
 			return r, e
@@ -456,7 +547,7 @@ func (c *RecoveryCoordinator) Resume(ctx context.Context, id string, reprove boo
 			return r, e
 		}
 	}
-	if r.ProofValid {
+	if r.ProofValid || r.DeliveryMode == "tracked" {
 		q := map[string]any{}
 		for k, v := range r.Locator {
 			q[k] = v

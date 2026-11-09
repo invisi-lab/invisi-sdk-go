@@ -149,6 +149,8 @@ func main() {
 		Inputs:          []provenance.WitnessInput{{Opening: prepared.Opening, SourceIndex: 0, LeafIndex: membership.LeafIndex, Path: membership.Path}},
 		Sources:         []provenance.Source{{TreeID: cert.TreeID, Root: cert.Root, LeafCount: cert.LeafCount}},
 	}, []provenance.RootCertificate{cert}, trust, identity, prover, 0))
+	evaluated := must(source.EvaluateTransaction(ctx, prepared.Data, []provenance.ProofSidecar{sidecar}))
+	tracking := must(provenance.PreflightTracking(evaluated, "0", digest))
 	relay := must(broadcaster.NewProvenanceClient(broadcaster.Configuration{
 		Endpoint:     config.Broadcaster.Endpoint,
 		QuoteSigner:  common.HexToAddress(config.Broadcaster.QuoteSigner),
@@ -170,7 +172,7 @@ func main() {
 			panic("Invalid BROADCAST_ID")
 		}
 	}
-	record := map[string]any{"data": prepared.Data, "sidecar": sidecar, "broadcastId": id, "quote": quote, "operationDigest": digest}
+	record := map[string]any{"data": prepared.Data, "sidecar": sidecar, "broadcastId": id, "quote": quote, "operationDigest": digest, "trackingId": tracking.ID}
 	// Save public evidence before the external side effect. Never overwrite an uncertain submission.
 	file := must(os.OpenFile(os.Getenv("PROVENANCE_RECORD"), os.O_CREATE|os.O_EXCL|os.O_WRONLY, 0600))
 	check(json.NewEncoder(file).Encode(record))

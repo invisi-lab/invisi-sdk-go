@@ -16,6 +16,7 @@ import (
 )
 
 type liveTrust struct {
+	TrackingID       string           `json:"trackingId"`
 	Recovery         json.RawMessage  `json:"recovery,omitempty"`
 	Format           string           `json:"format"`
 	Endpoint         string           `json:"endpoint"`
@@ -223,19 +224,19 @@ func TestProvenanceLiveService(t *testing.T) {
 	if json.Unmarshal(note["certificate"], &noteCert) != nil || AssertCertificateTrust(noteCert, trust) != nil {
 		t.Fatal("Note certificate not trusted")
 	}
-	job := must(client.GetProofJob(ctx, f.JobID))
-	if text(job, "jobId") != f.JobID || text(job, "status") != "valid" {
-		t.Fatal("genuine native job not valid")
+	tracked := must(client.GetTracking(ctx, f.TrackingID))
+	identity(tracked)
+	tracking, e := TrackingFromResult(tracked, f.TrackingID)
+	if e != nil || tracking.Status != "recognized" {
+		t.Fatal("tracking not recognized", e)
 	}
-	waited := must(client.WaitProofJob(ctx, f.JobID, time.Millisecond))
-	if text(waited, "status") != "valid" {
-		t.Fatal("job wait mismatch")
-	}
+	waited := must(client.WaitTracking(ctx, f.TrackingID, time.Millisecond, 3*time.Second))
+	identity(waited)
 	for name, change := range map[string]func(*TrustContext){"provider": func(t *TrustContext) { t.ProviderID = "0" }, "generation": func(t *TrustContext) { t.ChainGeneration = "0" }, "manifest": func(t *TrustContext) { t.ManifestSHA256 = strings.Repeat("0", 64) }, "key": func(t *TrustContext) { t.SigningKeys = map[string]ed25519.PublicKey{} }} {
 		bad := trust
 		change(&bad)
 		untrusted := Client{Endpoint: f.Endpoint, Trust: bad}
-		if _, e := untrusted.GetProofJob(ctx, f.JobID); e == nil {
+		if _, e := untrusted.GetTracking(ctx, f.TrackingID); e == nil {
 			t.Fatalf("actual response accepted with wrong %s pin", name)
 		}
 	}

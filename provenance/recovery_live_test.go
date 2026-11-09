@@ -23,6 +23,7 @@ import (
 )
 
 type recoveryLiveData struct {
+	TrackingID      string       `json:"trackingId"`
 	PrimaryRPC      string       `json:"primaryRPC"`
 	ProtocolRoot    string       `json:"protocolRoot"`
 	TransactionHash string       `json:"transactionHash"`
@@ -224,7 +225,7 @@ func TestProvenanceRecoveryLive(t *testing.T) {
 	raw, _ := hex.DecodeString(bad.ProofBundle.Proof[2:])
 	raw[len(raw)-1] ^= 1
 	bad.ProofBundle.Proof = "0x" + hex.EncodeToString(raw)
-	if _, e = c.Prepare(ctx, "bad-local", intent, bad, "go-bad-local"); e == nil {
+	if _, e = c.PrepareDirect(ctx, "bad-local", intent, bad, "go-bad-local"); e == nil {
 		t.Fatal("invalid native proof accepted locally")
 	}
 	if _, ok, _ := store.Load(ctx, "bad-local"); ok {
@@ -232,7 +233,7 @@ func TestProvenanceRecoveryLive(t *testing.T) {
 	}
 	id := "go-recovery-live"
 	base := fmt.Sprintf("go-recovery-%d", time.Now().UnixNano())
-	if _, e = c.Prepare(ctx, id, intent, r.Sidecar, base); e != nil {
+	if _, e = c.PrepareDirect(ctx, id, intent, r.Sidecar, base); e != nil {
 		t.Fatal(e)
 	}
 	if r.InvalidJobID != "" {
@@ -264,7 +265,16 @@ func TestProvenanceRecoveryLive(t *testing.T) {
 	if e != nil || result.State != "recognized" || !result.ProofValid || !reflect.DeepEqual(result.Intent, intent) || result.CheckpointSequence == "" || result.ReasonCode == "PROOF_INVALID" {
 		t.Fatal(result.State, e)
 	}
-	report, _ := json.MarshalIndent(map[string]any{"sdk": "go", "manifestSha256": pin, "realPrimaryHTTP": true, "primaryCalls": host.primaryCalls, "realNativeVerification": true, "nativeVerifications": host.nativeVerifications, "encryptedRestart": true, "badLocalProofRejected": true, "reasonCode": result.ReasonCode, "invalidJobImported": r.InvalidJobID != "", "jobStatus": result.ProofJobStatus, "state": result.State, "jobId": result.JobID, "checkpointSequence": result.CheckpointSequence, "frozenTransactionHash": result.TransactionHash, "mocks": false}, "", "  ")
+	automatic := &RecoveryCoordinator{Store: store, Trust: trust, Service: trackingOnlyLiveService{client}, Host: host}
+	trackedPermit, e := automatic.Prepare(ctx, "go-tracked-live", intent, r.Sidecar, fmt.Sprintf("go-tracked-%d", time.Now().UnixNano()))
+	if e != nil || trackedPermit.TrackingID != r.TrackingID {
+		t.Fatal("tracking not coalesced", e)
+	}
+	trackedResult, e := automatic.Run(ctx, "go-tracked-live", false, 100*time.Millisecond, 300)
+	if e != nil || trackedResult.State != "recognized" || !reflect.DeepEqual(trackedResult.Intent, intent) {
+		t.Fatal(trackedResult.State, e)
+	}
+	report, _ := json.MarshalIndent(map[string]any{"sdk": "go", "manifestSha256": pin, "realPrimaryHTTP": true, "primaryCalls": host.primaryCalls, "realNativeVerification": true, "nativeVerifications": host.nativeVerifications, "encryptedRestart": true, "trackedRecovery": true, "trackingId": trackedResult.TrackingID, "badLocalProofRejected": true, "reasonCode": result.ReasonCode, "invalidJobImported": r.InvalidJobID != "", "jobStatus": result.ProofJobStatus, "state": result.State, "jobId": result.JobID, "checkpointSequence": result.CheckpointSequence, "frozenTransactionHash": result.TransactionHash, "mocks": false}, "", "  ")
 	if e = os.WriteFile(filepath.Join(filepath.Dir(path), "sdk-recovery-go-validation.json"), append(report, '\n'), 0600); e != nil {
 		t.Fatal(e)
 	}
@@ -272,4 +282,13 @@ func TestProvenanceRecoveryLive(t *testing.T) {
 
 func sqlOpenRecovery(t *testing.T) (*sql.DB, error) {
 	return sql.Open("sqlite", filepath.Join(t.TempDir(), "recovery.sqlite"))
+}
+
+type trackingOnlyLiveService struct{ *Client }
+
+func (s trackingOnlyLiveService) SubmitProof(context.Context, map[string]any, ProofBundle, string) (Result, error) {
+	return nil, errors.New("tracked recovery must not submit proof")
+}
+func (s trackingOnlyLiveService) GetProofJob(context.Context, string) (Result, error) {
+	return nil, errors.New("tracked recovery must not fetch proof job")
 }

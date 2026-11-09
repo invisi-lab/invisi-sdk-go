@@ -7,6 +7,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"errors"
+	"net/http"
 	"os"
 	"reflect"
 	"strings"
@@ -160,7 +161,7 @@ func setupRecovery(t *testing.T) (*RecoveryCoordinator, *recoveryHostFixture, *r
 func TestRecoveryRestartAndRecognition(t *testing.T) {
 	c, h, s, v := setupRecovery(t)
 	ctx := context.Background()
-	r, e := c.Prepare(ctx, "send", v.Intent, v.Sidecars[0], "stable")
+	r, e := c.PrepareDirect(ctx, "send", v.Intent, v.Sidecars[0], "stable")
 	if e != nil || r.State != "broadcast_possible" {
 		t.Fatal(e)
 	}
@@ -191,7 +192,7 @@ func TestRecoveryRestartAndRecognition(t *testing.T) {
 func TestRecoveryCancellationGenerationAndMismatch(t *testing.T) {
 	c, h, s, v := setupRecovery(t)
 	ctx := context.Background()
-	if _, e := c.Prepare(ctx, "send", v.Intent, v.Sidecars[0], "stable"); e != nil {
+	if _, e := c.PrepareDirect(ctx, "send", v.Intent, v.Sidecars[0], "stable"); e != nil {
 		t.Fatal(e)
 	}
 	if _, e := c.MarkBroadcast(ctx, "send", h.fact.TransactionHash); e != nil {
@@ -231,7 +232,7 @@ func TestRecoveryCancellationGenerationAndMismatch(t *testing.T) {
 	}
 	bad := v.Intent
 	bad.OperationDigest = "5"
-	if _, e := c.Prepare(ctx, "bad", bad, v.Sidecars[1], "bad"); e == nil {
+	if _, e := c.PrepareDirect(ctx, "bad", bad, v.Sidecars[1], "bad"); e == nil {
 		t.Fatal("mismatched statement accepted")
 	}
 }
@@ -254,7 +255,7 @@ func TestRecoveryRefusesBroadcastOnPersistenceConflict(t *testing.T) {
 	c, _, service, v := setupRecovery(t)
 	original := c.Store
 	c.Store = rejectedRecoveryStore{original}
-	if _, e := c.Prepare(context.Background(), "blocked", v.Intent, v.Sidecars[0], "stable"); e == nil {
+	if _, e := c.PrepareDirect(context.Background(), "blocked", v.Intent, v.Sidecars[0], "stable"); e == nil {
 		t.Fatal("broadcast allowed without atomic persistence")
 	}
 	if _, found, _ := original.Load(context.Background(), "blocked"); found || service.submits != 0 {
@@ -273,7 +274,7 @@ func TestRecoveryCanonicalSubmissionKeys(t *testing.T) {
 
 func TestRecoveryWaitsAfterPermitCrashWithoutMarkBroadcast(t *testing.T) {
 	c, h, s, v := setupRecovery(t)
-	if _, e := c.Prepare(context.Background(), "possible", v.Intent, v.Sidecars[0], "stable"); e != nil {
+	if _, e := c.PrepareDirect(context.Background(), "possible", v.Intent, v.Sidecars[0], "stable"); e != nil {
 		t.Fatal(e)
 	}
 	h.pendingFirst = true
@@ -287,7 +288,7 @@ func TestRecoveryWaitsAfterPermitCrashWithoutMarkBroadcast(t *testing.T) {
 func TestRecoverySourceOutageAndDecisionResume(t *testing.T) {
 	c, _, s, v := setupRecovery(t)
 	ctx := context.Background()
-	if _, e := c.Prepare(ctx, "pending", v.Intent, v.Sidecars[0], "stable"); e != nil {
+	if _, e := c.PrepareDirect(ctx, "pending", v.Intent, v.Sidecars[0], "stable"); e != nil {
 		t.Fatal(e)
 	}
 	s.recognitionOutage = true
@@ -315,11 +316,11 @@ func TestRecoveryIdempotencyBoundaryBeforePermit(t *testing.T) {
 	if e != nil || len(key) != 128 {
 		t.Fatal("derived key exceeds service limit", e)
 	}
-	if _, e = c.Prepare(context.Background(), "max", v.Intent, v.Sidecars[0], max); e != nil {
+	if _, e = c.PrepareDirect(context.Background(), "max", v.Intent, v.Sidecars[0], max); e != nil {
 		t.Fatal(e)
 	}
 	for _, base := range []string{strings.Repeat("a", 64), strings.Repeat("a", 128), "é", " "} {
-		if _, e = c.Prepare(context.Background(), "blocked", v.Intent, v.Sidecars[0], base); e == nil {
+		if _, e = c.PrepareDirect(context.Background(), "blocked", v.Intent, v.Sidecars[0], base); e == nil {
 			t.Fatal("invalid base escaped into broadcast permit")
 		}
 		if _, ok, _ := c.Store.Load(context.Background(), "blocked"); ok {
@@ -341,7 +342,7 @@ func TestRecoverySameGenerationReplacementKey(t *testing.T) {
 func TestRecoveryRealJobWireStates(t *testing.T) {
 	ctx := context.Background()
 	c, h, s, v := setupRecovery(t)
-	if _, e := c.Prepare(ctx, "invalid", v.Intent, v.Sidecars[0], "stable"); e != nil {
+	if _, e := c.PrepareDirect(ctx, "invalid", v.Intent, v.Sidecars[0], "stable"); e != nil {
 		t.Fatal(e)
 	}
 	s.jobStatus = "invalid"
@@ -360,7 +361,7 @@ func TestRecoveryRealJobWireStates(t *testing.T) {
 	}
 	for _, status := range []string{"retryable_error", "stale_generation"} {
 		p, _, service, v := setupRecovery(t)
-		if _, e := p.Prepare(ctx, status, v.Intent, v.Sidecars[0], "stable"); e != nil {
+		if _, e := p.PrepareDirect(ctx, status, v.Intent, v.Sidecars[0], "stable"); e != nil {
 			t.Fatal(e)
 		}
 		service.jobStatus = status
@@ -373,4 +374,116 @@ func TestRecoveryRealJobWireStates(t *testing.T) {
 			t.Fatal(status, r.State, e)
 		}
 	}
+}
+
+func (s *recoveryServiceFixture) EvaluateTransaction(context.Context, any, []ProofSidecar) (Result, error) {
+	return nil, errors.New("direct fixture has no preflight")
+}
+func (s *recoveryServiceFixture) GetTracking(context.Context, string) (Result, error) {
+	return nil, errors.New("direct fixture has no tracking")
+}
+
+type trackedRecoveryService struct {
+	*recoveryServiceFixture
+	tracking             Tracking
+	evaluations, queries int
+	missing              bool
+}
+
+func (s *trackedRecoveryService) EvaluateTransaction(_ context.Context, data any, sidecars []ProofSidecar) (Result, error) {
+	s.evaluations++
+	if data != s.intent.Calldata || len(sidecars) != 1 {
+		return nil, errors.New("wrong frozen preflight")
+	}
+	if len(sidecars[0].ProofBundle.PublicInputs) == 13 {
+		sidecars[0].ProofBundle.PublicInputs[2], _ = word("3")
+	}
+	digest, _ := json.Marshal(s.intent.OperationDigest)
+	r := Result{"broadcastDecision": json.RawMessage(`"allow"`), "operationDigest": digest}
+	if !s.missing {
+		raw, _ := json.Marshal(s.tracking)
+		r["tracking"] = raw
+	}
+	return r, nil
+}
+func (s *trackedRecoveryService) GetTracking(_ context.Context, id string) (Result, error) {
+	s.queries++
+	if id != s.tracking.ID {
+		return nil, errors.New("wrong tracking id")
+	}
+	raw, _ := json.Marshal(s.tracking)
+	r := Result{"tracking": raw}
+	_, e := TrackingFromResult(r, id)
+	return r, e
+}
+func TestDefaultRecoveryPersistsTrackingWithoutRedundantSubmit(t *testing.T) {
+	c, h, s, v := setupRecovery(t)
+	digest, _ := word(v.Intent.OperationDigest)
+	tracking := Tracking{ID: strings.Repeat("a", 48), Status: "recognized", ExpiresAt: "1", OperationDigest: digest, Matched: &TrackingMatch{h.fact.TransactionHash, h.fact.Locator["blockHash"], "0"}}
+	tracked := &trackedRecoveryService{recoveryServiceFixture: s, tracking: tracking}
+	c.Service = tracked
+	s.recognition = "recognized"
+	r, e := c.Prepare(context.Background(), "tracked", v.Intent, v.Sidecars[0], "stable")
+	if e != nil || r.TrackingID != tracking.ID || r.DeliveryMode != "tracked" {
+		t.Fatal(e)
+	}
+	saved, _, _ := c.Store.Load(context.Background(), "tracked")
+	if saved.TrackingID != tracking.ID {
+		t.Fatal("tracking not durable before permit")
+	}
+	r, e = c.Run(context.Background(), "tracked", false, time.Millisecond, 2)
+	if e != nil || r.State != "recognized" || s.submits != 0 || tracked.evaluations != 1 || tracked.queries != 1 {
+		t.Fatal(r.State, e)
+	}
+	tracked.missing = true
+	if _, e = c.Prepare(context.Background(), "missing", v.Intent, v.Sidecars[0], "stable"); e == nil {
+		t.Fatal("silently downgraded missing tracking")
+	}
+	if _, ok, _ := c.Store.Load(context.Background(), "missing"); ok {
+		t.Fatal("missing tracking got permit")
+	}
+}
+
+func TestTerminalTrackingCannotReturnRecoveryPermit(t *testing.T) {
+	for _, status := range []string{"expired", "superseded"} {
+		c, _, s, v := setupRecovery(t)
+		digest, _ := word(v.Intent.OperationDigest)
+		service := &trackedRecoveryService{recoveryServiceFixture: s, tracking: Tracking{ID: strings.Repeat("a", 48), Status: status, ExpiresAt: "1", OperationDigest: digest}}
+		c.Service = service
+		if _, e := c.Prepare(context.Background(), "terminal", v.Intent, v.Sidecars[0], "stable"); e == nil {
+			t.Fatal("terminal preflight got broadcast permit")
+		}
+		if _, ok, _ := c.Store.Load(context.Background(), "terminal"); ok {
+			t.Fatal("terminal preflight persisted")
+		}
+		if s.submits != 0 {
+			t.Fatal("terminal preflight submitted")
+		}
+	}
+}
+
+type reservedKeyRoundTripper func(*http.Request) (*http.Response, error)
+
+func (f reservedKeyRoundTripper) RoundTrip(r *http.Request) (*http.Response, error) { return f(r) }
+func TestReservedIdempotencyPrefix(t *testing.T) {
+	t.Run("beforePermit", func(t *testing.T) {
+		c, _, _, v := setupRecovery(t)
+		if _, e := c.PrepareDirect(context.Background(), "reserved", v.Intent, v.Sidecars[0], "internal/test"); e == nil || !strings.Contains(e.Error(), "reserved") {
+			t.Fatal("reserved base escaped permit validation", e)
+		}
+		if _, ok, _ := c.Store.Load(context.Background(), "reserved"); ok {
+			t.Fatal("reserved base persisted")
+		}
+	})
+	t.Run("beforeHTTP", func(t *testing.T) {
+		c, _, _, v := setupRecovery(t)
+		calls := 0
+		client := Client{Endpoint: "https://example.test", Trust: c.Trust, HTTP: &http.Client{Transport: reservedKeyRoundTripper(func(*http.Request) (*http.Response, error) { calls++; return nil, errors.New("unexpected HTTP") })}}
+		if _, e := client.SubmitProof(context.Background(), map[string]any{}, v.Sidecars[0].ProofBundle, "internal/test"); e == nil || !strings.Contains(e.Error(), "reserved") {
+			t.Fatal("reserved key escaped HTTP validation", e)
+		}
+		if calls != 0 {
+			t.Fatal("reserved key sent over HTTP")
+		}
+	})
 }

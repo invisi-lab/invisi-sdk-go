@@ -47,8 +47,8 @@ func main() {
 	}
 	check(json.Unmarshal(must(os.ReadFile(os.Getenv("PROVENANCE_CONFIG"))), &config))
 	var record struct {
-		Data, BroadcastID string
-		Sidecar           provenance.ProofSidecar
+		Data, BroadcastID, TrackingID, OperationDigest string
+		Sidecar                                        provenance.ProofSidecar
 	}
 	check(json.Unmarshal(must(os.ReadFile(os.Getenv("PROVENANCE_RECORD"))), &record))
 	trust := provenance.TrustContext{
@@ -87,25 +87,14 @@ func main() {
 	}
 	source := &provenance.Client{Endpoint: config.Endpoint, Trust: trust}
 	locator := map[string]any{"txHash": hash.Hex(), "blockHash": receipt.BlockHash.Hex(), "operationIndex": "0"}
-	submitted := must(source.SubmitProof(ctx, locator, record.Sidecar.ProofBundle, record.BroadcastID+"-source"))
-	var jobID string
-	check(json.Unmarshal(submitted["jobId"], &jobID))
-	job := must(source.WaitProofJob(ctx, jobID, time.Second))
-	if string(job["status"]) != "\"valid\"" {
-		panic("Proof not valid; retain transaction and record for retry/reproof")
+	tracked := must(source.WaitTracking(ctx, record.TrackingID, 2*time.Second, 2*time.Minute))
+	tracking := must(provenance.TrackingFromResult(tracked, record.TrackingID))
+	if tracking.Status != "recognized" || tracking.Matched == nil || tracking.Matched.TxHash != hash.Hex() || tracking.Matched.BlockHash != receipt.BlockHash.Hex() || tracking.Matched.OperationIndex != "0" || must(provenance.Uint(tracking.OperationDigest, 256)).Cmp(must(provenance.Uint(record.OperationDigest, 256))) != 0 {
+		panic("Tracking not recognized or matched another operation; retain original record")
 	}
-	// Proof verification is not publication. Wait for this exact operation's recognized state.
-	for attempt := 0; attempt < 60; attempt++ {
-		operation := must(source.GetOperationRecognition(ctx, locator))
-		if string(operation["recognitionState"]) == "\"recognized\"" {
-			fmt.Println("Source service confirms operation recognition")
-			return
-		}
-		select {
-		case <-ctx.Done():
-			panic(ctx.Err())
-		case <-time.After(2 * time.Second):
-		}
+	operation := must(source.GetOperationRecognition(ctx, locator))
+	if string(operation["recognitionState"]) != "\"recognized\"" {
+		panic("Publication pending; retry the same tracking ID")
 	}
-	panic("Publication pending; rerun with the same transaction and record")
+	fmt.Println("Source service confirms operation recognition")
 }

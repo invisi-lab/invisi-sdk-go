@@ -86,7 +86,7 @@ func (c *Client) call(ctx context.Context, method string, query any) (Result, er
 	if env.Error != nil {
 		return nil, fmt.Errorf("provenance %s: %s", env.Error.Data.Code, env.Error.Message)
 	}
-	if method == "provenance_evaluateTransaction" || method == "provenance_submitProof" || method == "provenance_getProofJob" {
+	if method == "provenance_evaluateTransaction" || method == "provenance_submitProof" || method == "provenance_getProofJob" || method == "provenance_getTracking" {
 		for _, key := range []string{"chainGeneration", "providerId", "signingKeyId", "manifestSha256"} {
 			if len(env.Result[key]) == 0 {
 				return nil, errors.New("missing response trust identity")
@@ -234,6 +234,9 @@ func (c *Client) EvaluateTransaction(ctx context.Context, data any, sidecars []P
 	return c.call(ctx, "provenance_evaluateTransaction", c.policyQuery(map[string]any{"data": data, "proofSidecars": wireSidecars}))
 }
 func (c *Client) SubmitProof(ctx context.Context, locator map[string]any, bundle ProofBundle, idempotencyKey string) (Result, error) {
+	if strings.HasPrefix(idempotencyKey, "internal/") {
+		return nil, errors.New("reserved idempotency key prefix")
+	}
 	if idempotencyKey == "" {
 		return nil, errors.New("idempotency key required")
 	}
