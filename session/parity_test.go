@@ -29,7 +29,7 @@ func TestManagedStagesAreImmutableAndProofFailureIsRetryable(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	authorized, err := prepared.Authorize(ctx)
+	authorized, err := authorizeForTest(prepared, ctx)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -52,7 +52,7 @@ func TestManagedStagesAreImmutableAndProofFailureIsRetryable(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	recovered, err = recovered.Authorize(ctx)
+	recovered, err = authorizeForTest(recovered, ctx)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -71,7 +71,7 @@ func TestResumeRejectsModifiedCallAndProof(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			operation, err = operation.Authorize(ctx)
+			operation, err = authorizeForTest(operation, ctx)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -121,7 +121,7 @@ func TestRegistryStagesAndExportsFencePreviousHandles(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	prepared, err := registry.PrepareRegistration(ctx, sdk.RegistrationPreparation{Wallet: session.wallet.PublicWallet})
+	prepared, err := registry.PrepareRegistration(ctx, sdk.RegistrationPreparation{Wallet: session.wallet})
 	if err != nil {
 		t.Fatal(err)
 	}

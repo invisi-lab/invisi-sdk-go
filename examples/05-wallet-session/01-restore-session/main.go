@@ -69,7 +69,7 @@ func main() {
 		log.Fatal(err)
 	}
 	invisi := sdk.NewInvisi(sdk.InvisiOptions{Provider: provider, ProtocolRPC: client})
-	localWallet, err := sdk.WalletFromPrivateKey("0x" + hex.EncodeToString(crypto.FromECDSA(alice.Key)))
+	localWallet, err := shared.LocalWallet("0x" + hex.EncodeToString(crypto.FromECDSA(alice.Key)))
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -81,7 +81,7 @@ func main() {
 	}
 
 	// 5. Refresh authenticated wallet state and inspect the token balance.
-	refreshed, err := session.Refresh(ctx, walletsession.RefreshOptions{FromBlock: pool.Deployment().Protocol.FromBlock})
+	refreshed, err := shared.RefreshWallet(ctx, session, localWallet, walletsession.RefreshOptions{FromBlock: pool.Deployment().Protocol.FromBlock})
 	if err != nil {
 		log.Fatal(err)
 	}

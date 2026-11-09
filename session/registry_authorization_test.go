@@ -23,7 +23,7 @@ func TestRegistrationExternalSignerUsesFrozenEIP712Data(t *testing.T) {
 	registry := testRegistry(t, session, false)
 	ctx := context.Background()
 	address, _ := session.wallet.GetAddress()
-	watch, _ := sdk.PublicWalletFromAddress(address)
+	watch, _ := sdk.WalletFromAddress(address)
 	prepared, err := registry.PrepareRegistration(ctx, sdk.RegistrationPreparation{Wallet: watch})
 	if err != nil {
 		t.Fatal(err)
@@ -41,7 +41,7 @@ func TestRegistrationExternalSignerUsesFrozenEIP712Data(t *testing.T) {
 		t.Fatal(err)
 	}
 	digest, _, _ := apitypes.TypedDataAndHash(typed)
-	key, _ := crypto.ToECDSA(transaction.PrivateMaterial(session.wallet).SpendingPrivateKey)
+	key, _ := crypto.ToECDSA(localTestMaterial(session.wallet).SpendingPrivateKey)
 	bad, _ := crypto.Sign(digest, key)
 	if _, err = prepared.WithSignature(ctx, bad); err == nil {
 		t.Fatal("signature for changed nonce accepted")
@@ -71,7 +71,7 @@ func TestRegistrationAcceptsArbitraryERC1271SignatureAndRejectsInvalidEOA(t *tes
 	ctx := context.Background()
 	for _, contract := range []bool{false, true} {
 		registry := testRegistry(t, session, contract)
-		prepared, err := registry.PrepareRegistration(ctx, sdk.RegistrationPreparation{Wallet: session.wallet.PublicWallet})
+		prepared, err := registry.PrepareRegistration(ctx, sdk.RegistrationPreparation{Wallet: session.wallet})
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -102,7 +102,7 @@ func TestRegistrationRequiresSignatureAndValidatesPreparedMaterial(t *testing.T)
 	session, _, _ := testSession(t)
 	registry := testRegistry(t, session, false)
 	ctx := context.Background()
-	prepared, err := registry.PrepareRegistration(ctx, sdk.RegistrationPreparation{Wallet: session.wallet.PublicWallet})
+	prepared, err := registry.PrepareRegistration(ctx, sdk.RegistrationPreparation{Wallet: session.wallet})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -121,8 +121,8 @@ func TestRegistrationRequiresSignatureAndValidatesPreparedMaterial(t *testing.T)
 	if _, err = prepared.WithSignature(cancel, nil); !errors.Is(err, context.Canceled) {
 		t.Fatal(err)
 	}
-	transaction.ReceivingKeySnapshot(session.wallet.PublicWallet).ViewingPublicKey = make([]byte, 33)
-	if _, err = registry.PrepareRegistration(ctx, sdk.RegistrationPreparation{Wallet: session.wallet.PublicWallet}); err == nil {
+	transaction.ReceivingKeySnapshot(session.wallet).ViewingPublicKey = make([]byte, 33)
+	if _, err = registry.PrepareRegistration(ctx, sdk.RegistrationPreparation{Wallet: session.wallet}); err == nil {
 		t.Fatal("invalid viewing key accepted at preparation")
 	}
 }
@@ -130,7 +130,7 @@ func TestRegistrationRequiresSignatureAndValidatesPreparedMaterial(t *testing.T)
 func TestRegistrationExportRejectsExpiry(t *testing.T) {
 	session, _, _ := testSession(t)
 	registry := testRegistry(t, session, false)
-	prepared, err := registry.PrepareRegistration(context.Background(), sdk.RegistrationPreparation{Wallet: session.wallet.PublicWallet, Deadline: 101})
+	prepared, err := registry.PrepareRegistration(context.Background(), sdk.RegistrationPreparation{Wallet: session.wallet, Deadline: 101})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -150,7 +150,7 @@ func TestRegistrationAuthorizationRejectsChangedNonceAndExpiry(t *testing.T) {
 			session, _, _ := testSession(t)
 			registry := testRegistry(t, session, false)
 			ctx := context.Background()
-			prepared, err := registry.PrepareRegistration(ctx, sdk.RegistrationPreparation{Wallet: session.wallet.PublicWallet, Deadline: 101})
+			prepared, err := registry.PrepareRegistration(ctx, sdk.RegistrationPreparation{Wallet: session.wallet, Deadline: 101})
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -176,7 +176,7 @@ func TestRegistrationAcceptsEOASignatureWithDelegatedOwnerCode(t *testing.T) {
 	provider := registryProvider(registry).Provider.(fundingProvider)
 	provider.transport = true // Any ERC-1271 call would fail.
 	registryProvider(registry).Provider = provider
-	prepared, err := registry.PrepareRegistration(context.Background(), sdk.RegistrationPreparation{Wallet: session.wallet.PublicWallet})
+	prepared, err := registry.PrepareRegistration(context.Background(), sdk.RegistrationPreparation{Wallet: session.wallet})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -189,7 +189,7 @@ func TestRegistrationRemoteRoundTripCannotMakeExpiredRequestReady(t *testing.T) 
 	session, _, _ := testSession(t)
 	registry := testRegistry(t, session, false)
 	ctx := context.Background()
-	prepared, err := registry.PrepareRegistration(ctx, sdk.RegistrationPreparation{Wallet: session.wallet.PublicWallet, Deadline: 101})
+	prepared, err := registry.PrepareRegistration(ctx, sdk.RegistrationPreparation{Wallet: session.wallet, Deadline: 101})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -206,13 +206,13 @@ func TestRegistrationRemoteRoundTripCannotMakeExpiredRequestReady(t *testing.T) 
 func TestRegistrationNormalizesOnlyRecoverableOwnerSignature(t *testing.T) {
 	session, _, _ := testSession(t)
 	registry := testRegistry(t, session, false)
-	prepared, err := registry.PrepareRegistration(context.Background(), sdk.RegistrationPreparation{Wallet: session.wallet.PublicWallet})
+	prepared, err := registry.PrepareRegistration(context.Background(), sdk.RegistrationPreparation{Wallet: session.wallet})
 	if err != nil {
 		t.Fatal(err)
 	}
 	typed, _ := prepared.TypedData()
 	digest, _, _ := apitypes.TypedDataAndHash(typed)
-	key, _ := crypto.ToECDSA(transaction.PrivateMaterial(session.wallet).SpendingPrivateKey)
+	key, _ := crypto.ToECDSA(localTestMaterial(session.wallet).SpendingPrivateKey)
 	signature, _ := crypto.Sign(digest, key)
 	ready, err := prepared.WithSignature(context.Background(), signature)
 	if err != nil {
@@ -225,7 +225,7 @@ func TestRegistrationNormalizesOnlyRecoverableOwnerSignature(t *testing.T) {
 		t.Fatal("geth recovery ID was not normalized")
 	}
 	registry = testRegistry(t, session, true)
-	prepared, err = registry.PrepareRegistration(context.Background(), sdk.RegistrationPreparation{Wallet: session.wallet.PublicWallet})
+	prepared, err = registry.PrepareRegistration(context.Background(), sdk.RegistrationPreparation{Wallet: session.wallet})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -258,7 +258,7 @@ func TestRegistrationChecksCompleteERC1271MagicWord(t *testing.T) {
 				response = append(response, 1)
 			}
 			registryProvider(registry).Provider = erc1271ResponseProvider{Provider: registryProvider(registry).Provider, owner: session.wallet.OwnerAddress(), response: response}
-			prepared, err := registry.PrepareRegistration(context.Background(), sdk.RegistrationPreparation{Wallet: session.wallet.PublicWallet})
+			prepared, err := registry.PrepareRegistration(context.Background(), sdk.RegistrationPreparation{Wallet: session.wallet})
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -277,7 +277,7 @@ func TestRegistrationDirectCallRequiresOwnerSender(t *testing.T) {
 			session, _, _ := testSession(t)
 			registry := testRegistry(t, session, false)
 			ctx := context.Background()
-			operation, err := registry.PrepareRegistration(ctx, sdk.RegistrationPreparation{Wallet: session.wallet.PublicWallet})
+			operation, err := registry.PrepareRegistration(ctx, sdk.RegistrationPreparation{Wallet: session.wallet})
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -294,7 +294,7 @@ func TestRegistrationDirectCallRequiresOwnerSender(t *testing.T) {
 			if err != nil || len(values[1].([]byte)) != 0 {
 				t.Fatal("direct call signature must be empty", err)
 			}
-			private := transaction.PrivateMaterial(session.wallet).SpendingPrivateKey
+			private := localTestMaterial(session.wallet).SpendingPrivateKey
 			if !ownerSender {
 				private = bytes.Repeat([]byte{2}, 32)
 			}
@@ -323,14 +323,14 @@ func TestRegistrationDefaultAndUpdateState(t *testing.T) {
 	session, _, _ := testSession(t)
 	registry := testRegistry(t, session, false)
 	ctx := context.Background()
-	if _, err := registry.PrepareRegistration(ctx, sdk.RegistrationPreparation{Wallet: session.wallet.PublicWallet, Update: true}); err == nil {
+	if _, err := registry.PrepareRegistration(ctx, sdk.RegistrationPreparation{Wallet: session.wallet, Update: true}); err == nil {
 		t.Fatal("unregistered update accepted")
 	}
 	registryProvider(registry).Provider = registeredStateProvider{Provider: registryProvider(registry).Provider, nonce: 1}
-	if _, err := registry.PrepareRegistration(ctx, sdk.RegistrationPreparation{Wallet: session.wallet.PublicWallet}); err == nil || !strings.Contains(err.Error(), "already registered") {
+	if _, err := registry.PrepareRegistration(ctx, sdk.RegistrationPreparation{Wallet: session.wallet}); err == nil || !strings.Contains(err.Error(), "already registered") {
 		t.Fatal("default registration must reject registered owner", err)
 	}
-	update, err := registry.PrepareRegistration(ctx, sdk.RegistrationPreparation{Wallet: session.wallet.PublicWallet, Update: true})
+	update, err := registry.PrepareRegistration(ctx, sdk.RegistrationPreparation{Wallet: session.wallet, Update: true})
 	if err != nil {
 		t.Fatal(err)
 	}

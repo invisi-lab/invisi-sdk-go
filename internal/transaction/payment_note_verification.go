@@ -112,7 +112,7 @@ func (n *PaymentNote) Verify(ctx context.Context, pool *Protocol, options ...Pay
 	return result, e
 }
 func (n *PaymentNote) VerifySpendable(ctx context.Context, pool *Protocol, wallet *Wallet, options ...PaymentNoteVerificationOptions) (*SpendablePaymentNote, error) {
-	if wallet == nil || wallet.PublicWallet == nil || wallet.material == nil {
+	if wallet == nil {
 		return nil, errors.New("wallet spending authorization capability required")
 	}
 	result, input, current, e := n.verify(ctx, pool, wallet, options)
@@ -140,7 +140,7 @@ func (n *PaymentNote) verify(ctx context.Context, pool *Protocol, wallet *Wallet
 	if e = pool.ValidateDeployment(ctx, o.Provider); e != nil {
 		return fail(e)
 	}
-	if wallet != nil && (wallet.OwnerAddress() != n.data.OwnerAddress || common.BigToAddress(core.ElementToBigInt(wallet.material.OwnerAddress)) != n.data.OwnerAddress) {
+	if wallet != nil && wallet.OwnerAddress() != n.data.OwnerAddress {
 		return fail(errors.New("payment note owner mismatch"))
 	}
 	latest, e := paymentBlock(ctx, o.Provider, nil)

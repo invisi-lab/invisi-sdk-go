@@ -13,8 +13,6 @@ func walletAddress(w sdk.WalletReference) string {
 	switch w := w.(type) {
 	case *sdk.Wallet:
 		value, e = w.GetAddress()
-	case *sdk.PublicWallet:
-		value, e = w.GetAddress()
 	}
 	if e != nil {
 		panic(e)

@@ -203,6 +203,12 @@ func Decrypt(private, envelope []byte, c DeliveryContext, role Role) (DeliverySt
 		return DeliveryState{}, fmt.Errorf("Credit authentication failed")
 	}
 	defer clear(plain)
+	return DecodeDeliveryPlaintext(plain, c, role, recipient)
+}
+
+// DecodeDeliveryPlaintext verifies native wallet output independently of the executor.
+func DecodeDeliveryPlaintext(plain []byte, c DeliveryContext, role Role, recipient []byte) (DeliveryState, error) {
+	var err error
 	if len(plain) < 407 || int(binary.BigEndian.Uint16(plain[405:407])) != len(plain)-407 {
 		return DeliveryState{}, fmt.Errorf("invalid Credit plaintext length")
 	}
@@ -247,3 +253,6 @@ func (d DeliveryState) Validate() error {
 	}
 	return validateDelivery(d, DeliveryContext{ProtocolContext: d.State.ProtocolContext, TokenAddress: d.State.TokenAddress, Commitment: commitment, RecipientIdentity: d.State.OwnerWalletIdentity}, Owner)
 }
+
+// EncodeDeliveryPlaintext returns the canonical public transport plaintext.
+func EncodeDeliveryPlaintext(d DeliveryState) []byte { return encodeDelivery(d) }

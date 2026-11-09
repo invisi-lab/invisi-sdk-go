@@ -1,21 +1,20 @@
-// Derive an offline wallet and inspect its public addresses and capabilities.
+// Connect a public-only wallet to an explicit local cryptographic executor.
 package main
 
 import (
-	"encoding/hex"
+	"context"
 	"fmt"
-	"log"
-
-	"github.com/ethereum/go-ethereum/crypto"
+	"github.com/invisi-lab/invisi-sdk-go/native"
 	"github.com/invisi-lab/invisi-sdk-go/sdk"
+	"log"
 )
 
 func main() {
-	key, err := crypto.GenerateKey()
+	executor, err := native.NewExecutor("0x0000000000000000000000000000000000000000000000000000000000000001")
 	if err != nil {
 		log.Fatal(err)
 	}
-	wallet, err := sdk.WalletFromPrivateKey("0x" + hex.EncodeToString(crypto.FromECDSA(key)))
+	wallet, err := sdk.ConnectWallet(context.Background(), executor.OwnerAddress(), executor)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -23,21 +22,7 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	publicWallet, err := sdk.PublicWalletFromAddress(address)
-	if err != nil {
-		log.Fatal(err)
-	}
-	viewer, err := wallet.GetViewer()
-	if err != nil {
-		log.Fatal(err)
-	}
-	detector, err := wallet.GetDetector()
-	if err != nil {
-		log.Fatal(err)
-	}
-	fmt.Println("EVM owner:", publicWallet.OwnerAddress())
-	fmt.Println("Long receiving address:", address)
-	fmt.Println("EVM owner address length:", len(publicWallet.OwnerAddress().Hex()))
-	fmt.Printf("Public viewing key: 0x%x\nPublic clue key: 0x%x\n", viewer.GetPublicKey(), detector.GetClueKey())
-	fmt.Println("Private capabilities remain local:", viewer, detector)
+	fmt.Println("EVM owner:", wallet.OwnerAddress())
+	fmt.Println("Receiving address:", address)
+	fmt.Printf("Public viewing key: 0x%x\nPublic clue key: 0x%x\n", wallet.ViewingPublicKey(), wallet.ClueKey())
 }

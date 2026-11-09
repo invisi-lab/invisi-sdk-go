@@ -67,7 +67,7 @@ func main() {
 		log.Fatal(err)
 	}
 	signer.Context = ctx
-	recipient, err := bob.PublicWallet.GetAddress()
+	recipient, err := bob.Wallet.GetAddress()
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -95,7 +95,7 @@ func main() {
 		log.Fatal(err)
 	}
 	invisi := sdk.NewInvisi(sdk.InvisiOptions{Provider: provider, ProtocolRPC: client, Prover: localProver})
-	localWallet, err := sdk.WalletFromPrivateKey("0x" + hex.EncodeToString(crypto.FromECDSA(alice.Key)))
+	localWallet, err := shared.LocalWallet("0x" + hex.EncodeToString(crypto.FromECDSA(alice.Key)))
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -107,7 +107,7 @@ func main() {
 	}
 
 	// 6. Refresh authenticated wallet state and inspect the token balance.
-	refreshed, err := session.Refresh(ctx, walletsession.RefreshOptions{FromBlock: pool.Deployment().Protocol.FromBlock})
+	refreshed, err := shared.RefreshWallet(ctx, session, localWallet, walletsession.RefreshOptions{FromBlock: pool.Deployment().Protocol.FromBlock})
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -137,7 +137,15 @@ func main() {
 	fmt.Println("Review:", prepared.Preview())
 
 	// 9. Authorize spending through the managed session.
-	authorized, err := prepared.Authorize(ctx)
+	request, err := prepared.ExportWalletRequest(ctx, "example-authorization")
+	if err != nil {
+		log.Fatal(err)
+	}
+	response, err := shared.ExecutorFor(localWallet).Execute(ctx, request)
+	if err != nil {
+		log.Fatal(err)
+	}
+	authorized, err := prepared.WithWalletResponse(ctx, request, response)
 	if err != nil {
 		log.Fatal(err)
 	}

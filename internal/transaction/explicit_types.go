@@ -17,7 +17,7 @@ type NoteInput struct {
 }
 
 type TransactionIdentity struct {
-	Wallet   *PublicWallet
+	Wallet   *Wallet
 	Protocol *protocol.Protocol
 }
 

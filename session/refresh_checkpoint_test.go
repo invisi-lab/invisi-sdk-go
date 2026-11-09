@@ -95,7 +95,7 @@ func TestRefreshCheckpointRequiresCompleteContiguousScan(t *testing.T) {
 			if kind == "partial" {
 				from = 10
 			}
-			_, err := s.Refresh(context.Background(), RefreshOptions{FromBlock: from, PageSize: 5})
+			_, err := refreshForTest(s, context.Background(), RefreshOptions{FromBlock: from, PageSize: 5})
 			if (err != nil) != (kind == "failed") {
 				t.Fatal(err)
 			}
@@ -117,11 +117,11 @@ func TestRefreshSerializesAndCancelsQueuedWork(t *testing.T) {
 	entered, release := make(chan struct{}), make(chan struct{})
 	s, calls := refreshFixture(t, false, entered, release)
 	first := make(chan error, 1)
-	go func() { _, err := s.Refresh(context.Background(), RefreshOptions{FromBlock: 1}); first <- err }()
+	go func() { _, err := refreshForTest(s, context.Background(), RefreshOptions{FromBlock: 1}); first <- err }()
 	<-entered
 	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Millisecond)
 	defer cancel()
-	if _, err := s.Refresh(ctx, RefreshOptions{FromBlock: 1}); !errors.Is(err, context.DeadlineExceeded) {
+	if _, err := refreshForTest(s, ctx, RefreshOptions{FromBlock: 1}); !errors.Is(err, context.DeadlineExceeded) {
 		t.Fatal("queued canceled refresh did not return", err)
 	}
 	if calls.Load() != 1 {
@@ -161,29 +161,37 @@ func TestRefreshCannotCrossAnotherSessionsReset(t *testing.T) {
 			other := *s
 			other.refreshGate = make(chan struct{}, 1)
 			oldScan := make(chan error, 1)
-			go func() { _, err := s.Refresh(context.Background(), RefreshOptions{FromBlock: 1}); oldScan <- err }()
+			go func() {
+				_, err := refreshForTest(s, context.Background(), RefreshOptions{FromBlock: 1})
+				oldScan <- err
+			}()
 			<-entered
-			_, resetErr := other.Refresh(context.Background(), RefreshOptions{FromBlock: 1, Reset: true})
+			_, resetErr := refreshForTest(&other, context.Background(), RefreshOptions{FromBlock: 1, Reset: true})
 			if (resetErr != nil) != failedReset {
 				close(release)
 				t.Fatal("unexpected reset result", resetErr)
 			}
 			close(release)
-			if err := <-oldScan; err == nil {
+			oldErr := <-oldScan
+			if failedReset {
+				if oldErr != nil {
+					t.Fatal("failed staged reset should preserve active scan", oldErr)
+				}
+			} else if oldErr == nil {
 				t.Error("old scan committed across another session reset")
 			}
 			snapshot, err := s.options.Store.ReadSnapshot(context.Background(), s.scope)
 			if err != nil {
 				t.Fatal(err)
 			}
-			if len(snapshot.Notes) != 0 {
+			if !failedReset && len(snapshot.Notes) != 0 {
 				t.Error("old scan resurrected cleared inventory")
 			}
-			if snapshot.Invalidated != failedReset {
+			if snapshot.Invalidated {
 				t.Error("old scan overwrote reset validity")
 			}
-			if failedReset && snapshot.DiscoveryThrough != nil {
-				t.Error("failed reset claimed discovery coverage")
+			if failedReset && snapshot.DiscoveryThrough == nil {
+				t.Error("failed reset erased successful discovery coverage")
 			}
 		})
 	}
@@ -205,7 +213,7 @@ func (s *pauseFirstCommitStore) Update(ctx context.Context, scope WalletScope, a
 	}
 	return nil
 }
-func TestDiscoveryCheckpointCannotCrossResetAfterLastPageCommit(t *testing.T) {
+func TestFailedStagedResetPreservesCommittedDiscoveryCheckpoint(t *testing.T) {
 	session, _ := refreshFixture(t, true, nil, nil)
 	entered, release := make(chan struct{}), make(chan struct{})
 	store := &pauseFirstCommitStore{WalletStore: session.options.Store, entered: entered, release: release}
@@ -213,21 +221,24 @@ func TestDiscoveryCheckpointCannotCrossResetAfterLastPageCommit(t *testing.T) {
 	other := *session
 	other.refreshGate = make(chan struct{}, 1)
 	result := make(chan error, 1)
-	go func() { _, err := session.Refresh(context.Background(), RefreshOptions{FromBlock: 1}); result <- err }()
+	go func() {
+		_, err := refreshForTest(session, context.Background(), RefreshOptions{FromBlock: 1})
+		result <- err
+	}()
 	<-entered
-	if _, err := other.Refresh(context.Background(), RefreshOptions{FromBlock: 1, Reset: true}); err == nil {
+	if _, err := refreshForTest(&other, context.Background(), RefreshOptions{FromBlock: 1, Reset: true}); err == nil {
 		close(release)
 		t.Fatal("reset fixture should fail after clearing inventory")
 	}
 	close(release)
-	if err := <-result; err == nil {
-		t.Fatal("old scan finalized discovery after reset")
+	if err := <-result; err != nil {
+		t.Fatal("failed staged reset changed completed scan", err)
 	}
 	state, err := store.ReadSnapshot(context.Background(), session.scope)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if !state.Invalidated || state.DiscoveryThrough != nil || len(state.Notes) != 0 {
-		t.Fatal("old scan overwrote failed reset")
+	if state.Invalidated || state.DiscoveryThrough == nil || len(state.Notes) == 0 {
+		t.Fatal("failed staged reset erased committed state")
 	}
 }

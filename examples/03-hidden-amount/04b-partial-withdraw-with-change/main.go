@@ -78,7 +78,7 @@ func main() {
 	input := []sdk.NoteInput{}
 
 	// 4. Discover authenticated notes and choose this transaction's inputs.
-	candidates, err := shared.DiscoverNotes(ctx, provider, client, pool, bob.PublicWallet, bob.ViewingKey, token)
+	candidates, err := shared.DiscoverNotes(ctx, provider, client, pool, bob.Wallet, bob.ViewingKey, token)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -99,11 +99,11 @@ func main() {
 	}
 	params := sdk.TransferPreparation{TokenAddress: token}
 	params.Outputs = nil
-	params.Withdrawal = &sdk.Withdrawal{To: bob.PublicWallet.OwnerAddress(), Amount: amount}
+	params.Withdrawal = &sdk.Withdrawal{To: bob.Wallet.OwnerAddress(), Amount: amount}
 
 	// 5. Prepare and freeze the transaction intent.
 	prepared, err := invisi.PrepareTransfer(ctx, sdk.ExplicitTransferPreparation{
-		TransactionIdentity: sdk.TransactionIdentity{Wallet: bob.PublicWallet, Protocol: pool},
+		TransactionIdentity: sdk.TransactionIdentity{Wallet: bob.Wallet, Protocol: pool},
 		TransferPreparation: params,
 		ExplicitFunds:       sdk.ExplicitFunds{Inputs: input},
 	})

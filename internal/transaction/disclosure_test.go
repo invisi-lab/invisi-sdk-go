@@ -24,7 +24,9 @@ func TestDisclosuresInteroperateWithCurrentTSExports(t *testing.T) {
 	if e != nil {
 		t.Fatal(e)
 	}
-	viewer, e := wallet.GetViewer()
+	rawKey, _ := core.DecodePrivateKey("0x" + strings.Repeat("0", 63) + "1")
+	material, _ := core.DeriveWallet(rawKey)
+	viewer, e := NewViewingCapability(wallet.OwnerAddress(), material.ViewingPrivateKey, material.ViewingPublicKey)
 	if e != nil {
 		t.Fatal(e)
 	}

@@ -35,7 +35,7 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	candidates, err := shared.DiscoverCredits(ctx, provider, client, pool, owner.PublicWallet, owner.ViewingKey, common.HexToAddress(shared.Settings.TokenAddress), "owner")
+	candidates, err := shared.DiscoverCredits(ctx, provider, client, pool, owner.Wallet, owner.ViewingKey, common.HexToAddress(shared.Settings.TokenAddress), "owner")
 	if err != nil {
 		log.Fatal(err)
 	}

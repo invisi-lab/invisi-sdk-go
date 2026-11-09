@@ -80,7 +80,7 @@ func (r *AddressRegistry) Resolve(ctx context.Context, address string) (string, 
 }
 
 type RegistrationPreparation struct {
-	Wallet   *PublicWallet
+	Wallet   *Wallet
 	Update   bool
 	Deadline uint64
 }
@@ -99,7 +99,7 @@ type RegistrationOperation struct {
 	generation      uint64
 	mu              sync.Mutex
 	registry        *AddressRegistry
-	wallet          *PublicWallet
+	wallet          *Wallet
 	options         RegistrationPreparation
 	registration    protocol.AddressRegistration
 	context         protocol.RegistryContext

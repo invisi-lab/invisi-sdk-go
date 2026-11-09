@@ -51,7 +51,7 @@ func signRegistry(t *testing.T, o *sdk.RegistrationOperation, wallet *sdk.Wallet
 	if err != nil {
 		t.Fatal(err)
 	}
-	key, err := crypto.ToECDSA(transaction.PrivateMaterial(wallet).SpendingPrivateKey)
+	key, err := crypto.ToECDSA(localTestMaterial(wallet).SpendingPrivateKey)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -123,7 +123,7 @@ func registeredOperationFixture(t *testing.T) (*sdk.RegistrationOperation, *regi
 	t.Helper()
 	session, _, _ := testSession(t)
 	registry := testRegistry(t, session, false)
-	ready, err := registry.PrepareRegistration(context.Background(), sdk.RegistrationPreparation{Wallet: session.wallet.PublicWallet})
+	ready, err := registry.PrepareRegistration(context.Background(), sdk.RegistrationPreparation{Wallet: session.wallet})
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -68,7 +68,7 @@ func main() {
 		log.Fatal(err)
 	}
 	signer.Context = ctx
-	recipient, err := dave.PublicWallet.GetAddress()
+	recipient, err := dave.Wallet.GetAddress()
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -83,7 +83,7 @@ func main() {
 	input := []sdk.NoteInput{}
 
 	// 4. Discover authenticated notes and choose this transaction's inputs.
-	candidates, err := shared.DiscoverNotes(ctx, provider, client, pool, bob.PublicWallet, bob.ViewingKey, token)
+	candidates, err := shared.DiscoverNotes(ctx, provider, client, pool, bob.Wallet, bob.ViewingKey, token)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -127,7 +127,7 @@ func main() {
 	authorization := "caller"
 	fundingAmount := big.NewInt(1)
 	params.Funding = &sdk.FundingSource{
-		Payer:         bob.PublicWallet.OwnerAddress(),
+		Payer:         bob.Wallet.OwnerAddress(),
 		Amount:        fundingAmount,
 		Authorization: authorization,
 	}
@@ -154,7 +154,7 @@ func main() {
 
 	// 6. Prepare and freeze the transaction intent.
 	prepared, err := invisi.PrepareTransfer(ctx, sdk.ExplicitTransferPreparation{
-		TransactionIdentity: sdk.TransactionIdentity{Wallet: bob.PublicWallet, Protocol: pool},
+		TransactionIdentity: sdk.TransactionIdentity{Wallet: bob.Wallet, Protocol: pool},
 		TransferPreparation: params,
 		ExplicitFunds:       sdk.ExplicitFunds{Inputs: input},
 	})

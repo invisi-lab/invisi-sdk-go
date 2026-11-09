@@ -1,0 +1,134 @@
+{
+  "purpose": "Public test key only. Portable JSON wallet interoperability vectors.",
+  "privateKey": "0x0000000000000000000000000000000000000000000000000000000000000001",
+  "cases": [
+    {
+      "request": {
+        "version": 1,
+        "id": "wallet.public",
+        "ownerAddress": "0x7e5f4552091a69125d5dfcb7b8c2659029395bdf",
+        "method": "wallet.public",
+        "params": {}
+      },
+      "response": {
+        "version": 1,
+        "id": "wallet.public",
+        "ownerAddress": "0x7e5f4552091a69125d5dfcb7b8c2659029395bdf",
+        "method": "wallet.public",
+        "result": {
+          "viewingPublicKey": "0x0396f42bb298c8a0e74539294780d709799f9838c0b69a134f38c6d968f2921397",
+          "clueKey": "0x1292f7299a65930b0476394e55b6475425fb3ee7445176537042966a4653bf06",
+          "spendingPublicKey": "0x0479be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798483ada7726a3c4655da4fbfc0e1108a8fd17b448a68554199c47d08ffb10d4b8"
+        }
+      }
+    },
+    {
+      "request": {
+        "version": 1,
+        "id": "wallet.detect",
+        "ownerAddress": "0x7e5f4552091a69125d5dfcb7b8c2659029395bdf",
+        "method": "wallet.detect",
+        "params": {
+          "clues": [
+            "0xa469b2f0d4b5fbce27f2999de5c4b45b9a92a207de42617105748e14ee364c0bb438aeb650f006d8720c3840cf8b90da67b93aa571d0cfcae068035d41f6b700185f8730"
+          ]
+        }
+      },
+      "response": {
+        "version": 1,
+        "id": "wallet.detect",
+        "ownerAddress": "0x7e5f4552091a69125d5dfcb7b8c2659029395bdf",
+        "method": "wallet.detect",
+        "result": {
+          "matches": [
+            true
+          ]
+        }
+      }
+    },
+    {
+      "request": {
+        "version": 1,
+        "id": "wallet.decryptNote",
+        "ownerAddress": "0x7e5f4552091a69125d5dfcb7b8c2659029395bdf",
+        "method": "wallet.decryptNote",
+        "params": {
+          "envelope": "0x010256b328b30c8bf5839e24058747879408bdb36241dc9c2e7c619faa12b29209670707070707070707070707070707070708080808080808080808080822a505b086bc749a1e65218db68cfaafdf8ee55a1a76a2c44fdf3f08e2a4875ec53fc60321e52376c890fd9c7a12ec6ca17e9916bcba8c45fd5c2b24f3a8a634ddca5b9d9cde45441163bb9c33c6274e2fa5ddae7f0ea0ddd94a551dcb5a9e733471",
+          "context": {
+            "chainId": "31337",
+            "protocolAddress": "4660",
+            "tokenAddress": "22136",
+            "outputCommitment": "0x2896028af6f77d679612169cfcef4831e8af4c28dd0dc00b4e60374dc80e2306"
+          }
+        }
+      },
+      "response": {
+        "version": 1,
+        "id": "wallet.decryptNote",
+        "ownerAddress": "0x7e5f4552091a69125d5dfcb7b8c2659029395bdf",
+        "method": "wallet.decryptNote",
+        "result": {
+          "plaintext": "0x0000000000000000000000007e5f4552091a69125d5dfcb7b8c2659029395bdf00000000000000000000000000000046000000000000000000000000000000000000000000000000000000000000007b0000"
+        }
+      }
+    },
+    {
+      "request": {
+        "version": 1,
+        "id": "wallet.decryptCredit",
+        "ownerAddress": "0x7e5f4552091a69125d5dfcb7b8c2659029395bdf",
+        "method": "wallet.decryptCredit",
+        "params": {
+          "envelope": "0x820256b328b30c8bf5839e24058747879408bdb36241dc9c2e7c619faa12b29209670707070707070707070707070707070708080808080808080808080882dac18b1a8dc5bb6453504f9f2ecb0fe0dc40d33ea485040104a5528bcf434474ef71a5423c8769a96ddcd6cfefb3853eb977b5ffc0072432e1ef6c8ba5eb9c67046d6b717ceb27711dbd38db7ed30d710036a5224a224fb9821edb00c2551fc6caad5791087c7dc5eaa319b1b0a34f3cb5dd87f490357a439791515aeb4660f8aaa02629ceb85b8a1c377f2a655479bdf9a316bdeb4a7eedef773b42088aa70d9f39591489339c171c571531fb2ae9822511e4ebe2a36c16e55de4d7a38ca74dc8788468a362857d615cfcf8df2f65b0d27bf5c68355fa2f2c436a7f8914d73adaac2d432d82b09da7073dfd685752204d3fec8167699d4e6da3e5b88232455638b72ac5683ee96ee035fd9bd0f28793860a276854b4eff1408b75e15f8bdaf928b859ed60ed234e76d96812661d609b715b0fd7759ed867644ba645f8480f5f87e83ad5c1b415dc5788ee9eec7098797d9450831699cdaf65800bdc4f4db1ffa3911d953296340fbbe723bfa67d63ec7d47f547523ee8b2c104c0e867928859894bcc5b1929efa725c5d920293ee2357b6fc502b749cff344e418e57900514a3789836a3161",
+          "context": {
+            "chainId": "31337",
+            "protocolAddress": "4660",
+            "tokenAddress": "22136",
+            "outputCommitment": "0x0a18ab461e73958bad7759b4c2fc0d40d0c8c6f2265a6b9d43e76c46950c0be6",
+            "role": "owner"
+          }
+        }
+      },
+      "response": {
+        "version": 1,
+        "id": "wallet.decryptCredit",
+        "ownerAddress": "0x7e5f4552091a69125d5dfcb7b8c2659029395bdf",
+        "method": "wallet.decryptCredit",
+        "result": {
+          "plaintext": "0x0000000000000000000000002b5ad5c4795c026514f8317c7a215e218dccd6cf0000000000000000000000007e5f4552091a69125d5dfcb7b8c2659029395bdf0000000000000001000000000000000000000000000000000000000000000000000000000000000002a6000000007735947b00000000000000000000000000000000000000000000000000000000000003e7000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000f424000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000396f42bb298c8a0e74539294780d709799f9838c0b69a134f38c6d968f2921397c69480518ea88f8cb925fbcd8f5100b1ebc46cc4d8cbe19e0478936567e6b211027eb25acef93b6d40d19a5349282bd5769e7a439e1c356cce1f83078545b8a7e1c69480518ea88f8cb925fbcd8f5100b1ebc46cc4d8cbe19e0478936567e6b2110000"
+        }
+      }
+    },
+    {
+      "request": {
+        "version": 1,
+        "id": "wallet.authorize",
+        "ownerAddress": "0x7e5f4552091a69125d5dfcb7b8c2659029395bdf",
+        "method": "wallet.authorize",
+        "params": {
+          "operation": "transact",
+          "capacity": 1,
+          "words": [
+            "31337",
+            "4660"
+          ],
+          "context": {
+            "chainId": "31337",
+            "protocolAddress": "4660"
+          }
+        }
+      },
+      "response": {
+        "version": 1,
+        "id": "wallet.authorize",
+        "ownerAddress": "0x7e5f4552091a69125d5dfcb7b8c2659029395bdf",
+        "method": "wallet.authorize",
+        "result": {
+          "spendingPublicKey": "0x0479be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798483ada7726a3c4655da4fbfc0e1108a8fd17b448a68554199c47d08ffb10d4b8",
+          "signature": "0x3e25fccefa4d3656f98bab04594f88a460f9e53e0bf09130eda69a59e84c32262324fef0260f5ea0041b1d968721056e0bf335c2401fc376ec4b864b9409d817",
+          "digest": "0xc15a1630a6519498f535525b06dc95814bfb09e757426a8dfece4278b26eb334"
+        }
+      }
+    }
+  ]
+}

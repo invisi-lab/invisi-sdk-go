@@ -49,7 +49,7 @@ func TestRealNativeOperationProofs(t *testing.T) {
 				t.Fatal(err)
 			}
 			if prepared.Preview().NeedsWalletAuthorization {
-				if prepared, err = prepared.Authorize(ctx); err != nil {
+				if prepared, err = authorizeForTest(prepared, ctx); err != nil {
 					t.Fatal(err)
 				}
 			}
@@ -115,7 +115,7 @@ func TestRealNativeAggregation(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		if prepared, err = prepared.Authorize(ctx); err != nil {
+		if prepared, err = authorizeForTest(prepared, ctx); err != nil {
 			t.Fatal(err)
 		}
 		if prepared, err = prepared.Prove(ctx, sdk.TransactionProveOptions{Execution: "aggregate"}); err != nil {

@@ -34,7 +34,7 @@ func TestOwnedReceiptRequiresCanonicalInsertionAndMembership(t *testing.T) {
 	for _, note := range state.Notes {
 		stored = note
 	}
-	ciphertext, err := core.EncryptPrivateTransferNote(session.viewing.GetPublicKey(), stored.Note, core.NoteEncryptionContext{ProtocolContext: session.coreContext(), OutputCommitment: core.BigIntToElement(stored.Commitment.Big())})
+	ciphertext, err := core.EncryptPrivateTransferNote(session.wallet.ViewingPublicKey(), stored.Note, core.NoteEncryptionContext{ProtocolContext: session.coreContext(), OutputCommitment: core.BigIntToElement(stored.Commitment.Big())})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -89,17 +89,17 @@ func TestOwnedReceiptRequiresCanonicalInsertionAndMembership(t *testing.T) {
 	provider := receiptProvider{original, receipt}
 	session.options.Provider = provider
 	session.rpc = session.rpc.WithProvider(provider)
-	notes, credits, _, err := session.readTransaction(ctx, tx, *state.ObservedThrough)
+	notes, credits, _, err := readTransactionForTest(session, ctx, tx, *state.ObservedThrough)
 	if err != nil || len(notes) != 1 || len(credits) != 0 || notes[0].Commitment != stored.Commitment {
 		t.Fatal(notes, err)
 	}
 	log.BlockHash = common.HexToHash("0xdead")
-	if _, _, _, err := session.readTransaction(ctx, tx, *state.ObservedThrough); err == nil {
+	if _, _, _, err := readTransactionForTest(session, ctx, tx, *state.ObservedThrough); err == nil {
 		t.Fatal("misbound event accepted")
 	}
 	log.BlockHash = original.head.Hash()
 	receipt.TxHash = common.HexToHash("0xbeef")
-	if _, _, _, err := session.readTransaction(ctx, tx, *state.ObservedThrough); err == nil {
+	if _, _, _, err := readTransactionForTest(session, ctx, tx, *state.ObservedThrough); err == nil {
 		t.Fatal("substituted receipt accepted")
 	}
 }

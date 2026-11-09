@@ -65,7 +65,7 @@ func main() {
 		log.Fatal(err)
 	}
 	fundingSigner.Context = ctx
-	recipient, err := alice.PublicWallet.GetAddress()
+	recipient, err := alice.Wallet.GetAddress()
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -103,12 +103,12 @@ func main() {
 
 	// 4. Prepare and freeze the transaction intent.
 	prepared, err := invisi.PrepareShield(ctx, sdk.ExplicitShieldPreparation{
-		TransactionIdentity: sdk.TransactionIdentity{Wallet: alice.PublicWallet, Protocol: pool},
+		TransactionIdentity: sdk.TransactionIdentity{Wallet: alice.Wallet, Protocol: pool},
 		ShieldPreparation: sdk.ShieldPreparation{
 			TokenAddress: token,
 			Outputs:      outputs,
 			Funding: sdk.FundingSource{
-				Payer:         bob.PublicWallet.OwnerAddress(),
+				Payer:         bob.Wallet.OwnerAddress(),
 				Amount:        amount,
 				Authorization: authorization,
 			},

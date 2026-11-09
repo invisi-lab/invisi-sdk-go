@@ -15,7 +15,7 @@ func TestResumeFencesPreviousWorkerAndRequiresFreshAuthorization(t *testing.T) {
 	if e != nil {
 		t.Fatal(e)
 	}
-	if prepared, e = prepared.Authorize(ctx); e != nil {
+	if prepared, e = authorizeForTest(prepared, ctx); e != nil {
 		t.Fatal(e)
 	}
 	resumed, e := session.Resume(ctx, prepared.ID())
@@ -28,7 +28,7 @@ func TestResumeFencesPreviousWorkerAndRequiresFreshAuthorization(t *testing.T) {
 	if _, e = resumed.Prove(ctx); e == nil {
 		t.Fatal("private signature was persisted")
 	}
-	if resumed, e = resumed.Authorize(ctx); e != nil {
+	if resumed, e = authorizeForTest(resumed, ctx); e != nil {
 		t.Fatal(e)
 	}
 	if _, e = resumed.Prove(ctx); e != nil {

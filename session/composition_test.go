@@ -3,7 +3,7 @@ package session
 import (
 	"context"
 	"math/big"
-	"strings"
+	"reflect"
 	"sync"
 	"testing"
 
@@ -44,26 +44,11 @@ func TestConnectComposesIndependentStoresAroundNeutralInfrastructure(t *testing.
 	}
 }
 
-func TestConnectRejectsForeignCapabilities(t *testing.T) {
-	source, _, _ := testSession(t)
-	other, err := sdk.WalletFromPrivateKey("0x" + strings.Repeat("02", 32))
-	if err != nil {
-		t.Fatal(err)
-	}
-	viewer, err := other.GetViewer()
-	if err != nil {
-		t.Fatal(err)
-	}
-	authorization, err := other.ExportAuthorization()
-	if err != nil {
-		t.Fatal(err)
-	}
-	for _, option := range []Options{
-		{Invisi: sdk.NewInvisi(source.options.InvisiOptions), Wallet: source.wallet, Protocol: source.protocol, Store: NewMemoryWalletStore(), Viewing: viewer},
-		{Invisi: sdk.NewInvisi(source.options.InvisiOptions), Wallet: source.wallet, Protocol: source.protocol, Store: NewMemoryWalletStore(), Authorization: authorization},
-	} {
-		if _, err := Connect(context.Background(), option); err == nil || !strings.Contains(err.Error(), "identity mismatch") {
-			t.Fatalf("foreign capability accepted: %v", err)
+func TestSessionOptionsRequireOnlyPublicWallet(t *testing.T) {
+	typ := reflect.TypeOf(Options{})
+	for _, name := range []string{"Viewing", "Authorization", "WalletProvider"} {
+		if _, ok := typ.FieldByName(name); ok {
+			t.Fatal("obsolete injected capability", name)
 		}
 	}
 }

@@ -35,7 +35,6 @@ type Runtime struct {
 	Protocol          *protocol.Protocol
 	Scope             WalletScope
 	RPC               *protocolrpc.ProtocolRpcClient
-	Authorization     WalletAuthorizationProvider
 	ExplicitInventory *Inventory
 	ChangeAddress     string
 	InventoryReader   func(context.Context) (Inventory, error)
@@ -62,10 +61,7 @@ func SnapshotWallet(ref WalletReference) (*Wallet, error) {
 	if p == nil {
 		return nil, &MissingCapabilityError{Capability: "public wallet"}
 	}
-	w := &Wallet{PublicWallet: &PublicWallet{identity: p.identity, address: p.address, keys: core.ReceivingKeys{ViewingPublicKey: append([]byte(nil), p.keys.ViewingPublicKey...), ClueKey: append([]byte(nil), p.keys.ClueKey...)}}}
-	if local, ok := ref.(*Wallet); ok {
-		w.material = local.material
-	}
+	w := &Wallet{identity: p.identity, address: p.address, keys: core.ReceivingKeys{ViewingPublicKey: append([]byte(nil), p.keys.ViewingPublicKey...), ClueKey: append([]byte(nil), p.keys.ClueKey...)}}
 	return w, nil
 }
 func ResolveRuntime(ctx context.Context, infrastructure InvisiOptions, wallet WalletReference, pool *protocol.Protocol, namespace string) (*Runtime, error) {
@@ -123,4 +119,3 @@ func (e *Execution) CommitBroadcasterPlan(ctx context.Context) error {
 }
 
 func ViewingOwner(v *ViewingCapability) common.Address { return v.identity }
-func PrivateMaterial(w *Wallet) *core.InvisiWallet     { return w.material }

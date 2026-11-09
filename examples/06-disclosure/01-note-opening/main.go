@@ -56,7 +56,7 @@ func main() {
 	var reference sdk.DisclosureReference
 
 	// 3. Discover authenticated notes and choose this transaction's inputs.
-	candidates, err := shared.DiscoverNotes(ctx, provider, client, pool, bob.PublicWallet, bob.ViewingKey, token)
+	candidates, err := shared.DiscoverNotes(ctx, provider, client, pool, bob.Wallet, bob.ViewingKey, token)
 	if err != nil {
 		log.Fatal(err)
 	}

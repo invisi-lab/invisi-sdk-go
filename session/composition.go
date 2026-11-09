@@ -18,12 +18,10 @@ import (
 
 type Options struct {
 	Invisi        *sdk.Invisi
-	Wallet        sdk.WalletReference
+	Wallet        *sdk.Wallet
 	Protocol      *protocol.Protocol
 	Store         WalletStore
 	Namespace     string
-	Viewing       *sdk.ViewingCapability
-	Authorization sdk.WalletAuthorizationProvider
 	Signer        *bind.TransactOpts
 	FundingSigner sdk.FundingSigner
 }
@@ -34,17 +32,15 @@ type sessionOptions struct {
 	FundingSigner sdk.FundingSigner
 }
 type WalletSession struct {
-	history       *sessionNotifications
-	refreshGate   chan struct{}
-	sends         *sessionSendState
-	options       sessionOptions
-	wallet        *sdk.Wallet
-	protocol      *protocol.Protocol
-	scope         WalletScope
-	viewing       *sdk.ViewingCapability
-	authorization sdk.WalletAuthorizationProvider
-	rpc           *protocolrpc.ProtocolRpcClient
-	runtime       *transaction.Runtime
+	history     *sessionNotifications
+	refreshGate chan struct{}
+	sends       *sessionSendState
+	options     sessionOptions
+	wallet      *sdk.Wallet
+	protocol    *protocol.Protocol
+	scope       WalletScope
+	rpc         *protocolrpc.ProtocolRpcClient
+	runtime     *transaction.Runtime
 }
 
 func Connect(ctx context.Context, options Options) (*WalletSession, error) {
@@ -58,25 +54,10 @@ func Connect(ctx context.Context, options Options) (*WalletSession, error) {
 	if e != nil {
 		return nil, e
 	}
-	viewer := options.Viewing
-	if viewer == nil {
-		viewer, _ = runtime.Wallet.GetViewer()
-	}
-	if viewer != nil && transaction.ViewingOwner(viewer) != runtime.Wallet.OwnerAddress() {
-		return nil, errors.New("viewing identity mismatch")
-	}
-	authority := options.Authorization
-	if authority == nil {
-		authority, _ = runtime.Wallet.ExportAuthorization()
-	}
-	if authority != nil && authority.OwnerAddress() != runtime.Wallet.OwnerAddress() {
-		return nil, errors.New("authorization identity mismatch")
-	}
-	s := &WalletSession{history: newSessionNotifications(), refreshGate: make(chan struct{}, 1), sends: &sessionSendState{sending: map[string]bool{}}, options: sessionOptions{options.Invisi.GetInfrastructure(), options.Store, options.Signer, options.FundingSigner}, wallet: runtime.Wallet, protocol: options.Protocol, scope: runtime.Scope, viewing: viewer, authorization: authority, rpc: runtime.RPC, runtime: runtime}
+	s := &WalletSession{history: newSessionNotifications(), refreshGate: make(chan struct{}, 1), sends: &sessionSendState{sending: map[string]bool{}}, options: sessionOptions{options.Invisi.GetInfrastructure(), options.Store, options.Signer, options.FundingSigner}, wallet: runtime.Wallet, protocol: options.Protocol, scope: runtime.Scope, rpc: runtime.RPC, runtime: runtime}
 	s.options.Store = &notifyingWalletStore{base: s.options.Store, notifications: s.history}
 	runtime.Options.Signer = options.Signer
 	runtime.Options.FundingSigner = options.FundingSigner
-	runtime.Authorization = authority
 	runtime.InventoryReader = func(ctx context.Context) (transaction.Inventory, error) {
 		state, e := s.options.Store.ReadSnapshot(ctx, s.scope)
 		return transaction.Inventory{Notes: state.Notes, Invalidated: state.Invalidated, ObservedThrough: state.ObservedThrough, CheckedThrough: state.CheckedThrough}, e
@@ -147,7 +128,6 @@ func (s *WalletSession) runtimeSnapshot() *transaction.Runtime {
 	runtime.Options.InvisiOptions = s.options.InvisiOptions
 	runtime.Options.Signer = s.options.Signer
 	runtime.Options.FundingSigner = s.options.FundingSigner
-	runtime.Authorization = s.authorization
 	runtime.Wallet = s.wallet
 	runtime.Protocol = s.protocol
 	runtime.Scope = s.scope

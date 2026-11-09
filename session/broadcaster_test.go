@@ -196,7 +196,7 @@ func TestBroadcasterReadySubmitKeepsUncertainReservations(t *testing.T) {
 	if _, e = next.SubmitBroadcaster(ctx, c); e == nil {
 		t.Fatal("sent unready operation")
 	}
-	next, e = next.Authorize(ctx)
+	next, e = authorizeForTest(next, ctx)
 	if e != nil {
 		t.Fatal(e)
 	}
@@ -265,7 +265,7 @@ func TestBroadcasterPrivateShortfallSelectsAndAtomicallyReservesAnotherNote(t *t
 	if snapshot.Notes[leaf].ReservedBy != original.ID() || len(snapshot.Operations[original.ID()].Inputs) != 2 {
 		t.Fatal("additional input not atomically reserved")
 	}
-	next, e = next.Authorize(ctx)
+	next, e = authorizeForTest(next, ctx)
 	if e != nil {
 		t.Fatal(e)
 	}
@@ -346,7 +346,7 @@ func TestBroadcasterTransportFailureStaysExternalizedAndResumeRetainsQuote(t *te
 	if e != nil || quote.Context == nil {
 		t.Fatal(e)
 	}
-	op, e = op.Authorize(ctx)
+	op, e = authorizeForTest(op, ctx)
 	if e != nil {
 		t.Fatal(e)
 	}
@@ -380,7 +380,7 @@ func TestBroadcasterRejectsAggregateBeforeBackendAndPreservesHandle(t *testing.T
 	if e != nil {
 		t.Fatal(e)
 	}
-	op, e = op.Authorize(ctx)
+	op, e = authorizeForTest(op, ctx)
 	if e != nil {
 		t.Fatal(e)
 	}

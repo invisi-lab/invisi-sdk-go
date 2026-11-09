@@ -4,54 +4,10 @@ import (
 	"context"
 	"errors"
 
-	"github.com/consensys/gnark-crypto/ecc/bn254/fr"
 	"github.com/ethereum/go-ethereum/signer/core/apitypes"
 
-	"github.com/invisi-lab/invisi-sdk-go/core"
 	"github.com/invisi-lab/invisi-sdk-go/protocol"
 )
-
-func (o *Execution) AuthorizeInternal(ctx context.Context) (*Execution, error) {
-	o.mu.Lock()
-	defer o.mu.Unlock()
-	if e := o.CheckLease(ctx); e != nil {
-		return nil, e
-	}
-
-	if o.Status != "prepared" {
-		return nil, errors.New("operation must be prepared before authorization")
-	}
-	if !o.Plan.NeedsAuthorization {
-		return o, nil
-	}
-	if o.Runtime.Authorization == nil {
-		return nil, errors.New("wallet authorization permission required")
-	}
-	words, e := o.Words()
-	if e != nil {
-		return nil, e
-	}
-	base := words[:len(words)-2]
-	r, e := protocol.WalletAuthorizationRequest(o.Plan.Context, core.WalletOperation(o.Plan.Kind), o.Plan.Capacity, base)
-	if e != nil {
-		return nil, e
-	}
-	requestCopy := r
-	requestCopy.Words = append([]fr.Element(nil), r.Words...)
-	w, e := o.Runtime.Authorization.Authorize(ctx, requestCopy)
-	if e != nil {
-		return nil, e
-	}
-	if e = VerifyAuthorizationWitness(o.Runtime.Wallet.identity, r, w); e != nil {
-		return nil, e
-	}
-	o.Authorization = &w
-	o.Status = "authorized"
-	if e = o.Persist(ctx, o.Status); e != nil {
-		return nil, e
-	}
-	return o, nil
-}
 
 func (o *Execution) FundingTypedData() (apitypes.TypedData, error) {
 	switch o.Plan.Kind {

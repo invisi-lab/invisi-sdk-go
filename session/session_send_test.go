@@ -70,7 +70,7 @@ func readySendingOperation(t *testing.T) (*WalletSession, *Operation, *sendingPr
 	if err != nil {
 		t.Fatal(err)
 	}
-	operation, err = operation.Authorize(ctx)
+	operation, err = authorizeForTest(operation, ctx)
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -108,7 +108,7 @@ func testSession(t *testing.T, timestamps ...uint64) (*WalletSession, common.Add
 	}
 	t.Helper()
 	ctx := context.Background()
-	wallet, e := sdk.WalletFromPrivateKey("0x" + strings.Repeat("0", 63) + "1")
+	wallet, e := localTestWallet("0x" + strings.Repeat("0", 63) + "1")
 	if e != nil {
 		t.Fatal(e)
 	}
@@ -261,7 +261,7 @@ func TestTransferStagesReserveInputsAndAssembleCurrentWitness(t *testing.T) {
 	if _, e = session.PrepareTransfer(ctx, sdk.TransferPreparation{TokenAddress: token, Outputs: testOutputs(session, []testPaymentOutput{{To: address, Amount: big.NewInt(1)}})}); e == nil {
 		t.Fatal("reserved note selected twice")
 	}
-	authorized, e := prepared.Authorize(ctx)
+	authorized, e := authorizeForTest(prepared, ctx)
 	if e != nil {
 		t.Fatal(e)
 	}
@@ -271,7 +271,7 @@ func TestTransferStagesReserveInputsAndAssembleCurrentWitness(t *testing.T) {
 	}
 	request := backend.requests[0]
 	if e = request.Witness.WithInputs(func(inputs map[string]any) error {
-		if inputs["input_owner_address"] != transaction.PrivateMaterial(session.wallet).OwnerAddress.String() {
+		if inputs["input_owner_address"] != localTestMaterial(session.wallet).OwnerAddress.String() {
 			t.Fatal("wrong witness identity")
 		}
 		return nil
@@ -291,7 +291,7 @@ func TestProofForAnotherStatementIsRejected(t *testing.T) {
 	if e != nil {
 		t.Fatal(e)
 	}
-	if prepared, e = prepared.Authorize(ctx); e != nil {
+	if prepared, e = authorizeForTest(prepared, ctx); e != nil {
 		t.Fatal(e)
 	}
 	if _, e = prepared.Prove(ctx); e == nil {
@@ -308,7 +308,6 @@ func TestProofForAnotherStatementIsRejected(t *testing.T) {
 func TestViewOnlySweepUsesFullOwnerPayoutWithoutSignature(t *testing.T) {
 	ctx := context.Background()
 	session, token, _ := testSession(t)
-	session.authorization = nil
 	prepared, e := session.PrepareTransfer(ctx, sdk.TransferPreparation{TokenAddress: token, Withdrawal: &sdk.Withdrawal{To: session.wallet.OwnerAddress(), Amount: big.NewInt(100)}})
 	if e != nil {
 		t.Fatal(e)
@@ -326,7 +325,7 @@ func TestRegistryUsesOwnerSignatureAndIndependentNonce(t *testing.T) {
 	ctx := context.Background()
 	session, _, backend := testSession(t)
 	registry := testRegistry(t, session, false)
-	prepared, err := registry.PrepareRegistration(ctx, sdk.RegistrationPreparation{Wallet: session.wallet.PublicWallet})
+	prepared, err := registry.PrepareRegistration(ctx, sdk.RegistrationPreparation{Wallet: session.wallet})
 	if err != nil {
 		t.Fatal(err)
 	}

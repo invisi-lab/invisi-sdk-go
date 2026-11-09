@@ -87,11 +87,11 @@ func TestMemoStoreCloneAndFundsDisclosureBoundary(t *testing.T) {
 	if err != nil || len(result.Note.Payload) != 0 || opening.GetScope().RevealsPayload {
 		t.Fatal("opening claimed memo authenticity", err)
 	}
-	output.Ciphertext, err = core.EncryptPrivateTransferNote(session.viewing.GetPublicKey(), note, core.NoteEncryptionContext{ProtocolContext: note.ProtocolContext, OutputCommitment: core.BigIntToElement(stored.Commitment.Big())})
+	output.Ciphertext, err = core.EncryptPrivateTransferNote(session.wallet.ViewingPublicKey(), note, core.NoteEncryptionContext{ProtocolContext: note.ProtocolContext, OutputCommitment: core.BigIntToElement(stored.Commitment.Big())})
 	if err != nil {
 		t.Fatal(err)
 	}
-	payload, err := session.viewing.DiscloseNote(output.Ciphertext, core.NoteDecryptionContext{NoteEncryptionContext: core.NoteEncryptionContext{ProtocolContext: note.ProtocolContext, OutputCommitment: core.BigIntToElement(stored.Commitment.Big())}, TokenAddress: note.TokenAddress})
+	payload, err := testDisclosureViewer(session).DiscloseNote(output.Ciphertext, core.NoteDecryptionContext{NoteEncryptionContext: core.NoteEncryptionContext{ProtocolContext: note.ProtocolContext, OutputCommitment: core.BigIntToElement(stored.Commitment.Big())}, TokenAddress: note.TokenAddress})
 	if err != nil {
 		t.Fatal(err)
 	}

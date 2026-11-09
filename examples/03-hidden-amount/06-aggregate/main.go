@@ -89,7 +89,7 @@ func main() {
 	// 4. Bob and Charlie each sign and prove two distinct transfers.
 	// Each proof has one owner; the aggregate combines four independent members.
 	for _, owner := range accounts[1:3] {
-		candidates, err := shared.DiscoverNotes(ctx, provider, client, pool, owner.PublicWallet, owner.ViewingKey, token)
+		candidates, err := shared.DiscoverNotes(ctx, provider, client, pool, owner.Wallet, owner.ViewingKey, token)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -105,7 +105,7 @@ func main() {
 		if len(selected) != 2 {
 			log.Fatal(owner.Name, " needs two distinct authenticated unspent notes of at least 2 units")
 		}
-		destination, err := alice.PublicWallet.GetAddress()
+		destination, err := alice.Wallet.GetAddress()
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -122,7 +122,7 @@ func main() {
 				log.Fatal(err)
 			}
 			prepared, err := invisi.PrepareTransfer(ctx, sdk.ExplicitTransferPreparation{
-				TransactionIdentity: sdk.TransactionIdentity{Wallet: owner.PublicWallet, Protocol: pool},
+				TransactionIdentity: sdk.TransactionIdentity{Wallet: owner.Wallet, Protocol: pool},
 				ExplicitFunds:       sdk.ExplicitFunds{Inputs: []sdk.NoteInput{input}},
 				TransferPreparation: sdk.TransferPreparation{TokenAddress: token, Outputs: []sdk.NoteOutput{output}, Deadline: deadline},
 			})

@@ -205,12 +205,6 @@ func (s *WalletSession) validateCreditIntent(ctx context.Context, intent credit.
 	return nil
 }
 
-func (s *WalletSession) AuthorizeCredit(ctx context.Context, operation *creditsession.Operation) error {
-	if operation == nil || s.authorization == nil {
-		return errors.New("Credit operation and wallet authorization capability required")
-	}
-	return operation.Authorize(ctx, s.authorization)
-}
 func (s *WalletSession) ProveCredit(ctx context.Context, operation *creditsession.Operation, options prover.Options) error {
 	if operation == nil {
 		return errors.New("Credit operation required")

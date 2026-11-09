@@ -321,33 +321,6 @@ func (o *Operation) Cancel(ctx context.Context) error {
 	})
 }
 
-type AuthorizationProvider interface {
-	OwnerAddress() common.Address
-	Authorize(context.Context, core.WalletAuthorizationRequest) (core.WalletAuthorizationWitness, error)
-}
-
-func (o *Operation) Authorize(ctx context.Context, provider AuthorizationProvider) error {
-	if provider == nil {
-		return fmt.Errorf("Credit wallet authorization provider required")
-	}
-	o.mu.Lock()
-	if err := o.checkFresh(ctx); err != nil {
-		o.mu.Unlock()
-		return err
-	}
-	request, err := o.prepared.AuthorizationRequest()
-	o.mu.Unlock()
-	if err != nil {
-		return err
-	}
-	witness, err := provider.Authorize(ctx, request)
-	if err != nil {
-		return err
-	}
-	public := append([]byte{4}, witness.PublicKeyX[:]...)
-	public = append(public, witness.PublicKeyY[:]...)
-	return o.WithAuthority(ctx, credit.Authority{PublicKey: public, Signature: witness.Signature[:]})
-}
 func (o *Operation) WithRevocationSignature(ctx context.Context, signature []byte, verify func(context.Context, common.Address, apitypes.TypedData, []byte) (bool, error)) error {
 	o.mu.Lock()
 	defer o.mu.Unlock()

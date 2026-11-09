@@ -57,7 +57,7 @@ func main() {
 	var reference sdk.DisclosureReference
 
 	// 3. Discover authenticated notes and choose this transaction's inputs.
-	candidates, err := shared.DiscoverNotes(ctx, provider, client, pool, bob.PublicWallet, bob.ViewingKey, token)
+	candidates, err := shared.DiscoverNotes(ctx, provider, client, pool, bob.Wallet, bob.ViewingKey, token)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -65,7 +65,7 @@ func main() {
 		log.Fatal("no authenticated unspent note to disclose")
 	}
 	selected := candidates[0]
-	viewer, e := sdk.NewViewingCapability(bob.PublicWallet.OwnerAddress(), bob.ViewingKey, bob.PublicWallet.ViewingPublicKey())
+	viewer, e := sdk.NewViewingCapability(bob.Wallet.OwnerAddress(), bob.ViewingKey, bob.Wallet.ViewingPublicKey())
 	if e != nil {
 		log.Fatal(e)
 	}

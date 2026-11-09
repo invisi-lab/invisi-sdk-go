@@ -12,7 +12,8 @@ The SDK remains in the v1 series. Source synchronization does not publish a new 
 
 | Package | Responsibility |
 | --- | --- |
-| `sdk` | Stateless Note payments, public/private wallet capabilities, registration, IPR/IPN and Note disclosure |
+| `sdk` | Stateless Note payments, public-only Wallet identity and portable wallet requests, registration, IPR/IPN and Note disclosure |
+| `wallet`, `native` | Portable JSON wallet requests, independent response validation, and explicit local key execution |
 | `core` | Wallet derivation, addresses, ordinary Note cryptography, FMD and application payload codecs |
 | `credit` | Separate postpaid grant State, policy/usage, deliveries, lifecycle preparation, proof requests, paid broadcasting and grant audit disclosure |
 | `session` | Managed Note inventory, canonical refresh, encrypted persistence, journals and notifications |
@@ -29,7 +30,19 @@ All packages share one Go module and release. Import subpackages under `github.c
 
 ## Wallets and infrastructure
 
-`sdk.PublicWalletFromAddress` imports public receiving identity only. Complete `0i` addresses resolve offline; an EVM recipient requesting an envelope needs registered receiving keys. `sdk.WalletFromPrivateKey` restores local spending/viewing/detection capabilities from an application-owned EVM key. Mnemonic derivation is the application's responsibility.
+`sdk.Wallet` stores public identity and receiving material only. `sdk.WalletFromAddress` imports a receiving address offline. Private keys belong to a separate `native.Executor`, hardware wallet, or external process. The business wallet has no private-key constructor or viewing/detection/authorization exports.
+
+```go
+executor, err := native.NewExecutor(applicationOwnedPrivateKey)
+if err != nil { return err }
+wallet, err := sdk.ConnectWallet(ctx, executor.OwnerAddress(), executor)
+if err != nil { return err }
+// Keep executor separate; wallet contains no reference to it.
+```
+
+The `wallet` package defines one version-1 JSON request/response contract for `wallet.public`, `wallet.detect`, `wallet.decryptNote`, `wallet.decryptCredit`, and `wallet.authorize`. Requests carry a unique application-chosen `id`, `ownerAddress`, `method`, and public `params`; responses echo the version, ID, owner and method. Integers are canonical decimal strings and bytes are `0x` hex. Context addresses are also decimal strings. Public results expose viewing/spending public keys and the clue key, never the detection key.
+
+Detached applications call `wallet.Prepare` (or `Wallet.PrepareRequest`), send JSON to their executor, and call `wallet.Accept` (or `Wallet.AcceptResponse`). `sdk.WalletFromResponse` creates the public wallet after `wallet.public`. Acceptance validates the transcript binding, owner/spending key, authorization digest and signature, or decrypted identity/context/commitment and Credit receiving snapshot. Detect results are advisory: their count is checked, and candidates still require authenticated opening and commitment validation. Local automatic decryption uses `Wallet.DecryptNote(ctx, executor, ...)` / `DecryptCreditState`; managed sessions return pending requests for external execution and accept explicit responses. Mnemonic derivation and transport authentication remain application responsibilities.
 
 Create an `sdk.Invisi` with `Provider`, `ProtocolRPC` and optionally `Prover`. `sdk.ProtocolFromRPC` authenticates the selected deployment against Chain RPC. Protocol RPC uses the `/v1` API; this does not change the independent on-chain `VERSION()` value. Applications choose trusted endpoints and can pin deployment metadata.
 
@@ -96,9 +109,9 @@ Quotes bind chain, Protocol, token, registered signer, fee recipient/amount, dea
 
 `walletSession.Credit()` composes `credit/session` with the same encrypted WalletStore. Note and grant inventories/journals remain separate. Both roles of one physical grant reserve together. Current allocation, bitmap, consumed nullifiers, registered historical roots, UTC draw window and ERC20 gross/fee allowance are checked through the session's pinned provider.
 
-The managed flow provides `Prepare`, local or external authorization, `Prove`, `Calldata`, paid broadcaster submission, `Cancel`, `Resume` and canonical `Reconcile`. Externalization and exact calldata are committed before submission; transport failures retain reservations. Resume replaces the old worker lease and independently verifies saved proofs. A canonical reverted transaction can release reservations; an unconfirmed operator result cannot.
+The managed flow provides `Prepare`, explicit external wallet requests/responses, `Prove`, `Calldata`, paid broadcaster submission, `Cancel`, `Resume` and canonical `Reconcile`. Externalization and exact calldata are committed before submission; transport failures retain reservations. Resume replaces the old worker lease and independently verifies saved proofs. A canonical reverted transaction can release reservations; an unconfirmed operator result cannot.
 
-Use `walletSession.CreditReconciler(confirmations)` to bind the actual transaction destination, chain and exact calldata to canonical receipts and successor events. `WalletSession.Refresh` separately discovers Notes and Credit states, checks current consumption/revocation and restores unresolved reservations after reset. Reorganizations fence old workers without discarding externalized journals.
+Use `walletSession.CreditReconciler(confirmations)` to bind the actual transaction destination, chain and exact calldata to canonical receipts and successor events. `WalletSession.Refresh` stages Note/Credit discovery and returns `PendingWalletRefresh` with public `WalletRequests`. The host runs those requests outside the session, then calls `ApplyWalletResponses` with one response or explicit null nonmatch per ID. Apply rechecks canonical receipts, membership and consumption, guards the captured store revision, and commits the complete inventory/checkpoint atomically. Failed preparation or response validation never advances the real store. Reconciliation reuses those authenticated stored openings; refresh unseen deliveries before reconciling them. Reorganizations fence old workers without discarding externalized journals.
 
 `GetHistory` on each component returns business summaries without proof witnesses or signing secrets. Credit summaries omit grant recovery keys and nonces. Top-level `Subscribe` notifies after successful Store commits, serially outside operation locks. The application owns refresh scheduling and cross-process notifications.
 

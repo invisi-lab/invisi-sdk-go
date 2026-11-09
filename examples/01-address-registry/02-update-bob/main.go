@@ -64,7 +64,7 @@ func main() {
 	invisi := sdk.NewInvisi(sdk.InvisiOptions{Provider: provider, ProtocolRPC: client})
 
 	// 3. Prepare and freeze the transaction intent.
-	prepared, err := invisi.PrepareRegistration(ctx, sdk.RegistrationPreparation{Wallet: bob.PublicWallet, Update: true})
+	prepared, err := invisi.PrepareRegistration(ctx, sdk.RegistrationPreparation{Wallet: bob.Wallet, Update: true})
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -130,7 +130,7 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	address, err := registry.Resolve(ctx, bob.PublicWallet.OwnerAddress().Hex())
+	address, err := registry.Resolve(ctx, bob.Wallet.OwnerAddress().Hex())
 	if err != nil {
 		log.Fatal(err)
 	}

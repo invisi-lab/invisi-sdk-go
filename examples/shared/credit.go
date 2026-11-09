@@ -131,7 +131,7 @@ func RunCreditExample(kind string, actorIndex int) {
 		if e != nil {
 			log.Fatal(e)
 		}
-		allocation, e := contract.CreditAllocation(&bind.CallOpts{Context: ctx, BlockNumber: head.Number}, actor.PublicWallet.OwnerAddress(), token)
+		allocation, e := contract.CreditAllocation(&bind.CallOpts{Context: ctx, BlockNumber: head.Number}, actor.Wallet.OwnerAddress(), token)
 		if e != nil {
 			log.Fatal(e)
 		}
@@ -143,8 +143,8 @@ func RunCreditExample(kind string, actorIndex int) {
 		if e != nil {
 			log.Fatal(e)
 		}
-		state := credit.State{AvailableCredit: core.BigIntToElement(initial), Unlimited: *unlimited, ProtocolContext: coreContext, TokenAddress: core.BigIntToElement(token.Big()), OwnerWalletIdentity: core.BigIntToElement(actor.PublicWallet.OwnerAddress().Big()), SpenderWalletIdentity: core.BigIntToElement(alice.PublicWallet.OwnerAddress().Big()), RevocationShard: core.ElementFromUint64(allocation.Shard), RevocationSlot: core.ElementFromUint64(uint64(allocation.Slot)), Nonce: nonce, Expiry: core.ElementFromUint64(head.Time + 7*86400), SharedKey: key, Policy: credit.Policy{SingleLimit: core.ElementFromUint64(100), DailyLimit: core.ElementFromUint64(1000), MonthlyLimit: core.ElementFromUint64(10000)}}
-		snapshot := credit.DeliveryState{State: state, OwnerReceivingKeys: core.ReceivingKeys{ViewingPublicKey: actor.PublicWallet.ViewingPublicKey(), ClueKey: actor.PublicWallet.ClueKey()}, SpenderReceivingKeys: core.ReceivingKeys{ViewingPublicKey: alice.PublicWallet.ViewingPublicKey(), ClueKey: alice.PublicWallet.ClueKey()}}
+		state := credit.State{AvailableCredit: core.BigIntToElement(initial), Unlimited: *unlimited, ProtocolContext: coreContext, TokenAddress: core.BigIntToElement(token.Big()), OwnerWalletIdentity: core.BigIntToElement(actor.Wallet.OwnerAddress().Big()), SpenderWalletIdentity: core.BigIntToElement(alice.Wallet.OwnerAddress().Big()), RevocationShard: core.ElementFromUint64(allocation.Shard), RevocationSlot: core.ElementFromUint64(uint64(allocation.Slot)), Nonce: nonce, Expiry: core.ElementFromUint64(head.Time + 7*86400), SharedKey: key, Policy: credit.Policy{SingleLimit: core.ElementFromUint64(100), DailyLimit: core.ElementFromUint64(1000), MonthlyLimit: core.ElementFromUint64(10000)}}
+		snapshot := credit.DeliveryState{State: state, OwnerReceivingKeys: core.ReceivingKeys{ViewingPublicKey: actor.Wallet.ViewingPublicKey(), ClueKey: actor.Wallet.ClueKey()}, SpenderReceivingKeys: core.ReceivingKeys{ViewingPublicKey: alice.Wallet.ViewingPublicKey(), ClueKey: alice.Wallet.ClueKey()}}
 		ds, e := CreditDeliveries(snapshot)
 		if e != nil {
 			log.Fatal(e)
@@ -153,10 +153,10 @@ func RunCreditExample(kind string, actorIndex int) {
 		if e != nil {
 			log.Fatal(e)
 		}
-		prepared, err = credit.PrepareCreate(c, credit.CreateParams{Token: token, Owner: actor.PublicWallet.OwnerAddress(), RevocationShard: allocation.Shard, RevocationSlot: allocation.Slot, CreditCommitment: common.Hash(commitment.Bytes()), Deadline: deadline}, ds, state)
-		fmt.Printf("Retain original revocation reference: owner=%s token=%s shard=%d slot=%d\n", actor.PublicWallet.OwnerAddress(), token, allocation.Shard, allocation.Slot)
+		prepared, err = credit.PrepareCreate(c, credit.CreateParams{Token: token, Owner: actor.Wallet.OwnerAddress(), RevocationShard: allocation.Shard, RevocationSlot: allocation.Slot, CreditCommitment: common.Hash(commitment.Bytes()), Deadline: deadline}, ds, state)
+		fmt.Printf("Retain original revocation reference: owner=%s token=%s shard=%d slot=%d\n", actor.Wallet.OwnerAddress(), token, allocation.Shard, allocation.Slot)
 	case "draw":
-		candidates, e := DiscoverCredits(ctx, provider, client, pool, actor.PublicWallet, actor.ViewingKey, token, "spender")
+		candidates, e := DiscoverCredits(ctx, provider, client, pool, actor.Wallet, actor.ViewingKey, token, "spender")
 		if e != nil {
 			log.Fatal(e)
 		}
@@ -225,7 +225,7 @@ func RunCreditExample(kind string, actorIndex int) {
 		if e != nil {
 			log.Fatal(e)
 		}
-		note := core.Note{ProtocolContext: coreContext, OwnerAddress: core.BigIntToElement(recipient.PublicWallet.OwnerAddress().Big()), TokenAddress: core.BigIntToElement(token.Big()), Amount: core.BigIntToElement(p.TotalAmount), Nonce: nonce}
+		note := core.Note{ProtocolContext: coreContext, OwnerAddress: core.BigIntToElement(recipient.Wallet.OwnerAddress().Big()), TokenAddress: core.BigIntToElement(token.Big()), Amount: core.BigIntToElement(p.TotalAmount), Nonce: nonce}
 		identity, e := core.ComputeNoteIdentity(note.OwnerAddress, note.Nonce)
 		if e != nil {
 			log.Fatal(e)
@@ -235,19 +235,19 @@ func RunCreditExample(kind string, actorIndex int) {
 			log.Fatal(e)
 		}
 		p.NoteCommitment = common.Hash(commitment.Bytes())
-		cipher, e := core.EncryptPrivateTransferNote(recipient.PublicWallet.ViewingPublicKey(), note, core.NoteEncryptionContext{ProtocolContext: coreContext, OutputCommitment: commitment})
+		cipher, e := core.EncryptPrivateTransferNote(recipient.Wallet.ViewingPublicKey(), note, core.NoteEncryptionContext{ProtocolContext: coreContext, OutputCommitment: commitment})
 		if e != nil {
 			log.Fatal(e)
 		}
-		clue, e := core.CreateClue(recipient.PublicWallet.ClueKey())
+		clue, e := core.CreateClue(recipient.Wallet.ClueKey())
 		if e != nil {
 			log.Fatal(e)
 		}
 		ds = append(ds, protocol.Delivery{Ciphertext: cipher, Clue: clue})
 		prepared, err = credit.PrepareDraw(c, p, ds, inputs, identity)
-		fmt.Printf("Gross payer debit=%s; ordinary Note recipient=%s\n", p.TotalAmount, recipient.PublicWallet.OwnerAddress())
+		fmt.Printf("Gross payer debit=%s; ordinary Note recipient=%s\n", p.TotalAmount, recipient.Wallet.OwnerAddress())
 	case "update":
-		candidates, e := DiscoverCredits(ctx, provider, client, pool, actor.PublicWallet, actor.ViewingKey, token, "owner")
+		candidates, e := DiscoverCredits(ctx, provider, client, pool, actor.Wallet, actor.ViewingKey, token, "owner")
 		if e != nil {
 			log.Fatal(e)
 		}
@@ -269,9 +269,9 @@ func RunCreditExample(kind string, actorIndex int) {
 		if e != nil {
 			log.Fatal(e)
 		}
-		prepared, err = credit.PrepareUpdate(c, credit.UpdateParams{Token: token, Owner: actor.PublicWallet.OwnerAddress(), Source: protocol.InputSource{TreeId: new(big.Int).SetUint64(selected.Input.TreeID), MerkleRoot: selected.Membership.Root}, Nullifier: common.Hash(next.Nullifier.Bytes()), CreditCommitment: common.Hash(next.StateCommitment.Bytes()), RevocationShard: core.ElementToBigInt(old.RevocationShard).Uint64(), RevocationSlot: uint16(core.ElementToBigInt(old.RevocationSlot).Uint64()), Deadline: deadline}, ds, selected.Input, change)
+		prepared, err = credit.PrepareUpdate(c, credit.UpdateParams{Token: token, Owner: actor.Wallet.OwnerAddress(), Source: protocol.InputSource{TreeId: new(big.Int).SetUint64(selected.Input.TreeID), MerkleRoot: selected.Membership.Root}, Nullifier: common.Hash(next.Nullifier.Bytes()), CreditCommitment: common.Hash(next.StateCommitment.Bytes()), RevocationShard: core.ElementToBigInt(old.RevocationShard).Uint64(), RevocationSlot: uint16(core.ElementToBigInt(old.RevocationSlot).Uint64()), Deadline: deadline}, ds, selected.Input, change)
 	case "revoke":
-		prepared, err = credit.PrepareRevoke(c, credit.RevokeParams{Token: token, Owner: actor.PublicWallet.OwnerAddress(), Shard: *shard, Slot: uint16(*slot), Deadline: deadline})
+		prepared, err = credit.PrepareRevoke(c, credit.RevokeParams{Token: token, Owner: actor.Wallet.OwnerAddress(), Shard: *shard, Slot: uint16(*slot), Deadline: deadline})
 	default:
 		log.Fatal("unknown Credit example")
 	}
@@ -302,7 +302,7 @@ func RunCreditExample(kind string, actorIndex int) {
 			log.Fatal(e)
 		}
 	}
-	data, err := prepared.Calldata(actor.PublicWallet.OwnerAddress())
+	data, err := prepared.Calldata(actor.Wallet.OwnerAddress())
 	if err != nil {
 		log.Fatal(err)
 	}

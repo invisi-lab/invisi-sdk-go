@@ -186,7 +186,7 @@ func TestSubscriptionMayReadTheOperationBeingCommitted(t *testing.T) {
 	})
 	defer stop()
 	done := make(chan error, 1)
-	go func() { _, err := prepared.Authorize(context.Background()); done <- err }()
+	go func() { _, err := authorizeForTest(prepared, context.Background()); done <- err }()
 	select {
 	case err := <-done:
 		if err != nil {

@@ -13,23 +13,10 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/signer/core/apitypes"
 
-	"github.com/invisi-lab/invisi-sdk-go/core"
 	"github.com/invisi-lab/invisi-sdk-go/protocol"
 	sdk "github.com/invisi-lab/invisi-sdk-go/sdk"
 )
 
-type delegatedAuthorization struct {
-	source sdk.WalletAuthorizationProvider
-	mutate bool
-}
-
-func (d delegatedAuthorization) OwnerAddress() common.Address { return d.source.OwnerAddress() }
-func (d delegatedAuthorization) Authorize(ctx context.Context, request core.WalletAuthorizationRequest) (core.WalletAuthorizationWitness, error) {
-	if d.mutate {
-		request.Words[0].SetUint64(123)
-	}
-	return d.source.Authorize(ctx, request)
-}
 func TestExplicitPerCallAuthorizationAndProver(t *testing.T) {
 	invisi, input, backend := explicitFixture(t)
 	{

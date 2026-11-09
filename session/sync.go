@@ -40,11 +40,10 @@ func (s *WalletSession) invalidate(ctx context.Context) error {
 }
 
 type RefreshOptions struct {
-	FromBlock    uint64
-	ToBlock      *uint64
-	DetectionKey []byte
-	Reset        bool
-	PageSize     uint64
+	FromBlock uint64
+	ToBlock   *uint64
+	Reset     bool
+	PageSize  uint64
 }
 
 type RefreshResult struct {
@@ -52,8 +51,7 @@ type RefreshResult struct {
 	AddedNotes, AddedCredits int
 }
 
-func (s *WalletSession) Refresh(ctx context.Context, options RefreshOptions) (RefreshResult, error) {
-	options.DetectionKey = append([]byte(nil), options.DetectionKey...)
+func (s *WalletSession) refreshInternal(ctx context.Context, options RefreshOptions, resolve walletResolver, pages *refreshPages) (RefreshResult, error) {
 	if options.ToBlock != nil {
 		height := *options.ToBlock
 		options.ToBlock = &height
@@ -66,9 +64,6 @@ func (s *WalletSession) Refresh(ctx context.Context, options RefreshOptions) (Re
 	}
 
 	var result RefreshResult
-	if s.viewing == nil {
-		return result, errors.New("viewing permission required")
-	}
 	state, e := s.options.Store.ReadSnapshot(ctx, s.scope)
 	if e != nil {
 		return result, e
@@ -177,18 +172,11 @@ func (s *WalletSession) Refresh(ctx context.Context, options RefreshOptions) (Re
 			to = end
 		}
 		query := protocolrpc.ProtocolUpdateRange{FromBlock: from, ToBlock: to}
-		var notePage protocolrpc.ProtocolNoteUpdates
-		if len(options.DetectionKey) > 0 {
-			detected := query
-			detected.DetectionKey = options.DetectionKey
-			notePage, e = s.rpc.DetectNotes(ctx, s.protocol.Context(), detected)
-		} else {
-			notePage, e = s.rpc.GetNoteUpdates(ctx, s.protocol.Context(), query)
-		}
+		notePage, e := pages.notes(ctx, s, query)
 		if e != nil {
 			return result, e
 		}
-		creditPage, e := s.rpc.GetCreditTransitions(ctx, s.protocol.Context(), query)
+		creditPage, e := pages.credits(ctx, s, query)
 		if e != nil {
 			return result, e
 		}
@@ -211,20 +199,6 @@ func (s *WalletSession) Refresh(ctx context.Context, options RefreshOptions) (Re
 		}
 		for _, event := range creditPage.Transitions {
 			add(event.TransactionHash)
-		}
-		if len(options.DetectionKey) > 0 {
-			detected := query
-			detected.DetectionKey = options.DetectionKey
-			states, e := s.rpc.DetectCreditStates(ctx, s.protocol.Context(), detected)
-			if e != nil {
-				return result, e
-			}
-			if states.Block != page.Block {
-				return result, errors.New("detection pages have different anchors")
-			}
-			for _, state := range states.States {
-				add(state.TransactionHash)
-			}
 		}
 
 		// Empty intermediate pages need no local reconciliation; the final page still checks every spent flag.
@@ -266,7 +240,7 @@ func (s *WalletSession) Refresh(ctx context.Context, options RefreshOptions) (Re
 			page.TransactionHashes = append(page.TransactionHashes, entry.hash)
 		}
 		for _, hash := range page.TransactionHashes {
-			ns, cs, ds, e := s.readTransaction(ctx, hash, finalBlock)
+			ns, cs, ds, e := s.readTransaction(ctx, hash, finalBlock, resolve)
 			if e != nil {
 				return result, e
 			}

@@ -109,7 +109,7 @@ func TestCanonicalCreditCreationReceiptProducesStatesAndNoCashNotes(t *testing.T
 	provider := receiptProvider{original, receipt}
 	session.options.Provider = provider
 	session.rpc = session.rpc.WithProvider(provider)
-	notes, states, draws, e := session.readTransaction(ctx, tx, *snapshot.ObservedThrough)
+	notes, states, draws, e := readTransactionForTest(session, ctx, tx, *snapshot.ObservedThrough)
 	if e != nil {
 		t.Fatal(e)
 	}
@@ -120,7 +120,7 @@ func TestCanonicalCreditCreationReceiptProducesStatesAndNoCashNotes(t *testing.T
 		t.Fatal("role envelope or state identity lost")
 	}
 	insertion.TxHash = common.HexToHash("99")
-	if _, _, _, e = session.readTransaction(ctx, tx, *snapshot.ObservedThrough); e == nil {
+	if _, _, _, e = readTransactionForTest(session, ctx, tx, *snapshot.ObservedThrough); e == nil {
 		t.Fatal("unauthenticated insertion accepted")
 	}
 }
@@ -269,7 +269,40 @@ func TestRefreshKeepsAuthenticatedChildPayloadAndDropsUnknownRecoveredPayload(t 
 			}
 			session.rpc = client.WithProvider(provider)
 			session.options.Provider = provider
-			result, e := session.Refresh(ctx, RefreshOptions{FromBlock: 10})
+			beforePending, _ := session.options.Store.ReadSnapshot(ctx, session.scope)
+			pending, e := session.Refresh(ctx, RefreshOptions{FromBlock: 10})
+			if e != nil {
+				t.Fatal(e)
+			}
+			afterPending, _ := session.options.Store.ReadSnapshot(ctx, session.scope)
+			if beforePending.Revision != afterPending.Revision {
+				t.Fatal("pending discovery changed real store")
+			}
+			replies := make([]WalletRefreshResponse, len(pending.WalletRequests))
+			good := -1
+			for i, q := range pending.WalletRequests {
+				response, executeErr := testExecutor(session.wallet).Execute(ctx, q)
+				replies[i].RequestID = q.ID
+				if executeErr == nil {
+					replies[i].Response = &response
+					good = i
+				}
+			}
+			if good >= 0 {
+				original := *replies[good].Response
+				bad := original
+				bad.ID = "substituted"
+				replies[good].Response = &bad
+				if _, err := pending.ApplyWalletResponses(ctx, replies); err == nil {
+					t.Fatal("accepted substituted response")
+				}
+				afterBad, _ := session.options.Store.ReadSnapshot(ctx, session.scope)
+				if afterBad.Revision != beforePending.Revision {
+					t.Fatal("invalid response partially committed refresh")
+				}
+				replies[good].Response = &original
+			}
+			result, e := pending.ApplyWalletResponses(ctx, replies)
 			if e != nil {
 				t.Fatal(e)
 			}
@@ -311,7 +344,7 @@ func TestDirectResetFencesExternalizedCreditJournalOnReorg(t *testing.T) {
 	}); e != nil {
 		t.Fatal(e)
 	}
-	if _, e := s.Refresh(ctx, RefreshOptions{FromBlock: 1, Reset: true}); e != nil {
+	if _, e := refreshForTest(s, ctx, RefreshOptions{FromBlock: 1, Reset: true}); e != nil {
 		t.Fatal(e)
 	}
 	state, e := s.options.Store.ReadSnapshot(ctx, s.scope)

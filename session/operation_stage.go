@@ -72,10 +72,6 @@ func (o *Operation) stage(ctx context.Context, work func(*Operation) error, comm
 	return next, nil
 }
 
-func (o *Operation) Authorize(ctx context.Context) (*Operation, error) {
-	return o.stage(ctx, func(next *Operation) error { _, err := next.authorizeInternal(ctx); return err })
-}
-
 func (o *Operation) Prove(ctx context.Context, options ...sdk.TransactionProveOptions) (*Operation, error) {
 	if len(options) > 1 {
 		return nil, errors.New("expected at most one transaction prove options value")

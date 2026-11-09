@@ -15,34 +15,6 @@
       "nonce": "123"
     }
   },
-  "creditOpening": {
-    "version": 1,
-    "kind": "credit",
-    "method": "opening",
-    "context": {
-      "chainId": "31337",
-      "protocolAddress": "4660",
-      "tokenAddress": "22136",
-      "outputCommitment": "0x163c3a75a3e0aa2898b9d818ee558a8d619273f860205014a901c9351e30c522"
-    },
-    "data": {
-      "spenderWalletIdentity": "0x2b5ad5c4795c026514f8317c7a215e218dccd6cf",
-      "ownerWalletIdentity": "0x7e5f4552091a69125d5dfcb7b8c2659029395bdf",
-      "spenderPayout": "247512291986854564435551364600938690683113101007",
-      "ownerPayout": "721457446580647751014191829380889690493307935711",
-      "amount": "100",
-      "nonce": "678",
-      "expiry": "2000000123",
-      "creditSharedKeyHash": "0x0f026f0c4b47492045883222e15ad4992de85318c229189324151b81a0552466",
-      "singleLimit": "50",
-      "dailyLimit": "60",
-      "monthlyLimit": "90",
-      "lastDay": "23149",
-      "dailySpent": "10",
-      "lastMonth": "761",
-      "monthlySpent": "20"
-    }
-  },
   "notePayload": {
     "version": 1,
     "kind": "note",
@@ -59,22 +31,5 @@
       "role": "funds"
     }
   },
-  "creditPayload": {
-    "version": 1,
-    "kind": "credit",
-    "method": "payload-key",
-    "context": {
-      "chainId": "31337",
-      "protocolAddress": "4660",
-      "tokenAddress": "22136",
-      "outputCommitment": "0x163c3a75a3e0aa2898b9d818ee558a8d619273f860205014a901c9351e30c522"
-    },
-    "data": {
-      "payloadKey": "0xa725a4bf6ff21504ab9828db5362d09e20f65af64c13cfdbd53bfe9c59d94051",
-      "ownerAddress": "0x7e5f4552091a69125d5dfcb7b8c2659029395bdf",
-      "role": "owner"
-    }
-  },
-  "noteCiphertext": "0x010256b328b30c8bf5839e24058747879408bdb36241dc9c2e7c619faa12b29209670707070707070707070707070707070708080808080808080808080822a505b086bc749a1e65218db68cfaafdf8ee55a1a76a2c44fdf3f08e2a4875ec53fc60321e52376c890fd9c7a12ec6ca17e9916bcba8c45fd5c2b24f3a8a634ddca5b9d9cde45441163bb9c33c6274e2fa5ddae7f0ea0ddd94a551dcb5a9e733471",
-  "creditCiphertext": "0x810256b328b30c8bf5839e24058747879408bdb36241dc9c2e7c619faa12b292096707070707070707070707070707070707080808080808080808080808d303f610411efacdd5abe12b7ef0fad35d98a0a4877100c836c59bee1e95e1511974228f426469cad70c8f4cf891d3acbc904ce234f14e380376e803d1c9dccfbfd116da4bde40d23fe601e73758fca3a85a9705b6355a8ea29aa19e68a22b559df4d1e22a0f519a3e4c219167af0b8b043a327210dcf7ef9a29a1b7fa2561c89ee79414a22220d6fdaaf20ca59e183e72bd12ed22d3e5bcd00ccee716033266baa9e1060567369de6524852e5dbb7180f74a2dcaf4d1f0cf815042146c7829d8cc107ea16041e4a6aefaad2b402d9dd2f6683620b01f9919e3069e8e59f591f021a38282afa1cd765fe904ea1c4a80dbade64a87ba6b9dd381fd6ccafa0a612ed8cd1e987e1f36f89a779953606b119cfb0f97bb3149490e99e10f2266b78f8e10749c7320fdd5a43cd2c506f79702a9e6ce636871f9ae1f460955f38219003804476c9cb48e38ca479211b91d630300b7a8cb218abc6af50f891bafb865b211e485dd8d54f7b0317a751358b9dc0432d057175130314b7d3d34420befa8dd9d544d9890dacfcaadf99319cc3d140ab8d90f347c003ea6bdacbead9cc8df1f0e0f0bbb06a86fe79491cbe738fea4c270d720b69"
+  "noteCiphertext": "0x010256b328b30c8bf5839e24058747879408bdb36241dc9c2e7c619faa12b29209670707070707070707070707070707070708080808080808080808080822a505b086bc749a1e65218db68cfaafdf8ee55a1a76a2c44fdf3f08e2a4875ec53fc60321e52376c890fd9c7a12ec6ca17e9916bcba8c45fd5c2b24f3a8a634ddca5b9d9cde45441163bb9c33c6274e2fa5ddae7f0ea0ddd94a551dcb5a9e733471"
 }

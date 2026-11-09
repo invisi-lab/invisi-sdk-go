@@ -1,0 +1,102 @@
+package session
+
+import (
+	"context"
+	"github.com/ethereum/go-ethereum/common"
+	"github.com/invisi-lab/invisi-sdk-go/core"
+	creditsession "github.com/invisi-lab/invisi-sdk-go/credit/session"
+	"github.com/invisi-lab/invisi-sdk-go/native"
+	protocolrpc "github.com/invisi-lab/invisi-sdk-go/rpc"
+	"github.com/invisi-lab/invisi-sdk-go/sdk"
+	"github.com/invisi-lab/invisi-sdk-go/wallet"
+	"sync"
+)
+
+var testMaterials sync.Map
+var testExecutors sync.Map
+
+func localTestWallet(key string) (*sdk.Wallet, error) {
+	e, err := native.NewExecutor(key)
+	if err != nil {
+		return nil, err
+	}
+	w, err := sdk.ConnectWallet(context.Background(), e.OwnerAddress(), e)
+	if err != nil {
+		return nil, err
+	}
+	raw, err := core.DecodePrivateKey(key)
+	if err != nil {
+		return nil, err
+	}
+	defer clear(raw)
+	m, err := core.DeriveWallet(raw)
+	testMaterials.Store(w.OwnerAddress(), m)
+	testExecutors.Store(w.OwnerAddress(), e)
+	return w, err
+}
+func localTestMaterial(w *sdk.Wallet) *core.InvisiWallet {
+	v, _ := testMaterials.Load(w.OwnerAddress())
+	return v.(*core.InvisiWallet)
+}
+
+func testDisclosureViewer(s *WalletSession) *sdk.ViewingCapability {
+	m := localTestMaterial(s.wallet)
+	v, _ := sdk.NewViewingCapability(s.wallet.OwnerAddress(), m.ViewingPrivateKey, m.ViewingPublicKey)
+	return v
+}
+
+func testExecutor(w *sdk.Wallet) wallet.Executor {
+	if w == nil {
+		return nil
+	}
+	v, _ := testExecutors.Load(w.OwnerAddress())
+	if v == nil {
+		return nil
+	}
+	return v.(wallet.Executor)
+}
+
+func refreshForTest(s *WalletSession, ctx context.Context, options RefreshOptions) (RefreshResult, error) {
+	pending, err := s.Refresh(ctx, options)
+	if err != nil {
+		return RefreshResult{}, err
+	}
+	replies := make([]WalletRefreshResponse, len(pending.WalletRequests))
+	for i, q := range pending.WalletRequests {
+		r, e := testExecutor(s.wallet).Execute(ctx, q)
+		replies[i].RequestID = q.ID
+		if e == nil {
+			replies[i].Response = &r
+		}
+	}
+	return pending.ApplyWalletResponses(ctx, replies)
+}
+func authorizeForTest(o *Operation, ctx context.Context) (*Operation, error) {
+	if !o.plan.NeedsAuthorization {
+		return o, nil
+	}
+	q, err := o.ExportWalletRequest(ctx, "test-authorize")
+	if err != nil {
+		return nil, err
+	}
+	r, err := testExecutor(o.session.wallet).Execute(ctx, q)
+	if err != nil {
+		return nil, err
+	}
+	return o.WithWalletResponse(ctx, q, r)
+}
+func readTransactionForTest(s *WalletSession, ctx context.Context, hash common.Hash, anchor protocolrpc.CanonicalBlock) ([]StoredNote, []creditsession.StoredState, []*authenticatedCreditDraw, error) {
+	resolve := func(method wallet.Method, p wallet.DecryptParams) (any, error) {
+		q, e := s.wallet.PrepareRequest("test-read", method, p)
+		if e != nil {
+			return nil, e
+		}
+		r, e := testExecutor(s.wallet).Execute(ctx, q)
+		if e != nil {
+			return nil, e
+		}
+		v, e := s.wallet.AcceptResponse(q, r)
+		return v, e
+	}
+	return s.readTransaction(ctx, hash, anchor, resolve)
+}

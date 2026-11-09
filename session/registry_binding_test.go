@@ -76,7 +76,7 @@ func TestInvisiDiscoversRegistryAndExportsPortableRequest(t *testing.T) {
 		t.Fatal(err)
 	}
 	invisi := sdk.NewInvisi(sdk.InvisiOptions{Provider: registryProvider(registry).Provider, ProtocolRPC: rpc})
-	operation, err := invisi.PrepareRegistration(ctx, sdk.RegistrationPreparation{Wallet: session.wallet.PublicWallet})
+	operation, err := invisi.PrepareRegistration(ctx, sdk.RegistrationPreparation{Wallet: session.wallet})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -102,7 +102,7 @@ func TestInvisiDiscoversRegistryAndExportsPortableRequest(t *testing.T) {
 
 func TestRegistrationCompositionNormalizesMissingCapabilities(t *testing.T) {
 	session, _, _ := testSession(t)
-	_, err := sdk.NewInvisi(sdk.InvisiOptions{}).PrepareRegistration(context.Background(), sdk.RegistrationPreparation{Wallet: session.wallet.PublicWallet})
+	_, err := sdk.NewInvisi(sdk.InvisiOptions{}).PrepareRegistration(context.Background(), sdk.RegistrationPreparation{Wallet: session.wallet})
 	var failure *sdk.InvisiError
 	if !errors.As(err, &failure) || failure.Code != sdk.MissingCapability || failure.Operation != "prepareRegistration" || failure.Capability != "Chain RPC provider" {
 		t.Fatal("missing capability lost at composition boundary", err)

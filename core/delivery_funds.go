@@ -59,3 +59,11 @@ func readNotePlain(plain []byte, context NoteDecryptionContext) (Note, error) {
 	}
 	return note, nil
 }
+
+// DecodeNotePlaintext checks identity, context and commitment for native wallet responses.
+func DecodeNotePlaintext(plain []byte, context NoteDecryptionContext) (Note, error) {
+	return readNotePlain(plain, context)
+}
+
+// EncodeNotePlaintext returns the canonical wallet plaintext bytes.
+func EncodeNotePlaintext(note Note) []byte { return encodeNote(note) }

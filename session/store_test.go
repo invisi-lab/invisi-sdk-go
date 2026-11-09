@@ -58,7 +58,7 @@ func TestEncryptedStoreBindsScopeAndRejectsTampering(t *testing.T) {
 	}
 }
 func TestWalletPermissionsAndSecretRedaction(t *testing.T) {
-	wallet, e := sdk.WalletFromPrivateKey("0x" + strings.Repeat("0", 63) + "1")
+	wallet, e := localTestWallet("0x" + strings.Repeat("0", 63) + "1")
 	if e != nil {
 		t.Fatal(e)
 	}
@@ -66,21 +66,17 @@ func TestWalletPermissionsAndSecretRedaction(t *testing.T) {
 	if e != nil || len(address) != 138 {
 		t.Fatal(address, e)
 	}
-	public, e := sdk.PublicWalletFromAddress(address)
+	public, e := sdk.WalletFromAddress(address)
 	if e != nil {
 		t.Fatal(e)
 	}
 	if _, exists := reflect.TypeOf(public).MethodByName("GetViewer"); exists {
 		t.Fatal("public address granted viewing permission")
 	}
-	viewer, e := wallet.GetViewer()
-	if e != nil {
-		t.Fatal(e)
-	}
-	copy := viewer.ExportKey()
+	copy := wallet.ViewingPublicKey()
 	copy[0] ^= 1
-	if copy[0] == viewer.ExportKey()[0] {
-		t.Fatal("private export aliases internal key")
+	if copy[0] == wallet.ViewingPublicKey()[0] {
+		t.Fatal("public key snapshot aliases wallet")
 	}
 	if strings.Contains(wallet.GoString(), "80d9cd") {
 		t.Fatal("secret logged")

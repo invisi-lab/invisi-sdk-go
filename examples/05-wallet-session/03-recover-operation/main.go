@@ -72,7 +72,7 @@ func main() {
 		log.Fatal(err)
 	}
 	invisi := sdk.NewInvisi(sdk.InvisiOptions{Provider: provider, ProtocolRPC: client})
-	localWallet, err := sdk.WalletFromPrivateKey("0x" + hex.EncodeToString(crypto.FromECDSA(alice.Key)))
+	localWallet, err := shared.LocalWallet("0x" + hex.EncodeToString(crypto.FromECDSA(alice.Key)))
 	if err != nil {
 		log.Fatal(err)
 	}

@@ -4,6 +4,7 @@ package main
 import (
 	"encoding/hex"
 	"fmt"
+	"github.com/invisi-lab/invisi-sdk-go/examples/shared"
 	"log"
 	"math/big"
 
@@ -18,7 +19,7 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	wallet, err := sdk.WalletFromPrivateKey("0x" + hex.EncodeToString(crypto.FromECDSA(key)))
+	wallet, err := shared.LocalWallet("0x" + hex.EncodeToString(crypto.FromECDSA(key)))
 	if err != nil {
 		log.Fatal(err)
 	}

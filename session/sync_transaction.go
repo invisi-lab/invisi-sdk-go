@@ -20,7 +20,7 @@ type authenticatedCreditDraw struct {
 	Timestamp uint64
 }
 
-func (s *WalletSession) readTransaction(ctx context.Context, hash common.Hash, anchor protocolrpc.CanonicalBlock) ([]StoredNote, []creditsession.StoredState, []*authenticatedCreditDraw, error) {
+func (s *WalletSession) readTransaction(ctx context.Context, hash common.Hash, anchor protocolrpc.CanonicalBlock, resolver ...walletResolver) ([]StoredNote, []creditsession.StoredState, []*authenticatedCreditDraw, error) {
 	receipt, e := s.options.Provider.TransactionReceipt(ctx, hash)
 	if e != nil {
 		return nil, nil, nil, e
@@ -74,7 +74,7 @@ func (s *WalletSession) readTransaction(ctx context.Context, hash common.Hash, a
 			continue
 		}
 		context := core.NoteDecryptionContext{NoteEncryptionContext: core.NoteEncryptionContext{ProtocolContext: s.coreContext(), OutputCommitment: core.BigIntToElement(output.Commitment.Big())}, TokenAddress: core.BigIntToElement(output.Token.Big()), OwnerAddress: core.BigIntToElement(s.wallet.OwnerAddress().Big())}
-		if note, e := s.viewing.DecryptNote(output.Ciphertext, context); e == nil {
+		if note, e := resolveNote(resolver, output.Ciphertext, context); e == nil {
 			if _, e = s.rpc.GetMembership(ctx, s.protocol.Context(), protocolrpc.MembershipInput{TreeID: output.TreeID, LeafIndex: output.LeafIndex, Commitment: output.Commitment}, anchor); e != nil {
 				return nil, nil, nil, e
 			}
@@ -90,7 +90,7 @@ func (s *WalletSession) readTransaction(ctx context.Context, hash common.Hash, a
 		context := credit.DeliveryContext{ProtocolContext: s.coreContext(), TokenAddress: core.BigIntToElement(output.Token.Big()), Commitment: core.BigIntToElement(output.Commitment.Big()), RecipientIdentity: core.BigIntToElement(s.wallet.OwnerAddress().Big())}
 		for _, envelope := range output.Deliveries {
 			for _, role := range []credit.Role{credit.Owner, credit.Spender} {
-				state, e := s.viewing.DecryptCreditState(envelope.Ciphertext, context, role)
+				state, e := resolveCredit(resolver, envelope.Ciphertext, context, role)
 				if e != nil {
 					continue
 				}

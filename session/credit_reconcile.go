@@ -32,7 +32,7 @@ func (r creditReconciler) Reconcile(ctx context.Context, intent credit.Intent, d
 	if hash == (common.Hash{}) {
 		return nil, nil
 	}
-	if s == nil || s.viewing == nil {
+	if s == nil {
 		return nil, errors.New("Credit reconciliation requires the wallet viewing capability")
 	}
 	if core.ElementToBigInt(intent.Context.ChainID).Uint64() != s.scope.ChainID || common.BigToAddress(core.ElementToBigInt(intent.Context.ProtocolAddress)) != s.scope.ProtocolAddress {
@@ -84,7 +84,7 @@ func (r creditReconciler) Reconcile(ctx context.Context, intent credit.Intent, d
 	outcome := &creditsession.Outcome{TransactionHash: hash, Calldata: append([]byte(nil), data...), BlockHash: receipt.BlockHash, BlockNumber: receipt.BlockNumber.Uint64(), Success: receipt.Status == types.ReceiptStatusSuccessful}
 	if outcome.Success {
 		anchor := protocolrpc.CanonicalBlock{Number: head.Number.Uint64(), Hash: head.Hash(), ParentHash: head.ParentHash, Timestamp: head.Time}
-		notes, states, draws, err := s.readTransaction(ctx, hash, anchor)
+		notes, states, draws, err := s.readTransaction(ctx, hash, anchor, s.storedWalletResolver(ctx))
 		if err != nil {
 			return nil, err
 		}

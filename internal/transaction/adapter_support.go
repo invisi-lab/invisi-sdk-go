@@ -17,4 +17,4 @@ func PreparedIsCurrent(p *PreparedTransaction) bool {
 }
 func NewDetachedExecution(e *Execution) (*PreparedTransaction, error) { return Detached(e, nil) }
 
-func ReceivingKeySnapshot(w *PublicWallet) *core.ReceivingKeys { return &w.keys }
+func ReceivingKeySnapshot(w *Wallet) *core.ReceivingKeys { return &w.keys }

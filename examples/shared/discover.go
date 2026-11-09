@@ -29,11 +29,7 @@ type CreditCandidate struct {
 // DiscoverNotes scans genuine indexed outputs in MaxUpdateBlocks-bounded pages, authenticates decryption,
 // rejects conflicting records and filters spent nullifiers against the chain. Preparation
 // independently validates membership and the latest spent state; callers own reservations.
-func DiscoverNotes(ctx context.Context, provider sdk.Provider, client *sdk.ProtocolRpcClient, pool *sdk.Protocol, wallet *sdk.PublicWallet, viewingKey []byte, token common.Address) ([]NoteCandidate, error) {
-	viewer, err := sdk.NewViewingCapability(wallet.OwnerAddress(), viewingKey, wallet.ViewingPublicKey())
-	if err != nil {
-		return nil, err
-	}
+func DiscoverNotes(ctx context.Context, provider sdk.Provider, client *sdk.ProtocolRpcClient, pool *sdk.Protocol, wallet *sdk.Wallet, viewingKey []byte, token common.Address) ([]NoteCandidate, error) {
 	client = client.WithProvider(provider)
 	d := pool.Context()
 	deployment := rpc.DeploymentContext{ChainID: d.ChainID, ProtocolAddress: d.ProtocolAddress}
@@ -75,7 +71,7 @@ func DiscoverNotes(ctx context.Context, provider sdk.Provider, client *sdk.Proto
 			if output.TokenAddress != token {
 				continue
 			}
-			note, err := viewer.DecryptNote(output.Ciphertext, core.NoteDecryptionContext{NoteEncryptionContext: core.NoteEncryptionContext{ProtocolContext: core.ProtocolContext{ChainID: core.ElementFromUint64(d.ChainID), ProtocolAddress: core.BigIntToElement(d.ProtocolAddress.Big())}, OutputCommitment: core.BigIntToElement(output.Commitment.Big())}, TokenAddress: core.BigIntToElement(token.Big()), OwnerAddress: core.BigIntToElement(wallet.OwnerAddress().Big())})
+			note, err := wallet.DecryptNote(ctx, ExecutorFor(wallet), output.Ciphertext, core.NoteDecryptionContext{NoteEncryptionContext: core.NoteEncryptionContext{ProtocolContext: core.ProtocolContext{ChainID: core.ElementFromUint64(d.ChainID), ProtocolAddress: core.BigIntToElement(d.ProtocolAddress.Big())}, OutputCommitment: core.BigIntToElement(output.Commitment.Big())}, TokenAddress: core.BigIntToElement(token.Big()), OwnerAddress: core.BigIntToElement(wallet.OwnerAddress().Big())})
 			if err != nil {
 				continue
 			}
@@ -101,24 +97,20 @@ func DiscoverNotes(ctx context.Context, provider sdk.Provider, client *sdk.Proto
 }
 
 // DiscoverCredits composes the same canonical receipt authentication used by managed sessions.
-func DiscoverCredits(ctx context.Context, provider sdk.Provider, client *sdk.ProtocolRpcClient, pool *sdk.Protocol, wallet *sdk.PublicWallet, viewingKey []byte, token common.Address, role string) ([]CreditCandidate, error) {
+func DiscoverCredits(ctx context.Context, provider sdk.Provider, client *sdk.ProtocolRpcClient, pool *sdk.Protocol, wallet *sdk.Wallet, viewingKey []byte, token common.Address, role string) ([]CreditCandidate, error) {
 	selected := credit.Owner
 	if role == "spender" {
 		selected = credit.Spender
 	} else if role != "owner" {
 		return nil, fmt.Errorf("invalid grant role")
 	}
-	viewer, err := sdk.NewViewingCapability(wallet.OwnerAddress(), viewingKey, wallet.ViewingPublicKey())
-	if err != nil {
-		return nil, err
-	}
 	store := walletsession.NewMemoryWalletStore()
 	invisi := sdk.NewInvisi(sdk.InvisiOptions{Provider: provider, ProtocolRPC: client})
-	session, err := walletsession.Connect(ctx, walletsession.Options{Invisi: invisi, Wallet: wallet, Protocol: pool, Store: store, Viewing: viewer})
+	session, err := walletsession.Connect(ctx, walletsession.Options{Invisi: invisi, Wallet: wallet, Protocol: pool, Store: store})
 	if err != nil {
 		return nil, err
 	}
-	if _, err = session.Refresh(ctx, walletsession.RefreshOptions{}); err != nil {
+	if _, err = RefreshWallet(ctx, session, wallet, walletsession.RefreshOptions{}); err != nil {
 		return nil, err
 	}
 	snapshot, err := store.ReadSnapshot(ctx, session.Scope())

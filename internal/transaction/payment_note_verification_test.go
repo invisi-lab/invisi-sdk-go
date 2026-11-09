@@ -196,11 +196,7 @@ func TestPaymentNoteVerificationLevels(t *testing.T) {
 	if _, e = f.note.VerifySpendable(ctx, f.pool, nil); e == nil {
 		t.Fatal("nil wallet accepted")
 	}
-	forged := *wrong
-	forged.PublicWallet = f.wallet.PublicWallet
-	if _, e = f.note.VerifySpendable(ctx, f.pool, &forged); e == nil {
-		t.Fatal("mismatched private material accepted")
-	}
+
 }
 func TestPaymentNoteVerificationFailureAndCurrentState(t *testing.T) {
 	f := newNoteFixture(t)

@@ -41,7 +41,7 @@ func explicitFixture(t *testing.T) (*sdk.Invisi, sdk.ExplicitTransferPreparation
 	}
 	address, _ := s.wallet.GetAddress()
 	opts := s.options.InvisiOptions
-	return sdk.NewInvisi(opts), sdk.ExplicitTransferPreparation{TransactionIdentity: sdk.TransactionIdentity{Wallet: s.wallet.PublicWallet, Protocol: s.protocol}, TransferPreparation: sdk.TransferPreparation{TokenAddress: token, Outputs: testOutputs(s, []testPaymentOutput{{To: address, Amount: big.NewInt(30)}})}, ExplicitFunds: sdk.ExplicitFunds{Inputs: inputs}}, backend
+	return sdk.NewInvisi(opts), sdk.ExplicitTransferPreparation{TransactionIdentity: sdk.TransactionIdentity{Wallet: s.wallet, Protocol: s.protocol}, TransferPreparation: sdk.TransferPreparation{TokenAddress: token, Outputs: testOutputs(s, []testPaymentOutput{{To: address, Amount: big.NewInt(30)}})}, ExplicitFunds: sdk.ExplicitFunds{Inputs: inputs}}, backend
 }
 func TestExplicitTransferNeverUsesStore(t *testing.T) {
 	ctx := context.Background()
@@ -138,7 +138,7 @@ func TestExplicitOtherFundsRoutes(t *testing.T) {
 			case "withdraw":
 				p, err = invisi.PrepareTransfer(ctx, sdk.ExplicitTransferPreparation{TransactionIdentity: input.TransactionIdentity, ExplicitFunds: input.ExplicitFunds, TransferPreparation: sdk.TransferPreparation{TokenAddress: input.TokenAddress, Withdrawal: &sdk.Withdrawal{To: input.Wallet.OwnerAddress(), Amount: big.NewInt(30)}}})
 			case "sweep":
-				input.Wallet, err = sdk.PublicWalletFromAddress(input.Outputs[0].To())
+				input.Wallet, err = sdk.WalletFromAddress(input.Outputs[0].To())
 				if err != nil {
 					t.Fatal(err)
 				}
@@ -175,7 +175,7 @@ func TestExplicitOtherFundsRoutes(t *testing.T) {
 
 func TestExplicitSignedChangeCanUseAnotherOwner(t *testing.T) {
 	invisi, input, _ := explicitFixture(t)
-	other, err := sdk.WalletFromPrivateKey("0x" + strings.Repeat("0", 63) + "2")
+	other, err := localTestWallet("0x" + strings.Repeat("0", 63) + "2")
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -43,7 +43,7 @@ func TestRealNativeBroadcasterFeeProofs(t *testing.T) {
 			if e != nil {
 				t.Fatal(e)
 			}
-			op, e = op.Authorize(ctx)
+			op, e = authorizeForTest(op, ctx)
 			if e != nil {
 				t.Fatal(e)
 			}

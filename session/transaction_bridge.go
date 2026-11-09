@@ -144,14 +144,6 @@ func (o *Operation) words() ([][32]byte, error) {
 	result0, result1 := execution.Words()
 	return result0, result1
 }
-func (o *Operation) authorizeInternal(ctx context.Context) (*Operation, error) {
-	o.mu.Lock()
-	defer o.mu.Unlock()
-	execution := o.execution()
-	_, err := execution.AuthorizeInternal(ctx)
-	o.apply(execution)
-	return o, err
-}
 func (o *Operation) privateInputs() (map[string]any, error) {
 	execution := o.execution()
 	result0, result1 := execution.PrivateInputs()

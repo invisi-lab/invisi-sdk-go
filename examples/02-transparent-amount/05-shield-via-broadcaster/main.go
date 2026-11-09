@@ -66,7 +66,7 @@ func main() {
 		log.Fatal(err)
 	}
 	tokenAddress := common.HexToAddress(shared.Settings.TokenAddress)
-	bobAddress, err := bob.PublicWallet.GetAddress()
+	bobAddress, err := bob.Wallet.GetAddress()
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -86,12 +86,12 @@ func main() {
 
 	// 4. Prepare and freeze the transaction intent.
 	prepared, err := invisi.PrepareShield(ctx, sdk.ExplicitShieldPreparation{
-		TransactionIdentity: sdk.TransactionIdentity{Wallet: alice.PublicWallet, Protocol: pool},
+		TransactionIdentity: sdk.TransactionIdentity{Wallet: alice.Wallet, Protocol: pool},
 		ShieldPreparation: sdk.ShieldPreparation{
 			TokenAddress: tokenAddress,
 			Outputs:      []sdk.NoteOutput{output},
 			Funding: sdk.FundingSource{
-				Payer:         alice.PublicWallet.OwnerAddress(),
+				Payer:         alice.Wallet.OwnerAddress(),
 				Amount:        big.NewInt(10),
 				Authorization: "signature",
 			},

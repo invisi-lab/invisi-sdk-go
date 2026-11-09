@@ -2,6 +2,14 @@
 package shared
 
 import (
+	"bytes"
+	"context"
+	"github.com/invisi-lab/invisi-sdk-go/core"
+	walletnative "github.com/invisi-lab/invisi-sdk-go/native"
+	walletsession "github.com/invisi-lab/invisi-sdk-go/session"
+	"github.com/invisi-lab/invisi-sdk-go/wallet"
+	"sync"
+
 	"crypto/ecdsa"
 	"encoding/hex"
 	"encoding/json"
@@ -47,10 +55,10 @@ type accountEntry struct {
 // Account separates public receiving identity from explicitly loaded local signing/viewing keys.
 // Loading a recipient never derives a private Invisi wallet.
 type Account struct {
-	Name         string
-	Key          *ecdsa.PrivateKey
-	PublicWallet *sdk.PublicWallet
-	ViewingKey   []byte
+	Name       string
+	Key        *ecdsa.PrivateKey
+	Wallet     *sdk.Wallet
+	ViewingKey []byte
 }
 
 // GetAccounts reads only the explicitly selected local file. It never creates or funds accounts.
@@ -74,9 +82,13 @@ func GetAccounts(path string) ([]Account, error) {
 		if err != nil {
 			return nil, fmt.Errorf("invalid private key for %s", entry.Name)
 		}
-		wallet, err := sdk.PublicWalletFromAddress(entry.ReceivingAddress)
+		wallet, err := LocalWallet(entry.PrivateKey)
 		if err != nil {
 			return nil, fmt.Errorf("invalid receiving address for %s: %w", entry.Name, err)
+		}
+		savedAddress, err := sdk.WalletFromAddress(entry.ReceivingAddress)
+		if err != nil || savedAddress.OwnerAddress() != wallet.OwnerAddress() || !bytes.Equal(savedAddress.ViewingPublicKey(), wallet.ViewingPublicKey()) || !bytes.Equal(savedAddress.ClueKey(), wallet.ClueKey()) {
+			return nil, fmt.Errorf("receiving identity mismatch for %s", entry.Name)
 		}
 		if !common.IsHexAddress(entry.Address) || wallet.OwnerAddress() != common.HexToAddress(entry.Address) || wallet.OwnerAddress() != crypto.PubkeyToAddress(key.PublicKey) {
 			return nil, fmt.Errorf("account identity mismatch for %s", entry.Name)
@@ -108,7 +120,7 @@ func InitializeAccounts(path string) error {
 			return err
 		}
 		privateKey := "0x" + hex.EncodeToString(crypto.FromECDSA(key))
-		wallet, err := sdk.WalletFromPrivateKey(privateKey)
+		wallet, err := LocalWallet(privateKey)
 		if err != nil {
 			return err
 		}
@@ -116,11 +128,11 @@ func InitializeAccounts(path string) error {
 		if err != nil {
 			return err
 		}
-		viewer, err := wallet.GetViewer()
+		material, err := core.DeriveWallet(crypto.FromECDSA(key))
 		if err != nil {
 			return err
 		}
-		viewingKey := viewer.ExportKey()
+		viewingKey := material.ViewingPrivateKey
 		file.Accounts = append(file.Accounts, accountEntry{Name: name, PrivateKey: privateKey, Address: wallet.OwnerAddress().Hex(), ReceivingAddress: address, ViewingPrivateKey: "0x" + hex.EncodeToString(viewingKey)})
 		clear(viewingKey)
 	}
@@ -138,4 +150,43 @@ func InitializeAccounts(path string) error {
 		return err
 	}
 	return f.Close()
+}
+
+func LocalWallet(privateKey string) (*sdk.Wallet, error) {
+	e, err := walletnative.NewExecutor(privateKey)
+	if err != nil {
+		return nil, err
+	}
+	w, err := sdk.ConnectWallet(context.Background(), e.OwnerAddress(), e)
+	if err == nil {
+		exampleExecutors.Store(w.OwnerAddress(), e)
+	}
+	return w, err
+}
+
+var exampleExecutors sync.Map
+
+func ExecutorFor(w *sdk.Wallet) wallet.Executor {
+	v, _ := exampleExecutors.Load(w.OwnerAddress())
+	if v == nil {
+		return nil
+	}
+	return v.(wallet.Executor)
+}
+
+// RefreshWallet keeps host execution outside the managed session.
+func RefreshWallet(ctx context.Context, session *walletsession.WalletSession, public *sdk.Wallet, options walletsession.RefreshOptions) (walletsession.RefreshResult, error) {
+	pending, err := session.Refresh(ctx, options)
+	if err != nil {
+		return walletsession.RefreshResult{}, err
+	}
+	responses := make([]walletsession.WalletRefreshResponse, len(pending.WalletRequests))
+	for i, request := range pending.WalletRequests {
+		response, executeErr := ExecutorFor(public).Execute(ctx, request)
+		responses[i].RequestID = request.ID
+		if executeErr == nil {
+			responses[i].Response = &response
+		}
+	}
+	return pending.ApplyWalletResponses(ctx, responses)
 }
