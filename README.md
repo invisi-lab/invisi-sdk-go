@@ -13,7 +13,7 @@ The SDK remains in the v1 series. Source synchronization does not publish a new 
 | Package | Responsibility |
 | --- | --- |
 | `sdk` | Stateless Note payments, public-only Wallet identity and portable wallet requests, registration, IPR/IPN and Note disclosure |
-| `wallet`, `native` | Portable JSON wallet requests, independent response validation, and explicit local key execution |
+| `wallet` | Portable JSON wallet batches, host transport interfaces and independent response validation |
 | `core` | Wallet derivation, addresses, ordinary Note cryptography, FMD and application payload codecs |
 | `credit` | Separate postpaid grant State, policy/usage, deliveries, lifecycle preparation, proof requests, paid broadcasting and grant audit disclosure |
 | `session` | Managed Note inventory, canonical refresh, encrypted persistence, journals and notifications |
@@ -30,19 +30,24 @@ All packages share one Go module and release. Import subpackages under `github.c
 
 ## Wallets and infrastructure
 
-`sdk.Wallet` stores public identity and receiving material only. `sdk.WalletFromAddress` imports a receiving address offline. Private keys belong to a separate `native.Executor`, hardware wallet, or external process. The business wallet has no private-key constructor or viewing/detection/authorization exports.
+`sdk.Wallet` stores public identity and receiving material only. Import a public receiving address with `sdk.WalletFromAddress`, or prepare `wallet.public` and accept its external response with `sdk.WalletFromResponse`. The SDK has no key-holding local wallet or native executor. A Vault, hardware wallet or host-owned native process executes requests separately; raw cryptographic primitives remain in `core`.
 
 ```go
-executor, err := native.NewExecutor(applicationOwnedPrivateKey)
+request, err := wallet.Prepare("public-1", owner, wallet.Public, struct{}{})
 if err != nil { return err }
-wallet, err := sdk.ConnectWallet(ctx, executor.OwnerAddress(), executor)
+requests := []wallet.Request{request}
+// Serialize requests to the native host; decode its []wallet.Response reply.
+ordered, err := wallet.ValidateResponses(requests, responses)
 if err != nil { return err }
-// Keep executor separate; wallet contains no reference to it.
+publicWallet, err := sdk.WalletFromResponse(request, ordered[0])
+if err != nil { return err }
 ```
 
-The `wallet` package defines one version-1 JSON request/response contract for `wallet.public`, `wallet.detect`, `wallet.decryptNote`, `wallet.decryptCredit`, and `wallet.authorize`. Requests carry a unique application-chosen `id`, `ownerAddress`, `method`, and public `params`; responses echo the version, ID, owner and method. Integers are canonical decimal strings and bytes are `0x` hex. Context addresses are also decimal strings. Public results expose viewing/spending public keys and the clue key, never the detection key.
+The version-1 contract covers `wallet.public`, `wallet.detect`, `wallet.decryptNote`, `wallet.decryptCredit`, and `wallet.authorize`. Every response echoes version, ID, owner and method, and contains exactly one of `result` or `error: {"code": "..."}`. Integers, including context addresses, are canonical decimal strings; byte strings use lowercase `0x` hex. Public results expose viewing/spending public keys and the clue key, never private material or the detection key.
 
-Detached applications call `wallet.Prepare` (or `Wallet.PrepareRequest`), send JSON to their executor, and call `wallet.Accept` (or `Wallet.AcceptResponse`). `sdk.WalletFromResponse` creates the public wallet after `wallet.public`. Acceptance validates the transcript binding, owner/spending key, authorization digest and signature, or decrypted identity/context/commitment and Credit receiving snapshot. Detect results are advisory: their count is checked, and candidates still require authenticated opening and commitment validation. Local automatic decryption uses `Wallet.DecryptNote(ctx, executor, ...)` / `DecryptCreditState`; managed sessions return pending requests for external execution and accept explicit responses. Mnemonic derivation and transport authentication remain application responsibilities.
+`wallet.Client` describes an external `Execute(ctx, []wallet.Request) ([]wallet.Response, error)` transport. Batches contain at most 1024 requests, share one owner, have unique IDs and fit within 16 MiB serialized JSON. Empty batches are valid. Validate all requests before native execution. Invalid batch structure rejects the whole batch; item failures have explicit error responses. `wallet.ValidateResponses` rejects missing, duplicate, unknown or mismatched replies and returns request order; `wallet.AcceptBatch` additionally independently checks all successful results before returning them. Response errors remain errors. Only managed refresh treats `WALLET_NOT_RECIPIENT` on a decrypt request as a nonmatch; cancellation, unlock or other errors abort without writes.
+
+For detached operations, call `ExportWalletRequest`, print/send a one-element request array, read the response array, validate it, and pass the response to `WithWalletResponse`. Acceptance checks identity/context, signatures/digests and decrypted commitments. Sessions never retain a transport or executor: `pending := session.Refresh(...)` returns public requests, then `pending.ApplyWalletResponses(ctx, responses)` independently verifies the explicit batch before committing inventory and checkpoints atomically.
 
 Create an `sdk.Invisi` with `Provider`, `ProtocolRPC` and optionally `Prover`. `sdk.ProtocolFromRPC` authenticates the selected deployment against Chain RPC. Protocol RPC uses the `/v1` API; this does not change the independent on-chain `VERSION()` value. Applications choose trusted endpoints and can pin deployment metadata.
 
@@ -60,7 +65,7 @@ Recipients are typed variants:
 
 `sdk.Invisi.PrepareShield` creates transparent-amount deposits without a proof. `PrepareTransfer` combines explicit private inputs, optional public funding, private outputs and an optional `Withdrawal`. Every selected input is consumed. Automatic change uses a fresh Note.
 
-The detached sequence is prepare → inspect → export portable wallet signing request → attach external signature → prove and independently verify → attach separate public funding signature if needed → export calldata → submit with ordinary geth APIs. Full owner-bound sweeps without funding, private outputs or fees need viewing capability; partial or redirected spending requires owner authorization.
+The detached sequence is prepare → inspect → export wallet request array → accept external response array → prove and independently verify → attach separate public funding signature if needed → export calldata → submit with ordinary geth APIs. Full owner-bound sweeps without funding, private outputs or fees need viewing capability; partial or redirected spending requires owner authorization.
 
 Managed Note operations use `session.Connect`, reservations and durable journals. No Store is created or consulted by detached preparation.
 

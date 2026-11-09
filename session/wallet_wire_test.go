@@ -3,9 +3,10 @@ package session
 import (
 	"context"
 	"encoding/json"
-	"github.com/invisi-lab/invisi-sdk-go/wallet"
 	"math/big"
 	"testing"
+
+	"github.com/invisi-lab/invisi-sdk-go/wallet"
 )
 
 func TestDetachedWalletWireAuthorization(t *testing.T) {
@@ -19,7 +20,7 @@ func TestDetachedWalletWireAuthorization(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	response, err := testExecutor(input.Wallet).Execute(ctx, q)
+	response, err := testExecutor(input.Wallet).ExecuteOne(ctx, q)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -54,7 +55,7 @@ func TestWalletWireCannotAuthorizeDifferentStatement(t *testing.T) {
 	}
 	params.Words[2] = value.Add(value, big.NewInt(1)).String()
 	q.Params = wallet.Encode(params)
-	response, err := testExecutor(input.Wallet).Execute(ctx, q)
+	response, err := testExecutor(input.Wallet).ExecuteOne(ctx, q)
 	if err != nil {
 		t.Fatal(err)
 	}

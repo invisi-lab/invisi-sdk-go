@@ -1,6 +1,6 @@
-// Package native runs wallet cryptography locally using host-supplied private material.
+// Package testsupport simulates a native wallet host for SDK tests only.
 // Private keys never appear in wallet requests or responses.
-package native
+package testsupport
 
 import (
 	"context"
@@ -33,7 +33,7 @@ func (e *Executor) OwnerAddress() common.Address {
 func (e *Executor) String() string               { return "NativeWalletExecutor([redacted])" }
 func (e *Executor) GoString() string             { return e.String() }
 func (e *Executor) MarshalJSON() ([]byte, error) { return []byte(`{"nativeWallet":"[redacted]"}`), nil }
-func (e *Executor) Execute(ctx context.Context, r wallet.Request) (wallet.Response, error) {
+func (e *Executor) ExecuteOne(ctx context.Context, r wallet.Request) (wallet.Response, error) {
 	var result any
 	if err := ctx.Err(); err != nil {
 		return wallet.Response{}, err
@@ -140,4 +140,32 @@ func (e *Executor) Execute(ctx context.Context, r wallet.Request) (wallet.Respon
 		result = wallet.DecryptResult{Plaintext: wallet.Hex(plain)}
 	}
 	return wallet.Response{Version: 1, ID: r.ID, OwnerAddress: r.OwnerAddress, Method: r.Method, Result: wallet.Encode(result)}, nil
+}
+
+// Execute is a test-only host simulator. Production applications supply their own native transport.
+func (e *Executor) Execute(ctx context.Context, requests []wallet.Request) ([]wallet.Response, error) {
+	if err := wallet.ValidateRequests(requests); err != nil {
+		return nil, err
+	}
+	for _, q := range requests {
+		if !strings.EqualFold(q.OwnerAddress, e.OwnerAddress().Hex()) {
+			return nil, errors.New("wallet owner mismatch")
+		}
+	}
+	responses := make([]wallet.Response, len(requests))
+	for i, q := range requests {
+		if err := ctx.Err(); err != nil {
+			return nil, err
+		}
+		r, err := e.ExecuteOne(ctx, q)
+		if err != nil {
+			code := "WALLET_EXECUTION_FAILED"
+			if q.Method == wallet.DecryptNote || q.Method == wallet.DecryptCredit {
+				code = wallet.NotRecipient
+			}
+			r = wallet.Response{Version: q.Version, ID: q.ID, OwnerAddress: q.OwnerAddress, Method: q.Method, Error: &wallet.ResponseError{Code: code}}
+		}
+		responses[i] = r
+	}
+	return responses, nil
 }

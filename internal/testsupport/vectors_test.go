@@ -1,12 +1,13 @@
-package native
+package testsupport
 
 import (
 	"context"
 	"encoding/json"
-	"github.com/invisi-lab/invisi-sdk-go/wallet"
 	"os"
 	"reflect"
 	"testing"
+
+	"github.com/invisi-lab/invisi-sdk-go/wallet"
 )
 
 func TestPortableWalletWireVectors(t *testing.T) {
@@ -30,7 +31,7 @@ func TestPortableWalletWireVectors(t *testing.T) {
 	}
 	for _, c := range fixture.Cases {
 		t.Run(string(c.Request.Method), func(t *testing.T) {
-			got, err := executor.Execute(context.Background(), c.Request)
+			got, err := executor.ExecuteOne(context.Background(), c.Request)
 			if err != nil {
 				t.Fatal(err)
 			}

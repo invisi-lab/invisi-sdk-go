@@ -4,12 +4,12 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	wire "github.com/invisi-lab/invisi-sdk-go/wallet/protocol"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/invisi-lab/invisi-sdk-go/core"
 	"github.com/invisi-lab/invisi-sdk-go/credit"
+	wire "github.com/invisi-lab/invisi-sdk-go/wallet/protocol"
 )
 
 // Accept independently verifies the response against the original request.
@@ -19,6 +19,9 @@ import (
 func Accept(q Request, r Response, viewingPublicKey string) (any, error) {
 	if err := ValidateResponse(q, r); err != nil {
 		return nil, err
+	}
+	if r.Error != nil {
+		return nil, r.Error
 	}
 	owner := core.BigIntToElement(common.HexToAddress(q.OwnerAddress).Big())
 	switch q.Method {

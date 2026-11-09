@@ -2,17 +2,16 @@ package shared
 
 import (
 	"context"
-	"encoding/json"
-	"fmt"
+	"errors"
+	"sort"
 
-	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/invisi-lab/invisi-sdk-go/core"
 	"github.com/invisi-lab/invisi-sdk-go/credit"
-	"github.com/invisi-lab/invisi-sdk-go/protocol/contracts"
 	"github.com/invisi-lab/invisi-sdk-go/rpc"
 	"github.com/invisi-lab/invisi-sdk-go/sdk"
 	walletsession "github.com/invisi-lab/invisi-sdk-go/session"
+	"github.com/invisi-lab/invisi-sdk-go/wallet"
 )
 
 type NoteCandidate struct {
@@ -26,113 +25,74 @@ type CreditCandidate struct {
 	Membership rpc.Membership
 }
 
-// DiscoverNotes scans genuine indexed outputs in MaxUpdateBlocks-bounded pages, authenticates decryption,
-// rejects conflicting records and filters spent nullifiers against the chain. Preparation
-// independently validates membership and the latest spent state; callers own reservations.
-func DiscoverNotes(ctx context.Context, provider sdk.Provider, client *sdk.ProtocolRpcClient, pool *sdk.Protocol, wallet *sdk.Wallet, viewingKey []byte, token common.Address) ([]NoteCandidate, error) {
-	client = client.WithProvider(provider)
-	d := pool.Context()
-	deployment := rpc.DeploymentContext{ChainID: d.ChainID, ProtocolAddress: d.ProtocolAddress}
-	status, err := client.GetStatus(ctx, deployment)
+// Discovery uses canonical managed synchronization in an ephemeral inventory. The host
+// explicitly executes each captured request batch; no viewing key enters this process.
+func discover(ctx context.Context, provider sdk.Provider, client *sdk.ProtocolRpcClient, pool *sdk.Protocol, public *sdk.Wallet, nativeWallet wallet.Client) (walletsession.WalletState, error) {
+	store := walletsession.NewMemoryWalletStore()
+	managed, err := walletsession.Connect(ctx, walletsession.Options{Invisi: sdk.NewInvisi(sdk.InvisiOptions{Provider: provider, ProtocolRPC: client}), Wallet: public, Protocol: pool, Store: store})
+	if err != nil {
+		return walletsession.WalletState{}, err
+	}
+	pending, err := managed.Refresh(ctx, walletsession.RefreshOptions{FromBlock: pool.Deployment().Protocol.FromBlock})
+	if err != nil {
+		return walletsession.WalletState{}, err
+	}
+	responses, err := nativeWallet.Execute(ctx, pending.WalletRequests)
+	if err != nil {
+		return walletsession.WalletState{}, err
+	}
+	if _, err = pending.ApplyWalletResponses(ctx, responses); err != nil {
+		return walletsession.WalletState{}, err
+	}
+	return store.ReadSnapshot(ctx, managed.Scope())
+}
+func DiscoverNotes(ctx context.Context, provider sdk.Provider, client *sdk.ProtocolRpcClient, pool *sdk.Protocol, public *sdk.Wallet, nativeWallet wallet.Client, token common.Address) ([]NoteCandidate, error) {
+	state, err := discover(ctx, provider, client, pool, public, nativeWallet)
 	if err != nil {
 		return nil, err
 	}
-	if status.IndexedHead == nil {
-		return nil, fmt.Errorf("Protocol RPC has no indexed head")
-	}
-	contract, err := contracts.NewInvisiProtocolCaller(d.ProtocolAddress, provider)
-	if err != nil {
-		return nil, err
-	}
-	seen := map[common.Hash]string{}
-	positions := map[string]string{}
 	result := []NoteCandidate{}
-	for from := pool.Deployment().Protocol.FromBlock; from <= status.IndexedHead.Number; {
-		to := min(from+rpc.MaxUpdateBlocks-1, status.IndexedHead.Number)
-		page, err := client.GetNoteUpdates(ctx, deployment, rpc.ProtocolUpdateRange{FromBlock: from, ToBlock: to})
-		if err != nil {
-			return nil, err
+	for _, record := range state.Notes {
+		if record.Spent || record.Note.TokenAddress != core.BigIntToElement(token.Big()) {
+			continue
 		}
-		for _, output := range page.Notes {
-			encoded, _ := json.Marshal(output)
-			fingerprint := string(encoded)
-			position := fmt.Sprintf("%d:%d", output.TreeID, output.LeafIndex)
-			if prior, ok := seen[output.Commitment]; ok {
-				if prior != fingerprint {
-					return nil, fmt.Errorf("conflicting note record")
-				}
-				continue
-			}
-			if prior, ok := positions[position]; ok && prior != fingerprint {
-				return nil, fmt.Errorf("conflicting note tree position")
-			}
-			seen[output.Commitment] = fingerprint
-			positions[position] = fingerprint
-			if output.TokenAddress != token {
-				continue
-			}
-			note, err := wallet.DecryptNote(ctx, ExecutorFor(wallet), output.Ciphertext, core.NoteDecryptionContext{NoteEncryptionContext: core.NoteEncryptionContext{ProtocolContext: core.ProtocolContext{ChainID: core.ElementFromUint64(d.ChainID), ProtocolAddress: core.BigIntToElement(d.ProtocolAddress.Big())}, OutputCommitment: core.BigIntToElement(output.Commitment.Big())}, TokenAddress: core.BigIntToElement(token.Big()), OwnerAddress: core.BigIntToElement(wallet.OwnerAddress().Big())})
-			if err != nil {
-				continue
-			}
-			nullifier, err := wallet.ExportNullifier().ForNote(note)
-			if err != nil {
-				return nil, err
-			}
-			spent, err := contract.IsNullifierSpent(&bind.CallOpts{Context: ctx}, nullifier)
-			if err != nil {
-				return nil, err
-			}
-			if spent {
-				continue
-			}
-			result = append(result, NoteCandidate{sdk.NoteInput{Note: note, Commitment: output.Commitment, TreeID: output.TreeID, LeafIndex: output.LeafIndex}, output})
-		}
-		if to == status.IndexedHead.Number {
-			break
-		}
-		from = to + 1
+		result = append(result, NoteCandidate{Input: sdk.NoteInput{Note: record.Note, Commitment: record.Commitment, TreeID: record.TreeID, LeafIndex: record.LeafIndex}, Output: rpc.ProtocolNoteOutput{Commitment: record.Commitment, TokenAddress: token, TreeID: record.TreeID, LeafIndex: record.LeafIndex, TransactionHash: record.TransactionHash}})
 	}
+	sort.Slice(result, func(i, j int) bool {
+		if result[i].Input.TreeID != result[j].Input.TreeID {
+			return result[i].Input.TreeID < result[j].Input.TreeID
+		}
+		return result[i].Input.LeafIndex < result[j].Input.LeafIndex
+	})
 	return result, nil
 }
-
-// DiscoverCredits composes the same canonical receipt authentication used by managed sessions.
-func DiscoverCredits(ctx context.Context, provider sdk.Provider, client *sdk.ProtocolRpcClient, pool *sdk.Protocol, wallet *sdk.Wallet, viewingKey []byte, token common.Address, role string) ([]CreditCandidate, error) {
+func DiscoverCredits(ctx context.Context, provider sdk.Provider, client *sdk.ProtocolRpcClient, pool *sdk.Protocol, public *sdk.Wallet, nativeWallet wallet.Client, token common.Address, role string) ([]CreditCandidate, error) {
 	selected := credit.Owner
 	if role == "spender" {
 		selected = credit.Spender
 	} else if role != "owner" {
-		return nil, fmt.Errorf("invalid grant role")
+		return nil, errors.New("invalid Credit role")
 	}
-	store := walletsession.NewMemoryWalletStore()
-	invisi := sdk.NewInvisi(sdk.InvisiOptions{Provider: provider, ProtocolRPC: client})
-	session, err := walletsession.Connect(ctx, walletsession.Options{Invisi: invisi, Wallet: wallet, Protocol: pool, Store: store})
+	state, err := discover(ctx, provider, client, pool, public, nativeWallet)
 	if err != nil {
 		return nil, err
 	}
-	if _, err = RefreshWallet(ctx, session, wallet, walletsession.RefreshOptions{}); err != nil {
-		return nil, err
-	}
-	snapshot, err := store.ReadSnapshot(ctx, session.Scope())
-	if err != nil {
-		return nil, err
-	}
-	if snapshot.DiscoveryThrough == nil {
-		return nil, fmt.Errorf("grant discovery anchor missing")
+	if state.DiscoveryThrough == nil {
+		return nil, errors.New("canonical discovery anchor missing")
 	}
 	result := []CreditCandidate{}
-	for _, record := range snapshot.PostpaidCredit.Grants {
-		if record.Role != selected || record.Consumed || record.Revoked || core.ElementToBigInt(record.Delivery.State.TokenAddress).Cmp(token.Big()) != 0 {
+	for _, record := range state.PostpaidCredit.Grants {
+		if record.Role != selected || record.Consumed || record.Revoked || core.ElementToBigInt(record.Delivery.State.Expiry).Uint64() <= state.DiscoveryThrough.Timestamp || record.Delivery.State.TokenAddress != core.BigIntToElement(token.Big()) {
 			continue
 		}
-		membership, err := client.WithProvider(provider).GetMembership(ctx, pool.Context(), rpc.MembershipInput{TreeID: record.TreeID, LeafIndex: uint32(record.LeafIndex), Commitment: record.Commitment}, *snapshot.DiscoveryThrough)
+		membership, err := client.WithProvider(provider).GetMembership(ctx, pool.Context(), rpc.MembershipInput{TreeID: record.TreeID, LeafIndex: uint32(record.LeafIndex), Commitment: record.Commitment}, *state.DiscoveryThrough)
 		if err != nil {
 			return nil, err
 		}
-		var path [16]common.Hash
 		if len(membership.Path) != 16 {
-			return nil, fmt.Errorf("grant path requires16siblings")
+			return nil, errors.New("Credit membership depth mismatch")
 		}
+		var path [16]common.Hash
 		copy(path[:], membership.Path)
 		result = append(result, CreditCandidate{Input: credit.LocatedState{State: record.Delivery.State, TreeID: record.TreeID, LeafIndex: record.LeafIndex, Path: path}, Delivery: record.Delivery, Commitment: record.Commitment, Membership: membership})
 	}

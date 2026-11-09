@@ -2,14 +2,15 @@ package session
 
 import (
 	"context"
+	"sync"
+
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/invisi-lab/invisi-sdk-go/core"
 	creditsession "github.com/invisi-lab/invisi-sdk-go/credit/session"
-	"github.com/invisi-lab/invisi-sdk-go/native"
+	native "github.com/invisi-lab/invisi-sdk-go/internal/testsupport"
 	protocolrpc "github.com/invisi-lab/invisi-sdk-go/rpc"
 	"github.com/invisi-lab/invisi-sdk-go/sdk"
 	"github.com/invisi-lab/invisi-sdk-go/wallet"
-	"sync"
 )
 
 var testMaterials sync.Map
@@ -45,7 +46,7 @@ func testDisclosureViewer(s *WalletSession) *sdk.ViewingCapability {
 	return v
 }
 
-func testExecutor(w *sdk.Wallet) wallet.Executor {
+func testExecutor(w *sdk.Wallet) *native.Executor {
 	if w == nil {
 		return nil
 	}
@@ -53,7 +54,7 @@ func testExecutor(w *sdk.Wallet) wallet.Executor {
 	if v == nil {
 		return nil
 	}
-	return v.(wallet.Executor)
+	return v.(*native.Executor)
 }
 
 func refreshForTest(s *WalletSession, ctx context.Context, options RefreshOptions) (RefreshResult, error) {
@@ -61,13 +62,9 @@ func refreshForTest(s *WalletSession, ctx context.Context, options RefreshOption
 	if err != nil {
 		return RefreshResult{}, err
 	}
-	replies := make([]WalletRefreshResponse, len(pending.WalletRequests))
-	for i, q := range pending.WalletRequests {
-		r, e := testExecutor(s.wallet).Execute(ctx, q)
-		replies[i].RequestID = q.ID
-		if e == nil {
-			replies[i].Response = &r
-		}
+	replies, err := testExecutor(s.wallet).Execute(ctx, pending.WalletRequests)
+	if err != nil {
+		return RefreshResult{}, err
 	}
 	return pending.ApplyWalletResponses(ctx, replies)
 }
@@ -79,7 +76,7 @@ func authorizeForTest(o *Operation, ctx context.Context) (*Operation, error) {
 	if err != nil {
 		return nil, err
 	}
-	r, err := testExecutor(o.session.wallet).Execute(ctx, q)
+	r, err := testExecutor(o.session.wallet).ExecuteOne(ctx, q)
 	if err != nil {
 		return nil, err
 	}
@@ -91,7 +88,7 @@ func readTransactionForTest(s *WalletSession, ctx context.Context, hash common.H
 		if e != nil {
 			return nil, e
 		}
-		r, e := testExecutor(s.wallet).Execute(ctx, q)
+		r, e := testExecutor(s.wallet).ExecuteOne(ctx, q)
 		if e != nil {
 			return nil, e
 		}

@@ -39,14 +39,25 @@ type Response struct {
 	ID           string          `json:"id"`
 	OwnerAddress string          `json:"ownerAddress"`
 	Method       Method          `json:"method"`
-	Result       json.RawMessage `json:"result"`
+	Result       json.RawMessage `json:"result,omitempty"`
+	Error        *ResponseError  `json:"error,omitempty"`
 }
-type Executor interface {
-	Execute(context.Context, Request) (Response, error)
-}
-type ExecutorFunc func(context.Context, Request) (Response, error)
 
-func (f ExecutorFunc) Execute(c context.Context, r Request) (Response, error) { return f(c, r) }
+// ResponseError carries a stable native-wallet failure code without private diagnostics.
+type ResponseError struct {
+	Code string `json:"code"`
+}
+
+func (e *ResponseError) Error() string { return "wallet execution failed: " + e.Code }
+
+const NotRecipient = "WALLET_NOT_RECIPIENT"
+
+type Client interface {
+	Execute(context.Context, []Request) ([]Response, error)
+}
+type ClientFunc func(context.Context, []Request) ([]Response, error)
+
+func (f ClientFunc) Execute(c context.Context, r []Request) ([]Response, error) { return f(c, r) }
 
 type ProtocolContext struct {
 	ChainID         string `json:"chainId"`
@@ -191,7 +202,7 @@ func ValidateRequest(r Request) error {
 	if len(r.Params) == 0 || !json.Valid(r.Params) || r.Params[0] != '{' {
 		return errors.New("wallet params must be an object")
 	}
-	return nil
+	return validateParams(r)
 }
 func ValidateResponse(q Request, r Response) error {
 	if e := ValidateRequest(q); e != nil {
@@ -199,6 +210,20 @@ func ValidateResponse(q Request, r Response) error {
 	}
 	if r.Version != q.Version || r.ID != q.ID || r.Method != q.Method || r.OwnerAddress != q.OwnerAddress {
 		return errors.New("wallet response request binding mismatch")
+	}
+	if r.Error != nil {
+		if len(r.Result) != 0 || len(r.Error.Code) == 0 || len(r.Error.Code) > 128 {
+			return errors.New("invalid wallet error response")
+		}
+		if r.Error.Code[0] < 'A' || r.Error.Code[0] > 'Z' {
+			return errors.New("invalid wallet error code")
+		}
+		for _, c := range r.Error.Code {
+			if !(c >= 'A' && c <= 'Z') && !(c >= '0' && c <= '9') && c != '_' {
+				return errors.New("invalid wallet error code")
+			}
+		}
+		return nil
 	}
 	if len(r.Result) == 0 || !json.Valid(r.Result) || r.Result[0] != '{' {
 		return errors.New("wallet result must be an object")
@@ -223,6 +248,9 @@ func AcceptAuthorization(q Request, r Response) (core.WalletAuthorizationWitness
 	}
 	if err := ValidateResponse(q, r); err != nil {
 		return witness, err
+	}
+	if r.Error != nil {
+		return witness, r.Error
 	}
 	var p AuthorizeParams
 	if err := Decode(q.Params, &p); err != nil {

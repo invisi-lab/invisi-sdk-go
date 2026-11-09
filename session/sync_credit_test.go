@@ -5,13 +5,12 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/ethereum/go-ethereum"
-	protocolrpc "github.com/invisi-lab/invisi-sdk-go/rpc"
 	"math/big"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
+	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
@@ -19,6 +18,8 @@ import (
 	"github.com/invisi-lab/invisi-sdk-go/credit"
 	creditsession "github.com/invisi-lab/invisi-sdk-go/credit/session"
 	"github.com/invisi-lab/invisi-sdk-go/protocol/contracts"
+	protocolrpc "github.com/invisi-lab/invisi-sdk-go/rpc"
+	"github.com/invisi-lab/invisi-sdk-go/wallet"
 )
 
 func syncGrantState() credit.State {
@@ -278,21 +279,36 @@ func TestRefreshKeepsAuthenticatedChildPayloadAndDropsUnknownRecoveredPayload(t 
 			if beforePending.Revision != afterPending.Revision {
 				t.Fatal("pending discovery changed real store")
 			}
-			replies := make([]WalletRefreshResponse, len(pending.WalletRequests))
+			replies, e := testExecutor(session.wallet).Execute(ctx, pending.WalletRequests)
+			if e != nil {
+				t.Fatal(e)
+			}
 			good := -1
-			for i, q := range pending.WalletRequests {
-				response, executeErr := testExecutor(session.wallet).Execute(ctx, q)
-				replies[i].RequestID = q.ID
-				if executeErr == nil {
-					replies[i].Response = &response
+			for i := range replies {
+				if replies[i].Error == nil {
 					good = i
 				}
 			}
 			if good >= 0 {
-				original := *replies[good].Response
+				original := replies[good]
+				for _, code := range []string{"WALLET_CANCELLED", "WALLET_LOCKED", "WALLET_EXECUTION_FAILED"} {
+					failed := original
+					failed.Result = nil
+					failed.Error = &wallet.ResponseError{Code: code}
+					replies[good] = failed
+					if _, err := pending.ApplyWalletResponses(ctx, replies); err == nil {
+						t.Fatal("wallet failure must abort apply")
+					}
+					unchanged, _ := session.options.Store.ReadSnapshot(ctx, session.scope)
+					if unchanged.Revision != beforePending.Revision {
+						t.Fatal("wallet failure wrote inventory")
+					}
+				}
+				replies[good] = original
+
 				bad := original
 				bad.ID = "substituted"
-				replies[good].Response = &bad
+				replies[good] = bad
 				if _, err := pending.ApplyWalletResponses(ctx, replies); err == nil {
 					t.Fatal("accepted substituted response")
 				}
@@ -300,7 +316,7 @@ func TestRefreshKeepsAuthenticatedChildPayloadAndDropsUnknownRecoveredPayload(t 
 				if afterBad.Revision != beforePending.Revision {
 					t.Fatal("invalid response partially committed refresh")
 				}
-				replies[good].Response = &original
+				replies[good] = original
 			}
 			result, e := pending.ApplyWalletResponses(ctx, replies)
 			if e != nil {

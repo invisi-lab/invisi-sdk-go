@@ -2,7 +2,8 @@ package transaction
 
 import (
 	"context"
-	"github.com/invisi-lab/invisi-sdk-go/native"
+
+	native "github.com/invisi-lab/invisi-sdk-go/internal/testsupport"
 )
 
 func WalletFromPrivateKey(key string) (*Wallet, error) {

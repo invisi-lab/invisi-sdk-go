@@ -1,59 +1,44 @@
-// 04b partial withdraw with change.
+// Withdraw 10 units to Bob and retain any excess from selected Notes as private change.
 package main
 
 import (
 	"context"
+	"encoding/json"
 	"flag"
-	"fmt"
 	"log"
 	"math/big"
+	"os"
 
-	"github.com/ethereum/go-ethereum/accounts/abi"
-	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/core/types"
-	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
-	"github.com/ethereum/go-ethereum/signer/core/apitypes"
 	"github.com/invisi-lab/invisi-sdk-go/core"
 	"github.com/invisi-lab/invisi-sdk-go/examples/shared"
-	"github.com/invisi-lab/invisi-sdk-go/prover"
 	"github.com/invisi-lab/invisi-sdk-go/prover/native"
 	"github.com/invisi-lab/invisi-sdk-go/sdk"
+	"github.com/invisi-lab/invisi-sdk-go/wallet"
 )
 
 func main() {
-	execute := flag.Bool("execute", false, "authorize signing, proving and chain submission")
-	flag.Parse()
-	if !*execute {
-		log.Fatal("Review settings and code, then add --execute; no network request or transaction was made")
-	}
+	// Configure public actors and deployment; the native host retains account access.
 	ctx := context.Background()
+	chainRPC := flag.String("chain-rpc", "http://127.0.0.1:18565", "Chain RPC URL")
+	protocolRPC := flag.String("protocol-rpc", "https://rpc.invisipay.fi/v1/chains/97", "Protocol RPC URL")
+	address := flag.String("wallet-address", "", "public long receiving address")
+	tokenText := flag.String("token", "0x2222222222222222222222222222222222222222", "token contract")
+	flag.Parse()
 
-	// 1. Load local demonstration accounts.
-	accounts, err := shared.GetAccounts(shared.Settings.AccountsFile)
+	publicWallet, err := sdk.WalletFromAddress(*address)
 	if err != nil {
 		log.Fatal(err)
 	}
-	if len(accounts) < 2 {
-		log.Fatal("this example requires at least 2 initialized accounts")
-	}
-	bob := accounts[1]
 
-	// 2. Connect to the chain and pin the Protocol RPC deployment.
-	provider, err := ethclient.DialContext(ctx, shared.Settings.ChainRPCURL)
+	// Authenticate the Protocol RPC deployment against Chain RPC before preparing financial intent.
+	provider, err := ethclient.DialContext(ctx, *chainRPC)
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer provider.Close()
-	chain, err := provider.ChainID(ctx)
-	if err != nil {
-		log.Fatal(err)
-	}
-	if chain.Uint64() != shared.Settings.ChainID {
-		log.Fatal("chain does not match Settings.ChainID")
-	}
-	client, err := sdk.NewProtocolRpcClient(shared.Settings.ProtocolRPCURL)
+	client, err := sdk.NewProtocolRpcClient(*protocolRPC)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -61,110 +46,90 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	token := common.HexToAddress(shared.Settings.TokenAddress)
-	signer, err := bind.NewKeyedTransactorWithChainID(bob.Key, chain)
-	if err != nil {
-		log.Fatal(err)
-	}
-	signer.Context = ctx
 
-	// 3. Create the local prover; private witnesses stay on this machine.
-	localProver, err := native.NewNativeProver(shared.Settings.Prover)
+	// Proving runs locally; this backend never executes wallet account keys.
+	backend, err := native.NewNativeProver(native.NativeOptions{BBBinary: "bb", NoirBinary: "noir-execute"})
 	if err != nil {
 		log.Fatal(err)
 	}
-	invisi := sdk.NewInvisi(sdk.InvisiOptions{Provider: provider, ProtocolRPC: client, Prover: localProver})
-	amount := big.NewInt(10)
-	input := []sdk.NoteInput{}
+	invisi := sdk.NewInvisi(sdk.InvisiOptions{Provider: provider, ProtocolRPC: client, Prover: backend})
+	token := common.HexToAddress(*tokenText)
+	encoder := json.NewEncoder(os.Stdout)
+	decoder := json.NewDecoder(os.Stdin)
+	nativeWallet := shared.NativeWalletClient{Encoder: encoder, Decoder: decoder}
 
-	// 4. Discover authenticated notes and choose this transaction's inputs.
-	candidates, err := shared.DiscoverNotes(ctx, provider, client, pool, bob.Wallet, bob.ViewingKey, token)
+	// Discover automatically through canonical receipts and externally decrypted, independently checked openings.
+	candidates, err := shared.DiscoverNotes(ctx, provider, client, pool, publicWallet, nativeWallet, token)
 	if err != nil {
 		log.Fatal(err)
 	}
+	// Select only the required private portion; any selected excess returns to this owner.
+	var inputs []sdk.NoteInput
 	selectedAmount := new(big.Int)
-	required := new(big.Int).Set(amount)
 	for _, candidate := range candidates {
-		if selectedAmount.Cmp(required) >= 0 {
+		if selectedAmount.Cmp(big.NewInt(10)) >= 0 {
 			break
 		}
-		input = append(input, candidate.Input)
+		inputs = append(inputs, candidate.Input)
 		selectedAmount.Add(selectedAmount, core.ElementToBigInt(candidate.Input.Note.Amount))
+		if len(inputs) == 12 {
+			break
+		}
 	}
-	if len(input) > 12 {
-		log.Fatal("selected notes exceed this example's 12-input limit; consolidate or select a smaller set")
+	if len(inputs) == 0 {
+		log.Fatal("no authenticated unspent notes; run a funding example first")
 	}
-	if len(input) == 0 {
-		log.Fatal("no authenticated unspent notes; shield to this owner first")
-	}
-	params := sdk.TransferPreparation{TokenAddress: token}
-	params.Outputs = nil
-	params.Withdrawal = &sdk.Withdrawal{To: bob.Wallet.OwnerAddress(), Amount: amount}
 
-	// 5. Prepare and freeze the transaction intent.
+	// Freeze recipients and amounts before authorization so the native response approves this exact intent.
 	prepared, err := invisi.PrepareTransfer(ctx, sdk.ExplicitTransferPreparation{
-		TransactionIdentity: sdk.TransactionIdentity{Wallet: bob.Wallet, Protocol: pool},
-		TransferPreparation: params,
-		ExplicitFunds:       sdk.ExplicitFunds{Inputs: input},
+		TransactionIdentity: sdk.TransactionIdentity{Wallet: publicWallet, Protocol: pool},
+		ExplicitFunds:       sdk.ExplicitFunds{Inputs: inputs, ChangeAddress: *address},
+		TransferPreparation: sdk.TransferPreparation{
+			TokenAddress: token,
+			Withdrawal:   &sdk.Withdrawal{To: publicWallet.OwnerAddress(), Amount: big.NewInt(10)},
+		},
 	})
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Println("Review frozen operation:", prepared.Preview())
 
-	// 6. Export and sign the owner authorization without sharing the private key.
-	request, err := prepared.ExportWalletAuthorization(ctx)
+	// The host approves only this frozen spending statement; no wallet key is passed to the SDK.
+	request, err := prepared.ExportWalletRequest(ctx, "authorize-1")
 	if err != nil {
 		log.Fatal(err)
 	}
-	typed, err := request.TypedData()
-	if err != nil {
-		log.Fatal(err)
-	}
-	digest, _, err := apitypes.TypedDataAndHash(typed)
-	if err != nil {
-		log.Fatal(err)
-	}
-	signature, err := crypto.Sign(digest, bob.Key)
-	if err != nil {
-		log.Fatal(err)
-	}
-	prepared, err = prepared.WithWalletSignature(ctx, signature)
-	if err != nil {
+	requests := []wallet.Request{request}
+	if err = encoder.Encode(requests); err != nil {
 		log.Fatal(err)
 	}
 
-	// 7. Generate and verify the transaction proof locally.
-	prepared, err = prepared.Prove(ctx, sdk.TransactionProveOptions{Options: prover.Options{OnProgress: func(p prover.Progress) {
-		fmt.Println("Proof phase:", p.Phase)
-	}}, Execution: "single"})
+	var responses []wallet.Response
+	if err = decoder.Decode(&responses); err != nil {
+		log.Fatal(err)
+	}
+
+	// Match by ID rather than arrival order; attachment independently verifies the signature and statement.
+	ordered, err := wallet.ValidateResponses(requests, responses)
+	if err != nil {
+		log.Fatal(err)
+	}
+	prepared, err = prepared.WithWalletResponse(ctx, request, ordered[0])
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	// 8. Export calldata for ordinary geth submission.
+	// Generate the local proof and independently verify it before exposing calldata.
+	prepared, err = prepared.Prove(ctx)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// Export unsigned calldata for the external signer; submission and canonical reconciliation remain explicit.
 	call, err := prepared.ExportTransaction(ctx)
 	if err != nil {
 		log.Fatal(err)
 	}
-	transaction, err := bind.NewBoundContract(call.To, abi.ABI{}, provider, provider, provider).RawTransact(signer, call.Data)
-	if err != nil {
+	if err = encoder.Encode(call); err != nil {
 		log.Fatal(err)
 	}
-	fmt.Println("Submitted transaction:", transaction.Hash())
-	receipt, err := bind.WaitMined(ctx, provider, transaction)
-	if err != nil {
-		log.Fatal(err)
-	}
-	if receipt.Status != types.ReceiptStatusSuccessful {
-		log.Fatal("transaction reverted")
-	}
-	canonical, err := provider.HeaderByNumber(ctx, receipt.BlockNumber)
-	if err != nil {
-		log.Fatal(err)
-	}
-	if canonical == nil || canonical.Hash() != receipt.BlockHash {
-		log.Fatal("transaction receipt is no longer canonical; preserve the transaction hash and reconcile")
-	}
-	fmt.Println("Mined block:", receipt.BlockNumber)
 }

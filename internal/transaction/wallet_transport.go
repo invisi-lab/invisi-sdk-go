@@ -14,30 +14,38 @@ import (
 	"github.com/invisi-lab/invisi-sdk-go/wallet"
 )
 
-func (w *Wallet) request(ctx context.Context, executor wallet.Executor, method wallet.Method, params any, result any) error {
-	if w == nil || executor == nil {
-		return errors.New("wallet executor required")
+func (w *Wallet) request(ctx context.Context, client wallet.Client, method wallet.Method, params any, result any) error {
+	if w == nil || client == nil {
+		return errors.New("wallet client required")
 	}
 	q := wallet.Request{Version: 1, ID: "go-" + rand.Text(), OwnerAddress: strings.ToLower(w.identity.Hex()), Method: method, Params: wallet.Encode(params)}
-	// Preserve the original transcript even if an in-process executor mutates its copy.
+	if err := wallet.ValidateRequests([]wallet.Request{q}); err != nil {
+		return err
+	}
+	// Preserve the original transcript even if an in-process client mutates its copy.
 	sent := q
 	sent.Params = append([]byte(nil), q.Params...)
-	response, err := executor.Execute(ctx, sent)
+	responses, err := client.Execute(ctx, []wallet.Request{sent})
 	if err != nil {
 		return err
 	}
 	if err = ctx.Err(); err != nil {
 		return err
 	}
+	ordered, err := wallet.ValidateResponses([]wallet.Request{q}, responses)
+	if err != nil {
+		return err
+	}
+	response := ordered[0]
 	if _, err = w.AcceptResponse(q, response); err != nil {
 		return err
 	}
 	return wallet.Decode(response.Result, result)
 }
-func ConnectWallet(ctx context.Context, owner common.Address, executor wallet.Executor) (*Wallet, error) {
+func ConnectWallet(ctx context.Context, owner common.Address, client wallet.Client) (*Wallet, error) {
 	w := &Wallet{identity: owner}
 	var result wallet.PublicResult
-	if err := w.request(ctx, executor, wallet.Public, struct{}{}, &result); err != nil {
+	if err := w.request(ctx, client, wallet.Public, struct{}{}, &result); err != nil {
 		return nil, err
 	}
 	public, err := wallet.Bytes(result.SpendingPublicKey, 65)
@@ -66,13 +74,13 @@ func ConnectWallet(ctx context.Context, owner common.Address, executor wallet.Ex
 	w.address, err = core.EncodeLongAddress(core.ReceivingAddress{OwnerAddress: identity, ViewingPublicKey: viewing, ClueKey: clue})
 	return w, err
 }
-func (w *Wallet) Detect(ctx context.Context, executor wallet.Executor, clues [][]byte) ([]bool, error) {
+func (w *Wallet) Detect(ctx context.Context, client wallet.Client, clues [][]byte) ([]bool, error) {
 	values := make([]string, len(clues))
 	for i, v := range clues {
 		values[i] = wallet.Hex(v)
 	}
 	var result wallet.DetectResult
-	if err := w.request(ctx, executor, wallet.Detect, wallet.DetectParams{Clues: values}, &result); err != nil {
+	if err := w.request(ctx, client, wallet.Detect, wallet.DetectParams{Clues: values}, &result); err != nil {
 		return nil, err
 	}
 	if len(result.Matches) != len(clues) {
@@ -83,11 +91,11 @@ func (w *Wallet) Detect(ctx context.Context, executor wallet.Executor, clues [][
 func deliveryParams(envelope []byte, c core.ProtocolContext, token, commitment string, role string) wallet.DecryptParams {
 	return wallet.DecryptParams{Envelope: wallet.Hex(envelope), Context: wallet.DeliveryContext{ProtocolContext: wallet.Context(c), TokenAddress: token, OutputCommitment: commitment, Role: role}}
 }
-func (w *Wallet) DecryptNote(ctx context.Context, executor wallet.Executor, envelope []byte, c core.NoteDecryptionContext) (core.Note, error) {
+func (w *Wallet) DecryptNote(ctx context.Context, client wallet.Client, envelope []byte, c core.NoteDecryptionContext) (core.Note, error) {
 	c.OwnerAddress = core.BigIntToElement(w.identity.Big())
 	var result wallet.DecryptResult
 	commitment := c.OutputCommitment.Bytes()
-	if err := w.request(ctx, executor, wallet.DecryptNote, deliveryParams(envelope, c.ProtocolContext, c.TokenAddress.String(), wallet.Hex(commitment[:]), ""), &result); err != nil {
+	if err := w.request(ctx, client, wallet.DecryptNote, deliveryParams(envelope, c.ProtocolContext, c.TokenAddress.String(), wallet.Hex(commitment[:]), ""), &result); err != nil {
 		return core.Note{}, err
 	}
 	plain, err := wallet.Bytes(result.Plaintext, -1)
@@ -96,7 +104,7 @@ func (w *Wallet) DecryptNote(ctx context.Context, executor wallet.Executor, enve
 	}
 	return core.DecodeNotePlaintext(plain, c)
 }
-func (w *Wallet) DecryptCreditState(ctx context.Context, executor wallet.Executor, envelope []byte, c credit.DeliveryContext, role credit.Role) (credit.DeliveryState, error) {
+func (w *Wallet) DecryptCreditState(ctx context.Context, client wallet.Client, envelope []byte, c credit.DeliveryContext, role credit.Role) (credit.DeliveryState, error) {
 	c.RecipientIdentity = core.BigIntToElement(w.identity.Big())
 	r := "owner"
 	if role == credit.Spender {
@@ -106,7 +114,7 @@ func (w *Wallet) DecryptCreditState(ctx context.Context, executor wallet.Executo
 	}
 	var result wallet.DecryptResult
 	commitment := c.Commitment.Bytes()
-	if err := w.request(ctx, executor, wallet.DecryptCredit, deliveryParams(envelope, c.ProtocolContext, c.TokenAddress.String(), wallet.Hex(commitment[:]), r), &result); err != nil {
+	if err := w.request(ctx, client, wallet.DecryptCredit, deliveryParams(envelope, c.ProtocolContext, c.TokenAddress.String(), wallet.Hex(commitment[:]), r), &result); err != nil {
 		return credit.DeliveryState{}, err
 	}
 	plain, err := wallet.Bytes(result.Plaintext, -1)

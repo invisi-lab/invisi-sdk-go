@@ -1,60 +1,49 @@
-// Authorize four independent transfers and submit their aggregate.
+// Bob and Charlie each authorize two half-note transfers; combine their four recursive proofs.
 package main
 
 import (
 	"context"
+	"encoding/json"
 	"flag"
 	"fmt"
 	"log"
 	"math/big"
+	"os"
 
-	"github.com/ethereum/go-ethereum/accounts/abi"
-	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/core/types"
-	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
-	"github.com/ethereum/go-ethereum/signer/core/apitypes"
 	"github.com/invisi-lab/invisi-sdk-go/core"
 	"github.com/invisi-lab/invisi-sdk-go/examples/shared"
 	"github.com/invisi-lab/invisi-sdk-go/protocol"
 	"github.com/invisi-lab/invisi-sdk-go/prover"
 	"github.com/invisi-lab/invisi-sdk-go/prover/native"
 	"github.com/invisi-lab/invisi-sdk-go/sdk"
+	"github.com/invisi-lab/invisi-sdk-go/wallet"
 )
 
 func main() {
-	execute := flag.Bool("execute", false, "authorize signing, proving and chain submission")
-	flag.Parse()
-	if !*execute {
-		log.Fatal("Review settings and code, then add --execute; no network request or transaction was made")
-	}
+	// Configure public actors and deployment; the native host retains account access.
 	ctx := context.Background()
+	chainRPC := flag.String("chain-rpc", "http://127.0.0.1:18565", "Chain RPC URL")
+	protocolRPC := flag.String("protocol-rpc", "https://rpc.invisipay.fi/v1/chains/97", "Protocol RPC URL")
+	address := flag.String("wallet-address", "", "public long receiving address")
+	recipient := flag.String("recipient", "", "recipient public long receiving address")
+	tokenText := flag.String("token", "0x2222222222222222222222222222222222222222", "token contract")
+	secondAddress := flag.String("second-wallet-address", "", "second owner public long receiving address")
+	flag.Parse()
 
-	// 1. Load local demonstration accounts.
-	accounts, err := shared.GetAccounts(shared.Settings.AccountsFile)
+	publicWallet, err := sdk.WalletFromAddress(*address)
 	if err != nil {
 		log.Fatal(err)
 	}
-	if len(accounts) < 2 {
-		log.Fatal("this example requires at least 2 initialized accounts")
-	}
-	alice := accounts[0]
 
-	// 2. Connect to the chain and pin the Protocol RPC deployment.
-	provider, err := ethclient.DialContext(ctx, shared.Settings.ChainRPCURL)
+	// Authenticate the Protocol RPC deployment against Chain RPC before preparing financial intent.
+	provider, err := ethclient.DialContext(ctx, *chainRPC)
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer provider.Close()
-	chain, err := provider.ChainID(ctx)
-	if err != nil {
-		log.Fatal(err)
-	}
-	if chain.Uint64() != shared.Settings.ChainID {
-		log.Fatal("chain does not match Settings.ChainID")
-	}
-	client, err := sdk.NewProtocolRpcClient(shared.Settings.ProtocolRPCURL)
+	client, err := sdk.NewProtocolRpcClient(*protocolRPC)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -62,97 +51,112 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	signer, err := bind.NewKeyedTransactorWithChainID(alice.Key, chain)
-	if err != nil {
-		log.Fatal(err)
-	}
-	signer.Context = ctx
 
-	// 3. Create the local prover; private witnesses stay on this machine.
-	localProver, err := native.NewNativeProver(shared.Settings.Prover)
+	// Proving runs locally; this backend never executes wallet account keys.
+	backend, err := native.NewNativeProver(native.NativeOptions{BBBinary: "bb", NoirBinary: "noir-execute"})
 	if err != nil {
 		log.Fatal(err)
 	}
-	invisi := sdk.NewInvisi(sdk.InvisiOptions{Provider: provider, ProtocolRPC: client, Prover: localProver})
-	if len(accounts) < 3 {
-		log.Fatal("aggregate example requires Alice, Bob and Charlie")
-	}
-	head, err := provider.HeaderByNumber(ctx, nil)
+	invisi := sdk.NewInvisi(sdk.InvisiOptions{Provider: provider, ProtocolRPC: client, Prover: backend})
+	token := common.HexToAddress(*tokenText)
+	encoder := json.NewEncoder(os.Stdout)
+	decoder := json.NewDecoder(os.Stdin)
+	nativeWallet := shared.NativeWalletClient{Encoder: encoder, Decoder: decoder}
+	secondWallet, err := sdk.WalletFromAddress(*secondAddress)
 	if err != nil {
 		log.Fatal(err)
 	}
-	deadline := head.Time + 3600
-	token := common.HexToAddress(shared.Settings.TokenAddress)
+	if secondWallet.OwnerAddress() == publicWallet.OwnerAddress() {
+		log.Fatal("two distinct public owners required")
+	}
 	members := []prover.AggregateMember{}
-	requests := []protocol.TransactRequest{}
+	transacts := []protocol.TransactRequest{}
 
-	// 4. Bob and Charlie each sign and prove two distinct transfers.
-	// Each proof has one owner; the aggregate combines four independent members.
-	for _, owner := range accounts[1:3] {
-		candidates, err := shared.DiscoverNotes(ctx, provider, client, pool, owner.Wallet, owner.ViewingKey, token)
+	// Each native batch belongs to one owner; aggregate proofs may combine different owners.
+	for ownerIndex, ownerWallet := range []*sdk.Wallet{publicWallet, secondWallet} {
+		ownerAddress, err := ownerWallet.GetAddress()
 		if err != nil {
 			log.Fatal(err)
 		}
-		selected := []sdk.NoteInput{}
+
+		// Discover automatically through canonical receipts and externally decrypted, independently checked openings.
+		candidates, err := shared.DiscoverNotes(ctx, provider, client, pool, ownerWallet, nativeWallet, token)
+		if err != nil {
+			log.Fatal(err)
+		}
+		var inputs []sdk.NoteInput
 		for _, candidate := range candidates {
-			if core.ElementToBigInt(candidate.Input.Note.Amount).Cmp(big.NewInt(2)) >= 0 {
-				selected = append(selected, candidate.Input)
+			if core.ElementToBigInt(candidate.Input.Note.Amount).Cmp(big.NewInt(2)) < 0 {
+				continue
 			}
-			if len(selected) == 2 {
+			inputs = append(inputs, candidate.Input)
+			if len(inputs) == 2 {
 				break
 			}
 		}
-		if len(selected) != 2 {
-			log.Fatal(owner.Name, " needs two distinct authenticated unspent notes of at least 2 units")
+		if len(inputs) != 2 {
+			log.Fatal("two distinct selected unspent notes required")
 		}
-		destination, err := alice.Wallet.GetAddress()
-		if err != nil {
-			log.Fatal(err)
-		}
-		for _, input := range selected {
+		preparedMembers := make([]*sdk.PreparedTransaction, 2)
+		requests := make([]wallet.Request, 2)
+		for i, input := range inputs {
 			amount := new(big.Int).Div(core.ElementToBigInt(input.Note.Amount), big.NewInt(2))
+			if amount.Sign() == 0 {
+				log.Fatal("each note must contain at least two units")
+			}
 			output, err := sdk.NewNoteOutput(sdk.PaymentRequest{
-				ChainID:         chain,
+				ChainID:         new(big.Int).SetUint64(pool.Context().ChainID),
 				ProtocolAddress: pool.Context().ProtocolAddress,
 				TokenAddress:    token,
 				Amount:          amount,
-				Recipient:       sdk.InvisiRecipient{Address: destination},
+				Recipient:       sdk.InvisiRecipient{Address: *recipient},
 			})
 			if err != nil {
 				log.Fatal(err)
 			}
+
+			// Freeze recipients and amounts before authorization so the native response approves this exact intent.
 			prepared, err := invisi.PrepareTransfer(ctx, sdk.ExplicitTransferPreparation{
-				TransactionIdentity: sdk.TransactionIdentity{Wallet: owner.Wallet, Protocol: pool},
-				ExplicitFunds:       sdk.ExplicitFunds{Inputs: []sdk.NoteInput{input}},
-				TransferPreparation: sdk.TransferPreparation{TokenAddress: token, Outputs: []sdk.NoteOutput{output}, Deadline: deadline},
+				TransactionIdentity: sdk.TransactionIdentity{Wallet: ownerWallet, Protocol: pool},
+				ExplicitFunds:       sdk.ExplicitFunds{Inputs: []sdk.NoteInput{input}, ChangeAddress: ownerAddress},
+				TransferPreparation: sdk.TransferPreparation{TokenAddress: token, Outputs: []sdk.NoteOutput{output}},
 			})
 			if err != nil {
 				log.Fatal(err)
 			}
-			fmt.Println(owner.Name, " review:", prepared.Preview())
-			request, err := prepared.ExportWalletAuthorization(ctx)
+			requests[i], err = prepared.ExportWalletRequest(ctx, fmt.Sprintf("aggregate-%d-%d", ownerIndex, i))
 			if err != nil {
 				log.Fatal(err)
 			}
-			typed, err := request.TypedData()
+			preparedMembers[i] = prepared
+		}
+		if err = wallet.ValidateRequests(requests); err != nil {
+			log.Fatal(err)
+		}
+
+		// The host approves both frozen requests for this owner in one explicit exchange.
+		if err = encoder.Encode(requests); err != nil {
+			log.Fatal(err)
+		}
+
+		var responses []wallet.Response
+		if err = decoder.Decode(&responses); err != nil {
+			log.Fatal(err)
+		}
+
+		// Match by ID rather than arrival order; attachment independently verifies the signature and statement.
+		ordered, err := wallet.ValidateResponses(requests, responses)
+		if err != nil {
+			log.Fatal(err)
+		}
+		for i, prepared := range preparedMembers {
+			authorized, err := prepared.WithWalletResponse(ctx, requests[i], ordered[i])
 			if err != nil {
 				log.Fatal(err)
 			}
-			digest, _, err := apitypes.TypedDataAndHash(typed)
-			if err != nil {
-				log.Fatal(err)
-			}
-			signature, err := crypto.Sign(digest, owner.Key)
-			if err != nil {
-				log.Fatal(err)
-			}
-			authorized, err := prepared.WithWalletSignature(ctx, signature)
-			if err != nil {
-				log.Fatal(err)
-			}
-			ready, err := authorized.Prove(ctx, sdk.TransactionProveOptions{Options: prover.Options{OnProgress: func(p prover.Progress) {
-				fmt.Println("Member proof phase:", p.Phase)
-			}}, Execution: "aggregate"})
+
+			// Recursive proofs are verified separately before entering the aggregate.
+			ready, err := authorized.Prove(ctx, sdk.TransactionProveOptions{Execution: "aggregate"})
 			if err != nil {
 				log.Fatal(err)
 			}
@@ -161,41 +165,24 @@ func main() {
 				log.Fatal(err)
 			}
 			members = append(members, prover.AggregateMember{Bundle: member.Bundle, Statement: member.Statement})
-			requests = append(requests, member.Request)
+			transacts = append(transacts, member.Request)
 		}
 	}
-	aggregator, err := prover.NewAggregator(localProver)
+
+	// Aggregate only independently verified recursive members; owners may differ between members.
+	aggregator, err := prover.NewAggregator(backend)
 	if err != nil {
 		log.Fatal(err)
 	}
-	bundle, err := aggregator.Aggregate(ctx, members, prover.Options{OnProgress: func(p prover.Progress) {
-		fmt.Println("Aggregate phase:", p.Phase)
-	}})
+	bundle, err := aggregator.Aggregate(ctx, members, prover.Options{})
 	if err != nil {
 		log.Fatal(err)
 	}
-	call, err := pool.Aggregate(protocol.AggregateRequest{Proof: bundle.Proof, Requests: requests})
+	call, err := pool.Aggregate(protocol.AggregateRequest{Proof: bundle.Proof, Requests: transacts})
 	if err != nil {
 		log.Fatal(err)
 	}
-	transaction, err := bind.NewBoundContract(call.To, abi.ABI{}, provider, provider, provider).RawTransact(signer, call.Data)
-	if err != nil {
+	if err = encoder.Encode(call); err != nil {
 		log.Fatal(err)
 	}
-	fmt.Println("Submitted transaction:", transaction.Hash())
-	receipt, err := bind.WaitMined(ctx, provider, transaction)
-	if err != nil {
-		log.Fatal(err)
-	}
-	if receipt.Status != types.ReceiptStatusSuccessful {
-		log.Fatal("transaction reverted")
-	}
-	canonical, err := provider.HeaderByNumber(ctx, receipt.BlockNumber)
-	if err != nil {
-		log.Fatal(err)
-	}
-	if canonical == nil || canonical.Hash() != receipt.BlockHash {
-		log.Fatal("transaction receipt is no longer canonical; preserve the transaction hash and reconcile")
-	}
-	fmt.Println("Mined block:", receipt.BlockNumber)
 }

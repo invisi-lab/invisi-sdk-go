@@ -8,7 +8,7 @@ import (
 )
 
 func TestAcceptRejectsAlteredCryptographicResultsAndContexts(t *testing.T) {
-	raw, err := os.ReadFile("../native/testdata/wallet-wire-vectors.json")
+	raw, err := os.ReadFile("../internal/testsupport/testdata/wallet-wire-vectors.json")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -60,7 +60,7 @@ func TestDecodeRejectsTrailingMalformedJSON(t *testing.T) {
 }
 
 func TestAcceptRejectsMalformedDeliveryRequest(t *testing.T) {
-	raw, err := os.ReadFile("../native/testdata/wallet-wire-vectors.json")
+	raw, err := os.ReadFile("../internal/testsupport/testdata/wallet-wire-vectors.json")
 	if err != nil {
 		t.Fatal(err)
 	}

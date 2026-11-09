@@ -1,56 +1,42 @@
-// 04 shield with memo.
+// Alice funds a 10-unit Note for Bob with an authenticated application memo.
 package main
 
 import (
 	"context"
+	"encoding/json"
 	"flag"
-	"fmt"
 	"log"
 	"math/big"
-	"strings"
+	"os"
 
-	"github.com/ethereum/go-ethereum/accounts/abi"
-	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/invisi-lab/invisi-sdk-go/core"
-	"github.com/invisi-lab/invisi-sdk-go/examples/shared"
 	"github.com/invisi-lab/invisi-sdk-go/sdk"
 )
 
 func main() {
-	execute := flag.Bool("execute", false, "authorize signing, proving and chain submission")
-	flag.Parse()
-	if !*execute {
-		log.Fatal("Review settings and code, then add --execute; no network request or transaction was made")
-	}
+	// Configure public actors and deployment; the native host retains account access.
 	ctx := context.Background()
+	chainRPC := flag.String("chain-rpc", "http://127.0.0.1:18565", "Chain RPC URL")
+	protocolRPC := flag.String("protocol-rpc", "https://rpc.invisipay.fi/v1/chains/97", "Protocol RPC URL")
+	address := flag.String("wallet-address", "", "public long receiving address")
+	recipient := flag.String("recipient", "", "recipient public long receiving address")
+	tokenText := flag.String("token", "0x2222222222222222222222222222222222222222", "token contract")
+	flag.Parse()
 
-	// 1. Load local demonstration accounts.
-	accounts, err := shared.GetAccounts(shared.Settings.AccountsFile)
+	publicWallet, err := sdk.WalletFromAddress(*address)
 	if err != nil {
 		log.Fatal(err)
 	}
-	if len(accounts) < 2 {
-		log.Fatal("this example requires at least 2 initialized accounts")
-	}
-	alice, bob := accounts[0], accounts[1]
 
-	// 2. Connect to the chain and pin the Protocol RPC deployment.
-	provider, err := ethclient.DialContext(ctx, shared.Settings.ChainRPCURL)
+	// Authenticate the Protocol RPC deployment against Chain RPC before preparing financial intent.
+	provider, err := ethclient.DialContext(ctx, *chainRPC)
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer provider.Close()
-	chain, err := provider.ChainID(ctx)
-	if err != nil {
-		log.Fatal(err)
-	}
-	if chain.Uint64() != shared.Settings.ChainID {
-		log.Fatal("chain does not match Settings.ChainID")
-	}
-	client, err := sdk.NewProtocolRpcClient(shared.Settings.ProtocolRPCURL)
+	client, err := sdk.NewProtocolRpcClient(*protocolRPC)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -58,98 +44,48 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	token := common.HexToAddress(shared.Settings.TokenAddress)
-	signer, err := bind.NewKeyedTransactorWithChainID(alice.Key, chain)
-	if err != nil {
-		log.Fatal(err)
-	}
-	signer.Context = ctx
-	recipient, err := bob.Wallet.GetAddress()
-	if err != nil {
-		log.Fatal(err)
-	}
 	invisi := sdk.NewInvisi(sdk.InvisiOptions{Provider: provider, ProtocolRPC: client})
-	payload, err := core.FundsV1.Encode(core.PayloadDataV1{Memo: []byte("Transparent funded payment")})
+	token := common.HexToAddress(*tokenText)
+	encoder := json.NewEncoder(os.Stdout)
+	memo, err := core.FundsV1.Encode(core.PayloadDataV1{Memo: []byte("Invoice 42")})
 	if err != nil {
 		log.Fatal(err)
 	}
-
-	// 3. Build the complete output with its deployment, token, amount and recipient.
 	output, err := sdk.NewNoteOutput(sdk.PaymentRequest{
-		ChainID:         chain,
+		ChainID:         new(big.Int).SetUint64(pool.Context().ChainID),
 		ProtocolAddress: pool.Context().ProtocolAddress,
 		TokenAddress:    token,
 		Amount:          big.NewInt(10),
-		Recipient:       sdk.InvisiRecipient{Address: recipient},
-		Payload:         payload,
+		Payload:         memo,
+		Recipient:       sdk.InvisiRecipient{Address: *recipient},
 	})
 	if err != nil {
 		log.Fatal(err)
 	}
-	outputs := []sdk.NoteOutput{output}
-	amount := big.NewInt(10)
-	authorization := "caller"
-	tokenABI, err := abi.JSON(strings.NewReader(`[{"type":"function","name":"approve","stateMutability":"nonpayable","inputs":[{"name":"spender","type":"address"},{"name":"amount","type":"uint256"}],"outputs":[{"type":"bool"}]}]`))
-	if err != nil {
-		log.Fatal(err)
-	}
-	approval, err := bind.NewBoundContract(token, tokenABI, provider, provider, provider).Transact(signer, "approve", pool.Context().ProtocolAddress, amount)
-	if err != nil {
-		log.Fatal(err)
-	}
-	receipt, err := bind.WaitMined(ctx, provider, approval)
-	if err != nil {
-		log.Fatal(err)
-	}
-	if receipt.Status != types.ReceiptStatusSuccessful {
-		log.Fatal("approval reverted")
-	}
 
-	// 4. Prepare and freeze the transaction intent.
+	// Freeze recipients and amounts before authorization so the native response approves this exact intent.
 	prepared, err := invisi.PrepareShield(ctx, sdk.ExplicitShieldPreparation{
-		TransactionIdentity: sdk.TransactionIdentity{Wallet: alice.Wallet, Protocol: pool},
+		TransactionIdentity: sdk.TransactionIdentity{Wallet: publicWallet, Protocol: pool},
 		ShieldPreparation: sdk.ShieldPreparation{
 			TokenAddress: token,
-			Outputs:      outputs,
-			Funding: sdk.FundingSource{
-				Payer:         alice.Wallet.OwnerAddress(),
-				Amount:        amount,
-				Authorization: authorization,
-			},
+			Outputs:      []sdk.NoteOutput{output},
+			Funding:      sdk.FundingSource{Payer: publicWallet.OwnerAddress(), Amount: big.NewInt(10), Authorization: "caller"},
 		},
 	})
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Println("Review frozen shield:", prepared.Preview())
 	prepared, err = prepared.Ready(ctx)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	// 5. Export calldata for ordinary geth submission.
+	// Export unsigned calldata for the external signer; submission and canonical reconciliation remain explicit.
 	call, err := prepared.ExportTransaction(ctx)
 	if err != nil {
 		log.Fatal(err)
 	}
-	transaction, err := bind.NewBoundContract(call.To, abi.ABI{}, provider, provider, provider).RawTransact(signer, call.Data)
-	if err != nil {
+	if err = encoder.Encode(call); err != nil {
 		log.Fatal(err)
 	}
-	fmt.Println("Submitted transaction:", transaction.Hash())
-	receipt, err = bind.WaitMined(ctx, provider, transaction)
-	if err != nil {
-		log.Fatal(err)
-	}
-	if receipt.Status != types.ReceiptStatusSuccessful {
-		log.Fatal("transaction reverted")
-	}
-	canonical, err := provider.HeaderByNumber(ctx, receipt.BlockNumber)
-	if err != nil {
-		log.Fatal(err)
-	}
-	if canonical == nil || canonical.Hash() != receipt.BlockHash {
-		log.Fatal("transaction receipt is no longer canonical; preserve the transaction hash and reconcile")
-	}
-	fmt.Println("Mined block:", receipt.BlockNumber)
 }

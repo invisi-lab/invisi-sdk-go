@@ -55,11 +55,6 @@ func (p *refreshPages) credits(ctx context.Context, s *WalletSession, q protocol
 	return v, err
 }
 
-type WalletRefreshResponse struct {
-	RequestID string           `json:"requestId"`
-	Response  *wallet.Response `json:"response"`
-}
-
 // PendingWalletRefresh holds public requests and captured candidate pages, never an executor.
 type PendingWalletRefresh struct {
 	WalletRequests []wallet.Request
@@ -74,7 +69,8 @@ type PendingWalletRefresh struct {
 }
 
 func cloneRequests(q []wallet.Request) []wallet.Request {
-	out := append([]wallet.Request(nil), q...)
+	out := make([]wallet.Request, len(q))
+	copy(out, q)
 	for i := range out {
 		out[i].Params = append([]byte(nil), out[i].Params...)
 	}
@@ -169,6 +165,9 @@ func (s *WalletSession) Refresh(ctx context.Context, options RefreshOptions) (*P
 	if err != nil {
 		return nil, err
 	}
+	if err := wallet.ValidateRequests(pending.requests); err != nil {
+		return nil, fmt.Errorf("refresh wallet batch exceeds transport contract; narrow the block range: %w", err)
+	}
 	pending.WalletRequests = cloneRequests(pending.requests)
 	if result.Block != nil {
 		block := *result.Block
@@ -178,7 +177,7 @@ func (s *WalletSession) Refresh(ctx context.Context, options RefreshOptions) (*P
 	}
 	return pending, nil
 }
-func (p *PendingWalletRefresh) ApplyWalletResponses(ctx context.Context, replies []WalletRefreshResponse) (RefreshResult, error) {
+func (p *PendingWalletRefresh) ApplyWalletResponses(ctx context.Context, replies []wallet.Response) (RefreshResult, error) {
 	if !p.mu.TryLock() {
 		return RefreshResult{}, errors.New("wallet refresh apply already running")
 	}
@@ -200,34 +199,28 @@ func (p *PendingWalletRefresh) ApplyWalletResponses(ctx context.Context, replies
 	if current.Revision != p.base.Revision {
 		return RefreshResult{}, errors.New("wallet inventory changed during pending refresh")
 	}
-	if len(replies) != len(p.requests) {
-		return RefreshResult{}, errors.New("every wallet request requires an explicit response or nonmatch")
-	}
-	submitted := map[string]*wallet.Response{}
-	for _, r := range replies {
-		if _, exists := submitted[r.RequestID]; exists {
-			return RefreshResult{}, errors.New("duplicate wallet response")
-		}
-		submitted[r.RequestID] = r.Response
+	ordered, err := wallet.ValidateResponses(p.requests, replies)
+	if err != nil {
+		return RefreshResult{}, err
 	}
 	decoded := map[string]any{}
-	for _, q := range p.requests {
-		r, ok := submitted[q.ID]
-		if !ok {
-			return RefreshResult{}, errors.New("missing wallet response")
-		}
+	for i, q := range p.requests {
+		r := ordered[i]
 		var params wallet.DecryptParams
 		if err = wallet.Decode(q.Params, &params); err != nil {
 			return RefreshResult{}, err
 		}
 		key := walletFingerprint(q.Method, params)
-		if r != nil {
-			value, err := s.wallet.AcceptResponse(q, *r)
+		if r.Error == nil {
+			value, err := s.wallet.AcceptResponse(q, r)
 			if err != nil {
 				return RefreshResult{}, err
 			}
 			decoded[key] = value
 		} else {
+			if r.Error.Code != wallet.NotRecipient || (q.Method != wallet.DecryptNote && q.Method != wallet.DecryptCredit) {
+				return RefreshResult{}, r.Error
+			}
 			decoded[key] = nil
 		}
 	}

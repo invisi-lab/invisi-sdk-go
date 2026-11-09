@@ -1,196 +1,115 @@
-// Discover broadcasters, quote a shield, sign its final funding and submit.
+// Freeze a broadcaster fee before obtaining the separate public ERC20 payer authorization.
 package main
 
 import (
 	"context"
+	"encoding/json"
 	"flag"
-	"fmt"
 	"log"
 	"math/big"
-	"time"
+	"os"
 
-	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/core/types"
-	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
-	"github.com/ethereum/go-ethereum/signer/core/apitypes"
-	"github.com/invisi-lab/invisi-sdk-go/examples/shared"
-	"github.com/invisi-lab/invisi-sdk-go/protocol/contracts"
 	"github.com/invisi-lab/invisi-sdk-go/sdk"
+	"github.com/invisi-lab/invisi-sdk-go/wallet"
 )
 
 func main() {
-	execute := flag.Bool("execute", false, "authorize approval, funding signature and broadcaster submission")
-	maxFeeText := flag.String("max-fee", "1000", "maximum broadcaster fee in token base units")
+	// Configure public actors and deployment; the native host retains account access.
+	ctx := context.Background()
+	chainRPC := flag.String("chain-rpc", "http://127.0.0.1:18565", "Chain RPC URL")
+	protocolRPC := flag.String("protocol-rpc", "https://rpc.invisipay.fi/v1/chains/97", "Protocol RPC URL")
+	address := flag.String("wallet-address", "", "public long receiving address")
+	recipient := flag.String("recipient", "", "recipient public long receiving address")
+	tokenText := flag.String("token", "0x2222222222222222222222222222222222222222", "token contract")
 	flag.Parse()
-	if !*execute {
-		log.Fatal("Review the code and settings, then add --execute; no network request was made")
-	}
-	maxFee, ok := new(big.Int).SetString(*maxFeeText, 10)
-	if !ok || maxFee.Sign() <= 0 {
-		log.Fatal("max-fee must be a positive integer")
-	}
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
-	defer cancel()
 
-	// 1. Load local demonstration accounts.
-	accounts, err := shared.GetAccounts(shared.Settings.AccountsFile)
+	publicWallet, err := sdk.WalletFromAddress(*address)
 	if err != nil {
 		log.Fatal(err)
 	}
-	if len(accounts) < 2 {
-		log.Fatal("this example requires at least 2 initialized accounts")
-	}
-	alice, bob := accounts[0], accounts[1]
 
-	// 2. Connect to the chain and pin the Protocol RPC deployment.
-	provider, err := ethclient.DialContext(ctx, shared.Settings.ChainRPCURL)
+	// Authenticate the Protocol RPC deployment against Chain RPC before preparing financial intent.
+	provider, err := ethclient.DialContext(ctx, *chainRPC)
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer provider.Close()
-	chain, err := provider.ChainID(ctx)
+	client, err := sdk.NewProtocolRpcClient(*protocolRPC)
 	if err != nil {
 		log.Fatal(err)
 	}
-	if chain.Uint64() != shared.Settings.ChainID {
-		log.Fatal("chain mismatch")
-	}
-	rpc, err := sdk.NewProtocolRpcClient(shared.Settings.ProtocolRPCURL)
+	pool, err := sdk.ProtocolFromRPC(ctx, client, provider)
 	if err != nil {
 		log.Fatal(err)
 	}
-	pool, err := sdk.ProtocolFromRPC(ctx, rpc, provider)
-	if err != nil {
-		log.Fatal(err)
-	}
-	tokenAddress := common.HexToAddress(shared.Settings.TokenAddress)
-	bobAddress, err := bob.Wallet.GetAddress()
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	// 3. Build the complete output with its deployment, token, amount and recipient.
+	invisi := sdk.NewInvisi(sdk.InvisiOptions{Provider: provider, ProtocolRPC: client})
+	token := common.HexToAddress(*tokenText)
+	encoder := json.NewEncoder(os.Stdout)
+	decoder := json.NewDecoder(os.Stdin)
 	output, err := sdk.NewNoteOutput(sdk.PaymentRequest{
-		ChainID:         chain,
+		ChainID:         new(big.Int).SetUint64(pool.Context().ChainID),
 		ProtocolAddress: pool.Context().ProtocolAddress,
-		TokenAddress:    tokenAddress,
+		TokenAddress:    token,
 		Amount:          big.NewInt(10),
-		Recipient:       sdk.InvisiRecipient{Address: bobAddress},
+		Recipient:       sdk.InvisiRecipient{Address: *recipient},
 	})
 	if err != nil {
 		log.Fatal(err)
 	}
-	invisi := sdk.NewInvisi(sdk.InvisiOptions{Provider: provider, ProtocolRPC: rpc})
 
-	// 4. Prepare and freeze the transaction intent.
+	// Freeze recipients and amounts before authorization so the native response approves this exact intent.
 	prepared, err := invisi.PrepareShield(ctx, sdk.ExplicitShieldPreparation{
-		TransactionIdentity: sdk.TransactionIdentity{Wallet: alice.Wallet, Protocol: pool},
+		TransactionIdentity: sdk.TransactionIdentity{Wallet: publicWallet, Protocol: pool},
 		ShieldPreparation: sdk.ShieldPreparation{
-			TokenAddress: tokenAddress,
+			TokenAddress: token,
 			Outputs:      []sdk.NoteOutput{output},
-			Funding: sdk.FundingSource{
-				Payer:         alice.Wallet.OwnerAddress(),
-				Amount:        big.NewInt(10),
-				Authorization: "signature",
-			},
+			Funding:      sdk.FundingSource{Payer: publicWallet.OwnerAddress(), Amount: big.NewInt(10), Authorization: "signature"},
 		},
 	})
 	if err != nil {
 		log.Fatal(err)
 	}
-
-	// 5. Discover services that support this token; compare several quotes if needed.
-	clients, err := pool.GetBroadcasters(ctx, sdk.BroadcasterOptions{TokenAddress: tokenAddress})
+	operators, err := pool.GetBroadcasters(ctx, sdk.BroadcasterOptions{TokenAddress: token})
 	if err != nil {
 		log.Fatal(err)
 	}
-	if len(clients) == 0 {
-		log.Fatal("no compatible broadcaster")
+	if len(operators) == 0 {
+		log.Fatal("no enabled broadcaster supports this token")
 	}
-	client := clients[0]
-
-	// 6. Rebuild the prepared transaction with the selected broadcaster fee.
-	quoted, err := prepared.WithBroadcaster(ctx, client, sdk.WithBroadcasterOptions{MaxFeeAmount: maxFee})
-	if err != nil {
-		log.Fatal(err)
-	}
-	fmt.Println("Broadcaster fee (base units):", quoted.Preview().FeeAmount)
-	signer, err := bind.NewKeyedTransactorWithChainID(alice.Key, chain)
-	if err != nil {
-		log.Fatal(err)
-	}
-	signer.Context = ctx
-	token, err := contracts.NewIERC20(tokenAddress, provider)
+	prepared, err = prepared.WithBroadcaster(ctx, operators[0], sdk.WithBroadcasterOptions{FeeSource: sdk.BroadcasterFeePublicFunding})
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	// 7. Approve the final gross funding, including the fee, before signing.
-	gross := quoted.Preview().FundingAmount
-	allowance, err := token.Allowance(&bind.CallOpts{Context: ctx}, signer.From, pool.Context().ProtocolAddress)
+	// Public ERC20 funding uses its own EIP-712 authorization, separate from private Note spending.
+	fundingRequest, err := prepared.ExportFundingAuthorization(ctx)
 	if err != nil {
 		log.Fatal(err)
 	}
-	if allowance.Cmp(gross) < 0 {
-		if allowance.Sign() != 0 {
-			reset, err := token.Approve(signer, pool.Context().ProtocolAddress, new(big.Int))
-			if err != nil {
-				log.Fatal(err)
-			}
-			receipt, err := bind.WaitMined(ctx, provider, reset)
-			if err != nil {
-				log.Fatal(err)
-			}
-			if receipt.Status != types.ReceiptStatusSuccessful {
-				log.Fatal("allowance reset reverted")
-			}
-		}
-		approval, err := token.Approve(signer, pool.Context().ProtocolAddress, gross)
-		if err != nil {
-			log.Fatal(err)
-		}
-		receipt, err := bind.WaitMined(ctx, provider, approval)
-		if err != nil {
-			log.Fatal(err)
-		}
-		if receipt.Status != types.ReceiptStatusSuccessful {
-			log.Fatal("approval reverted")
-		}
+	if err = encoder.Encode(fundingRequest); err != nil {
+		log.Fatal(err)
+	}
+	var signatureHex string
+	if err = decoder.Decode(&signatureHex); err != nil {
+		log.Fatal(err)
+	}
+	signature, err := wallet.Bytes(signatureHex, -1)
+	if err != nil {
+		log.Fatal(err)
+	}
+	prepared, err = prepared.WithFundingSignature(ctx, signature)
+	if err != nil {
+		log.Fatal(err)
 	}
 
-	// 8. Sign the frozen fee-bearing funding request externally.
-	request, err := quoted.ExportFundingAuthorization(ctx)
+	// Export unsigned calldata for the external signer; submission and canonical reconciliation remain explicit.
+	call, err := prepared.ExportTransaction(ctx)
 	if err != nil {
 		log.Fatal(err)
 	}
-	typed, err := request.TypedData()
-	if err != nil {
+	if err = encoder.Encode(call); err != nil {
 		log.Fatal(err)
-	}
-	digest, _, err := apitypes.TypedDataAndHash(typed)
-	if err != nil {
-		log.Fatal(err)
-	}
-	signature, err := crypto.Sign(digest, alice.Key)
-	if err != nil {
-		log.Fatal(err)
-	}
-	ready, err := quoted.WithFundingSignature(ctx, signature)
-	if err != nil {
-		log.Fatal(err)
-	}
-	fmt.Println("Keep this request ID before submitting:", ready.ID())
-
-	// 9. Persist the request ID before submission so an uncertain result can be recovered.
-	status, err := ready.SubmitBroadcaster(ctx, client)
-	if err != nil {
-		log.Fatal("Preserve the prepared transaction ID and recover its status: ", err)
-	}
-	fmt.Println("Broadcaster request ID:", status.ID)
-	fmt.Println("Submission state:", status.State)
-	if status.TransactionHash != "" {
-		fmt.Println("Transaction hash:", status.TransactionHash)
 	}
 }

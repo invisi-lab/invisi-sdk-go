@@ -7,7 +7,7 @@ import (
 )
 
 func TestAcceptNativeResponsesAndRejectTampering(t *testing.T) {
-	raw, e := os.ReadFile("../native/testdata/wallet-wire-vectors.json")
+	raw, e := os.ReadFile("../internal/testsupport/testdata/wallet-wire-vectors.json")
 	if e != nil {
 		t.Fatal(e)
 	}

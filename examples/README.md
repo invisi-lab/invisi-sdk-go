@@ -1,165 +1,31 @@
 # Go examples
 
-Each numbered directory is one runnable example with one `main.go`. Note examples show their stages directly. Credit examples select a specific lifecycle entrypoint in [shared/credit.go](shared/credit.go), which shares current authority, delivery and gross/net rules. There is no mode-selection CLI.
+Each main is a flat walkthrough. No example loads account keys, creates a local wallet executor, signs EVM transactions or broadcasts a transaction. Wallet execution belongs to an external native host. `prover/native` runs proof computation and is separate from wallet execution.
 
-Run commands from the repository root. Transaction examples require `--execute` before loading accounts or making network requests. Wallet and output examples are offline. Session restore, operation reconciliation, and disclosures read chain/RPC state but do not submit transactions. Category 05 demonstrates durable managed wallets. Grant discovery also composes the canonical managed refresh algorithm with an ephemeral Store; transaction preparation in category 04 uses the independent `credit` package.
-
-## Setup
-
-Edit [shared/settings.go](shared/settings.go) for the chain, Chain RPC, Protocol RPC, token, native currency, account/database paths, and prover binaries. Defaults target chain 97. Use a Chain RPC that retains historical state.
-
-Local proofs require Barretenberg 6.0.0 and `noir-execute` compatible with Noir 1.0.0. Set `Settings.Prover.BBBinary` and `Settings.Prover.NoirBinary`. Witnesses stay local.
+Install Barretenberg 6.0.0 and a Noir 1.0.0 compatible `noir-execute` for proof examples. Live examples accept `--chain-rpc`, `--protocol-rpc`, `--wallet-address` (public long receiving address), and where applicable `--token` and `--recipient`. Chain and deployment checks run before preparation. Amounts are integer token base units.
 
 ```sh
-go run ./examples/scripts/init-accounts
+go run ./examples/00-wallet/01-wallet --owner 0x7e5f4552091a69125d5dfcb7b8c2659029395bdf
+go run ./examples/00-wallet/02-note-output
+go run ./examples/03-hidden-amount/03-notes-with-change \
+  --wallet-address '<public receiving address>' --recipient '<public receiving address>' \
+  --token 0x2222222222222222222222222222222222222222
 ```
 
-The initializer creates ten fresh accounts in `examples/accounts.json`, with owner-only permissions, and refuses to overwrite a file. Their order is Alice, Bob, Charlie, Dave, Eve, Frank, Grace, Heidi, Ivan, Judy. `--out /your/path/accounts.json` selects a different new file; update `Settings.AccountsFile` accordingly.
+The first command prints a `wallet.public` request array and waits for the native response array on stdin. The second runs offline using public fixture material only. Live commands use your selected deployment and token.
 
-[accounts.example.json](accounts.example.json) shows the saved fields. Initialization derives receiving/viewing material; loading validates owner addresses, receiving addresses, viewing keys and duplicate accounts. Keep private account files and encrypted SQLite data outside version control.
+For an external wallet exchange, read the printed request array, execute it in your native host and write the response array to stdin. Responses may arrive in any order; their exact IDs and identity fields bind them to the original requests. Use explicit per-item errors such as `{"version":1,"id":"...","ownerAddress":"...","method":"wallet.decryptNote","error":{"code":"WALLET_NOT_RECIPIENT"}}`. Only this decrypt nonmatch is skipped during sync; cancellation and unlock failures leave inventory unchanged. Batches have at most 1024 items and 16 MiB serialized JSON, unique IDs and one owner. Do not put keys in requests, responses or command-line settings.
 
-Initialization does not fund accounts. Give public token payers enough tokens and actual transaction submitters enough native currency. Amounts in the examples are **integer token base units**. Edit the named accounts, amount or output construction directly in the example to change its scenario.
-
-## Reading order
-
-Each path below can be run with `go run ./examples/<path>`. Add `--execute` for transaction examples.
-
-| Path | Scenario |
+| Directory | Scenario and stdin order |
 | --- | --- |
-| `00-wallet/01-wallet` | Generate an offline wallet and inspect public addresses and capabilities. |
-| `00-wallet/02-note-output` | Create offline outputs for `0i`, registered `0x`, identity, and no-envelope recipients. |
-| `01-address-registry/01-register-bob` | Register Bob's receiving keys with external EIP-712 authorization. |
-| `01-address-registry/02-update-bob` | Update Bob's registration using a fresh authorization. |
-| `02-transparent-amount/01-alice-to-bob` | Alice publicly funds one private note for Bob, using caller funding. |
-| `02-transparent-amount/02-alice-to-nine` | Alice funds nine outputs, one each for Bob through Judy. |
-| `02-transparent-amount/03-bob-funded-by-signature` | Bob approves tokens and signs funding; Alice receives the note and submits the transaction. |
-| `02-transparent-amount/04-shield-with-memo` | Alice shields a note for Bob with an explicit application memo. |
-| `02-transparent-amount/05-shield-via-broadcaster` | Discover services, quote Shield, approve gross funding, sign and submit through a broadcaster. |
-| `03-hidden-amount/01-cash-to-bob` | Alice funds a proved transfer to Bob entirely from public tokens. |
-| `03-hidden-amount/01b-cash-funded-by-signature` | Alice signs public funding; Frank submits the proved transfer to Bob. |
-| `03-hidden-amount/02-notes-and-cash` | Bob combines existing notes with one public token unit and pays Dave. |
-| `03-hidden-amount/03-notes-with-change` | Bob pays Dave from existing notes, returning any excess as private change. |
-| `03-hidden-amount/04-sweep-multiple-notes` | Bob withdraws all selected notes to his bound EVM owner without a spend signature. |
-| `03-hidden-amount/04b-partial-withdraw-with-change` | Bob withdraws a chosen amount and retains private change when selected notes exceed it. |
-| `03-hidden-amount/05-frank-sweep-for-bob` | Frank pays gas to sweep Bob's notes to Bob's bound EVM owner. |
-| `03-hidden-amount/06-aggregate` | Bob and Charlie independently authorize four transfers; Alice submits their aggregate. |
-| `04-credit/01-bob-create` | Bob creates a Credit for Alice. |
-| `04-credit/01b-charlie-create` | Charlie creates a separate Credit for Alice. |
-| `04-credit/02-alice-batch-draw` | Alice draws from grants belonging to two distinct owners in one transaction. |
-| `04-credit/03-bob-update` | Bob updates private policy/expiry without clearing usage. |
-| `04-credit/04-charlie-revoke` | Charlie revokes an original grant reference without latest state or ZK. |
-| `05-wallet-session/01-restore-session` | Restore Alice's encrypted SQLite inventory, refresh and inspect balance. |
-| `05-wallet-session/02-notes-to-bob` | Alice selects/reserves notes, authorizes, proves, submits and reconciles through a session. |
-| `05-wallet-session/03-recover-operation` | Resume an existing persisted operation and reconcile its transaction. |
-| `06-disclosure/01-note-opening` | Export and verify a selected Bob note opening. |
-| `06-disclosure/02-note-payload` | Disclose one selected Bob note's envelope and decode its application payload. |
-| `06-disclosure/03-credit-opening` | Export and verify a selected Bob Credit opening. |
+| `00-wallet` | Public request/response bootstrap; offline encrypted Note output from public receiving material. |
+| `01-address-registry` | Prepare register/update and export an unsigned direct-owner call. The external transaction caller must be the owner. |
+| `02-transparent-amount` | Shield one/nine outputs, memo output, external payer authorization, or authenticated broadcaster pricing. The signature-funded Shield uses `--payer` for Bob while `--wallet-address` selects the recipient-side public wallet. Signature variants print a public EIP-712 funding request and read a JSON hex signature; they export the final unsigned call. |
+| `03-hidden-amount` | Public funding, Note inputs, change, withdrawal, owner-bound sweep and recursive aggregation. Note-funded examples automatically discover indexed candidates through canonical receipts and membership checks, print native decrypt request arrays and read response arrays, then print an authorization request array and read its response array. Full sweeps have no private-spending signature and pay only the original owner. Aggregate selects two discovered Notes for each of two owners, obtains one authorization batch per owner, proves four recursive members and exports one aggregate call. Use `--second-wallet-address` for the second owner. |
+| `04-credit` | Separate postpaid create/draw/update/revoke plans. The examples discover current role-bound grants automatically, build the business state transition and obtain current chain allocation/time; no grant input JSON is required. Create/update/draw print a wallet request array and read the native response array. Prepare through the managed Credit session for current roots, nullifiers, allocation, balances and cross-role reservations. Revoke exports a direct-owner call without a wallet-spending proof/signature. |
+| `05-wallet-session` | Encrypted SQLite restore/refresh, managed transfer and operation recovery. Every refresh prints its request array and reads the response array. Transfer then does the explicit authorization exchange and proof. Recovery uses `--operation-id`, reauthorizes if the saved plan has no proof, and exports calldata. |
+| `06-disclosure` | Automatically discover owned Note/Credit candidates using `--wallet-address` and `--token`, exchange native decrypt request/response arrays and independently verify the opening before exporting the scoped disclosure. The payload variant decodes the application memo. A scoped disclosure contains private application data; direct its output to its intended auditor. |
 
-## Typical runs
+Session and Credit examples use `examples/wallet.sqlite`. Set `INVISI_EXAMPLE_STORAGE_KEY` to an application-owned 32-byte lowercase hex **storage encryption key**. This is independent of wallet cryptographic keys. Keep this key across runs to reopen the journal. A reused Credit operation ID rejects; select a fresh `--operation-id` for each new plan. Selected Note/Credit openings and recovery intents are sensitive inventory data, despite containing no wallet private keys.
 
-Start with an offline example, then fund Bob with a real note:
-
-```sh
-go run ./examples/00-wallet/01-wallet
-go run ./examples/00-wallet/02-note-output
-go run ./examples/02-transparent-amount/01-alice-to-bob --execute
-go run ./examples/03-hidden-amount/03-notes-with-change --execute
-```
-
-An exact-value input produces no change. For a partial withdrawal demonstration, first give Bob more notes than the amount withdrawn. Hidden examples select at most 12 Note inputs; grant creation consumes no Note inputs. These limits keep the walkthrough focused, and preparation independently validates available funds and circuit capacity.
-
-The examples are separate scenarios, not a script to run all transactions against the same finite inventory. To try Credit, fund the owner ERC20 wallets and approve the selected Protocol to collect gross draw receipts. Creation registers authority without depositing principal. Then:
-
-```sh
-go run ./examples/04-credit/01-bob-create --execute
-go run ./examples/04-credit/01b-charlie-create --execute
-go run ./examples/04-credit/02-alice-batch-draw --execute
-go run ./examples/04-credit/03-bob-update --execute
-go run ./examples/04-credit/04-charlie-revoke --execute --shard 1 --slot 0
-```
-
-Creation prints the original owner/token/shard/slot reference for later revocation. The draw selects up to two active grants, debits seven base units gross per grant and issues one ordinary Note to another recipient. Update preserves all usage and immutable grant identity. Direct self-submitted examples use zero fees; operator attachment can quote a positive fee before authorization, deducting it from the final Note net amount for draws.
-
-Aggregation needs two distinct unspent notes of at least two units for each of Bob and Charlie. Each owner authorizes independently; the four transfers are proved with `Execution: "aggregate"` before Alice submits the combined public members. Applications must reserve inputs until the aggregate outcome is resolved.
-
-Run broadcaster Shield with an appropriate maximum token fee:
-
-```sh
-go run ./examples/02-transparent-amount/05-shield-via-broadcaster --execute --max-fee 1000
-```
-
-The example discovers token-compatible clients from Protocol RPC. Applications may quote several clients and select one. The final quote includes its fee before funding authorization. Private transfers and all four Credit lifecycle operations support paid operator attachment. Registration is self-submitted. See the main README for `credit.Prepared.WithBroadcaster`, and the genuine native lifecycle test for create/draw/update proof plus quote/submission interoperability; the operator transport in that test is controlled, not a real funded chain service.
-
-For managed recovery, use the operation ID persisted by the session and optionally its already submitted hash:
-
-```sh
-go run ./examples/05-wallet-session/03-recover-operation --recover OPERATION_ID --transaction 0xTRANSACTION_HASH
-```
-
-This command only tracks/reconciles; it never signs or resubmits. Uncertain operations retain reservations. To supply Alice's inventory for the managed examples, Bob can fund her through `02-transparent-amount/03-bob-funded-by-signature`.
-
-## Shared helpers and verification
-
-Public settings, account loading, canonical discovery and the focused Credit lifecycle runner live under `shared`. Discovery pages real RPC outputs, validates owner/role, token and commitment, rejects conflicts, and checks nullifiers. Credit discovery binds historical keys and ciphertext to canonical receipts. Preparation rechecks membership and current spent state.
-
-Each transaction example shows geth submission directly. Persist hashes before waiting in a production application. Stateless examples leave durable reservations and recovery to the application. Disclosure examples explicitly print sensitive exports locally; do not forward that output to public application logs.
-
-```sh
-go test ./examples/...
-go vet ./examples/...
-go run ./examples/00-wallet/01-wallet
-go run ./examples/00-wallet/02-note-output
-```
-
-These checks do not execute chain transactions. Account initializer tests use temporary fresh files and verify metadata, permissions, identity binding and overwrite refusal.
-
-## Payment requests and offline Note delivery
-
-IPR describes a requested output. IPN delivers one actual Note opening. These are independent data steps around the existing payment workflows; no additional executable example is needed. Continue using the existing transparent-payment or hidden-amount example for external signing, proving and transaction submission.
-
-```go
-// Recipient: publish a reusable request, for example as a QR code.
-ipr, err := sdk.EncodePaymentRequest(sdk.PaymentRequest{
-    ChainID: chainID, ProtocolAddress: protocolAddress, TokenAddress: token,
-    Amount: amount, Recipient: sdk.InvisiRecipient{Address: bobAddress},
-})
-if err != nil { return err }
-
-// Payer: use this output in the existing PrepareShield/PrepareTransfer workflow.
-output, err := sdk.NewNoteOutput(ipr)
-if err != nil { return err }
-// Omitted request nonce means a fresh nonce is selected per payment.
-// Keep the final prepared handle after any broadcaster fee/change reconstruction.
-
-// Payer: export only Bob's output, identified by its commitment.
-var ipn string
-for _, final := range prepared.GetOutputs() {
-    if final.Commitment() == output.Commitment() {
-        ipn, err = final.ExportPaymentNote()
-        if err != nil { return err }
-        break
-    }
-}
-if ipn == "" { return fmt.Errorf("payment output is missing from the final plan") }
-// Submit through the existing workflow, then privately deliver ipn after confirmation.
-// Generated change belongs to the payer and is not delivered to Bob.
-
-// Bob: reconstruct and verify the exact requested payment.
-note, err := sdk.PaymentNoteFromIPN(ipn)
-if err != nil { return err }
-if note.TokenAddress() != token || note.Amount().Cmp(amount) != 0 {
-    return fmt.Errorf("payment does not match the requested token and amount")
-}
-verified, err := note.Verify(ctx, pool) // Correct opening and confirmed membership.
-if err != nil { return err }
-_ = verified
-spendable, err := note.VerifySpendable(ctx, pool, bobWallet) // Also owner capability and current unspent state.
-if err != nil { return err }
-input, err := spendable.ToInput()
-if err != nil { return err }
-_ = input // Use in the next explicit PrepareTransfer; authorization remains separate.
-```
-
-The sections are separate recipient/payer steps, using the chosen protocol, token and amount from the existing examples. `pool` comes from `sdk.ProtocolFromRPC(ctx, rpc, provider)`. Simple verification also accepts spent Notes; detailed verification does not. Neither method signs. EVM recipients may export IPN with or without a chain envelope; identity recipients cannot. See the root README for wire layouts, nonce execution overrides and explicit verification connections.
-
-Credit creation accepts `--available-credit=400`; finite zero is exhausted. To create an unlimited grant, use `--unlimited --available-credit=0`. Update accepts `--increase-available-credit=100` or `--decrease-available-credit=100` (mutually exclusive), plus `--new-unlimited=keep|true|false`. Switching to unlimited requires zero deltas; switching back to finite starts from zero plus the specified increase. These flags still require the explicit `--execute` submission opt-in.
+`shared.DiscoverNotes` and `DiscoverCredits` use the same canonical managed refresh checks in an ephemeral inventory, with an external JSON native transport; they obtain tree positions, membership and spent/revoked status automatically. Preparation independently revalidates current financial state. Large historical scans exceeding the batch bound must narrow their refresh range. Credit creation takes `--spender`; draw takes `--recipient`; revocation takes the original `--shard` and `--slot` reference. Application-owned detached reservations must remain held until the exported call is canonically resolved. Managed examples retain reservations in the encrypted journal when exporting calldata. Submit the unsigned call through your external EVM signer and track/reconcile its transaction hash through the SDK. Public ERC20 payer allowance and gas funding are separate from wallet authorization.
