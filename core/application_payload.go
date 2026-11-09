@@ -20,7 +20,6 @@ type PayloadDataV1 struct {
 type payloadCodecV1 struct{}
 
 var FundsV1 = payloadCodecV1{}
-var CreditV1 = payloadCodecV1{}
 
 func (payloadCodecV1) Encode(data PayloadDataV1) ([]byte, error) {
 	if err := ValidateMemo(data.Memo); err != nil {

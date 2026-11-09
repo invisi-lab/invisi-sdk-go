@@ -87,23 +87,20 @@ func TestWalletPermissionsAndSecretRedaction(t *testing.T) {
 	}
 }
 
-func TestRefreshRestoresPendingReservationsAcrossRoles(t *testing.T) {
+func TestRefreshRestoresPendingNoteReservations(t *testing.T) {
 	state := emptyState()
 	noteHash := common.HexToHash("0x01")
-	creditHash := common.HexToHash("0x02")
-	plan := transaction.Plan{Inputs: []StoredNote{{Commitment: noteHash}}, CreditInputs: []StoredCredit{{Commitment: creditHash}}}
+	plan := transaction.Plan{Inputs: []StoredNote{{Commitment: noteHash}}}
 	raw, err := json.Marshal(plan)
 	if err != nil {
 		t.Fatal(err)
 	}
 	state.Operations["pending"] = OperationRecord{ID: "pending", Status: "failed", Externalized: true, Plan: raw}
 	state.Notes[noteHash] = StoredNote{Commitment: noteHash}
-	state.Credits["owner"] = StoredCredit{Commitment: creditHash, Role: "owner"}
-	state.Credits["spender"] = StoredCredit{Commitment: creditHash, Role: "spender"}
 	if err := restoreReservations(&state); err != nil {
 		t.Fatal(err)
 	}
-	if state.Notes[noteHash].ReservedBy != "pending" || state.Credits["owner"].ReservedBy != "pending" || state.Credits["spender"].ReservedBy != "pending" {
+	if state.Notes[noteHash].ReservedBy != "pending" {
 		t.Fatal("pending spend was released during inventory rebuild")
 	}
 	state.Notes[noteHash] = StoredNote{Commitment: noteHash}

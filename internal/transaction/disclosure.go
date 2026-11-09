@@ -41,26 +41,16 @@ type DisclosureOutput struct {
 	Ciphertext       []byte
 }
 
-type CreditOpening struct {
-	core.CreditSpendingState
-	// Payload is present only after authenticating a payload-key disclosure.
-	Payload []byte
-	core.ProtocolContext
-	SpenderWalletIdentity, OwnerWalletIdentity, SpenderPayout, OwnerPayout, TokenAddress, Amount, Nonce, Expiry fr.Element
-	CreditSharedKeyHash                                                                                         common.Hash
-}
-
 type DisclosureResult struct {
-	Kind   string
-	Note   *core.Note
-	Credit *CreditOpening
+	Kind string
+	Note *core.Note
 }
 
 type DisclosureScope struct {
-	RevealsPayload                                                                          bool
-	Version                                                                                 int
-	Kind, Method                                                                            string
-	PermitsOwnerSweep, RevealsNoteConsumption, RevealsCreditSharedKey, RevealsReceivingKeys bool
+	PermitsOwnerSweep, RevealsNoteConsumption bool
+	RevealsPayload                            bool
+	Version                                   int
+	Kind, Method                              string
 }
 
 func (d *Disclosure) String() string { return "Disclosure([redacted])" }
@@ -73,9 +63,7 @@ func (d *Disclosure) GetScope() DisclosureScope {
 	return DisclosureScope{
 		Version: 1, Kind: d.material.Kind, Method: d.material.Method,
 		PermitsOwnerSweep: d.material.Kind == "note", RevealsNoteConsumption: d.material.Kind == "note",
-		RevealsCreditSharedKey: d.material.Kind == "credit" && d.material.Method == "payload-key",
-		RevealsReceivingKeys:   d.material.Kind == "credit" && d.material.Method == "payload-key",
-		RevealsPayload:         d.material.Method == "payload-key",
+		RevealsPayload: d.material.Method == "payload-key",
 	}
 }
 
@@ -107,19 +95,6 @@ func DisclosureFromNote(note core.Note) (*Disclosure, error) {
 	}
 	m := DisclosureExport{1, "note", "opening", DisclosedContext(note.ProtocolContext, note.TokenAddress, FieldHash(leaf)), map[string]string{"ownerAddress": OwnerText(note.OwnerAddress), "amount": note.Amount.String(), "nonce": note.Nonce.String()}}
 	return &Disclosure{m}, nil
-}
-
-func DisclosureFromCredit(note core.CreditNote) (*Disclosure, error) {
-	leaf, e := CreditCommitment(note)
-	if e != nil {
-		return nil, e
-	}
-	key, e := core.ComputeCreditSharedKeyHash(note.CreditSharedKey)
-	if e != nil {
-		return nil, e
-	}
-	data := map[string]string{"spenderWalletIdentity": OwnerText(note.SpenderWalletIdentity), "ownerWalletIdentity": OwnerText(note.OwnerWalletIdentity), "spenderPayout": note.SpenderPayout.String(), "ownerPayout": note.OwnerPayout.String(), "amount": note.Amount.String(), "nonce": note.Nonce.String(), "expiry": note.Expiry.String(), "creditSharedKeyHash": FieldHash(key).Hex(), "singleLimit": note.SingleLimit.String(), "dailyLimit": note.DailyLimit.String(), "monthlyLimit": note.MonthlyLimit.String(), "lastDay": note.LastDay.String(), "dailySpent": note.DailySpent.String(), "lastMonth": note.LastMonth.String(), "monthlySpent": note.MonthlySpent.String()}
-	return &Disclosure{DisclosureExport{1, "credit", "opening", DisclosedContext(note.ProtocolContext, note.TokenAddress, leaf), data}}, nil
 }
 
 func DecimalField(text string, bits int) (fr.Element, error) {
@@ -158,9 +133,7 @@ func (d *Disclosure) output() (DisclosureOutput, error) {
 		return DisclosureOutput{}, e
 	}
 	role := "funds"
-	if d.material.Kind == "credit" {
-		role = "owner"
-	}
+
 	return DisclosureOutput{ProtocolContext: core.ProtocolContext{ChainID: chain, ProtocolAddress: protocol}, TokenAddress: token, OutputCommitment: c.OutputCommitment, Role: role}, nil
 }
 
@@ -175,13 +148,11 @@ func DisclosureFromExport(data []byte) (*Disclosure, error) {
 	if e := decoder.Decode(&trailing); e != io.EOF {
 		return nil, errors.New("trailing disclosure data")
 	}
-	if material.Version != 1 || (material.Kind != "note" && material.Kind != "credit") || (material.Method != "opening" && material.Method != "payload-key") {
+	if material.Version != 1 || material.Kind != "note" || (material.Method != "opening" && material.Method != "payload-key") {
 		return nil, errors.New("unsupported disclosure format")
 	}
 	expected := []string{"ownerAddress", "amount", "nonce"}
-	if material.Kind == "credit" {
-		expected = []string{"spenderWalletIdentity", "ownerWalletIdentity", "spenderPayout", "ownerPayout", "amount", "nonce", "expiry", "creditSharedKeyHash", "singleLimit", "dailyLimit", "monthlyLimit", "lastDay", "dailySpent", "lastMonth", "monthlySpent"}
-	}
+
 	if material.Method == "payload-key" {
 		expected = []string{"payloadKey", "ownerAddress", "role"}
 	}
@@ -210,7 +181,7 @@ func DisclosureFromExport(data []byte) (*Disclosure, error) {
 			return nil, e
 		}
 		role := material.Data["role"]
-		if material.Kind == "note" && role != "funds" || material.Kind == "credit" && role != "owner" && role != "spender" {
+		if role != "funds" {
 			return nil, errors.New("invalid disclosure role")
 		}
 	}
@@ -226,7 +197,7 @@ func (d *Disclosure) Verify(output DisclosureOutput) (DisclosureResult, error) {
 		return DisclosureResult{}, errors.New("disclosure deployment or output commitment mismatch")
 	}
 	data := d.material.Data
-	if d.material.Kind == "note" && output.Role != "funds" || d.material.Kind == "credit" && output.Role != "owner" && output.Role != "spender" {
+	if output.Role != "funds" {
 		return DisclosureResult{}, errors.New("disclosure role mismatch")
 	}
 	if d.material.Method == "payload-key" {
@@ -247,12 +218,7 @@ func (d *Disclosure) Verify(output DisclosureOutput) (DisclosureResult, error) {
 			note, e := core.DecryptNotePayload(key, output.Ciphertext, context)
 			return DisclosureResult{Kind: "note", Note: &note}, e
 		}
-		state, e := core.DecryptCreditPayload(key, output.Ciphertext, core.CreditNoteDecryptionContext{NoteDecryptionContext: context, Role: core.CreditDeliveryRole(output.Role)})
-		if e != nil {
-			return DisclosureResult{}, e
-		}
-		opening, e := InternalCreditOpening(state.Note)
-		return DisclosureResult{Kind: "credit", Credit: &opening}, e
+		return DisclosureResult{}, errors.New("unsupported Note disclosure")
 	}
 	if d.material.Kind == "note" {
 		owner, e := DisclosedOwner(data["ownerAddress"])
@@ -278,67 +244,17 @@ func (d *Disclosure) Verify(output DisclosureOutput) (DisclosureResult, error) {
 		}
 		return DisclosureResult{Kind: "note", Note: &note}, nil
 	}
-	var opening CreditOpening
-	opening.ProtocolContext = output.ProtocolContext
-	opening.TokenAddress = output.TokenAddress
-	opening.SpenderWalletIdentity, e = DisclosedOwner(data["spenderWalletIdentity"])
-	if e != nil {
-		return DisclosureResult{}, e
-	}
-	opening.OwnerWalletIdentity, e = DisclosedOwner(data["ownerWalletIdentity"])
-	if e != nil {
-		return DisclosureResult{}, e
-	}
-	for _, field := range []struct {
-		name   string
-		bits   int
-		target *fr.Element
-	}{{"spenderPayout", 160, &opening.SpenderPayout}, {"ownerPayout", 160, &opening.OwnerPayout}, {"amount", 126, &opening.Amount}, {"nonce", 254, &opening.Nonce}, {"expiry", 64, &opening.Expiry}, {"singleLimit", 126, &opening.SingleLimit}, {"dailyLimit", 126, &opening.DailyLimit}, {"monthlyLimit", 126, &opening.MonthlyLimit}, {"lastDay", 64, &opening.LastDay}, {"dailySpent", 128, &opening.DailySpent}, {"lastMonth", 64, &opening.LastMonth}, {"monthlySpent", 128, &opening.MonthlySpent}} {
-		*field.target, e = DecimalField(data[field.name], field.bits)
-		if e != nil {
-			return DisclosureResult{}, e
-		}
-	}
-	if !regexp.MustCompile(`^0x[0-9a-fA-F]{64}$`).MatchString(data["creditSharedKeyHash"]) {
-		return DisclosureResult{}, errors.New("invalid Credit shared key hash")
-	}
-	hash, e := core.HexToElement(data["creditSharedKeyHash"])
-	if e != nil {
-		return DisclosureResult{}, e
-	}
-	opening.CreditSharedKeyHash = FieldHash(hash)
-	leaf, e := core.ComputeCreditCommitment(output.ProtocolContext.ChainID, opening.SpenderWalletIdentity, opening.OwnerWalletIdentity, opening.SpenderPayout, opening.OwnerPayout, opening.TokenAddress, opening.Amount, opening.Nonce, opening.Expiry, hash, opening.CreditSpendingState)
-	if e != nil || FieldHash(leaf) != output.OutputCommitment {
-		return DisclosureResult{}, errors.New("disclosed Credit commitment mismatch")
-	}
-	return DisclosureResult{Kind: "credit", Credit: &opening}, nil
-}
-
-func InternalCreditOpening(note core.CreditNote) (CreditOpening, error) {
-	hash, e := core.ComputeCreditSharedKeyHash(note.CreditSharedKey)
-	return CreditOpening{CreditSpendingState: note.CreditSpendingState, ProtocolContext: note.ProtocolContext, SpenderWalletIdentity: note.SpenderWalletIdentity, OwnerWalletIdentity: note.OwnerWalletIdentity, SpenderPayout: note.SpenderPayout, OwnerPayout: note.OwnerPayout, TokenAddress: note.TokenAddress, Amount: note.Amount, Nonce: note.Nonce, Expiry: note.Expiry, CreditSharedKeyHash: FieldHash(hash), Payload: ClonePayload(note.Payload)}, e
+	return DisclosureResult{}, errors.New("unsupported Note disclosure")
 }
 
 func (v *ViewingCapability) DiscloseNote(envelope []byte, context core.NoteDecryptionContext) (*Disclosure, error) {
 	if _, e := v.decryptNote(envelope, context); e != nil {
 		return nil, e
 	}
-	key, e := core.ExportPayloadKey(v.key, envelope, false)
+	key, e := core.ExportPayloadKey(v.key, envelope)
 	if e != nil {
 		return nil, e
 	}
 	defer clear(key)
 	return &Disclosure{DisclosureExport{1, "note", "payload-key", DisclosedContext(context.ProtocolContext, context.TokenAddress, FieldHash(context.OutputCommitment)), map[string]string{"payloadKey": "0x" + common.Bytes2Hex(key), "ownerAddress": strings.ToLower(v.identity.Hex()), "role": "funds"}}}, nil
-}
-
-func (v *ViewingCapability) DiscloseCredit(envelope []byte, context core.CreditNoteDecryptionContext) (*Disclosure, error) {
-	if _, e := v.decryptCredit(envelope, context); e != nil {
-		return nil, e
-	}
-	key, e := core.ExportPayloadKey(v.key, envelope, true)
-	if e != nil {
-		return nil, e
-	}
-	defer clear(key)
-	return &Disclosure{DisclosureExport{1, "credit", "payload-key", DisclosedContext(context.ProtocolContext, context.TokenAddress, FieldHash(context.OutputCommitment)), map[string]string{"payloadKey": "0x" + common.Bytes2Hex(key), "ownerAddress": strings.ToLower(v.identity.Hex()), "role": string(context.Role)}}}, nil
 }

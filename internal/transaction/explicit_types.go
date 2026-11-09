@@ -16,15 +16,6 @@ type NoteInput struct {
 	LeafIndex  uint32
 }
 
-// CreditInput carries one selected role of a Credit leaf, including its receiving-key snapshots.
-type CreditInput struct {
-	State      core.CreditDeliveryState
-	Commitment common.Hash
-	TreeID     uint64
-	LeafIndex  uint32
-	Role       string
-}
-
 type TransactionIdentity struct {
 	Wallet   *PublicWallet
 	Protocol *protocol.Protocol
@@ -44,29 +35,4 @@ type ExplicitTransferPreparation struct {
 type ExplicitShieldPreparation struct {
 	TransactionIdentity
 	ShieldPreparation
-}
-
-type ExplicitCreateCreditPreparation struct {
-	TransactionIdentity
-	CreateCreditPreparation
-	ExplicitFunds
-}
-
-type ExplicitDrawCreditPreparation struct {
-	TransactionIdentity
-	DrawCreditPreparation
-	CreditInputs []CreditInput
-}
-
-type ExplicitTopUpCreditPreparation struct {
-	TransactionIdentity
-	TopUpCreditPreparation
-	ExplicitFunds
-	CreditInputs []CreditInput
-}
-
-type ExplicitCancelCreditPreparation struct {
-	TransactionIdentity
-	CancelCreditPreparation
-	CreditInputs []CreditInput
 }

@@ -129,7 +129,7 @@ func TestExplicitConsumesSelectedInputsWithPublicFunding(t *testing.T) {
 }
 func TestExplicitOtherFundsRoutes(t *testing.T) {
 	ctx := context.Background()
-	for _, kind := range []string{"withdraw", "sweep", "shield", "create-credit"} {
+	for _, kind := range []string{"withdraw", "sweep", "shield"} {
 		t.Run(kind, func(t *testing.T) {
 			invisi, input, _ := explicitFixture(t)
 			var p *sdk.PreparedTransaction
@@ -145,8 +145,7 @@ func TestExplicitOtherFundsRoutes(t *testing.T) {
 				p, err = invisi.PrepareTransfer(ctx, sdk.ExplicitTransferPreparation{TransactionIdentity: input.TransactionIdentity, ExplicitFunds: input.ExplicitFunds, TransferPreparation: sdk.TransferPreparation{TokenAddress: input.TokenAddress, Withdrawal: &sdk.Withdrawal{To: input.Wallet.OwnerAddress(), Amount: big.NewInt(100)}}})
 			case "shield":
 				p, err = invisi.PrepareShield(ctx, sdk.ExplicitShieldPreparation{TransactionIdentity: input.TransactionIdentity, ShieldPreparation: sdk.ShieldPreparation{TokenAddress: input.TokenAddress, Outputs: input.Outputs, Funding: sdk.FundingSource{Payer: input.Wallet.OwnerAddress(), Amount: big.NewInt(30), Authorization: "signature"}}})
-			case "create-credit":
-				p, err = invisi.PrepareCreateCredit(ctx, sdk.ExplicitCreateCreditPreparation{TransactionIdentity: input.TransactionIdentity, ExplicitFunds: input.ExplicitFunds, CreateCreditPreparation: sdk.CreateCreditPreparation{TokenAddress: input.TokenAddress, Spender: input.Outputs[0].To(), Amount: big.NewInt(70), Expiry: big.NewInt(1000)}})
+
 			}
 			if err != nil {
 				t.Fatal(err)
@@ -173,55 +172,7 @@ func TestExplicitOtherFundsRoutes(t *testing.T) {
 		})
 	}
 }
-func TestExplicitCreditLifecycle(t *testing.T) {
-	ctx := context.Background()
-	for _, kind := range []string{"draw", "cancel", "top-up"} {
-		t.Run(kind, func(t *testing.T) {
-			session, token, _ := testSession(t)
-			leaf := seedCredit(t, session, token)
-			state, err := session.options.Store.ReadSnapshot(ctx, session.scope)
-			if err != nil {
-				t.Fatal(err)
-			}
-			role := "owner"
-			if kind == "draw" {
-				role = "spender"
-			}
-			stored := state.Credits[transaction.CreditKey(leaf, role)]
-			credits := []sdk.CreditInput{{State: stored.State, Commitment: stored.Commitment, TreeID: stored.TreeID, LeafIndex: stored.LeafIndex, Role: role}}
-			funds := sdk.ExplicitFunds{}
-			for _, n := range state.Notes {
-				funds.Inputs = append(funds.Inputs, sdk.NoteInput{Note: n.Note, Commitment: n.Commitment, TreeID: n.TreeID, LeafIndex: n.LeafIndex})
-			}
-			opts := session.options.InvisiOptions
-			invisi := sdk.NewInvisi(opts)
-			identity := sdk.TransactionIdentity{Wallet: session.wallet.PublicWallet, Protocol: session.protocol}
-			var p *sdk.PreparedTransaction
-			switch kind {
-			case "draw":
-				p, err = invisi.PrepareDrawCredit(ctx, sdk.ExplicitDrawCreditPreparation{TransactionIdentity: identity, CreditInputs: credits, DrawCreditPreparation: sdk.DrawCreditPreparation{TokenAddress: token, Credits: []sdk.CreditDrawInput{{Credit: leaf, Amount: big.NewInt(30)}}}})
-			case "cancel":
-				p, err = invisi.PrepareCancelCredit(ctx, sdk.ExplicitCancelCreditPreparation{TransactionIdentity: identity, CreditInputs: credits, CancelCreditPreparation: sdk.CancelCreditPreparation{TokenAddress: token, Credit: leaf}})
-			case "top-up":
-				p, err = invisi.PrepareTopUpCredit(ctx, sdk.ExplicitTopUpCreditPreparation{TransactionIdentity: identity, ExplicitFunds: funds, CreditInputs: credits, TopUpCreditPreparation: sdk.TopUpCreditPreparation{TokenAddress: token, Credit: leaf, AdditionalAmount: big.NewInt(30), Expiry: big.NewInt(2000)}})
-			}
-			if err != nil {
-				t.Fatal(err)
-			}
-			p, err = externallyAuthorize(ctx, p)
-			if err != nil {
-				t.Fatal(err)
-			}
-			p, err = p.Prove(ctx)
-			if err != nil {
-				t.Fatal(err)
-			}
-			if _, err = p.ExportTransaction(ctx); err != nil {
-				t.Fatal(err)
-			}
-		})
-	}
-}
+
 func TestExplicitSignedChangeCanUseAnotherOwner(t *testing.T) {
 	invisi, input, _ := explicitFixture(t)
 	other, err := sdk.WalletFromPrivateKey("0x" + strings.Repeat("0", 63) + "2")

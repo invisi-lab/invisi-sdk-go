@@ -66,7 +66,7 @@ func (p *NativeProver) run(ctx context.Context, args ...string) ([]byte, error) 
 	defer cancel()
 	cmd := exec.CommandContext(ctx, p.options.BBBinary, args...)
 	cmd.Env = append(os.Environ(), fmt.Sprintf("HARDWARE_CONCURRENCY=%d", p.options.Threads))
-	// BB 6 fast MSM aborts for the production 12-member aggregate on Darwin arm64.
+	// BB 6 fast MSM has an upstream Darwin arm64 failure on large recursive workloads.
 	// Select its upstream stable MSM implementation without changing proof semantics.
 	if _, configured := os.LookupEnv("BB_MSM_LEGACY"); !configured {
 		cmd.Env = append(cmd.Env, "BB_MSM_LEGACY=1")

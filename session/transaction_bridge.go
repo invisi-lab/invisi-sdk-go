@@ -11,7 +11,6 @@ import (
 
 	"github.com/invisi-lab/invisi-sdk-go/broadcaster"
 	"github.com/invisi-lab/invisi-sdk-go/core"
-	gasmodel "github.com/invisi-lab/invisi-sdk-go/internal/gas"
 	transaction "github.com/invisi-lab/invisi-sdk-go/internal/transaction"
 	"github.com/invisi-lab/invisi-sdk-go/protocol"
 	sdk "github.com/invisi-lab/invisi-sdk-go/sdk"
@@ -81,16 +80,7 @@ func (o *Operation) validateBroadcasterPlan() error {
 	result0 := execution.ValidateBroadcasterPlan()
 	return result0
 }
-func (o *Operation) creditPrivateInputs(private map[string]any) (map[string]any, error) {
-	execution := o.execution()
-	result0, result1 := execution.CreditPrivateInputs(private)
-	return result0, result1
-}
-func (o *Operation) encodeCredit(proof []byte, caller *common.Address) (*protocol.Calldata, error) {
-	execution := o.execution()
-	result0, result1 := execution.EncodeCredit(proof, caller)
-	return result0, result1
-}
+
 func (o *Operation) walletRequest(ctx context.Context) (core.WalletAuthorizationRequest, error) {
 	execution := o.execution()
 	result0, result1 := execution.WalletRequest(ctx)
@@ -127,18 +117,7 @@ func (o *Operation) attachFunding(ctx context.Context, signature []byte) error {
 	o.apply(execution)
 	return result0
 }
-func (o *Operation) EstimateGas() (sdk.GasReference, error) {
-	o.mu.Lock()
-	defer o.mu.Unlock()
-	execution := o.execution()
-	result0, result1 := execution.EstimateGas()
-	return result0, result1
-}
-func (o *Operation) gasRequest() (gasmodel.GasEstimateRequest, error) {
-	execution := o.execution()
-	result0, result1 := execution.GasRequest()
-	return result0, result1
-}
+
 func (o *Operation) ID() string {
 	o.metadataMu.RLock()
 	defer o.metadataMu.RUnlock()
@@ -231,11 +210,6 @@ func (o *Operation) sources() []protocol.InputSource {
 func (o *Operation) validateExport(ctx context.Context) error {
 	execution := o.execution()
 	result0 := execution.ValidateExport(ctx)
-	return result0
-}
-func (o *Operation) checkDrawPeriod(ctx context.Context) error {
-	execution := o.execution()
-	result0 := execution.CheckDrawPeriod(ctx)
 	return result0
 }
 func (o *Operation) Kind() string {

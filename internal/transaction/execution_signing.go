@@ -17,9 +17,7 @@ func (o *Execution) AuthorizeInternal(ctx context.Context) (*Execution, error) {
 	if e := o.CheckLease(ctx); e != nil {
 		return nil, e
 	}
-	if e := o.CheckDrawPeriod(ctx); e != nil {
-		return nil, e
-	}
+
 	if o.Status != "prepared" {
 		return nil, errors.New("operation must be prepared before authorization")
 	}
@@ -65,10 +63,7 @@ func (o *Execution) FundingTypedData() (apitypes.TypedData, error) {
 		}
 
 		return protocol.EncodeTransactFundingTypedData(o.Plan.Context, o.Bundle.Proof, o.Plan.Params, o.Deliveries(), o.Plan.Funding)
-	case "create-credit":
-		return protocol.EncodeCreateCreditFundingTypedData(o.Plan.Context, *o.Plan.CreateCredit, o.Deliveries(), o.Plan.Funding)
-	case "top-up-credit":
-		return protocol.EncodeTopUpCreditFundingTypedData(o.Plan.Context, *o.Plan.TopUpCredit, o.Deliveries(), o.Plan.Funding)
+
 	}
 	return apitypes.TypedData{}, errors.New("operation has no public funding")
 }

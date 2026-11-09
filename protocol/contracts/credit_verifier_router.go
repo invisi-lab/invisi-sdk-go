@@ -31,7 +31,7 @@ var (
 
 // CreditVerifierRouterMetaData contains all meta data concerning the CreditVerifierRouter contract.
 var CreditVerifierRouterMetaData = &bind.MetaData{
-	ABI: "[{\"type\":\"constructor\",\"inputs\":[{\"name\":\"singleRegistry\",\"type\":\"address\",\"internalType\":\"contractIPrivateTransferVerifierRegistry\"},{\"name\":\"crossRegistry\",\"type\":\"address\",\"internalType\":\"contractCrossTreeVerifierRegistry\"},{\"name\":\"creditVerifiers\",\"type\":\"address[7]\",\"internalType\":\"contractIVerifier[7]\"}],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"createCreditVerifier\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"address\",\"internalType\":\"contractIVerifier\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"creditCancelVerifier\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"address\",\"internalType\":\"contractIVerifier\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"creditDrawSlots120Verifier\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"address\",\"internalType\":\"contractIVerifier\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"creditDrawSlots12Verifier\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"address\",\"internalType\":\"contractIVerifier\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"creditDrawSlots1Verifier\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"address\",\"internalType\":\"contractIVerifier\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"creditDrawSlots50Verifier\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"address\",\"internalType\":\"contractIVerifier\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"creditTopUpVerifier\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"address\",\"internalType\":\"contractIVerifier\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"crossTreeRegistry\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"address\",\"internalType\":\"contractCrossTreeVerifierRegistry\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getCreateCreditVerifier\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"address\",\"internalType\":\"contractIVerifier\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getCreditCancelVerifier\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"address\",\"internalType\":\"contractIVerifier\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getCreditDrawVerifier\",\"inputs\":[{\"name\":\"inputs\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[{\"name\":\"\",\"type\":\"address\",\"internalType\":\"contractIVerifier\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getCreditTopUpVerifier\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"address\",\"internalType\":\"contractIVerifier\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getCrossTreeVerifier\",\"inputs\":[{\"name\":\"inputs\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"outputs\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[{\"name\":\"\",\"type\":\"address\",\"internalType\":\"contractIVerifier\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getPrivateTransferVerifier\",\"inputs\":[{\"name\":\"inputs\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"outputs\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[{\"name\":\"\",\"type\":\"address\",\"internalType\":\"contractIVerifier\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"privateTransferRegistry\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"address\",\"internalType\":\"contractIPrivateTransferVerifierRegistry\"}],\"stateMutability\":\"view\"},{\"type\":\"error\",\"name\":\"InvalidBatchSize\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"UnsupportedCreditCreation\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"UnsupportedCrossTreeShape\",\"inputs\":[{\"name\":\"inputs\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"outputs\",\"type\":\"uint256\",\"internalType\":\"uint256\"}]},{\"type\":\"error\",\"name\":\"UnsupportedPrivateTransferShape\",\"inputs\":[{\"name\":\"inputs\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"outputs\",\"type\":\"uint256\",\"internalType\":\"uint256\"}]}]",
+	ABI: "[{\"type\":\"constructor\",\"inputs\":[{\"name\":\"singleRegistry\",\"type\":\"address\",\"internalType\":\"contractIPrivateTransferVerifierRegistry\"},{\"name\":\"crossRegistry\",\"type\":\"address\",\"internalType\":\"contractCrossTreeVerifierRegistry\"},{\"name\":\"creditVerifiers\",\"type\":\"address[15]\",\"internalType\":\"contractIVerifier[15]\"}],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"createCreditVerifier\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"address\",\"internalType\":\"contractIVerifier\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"creditDrawSlots10Verifier\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"address\",\"internalType\":\"contractIVerifier\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"creditDrawSlots1Verifier\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"address\",\"internalType\":\"contractIVerifier\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"creditDrawSlots20Verifier\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"address\",\"internalType\":\"contractIVerifier\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"creditDrawSlots2Verifier\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"address\",\"internalType\":\"contractIVerifier\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"creditDrawSlots30Verifier\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"address\",\"internalType\":\"contractIVerifier\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"creditDrawSlots3Verifier\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"address\",\"internalType\":\"contractIVerifier\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"creditDrawSlots40Verifier\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"address\",\"internalType\":\"contractIVerifier\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"creditDrawSlots4Verifier\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"address\",\"internalType\":\"contractIVerifier\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"creditDrawSlots50Verifier\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"address\",\"internalType\":\"contractIVerifier\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"creditDrawSlots5Verifier\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"address\",\"internalType\":\"contractIVerifier\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"creditDrawSlots60Verifier\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"address\",\"internalType\":\"contractIVerifier\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"creditDrawSlots70Verifier\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"address\",\"internalType\":\"contractIVerifier\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"creditDrawSlots80Verifier\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"address\",\"internalType\":\"contractIVerifier\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"creditUpdateVerifier\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"address\",\"internalType\":\"contractIVerifier\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"crossTreeRegistry\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"address\",\"internalType\":\"contractCrossTreeVerifierRegistry\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getCreateCreditVerifier\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"address\",\"internalType\":\"contractIVerifier\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getCreditDrawVerifier\",\"inputs\":[{\"name\":\"inputs\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[{\"name\":\"\",\"type\":\"address\",\"internalType\":\"contractIVerifier\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getCreditUpdateVerifier\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"address\",\"internalType\":\"contractIVerifier\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getCrossTreeVerifier\",\"inputs\":[{\"name\":\"inputs\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"outputs\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[{\"name\":\"\",\"type\":\"address\",\"internalType\":\"contractIVerifier\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getPrivateTransferVerifier\",\"inputs\":[{\"name\":\"inputs\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"outputs\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[{\"name\":\"\",\"type\":\"address\",\"internalType\":\"contractIVerifier\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"privateTransferRegistry\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"address\",\"internalType\":\"contractIPrivateTransferVerifierRegistry\"}],\"stateMutability\":\"view\"},{\"type\":\"error\",\"name\":\"InvalidBatchSize\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"UnsupportedCreditCreation\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"UnsupportedCrossTreeShape\",\"inputs\":[{\"name\":\"inputs\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"outputs\",\"type\":\"uint256\",\"internalType\":\"uint256\"}]},{\"type\":\"error\",\"name\":\"UnsupportedPrivateTransferShape\",\"inputs\":[{\"name\":\"inputs\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"outputs\",\"type\":\"uint256\",\"internalType\":\"uint256\"}]}]",
 }
 
 // CreditVerifierRouterABI is the input ABI used to generate the binding from.
@@ -211,12 +211,12 @@ func (_CreditVerifierRouter *CreditVerifierRouterCallerSession) CreateCreditVeri
 	return _CreditVerifierRouter.Contract.CreateCreditVerifier(&_CreditVerifierRouter.CallOpts)
 }
 
-// CreditCancelVerifier is a free data retrieval call binding the contract method 0x967c7d10.
+// CreditDrawSlots10Verifier is a free data retrieval call binding the contract method 0x5d73d7f3.
 //
-// Solidity: function creditCancelVerifier() view returns(address)
-func (_CreditVerifierRouter *CreditVerifierRouterCaller) CreditCancelVerifier(opts *bind.CallOpts) (common.Address, error) {
+// Solidity: function creditDrawSlots10Verifier() view returns(address)
+func (_CreditVerifierRouter *CreditVerifierRouterCaller) CreditDrawSlots10Verifier(opts *bind.CallOpts) (common.Address, error) {
 	var out []interface{}
-	err := _CreditVerifierRouter.contract.Call(opts, &out, "creditCancelVerifier")
+	err := _CreditVerifierRouter.contract.Call(opts, &out, "creditDrawSlots10Verifier")
 
 	if err != nil {
 		return *new(common.Address), err
@@ -228,80 +228,18 @@ func (_CreditVerifierRouter *CreditVerifierRouterCaller) CreditCancelVerifier(op
 
 }
 
-// CreditCancelVerifier is a free data retrieval call binding the contract method 0x967c7d10.
+// CreditDrawSlots10Verifier is a free data retrieval call binding the contract method 0x5d73d7f3.
 //
-// Solidity: function creditCancelVerifier() view returns(address)
-func (_CreditVerifierRouter *CreditVerifierRouterSession) CreditCancelVerifier() (common.Address, error) {
-	return _CreditVerifierRouter.Contract.CreditCancelVerifier(&_CreditVerifierRouter.CallOpts)
+// Solidity: function creditDrawSlots10Verifier() view returns(address)
+func (_CreditVerifierRouter *CreditVerifierRouterSession) CreditDrawSlots10Verifier() (common.Address, error) {
+	return _CreditVerifierRouter.Contract.CreditDrawSlots10Verifier(&_CreditVerifierRouter.CallOpts)
 }
 
-// CreditCancelVerifier is a free data retrieval call binding the contract method 0x967c7d10.
+// CreditDrawSlots10Verifier is a free data retrieval call binding the contract method 0x5d73d7f3.
 //
-// Solidity: function creditCancelVerifier() view returns(address)
-func (_CreditVerifierRouter *CreditVerifierRouterCallerSession) CreditCancelVerifier() (common.Address, error) {
-	return _CreditVerifierRouter.Contract.CreditCancelVerifier(&_CreditVerifierRouter.CallOpts)
-}
-
-// CreditDrawSlots120Verifier is a free data retrieval call binding the contract method 0x7c7f67e4.
-//
-// Solidity: function creditDrawSlots120Verifier() view returns(address)
-func (_CreditVerifierRouter *CreditVerifierRouterCaller) CreditDrawSlots120Verifier(opts *bind.CallOpts) (common.Address, error) {
-	var out []interface{}
-	err := _CreditVerifierRouter.contract.Call(opts, &out, "creditDrawSlots120Verifier")
-
-	if err != nil {
-		return *new(common.Address), err
-	}
-
-	out0 := *abi.ConvertType(out[0], new(common.Address)).(*common.Address)
-
-	return out0, err
-
-}
-
-// CreditDrawSlots120Verifier is a free data retrieval call binding the contract method 0x7c7f67e4.
-//
-// Solidity: function creditDrawSlots120Verifier() view returns(address)
-func (_CreditVerifierRouter *CreditVerifierRouterSession) CreditDrawSlots120Verifier() (common.Address, error) {
-	return _CreditVerifierRouter.Contract.CreditDrawSlots120Verifier(&_CreditVerifierRouter.CallOpts)
-}
-
-// CreditDrawSlots120Verifier is a free data retrieval call binding the contract method 0x7c7f67e4.
-//
-// Solidity: function creditDrawSlots120Verifier() view returns(address)
-func (_CreditVerifierRouter *CreditVerifierRouterCallerSession) CreditDrawSlots120Verifier() (common.Address, error) {
-	return _CreditVerifierRouter.Contract.CreditDrawSlots120Verifier(&_CreditVerifierRouter.CallOpts)
-}
-
-// CreditDrawSlots12Verifier is a free data retrieval call binding the contract method 0x9c58a03f.
-//
-// Solidity: function creditDrawSlots12Verifier() view returns(address)
-func (_CreditVerifierRouter *CreditVerifierRouterCaller) CreditDrawSlots12Verifier(opts *bind.CallOpts) (common.Address, error) {
-	var out []interface{}
-	err := _CreditVerifierRouter.contract.Call(opts, &out, "creditDrawSlots12Verifier")
-
-	if err != nil {
-		return *new(common.Address), err
-	}
-
-	out0 := *abi.ConvertType(out[0], new(common.Address)).(*common.Address)
-
-	return out0, err
-
-}
-
-// CreditDrawSlots12Verifier is a free data retrieval call binding the contract method 0x9c58a03f.
-//
-// Solidity: function creditDrawSlots12Verifier() view returns(address)
-func (_CreditVerifierRouter *CreditVerifierRouterSession) CreditDrawSlots12Verifier() (common.Address, error) {
-	return _CreditVerifierRouter.Contract.CreditDrawSlots12Verifier(&_CreditVerifierRouter.CallOpts)
-}
-
-// CreditDrawSlots12Verifier is a free data retrieval call binding the contract method 0x9c58a03f.
-//
-// Solidity: function creditDrawSlots12Verifier() view returns(address)
-func (_CreditVerifierRouter *CreditVerifierRouterCallerSession) CreditDrawSlots12Verifier() (common.Address, error) {
-	return _CreditVerifierRouter.Contract.CreditDrawSlots12Verifier(&_CreditVerifierRouter.CallOpts)
+// Solidity: function creditDrawSlots10Verifier() view returns(address)
+func (_CreditVerifierRouter *CreditVerifierRouterCallerSession) CreditDrawSlots10Verifier() (common.Address, error) {
+	return _CreditVerifierRouter.Contract.CreditDrawSlots10Verifier(&_CreditVerifierRouter.CallOpts)
 }
 
 // CreditDrawSlots1Verifier is a free data retrieval call binding the contract method 0xe32cd3ea.
@@ -335,6 +273,192 @@ func (_CreditVerifierRouter *CreditVerifierRouterCallerSession) CreditDrawSlots1
 	return _CreditVerifierRouter.Contract.CreditDrawSlots1Verifier(&_CreditVerifierRouter.CallOpts)
 }
 
+// CreditDrawSlots20Verifier is a free data retrieval call binding the contract method 0xf665ed4a.
+//
+// Solidity: function creditDrawSlots20Verifier() view returns(address)
+func (_CreditVerifierRouter *CreditVerifierRouterCaller) CreditDrawSlots20Verifier(opts *bind.CallOpts) (common.Address, error) {
+	var out []interface{}
+	err := _CreditVerifierRouter.contract.Call(opts, &out, "creditDrawSlots20Verifier")
+
+	if err != nil {
+		return *new(common.Address), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(common.Address)).(*common.Address)
+
+	return out0, err
+
+}
+
+// CreditDrawSlots20Verifier is a free data retrieval call binding the contract method 0xf665ed4a.
+//
+// Solidity: function creditDrawSlots20Verifier() view returns(address)
+func (_CreditVerifierRouter *CreditVerifierRouterSession) CreditDrawSlots20Verifier() (common.Address, error) {
+	return _CreditVerifierRouter.Contract.CreditDrawSlots20Verifier(&_CreditVerifierRouter.CallOpts)
+}
+
+// CreditDrawSlots20Verifier is a free data retrieval call binding the contract method 0xf665ed4a.
+//
+// Solidity: function creditDrawSlots20Verifier() view returns(address)
+func (_CreditVerifierRouter *CreditVerifierRouterCallerSession) CreditDrawSlots20Verifier() (common.Address, error) {
+	return _CreditVerifierRouter.Contract.CreditDrawSlots20Verifier(&_CreditVerifierRouter.CallOpts)
+}
+
+// CreditDrawSlots2Verifier is a free data retrieval call binding the contract method 0xbadf1535.
+//
+// Solidity: function creditDrawSlots2Verifier() view returns(address)
+func (_CreditVerifierRouter *CreditVerifierRouterCaller) CreditDrawSlots2Verifier(opts *bind.CallOpts) (common.Address, error) {
+	var out []interface{}
+	err := _CreditVerifierRouter.contract.Call(opts, &out, "creditDrawSlots2Verifier")
+
+	if err != nil {
+		return *new(common.Address), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(common.Address)).(*common.Address)
+
+	return out0, err
+
+}
+
+// CreditDrawSlots2Verifier is a free data retrieval call binding the contract method 0xbadf1535.
+//
+// Solidity: function creditDrawSlots2Verifier() view returns(address)
+func (_CreditVerifierRouter *CreditVerifierRouterSession) CreditDrawSlots2Verifier() (common.Address, error) {
+	return _CreditVerifierRouter.Contract.CreditDrawSlots2Verifier(&_CreditVerifierRouter.CallOpts)
+}
+
+// CreditDrawSlots2Verifier is a free data retrieval call binding the contract method 0xbadf1535.
+//
+// Solidity: function creditDrawSlots2Verifier() view returns(address)
+func (_CreditVerifierRouter *CreditVerifierRouterCallerSession) CreditDrawSlots2Verifier() (common.Address, error) {
+	return _CreditVerifierRouter.Contract.CreditDrawSlots2Verifier(&_CreditVerifierRouter.CallOpts)
+}
+
+// CreditDrawSlots30Verifier is a free data retrieval call binding the contract method 0x8a350948.
+//
+// Solidity: function creditDrawSlots30Verifier() view returns(address)
+func (_CreditVerifierRouter *CreditVerifierRouterCaller) CreditDrawSlots30Verifier(opts *bind.CallOpts) (common.Address, error) {
+	var out []interface{}
+	err := _CreditVerifierRouter.contract.Call(opts, &out, "creditDrawSlots30Verifier")
+
+	if err != nil {
+		return *new(common.Address), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(common.Address)).(*common.Address)
+
+	return out0, err
+
+}
+
+// CreditDrawSlots30Verifier is a free data retrieval call binding the contract method 0x8a350948.
+//
+// Solidity: function creditDrawSlots30Verifier() view returns(address)
+func (_CreditVerifierRouter *CreditVerifierRouterSession) CreditDrawSlots30Verifier() (common.Address, error) {
+	return _CreditVerifierRouter.Contract.CreditDrawSlots30Verifier(&_CreditVerifierRouter.CallOpts)
+}
+
+// CreditDrawSlots30Verifier is a free data retrieval call binding the contract method 0x8a350948.
+//
+// Solidity: function creditDrawSlots30Verifier() view returns(address)
+func (_CreditVerifierRouter *CreditVerifierRouterCallerSession) CreditDrawSlots30Verifier() (common.Address, error) {
+	return _CreditVerifierRouter.Contract.CreditDrawSlots30Verifier(&_CreditVerifierRouter.CallOpts)
+}
+
+// CreditDrawSlots3Verifier is a free data retrieval call binding the contract method 0x4eac0686.
+//
+// Solidity: function creditDrawSlots3Verifier() view returns(address)
+func (_CreditVerifierRouter *CreditVerifierRouterCaller) CreditDrawSlots3Verifier(opts *bind.CallOpts) (common.Address, error) {
+	var out []interface{}
+	err := _CreditVerifierRouter.contract.Call(opts, &out, "creditDrawSlots3Verifier")
+
+	if err != nil {
+		return *new(common.Address), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(common.Address)).(*common.Address)
+
+	return out0, err
+
+}
+
+// CreditDrawSlots3Verifier is a free data retrieval call binding the contract method 0x4eac0686.
+//
+// Solidity: function creditDrawSlots3Verifier() view returns(address)
+func (_CreditVerifierRouter *CreditVerifierRouterSession) CreditDrawSlots3Verifier() (common.Address, error) {
+	return _CreditVerifierRouter.Contract.CreditDrawSlots3Verifier(&_CreditVerifierRouter.CallOpts)
+}
+
+// CreditDrawSlots3Verifier is a free data retrieval call binding the contract method 0x4eac0686.
+//
+// Solidity: function creditDrawSlots3Verifier() view returns(address)
+func (_CreditVerifierRouter *CreditVerifierRouterCallerSession) CreditDrawSlots3Verifier() (common.Address, error) {
+	return _CreditVerifierRouter.Contract.CreditDrawSlots3Verifier(&_CreditVerifierRouter.CallOpts)
+}
+
+// CreditDrawSlots40Verifier is a free data retrieval call binding the contract method 0x4e176696.
+//
+// Solidity: function creditDrawSlots40Verifier() view returns(address)
+func (_CreditVerifierRouter *CreditVerifierRouterCaller) CreditDrawSlots40Verifier(opts *bind.CallOpts) (common.Address, error) {
+	var out []interface{}
+	err := _CreditVerifierRouter.contract.Call(opts, &out, "creditDrawSlots40Verifier")
+
+	if err != nil {
+		return *new(common.Address), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(common.Address)).(*common.Address)
+
+	return out0, err
+
+}
+
+// CreditDrawSlots40Verifier is a free data retrieval call binding the contract method 0x4e176696.
+//
+// Solidity: function creditDrawSlots40Verifier() view returns(address)
+func (_CreditVerifierRouter *CreditVerifierRouterSession) CreditDrawSlots40Verifier() (common.Address, error) {
+	return _CreditVerifierRouter.Contract.CreditDrawSlots40Verifier(&_CreditVerifierRouter.CallOpts)
+}
+
+// CreditDrawSlots40Verifier is a free data retrieval call binding the contract method 0x4e176696.
+//
+// Solidity: function creditDrawSlots40Verifier() view returns(address)
+func (_CreditVerifierRouter *CreditVerifierRouterCallerSession) CreditDrawSlots40Verifier() (common.Address, error) {
+	return _CreditVerifierRouter.Contract.CreditDrawSlots40Verifier(&_CreditVerifierRouter.CallOpts)
+}
+
+// CreditDrawSlots4Verifier is a free data retrieval call binding the contract method 0xb12e7791.
+//
+// Solidity: function creditDrawSlots4Verifier() view returns(address)
+func (_CreditVerifierRouter *CreditVerifierRouterCaller) CreditDrawSlots4Verifier(opts *bind.CallOpts) (common.Address, error) {
+	var out []interface{}
+	err := _CreditVerifierRouter.contract.Call(opts, &out, "creditDrawSlots4Verifier")
+
+	if err != nil {
+		return *new(common.Address), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(common.Address)).(*common.Address)
+
+	return out0, err
+
+}
+
+// CreditDrawSlots4Verifier is a free data retrieval call binding the contract method 0xb12e7791.
+//
+// Solidity: function creditDrawSlots4Verifier() view returns(address)
+func (_CreditVerifierRouter *CreditVerifierRouterSession) CreditDrawSlots4Verifier() (common.Address, error) {
+	return _CreditVerifierRouter.Contract.CreditDrawSlots4Verifier(&_CreditVerifierRouter.CallOpts)
+}
+
+// CreditDrawSlots4Verifier is a free data retrieval call binding the contract method 0xb12e7791.
+//
+// Solidity: function creditDrawSlots4Verifier() view returns(address)
+func (_CreditVerifierRouter *CreditVerifierRouterCallerSession) CreditDrawSlots4Verifier() (common.Address, error) {
+	return _CreditVerifierRouter.Contract.CreditDrawSlots4Verifier(&_CreditVerifierRouter.CallOpts)
+}
+
 // CreditDrawSlots50Verifier is a free data retrieval call binding the contract method 0x6b0d9c1b.
 //
 // Solidity: function creditDrawSlots50Verifier() view returns(address)
@@ -366,12 +490,12 @@ func (_CreditVerifierRouter *CreditVerifierRouterCallerSession) CreditDrawSlots5
 	return _CreditVerifierRouter.Contract.CreditDrawSlots50Verifier(&_CreditVerifierRouter.CallOpts)
 }
 
-// CreditTopUpVerifier is a free data retrieval call binding the contract method 0x1e99874f.
+// CreditDrawSlots5Verifier is a free data retrieval call binding the contract method 0xa3c48ef1.
 //
-// Solidity: function creditTopUpVerifier() view returns(address)
-func (_CreditVerifierRouter *CreditVerifierRouterCaller) CreditTopUpVerifier(opts *bind.CallOpts) (common.Address, error) {
+// Solidity: function creditDrawSlots5Verifier() view returns(address)
+func (_CreditVerifierRouter *CreditVerifierRouterCaller) CreditDrawSlots5Verifier(opts *bind.CallOpts) (common.Address, error) {
 	var out []interface{}
-	err := _CreditVerifierRouter.contract.Call(opts, &out, "creditTopUpVerifier")
+	err := _CreditVerifierRouter.contract.Call(opts, &out, "creditDrawSlots5Verifier")
 
 	if err != nil {
 		return *new(common.Address), err
@@ -383,18 +507,142 @@ func (_CreditVerifierRouter *CreditVerifierRouterCaller) CreditTopUpVerifier(opt
 
 }
 
-// CreditTopUpVerifier is a free data retrieval call binding the contract method 0x1e99874f.
+// CreditDrawSlots5Verifier is a free data retrieval call binding the contract method 0xa3c48ef1.
 //
-// Solidity: function creditTopUpVerifier() view returns(address)
-func (_CreditVerifierRouter *CreditVerifierRouterSession) CreditTopUpVerifier() (common.Address, error) {
-	return _CreditVerifierRouter.Contract.CreditTopUpVerifier(&_CreditVerifierRouter.CallOpts)
+// Solidity: function creditDrawSlots5Verifier() view returns(address)
+func (_CreditVerifierRouter *CreditVerifierRouterSession) CreditDrawSlots5Verifier() (common.Address, error) {
+	return _CreditVerifierRouter.Contract.CreditDrawSlots5Verifier(&_CreditVerifierRouter.CallOpts)
 }
 
-// CreditTopUpVerifier is a free data retrieval call binding the contract method 0x1e99874f.
+// CreditDrawSlots5Verifier is a free data retrieval call binding the contract method 0xa3c48ef1.
 //
-// Solidity: function creditTopUpVerifier() view returns(address)
-func (_CreditVerifierRouter *CreditVerifierRouterCallerSession) CreditTopUpVerifier() (common.Address, error) {
-	return _CreditVerifierRouter.Contract.CreditTopUpVerifier(&_CreditVerifierRouter.CallOpts)
+// Solidity: function creditDrawSlots5Verifier() view returns(address)
+func (_CreditVerifierRouter *CreditVerifierRouterCallerSession) CreditDrawSlots5Verifier() (common.Address, error) {
+	return _CreditVerifierRouter.Contract.CreditDrawSlots5Verifier(&_CreditVerifierRouter.CallOpts)
+}
+
+// CreditDrawSlots60Verifier is a free data retrieval call binding the contract method 0x0cd316e7.
+//
+// Solidity: function creditDrawSlots60Verifier() view returns(address)
+func (_CreditVerifierRouter *CreditVerifierRouterCaller) CreditDrawSlots60Verifier(opts *bind.CallOpts) (common.Address, error) {
+	var out []interface{}
+	err := _CreditVerifierRouter.contract.Call(opts, &out, "creditDrawSlots60Verifier")
+
+	if err != nil {
+		return *new(common.Address), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(common.Address)).(*common.Address)
+
+	return out0, err
+
+}
+
+// CreditDrawSlots60Verifier is a free data retrieval call binding the contract method 0x0cd316e7.
+//
+// Solidity: function creditDrawSlots60Verifier() view returns(address)
+func (_CreditVerifierRouter *CreditVerifierRouterSession) CreditDrawSlots60Verifier() (common.Address, error) {
+	return _CreditVerifierRouter.Contract.CreditDrawSlots60Verifier(&_CreditVerifierRouter.CallOpts)
+}
+
+// CreditDrawSlots60Verifier is a free data retrieval call binding the contract method 0x0cd316e7.
+//
+// Solidity: function creditDrawSlots60Verifier() view returns(address)
+func (_CreditVerifierRouter *CreditVerifierRouterCallerSession) CreditDrawSlots60Verifier() (common.Address, error) {
+	return _CreditVerifierRouter.Contract.CreditDrawSlots60Verifier(&_CreditVerifierRouter.CallOpts)
+}
+
+// CreditDrawSlots70Verifier is a free data retrieval call binding the contract method 0xa3cf0596.
+//
+// Solidity: function creditDrawSlots70Verifier() view returns(address)
+func (_CreditVerifierRouter *CreditVerifierRouterCaller) CreditDrawSlots70Verifier(opts *bind.CallOpts) (common.Address, error) {
+	var out []interface{}
+	err := _CreditVerifierRouter.contract.Call(opts, &out, "creditDrawSlots70Verifier")
+
+	if err != nil {
+		return *new(common.Address), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(common.Address)).(*common.Address)
+
+	return out0, err
+
+}
+
+// CreditDrawSlots70Verifier is a free data retrieval call binding the contract method 0xa3cf0596.
+//
+// Solidity: function creditDrawSlots70Verifier() view returns(address)
+func (_CreditVerifierRouter *CreditVerifierRouterSession) CreditDrawSlots70Verifier() (common.Address, error) {
+	return _CreditVerifierRouter.Contract.CreditDrawSlots70Verifier(&_CreditVerifierRouter.CallOpts)
+}
+
+// CreditDrawSlots70Verifier is a free data retrieval call binding the contract method 0xa3cf0596.
+//
+// Solidity: function creditDrawSlots70Verifier() view returns(address)
+func (_CreditVerifierRouter *CreditVerifierRouterCallerSession) CreditDrawSlots70Verifier() (common.Address, error) {
+	return _CreditVerifierRouter.Contract.CreditDrawSlots70Verifier(&_CreditVerifierRouter.CallOpts)
+}
+
+// CreditDrawSlots80Verifier is a free data retrieval call binding the contract method 0x1699487e.
+//
+// Solidity: function creditDrawSlots80Verifier() view returns(address)
+func (_CreditVerifierRouter *CreditVerifierRouterCaller) CreditDrawSlots80Verifier(opts *bind.CallOpts) (common.Address, error) {
+	var out []interface{}
+	err := _CreditVerifierRouter.contract.Call(opts, &out, "creditDrawSlots80Verifier")
+
+	if err != nil {
+		return *new(common.Address), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(common.Address)).(*common.Address)
+
+	return out0, err
+
+}
+
+// CreditDrawSlots80Verifier is a free data retrieval call binding the contract method 0x1699487e.
+//
+// Solidity: function creditDrawSlots80Verifier() view returns(address)
+func (_CreditVerifierRouter *CreditVerifierRouterSession) CreditDrawSlots80Verifier() (common.Address, error) {
+	return _CreditVerifierRouter.Contract.CreditDrawSlots80Verifier(&_CreditVerifierRouter.CallOpts)
+}
+
+// CreditDrawSlots80Verifier is a free data retrieval call binding the contract method 0x1699487e.
+//
+// Solidity: function creditDrawSlots80Verifier() view returns(address)
+func (_CreditVerifierRouter *CreditVerifierRouterCallerSession) CreditDrawSlots80Verifier() (common.Address, error) {
+	return _CreditVerifierRouter.Contract.CreditDrawSlots80Verifier(&_CreditVerifierRouter.CallOpts)
+}
+
+// CreditUpdateVerifier is a free data retrieval call binding the contract method 0x7b8ad201.
+//
+// Solidity: function creditUpdateVerifier() view returns(address)
+func (_CreditVerifierRouter *CreditVerifierRouterCaller) CreditUpdateVerifier(opts *bind.CallOpts) (common.Address, error) {
+	var out []interface{}
+	err := _CreditVerifierRouter.contract.Call(opts, &out, "creditUpdateVerifier")
+
+	if err != nil {
+		return *new(common.Address), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(common.Address)).(*common.Address)
+
+	return out0, err
+
+}
+
+// CreditUpdateVerifier is a free data retrieval call binding the contract method 0x7b8ad201.
+//
+// Solidity: function creditUpdateVerifier() view returns(address)
+func (_CreditVerifierRouter *CreditVerifierRouterSession) CreditUpdateVerifier() (common.Address, error) {
+	return _CreditVerifierRouter.Contract.CreditUpdateVerifier(&_CreditVerifierRouter.CallOpts)
+}
+
+// CreditUpdateVerifier is a free data retrieval call binding the contract method 0x7b8ad201.
+//
+// Solidity: function creditUpdateVerifier() view returns(address)
+func (_CreditVerifierRouter *CreditVerifierRouterCallerSession) CreditUpdateVerifier() (common.Address, error) {
+	return _CreditVerifierRouter.Contract.CreditUpdateVerifier(&_CreditVerifierRouter.CallOpts)
 }
 
 // CrossTreeRegistry is a free data retrieval call binding the contract method 0x196b73d4.
@@ -459,37 +707,6 @@ func (_CreditVerifierRouter *CreditVerifierRouterCallerSession) GetCreateCreditV
 	return _CreditVerifierRouter.Contract.GetCreateCreditVerifier(&_CreditVerifierRouter.CallOpts)
 }
 
-// GetCreditCancelVerifier is a free data retrieval call binding the contract method 0x7207e214.
-//
-// Solidity: function getCreditCancelVerifier() view returns(address)
-func (_CreditVerifierRouter *CreditVerifierRouterCaller) GetCreditCancelVerifier(opts *bind.CallOpts) (common.Address, error) {
-	var out []interface{}
-	err := _CreditVerifierRouter.contract.Call(opts, &out, "getCreditCancelVerifier")
-
-	if err != nil {
-		return *new(common.Address), err
-	}
-
-	out0 := *abi.ConvertType(out[0], new(common.Address)).(*common.Address)
-
-	return out0, err
-
-}
-
-// GetCreditCancelVerifier is a free data retrieval call binding the contract method 0x7207e214.
-//
-// Solidity: function getCreditCancelVerifier() view returns(address)
-func (_CreditVerifierRouter *CreditVerifierRouterSession) GetCreditCancelVerifier() (common.Address, error) {
-	return _CreditVerifierRouter.Contract.GetCreditCancelVerifier(&_CreditVerifierRouter.CallOpts)
-}
-
-// GetCreditCancelVerifier is a free data retrieval call binding the contract method 0x7207e214.
-//
-// Solidity: function getCreditCancelVerifier() view returns(address)
-func (_CreditVerifierRouter *CreditVerifierRouterCallerSession) GetCreditCancelVerifier() (common.Address, error) {
-	return _CreditVerifierRouter.Contract.GetCreditCancelVerifier(&_CreditVerifierRouter.CallOpts)
-}
-
 // GetCreditDrawVerifier is a free data retrieval call binding the contract method 0x86b5ceca.
 //
 // Solidity: function getCreditDrawVerifier(uint256 inputs) view returns(address)
@@ -521,12 +738,12 @@ func (_CreditVerifierRouter *CreditVerifierRouterCallerSession) GetCreditDrawVer
 	return _CreditVerifierRouter.Contract.GetCreditDrawVerifier(&_CreditVerifierRouter.CallOpts, inputs)
 }
 
-// GetCreditTopUpVerifier is a free data retrieval call binding the contract method 0x604ee023.
+// GetCreditUpdateVerifier is a free data retrieval call binding the contract method 0xb6b64562.
 //
-// Solidity: function getCreditTopUpVerifier() view returns(address)
-func (_CreditVerifierRouter *CreditVerifierRouterCaller) GetCreditTopUpVerifier(opts *bind.CallOpts) (common.Address, error) {
+// Solidity: function getCreditUpdateVerifier() view returns(address)
+func (_CreditVerifierRouter *CreditVerifierRouterCaller) GetCreditUpdateVerifier(opts *bind.CallOpts) (common.Address, error) {
 	var out []interface{}
-	err := _CreditVerifierRouter.contract.Call(opts, &out, "getCreditTopUpVerifier")
+	err := _CreditVerifierRouter.contract.Call(opts, &out, "getCreditUpdateVerifier")
 
 	if err != nil {
 		return *new(common.Address), err
@@ -538,18 +755,18 @@ func (_CreditVerifierRouter *CreditVerifierRouterCaller) GetCreditTopUpVerifier(
 
 }
 
-// GetCreditTopUpVerifier is a free data retrieval call binding the contract method 0x604ee023.
+// GetCreditUpdateVerifier is a free data retrieval call binding the contract method 0xb6b64562.
 //
-// Solidity: function getCreditTopUpVerifier() view returns(address)
-func (_CreditVerifierRouter *CreditVerifierRouterSession) GetCreditTopUpVerifier() (common.Address, error) {
-	return _CreditVerifierRouter.Contract.GetCreditTopUpVerifier(&_CreditVerifierRouter.CallOpts)
+// Solidity: function getCreditUpdateVerifier() view returns(address)
+func (_CreditVerifierRouter *CreditVerifierRouterSession) GetCreditUpdateVerifier() (common.Address, error) {
+	return _CreditVerifierRouter.Contract.GetCreditUpdateVerifier(&_CreditVerifierRouter.CallOpts)
 }
 
-// GetCreditTopUpVerifier is a free data retrieval call binding the contract method 0x604ee023.
+// GetCreditUpdateVerifier is a free data retrieval call binding the contract method 0xb6b64562.
 //
-// Solidity: function getCreditTopUpVerifier() view returns(address)
-func (_CreditVerifierRouter *CreditVerifierRouterCallerSession) GetCreditTopUpVerifier() (common.Address, error) {
-	return _CreditVerifierRouter.Contract.GetCreditTopUpVerifier(&_CreditVerifierRouter.CallOpts)
+// Solidity: function getCreditUpdateVerifier() view returns(address)
+func (_CreditVerifierRouter *CreditVerifierRouterCallerSession) GetCreditUpdateVerifier() (common.Address, error) {
+	return _CreditVerifierRouter.Contract.GetCreditUpdateVerifier(&_CreditVerifierRouter.CallOpts)
 }
 
 // GetCrossTreeVerifier is a free data retrieval call binding the contract method 0xf63ba548.

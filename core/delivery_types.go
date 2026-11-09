@@ -6,8 +6,6 @@ import (
 
 const ordinaryNoteDomain = "Invisi.NoteDelivery.v1"
 
-const creditNoteDomain = "Invisi.CreditDelivery.v1"
-
 type NoteEncryptionContext struct {
 	ProtocolContext
 	OutputCommitment fr.Element

@@ -20,31 +20,3 @@ func (s *WalletSession) PrepareShield(ctx context.Context, p sdk.ShieldPreparati
 	}
 	return operationFromExecution(s, execution), nil
 }
-func (s *WalletSession) PrepareCreateCredit(ctx context.Context, p sdk.CreateCreditPreparation) (*Operation, error) {
-	execution, e := s.runtimeSnapshot().PrepareCreateCredit(ctx, p)
-	if e != nil {
-		return nil, e
-	}
-	return operationFromExecution(s, execution), nil
-}
-func (s *WalletSession) PrepareDrawCredit(ctx context.Context, p sdk.DrawCreditPreparation) (*Operation, error) {
-	execution, e := s.runtimeSnapshot().PrepareDrawCredit(ctx, p)
-	if e != nil {
-		return nil, e
-	}
-	return operationFromExecution(s, execution), nil
-}
-func (s *WalletSession) PrepareTopUpCredit(ctx context.Context, p sdk.TopUpCreditPreparation) (*Operation, error) {
-	execution, e := s.runtimeSnapshot().PrepareTopUpCredit(ctx, p)
-	if e != nil {
-		return nil, e
-	}
-	return operationFromExecution(s, execution), nil
-}
-func (s *WalletSession) PrepareCancelCredit(ctx context.Context, p sdk.CancelCreditPreparation) (*Operation, error) {
-	execution, e := s.runtimeSnapshot().PrepareCancelCredit(ctx, p)
-	if e != nil {
-		return nil, e
-	}
-	return operationFromExecution(s, execution), nil
-}

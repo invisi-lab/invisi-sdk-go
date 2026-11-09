@@ -11,6 +11,7 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 
+	creditsession "github.com/invisi-lab/invisi-sdk-go/credit/session"
 	transaction "github.com/invisi-lab/invisi-sdk-go/internal/transaction"
 	protocolrpc "github.com/invisi-lab/invisi-sdk-go/rpc"
 )
@@ -29,10 +30,11 @@ type OperationRecord struct {
 }
 
 type WalletState struct {
+	FormatVersion    int
+	PostpaidCredit   creditsession.State
 	Revision         uint64
 	DiscoveryThrough *protocolrpc.CanonicalBlock
 	Notes            map[common.Hash]StoredNote
-	Credits          map[string]StoredCredit
 	Operations       map[string]OperationRecord
 	ObservedThrough  *protocolrpc.CanonicalBlock
 	Invalidated      bool
@@ -40,7 +42,7 @@ type WalletState struct {
 }
 
 func emptyState() WalletState {
-	return WalletState{Notes: map[common.Hash]StoredNote{}, Credits: map[string]StoredCredit{}, Operations: map[string]OperationRecord{}}
+	return WalletState{FormatVersion: 2, PostpaidCredit: creditsession.EmptyState(), Notes: map[common.Hash]StoredNote{}, Operations: map[string]OperationRecord{}}
 }
 
 func CloneState(s WalletState) (WalletState, error) {
@@ -130,6 +132,10 @@ func NewEncryptedWalletCodec(key []byte) (*EncryptedWalletCodec, error) {
 }
 
 func (c *EncryptedWalletCodec) Seal(scope WalletScope, state WalletState) ([]byte, error) {
+	state.FormatVersion = 2
+	if state.PostpaidCredit.Version == 0 {
+		state.PostpaidCredit = creditsession.EmptyState()
+	}
 	raw, e := json.Marshal(state)
 	if e != nil {
 		return nil, e
@@ -142,7 +148,7 @@ func (c *EncryptedWalletCodec) Seal(scope WalletScope, state WalletState) ([]byt
 	return c.aead.Seal(nonce, nonce, raw, []byte("Invisi.WalletStore.v1:"+scope.Key())), nil
 }
 
-func (c *EncryptedWalletCodec) Open(scope WalletScope, data []byte) (WalletState, error) {
+func (c *EncryptedWalletCodec) decode(scope WalletScope, data []byte) (WalletState, error) {
 	if len(data) < c.aead.NonceSize()+c.aead.Overhead() {
 		return WalletState{}, errors.New("invalid encrypted wallet state")
 	}
@@ -154,7 +160,32 @@ func (c *EncryptedWalletCodec) Open(scope WalletScope, data []byte) (WalletState
 	defer clear(plain)
 	s := emptyState()
 	e = json.Unmarshal(plain, &s)
-	return s, e
+	if e != nil {
+		return WalletState{}, e
+	}
+
+	return s, nil
+}
+
+func normalizeWalletVersion(s WalletState) (WalletState, error) {
+	if s.FormatVersion != 0 && s.FormatVersion != 2 {
+		return WalletState{}, errors.New("unsupported wallet storage version")
+	}
+	if s.PostpaidCredit.Version == 0 {
+		s.PostpaidCredit = creditsession.EmptyState()
+	}
+	if s.PostpaidCredit.Version != 2 {
+		return WalletState{}, errors.New("unsupported Credit storage schema")
+	}
+	s.FormatVersion = 2
+	return s, nil
+}
+func (c *EncryptedWalletCodec) Open(scope WalletScope, data []byte) (WalletState, error) {
+	state, err := c.decode(scope, data)
+	if err != nil {
+		return WalletState{}, err
+	}
+	return normalizeWalletVersion(state)
 }
 
 // restoreReservations preserves pending spends when rebuilding the local inventory.
@@ -176,21 +207,10 @@ func restoreReservations(state *WalletState) error {
 				state.Notes[input.Commitment] = note
 			}
 		}
-		for _, input := range plan.CreditInputs {
-			for key, credit := range state.Credits {
-				if credit.Commitment == input.Commitment && !credit.Spent {
-					if credit.ReservedBy != "" && credit.ReservedBy != id {
-						return errors.New("conflicting persisted Credit reservations")
-					}
-					credit.ReservedBy = id
-					state.Credits[key] = credit
-				}
-			}
-		}
+
 	}
 	return nil
 }
 
 type WalletScope = transaction.WalletScope
 type StoredNote = transaction.NoteRecord
-type StoredCredit = transaction.CreditRecord

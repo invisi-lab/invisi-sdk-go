@@ -22,7 +22,7 @@ func TestRealNativeOperationProofs(t *testing.T) {
 	if bb == "" || noir == "" {
 		t.Skip("set BB_BINARY_PATH and NOIR_EXECUTE_PATH for genuine proving")
 	}
-	for _, kind := range []string{"transfer", "withdraw", "sweep", "recursive", "create-credit", "draw-credit", "cancel-credit", "top-up-credit"} {
+	for _, kind := range []string{"transfer", "withdraw", "sweep", "recursive"} {
 		t.Run(kind, func(t *testing.T) {
 			ctx := context.Background()
 			session, token, _ := testSession(t)
@@ -43,17 +43,7 @@ func TestRealNativeOperationProofs(t *testing.T) {
 				prepared, err = session.PrepareTransfer(ctx, sdk.TransferPreparation{TokenAddress: token, Withdrawal: &sdk.Withdrawal{To: session.wallet.OwnerAddress(), Amount: big.NewInt(30)}})
 			case "sweep":
 				prepared, err = session.PrepareTransfer(ctx, sdk.TransferPreparation{TokenAddress: token, Withdrawal: &sdk.Withdrawal{To: session.wallet.OwnerAddress(), Amount: big.NewInt(100)}})
-			case "create-credit":
-				prepared, err = session.PrepareCreateCredit(ctx, sdk.CreateCreditPreparation{TokenAddress: token, Spender: address, Amount: big.NewInt(70), Expiry: big.NewInt(1000)})
-			case "draw-credit":
-				leaf := seedCredit(t, session, token)
-				prepared, err = session.PrepareDrawCredit(ctx, sdk.DrawCreditPreparation{TokenAddress: token, Credits: []sdk.CreditDrawInput{{Credit: leaf, Amount: big.NewInt(30)}}})
-			case "cancel-credit":
-				leaf := seedCredit(t, session, token)
-				prepared, err = session.PrepareCancelCredit(ctx, sdk.CancelCreditPreparation{TokenAddress: token, Credit: leaf})
-			case "top-up-credit":
-				leaf := seedCredit(t, session, token)
-				prepared, err = session.PrepareTopUpCredit(ctx, sdk.TopUpCreditPreparation{TokenAddress: token, Credit: leaf, AdditionalAmount: big.NewInt(30), Expiry: big.NewInt(2000)})
+
 			}
 			if err != nil {
 				t.Fatal(err)
@@ -145,7 +135,7 @@ func TestRealNativeAggregation(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if result.CircuitName != "transact_aggregate_14_4" || len(result.PublicInputs) != 4*59+1 {
+	if result.CircuitName != "transact_aggregate_mixed_1_5_4" || len(result.PublicInputs) != 4+4*32+5 {
 		t.Fatal("incorrect aggregate statement")
 	}
 }

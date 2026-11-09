@@ -8,8 +8,9 @@ import (
 	"github.com/ethereum/go-ethereum/core/types"
 
 	"github.com/invisi-lab/invisi-sdk-go/core"
+	"github.com/invisi-lab/invisi-sdk-go/credit"
+	creditsession "github.com/invisi-lab/invisi-sdk-go/credit/session"
 	"github.com/invisi-lab/invisi-sdk-go/internal/receipts"
-	transaction "github.com/invisi-lab/invisi-sdk-go/internal/transaction"
 	"github.com/invisi-lab/invisi-sdk-go/protocol/contracts"
 	protocolrpc "github.com/invisi-lab/invisi-sdk-go/rpc"
 )
@@ -19,7 +20,7 @@ type authenticatedCreditDraw struct {
 	Timestamp uint64
 }
 
-func (s *WalletSession) readTransaction(ctx context.Context, hash common.Hash, anchor protocolrpc.CanonicalBlock) ([]StoredNote, []StoredCredit, []*authenticatedCreditDraw, error) {
+func (s *WalletSession) readTransaction(ctx context.Context, hash common.Hash, anchor protocolrpc.CanonicalBlock) ([]StoredNote, []creditsession.StoredState, []*authenticatedCreditDraw, error) {
 	receipt, e := s.options.Provider.TransactionReceipt(ctx, hash)
 	if e != nil {
 		return nil, nil, nil, e
@@ -56,7 +57,7 @@ func (s *WalletSession) readTransaction(ctx context.Context, hash common.Hash, a
 		return nil, nil, nil, e
 	}
 	notes := []StoredNote{}
-	credits := []StoredCredit{}
+	credits := []creditsession.StoredState{}
 	draws := []*authenticatedCreditDraw{}
 	filter, e := contracts.NewInvisiProtocolFilterer(s.scope.ProtocolAddress, nil)
 	if e != nil {
@@ -84,20 +85,26 @@ func (s *WalletSession) readTransaction(ctx context.Context, hash common.Hash, a
 			notes = append(notes, StoredNote{Note: note, Commitment: output.Commitment, Nullifier: nf, TreeID: output.TreeID, LeafIndex: output.LeafIndex, TransactionHash: hash, Block: &protocolrpc.CanonicalBlock{Number: header.Number.Uint64(), Hash: header.Hash(), ParentHash: header.ParentHash, Timestamp: header.Time}})
 			continue
 		}
-		for _, role := range []core.CreditDeliveryRole{core.CreditOwner, core.CreditSpender} {
-			state, e := s.viewing.DecryptCredit(output.Ciphertext, core.CreditNoteDecryptionContext{NoteDecryptionContext: context, Role: role})
-			if e != nil {
-				continue
+	}
+	for _, output := range batch.CreditStates {
+		context := credit.DeliveryContext{ProtocolContext: s.coreContext(), TokenAddress: core.BigIntToElement(output.Token.Big()), Commitment: core.BigIntToElement(output.Commitment.Big()), RecipientIdentity: core.BigIntToElement(s.wallet.OwnerAddress().Big())}
+		for _, envelope := range output.Deliveries {
+			for _, role := range []credit.Role{credit.Owner, credit.Spender} {
+				state, e := s.viewing.DecryptCreditState(envelope.Ciphertext, context, role)
+				if e != nil {
+					continue
+				}
+				if _, e = s.rpc.GetMembership(ctx, s.protocol.Context(), protocolrpc.MembershipInput{TreeID: output.TreeID, LeafIndex: output.LeafIndex, Commitment: output.Commitment}, anchor); e != nil {
+					return nil, nil, nil, e
+				}
+				nf, e := state.State.Nullifier()
+				if e != nil {
+					return nil, nil, nil, e
+				}
+				credits = append(credits, creditsession.StoredState{Delivery: state, Commitment: output.Commitment, Nullifier: common.Hash(nf.Bytes()), TreeID: output.TreeID, LeafIndex: uint16(output.LeafIndex), Role: role})
 			}
-			if _, e = s.rpc.GetMembership(ctx, s.protocol.Context(), protocolrpc.MembershipInput{TreeID: output.TreeID, LeafIndex: output.LeafIndex, Commitment: output.Commitment}, anchor); e != nil {
-				return nil, nil, nil, e
-			}
-			nf, e := core.ComputeCreditNullifier(state.Note.ChainID, state.Note.CreditSharedKey, context.OutputCommitment)
-			if e != nil {
-				return nil, nil, nil, e
-			}
-			credits = append(credits, StoredCredit{State: state, Commitment: output.Commitment, Nullifier: transaction.FieldHash(nf), TreeID: output.TreeID, LeafIndex: output.LeafIndex, Role: string(role)})
 		}
 	}
+
 	return notes, credits, draws, nil
 }

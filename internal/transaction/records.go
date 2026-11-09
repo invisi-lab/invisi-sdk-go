@@ -33,13 +33,3 @@ type NoteRecord struct {
 	Spent                 bool
 	ReservedBy            string
 }
-
-type CreditRecord struct {
-	State                 core.CreditDeliveryState
-	Commitment, Nullifier common.Hash
-	TreeID                uint64
-	LeafIndex             uint32
-	Role                  string
-	Spent                 bool
-	ReservedBy            string
-}

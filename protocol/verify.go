@@ -1,10 +1,8 @@
 package protocol
 
 import (
-	"fmt"
 	"math/big"
 
-	"github.com/consensys/gnark-crypto/ecc/bn254/fr"
 	"github.com/ethereum/go-ethereum/common"
 
 	"github.com/invisi-lab/invisi-sdk-go/core"
@@ -39,24 +37,4 @@ func VerifyNoteCommitment(p VerifyNoteCommitmentParams) (bool, error) {
 		return false, err
 	}
 	return expected.Bytes() == [32]byte(p.NoteCommitment), nil
-}
-
-type VerifyCreditCommitmentParams struct {
-	core.CreditSpendingState
-	ChainID, SpenderWalletIdentity, OwnerWalletIdentity, SpenderPayout, OwnerPayout, TokenAddress, Amount, Nonce, Expiry, CreditSharedKey, CreditCommitment fr.Element
-}
-
-func VerifyCreditCommitment(p VerifyCreditCommitmentParams) (bool, error) {
-	if p.CreditSharedKey.IsZero() {
-		return false, fmt.Errorf("creditSharedKey must be nonzero")
-	}
-	keyHash, err := core.ComputeCreditSharedKeyHash(p.CreditSharedKey)
-	if err != nil {
-		return false, err
-	}
-	expected, err := core.ComputeCreditCommitment(p.ChainID, p.SpenderWalletIdentity, p.OwnerWalletIdentity, p.SpenderPayout, p.OwnerPayout, p.TokenAddress, p.Amount, p.Nonce, p.Expiry, keyHash, p.CreditSpendingState)
-	if err != nil {
-		return false, err
-	}
-	return expected.Equal(&p.CreditCommitment), nil
 }

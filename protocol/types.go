@@ -17,10 +17,6 @@ type ShieldParams = contracts.IInvisiProtocolShieldParams
 type ShieldOutput = contracts.IInvisiProtocolShieldOutput
 type CrossTreeTransactParams = contracts.IInvisiProtocolCrossTreeTransactParams
 type TransactRequest = contracts.IInvisiProtocolTransactRequest
-type CreateCreditParams = contracts.IInvisiProtocolCreateCreditParams
-type CreditDrawParams = contracts.IInvisiProtocolCreditDrawParams
-type CancelCreditParams = contracts.IInvisiProtocolCancelCreditParams
-type TopUpCreditParams = contracts.IInvisiProtocolTopUpCreditParams
 
 type TransactionContext struct {
 	ChainID         *big.Int
@@ -55,15 +51,7 @@ type BuildShieldCalldataParams struct {
 	Funding    FundingParams
 	Caller     *common.Address
 }
-type BuildCreateCreditCalldataParams struct {
-	Context    TransactionContext
-	Proof      []byte
-	Params     CreateCreditParams
-	Deliveries []Delivery
-	Funding    FundingParams
 
-	Caller *common.Address
-}
 type ApproveParams struct {
 	ProtocolAddress, Token common.Address
 	Amount                 *big.Int

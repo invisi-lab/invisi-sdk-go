@@ -13,10 +13,10 @@ import (
 )
 
 func SelectTransactCapacity(inputs, outputs int) (int, error) {
-	if inputs < 0 || outputs < 0 || inputs > 168 || outputs > 168 || inputs+outputs < 1 || inputs+outputs > 168 || (inputs == 0 && outputs < 2) {
+	if inputs < 0 || outputs < 0 || inputs > 190 || outputs > 190 || inputs+outputs < 1 || inputs+outputs > 190 || (inputs == 0 && outputs < 2) {
 		return 0, fmt.Errorf("unsupported transact shape")
 	}
-	for _, n := range []int{14, 56, 112, 168} {
+	for _, n := range []int{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120, 130, 140, 150, 160, 170, 180, 190} {
 		if inputs+outputs <= n {
 			return n, nil
 		}
@@ -34,6 +34,9 @@ type NormalizedTransact struct {
 
 func NormalizeTransactRequest(c TransactionContext, p CrossTreeTransactParams, cs []Delivery, f FundingParams) (NormalizedTransact, error) {
 	r := NormalizedTransact{Params: p}
+	if p.Token != c.TokenAddress {
+		return r, fmt.Errorf("request asset context mismatch")
+	}
 	var feeErr error
 	r.Params.FeeAmount, feeErr = normalizeFee(p.FeeRecipient, p.FeeAmount)
 	if feeErr != nil {
@@ -68,7 +71,7 @@ func NormalizeTransactRequest(c TransactionContext, p CrossTreeTransactParams, c
 	if err := CheckUint(p.WithdrawalAmount, 128, "withdrawal amount"); err != nil {
 		return r, err
 	}
-	if (p.WithdrawalAmount.Sign() == 0) != (p.WithdrawalAddress == common.Address{}) || (len(p.OutputCommitments) == 0 && p.WithdrawalAmount.Sign() == 0) {
+	if (p.WithdrawalAmount.Sign() == 0) != (p.WithdrawalAddress == common.Address{}) || (len(p.OutputCommitments) == 0 && p.WithdrawalAmount.Sign() == 0 && r.Params.FeeAmount.Sign() == 0) {
 		return r, fmt.Errorf("invalid withdrawal")
 	}
 	if err := CheckDeadline(c, p.Deadline); err != nil {
@@ -166,7 +169,7 @@ func TransactFundingRequestHash(proof []byte, p CrossTreeTransactParams, cs []De
 	if err := CheckUint(p.Deadline, 64, "deadline"); err != nil {
 		return common.Hash{}, err
 	}
-	if _, err := NormalizeSources(p.Sources, len(p.Nullifiers), 168); err != nil {
+	if _, err := NormalizeSources(p.Sources, len(p.Nullifiers), 190); err != nil {
 		return common.Hash{}, err
 	}
 
@@ -234,21 +237,58 @@ func BuildTransactCalldata(p BuildTransactCalldataParams) (*Calldata, error) {
 	return &Calldata{Data: data, Capacity: r.Capacity, ApproveAmount: new(big.Int).Set(r.Funding.Amount)}, nil
 }
 func AggregateMemberRequestHash(c TransactionContext, r TransactRequest) (common.Hash, error) {
+	c.TokenAddress = r.Params.Token
 	normalized, err := NormalizeTransactRequest(c, r.Params, r.Deliveries, r.Funding)
 	if err != nil {
 		return common.Hash{}, err
 	}
-	if normalized.Capacity != 14 {
-		return common.Hash{}, fmt.Errorf("aggregate supports only capacity14")
+	if normalized.Capacity > 10 {
+		return common.Hash{}, fmt.Errorf("aggregate supports native capacities1 through10")
 	}
-	return HashABI(args("bytes32", "uint256", "bytes32[]"), crypto.Keccak256Hash([]byte("InvisiAtomicBatchMemberV1")), big.NewInt(14), words(transactWords(c, normalized)))
+	return HashABI(args("bytes32", "uint256", "bytes32[]"), crypto.Keccak256Hash([]byte("InvisiAtomicBatchMemberV1")), big.NewInt(int64(normalized.Capacity)), words(transactWords(c, normalized)))
 }
-func validAggregateCount(n int) bool { return n == 4 || n == 8 || n == 12 }
+func validAggregateCount(n int) bool { return n >= 1 && n <= 5 }
+
+// Zero identifies a mixed outer, never a member capacity.
+func SelectAggregateRoute(capacities []int) (int, error) {
+	if !validAggregateCount(len(capacities)) {
+		return 0, fmt.Errorf("aggregate requires one through five members")
+	}
+	first, homogeneous, small := capacities[0], true, true
+	for _, c := range capacities {
+		if c < 1 || c > 10 {
+			return 0, fmt.Errorf("unsupported aggregate capacity")
+		}
+		homogeneous = homogeneous && c == first
+		small = small && c <= 5
+	}
+	if homogeneous && (len(capacities) == 1 || len(capacities) == 2 || len(capacities) == 5) {
+		return first, nil
+	}
+	if small && len(capacities) >= 2 {
+		return 0, nil
+	}
+	return 0, fmt.Errorf("unsupported aggregate route")
+}
+func aggregateRequestRoute(requests []TransactRequest) (int, error) {
+	capacities := []int{}
+	for _, r := range requests {
+		c, e := SelectTransactCapacity(len(r.Params.Nullifiers), len(r.Params.OutputCommitments))
+		if e != nil {
+			return 0, e
+		}
+		capacities = append(capacities, c)
+	}
+	return SelectAggregateRoute(capacities)
+}
 
 // AggregatePublicInputs returns router business words, not aggregate circuit public inputs.
 func AggregatePublicInputs(c TransactionContext, requests []TransactRequest) ([][32]byte, error) {
 	if !validAggregateCount(len(requests)) {
-		return nil, fmt.Errorf("aggregate requires 4,8 or12 requests")
+		return nil, fmt.Errorf("aggregate requires one through five requests")
+	}
+	if _, err := aggregateRequestRoute(requests); err != nil {
+		return nil, err
 	}
 	var out [][32]byte
 	for _, r := range requests {
@@ -260,12 +300,14 @@ func AggregatePublicInputs(c TransactionContext, requests []TransactRequest) ([]
 		if err != nil {
 			return nil, err
 		}
-		out = append(out, Word(big.NewInt(14)))
+		capacity, _ := SelectTransactCapacity(len(r.Params.Nullifiers), len(r.Params.OutputCommitments))
+		out = append(out, Word(big.NewInt(int64(capacity))))
 		out = append(out, v...)
 	}
 	return out, nil
 }
 func EncodeAggregateFundingTypedData(c TransactionContext, r TransactRequest) (apitypes.TypedData, error) {
+	c.TokenAddress = r.Params.Token
 	hash, err := AggregateMemberRequestHash(c, r)
 	if err != nil {
 		return apitypes.TypedData{}, err
@@ -278,7 +320,11 @@ func EncodeAggregateFundingTypedData(c TransactionContext, r TransactRequest) (a
 }
 func BuildTransactAggregateCalldata(p BuildTransactAggregateCalldataParams) (*Calldata, error) {
 	if !validAggregateCount(len(p.Requests)) {
-		return nil, fmt.Errorf("aggregate requires 4,8 or12 requests")
+		return nil, fmt.Errorf("aggregate requires one through five requests")
+	}
+	route, err := aggregateRequestRoute(p.Requests)
+	if err != nil {
+		return nil, err
 	}
 	requests := make([]TransactRequest, len(p.Requests))
 	total := new(big.Int)
@@ -290,8 +336,8 @@ func BuildTransactAggregateCalldata(p BuildTransactAggregateCalldataParams) (*Ca
 		if err != nil {
 			return nil, err
 		}
-		if n.Capacity != 14 {
-			return nil, fmt.Errorf("aggregate supports only capacity14")
+		if n.Capacity > 10 {
+			return nil, fmt.Errorf("aggregate supports native capacities1 through10")
 		}
 		if err := ValidateFundingSubmission(n.Funding, p.Caller, p.Context.Now); err != nil {
 			return nil, err
@@ -319,5 +365,12 @@ func BuildTransactAggregateCalldata(p BuildTransactAggregateCalldataParams) (*Ca
 	if err != nil {
 		return nil, err
 	}
-	return &Calldata{Data: data, Capacity: 14, ApproveAmount: total}, nil
+	// A scalar approval cannot represent multiple assets; callers inspect each explicit funding request.
+	for _, r := range p.Requests {
+		if r.Params.Token != p.Requests[0].Params.Token {
+			total = new(big.Int)
+			break
+		}
+	}
+	return &Calldata{Data: data, Capacity: route, ApproveAmount: total}, nil
 }

@@ -150,18 +150,7 @@ func (o *Operation) reconcileInternal(ctx context.Context, options ...ReconcileO
 				state.Notes[input.Commitment] = note
 			}
 		}
-		for _, input := range o.plan.CreditInputs {
-			for key, credit := range state.Credits {
-				if credit.Commitment == input.Commitment {
-					if credit.ReservedBy != "" && credit.ReservedBy != o.plan.ID {
-						return errors.New("Credit reserved by another operation")
-					}
-					credit.Spent = true
-					credit.ReservedBy = ""
-					state.Credits[key] = credit
-				}
-			}
-		}
+
 		record.Status = "confirmed"
 		record.TransactionHash = o.transactionHash
 		record.ResolvedAt = &block
@@ -196,12 +185,7 @@ func (o *Operation) Abandon(ctx context.Context) error {
 				state.Notes[hash] = n
 			}
 		}
-		for key, c := range state.Credits {
-			if c.ReservedBy == o.plan.ID {
-				c.ReservedBy = ""
-				state.Credits[key] = c
-			}
-		}
+
 		record := state.Operations[o.plan.ID]
 		record.Status = "failed"
 		state.Operations[o.plan.ID] = record

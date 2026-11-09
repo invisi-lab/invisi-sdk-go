@@ -72,16 +72,10 @@ type Plan struct {
 	Shield             protocol.ShieldParams
 	Capacity           int
 	NeedsAuthorization bool
-	CreateCredit       *protocol.CreateCreditParams
-	DrawCredit         *protocol.CreditDrawParams
-	CancelCredit       *protocol.CancelCreditParams
-	TopUpCredit        *protocol.TopUpCreditParams
-	CreditInputs       []CreditRecord
-	CreditMemberships  []protocolrpc.Membership
-	CreditOutput       *core.CreditDeliveryState
-	Deliveries         []protocol.Delivery
-	DrawAmounts        []*big.Int
-	Broadcaster        *BroadcasterPlan
+
+	Deliveries  []protocol.Delivery
+	DrawAmounts []*big.Int
+	Broadcaster *BroadcasterPlan
 }
 
 func ValidatePayload(payload []byte) error { return core.ValidatePayload(payload) }

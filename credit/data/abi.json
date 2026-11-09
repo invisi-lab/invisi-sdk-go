@@ -1,0 +1,814 @@
+[
+  {
+    "type": "function",
+    "name": "createCredit",
+    "inputs": [
+      {
+        "name": "",
+        "type": "bytes",
+        "internalType": "bytes"
+      },
+      {
+        "name": "p",
+        "type": "tuple",
+        "internalType": "struct IInvisiProtocol.CreateCreditParams",
+        "components": [
+          {
+            "name": "token",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "owner",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "revocationShard",
+            "type": "uint64",
+            "internalType": "uint64"
+          },
+          {
+            "name": "revocationSlot",
+            "type": "uint16",
+            "internalType": "uint16"
+          },
+          {
+            "name": "creditCommitment",
+            "type": "bytes32",
+            "internalType": "bytes32"
+          },
+          {
+            "name": "deadline",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "feeRecipient",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "feeAmount",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ]
+      },
+      {
+        "name": "",
+        "type": "tuple[]",
+        "internalType": "struct IInvisiProtocol.Delivery[]",
+        "components": [
+          {
+            "name": "ciphertext",
+            "type": "bytes",
+            "internalType": "bytes"
+          },
+          {
+            "name": "clue",
+            "type": "bytes",
+            "internalType": "bytes"
+          }
+        ]
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "creditAllocation",
+    "inputs": [
+      {
+        "name": "owner",
+        "type": "address",
+        "internalType": "address"
+      },
+      {
+        "name": "token",
+        "type": "address",
+        "internalType": "address"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "shard",
+        "type": "uint64",
+        "internalType": "uint64"
+      },
+      {
+        "name": "slot",
+        "type": "uint16",
+        "internalType": "uint16"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "creditDraw",
+    "inputs": [
+      {
+        "name": "",
+        "type": "bytes",
+        "internalType": "bytes"
+      },
+      {
+        "name": "p",
+        "type": "tuple",
+        "internalType": "struct IInvisiProtocol.CreditDrawParams",
+        "components": [
+          {
+            "name": "token",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "sources",
+            "type": "tuple[]",
+            "internalType": "struct IInvisiProtocol.InputSource[]",
+            "components": [
+              {
+                "name": "treeId",
+                "type": "uint256",
+                "internalType": "uint256"
+              },
+              {
+                "name": "merkleRoot",
+                "type": "bytes32",
+                "internalType": "bytes32"
+              }
+            ]
+          },
+          {
+            "name": "payers",
+            "type": "tuple[]",
+            "internalType": "struct IInvisiProtocol.CreditPayer[]",
+            "components": [
+              {
+                "name": "payer",
+                "type": "address",
+                "internalType": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256",
+                "internalType": "uint256"
+              }
+            ]
+          },
+          {
+            "name": "grantRefs",
+            "type": "tuple[]",
+            "internalType": "struct IInvisiProtocol.CreditGrantRef[]",
+            "components": [
+              {
+                "name": "payerIndex",
+                "type": "uint256",
+                "internalType": "uint256"
+              },
+              {
+                "name": "shard",
+                "type": "uint64",
+                "internalType": "uint64"
+              },
+              {
+                "name": "slot",
+                "type": "uint16",
+                "internalType": "uint16"
+              }
+            ]
+          },
+          {
+            "name": "nullifiers",
+            "type": "bytes32[]",
+            "internalType": "bytes32[]"
+          },
+          {
+            "name": "stateCommitments",
+            "type": "bytes32[]",
+            "internalType": "bytes32[]"
+          },
+          {
+            "name": "recoveryAmounts",
+            "type": "bytes32[]",
+            "internalType": "bytes32[]"
+          },
+          {
+            "name": "noteCommitment",
+            "type": "bytes32",
+            "internalType": "bytes32"
+          },
+          {
+            "name": "totalAmount",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "deadline",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "feeRecipient",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "feeAmount",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ]
+      },
+      {
+        "name": "",
+        "type": "tuple[]",
+        "internalType": "struct IInvisiProtocol.Delivery[]",
+        "components": [
+          {
+            "name": "ciphertext",
+            "type": "bytes",
+            "internalType": "bytes"
+          },
+          {
+            "name": "clue",
+            "type": "bytes",
+            "internalType": "bytes"
+          }
+        ]
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "creditRevocationBitmap",
+    "inputs": [
+      {
+        "name": "owner",
+        "type": "address",
+        "internalType": "address"
+      },
+      {
+        "name": "token",
+        "type": "address",
+        "internalType": "address"
+      },
+      {
+        "name": "shard",
+        "type": "uint64",
+        "internalType": "uint64"
+      },
+      {
+        "name": "word",
+        "type": "uint8",
+        "internalType": "uint8"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "revokeCredit",
+    "inputs": [
+      {
+        "name": "token",
+        "type": "address",
+        "internalType": "address"
+      },
+      {
+        "name": "owner",
+        "type": "address",
+        "internalType": "address"
+      },
+      {
+        "name": "shard",
+        "type": "uint64",
+        "internalType": "uint64"
+      },
+      {
+        "name": "slot",
+        "type": "uint16",
+        "internalType": "uint16"
+      },
+      {
+        "name": "deadline",
+        "type": "uint256",
+        "internalType": "uint256"
+      },
+      {
+        "name": "feeRecipient",
+        "type": "address",
+        "internalType": "address"
+      },
+      {
+        "name": "feeAmount",
+        "type": "uint256",
+        "internalType": "uint256"
+      },
+      {
+        "name": "signature",
+        "type": "bytes",
+        "internalType": "bytes"
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "updateCredit",
+    "inputs": [
+      {
+        "name": "",
+        "type": "bytes",
+        "internalType": "bytes"
+      },
+      {
+        "name": "p",
+        "type": "tuple",
+        "internalType": "struct IInvisiProtocol.UpdateCreditParams",
+        "components": [
+          {
+            "name": "token",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "owner",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "source",
+            "type": "tuple",
+            "internalType": "struct IInvisiProtocol.InputSource",
+            "components": [
+              {
+                "name": "treeId",
+                "type": "uint256",
+                "internalType": "uint256"
+              },
+              {
+                "name": "merkleRoot",
+                "type": "bytes32",
+                "internalType": "bytes32"
+              }
+            ]
+          },
+          {
+            "name": "nullifier",
+            "type": "bytes32",
+            "internalType": "bytes32"
+          },
+          {
+            "name": "creditCommitment",
+            "type": "bytes32",
+            "internalType": "bytes32"
+          },
+          {
+            "name": "revocationShard",
+            "type": "uint64",
+            "internalType": "uint64"
+          },
+          {
+            "name": "revocationSlot",
+            "type": "uint16",
+            "internalType": "uint16"
+          },
+          {
+            "name": "deadline",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "feeRecipient",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "feeAmount",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ]
+      },
+      {
+        "name": "",
+        "type": "tuple[]",
+        "internalType": "struct IInvisiProtocol.Delivery[]",
+        "components": [
+          {
+            "name": "ciphertext",
+            "type": "bytes",
+            "internalType": "bytes"
+          },
+          {
+            "name": "clue",
+            "type": "bytes",
+            "internalType": "bytes"
+          }
+        ]
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "event",
+    "name": "CreditCreated",
+    "inputs": [
+      {
+        "name": "token",
+        "type": "address",
+        "indexed": true,
+        "internalType": "address"
+      },
+      {
+        "name": "owner",
+        "type": "address",
+        "indexed": true,
+        "internalType": "address"
+      },
+      {
+        "name": "outputTreeId",
+        "type": "uint256",
+        "indexed": true,
+        "internalType": "uint256"
+      },
+      {
+        "name": "revocationShard",
+        "type": "uint64",
+        "indexed": false,
+        "internalType": "uint64"
+      },
+      {
+        "name": "revocationSlot",
+        "type": "uint16",
+        "indexed": false,
+        "internalType": "uint16"
+      },
+      {
+        "name": "creditCommitment",
+        "type": "bytes32",
+        "indexed": false,
+        "internalType": "bytes32"
+      },
+      {
+        "name": "leafIndex",
+        "type": "uint32",
+        "indexed": false,
+        "internalType": "uint32"
+      },
+      {
+        "name": "deliveries",
+        "type": "tuple[]",
+        "indexed": false,
+        "internalType": "struct IInvisiProtocol.Delivery[]",
+        "components": [
+          {
+            "name": "ciphertext",
+            "type": "bytes",
+            "internalType": "bytes"
+          },
+          {
+            "name": "clue",
+            "type": "bytes",
+            "internalType": "bytes"
+          }
+        ]
+      },
+      {
+        "name": "deadline",
+        "type": "uint256",
+        "indexed": false,
+        "internalType": "uint256"
+      },
+      {
+        "name": "feeRecipient",
+        "type": "address",
+        "indexed": false,
+        "internalType": "address"
+      },
+      {
+        "name": "feeAmount",
+        "type": "uint256",
+        "indexed": false,
+        "internalType": "uint256"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
+    "name": "CreditDraw",
+    "inputs": [
+      {
+        "name": "outputTreeId",
+        "type": "uint256",
+        "indexed": true,
+        "internalType": "uint256"
+      },
+      {
+        "name": "params",
+        "type": "tuple",
+        "indexed": false,
+        "internalType": "struct IInvisiProtocol.CreditDrawParams",
+        "components": [
+          {
+            "name": "token",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "sources",
+            "type": "tuple[]",
+            "internalType": "struct IInvisiProtocol.InputSource[]",
+            "components": [
+              {
+                "name": "treeId",
+                "type": "uint256",
+                "internalType": "uint256"
+              },
+              {
+                "name": "merkleRoot",
+                "type": "bytes32",
+                "internalType": "bytes32"
+              }
+            ]
+          },
+          {
+            "name": "payers",
+            "type": "tuple[]",
+            "internalType": "struct IInvisiProtocol.CreditPayer[]",
+            "components": [
+              {
+                "name": "payer",
+                "type": "address",
+                "internalType": "address"
+              },
+              {
+                "name": "amount",
+                "type": "uint256",
+                "internalType": "uint256"
+              }
+            ]
+          },
+          {
+            "name": "grantRefs",
+            "type": "tuple[]",
+            "internalType": "struct IInvisiProtocol.CreditGrantRef[]",
+            "components": [
+              {
+                "name": "payerIndex",
+                "type": "uint256",
+                "internalType": "uint256"
+              },
+              {
+                "name": "shard",
+                "type": "uint64",
+                "internalType": "uint64"
+              },
+              {
+                "name": "slot",
+                "type": "uint16",
+                "internalType": "uint16"
+              }
+            ]
+          },
+          {
+            "name": "nullifiers",
+            "type": "bytes32[]",
+            "internalType": "bytes32[]"
+          },
+          {
+            "name": "stateCommitments",
+            "type": "bytes32[]",
+            "internalType": "bytes32[]"
+          },
+          {
+            "name": "recoveryAmounts",
+            "type": "bytes32[]",
+            "internalType": "bytes32[]"
+          },
+          {
+            "name": "noteCommitment",
+            "type": "bytes32",
+            "internalType": "bytes32"
+          },
+          {
+            "name": "totalAmount",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "deadline",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "feeRecipient",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "feeAmount",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ]
+      },
+      {
+        "name": "leafIndices",
+        "type": "uint32[]",
+        "indexed": false,
+        "internalType": "uint32[]"
+      },
+      {
+        "name": "deliveries",
+        "type": "tuple[]",
+        "indexed": false,
+        "internalType": "struct IInvisiProtocol.Delivery[]",
+        "components": [
+          {
+            "name": "ciphertext",
+            "type": "bytes",
+            "internalType": "bytes"
+          },
+          {
+            "name": "clue",
+            "type": "bytes",
+            "internalType": "bytes"
+          }
+        ]
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
+    "name": "CreditRevoked",
+    "inputs": [
+      {
+        "name": "owner",
+        "type": "address",
+        "indexed": true,
+        "internalType": "address"
+      },
+      {
+        "name": "token",
+        "type": "address",
+        "indexed": true,
+        "internalType": "address"
+      },
+      {
+        "name": "shard",
+        "type": "uint64",
+        "indexed": true,
+        "internalType": "uint64"
+      },
+      {
+        "name": "slot",
+        "type": "uint16",
+        "indexed": false,
+        "internalType": "uint16"
+      },
+      {
+        "name": "feeRecipient",
+        "type": "address",
+        "indexed": false,
+        "internalType": "address"
+      },
+      {
+        "name": "feeAmount",
+        "type": "uint256",
+        "indexed": false,
+        "internalType": "uint256"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
+    "name": "CreditUpdated",
+    "inputs": [
+      {
+        "name": "owner",
+        "type": "address",
+        "indexed": true,
+        "internalType": "address"
+      },
+      {
+        "name": "outputTreeId",
+        "type": "uint256",
+        "indexed": true,
+        "internalType": "uint256"
+      },
+      {
+        "name": "params",
+        "type": "tuple",
+        "indexed": false,
+        "internalType": "struct IInvisiProtocol.UpdateCreditParams",
+        "components": [
+          {
+            "name": "token",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "owner",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "source",
+            "type": "tuple",
+            "internalType": "struct IInvisiProtocol.InputSource",
+            "components": [
+              {
+                "name": "treeId",
+                "type": "uint256",
+                "internalType": "uint256"
+              },
+              {
+                "name": "merkleRoot",
+                "type": "bytes32",
+                "internalType": "bytes32"
+              }
+            ]
+          },
+          {
+            "name": "nullifier",
+            "type": "bytes32",
+            "internalType": "bytes32"
+          },
+          {
+            "name": "creditCommitment",
+            "type": "bytes32",
+            "internalType": "bytes32"
+          },
+          {
+            "name": "revocationShard",
+            "type": "uint64",
+            "internalType": "uint64"
+          },
+          {
+            "name": "revocationSlot",
+            "type": "uint16",
+            "internalType": "uint16"
+          },
+          {
+            "name": "deadline",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "feeRecipient",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "feeAmount",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ]
+      },
+      {
+        "name": "leafIndex",
+        "type": "uint32",
+        "indexed": false,
+        "internalType": "uint32"
+      },
+      {
+        "name": "deliveries",
+        "type": "tuple[]",
+        "indexed": false,
+        "internalType": "struct IInvisiProtocol.Delivery[]",
+        "components": [
+          {
+            "name": "ciphertext",
+            "type": "bytes",
+            "internalType": "bytes"
+          },
+          {
+            "name": "clue",
+            "type": "bytes",
+            "internalType": "bytes"
+          }
+        ]
+      }
+    ],
+    "anonymous": false
+  }
+]

@@ -45,7 +45,6 @@ type OutgoingHistoryEntry struct {
 	Funding           HistoryFunding
 	WithdrawalAddress common.Address
 	WithdrawalAmount  *big.Int
-	CreditOutputs     []sdk.CreditPreview
 }
 
 // IncomingHistoryEntry retains spent receipts; spending is not a failed incoming payment.
@@ -108,7 +107,7 @@ func (s *WalletSession) GetHistory(ctx context.Context, options HistoryOptions) 
 			Permissions: preview.Permissions, InputCount: preview.InputCount,
 			Funding:           HistoryFunding{Payer: preview.FundingPayer, Amount: preview.FundingAmount, Authorization: plan.FundingMode},
 			WithdrawalAddress: preview.WithdrawalAddress, WithdrawalAmount: preview.WithdrawalAmount,
-			CreditOutputs: preview.CreditOutputs, Outputs: []HistoryOutput{},
+			Outputs: []HistoryOutput{},
 		}
 		for _, output := range plan.Outputs {
 			entry.Outputs = append(entry.Outputs, HistoryOutput{To: output.Address, Amount: new(big.Int).Set(output.Amount), Payload: outputPayload(output), Change: output.Change})

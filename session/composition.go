@@ -79,7 +79,7 @@ func Connect(ctx context.Context, options Options) (*WalletSession, error) {
 	runtime.Authorization = authority
 	runtime.InventoryReader = func(ctx context.Context) (transaction.Inventory, error) {
 		state, e := s.options.Store.ReadSnapshot(ctx, s.scope)
-		return transaction.Inventory{Notes: state.Notes, Credits: state.Credits, Invalidated: state.Invalidated, ObservedThrough: state.ObservedThrough, CheckedThrough: state.CheckedThrough}, e
+		return transaction.Inventory{Notes: state.Notes, Invalidated: state.Invalidated, ObservedThrough: state.ObservedThrough, CheckedThrough: state.CheckedThrough}, e
 	}
 	runtime.OnComplete = s.reserveExecution
 	runtime.OnPersist = func(ctx context.Context, e *transaction.Execution, status string) error {

@@ -47,7 +47,7 @@ func TestMemoRoundTripAndPayloadKey(t *testing.T) {
 		if err != nil || !bytes.Equal(decoded.Payload, memo) {
 			t.Fatal("memo roundtrip", err)
 		}
-		key, err := ExportPayloadKey(private, ciphertext, false)
+		key, err := ExportPayloadKey(private, ciphertext)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -113,95 +113,5 @@ func TestMalformedMemoLengthsAndRetiredVersions(t *testing.T) {
 	ciphertext[0] = 2
 	if _, err = DecryptPrivateTransferNote(private, ciphertext, context); err == nil {
 		t.Fatal("retired version accepted")
-	}
-}
-
-func TestCreditMemoRoundTripAndRecoveryOmitsUnknownMemo(t *testing.T) {
-	note, private, public, noteContext := memoNote(t)
-	wallet, err := DeriveWallet(private)
-	if err != nil {
-		t.Fatal(err)
-	}
-	keys := ReceivingKeys{ViewingPublicKey: public, ClueKey: wallet.ClueKey}
-	credit := CreditNote{ProtocolContext: note.ProtocolContext, SpenderWalletIdentity: note.OwnerAddress, OwnerWalletIdentity: note.OwnerAddress, SpenderPayout: note.OwnerAddress, OwnerPayout: note.OwnerAddress, TokenAddress: note.TokenAddress, Amount: ElementFromUint64(100), Nonce: note.Nonce, Expiry: ElementFromUint64(1000), CreditSharedKey: ElementFromUint64(7), Payload: bytes.Repeat([]byte{0xff}, 256)}
-	keyHash, _ := ComputeCreditSharedKeyHash(credit.CreditSharedKey)
-	leaf, _ := ComputeCreditCommitment(credit.ChainID, credit.SpenderWalletIdentity, credit.OwnerWalletIdentity, credit.SpenderPayout, credit.OwnerPayout, credit.TokenAddress, credit.Amount, credit.Nonce, credit.Expiry, keyHash, credit.CreditSpendingState)
-	state := CreditDeliveryState{Note: credit, OwnerReceivingKeys: keys, SpenderReceivingKeys: keys}
-	for _, role := range []CreditDeliveryRole{CreditOwner, CreditSpender} {
-		context := CreditNoteDecryptionContext{NoteDecryptionContext: noteContext, Role: role}
-		context.OutputCommitment = leaf
-		ciphertext, err := EncryptCreditNote(public, state, CreditNoteEncryptionContext{NoteEncryptionContext: context.NoteEncryptionContext, Role: role})
-		if err != nil {
-			t.Fatal(err)
-		}
-		if len(ciphertext) != 754 || ciphertext[0] != 0x81 {
-			t.Fatal("Credit envelope width/version")
-		}
-		decoded, err := DecryptCreditNote(private, ciphertext, context)
-		if err != nil || !bytes.Equal(decoded.Note.Payload, credit.Payload) {
-			t.Fatal("Credit memo", err)
-		}
-		decoded.Note.Payload[0] = 0
-		if credit.Payload[0] != 0xff {
-			t.Fatal("Credit memo aliased")
-		}
-		key, err := ExportPayloadKey(private, ciphertext, true)
-		if err != nil {
-			t.Fatal(err)
-		}
-		decoded, err = DecryptCreditPayload(key, ciphertext, context)
-		if err != nil || !bytes.Equal(decoded.Note.Payload, credit.Payload) {
-			t.Fatal("Credit payload memo", err)
-		}
-		if role == CreditOwner {
-			context.Role = CreditSpender
-		} else {
-			context.Role = CreditOwner
-		}
-		if _, err = DecryptCreditNote(private, ciphertext, context); err == nil {
-			t.Fatal("role switch accepted")
-		}
-	}
-	nf, _ := ComputeCreditNullifier(credit.ChainID, credit.CreditSharedKey, leaf)
-	child, err := ApplyCreditDrawUsage(credit, ElementFromUint64(30), 100)
-	if err != nil {
-		t.Fatal(err)
-	}
-	child.Amount = ElementFromUint64(70)
-	child.Nonce, _ = DeriveRemainderNonce(credit.ChainID, credit.ProtocolAddress, credit.TokenAddress, nf, credit.CreditSharedKey)
-	childLeaf, _ := ComputeCreditCommitment(child.ChainID, child.SpenderWalletIdentity, child.OwnerWalletIdentity, child.SpenderPayout, child.OwnerPayout, child.TokenAddress, child.Amount, child.Nonce, child.Expiry, keyHash, child.CreditSpendingState)
-	pad, _ := ComputeCreditRecoveryPad(credit.ChainID, credit.ProtocolAddress, credit.TokenAddress, nf, credit.CreditSharedKey)
-	amount := child.Amount
-	amount.Add(&amount, &pad)
-	recovered, err := RecoverCreditRemainder(credit.ProtocolContext, credit, CreditRemainderRecovery{nf, childLeaf, amount}, 100)
-	if err != nil || recovered == nil || recovered.Amount != child.Amount {
-		t.Fatal("financial recovery failed", err)
-	}
-	if len(recovered.Payload) != 0 {
-		t.Fatal("financial recovery fabricated child memo")
-	}
-	normalized, err := NormalizeCreditDeliveryState(state)
-	if err != nil {
-		t.Fatal(err)
-	}
-	normalized.Note.Payload[0] = 0
-	if credit.Payload[0] != 0xff {
-		t.Fatal("normalized memo alias")
-	}
-	creditContext := CreditNoteDecryptionContext{NoteDecryptionContext: noteContext, Role: CreditOwner}
-	creditContext.OutputCommitment = leaf
-	for _, tail := range [][]byte{{}, {0}, {1, 1}, {0, 0, 1}} {
-		plain := append(encodeCreditState(state)[:418], tail...)
-		ciphertext, err := sealEnvelope(public, plain, creditContext.NoteEncryptionContext, credit.TokenAddress, 0x81, 1, bytes.NewReader(bytes.Repeat([]byte{1}, 100)))
-		if err != nil {
-			t.Fatal(err)
-		}
-		if _, err = DecryptCreditNote(private, ciphertext, creditContext); err == nil {
-			t.Fatal("malformed Credit memo accepted")
-		}
-	}
-	state.Note.Payload = make([]byte, MaxCiphertextBytes)
-	if _, err := EncryptCreditNote(public, state, CreditNoteEncryptionContext{NoteEncryptionContext: NoteEncryptionContext{credit.ProtocolContext, leaf}, Role: CreditOwner}); err == nil {
-		t.Fatal("257 byte Credit memo accepted")
 	}
 }

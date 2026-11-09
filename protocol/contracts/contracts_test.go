@@ -63,7 +63,7 @@ func TestInvisiProtocolKeyMethods(t *testing.T) {
 		t.Fatalf("failed to parse ABI: %v", err)
 	}
 
-	required := []string{"shield", "transact", "createCredit", "creditDraw", "cancelCredit", "topUpCredit", "activeNoteTreeId", "getNoteTreeRoot", "getNoteTreeNextLeafIndex", "isCommitmentPaid", "isNullifierSpent"}
+	required := []string{"shield", "transact", "createCredit", "creditDraw", "updateCredit", "revokeCredit", "creditAllocation", "creditRevocationBitmap", "activeNoteTreeId", "getNoteTreeRoot", "getNoteTreeNextLeafIndex", "isCommitmentPaid", "isNullifierSpent"}
 	for _, name := range required {
 		if _, ok := parsed.Methods[name]; !ok {
 			t.Errorf("InvisiProtocol ABI missing method: %s", name)

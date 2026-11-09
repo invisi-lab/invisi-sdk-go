@@ -19,12 +19,7 @@ func PlanFee(p Plan) (common.Address, *big.Int) {
 		r, f = p.Shield.FeeRecipient, p.Shield.FeeAmount
 	case "transact":
 		r, f = p.Params.FeeRecipient, p.Params.FeeAmount
-	case "create-credit":
-		r, f = p.CreateCredit.FeeRecipient, p.CreateCredit.FeeAmount
-	case "top-up-credit":
-		r, f = p.TopUpCredit.Creation.FeeRecipient, p.TopUpCredit.Creation.FeeAmount
-	case "cancel-credit":
-		r, f = p.CancelCredit.FeeRecipient, p.CancelCredit.FeeAmount
+
 	}
 	if f == nil {
 		return r, new(big.Int)
@@ -38,18 +33,12 @@ func SetPlanFee(p *Plan, r common.Address, f *big.Int) {
 		p.Shield.FeeRecipient, p.Shield.FeeAmount = r, new(big.Int).Set(f)
 	case "transact":
 		p.Params.FeeRecipient, p.Params.FeeAmount = r, new(big.Int).Set(f)
-	case "create-credit", "top-up-credit":
-		p.CreateCredit.FeeRecipient, p.CreateCredit.FeeAmount = r, new(big.Int).Set(f)
-		if p.TopUpCredit != nil {
-			p.TopUpCredit.Creation = *p.CreateCredit
-		}
-	case "cancel-credit":
-		p.CancelCredit.FeeRecipient, p.CancelCredit.FeeAmount = r, new(big.Int).Set(f)
+
 	}
 }
 
 func (o *Execution) ApplyBroadcasterFee(ctx context.Context, base Plan, recipient common.Address, fee *big.Int, opt WithBroadcasterOptions) error {
-	if base.Kind != "shield" && base.Kind != "cancel-credit" && opt.FeeSource != BroadcasterFeePublicFunding && (base.Funding.Amount == nil || base.Funding.Amount.Sign() == 0 || opt.FeeSource == BroadcasterFeePrivateInputs) {
+	if base.Kind != "shield" && opt.FeeSource != BroadcasterFeePublicFunding && (base.Funding.Amount == nil || base.Funding.Amount.Sign() == 0 || opt.FeeSource == BroadcasterFeePrivateInputs) {
 		var err error
 		base, err = o.ExtendBroadcasterInputs(ctx, base, fee)
 		if err != nil {
@@ -62,12 +51,7 @@ func (o *Execution) ApplyBroadcasterFee(ctx context.Context, base Plan, recipien
 	}
 	o.Plan = p
 	SetPlanFee(&o.Plan, recipient, fee)
-	if p.Kind == "cancel-credit" {
-		if fee.Cmp(p.CancelCredit.Amount) >= 0 {
-			return errors.New("broadcaster fee consumes cancellation payout")
-		}
-		return nil
-	}
+
 	change := -1
 	for j, out := range p.Outputs {
 		if out.Change && out.Amount.Cmp(fee) >= 0 {
@@ -118,16 +102,6 @@ func (o *Execution) ApplyBroadcasterFee(ctx context.Context, base Plan, recipien
 			o.Plan.Capacity, e = protocol.SelectTransactCapacity(len(p.Inputs), len(o.Plan.Outputs))
 			if e != nil {
 				return e
-			}
-		} else {
-			o.Plan.CreateCredit.ChangeCommitment = [32]byte{}
-			o.Plan.Deliveries[2] = protocol.Delivery{}
-			if len(o.Plan.Outputs) > 0 {
-				o.Plan.CreateCredit.ChangeCommitment = o.Plan.Outputs[0].Commitment
-				o.Plan.Deliveries[2] = o.Plan.Outputs[0].Delivery
-			}
-			if o.Plan.TopUpCredit != nil {
-				o.Plan.TopUpCredit.Creation = *o.Plan.CreateCredit
 			}
 		}
 		o.Plan.NeedsAuthorization = len(o.Plan.Inputs) > 0 || p.Kind != "transact"

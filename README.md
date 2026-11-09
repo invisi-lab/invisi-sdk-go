@@ -1,220 +1,142 @@
 # Invisi Go SDK
 
-Go client for Invisi Protocol, aligned with the current TypeScript SDK workflows. Requires Go 1.26.1 or newer.
+Go client for the current Invisi Protocol. Requires Go 1.26.1 or newer.
 
 ```sh
 go get github.com/invisi-lab/invisi-sdk-go
 ```
 
-Start with the [configurable examples](examples/README.md). They cover offline wallets, address registration, transparent payments, hidden transfers and withdrawals, Credit, managed wallet sessions, and selective disclosure. Example settings expose the network, native currency, token, RPC endpoints and prover paths. A local initializer creates ten fresh accounts without overwriting existing keys; no funded account is included.
-
-## Public wallets and external signing
-
-Use `sdk.PublicWalletFromAddress(receivingAddress)` for a public identity. A complete `0i` address contains the owner, viewing public key and clue key and resolves offline. An EVM destination needs registered receiving keys only when it requests an envelope. The output recipient selects Protocol RPC (default) or Chain RPC lookup during preparation; `InvisiOptions` accepts neither a global lookup selector nor caller resolver injection. Public wallets contain no spending or viewing secrets.
-
-Create an `sdk.Invisi` with `Provider`, `ProtocolRPC` and optionally `Prover`. `sdk.ProtocolFromRPC` validates the selected deployment against Chain RPC. Applications select a trusted Protocol RPC and can pin deployment metadata independently.
-
-Detached preparation never creates a Store or imports a private wallet. Supply a public wallet, explicit authenticated notes and payment outputs. The stages are:
-
-1. Prepare and review the transaction.
-2. Export a portable wallet signing request and sign it with the application's signing tool.
-3. Attach the signature with `WithWalletSignature`.
-4. Generate and independently verify the proof with `Prove`.
-5. If public funding uses a signature, export its separate request and attach the payer's signature with `WithFundingSignature`.
-6. Export calldata and submit it with ordinary go-ethereum APIs.
-
-Requests use JSON-safe EIP-712 domain/message values and omit `EIP712Domain` from application types. Wallet spending authorization, public funding authorization, ERC20 allowance and gas submission are separate roles. Nonces, deadlines, signer identity and accepted roots are rechecked. EOA signatures support standard and compact formats; funding verification also supports ERC-1271 wallets.
-
-`Prove` accepts strongly typed `sdk.TransactionProveOptions`, including an optional backend and single/aggregate execution. Recursive aggregation snapshots all members before invoking a backend. Errors from preparation use `sdk.InvisiError` with a stable code and operation/recipient details where applicable; inspect them with `errors.As`.
-
-## Payments and Credit
-
-`PrepareShield` creates transparent-amount deposits. `PrepareTransfer` supports private inputs, public funding, private outputs and an optional public `Withdrawal` in one entry point. All explicit inputs are consumed. Inputs must belong to the same spending owner. Automatic change uses a fresh private output.
-
-A full withdrawal to each note's bound owner, without public funding or private outputs, needs viewing permission rather than an arbitrary-spending signature. Partial withdrawals and redirected payouts require owner authorization. There are no separate `PrepareWithdraw` or `PrepareSweep` APIs.
-
-Credit supports creation, draw, top-up and cancellation, including private-note funding and change. A spender can consume grants from different owners together. Single/daily/monthly limits are enforced per grant; nil or zero creation limits disable that limit. Nil top-up limits inherit the current policy, while explicit zero disables it. Usage is preserved. Day/month checks use canonical chain timestamps and contract period rules. Recovered remainders retain financial state and historical receiving-key snapshots.
-
-Registry preparation is exposed through `Invisi.PrepareRegistration`. Export the registration signing request and attach its signature, or explicitly use the direct owner-caller route. Registration updates are explicit; an existing registration does not silently become a first registration.
-
-## Independent note outputs
-
-Every Shield/Transfer business output is a `NoteOutput` created with `sdk.NewNoteOutput`; raw payment objects and zero-value outputs are rejected. The factory requires chain, Protocol, token and amount up front. Preparation rejects a different context instead of rewriting the output.
-
-```go
-output, err := sdk.NewNoteOutput(sdk.PaymentRequest{
-    ChainID: chainID, ProtocolAddress: pool.Context().ProtocolAddress,
-    TokenAddress: token, Amount: amount,
-    Recipient: sdk.InvisiRecipient{Address: bobAddress, Nonce: nonce},
-})
-// Check err, then pass Outputs: []sdk.NoteOutput{output} to preparation.
-```
-
-Recipients are sealed typed variants:
-
-- `InvisiRecipient{Address, Nonce}` accepts a complete `0i` address and encrypts offline. Nonce is optional; nil securely samples a canonical field element, including zero as a valid explicit value.
-- `EVMRecipient{Address, Nonce, Envelope, AddressLookup}` accepts an EVM owner. A nil Envelope defaults to true. `DeliveryPending()` is true on the offline intent; preparation uses `"protocol-rpc"` (default) or `"chain"` to resolve registered keys and freezes delivery. Unregistered destinations or lookup failures reject preparation. A pointer to false skips registration and delivery entirely.
-- `IdentityRecipient{Identity}` accepts a nonzero canonical per-note identity (`common.Hash`), with no nonce, wallet opening or envelope. `Note()` returns nil; the recipient must retain its own opening. Verify a merchant-supplied commitment independently with `output.AssertCommitment(expected)`.
-
-Payload is an outer `PaymentRequest` field allowed only with envelopes. Getter results are detached copies. Factory objects are in-memory intents; retain business parameters/complete notes to recreate them after a process restart. Managed operation plans use durable Store snapshots independently of factory objects. Empty Funds delivery always means both ciphertext and clue are empty. Decryption skips these slots without changing sibling leaf positions; active Credit owner/spender envelopes remain mandatory.
-
-## Optional broadcaster submission
-
-Discover registered operators through `pool.GetBroadcasters(ctx, sdk.BroadcasterOptions{TokenAddress: token})`. It returns clients that advertise support for that token; unreachable or unsupported operators are skipped. Discovery uses the Protocol's pinned registry and Protocol RPC index, not an endorsement of an operator. `sdk.NewBroadcasterClient` also accepts an explicit public registration configuration. The service uses JSON-RPC 2.0 positional parameters, matching Protocol RPC.
-
-The stage sequence matches TypeScript:
-
-1. Prepare business intent, then inspect `Preview()` or `EstimateGas()`.
-2. Call `prepared.WithBroadcaster(ctx, client, sdk.WithBroadcasterOptions{MaxFeeAmount: limit})` before signing/proving. The returned handle contains the fee-bearing frozen plan and authenticated quote.
-3. Review `quoted.Preview().FeeAmount`; existing private change pays first when sufficient. Otherwise an explicitly selected public payer authorizes the gross funding amount. Private-only managed sessions may select additional available notes; detached inputs remain explicit. Cancellation deducts the fee from its public refund.
-4. Complete wallet authorization and proving when required, then sign the final EIP-712 public funding request externally. Shield requires no ZK proof.
-5. Call `ready.SubmitBroadcaster(ctx, client)`, retaining the operation/request ID before sending. On timeout, recover through the same client's status API rather than issuing a conflicting spend. Quote and final calldata remain bound to chain, Protocol, token, registered signer, fee recipient and deadline.
-
-Transfer, Shield, Credit creation, top-up and cancellation support this flow. Credit draw, registration and aggregates do not. Fee estimation rebuilds the plan in bounded attempts and rejects a non-converging or over-limit fee. An optional `FundingPermit` callback signs a permit for the final gross amount; funding signatures do not replace ERC20 allowance/permit. Business output identities and delivery stay frozen during repricing. Existing self-submission via geth remains available. Successful fees accrue in Protocol custody; generated contract bindings expose the balance and withdrawal methods.
-
-Managed sessions reserve additional quoted inputs atomically; failed quotes restore the original reservations. Potentially externalized submissions remain uncertain until canonical receipt reconciliation. Both managed Operation and detached PreparedTransaction expose quote/intent exports and the same broadcaster attachment stages.
-
-See the complete [Shield broadcaster example](examples/02-transparent-amount/05-shield-via-broadcaster/main.go) and the [offline output variants](examples/00-wallet/02-note-output/main.go).
-
-## Envelopes and application payloads
-
-Funds and Credit deliveries use current version-1 envelopes, identified by header `0x01` and `0x81`. Deliveries are bounded by 4096 bytes. Historical formats are rejected by local decryption. Protocol RPC transports opaque deliveries rather than interpreting application payloads.
-
-`core.Note.Payload` and `core.CreditNote.Payload` contain raw application bytes. Decryption authenticates the SDK envelope and financial fields and preserves these bytes without choosing an application codec. Applications explicitly call `core.FundsV1.Encode` / `Decode` or `core.CreditV1.Encode` / `Decode` for the built-in memo payload, or use their own codec. The built-in payload contains only memo metadata; it does not assert sender identity or a return address. Payloads do not change note commitments.
-
-Top-up and draw payload overrides preserve the parent payload when nil; a non-nil empty slice clears it. Selective disclosures can reveal one note opening or authenticate its encrypted payload without exporting an entire viewing key. Verify disclosures against canonical receipts; explicit disclosure exports are sensitive.
-
-## Managed wallet sessions
-
-The stateless SDK does not import the session package or a database driver. Both paths use one internal transaction engine; managed persistence and lease checks are injected by the session package. There is no separate Go module or independently versioned session release.
-
-`sdk.WalletFromPrivateKey` restores a complete local wallet for a managed session. It derives separate viewing and detection capabilities from the application's existing EVM key; mnemonic derivation remains the application's responsibility. Private wallet and capability objects redact default formatting and JSON.
-
-Import `github.com/invisi-lab/invisi-sdk-go/session` for managed wallets. Compose `session.Connect(ctx, session.Options{Invisi: invisi, Wallet: wallet, Protocol: pool, Store: store})`. Supply private capabilities, a geth signer and optional funding signer on these session options; the shared `sdk.InvisiOptions` contains infrastructure only. Session operations provide local authorization, input reservations, submission tracking, reconciliation and recovery. Only this workflow uses a Store.
-
-`session.NewMemoryWalletStore` is ephemeral. For persistence, combine `session.NewEncryptedWalletCodec` with `session/sqlite.NewWalletStore` and an application-owned database and encryption key. Successful atomic commits advance a revision; failed commits do not. SQLite authenticates the stored revision. Private authorization signatures are not persisted.
-
-Refresh defaults to `sdk.MaxUpdateBlocks` / `rpc.MaxUpdateBlocks` (10000 inclusive blocks); `PageSize` may reduce that limit. Empty intermediate pages skip repeated inventory work, while an entirely empty range retains one final spent-state check. Every page still checks its block anchor, and output count, response size and detection delivery limits remain separate.
-
-Refresh authenticates RPC candidates against canonical receipts, membership and spent state. Complete discovery coverage is separate from blocks observed during reconciliation. Partial or failed scans do not claim complete coverage. Refresh is serialized per session; revision checks prevent a stale scan from overwriting another session's reset. Reorganizations require an explicit reset refresh.
-
-`GetHistory` returns copied incoming notes and outgoing business summaries, including public funding, private outputs and withdrawals, without proof witnesses or recovery secrets. `Subscribe` queues notifications only after successful commits. Callbacks run serially outside operation locks and may read the session; unsubscribe cancels pending callbacks. Notifications are local to that session instance. Applications own refresh scheduling and UI updates.
-
-A timeout does not release potentially externalized inputs. Persist a broadcast hash, reconcile the exact calldata and canonical receipt, and resume the saved operation after interruption. Use ordinary geth receipt waiting; the SDK does not hide a transaction submission service.
+The SDK remains in the v1 series. Source synchronization does not publish a new module version or upgrade deployed contracts.
 
 ## Packages
 
 | Package | Responsibility |
 | --- | --- |
-| `sdk` | Stateless wallets, preparation, signing requests, registry and disclosure |
-| `session` | Managed operations, inventory, history, refresh, reservations and recovery |
-| `session/sqlite` | Encrypted persistent wallet state |
-| `core` | Wallet KDF, addresses, note encryption, payload codecs and FMD |
-| `protocol` | Deployment context, statements, calldata and generated contract bindings |
-| `rpc` | Deployment discovery, registered keys, broadcaster profiles, outputs, candidates and membership |
-| `broadcaster` | Token capability probes, bound fee quotes, delegated submission and status |
-| `prover` | Authenticated proof statements and recursive aggregation |
-| `prover/native` | Local witness execution, generation and independent verification |
+| `sdk` | Stateless Note payments, public/private wallet capabilities, registration, IPR/IPN and Note disclosure |
+| `core` | Wallet derivation, addresses, ordinary Note cryptography, FMD and application payload codecs |
+| `credit` | Separate postpaid grant State, policy/usage, deliveries, lifecycle preparation, proof requests, paid broadcasting and grant audit disclosure |
+| `session` | Managed Note inventory, canonical refresh, encrypted persistence, journals and notifications |
+| `credit/session` | Independent managed grant projection, cross-role reservations and recoverable Credit journals; composed through `WalletSession.Credit()` |
+| `session/sqlite` | Authenticated encrypted wallet snapshots in an application-owned database |
+| `protocol` | Note statements/calldata, deployment validation and registry contracts |
+| `protocol/contracts` | Generated bindings for the six current contract ABIs |
+| `rpc` | Separate typed Note and Credit data APIs, with independent Chain RPC checks |
+| `prover`, `prover/native` | Authenticated statements, native recursion, local witness execution and independent verification |
+| `broadcaster` | Registered operator clients, authenticated fee quotes, canonical intent hashes and idempotent submission |
+| `gas` | Exact documented benchmark references with provenance and release identity |
 
-Chain RPC supplies contract reads, canonical blocks/receipts and submission. Protocol RPC supplies indexed public records and candidate filtering. Detection keys only delegate filtering; they do not decrypt notes or authorize spending. Applications remain responsible for trusted endpoints, keys, reservations in detached workflows and durable broadcast tracking.
+All packages share one Go module and release. Import subpackages under `github.com/invisi-lab/invisi-sdk-go`.
 
-## Source organization
+## Wallets and infrastructure
 
-Public Go import paths remain stable. The `sdk` package is a capability entrypoint, with focused client, wallet, note, funding, transaction, Credit, registry, broadcaster, gas and disclosure files. It owns no managed wallet state.
+`sdk.PublicWalletFromAddress` imports public receiving identity only. Complete `0i` addresses resolve offline; an EVM recipient requesting an envelope needs registered receiving keys. `sdk.WalletFromPrivateKey` restores local spending/viewing/detection capabilities from an application-owned EVM key. Mnemonic derivation is the application's responsibility.
 
-Go receiver methods and private state stay in their owning package. Related files use descriptive feature names instead of introducing subpackages that depend on each other:
+Create an `sdk.Invisi` with `Provider`, `ProtocolRPC` and optionally `Prover`. `sdk.ProtocolFromRPC` authenticates the selected deployment against Chain RPC. Protocol RPC uses the `/v1` API; this does not change the independent on-chain `VERSION()` value. Applications choose trusted endpoints and can pin deployment metadata.
 
-| Package | Implementation responsibilities |
-| --- | --- |
-| `core` | Wallet authorization, receiving addresses, note/Credit commitments, delivery types, envelope cryptography, payloads and recovery |
-| `protocol` | Funds/Shield/aggregate requests, separate Credit create/draw/cancel/top-up encoders, registry and contract readers |
-| `rpc` | Client configuration, HTTP transport, service discovery, response values, output validation and indexed queries |
-| `prover` | Public interfaces, private witness access, authenticated statements, proof verification and aggregation |
-| `prover/native` | Explicit local proving backend and authenticated resources |
-| `session` | Composition, inventory, canonical synchronization, history, operation stages, reservations, recovery and storage |
-| `broadcaster` | Bound intents, quotes, submissions and status |
+Spending authorization, public ERC20 funding, allowance/Permit, detection, viewing and gas submission are separate roles. A full Note viewing capability is not purely read-only: it also permits consumption tracking and a full owner-bound sweep.
 
-Independent implementations live under `internal/cryptography/{field,poseidon,fmd}` and `internal/gas`. The shared `internal/transaction` engine separates funds/Credit preparation, recipient lookup, signing, proving, calldata, fee rebuilding and registry reconciliation into focused files. Applications use public package entries rather than internal implementations. Tests stay with the capability they verify; fixtures and their generators move together. Generated bindings, circuit artifacts and wire-vector bytes are preserved.
+## Ordinary Note payments
 
-## Single-transaction indexed updates
+Every business output is an immutable `NoteOutput` created with `sdk.NewNoteOutput`. The factory accepts `PaymentRequest` or an IPR string and binds chain, Protocol, token, amount and recipient before preparation.
 
-Protocol RPC service 1.1.4+ supports one-transaction lookup with an independently configured Chain RPC provider:
+Recipients are typed variants:
 
-```go
-updates, err := protocolRPC.GetTransactionUpdates(ctx, protocol.Context(), transactionHash)
-if err != nil { return err }
-if updates.Status == sdk.TransactionIndexed {
-    fmt.Println(updates.Block.Number, *updates.ReceiptStatus)
-    fmt.Println(updates.Outputs, updates.CreditTransitions)
-}
-```
+- `InvisiRecipient`: complete receiving address; delivery can be encrypted offline.
+- `EVMRecipient`: EVM owner; envelope lookup uses the selected Protocol RPC or Chain RPC registry. Explicitly disabling the envelope permits an unregistered destination.
+- `IdentityRecipient`: canonical per-note identity, with no recoverable owner/nonce opening or envelope.
 
-`ProtocolTransactionUpdates` distinguishes `not_found` (no mined receipt; unknown or still pending), `pending_index` and `indexed`. Outputs and Credit transitions stay nil until indexed; indexed empty slices mean no matching updates. `Block` and `ReceiptStatus` are nil only for `not_found`. Receipt status 0/1 independently describes EVM reversion/success.
+`sdk.Invisi.PrepareShield` creates transparent-amount deposits without a proof. `PrepareTransfer` combines explicit private inputs, optional public funding, private outputs and an optional `Withdrawal`. Every selected input is consumed. Automatic change uses a fresh Note.
 
-For unavailable data, `IndexedHead` is an observed checkpoint and may remain on a stale fork. Mined transaction blocks are checked through the caller's Chain RPC; indexed results additionally require canonical checkpoint/output references and a final block recheck. The ordinary `GetStatus` call retains its strict canonical checks. Opaque outputs preserve both Credit role envelopes and deduplicate exact deliveries. Transition `Data` contains raw public JSON fields without floating-point conversion; decode it explicitly and authenticate receipts before applying financial state.
+The detached sequence is prepare → inspect → export portable wallet signing request → attach external signature → prove and independently verify → attach separate public funding signature if needed → export calldata → submit with ordinary geth APIs. Full owner-bound sweeps without funding, private outputs or fees need viewing capability; partial or redirected spending requires owner authorization.
 
-The method does not poll, fall back to ranges, decrypt payloads or mutate a wallet Store. Context controls cancellation. Result types and availability constants are exported from both `rpc` and `sdk`.
+Managed Note operations use `session.Connect`, reservations and durable journals. No Store is created or consulted by detached preparation.
 
-## Proving and verification
+## Postpaid Credit
 
-Native proving requires BB 6.0.0 and `noir-execute` for Noir 1.0.0-rc.6. Configure `native.NativeOptions.BBBinary` and `NoirBinary`, or put matching tools on PATH. Tool versions and circuit/VK identities are checked. There is no Node runtime dependency and no automatic tool download.
+`credit.State` is authority to debit an owner's wallet, not a prepaid token balance. It keeps owner/spender identities, token, the original revocation shard/slot, nonce, expiry, a grant-scoped shared key, four limits and five usage fields. It has no payout, refund, remainder balance or Note funding fields.
+
+- `PrepareCreate` registers private authority without depositing principal or spending Notes.
+- `PrepareDraw` consumes N grant states, groups sorted owner payer receipts, creates N successor states and one ordinary Note for any recipient identity.
+- `PrepareDrawToNote` additionally freezes that Note opening and public receiving keys, so fee quotation can preserve owner/nonce/payload while rebuilding its net amount and envelope.
+- `PrepareUpdate` changes policy/expiry while preserving usage and immutable grant identity/namespace.
+- `PrepareRevoke` uses the original owner/token/shard/slot reference. It needs no latest merchant state and no ZK proof.
+
+The shared Note Tree is a storage/membership primitive. A Credit state remains a distinct business model from an ordinary spendable Note.
+
+Limits are single/day/month/lifetime. Zero disables a check, never usage accumulation. Draw and recovery use canonical chain time. State recovery authenticates the masked **gross debit**, deterministic next nonce and successor commitment; unknown child payload is not copied from the parent.
+
+`credit.DeliveryState` retains both receiving-key snapshots. Current Credit envelopes use `0x82`; older financial models/envelopes are rejected. `Payload` is opaque authenticated application data outside commitments. `credit.MemoV1` is an optional memo codec independent of the envelope version.
+
+### Authorization, fees and proving
+
+Create/update/draw use v4 wallet authorization domains and direct local proofs. `ExportSigningRequest` returns portable JSON-safe EIP-712 data without `EIP712Domain` in application types; `WithWalletSignature` accepts standard or compact EOA signatures. `WithAuthority` is the explicit raw public-key/circuit-signature boundary.
+
+Revoke uses its own fee-bound owner EIP-712 signature, including EOA/ERC-1271 support through `WithRevocationSignature`. A direct owner caller may omit the signature. Revocation remains available during protocol and circuit pauses and cannot claw back an already issued Note.
+
+Every Credit request carries `FeeRecipient` and `FeeAmount`: either a complete zero pair or a nonzero recipient and positive uint128 fee. Create/update/revoke pull fees from the owner's ERC20 wallet. Draw debits and usage are gross; the ordinary Note receives `totalAmount - feeAmount`. Allowance and token balance remain separate from wallet authorization.
+
+`Prove` creates a local witness, uses an authenticated statement, and independently verifies the resulting proof before `Calldata` becomes available. Recovery intents omit private wallet authorization and separate revoke signing material. Final public calldata, including a submitted revoke signature, is retained in the encrypted journal for exact reconciliation and idempotency. Explicit intent exports contain private grant data and belong only in authenticated encrypted storage.
+
+## Paid broadcaster flow
+
+Note operations retain their `WithBroadcaster` flow. All four Credit operations support:
+
+1. Prepare the business request.
+2. Select `prepared.WithBroadcaster(ctx, client, credit.WithBroadcasterOptions{MaxFeeAmount: limit})` before authorization/proving.
+3. Inspect `Preview()`, including fee and ordinary Note net amount; prepare the required owner/payer ERC20 allowance.
+4. Authorize and prove, or attach the revoke owner signature.
+5. Persist a submission ID, then `SubmitBroadcaster` with the original client.
+6. Authenticate canonical receipts independently of the operator's status response.
+
+Fee convergence is bounded and fails without modifying the original request on over-limit/nonconverging quotes. Grant gross debits and successor state commitments remain fixed during draw repricing. Enveloped draws need `PrepareDrawToNote` to reencrypt the final net Note safely.
+
+Quotes bind chain, Protocol, token, registered signer, fee recipient/amount, deadline and canonical public intent. Only proofs and the operation's separate signature slots are stripped from the intent hash. Final calldata must match the quote. After a timeout, query the same operator with the same request ID rather than creating a conflicting spend.
+
+## Managed grant state and recovery
+
+`walletSession.Credit()` composes `credit/session` with the same encrypted WalletStore. Note and grant inventories/journals remain separate. Both roles of one physical grant reserve together. Current allocation, bitmap, consumed nullifiers, registered historical roots, UTC draw window and ERC20 gross/fee allowance are checked through the session's pinned provider.
+
+The managed flow provides `Prepare`, local or external authorization, `Prove`, `Calldata`, paid broadcaster submission, `Cancel`, `Resume` and canonical `Reconcile`. Externalization and exact calldata are committed before submission; transport failures retain reservations. Resume replaces the old worker lease and independently verifies saved proofs. A canonical reverted transaction can release reservations; an unconfirmed operator result cannot.
+
+Use `walletSession.CreditReconciler(confirmations)` to bind the actual transaction destination, chain and exact calldata to canonical receipts and successor events. `WalletSession.Refresh` separately discovers Notes and Credit states, checks current consumption/revocation and restores unresolved reservations after reset. Reorganizations fence old workers without discarding externalized journals.
+
+`GetHistory` on each component returns business summaries without proof witnesses or signing secrets. Credit summaries omit grant recovery keys and nonces. Top-level `Subscribe` notifies after successful Store commits, serially outside operation locks. The application owns refresh scheduling and cross-process notifications.
+
+## Typed Protocol RPC and receiving
+
+Note methods are `GetNote`, `GetNoteUpdates`, `GetTransactionNoteUpdates`, `DetectNotes` and `IsNoteSpent`. Credit methods are `GetCreditState`, `GetCreditTransitions`, `GetTransactionCreditUpdates`, `DetectCreditStates`, `IsCreditConsumed`, `GetCreditAllocation` and `GetCreditRevocationBitmap`.
+
+One indexed CreditState is one physical leaf with two opaque role deliveries. Credit records never pass through the Note APIs. Public grant references/bitmap are distinct from private spender, terms and usage. Index availability (`not_found`, `pending_index`, `indexed`) is separate from chain receipt success/reversion.
+
+RPC candidates are authenticated against canonical receipts, insertion positions, membership and chain state before becoming spendable inventory. FMD is a filter, not proof of completeness or payment. Discovery coverage is separate from blocks merely observed during reconciliation. A reorganization needs an explicit reset refresh.
+
+`credit.Disclose` creates a grant-scoped audit disclosure without wallet signing keys or recipient Note openings. Its explicit `Export` is sensitive; `Verify` requires an independently accepted commitment anchor.
+
+## IPR and IPN
+
+`sdk.EncodePaymentRequest` / `DecodePaymentRequest` use the cross-language `ipr:` wire format for ordinary Note output intent. `NewNoteOutput` freezes execution-specific nonce/lookup choices without rewriting the request's deployment context.
+
+`TransactionOutput.ExportPaymentNote` and `NoteOutput.ExportPaymentNote` export one definite ordinary Note opening as `ipn:`. `PaymentNoteFromIPN` recomputes identity/commitment offline. `Verify` checks canonical confirmed membership; `VerifySpendable` also checks the actual owner's spending capability and current nullifier status, then provides `ToInput`.
+
+IPN contains no viewing/spending key, ciphertext, payload or membership path. Export is not a claim of payment. Identity-only outputs and Credit states cannot export IPN. Deliver only the recipient's final output after confirmation, never the payer's change.
+
+## Gas references
+
+`gas.Reference(shape)` matches a complete documented benchmark shape and returns a detached result with source hash, docs commit, conditions and measured median. Unsupported shapes return unavailable; there is no arbitrary linear fallback or current aggregate gas claim based on historical private-pin experiments.
+
+Credit measurements must match the packaged manifest/format identity and fee mechanism. Historical rows remain identifiable; they cannot impersonate a new release. Use Chain RPC `eth_estimateGas` on the final calldata and real caller for actual submission.
+
+## Development and validation
 
 ```sh
 go test ./...
 go test -race ./...
 go vet ./...
+python3 scripts/test-sync-reference.py
 ```
 
-Real native integration tests additionally use `BB_BINARY_PATH` and `NOIR_EXECUTE_PATH`. Cross-language fixtures check current TypeScript signing, wallet, encryption and disclosure formats. [CHANGELOG.md](CHANGELOG.md) describes the breaking migration from 1.1.3.
+Native integration tests additionally use `BB_BINARY_PATH` and `NOIR_EXECUTE_PATH`. The backend checks exact Noir/BB versions and authenticated artifact/VK identity, does not automatically download tools and never uploads witnesses.
 
-## Portable Note payment requests (IPR)
+Maintainers regenerate bindings with `INVISI_PROTOCOL_ROOT=/path/to/invisi-protocol go generate ./protocol/contracts`. `python3 scripts/sync-reference.py --proving-only` authenticates the current 28 daily Note circuits, 34 aggregate outers and 15 direct Credit routes, with recursive certificates for C1..C10. User manifest4/format7, aggregate receipts10 and Credit manifest7/format8 have separate identities.
 
-`PaymentRequest` describes Note output creation. `EncodePaymentRequest` and `DecodePaymentRequest` are offline operations. The canonical wire format is identical to the TypeScript SDK: `ipr:` followed by unpadded Base64URL, version 1 in the binary header, unsigned big-endian fields and strict range/length checks. Shared fixtures are in `internal/transaction/testdata/payment_requests.json`.
-
-```go
-ipr, err := sdk.EncodePaymentRequest(request)
-if err != nil { return err }
-output, err := sdk.NewNoteOutput(ipr)
-if err != nil { return err }
-// The original request remains unchanged when a nonce is selected.
-original := output.IPP()
-_ = original
-```
-
-`NewNoteOutput` accepts a `PaymentRequest` or an encoded IPR, with at most one `NoteOutputExecutionOptions`. Its `Nonce` overrides only an omitted nonce (or matches a fixed one); `AddressLookup` selects `"chain"` or `"protocol-rpc"` only for encrypted EVM recipients. Local lookup preferences are never encoded. Invisi recipients always have an envelope. Identity recipients have no envelope, nonce or payload. Missing nonces are independently randomized per output. Request bytes are retained through protected output snapshots and validated again during preparation. Application payload is bounded to 3936 bytes; unsupported versions, flags, trailing bytes and noncanonical Base64URL are rejected. Credit is outside this codec.
-
-## Offline payment Notes (IPN)
-
-IPN privately delivers one definite funds Note opening. The canonical wire format is `ipn:` plus unpadded Base64URL, exactly 149 binary bytes and 203 text characters. Fields are version (1 byte), chainId (8), protocol address (20), token address (20), amount (16), owner address (20), nonce (32) and commitment (32), in that order. All integers are unsigned big-endian. There is no payload, ciphertext, clue, viewing key, spending key or signature. `EncodePaymentNote`/`DecodePaymentNote` validate structure; `PaymentNoteFromIPN` also recomputes identity and commitment. Independent cross-language vectors are in `internal/transaction/testdata/payment_notes.json`.
-
-```go
-// Export from the final prepared/quoted plan, which includes generated change.
-outputs := prepared.GetOutputs()
-ipn, err := outputs[0].ExportPaymentNote()
-if err != nil { return err }
-// Privately deliver only this recipient's IPN after confirmation.
-note, err := sdk.PaymentNoteFromIPN(ipn)
-if err != nil { return err }
-
-// Correct opening and confirmed on-chain membership; spent Notes may pass.
-verified, err := note.Verify(ctx, pool)
-if err != nil { return err }
-_ = verified.CheckedAt()
-
-// Requires the actual owner's spending Wallet and a currently unspent nullifier.
-// This does not sign or submit a transaction.
-spendable, err := note.VerifySpendable(ctx, pool, ownerWallet)
-if err != nil { return err }
-input, err := spendable.ToInput()
-if err != nil { return err }
-_ = input
-_ = spendable.SpendabilityCheckedAt()
-```
-
-`NoteOutput.ExportPaymentNote()` exports a created output directly. Stateless `PreparedTransaction.GetOutputs()` and managed `Operation.GetOutputs()` return detached final `TransactionOutput` snapshots, including change. Identity-only outputs have no recoverable owner/nonce opening and reject IPN export. Credit openings have no IPN export. Export alone does not assert payment; match the token and amount to your business request and verify on-chain receipt.
-
-`Verify` checks deployment context/code, canonical confirmed blocks, commitment membership and a chain-accepted root, without checking spent status. `VerifySpendable` additionally requires a private `Wallet` whose actual signing material matches the Note owner, then checks the latest chain nullifier/root state. Returned Note data, proof paths and inputs are copied. `ToInput` is available only on a successful spendable result; a zero-valued result is rejected.
-
-`ProtocolFromRPC` retains public provider/RPC connections for these checks. Manually constructed Protocols can supply `PaymentNoteVerificationOptions{ProtocolRPC: rpc, Provider: provider, Confirmations: 3}` to either method. Zero/omitted confirmations use 1. The confirmed verification anchor is the indexed head or the confirmation-depth block, whichever is earlier. Detailed spent status is checked at the latest chain block. Spendability is a point-in-time observation; subsequent preparation/simulation still checks the chosen operation's restrictions.
-
-The RPC client exposes `GetNote(ctx, context, commitment, block)`, backed by `invisi_getNote`. The client obtains and verifies canonical output metadata and a Merkle proof through the existing membership APIs, independently checking accepted roots through Chain RPC. A null result means absent from the selected index snapshot, not proof of absence from the chain. No Note nonce or wallet key is sent to Protocol RPC.
+Current configurable examples live under [examples](examples/README.md). Real native proof tests establish cryptographic interoperability; mocked operator/provider tests establish stage and journal behavior and do not claim real token accounting.

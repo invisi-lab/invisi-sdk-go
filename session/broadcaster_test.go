@@ -162,9 +162,6 @@ func TestBroadcasterShieldGrossFundingAndDecodedCurrentCalldata(t *testing.T) {
 	if e != nil {
 		t.Fatal(e)
 	}
-	if _, err := next.EstimateGas(); err != nil {
-		t.Fatal("quoted gross funding gas reference", err)
-	}
 	if next.plan.FundingMode != "signature" || next.plan.Funding.Amount.Int64() != 35 || next.plan.Outputs[0].Amount.Int64() != 30 {
 		t.Fatal(next.Preview())
 	}
@@ -223,56 +220,6 @@ func TestBroadcasterReadySubmitKeepsUncertainReservations(t *testing.T) {
 		if note.ReservedBy != next.ID() {
 			t.Fatal("uncertain send lost reservation")
 		}
-	}
-}
-
-func TestBroadcasterCreditFeesKeepBusinessLeafAndRefundFullWitness(t *testing.T) {
-	for _, kind := range []string{"create", "top-up", "cancel"} {
-		t.Run(kind, func(t *testing.T) {
-			ctx := context.Background()
-			s, token, _ := testSession(t)
-			address, _ := s.wallet.GetAddress()
-			var original *Operation
-			var e error
-			switch kind {
-			case "create":
-				original, e = s.PrepareCreateCredit(ctx, sdk.CreateCreditPreparation{TokenAddress: token, Deadline: uint64(time.Now().Unix() + 300), Spender: address, Amount: big.NewInt(30), Expiry: big.NewInt(time.Now().Unix() + 10000)})
-			case "top-up":
-				leaf := seedCredit(t, s, token)
-				original, e = s.PrepareTopUpCredit(ctx, sdk.TopUpCreditPreparation{TokenAddress: token, Deadline: uint64(time.Now().Unix() + 300), Credit: leaf, AdditionalAmount: big.NewInt(30), Expiry: big.NewInt(time.Now().Unix() + 10000)})
-			case "cancel":
-				leaf := seedCredit(t, s, token)
-				original, e = s.PrepareCancelCredit(ctx, sdk.CancelCreditPreparation{TokenAddress: token, Credit: leaf, Deadline: uint64(time.Now().Unix() + 300)})
-			}
-			if e != nil {
-				t.Fatal(e)
-			}
-			c, _ := testBroadcaster(t, original, []int64{5}, false)
-			next, e := original.WithBroadcaster(ctx, c, sdk.WithBroadcasterOptions{MaxFeeAmount: big.NewInt(10)})
-			if e != nil {
-				t.Fatal(e)
-			}
-			if kind == "cancel" {
-				if next.plan.CancelCredit.Amount.Int64() != 100 || next.Preview().WithdrawalAmount.Int64() != 95 {
-					t.Fatal(next.Preview())
-				}
-			} else {
-				if original.plan.CreateCredit.CreditCommitment != next.plan.CreateCredit.CreditCommitment || string(original.plan.Deliveries[0].Ciphertext) != string(next.plan.Deliveries[0].Ciphertext) || next.plan.Outputs[0].Amount.Int64() != 65 {
-					t.Fatal("Credit business leaf changed")
-				}
-			}
-			next, e = next.Authorize(ctx)
-			if e != nil {
-				t.Fatal(e)
-			}
-			next, e = next.Prove(ctx)
-			if e != nil {
-				t.Fatal(e)
-			}
-			if _, e = next.SubmitBroadcaster(ctx, c); e != nil {
-				t.Fatal(e)
-			}
-		})
 	}
 }
 

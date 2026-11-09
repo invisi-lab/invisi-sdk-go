@@ -35,9 +35,7 @@ func (o *Execution) WalletRequest(ctx context.Context) (core.WalletAuthorization
 	if !o.Plan.NeedsAuthorization || (o.Status != "prepared" && o.Status != "authorized") {
 		return core.WalletAuthorizationRequest{}, errors.New("operation is not awaiting wallet authorization")
 	}
-	if err := o.CheckDrawPeriod(ctx); err != nil {
-		return core.WalletAuthorizationRequest{}, err
-	}
+
 	words, err := o.Words()
 	if err != nil {
 		return core.WalletAuthorizationRequest{}, err

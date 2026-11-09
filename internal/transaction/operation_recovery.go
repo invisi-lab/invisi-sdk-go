@@ -59,26 +59,7 @@ func (o *Execution) ValidateRecovered() error {
 			return errors.New("recovered note nullifier mismatch")
 		}
 	}
-	for _, input := range p.CreditInputs {
-		note := input.State.Note
-		actor := note.OwnerWalletIdentity
-		if input.Role == "spender" {
-			actor = note.SpenderWalletIdentity
-		} else if input.Role != "owner" {
-			return errors.New("invalid recovered Credit role")
-		}
-		if note.ProtocolContext != o.Runtime.CoreContext() || actor != core.BigIntToElement(p.OwnerAddress.Big()) || note.TokenAddress != core.BigIntToElement(p.Context.TokenAddress.Big()) {
-			return errors.New("recovered Credit scope mismatch")
-		}
-		leaf, err := CreditCommitment(note)
-		if err != nil || leaf != input.Commitment {
-			return errors.New("recovered Credit commitment mismatch")
-		}
-		nf, err := core.ComputeCreditNullifier(note.ChainID, note.CreditSharedKey, core.BigIntToElement(leaf.Big()))
-		if err != nil || FieldHash(nf) != input.Nullifier {
-			return errors.New("recovered Credit nullifier mismatch")
-		}
-	}
+
 	if p.Kind != "shield" {
 		words, err := o.Words()
 		if err != nil {

@@ -26,7 +26,7 @@ func detachedForTest(t *testing.T, o *Operation, state WalletState) *sdk.Prepare
 	t.Helper()
 	execution := o.execution()
 	runtime := *execution.Runtime
-	runtime.ExplicitInventory = &transaction.Inventory{Notes: state.Notes, Credits: state.Credits}
+	runtime.ExplicitInventory = &transaction.Inventory{Notes: state.Notes}
 	runtime.InventoryReader = nil
 	runtime.OnComplete = nil
 	runtime.OnPersist = nil

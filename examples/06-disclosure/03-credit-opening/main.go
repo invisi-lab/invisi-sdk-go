@@ -1,44 +1,32 @@
-// 03 credit opening.
 package main
 
 import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"log"
-
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
+	"github.com/invisi-lab/invisi-sdk-go/credit"
 	"github.com/invisi-lab/invisi-sdk-go/examples/shared"
 	"github.com/invisi-lab/invisi-sdk-go/sdk"
+	"log"
 )
 
 func main() {
 	ctx := context.Background()
-
-	// 1. Load local demonstration accounts.
 	accounts, err := shared.GetAccounts(shared.Settings.AccountsFile)
 	if err != nil {
 		log.Fatal(err)
 	}
 	if len(accounts) < 2 {
-		log.Fatal("this example requires at least 2 initialized accounts")
+		log.Fatal("initialize local accounts first")
 	}
-	bob := accounts[1]
-
-	// 2. Connect to the chain and pin the Protocol RPC deployment.
+	owner := accounts[1]
 	provider, err := ethclient.DialContext(ctx, shared.Settings.ChainRPCURL)
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer provider.Close()
-	chain, err := provider.ChainID(ctx)
-	if err != nil {
-		log.Fatal(err)
-	}
-	if chain.Uint64() != shared.Settings.ChainID {
-		log.Fatal("chain does not match Settings.ChainID")
-	}
 	client, err := sdk.NewProtocolRpcClient(shared.Settings.ProtocolRPCURL)
 	if err != nil {
 		log.Fatal(err)
@@ -47,48 +35,26 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	token := common.HexToAddress(shared.Settings.TokenAddress)
-	verifier, err := sdk.NewDisclosureVerifier(sdk.DisclosureVerifierOptions{Protocol: pool, Provider: provider, TokenAddress: token, Confirmations: 1})
-	if err != nil {
-		log.Fatal(err)
-	}
-	var disclosure *sdk.Disclosure
-	var reference sdk.DisclosureReference
-
-	// 3. Discover authenticated Credit records for this role.
-	candidates, err := shared.DiscoverCredits(ctx, provider, client, pool, bob.PublicWallet, bob.ViewingKey, token, "owner")
+	candidates, err := shared.DiscoverCredits(ctx, provider, client, pool, owner.PublicWallet, owner.ViewingKey, common.HexToAddress(shared.Settings.TokenAddress), "owner")
 	if err != nil {
 		log.Fatal(err)
 	}
 	if len(candidates) == 0 {
-		log.Fatal("no authenticated owned Credit to disclose")
+		log.Fatal("no authenticated owner grant")
 	}
 	selected := candidates[0]
-	disclosure, err = sdk.DisclosureFromCredit(selected.Input.State.Note)
+	disclosure, err := credit.Disclose(selected.Input.State)
 	if err != nil {
 		log.Fatal(err)
 	}
-	reference = sdk.DisclosureReference{
-		TransactionHash: selected.Output.TransactionHash,
-		TreeID:          selected.Input.TreeID,
-		LeafIndex:       selected.Input.LeafIndex,
-		Role:            "owner",
+	// The commitment anchor came from canonical receipt authentication during discovery.
+	if _, err = disclosure.Verify(selected.Commitment); err != nil {
+		log.Fatal(err)
 	}
-
-	// 4. Export this one disclosure locally; never print its sensitive contents.
-	exported, err := json.Marshal(disclosure.Export())
+	encoded, err := json.MarshalIndent(disclosure.Export(), "", "  ")
 	if err != nil {
 		log.Fatal(err)
 	}
-	defer clear(exported)
-	imported, err := sdk.DisclosureFromExport(exported)
-	if err != nil {
-		log.Fatal(err)
-	}
-	verified, err := verifier.Verify(ctx, imported, reference)
-	if err != nil {
-		log.Fatal(err)
-	}
-	fmt.Println("Verified canonical disclosure block:", verified.Block.Number, "Confirmations:", verified.Confirmations)
-	fmt.Println("Redacted inspection:", disclosure, "Scope:", disclosure.GetScope())
+	fmt.Println("Sensitive grant-scoped audit export; it permits following this grant's history:")
+	fmt.Println(string(encoded))
 }

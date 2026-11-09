@@ -29,7 +29,7 @@ func (o *Execution) PrivateInputs() (map[string]any, error) {
 	}
 	private := map[string]any{"public_key_x": authority.PublicKeyX, "public_key_y": authority.PublicKeyY, "signature": authority.Signature}
 	if o.Plan.Kind != "transact" {
-		return o.CreditPrivateInputs(private)
+		return nil, errors.New("Note proving supports only transact; Credit uses its independent lifecycle")
 	}
 	private["input_owner_address"] = "0"
 	if len(o.Plan.Inputs) > 0 {
@@ -80,14 +80,7 @@ func (o *Execution) CircuitName() string {
 	switch o.Plan.Kind {
 	case "transact":
 		return fmt.Sprintf("transact_user_slots%d", o.Plan.Capacity)
-	case "create-credit":
-		return "create_credit"
-	case "credit-draw":
-		return fmt.Sprintf("credit_draw_slots%d", o.Plan.Capacity)
-	case "cancel-credit":
-		return "credit_cancel"
-	case "top-up-credit":
-		return "credit_top_up"
+
 	}
 	return ""
 }
@@ -96,9 +89,6 @@ func (o *Execution) ProveInternal(ctx context.Context, options ...TransactionPro
 	o.mu.Lock()
 	defer o.mu.Unlock()
 	if e := o.CheckLease(ctx); e != nil {
-		return nil, e
-	}
-	if e := o.CheckDrawPeriod(ctx); e != nil {
 		return nil, e
 	}
 	if len(options) > 1 {
@@ -130,8 +120,8 @@ func (o *Execution) ProveInternal(ctx context.Context, options ...TransactionPro
 	if execution == "aggregate" && o.Plan.Broadcaster != nil {
 		return nil, errors.New("broadcaster operations cannot target aggregate proofs")
 	}
-	if execution == "aggregate" && (o.Plan.Kind != "transact" || o.Plan.Capacity != 14) {
-		return nil, errors.New("aggregate execution requires a 14-slot transfer")
+	if execution == "aggregate" && (o.Plan.Kind != "transact" || (o.Plan.Capacity < 1 || o.Plan.Capacity > 10)) {
+		return nil, errors.New("aggregate execution requires a native C1 through C10 transfer")
 	}
 	o.Plan.Target = "evm"
 	if execution == "aggregate" {

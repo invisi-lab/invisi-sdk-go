@@ -3,94 +3,53 @@ package native
 import (
 	"bytes"
 	"context"
-	"math/big"
+	"encoding/json"
+	"github.com/ethereum/go-ethereum/common"
+	"github.com/invisi-lab/invisi-sdk-go/prover"
 	"os"
 	"strings"
 	"testing"
 	"time"
-
-	"github.com/consensys/gnark-crypto/ecc/bn254/fr"
-	"github.com/ethereum/go-ethereum/common"
-
-	"github.com/invisi-lab/invisi-sdk-go/core"
-	"github.com/invisi-lab/invisi-sdk-go/protocol"
-	"github.com/invisi-lab/invisi-sdk-go/prover"
 )
 
-// Public deterministic test key only; never use this account with funds.
-func creditCancellationRequest(t *testing.T) prover.ProvingRequest {
-	t.Helper()
-	wallet, err := core.DeriveWallet(bytes.Repeat([]byte{1}, 32))
-	if err != nil {
-		t.Fatal(err)
-	}
-	context := core.ProtocolContext{ChainID: core.ElementFromUint64(31337), ProtocolAddress: core.ElementFromUint64(4660)}
-	token, nonce, expiry, amount, shared := core.ElementFromUint64(22136), core.ElementFromUint64(123), core.ElementFromUint64(2000000000), core.ElementFromUint64(100), core.ElementFromUint64(456)
-	state := core.CreditSpendingState{SingleLimit: core.ElementFromUint64(20), DailyLimit: core.ElementFromUint64(40), MonthlyLimit: core.ElementFromUint64(60), LastDay: core.ElementFromUint64(23149), DailySpent: core.ElementFromUint64(10), LastMonth: core.ElementFromUint64(761), MonthlySpent: core.ElementFromUint64(15)}
-	keyHash, err := core.ComputeCreditSharedKeyHash(shared)
-	if err != nil {
-		t.Fatal(err)
-	}
-	leaf, err := core.ComputeCreditCommitment(context.ChainID, wallet.OwnerAddress, wallet.OwnerAddress, wallet.OwnerAddress, wallet.OwnerAddress, token, amount, nonce, expiry, keyHash, state)
-	if err != nil {
-		t.Fatal(err)
-	}
-	root := leaf
-	path := make([]string, 16)
-	for i := range path {
-		path[i] = "0"
-		root, err = core.Poseidon2Hash(root, core.ElementFromUint64(0))
-		if err != nil {
-			t.Fatal(err)
-		}
-	}
-	nullifier, err := core.ComputeCreditNullifier(context.ChainID, shared, leaf)
-	if err != nil {
-		t.Fatal(err)
-	}
-	callContext := protocol.TransactionContext{ChainID: core.ElementToBigInt(context.ChainID), ProtocolAddress: common.BigToAddress(core.ElementToBigInt(context.ProtocolAddress)), TokenAddress: common.BigToAddress(core.ElementToBigInt(token))}
-	params := protocol.CancelCreditParams{Token: callContext.TokenAddress, Owner: common.BigToAddress(core.ElementToBigInt(wallet.OwnerAddress)), Source: protocol.InputSource{TreeId: big.NewInt(1), MerkleRoot: root.Bytes()}, Nullifier: nullifier.Bytes(), Amount: core.ElementToBigInt(amount), Deadline: big.NewInt(2000000000)}
-	base, err := protocol.CancelCreditBaseInputs(callContext, params)
-	if err != nil {
-		t.Fatal(err)
-	}
-	words := make([]fr.Element, len(base))
-	for i, value := range base {
-		words[i] = core.BigIntToElement(new(big.Int).SetBytes(value[:]))
-	}
-	request := core.WalletAuthorizationRequest{Context: context, Operation: core.WalletCancelCredit, Capacity: 1, Words: words}
-	signed, err := core.BuildWalletAuthorizationWitness(wallet, request)
-	if err != nil {
-		t.Fatal(err)
-	}
-	inputs, err := protocol.CancelCreditPublicInputs(callContext, params)
-	if err != nil {
-		t.Fatal(err)
-	}
-	public := make([]common.Hash, len(inputs))
-	for i, value := range inputs {
-		public[i] = value
-	}
-	proofRequest, err := prover.Request("credit_cancel", "evm", map[string]any{
-		"public_key_x": signed.PublicKeyX, "public_key_y": signed.PublicKeyY, "signature": signed.Signature,
-		"spender_payout": wallet.OwnerAddress.String(), "spender_wallet_identity": wallet.OwnerAddress.String(), "owner_wallet_identity": wallet.OwnerAddress.String(),
-		"single_limit": state.SingleLimit.String(), "daily_limit": state.DailyLimit.String(), "monthly_limit": state.MonthlyLimit.String(), "last_day": state.LastDay.String(), "daily_spent": state.DailySpent.String(), "last_month": state.LastMonth.String(), "monthly_spent": state.MonthlySpent.String(),
-		"input_nonce": nonce.String(), "expiry": expiry.String(), "credit_shared_key": shared.String(), "leaf_index": "0", "merkle_path": path,
-	}, public)
-	if err != nil {
-		t.Fatal(err)
-	}
-	return proofRequest
+type publicFixture struct {
+	Label, Name, Target string
+	Witness             map[string]any
+	PublicInputs        []common.Hash
 }
 
+func currentFixtures(t *testing.T) []publicFixture {
+	t.Helper()
+	raw, err := os.ReadFile("testdata/current-proving.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	var data struct{ Fixtures []publicFixture }
+	if err = json.Unmarshal(raw, &data); err != nil {
+		t.Fatal(err)
+	}
+	return data.Fixtures
+}
+func fixtureRequest(t *testing.T, f publicFixture) prover.ProvingRequest {
+	t.Helper()
+	s, err := prover.Statement(f.Name, f.Target, f.PublicInputs)
+	if err != nil {
+		t.Fatal(err)
+	}
+	w, err := prover.NewLocalWitness(f.Witness)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return prover.ProvingRequest{ProofStatement: s, Witness: w}
+}
 func TestRealOfficialWitnessExecutor(t *testing.T) {
 	binary := os.Getenv("NOIR_EXECUTE_PATH")
 	if binary == "" {
-		t.Skip("set NOIR_EXECUTE_PATH to Noir 1.0.0-rc.6 noir-execute")
+		t.Skip("set NOIR_EXECUTE_PATH to Noir1.0.0 noir-execute")
 	}
 	scratch := t.TempDir()
 	t.Setenv("TMPDIR", scratch)
-	request := creditCancellationRequest(t)
+	request := fixtureRequest(t, currentFixtures(t)[0])
 	artifact, _, err := assets(request.ProofStatement)
 	if err != nil {
 		t.Fatal(err)
@@ -107,7 +66,6 @@ func TestRealOfficialWitnessExecutor(t *testing.T) {
 	var invalid *prover.LocalWitness
 	err = request.Witness.WithInputs(func(inputs map[string]any) error {
 		inputs["signature"] = [64]byte{}
-		var err error
 		invalid, err = prover.NewLocalWitness(inputs)
 		return err
 	})
@@ -122,35 +80,64 @@ func TestRealOfficialWitnessExecutor(t *testing.T) {
 	}
 	leftovers, err := os.ReadDir(scratch)
 	if err != nil || len(leftovers) != 0 {
-		t.Fatal("temporary private witness files were retained", err)
+		t.Fatal("temporary private witness files retained", err)
 	}
-
 }
-
-func TestRealNativeCreditCancellationProof(t *testing.T) {
+func TestRealNativeCurrentCreditNoteAndMixedAggregation(t *testing.T) {
 	bb, noir := os.Getenv("BB_BINARY_PATH"), os.Getenv("NOIR_EXECUTE_PATH")
 	if bb == "" || noir == "" {
 		t.Skip("set BB_BINARY_PATH and NOIR_EXECUTE_PATH for genuine proving")
 	}
-	request := creditCancellationRequest(t)
 	backend, err := NewNativeProver(NativeOptions{BBBinary: bb, NoirBinary: noir, Threads: 4})
 	if err != nil {
 		t.Fatal(err)
 	}
-	phases := []string{}
-	bundle, err := backend.Prove(context.Background(), request, prover.Options{OnProgress: func(event prover.Progress) { phases = append(phases, event.Phase) }})
+	members := []prover.AggregateMember{}
+	for _, fixture := range currentFixtures(t) {
+		t.Run(fixture.Label, func(t *testing.T) {
+			request := fixtureRequest(t, fixture)
+			phases := []string{}
+			bundle, err := backend.Prove(context.Background(), request, prover.Options{OnProgress: func(p prover.Progress) { phases = append(phases, p.Phase) }})
+			if err != nil {
+				t.Fatal(err)
+			}
+			if strings.Join(phases, ",") != "witness,proving,verifying,complete" {
+				t.Fatal(phases)
+			}
+			valid, err := backend.Verify(context.Background(), bundle, request.ProofStatement, prover.Options{})
+			if err != nil || !valid {
+				t.Fatal("independent verification failed", err)
+			}
+			if fixture.Target == "noir-recursive" {
+				members = append(members, prover.AggregateMember{Bundle: bundle, Statement: request.ProofStatement})
+			}
+			changed := prover.CloneBundle(bundle)
+			changed.PublicInputs[0] = common.Hash{}
+			if _, err = backend.Verify(context.Background(), changed, request.ProofStatement, prover.Options{}); err == nil {
+				t.Fatal("modified public input accepted")
+			}
+		})
+	}
+	if len(members) != 3 {
+		t.Fatal("recursive fixtures failed")
+	}
+	aggregator, err := prover.NewAggregator(backend)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if strings.Join(phases, ",") != "witness,proving,verifying,complete" {
-		t.Fatal(phases)
-	}
-	verified, err := backend.Verify(context.Background(), bundle, request.ProofStatement, prover.Options{})
-	if err != nil || !verified {
-		t.Fatal("proof verification failed", err)
-	}
-	bundle.PublicInputs[0] = common.Hash{}
-	if _, err = backend.Verify(context.Background(), bundle, request.ProofStatement, prover.Options{}); err == nil {
-		t.Fatal("modified public inputs accepted")
+	for _, test := range []struct {
+		Name    string
+		Members []prover.AggregateMember
+		Route   string
+	}{{"dedicated", members[:2], "transact_aggregate_1_2"}, {"native-mixed", []prover.AggregateMember{members[0], members[2]}, "transact_aggregate_mixed_1_5_2"}} {
+		t.Run(test.Name, func(t *testing.T) {
+			bundle, err := aggregator.Aggregate(context.Background(), test.Members)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if bundle.CircuitName != test.Route {
+				t.Fatal("wrong route", bundle.CircuitName)
+			}
+		})
 	}
 }

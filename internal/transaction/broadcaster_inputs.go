@@ -74,15 +74,6 @@ func (o *Execution) ExtendBroadcasterInputs(ctx context.Context, base Plan, fee 
 	if p.Kind == "transact" {
 		p.Params.Sources = sources
 		p.Params.Nullifiers = nullifiers
-	} else {
-		if len(p.Inputs) > 10 {
-			return base, errors.New("Credit broadcaster fee requires more than ten funds inputs")
-		}
-		p.CreateCredit.Sources = sources
-		p.CreateCredit.Nullifiers = nullifiers
-		if p.TopUpCredit != nil {
-			p.TopUpCredit.Creation = *p.CreateCredit
-		}
 	}
 	return p, nil
 }

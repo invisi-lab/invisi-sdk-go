@@ -18,7 +18,7 @@ import (
 	"github.com/invisi-lab/invisi-sdk-go/prover"
 )
 
-const noirVersion = "1.0.0-rc.6"
+const noirVersion = "1.0.0"
 
 // noirWitnessExecutor uses the official artifact executor; no compiler or source tree is required.
 type noirWitnessExecutor struct {
@@ -36,7 +36,7 @@ func (n noirWitnessExecutor) Execute(ctx context.Context, artifact []byte, witne
 	if err := json.Unmarshal(artifact, &identity); err != nil {
 		return nil, errors.New("invalid Noir artifact")
 	}
-	if identity.NoirVersion != noirVersion+"+2c22344a0d76f2456d017859a8f59d4dcd7b1208" {
+	if identity.NoirVersion != noirVersion+"+275d3ab1a5c916c6ea73e8d6b943f685f574500c" {
 		return nil, errors.New("Noir artifact version does not match the released executor")
 	}
 	ctx, cancel := context.WithTimeout(ctx, n.timeout)
@@ -57,7 +57,7 @@ func (n noirWitnessExecutor) Execute(ctx context.Context, artifact []byte, witne
 		return nil, fmt.Errorf("local noir-execute %s is required: %w", noirVersion, err)
 	}
 	if strings.TrimSpace(string(version)) != "noir-execute version = "+noirVersion {
-		return nil, errors.New("noir-execute 1.0.0-rc.6 is required")
+		return nil, errors.New("noir-execute 1.0.0 is required")
 	}
 	dir, err := os.MkdirTemp("", "invisi-witness-")
 	if err != nil {

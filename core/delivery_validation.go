@@ -40,27 +40,3 @@ func verifyNote(context NoteEncryptionContext, note Note) error {
 	}
 	return nil
 }
-
-func verifyCredit(context NoteEncryptionContext, note CreditNote) error {
-	if err := validateProtocolContext(context.ProtocolContext, note.TokenAddress); err != nil {
-		return err
-	}
-	if note.ProtocolContext != context.ProtocolContext {
-		return fmt.Errorf("Credit context mismatch")
-	}
-	if err := validateCredit(note); err != nil {
-		return err
-	}
-	keyHash, err := ComputeCreditSharedKeyHash(note.CreditSharedKey)
-	if err != nil {
-		return err
-	}
-	leaf, err := ComputeCreditCommitment(context.ChainID, note.SpenderWalletIdentity, note.OwnerWalletIdentity, note.SpenderPayout, note.OwnerPayout, note.TokenAddress, note.Amount, note.Nonce, note.Expiry, keyHash, note.CreditSpendingState)
-	if err != nil {
-		return err
-	}
-	if leaf != context.OutputCommitment {
-		return fmt.Errorf("credit commitment mismatch")
-	}
-	return nil
-}

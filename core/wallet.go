@@ -48,8 +48,7 @@ const (
 	WalletTransact     WalletOperation = "transact"
 	WalletCreateCredit WalletOperation = "create-credit"
 	WalletCreditDraw   WalletOperation = "credit-draw"
-	WalletCancelCredit WalletOperation = "cancel-credit"
-	WalletTopUpCredit  WalletOperation = "top-up-credit"
+	WalletUpdateCredit WalletOperation = "update-credit"
 )
 
 // WalletAuthorizationRequest binds a private spending-key signature to the
@@ -156,19 +155,16 @@ func walletOperationName(operation WalletOperation, capacity int) (string, error
 	switch operation {
 	case WalletTransact:
 		name = "Transact"
-		allowed = capacity == 14 || capacity == 56 || capacity == 112 || capacity == 168
+		allowed = capacity >= 1 && capacity <= 10 || capacity >= 20 && capacity <= 190 && capacity%10 == 0
 	case WalletCreateCredit:
 		name = "CreateCredit"
-		allowed = capacity == 10
+		allowed = capacity == 1
 	case WalletCreditDraw:
 		name = "CreditDraw"
-		allowed = capacity == 1 || capacity == 12 || capacity == 50 || capacity == 120
-	case WalletCancelCredit:
-		name = "CancelCredit"
+		allowed = capacity >= 1 && capacity <= 5 || capacity >= 10 && capacity <= 80 && capacity%10 == 0
+	case WalletUpdateCredit:
+		name = "UpdateCredit"
 		allowed = capacity == 1
-	case WalletTopUpCredit:
-		name = "TopUpCredit"
-		allowed = capacity == 10
 	default:
 		return "", fmt.Errorf("unsupported wallet operation")
 	}
@@ -208,12 +204,16 @@ func WalletAuthorizationTypedData(request WalletAuthorizationRequest) (apitypes.
 		b := value.Bytes()
 		copy(statement[96+32*i:], b[:])
 	}
+	operationVersion := ".v1"
+	if request.Operation != WalletTransact {
+		operationVersion = ".v4"
+	}
 	chainID := ethmath.HexOrDecimal256(*chain)
 	return apitypes.TypedData{Types: apitypes.Types{
 		"EIP712Domain":        {{Name: "name", Type: "string"}, {Name: "version", Type: "string"}, {Name: "chainId", Type: "uint256"}, {Name: "verifyingContract", Type: "address"}},
 		"WalletAuthorization": {{Name: "operation", Type: "bytes32"}, {Name: "statementHash", Type: "bytes32"}},
 	}, PrimaryType: "WalletAuthorization", Domain: apitypes.TypedDataDomain{Name: "InvisibleProtocol", Version: "1", ChainId: &chainID, VerifyingContract: common.BigToAddress(address).Hex()}, Message: apitypes.TypedDataMessage{
-		"operation": ethcrypto.Keccak256Hash([]byte("Invisi." + name + ".v1")).Hex(), "statementHash": ethcrypto.Keccak256Hash(statement).Hex(),
+		"operation": ethcrypto.Keccak256Hash([]byte("Invisi." + name + operationVersion)).Hex(), "statementHash": ethcrypto.Keccak256Hash(statement).Hex(),
 	}}, nil
 }
 func ComputeWalletAuthorizationDigest(request WalletAuthorizationRequest) (common.Hash, error) {

@@ -12,9 +12,8 @@ type Protocol = protocol.Protocol
 
 type ProtocolRpcClient = protocolrpc.ProtocolRpcClient
 
-type ProtocolTransactionUpdates = protocolrpc.ProtocolTransactionUpdates
-
-type ProtocolCreditTransition = protocolrpc.ProtocolCreditTransition
+type ProtocolTransactionNoteUpdates = protocolrpc.ProtocolTransactionNoteUpdates
+type ProtocolTransactionCreditUpdates = protocolrpc.ProtocolTransactionCreditUpdates
 
 type TransactionUpdateStatus = protocolrpc.TransactionUpdateStatus
 

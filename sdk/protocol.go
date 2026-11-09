@@ -19,8 +19,6 @@ func NewProtocolRpcClient(endpoint string, options ...protocolrpc.ClientOptions)
 
 type Protocol = transaction.Protocol
 
-type ProtocolCreditTransition = transaction.ProtocolCreditTransition
-
 type ProtocolDeployment = transaction.ProtocolDeployment
 
 func ProtocolFromRPC(ctx context.Context, rpc *ProtocolRpcClient, provider protocolrpc.ChainProvider) (*Protocol, error) {
@@ -29,7 +27,8 @@ func ProtocolFromRPC(ctx context.Context, rpc *ProtocolRpcClient, provider proto
 
 type ProtocolRpcClient = transaction.ProtocolRpcClient
 
-type ProtocolTransactionUpdates = transaction.ProtocolTransactionUpdates
+type ProtocolTransactionNoteUpdates = transaction.ProtocolTransactionNoteUpdates
+type ProtocolTransactionCreditUpdates = transaction.ProtocolTransactionCreditUpdates
 
 type TransactionUpdateStatus = transaction.TransactionUpdateStatus
 

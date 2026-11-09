@@ -15,11 +15,11 @@ func TestFeePairAndEmptyFundsDelivery(t *testing.T) {
 		t.Fatal("credit delivery required")
 	}
 	p := CrossTreeTransactParams{Token: common.HexToAddress("0x1"), Nullifiers: [][32]byte{Word(big.NewInt(1))}, Sources: []InputSource{{TreeId: big.NewInt(1), MerkleRoot: Word(big.NewInt(2))}}, WithdrawalAddress: common.HexToAddress("0x2"), WithdrawalAmount: big.NewInt(1), Deadline: big.NewInt(2), FeeRecipient: common.HexToAddress("0x3"), FeeAmount: big.NewInt(4)}
-	w, e := TransactPublicInputs(TransactionContext{ChainID: big.NewInt(1)}, p, nil, FundingParams{})
+	w, e := TransactPublicInputs(TransactionContext{ChainID: big.NewInt(1), TokenAddress: p.Token}, p, nil, FundingParams{})
 	if e != nil {
 		t.Fatal(e)
 	}
-	if len(w) != 57 || w[len(w)-1] != Word(big.NewInt(4)) {
+	if len(w) != 18 || w[len(w)-1] != Word(big.NewInt(4)) {
 		t.Fatal("fee missing from statement")
 	}
 }

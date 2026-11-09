@@ -18,7 +18,7 @@ func TestRealNativeBroadcasterFeeProofs(t *testing.T) {
 	if bb == "" || noir == "" {
 		t.Skip("set BB_BINARY_PATH and NOIR_EXECUTE_PATH for genuine proving")
 	}
-	for _, kind := range []string{"transfer", "create-credit", "top-up-credit", "cancel-credit"} {
+	for _, kind := range []string{"transfer"} {
 		t.Run(kind, func(t *testing.T) {
 			ctx := context.Background()
 			s, token, _ := testSession(t)
@@ -33,14 +33,7 @@ func TestRealNativeBroadcasterFeeProofs(t *testing.T) {
 			switch kind {
 			case "transfer":
 				op, e = s.PrepareTransfer(ctx, sdk.TransferPreparation{TokenAddress: token, Deadline: deadline, Outputs: testOutputs(s, []testPaymentOutput{{To: address, Amount: big.NewInt(30)}})})
-			case "create-credit":
-				op, e = s.PrepareCreateCredit(ctx, sdk.CreateCreditPreparation{TokenAddress: token, Deadline: deadline, Spender: address, Amount: big.NewInt(30), Expiry: big.NewInt(1000)})
-			case "top-up-credit":
-				leaf := seedCredit(t, s, token)
-				op, e = s.PrepareTopUpCredit(ctx, sdk.TopUpCreditPreparation{TokenAddress: token, Deadline: deadline, Credit: leaf, AdditionalAmount: big.NewInt(30), Expiry: big.NewInt(2000)})
-			case "cancel-credit":
-				leaf := seedCredit(t, s, token)
-				op, e = s.PrepareCancelCredit(ctx, sdk.CancelCreditPreparation{TokenAddress: token, Deadline: deadline, Credit: leaf})
+
 			}
 			if e != nil {
 				t.Fatal(e)

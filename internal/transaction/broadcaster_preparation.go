@@ -67,24 +67,7 @@ func (o *Execution) BroadcasterIntent() ([]byte, error) {
 				return a.Pack(m.Name, []byte{}, protocol.TransactRequest{Params: r.Params, Deliveries: o.Deliveries(), Funding: r.Funding})
 			}
 		}
-	case "create-credit":
-		r, e := protocol.ValidateCreateCreditRequest(o.Plan.Context, *o.Plan.CreateCredit, o.Deliveries(), f)
-		if e != nil {
-			return nil, e
-		}
-		return a.Pack("createCredit", []byte{}, r.Params, o.Deliveries(), r.Funding)
-	case "top-up-credit":
-		r, e := protocol.ValidateTopUpCreditRequest(o.Plan.Context, *o.Plan.TopUpCredit, o.Deliveries(), f)
-		if e != nil {
-			return nil, e
-		}
-		return a.Pack("topUpCredit", []byte{}, r.Params, o.Deliveries(), r.Funding)
-	case "cancel-credit":
-		r, e := protocol.ValidateCancelCreditRequest(o.Plan.Context, *o.Plan.CancelCredit)
-		if e != nil {
-			return nil, e
-		}
-		return a.Pack("cancelCredit", []byte{}, r.Params)
+
 	}
 	return nil, errors.New("unsupported broadcaster operation")
 }
@@ -97,7 +80,7 @@ func (o *Execution) WithBroadcaster(ctx context.Context, c *broadcaster.Client, 
 		return errors.New("broadcaster must be selected before authorization and proving")
 	}
 	switch o.Plan.Kind {
-	case "shield", "transact", "create-credit", "top-up-credit", "cancel-credit":
+	case "shield", "transact":
 	default:
 		return errors.New("unsupported broadcaster operation")
 	}
@@ -106,13 +89,10 @@ func (o *Execution) WithBroadcaster(ctx context.Context, c *broadcaster.Client, 
 	default:
 		return errors.New("unsupported fee source")
 	}
-	if o.Plan.Kind == "cancel-credit" {
-		if opt.FeeSource != "" && opt.FeeSource != BroadcasterFeePayout {
-			return errors.New("cancellation fee requires payout source")
-		}
-	} else if opt.FeeSource == BroadcasterFeePayout || o.Plan.Kind == "shield" && opt.FeeSource == BroadcasterFeePrivateInputs {
+	if opt.FeeSource == BroadcasterFeePayout || o.Plan.Kind == "shield" && opt.FeeSource == BroadcasterFeePrivateInputs {
 		return errors.New("fee source unavailable for operation")
 	}
+
 	if Positive(opt.MaxFeeAmount, 128) != nil {
 		return errors.New("max fee must be Positive uint128")
 	}

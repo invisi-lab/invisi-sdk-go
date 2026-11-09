@@ -28,7 +28,7 @@ func TestDisclosuresInteroperateWithCurrentTSExports(t *testing.T) {
 	if e != nil {
 		t.Fatal(e)
 	}
-	for _, name := range []string{"noteOpening", "creditOpening", "notePayload", "creditPayload"} {
+	for _, name := range []string{"noteOpening", "notePayload"} {
 		t.Run(name, func(t *testing.T) {
 			disclosure, e := DisclosureFromExport(fixture[name])
 			if e != nil {

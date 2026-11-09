@@ -176,12 +176,7 @@ func DeliveriesHash(deliveries []Delivery) (common.Hash, error) {
 	}
 	return HashABI(abi.Arguments{{Type: tuple}}, deliveries)
 }
-func EncodeCreditProof(proof []byte) ([]byte, error) {
-	if len(proof) == 0 {
-		return nil, fmt.Errorf("empty Credit proof")
-	}
-	return args("uint8", "bytes").Pack(uint8(0), proof)
-}
+
 func Word(v *big.Int) [32]byte { return common.BigToHash(v) }
 func words(values []*big.Int) [][32]byte {
 	out := make([][32]byte, len(values))

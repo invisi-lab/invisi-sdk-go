@@ -3,6 +3,7 @@ package session
 import (
 	"context"
 	"errors"
+	"fmt"
 	"math/big"
 	"sort"
 
@@ -10,7 +11,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 
 	"github.com/invisi-lab/invisi-sdk-go/core"
-	transaction "github.com/invisi-lab/invisi-sdk-go/internal/transaction"
+	creditsession "github.com/invisi-lab/invisi-sdk-go/credit/session"
 	"github.com/invisi-lab/invisi-sdk-go/protocol/contracts"
 	protocolrpc "github.com/invisi-lab/invisi-sdk-go/rpc"
 )
@@ -26,6 +27,13 @@ func (s *WalletSession) invalidate(ctx context.Context) error {
 			record.ResolvedAt = nil
 			record.WorkerID = ""
 			state.Operations[id] = record
+		}
+		for id, record := range state.PostpaidCredit.Operations {
+			if record.Externalized {
+				record.Status = "reorged"
+				record.WorkerID = ""
+				state.PostpaidCredit.Operations[id] = record
+			}
 		}
 		return nil
 	})
@@ -64,6 +72,27 @@ func (s *WalletSession) Refresh(ctx context.Context, options RefreshOptions) (Re
 	state, e := s.options.Store.ReadSnapshot(ctx, s.scope)
 	if e != nil {
 		return result, e
+	}
+	if state.PostpaidCredit.Version != 2 {
+		return result, errors.New("legacy Credit store is unsupported")
+	}
+	// A direct reset can first observe a reorg; fence exposed journals before rebuilding.
+	if options.Reset && !state.Invalidated {
+		for _, saved := range []*protocolrpc.CanonicalBlock{state.ObservedThrough, state.CheckedThrough, state.DiscoveryThrough} {
+			if saved == nil {
+				continue
+			}
+			if err := s.canonical(ctx, *saved); err != nil {
+				if e = s.invalidate(ctx); e != nil {
+					return result, e
+				}
+				state, e = s.options.Store.ReadSnapshot(ctx, s.scope)
+				if e != nil {
+					return result, e
+				}
+				break
+			}
+		}
 	}
 	expectedRevision := state.Revision
 	if state.ObservedThrough != nil && !options.Reset {
@@ -131,7 +160,7 @@ func (s *WalletSession) Refresh(ctx context.Context, options RefreshOptions) (Re
 				return errors.New("wallet inventory changed before reset; retry refresh")
 			}
 			state.Notes = map[common.Hash]StoredNote{}
-			state.Credits = map[string]StoredCredit{}
+			state.PostpaidCredit.Grants = map[string]creditsession.StoredState{}
 			state.ObservedThrough = nil
 			state.CheckedThrough = nil
 			state.DiscoveryThrough = nil
@@ -147,10 +176,57 @@ func (s *WalletSession) Refresh(ctx context.Context, options RefreshOptions) (Re
 		if to < from || to > end {
 			to = end
 		}
-		page, e := s.rpc.GetUpdates(ctx, s.protocol.Context(), protocolrpc.ProtocolUpdateRange{FromBlock: from, ToBlock: to, DetectionKey: options.DetectionKey})
+		query := protocolrpc.ProtocolUpdateRange{FromBlock: from, ToBlock: to}
+		var notePage protocolrpc.ProtocolNoteUpdates
+		if len(options.DetectionKey) > 0 {
+			detected := query
+			detected.DetectionKey = options.DetectionKey
+			notePage, e = s.rpc.DetectNotes(ctx, s.protocol.Context(), detected)
+		} else {
+			notePage, e = s.rpc.GetNoteUpdates(ctx, s.protocol.Context(), query)
+		}
 		if e != nil {
 			return result, e
 		}
+		creditPage, e := s.rpc.GetCreditTransitions(ctx, s.protocol.Context(), query)
+		if e != nil {
+			return result, e
+		}
+		if creditPage.Block != notePage.Block {
+			return result, errors.New("discovery pages have different anchors")
+		}
+		page := struct {
+			Block             protocolrpc.CanonicalBlock
+			TransactionHashes []common.Hash
+		}{Block: notePage.Block}
+		seen := map[common.Hash]bool{}
+		add := func(hash common.Hash) {
+			if !seen[hash] {
+				seen[hash] = true
+				page.TransactionHashes = append(page.TransactionHashes, hash)
+			}
+		}
+		for _, note := range notePage.Notes {
+			add(note.TransactionHash)
+		}
+		for _, event := range creditPage.Transitions {
+			add(event.TransactionHash)
+		}
+		if len(options.DetectionKey) > 0 {
+			detected := query
+			detected.DetectionKey = options.DetectionKey
+			states, e := s.rpc.DetectCreditStates(ctx, s.protocol.Context(), detected)
+			if e != nil {
+				return result, e
+			}
+			if states.Block != page.Block {
+				return result, errors.New("detection pages have different anchors")
+			}
+			for _, state := range states.States {
+				add(state.TransactionHash)
+			}
+		}
+
 		// Empty intermediate pages need no local reconciliation; the final page still checks every spent flag.
 		if len(page.TransactionHashes) == 0 && to < end {
 			if err := ctx.Err(); err != nil {
@@ -160,7 +236,7 @@ func (s *WalletSession) Refresh(ctx context.Context, options RefreshOptions) (Re
 			continue
 		}
 		notes := []StoredNote{}
-		credits := []StoredCredit{}
+		credits := []creditsession.StoredState{}
 		draws := []*authenticatedCreditDraw{}
 		// Process complete receipts in canonical transaction order, independently of service ordering.
 		type receiptOrder struct {
@@ -211,56 +287,49 @@ func (s *WalletSession) Refresh(ctx context.Context, options RefreshOptions) (Re
 			return result, errors.New("wallet inventory changed during refresh; retry")
 		}
 		for _, c := range credits {
-			before.Credits[transaction.CreditKey(c.Commitment, c.Role)] = c
+			before.PostpaidCredit.Grants[creditsession.GrantKey(c.Commitment, c.Role)] = c
 		}
 		for _, draw := range draws {
-			for _, previous := range before.Credits {
+			for _, previous := range before.PostpaidCredit.Grants {
 				for j, nf := range draw.Params.Nullifiers {
 					if previous.Nullifier != common.Hash(nf) {
 						continue
 					}
-					recovered, e := core.RecoverCreditRemainder(s.coreContext(), previous.State.Note, core.CreditRemainderRecovery{CreditNullifier: core.BigIntToElement(new(big.Int).SetBytes(nf[:])), RemainderCommitment: core.BigIntToElement(new(big.Int).SetBytes(draw.Params.RemainderCommitments[j][:])), RecoveryAmount: core.BigIntToElement(new(big.Int).SetBytes(draw.Params.RecoveryAmounts[j][:]))}, draw.Timestamp)
+					recovered, e := previous.Delivery.State.Recover(core.BigIntToElement(new(big.Int).SetBytes(nf[:])), core.BigIntToElement(new(big.Int).SetBytes(draw.Params.StateCommitments[j][:])), core.BigIntToElement(new(big.Int).SetBytes(draw.Params.RecoveryAmounts[j][:])), draw.Timestamp)
 					if e != nil {
 						return result, e
 					}
-					if recovered == nil {
+					commitment := common.Hash(draw.Params.StateCommitments[j])
+					if _, ok := before.PostpaidCredit.Grants[creditsession.GrantKey(commitment, previous.Role)]; ok {
 						continue
 					}
-					commitment := common.Hash(draw.Params.RemainderCommitments[j])
-					// An authenticated child envelope carries metadata that proof-only recovery cannot reconstruct.
-					if _, ok := before.Credits[transaction.CreditKey(commitment, previous.Role)]; ok {
-						continue
-					}
-					if _, e = s.rpc.GetMembership(ctx, s.protocol.Context(), protocolrpc.MembershipInput{TreeID: draw.OutputTreeId.Uint64(), LeafIndex: draw.RemainderLeafIndices[j], Commitment: commitment}, finalBlock); e != nil {
+					if _, e = s.rpc.GetMembership(ctx, s.protocol.Context(), protocolrpc.MembershipInput{TreeID: draw.OutputTreeId.Uint64(), LeafIndex: draw.LeafIndices[j], Commitment: commitment}, finalBlock); e != nil {
 						return result, e
 					}
 					child := previous
-					child.State.Note = *recovered
+					child.Delivery.State = recovered
 					child.Commitment = commitment
-					keyHash, _ := core.ComputeCreditSharedKeyHash(recovered.CreditSharedKey)
-					leaf, e := core.ComputeCreditCommitment(recovered.ChainID, recovered.SpenderWalletIdentity, recovered.OwnerWalletIdentity, recovered.SpenderPayout, recovered.OwnerPayout, recovered.TokenAddress, recovered.Amount, recovered.Nonce, recovered.Expiry, keyHash, recovered.CreditSpendingState)
+					nullifier, e := recovered.Nullifier()
 					if e != nil {
 						return result, e
 					}
-					cn, e := core.ComputeCreditNullifier(recovered.ChainID, recovered.CreditSharedKey, leaf)
-					if e != nil {
-						return result, e
-					}
-					child.Nullifier = transaction.FieldHash(cn)
+					child.Nullifier = common.Hash(nullifier.Bytes())
 					child.TreeID = draw.OutputTreeId.Uint64()
-					child.LeafIndex = draw.RemainderLeafIndices[j]
-					child.Spent = false
+					child.LeafIndex = uint16(draw.LeafIndices[j])
+					child.Consumed = false
+					child.Revoked = false
 					child.ReservedBy = ""
 					credits = append(credits, child)
-					before.Credits[transaction.CreditKey(child.Commitment, child.Role)] = child
+					before.PostpaidCredit.Grants[creditsession.GrantKey(child.Commitment, child.Role)] = child
 				}
 			}
 		}
+
 		for _, n := range notes {
 			before.Notes[n.Commitment] = n
 		}
 		for _, c := range credits {
-			before.Credits[transaction.CreditKey(c.Commitment, c.Role)] = c
+			before.PostpaidCredit.Grants[creditsession.GrantKey(c.Commitment, c.Role)] = c
 		}
 		contract, e := contracts.NewInvisiProtocolCaller(s.scope.ProtocolAddress, s.options.Provider)
 		if e != nil {
@@ -275,12 +344,34 @@ func (s *WalletSession) Refresh(ctx context.Context, options RefreshOptions) (Re
 			}
 			spentNotes[hash] = spent
 		}
-		for key, c := range before.Credits {
+		revokedCredits := map[string]bool{}
+		bitmaps := map[string]*big.Int{}
+		for key, c := range before.PostpaidCredit.Grants {
 			spent, e := contract.IsNullifierSpent(&bind.CallOpts{Context: ctx, BlockNumber: new(big.Int).SetUint64(end)}, c.Nullifier)
 			if e != nil {
 				return result, e
 			}
 			spentCredits[key] = spent
+			grant := c.Delivery.State
+			owner := common.BigToAddress(core.ElementToBigInt(grant.OwnerWalletIdentity))
+			token := common.BigToAddress(core.ElementToBigInt(grant.TokenAddress))
+			shard := core.ElementToBigInt(grant.RevocationShard).Uint64()
+			slot := core.ElementToBigInt(grant.RevocationSlot).Uint64()
+			word := uint8(slot / 256)
+			bitmapKey := fmt.Sprintf("%s:%s:%d:%d", owner.Hex(), token.Hex(), shard, word)
+			bits, ok := bitmaps[bitmapKey]
+			if !ok {
+				bits, e = contract.CreditRevocationBitmap(&bind.CallOpts{Context: ctx, BlockNumber: new(big.Int).SetUint64(end)}, owner, token, shard, word)
+				if e != nil {
+					return result, e
+				}
+				if bits == nil || bits.Sign() < 0 || bits.BitLen() > 256 {
+					return result, errors.New("invalid revocation bitmap")
+				}
+				bitmaps[bitmapKey] = bits
+			}
+			revokedCredits[key] = bits.Bit(int(slot%256)) == 1
+
 		}
 		if e = s.canonical(ctx, finalBlock); e != nil {
 			_ = s.invalidate(ctx)
@@ -304,15 +395,16 @@ func (s *WalletSession) Refresh(ctx context.Context, options RefreshOptions) (Re
 				state.Notes[n.Commitment] = n
 			}
 			for _, c := range credits {
-				k := transaction.CreditKey(c.Commitment, c.Role)
-				old, ok := state.Credits[k]
+				k := creditsession.GrantKey(c.Commitment, c.Role)
+				old, ok := state.PostpaidCredit.Grants[k]
 				if ok {
 					c.ReservedBy = old.ReservedBy
 				} else {
 					result.AddedCredits++
 				}
-				state.Credits[k] = c
+				state.PostpaidCredit.Grants[k] = c
 			}
+
 			for hash, spent := range spentNotes {
 				n, ok := state.Notes[hash]
 				if !ok {
@@ -322,12 +414,13 @@ func (s *WalletSession) Refresh(ctx context.Context, options RefreshOptions) (Re
 				state.Notes[hash] = n
 			}
 			for key, spent := range spentCredits {
-				c, ok := state.Credits[key]
+				c, ok := state.PostpaidCredit.Grants[key]
 				if !ok {
 					return errors.New("refresh Credit disappeared before spent-state commit")
 				}
-				c.Spent = spent
-				state.Credits[key] = c
+				c.Consumed = spent
+				c.Revoked = revokedCredits[key]
+				state.PostpaidCredit.Grants[key] = c
 			}
 			if state.ObservedThrough == nil || state.ObservedThrough.Number <= page.Block.Number {
 				state.ObservedThrough = &page.Block
@@ -336,6 +429,13 @@ func (s *WalletSession) Refresh(ctx context.Context, options RefreshOptions) (Re
 			if err := restoreReservations(state); err != nil {
 				return err
 			}
+			if err := restoreCreditReservations(&state.PostpaidCredit); err != nil {
+				return err
+			}
+			if state.PostpaidCredit.Revision == ^uint64(0) {
+				return errors.New("Credit revision exhausted")
+			}
+			state.PostpaidCredit.Revision++
 			state.Invalidated = to != end && options.Reset
 			return nil
 		})
@@ -369,4 +469,31 @@ func (s *WalletSession) Refresh(ctx context.Context, options RefreshOptions) (Re
 		}
 	}
 	return result, nil
+}
+
+// Replay unresolved Credit reservations after a reset without releasing externalized authority.
+func restoreCreditReservations(state *creditsession.State) error {
+	for id, record := range state.Operations {
+		if record.Status == "confirmed" || record.Status == "reverted" || record.Status == "cancelled" {
+			continue
+		}
+		for _, input := range record.Intent.Inputs {
+			c, e := input.State.Commitment()
+			if e != nil {
+				return e
+			}
+			commitment := common.Hash(c.Bytes())
+			for key, grant := range state.Grants {
+				if grant.Commitment != commitment || grant.Consumed {
+					continue
+				}
+				if grant.ReservedBy != "" && grant.ReservedBy != id {
+					return errors.New("conflicting persisted Credit reservations")
+				}
+				grant.ReservedBy = id
+				state.Grants[key] = grant
+			}
+		}
+	}
+	return nil
 }

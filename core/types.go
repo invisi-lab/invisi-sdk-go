@@ -12,22 +12,3 @@ type Note struct {
 	// Payload is opaque authenticated application data, excluded from commitments.
 	Payload []byte
 }
-
-// CreditNote binds both wallet roles, public payout addresses and the shared recovery secret.
-type CreditNote struct {
-	CreditSpendingState
-	ProtocolContext
-	SpenderWalletIdentity, OwnerWalletIdentity, SpenderPayout, OwnerPayout fr.Element
-	TokenAddress, Amount, Nonce, Expiry, CreditSharedKey                   fr.Element
-	// Payload is opaque authenticated application data, excluded from commitments.
-	Payload []byte
-}
-
-// CreditRemainderRecovery contains circuit-bound fields from an authenticated draw event.
-type CreditRemainderRecovery struct{ CreditNullifier, RemainderCommitment, RecoveryAmount fr.Element }
-
-// CreditDeliveryState retains both receiving key snapshots for autonomous lifecycle recovery.
-type CreditDeliveryState struct {
-	Note                                     CreditNote
-	OwnerReceivingKeys, SpenderReceivingKeys ReceivingKeys
-}

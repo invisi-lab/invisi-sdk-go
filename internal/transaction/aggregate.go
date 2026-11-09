@@ -28,8 +28,8 @@ func (o *Execution) ExportAggregateMember(ctx context.Context) (OperationAggrega
 	if o.Plan.Broadcaster != nil {
 		return OperationAggregateMember{}, errors.New("broadcaster operations cannot be aggregate members")
 	}
-	if (o.Status != "proved" && o.Status != "ready") || o.Plan.Kind != "transact" || o.Plan.Target != "noir-recursive" || o.Plan.Capacity != 14 || o.Bundle == nil || len(o.Bundle.Proof) != 458*32 {
-		return OperationAggregateMember{}, errors.New("ready recursive slots14 member required")
+	if (o.Status != "proved" && o.Status != "ready") || o.Plan.Kind != "transact" || o.Plan.Target != "noir-recursive" || (o.Plan.Capacity < 1 || o.Plan.Capacity > 10) || o.Bundle == nil || len(o.Bundle.Proof) != 458*32 {
+		return OperationAggregateMember{}, errors.New("ready recursive C1..C10 member required")
 	}
 	if o.Plan.FundingMode == "signature" && len(o.Plan.Funding.Signature) == 0 {
 		return OperationAggregateMember{}, errors.New("aggregate funding authorization required")

@@ -1,27 +1,29 @@
 package shared
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
-	"math/big"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/invisi-lab/invisi-sdk-go/core"
+	"github.com/invisi-lab/invisi-sdk-go/credit"
 	"github.com/invisi-lab/invisi-sdk-go/protocol/contracts"
 	"github.com/invisi-lab/invisi-sdk-go/rpc"
 	"github.com/invisi-lab/invisi-sdk-go/sdk"
+	walletsession "github.com/invisi-lab/invisi-sdk-go/session"
 )
 
 type NoteCandidate struct {
 	Input  sdk.NoteInput
-	Output rpc.ProtocolOutput
+	Output rpc.ProtocolNoteOutput
 }
 type CreditCandidate struct {
-	Input  sdk.CreditInput
-	Output rpc.ProtocolOutput
+	Input      credit.LocatedState
+	Delivery   credit.DeliveryState
+	Commitment common.Hash
+	Membership rpc.Membership
 }
 
 // DiscoverNotes scans genuine indexed outputs in MaxUpdateBlocks-bounded pages, authenticates decryption,
@@ -51,11 +53,11 @@ func DiscoverNotes(ctx context.Context, provider sdk.Provider, client *sdk.Proto
 	result := []NoteCandidate{}
 	for from := pool.Deployment().Protocol.FromBlock; from <= status.IndexedHead.Number; {
 		to := min(from+rpc.MaxUpdateBlocks-1, status.IndexedHead.Number)
-		page, err := client.GetOutputs(ctx, deployment, rpc.ProtocolUpdateRange{FromBlock: from, ToBlock: to})
+		page, err := client.GetNoteUpdates(ctx, deployment, rpc.ProtocolUpdateRange{FromBlock: from, ToBlock: to})
 		if err != nil {
 			return nil, err
 		}
-		for _, output := range page.Outputs {
+		for _, output := range page.Notes {
 			encoded, _ := json.Marshal(output)
 			fingerprint := string(encoded)
 			position := fmt.Sprintf("%d:%d", output.TreeID, output.LeafIndex)
@@ -98,90 +100,49 @@ func DiscoverNotes(ctx context.Context, provider sdk.Provider, client *sdk.Proto
 	return result, nil
 }
 
-// DiscoverCredits authenticates the requested role before deduplicating the two envelopes.
-// Canonical receipt evidence also binds historical receiving-key snapshots and ciphertext.
-// Expired Credit remains visible so its owner can select it for cancellation.
+// DiscoverCredits composes the same canonical receipt authentication used by managed sessions.
 func DiscoverCredits(ctx context.Context, provider sdk.Provider, client *sdk.ProtocolRpcClient, pool *sdk.Protocol, wallet *sdk.PublicWallet, viewingKey []byte, token common.Address, role string) ([]CreditCandidate, error) {
-	if role != "owner" && role != "spender" {
-		return nil, fmt.Errorf("role must be owner or spender")
+	selected := credit.Owner
+	if role == "spender" {
+		selected = credit.Spender
+	} else if role != "owner" {
+		return nil, fmt.Errorf("invalid grant role")
 	}
 	viewer, err := sdk.NewViewingCapability(wallet.OwnerAddress(), viewingKey, wallet.ViewingPublicKey())
 	if err != nil {
 		return nil, err
 	}
-	client = client.WithProvider(provider)
-	d := pool.Context()
-	deployment := rpc.DeploymentContext{ChainID: d.ChainID, ProtocolAddress: d.ProtocolAddress}
-	status, err := client.GetStatus(ctx, deployment)
+	store := walletsession.NewMemoryWalletStore()
+	invisi := sdk.NewInvisi(sdk.InvisiOptions{Provider: provider, ProtocolRPC: client})
+	session, err := walletsession.Connect(ctx, walletsession.Options{Invisi: invisi, Wallet: wallet, Protocol: pool, Store: store, Viewing: viewer})
 	if err != nil {
 		return nil, err
 	}
-	if status.IndexedHead == nil {
-		return nil, fmt.Errorf("Protocol RPC has no indexed head")
+	if _, err = session.Refresh(ctx, walletsession.RefreshOptions{}); err != nil {
+		return nil, err
 	}
-	contract, err := contracts.NewInvisiProtocolCaller(d.ProtocolAddress, provider)
+	snapshot, err := store.ReadSnapshot(ctx, session.Scope())
 	if err != nil {
 		return nil, err
 	}
-	verifier, err := sdk.NewDisclosureVerifier(sdk.DisclosureVerifierOptions{Protocol: pool, Provider: provider, TokenAddress: token, Confirmations: 1})
-	if err != nil {
-		return nil, err
+	if snapshot.DiscoveryThrough == nil {
+		return nil, fmt.Errorf("grant discovery anchor missing")
 	}
-	seen := map[common.Hash]string{}
-	positions := map[string]string{}
 	result := []CreditCandidate{}
-	for from := pool.Deployment().Protocol.FromBlock; from <= status.IndexedHead.Number; {
-		to := min(from+rpc.MaxUpdateBlocks-1, status.IndexedHead.Number)
-		page, err := client.GetCreditOutputs(ctx, deployment, rpc.ProtocolUpdateRange{FromBlock: from, ToBlock: to})
+	for _, record := range snapshot.PostpaidCredit.Grants {
+		if record.Role != selected || record.Consumed || record.Revoked || core.ElementToBigInt(record.Delivery.State.TokenAddress).Cmp(token.Big()) != 0 {
+			continue
+		}
+		membership, err := client.WithProvider(provider).GetMembership(ctx, pool.Context(), rpc.MembershipInput{TreeID: record.TreeID, LeafIndex: uint32(record.LeafIndex), Commitment: record.Commitment}, *snapshot.DiscoveryThrough)
 		if err != nil {
 			return nil, err
 		}
-		for _, output := range page.Outputs {
-			if output.TokenAddress != token {
-				continue
-			}
-			state, err := viewer.DecryptCredit(output.Ciphertext, core.CreditNoteDecryptionContext{NoteDecryptionContext: core.NoteDecryptionContext{NoteEncryptionContext: core.NoteEncryptionContext{ProtocolContext: core.ProtocolContext{ChainID: core.ElementFromUint64(d.ChainID), ProtocolAddress: core.BigIntToElement(d.ProtocolAddress.Big())}, OutputCommitment: core.BigIntToElement(output.Commitment.Big())}, TokenAddress: core.BigIntToElement(token.Big()), OwnerAddress: core.BigIntToElement(wallet.OwnerAddress().Big())}, Role: core.CreditDeliveryRole(role)})
-			if err != nil {
-				continue
-			}
-			encoded, _ := json.Marshal(output)
-			fingerprint := string(encoded)
-			position := fmt.Sprintf("%d:%d", output.TreeID, output.LeafIndex)
-			if prior, ok := seen[output.Commitment]; ok {
-				if prior != fingerprint {
-					return nil, fmt.Errorf("conflicting Credit role record")
-				}
-				continue
-			}
-			if prior, ok := positions[position]; ok && prior != fingerprint {
-				return nil, fmt.Errorf("conflicting Credit position")
-			}
-			seen[output.Commitment] = fingerprint
-			positions[position] = fingerprint
-			nullifier, err := core.ComputeCreditNullifier(state.Note.ChainID, state.Note.CreditSharedKey, core.BigIntToElement(output.Commitment.Big()))
-			if err != nil {
-				return nil, err
-			}
-			spent, err := contract.IsNullifierSpent(&bind.CallOpts{Context: ctx, BlockNumber: new(big.Int).SetUint64(status.IndexedHead.Number)}, nullifier.Bytes())
-			if err != nil {
-				return nil, err
-			}
-			if spent {
-				continue
-			}
-			evidence, err := verifier.ReadOutput(ctx, sdk.DisclosureReference{TransactionHash: output.TransactionHash, TreeID: output.TreeID, LeafIndex: output.LeafIndex, Role: role})
-			if err != nil {
-				return nil, err
-			}
-			if evidence.Output.OutputCommitment != output.Commitment || !bytes.Equal(evidence.Output.Ciphertext, output.Ciphertext) || evidence.Block != output.Block {
-				return nil, fmt.Errorf("indexed Credit delivery does not match canonical receipt")
-			}
-			result = append(result, CreditCandidate{sdk.CreditInput{State: state, Commitment: output.Commitment, TreeID: output.TreeID, LeafIndex: output.LeafIndex, Role: role}, output})
+		var path [16]common.Hash
+		if len(membership.Path) != 16 {
+			return nil, fmt.Errorf("grant path requires16siblings")
 		}
-		if to == status.IndexedHead.Number {
-			break
-		}
-		from = to + 1
+		copy(path[:], membership.Path)
+		result = append(result, CreditCandidate{Input: credit.LocatedState{State: record.Delivery.State, TreeID: record.TreeID, LeafIndex: record.LeafIndex, Path: path}, Delivery: record.Delivery, Commitment: record.Commitment, Membership: membership})
 	}
 	return result, nil
 }

@@ -1,5 +1,5 @@
 {
-  "source": "Independent ethers6.17 EIP712 and ABI encoding from invisi-protocol ec2beb7, checked against Solidity adapters",
+  "source": "Current independent protocol EIP712 helper, Noir1.0.0 release",
   "rows": [
     {
       "context": {
@@ -7,32 +7,16 @@
         "protocolAddress": "0x0000000000000000000000000000000000001234"
       },
       "operation": "transact",
-      "capacity": 14,
+      "capacity": 1,
       "words": [
         "31337",
         "4660",
-        "1",
-        "2048",
-        "177147",
-        "4194304",
-        "48828125",
-        "362797056",
-        "1977326743",
-        "8589934592",
-        "31381059609",
-        "100000000000",
-        "285311670611",
-        "743008370688",
-        "1792160394037",
-        "4049565169664",
-        "8649755859375",
-        "17592186044416",
-        "34271896307633"
+        "2"
       ],
-      "digest": "0xc8e0da9d0ae20b1725455e1ed4cd92a9298b05f1501e84470b113f853dd1c90b",
+      "digest": "0x2ad9e8f6d02e5f59f9057c64e2f90a9ac9946e20e331115bf6e135d95f0b032c",
       "message": {
         "operation": "0xbd121e5b46d2c5edc1fe3a980404964e2364cb4d2899c799cdf30a05875176fa",
-        "statementHash": "0x8452838755114b6b597a5c5402d3d3bd18cf3189b4399a9746dd99e786617e33"
+        "statementHash": "0x54543b8b2068985a8357a2067bf7be86475b0fcf906a15c78f0fca9739522a37"
       }
     },
     {
@@ -41,32 +25,16 @@
         "protocolAddress": "0x0000000000000000000000000000000000001234"
       },
       "operation": "transact",
-      "capacity": 56,
+      "capacity": 2,
       "words": [
         "31337",
         "4660",
-        "1",
-        "2048",
-        "177147",
-        "4194304",
-        "48828125",
-        "362797056",
-        "1977326743",
-        "8589934592",
-        "31381059609",
-        "100000000000",
-        "285311670611",
-        "743008370688",
-        "1792160394037",
-        "4049565169664",
-        "8649755859375",
-        "17592186044416",
-        "34271896307633"
+        "2"
       ],
-      "digest": "0x8e284e10a2d5a602431a4ff6bb7ceda34f3273bff4a6e67c8d14882cd73c9bd6",
+      "digest": "0xa265bddceea45d46c0daafc72f2125ffce780d136922fbd8c572c4f5d7a706e7",
       "message": {
         "operation": "0xbd121e5b46d2c5edc1fe3a980404964e2364cb4d2899c799cdf30a05875176fa",
-        "statementHash": "0xa5afdeb211653f06ae8af25a022e081a413631ed6331e6cf7cd36e8b883c6931"
+        "statementHash": "0x5f2fc017a66b1a889e8a4c321057e96a4d0e6b30fc7ca09e434e2b4a87b13cca"
       }
     },
     {
@@ -75,32 +43,16 @@
         "protocolAddress": "0x0000000000000000000000000000000000001234"
       },
       "operation": "transact",
-      "capacity": 112,
+      "capacity": 3,
       "words": [
         "31337",
         "4660",
-        "1",
-        "2048",
-        "177147",
-        "4194304",
-        "48828125",
-        "362797056",
-        "1977326743",
-        "8589934592",
-        "31381059609",
-        "100000000000",
-        "285311670611",
-        "743008370688",
-        "1792160394037",
-        "4049565169664",
-        "8649755859375",
-        "17592186044416",
-        "34271896307633"
+        "2"
       ],
-      "digest": "0xb46ac1a993e17e1dd3bfecd36567656f5e6c54fae7a5b60c8a171e901c8aaea9",
+      "digest": "0x1205c0ed15610bfaad7c3643651eaf23a1dd3e3827e1fea1b09df82ea4a5bcc5",
       "message": {
         "operation": "0xbd121e5b46d2c5edc1fe3a980404964e2364cb4d2899c799cdf30a05875176fa",
-        "statementHash": "0x3cc991d9656368c1c46f8ba7424cba1bad7216d064419440dbda2ae0a18c2647"
+        "statementHash": "0x916d95b95c393d041edeb2f7ca35b1be4de97f7e756e162f36a4c7dbcde08966"
       }
     },
     {
@@ -109,32 +61,448 @@
         "protocolAddress": "0x0000000000000000000000000000000000001234"
       },
       "operation": "transact",
-      "capacity": 168,
+      "capacity": 4,
       "words": [
         "31337",
         "4660",
-        "1",
-        "2048",
-        "177147",
-        "4194304",
-        "48828125",
-        "362797056",
-        "1977326743",
-        "8589934592",
-        "31381059609",
-        "100000000000",
-        "285311670611",
-        "743008370688",
-        "1792160394037",
-        "4049565169664",
-        "8649755859375",
-        "17592186044416",
-        "34271896307633"
+        "2"
       ],
-      "digest": "0x0d4a15f2c9cdc246c4bbc56c4773a98f3fae3ead084e5d6d3986cf7efd47ffcb",
+      "digest": "0x772a1996a8b6c7ec1f5f3a767280ca7a544eced0f75dcb114702ff3239bf3788",
       "message": {
         "operation": "0xbd121e5b46d2c5edc1fe3a980404964e2364cb4d2899c799cdf30a05875176fa",
-        "statementHash": "0x1ee166e4edf3efeec2f7bc96cc009a308817b7a9d0b9b35e107c0f2bd19b9733"
+        "statementHash": "0xd7759be4e27c5f2807e4564578077ef02c3bb94675516531aa95d618d6ddc89b"
+      }
+    },
+    {
+      "context": {
+        "chainId": "31337",
+        "protocolAddress": "0x0000000000000000000000000000000000001234"
+      },
+      "operation": "transact",
+      "capacity": 5,
+      "words": [
+        "31337",
+        "4660",
+        "2"
+      ],
+      "digest": "0x590c75e807885d972d4208f5c307c785884fdaa38e71435be8191d2ea25c94ce",
+      "message": {
+        "operation": "0xbd121e5b46d2c5edc1fe3a980404964e2364cb4d2899c799cdf30a05875176fa",
+        "statementHash": "0xff510ffdc3d6bc981f53140a25a8418af4d7785952daa6674907cd160c6e709e"
+      }
+    },
+    {
+      "context": {
+        "chainId": "31337",
+        "protocolAddress": "0x0000000000000000000000000000000000001234"
+      },
+      "operation": "transact",
+      "capacity": 6,
+      "words": [
+        "31337",
+        "4660",
+        "2"
+      ],
+      "digest": "0xd35a6696219d168e79ec66069f1b7dfe46506629f7298faff378cc8ee00fb4ea",
+      "message": {
+        "operation": "0xbd121e5b46d2c5edc1fe3a980404964e2364cb4d2899c799cdf30a05875176fa",
+        "statementHash": "0xf168493c6187693bcf46637fe00c826046e80b651d85ea58b2a3828236757ad9"
+      }
+    },
+    {
+      "context": {
+        "chainId": "31337",
+        "protocolAddress": "0x0000000000000000000000000000000000001234"
+      },
+      "operation": "transact",
+      "capacity": 7,
+      "words": [
+        "31337",
+        "4660",
+        "2"
+      ],
+      "digest": "0x149e7c9e0fe0a747f47c282048643d1335a09b0ccc73630c8fbb3c5a45f69ff8",
+      "message": {
+        "operation": "0xbd121e5b46d2c5edc1fe3a980404964e2364cb4d2899c799cdf30a05875176fa",
+        "statementHash": "0x41ca91bb137dfcd4443485f0ced16b0eb52f7e1d2a1219860b384f0839d01e2d"
+      }
+    },
+    {
+      "context": {
+        "chainId": "31337",
+        "protocolAddress": "0x0000000000000000000000000000000000001234"
+      },
+      "operation": "transact",
+      "capacity": 8,
+      "words": [
+        "31337",
+        "4660",
+        "2"
+      ],
+      "digest": "0x9d6d944799b857105bf58f87ee3a082df9bdeb76bac83e6c1aa0018c0dafbb99",
+      "message": {
+        "operation": "0xbd121e5b46d2c5edc1fe3a980404964e2364cb4d2899c799cdf30a05875176fa",
+        "statementHash": "0x050b4d015d71af8a60c758d7607e528250dd13fb679e28457a3dfa48ca16ef66"
+      }
+    },
+    {
+      "context": {
+        "chainId": "31337",
+        "protocolAddress": "0x0000000000000000000000000000000000001234"
+      },
+      "operation": "transact",
+      "capacity": 9,
+      "words": [
+        "31337",
+        "4660",
+        "2"
+      ],
+      "digest": "0xcaca4be43d1970577081112ff968d38d5df69d53fb2f1a208c36fcd3ec3815ee",
+      "message": {
+        "operation": "0xbd121e5b46d2c5edc1fe3a980404964e2364cb4d2899c799cdf30a05875176fa",
+        "statementHash": "0x87c7bd28383854db24c62f5c6fb4135fc68648a5e205cac40c4d201a5d9901ba"
+      }
+    },
+    {
+      "context": {
+        "chainId": "31337",
+        "protocolAddress": "0x0000000000000000000000000000000000001234"
+      },
+      "operation": "transact",
+      "capacity": 10,
+      "words": [
+        "31337",
+        "4660",
+        "2"
+      ],
+      "digest": "0xe36411b9ed41978ea9f5b88bab3008df698db59e9053eca7ed85e3fa2c86d3e5",
+      "message": {
+        "operation": "0xbd121e5b46d2c5edc1fe3a980404964e2364cb4d2899c799cdf30a05875176fa",
+        "statementHash": "0xb5c4c6792570229e0beb4b0e7556445aaaa04304cf30e1f7bd71e583e899b749"
+      }
+    },
+    {
+      "context": {
+        "chainId": "31337",
+        "protocolAddress": "0x0000000000000000000000000000000000001234"
+      },
+      "operation": "transact",
+      "capacity": 20,
+      "words": [
+        "31337",
+        "4660",
+        "2"
+      ],
+      "digest": "0x28fe5d29576096d1120b204098ec8ad445043d1832a02e60af9a6ef0dca54ae9",
+      "message": {
+        "operation": "0xbd121e5b46d2c5edc1fe3a980404964e2364cb4d2899c799cdf30a05875176fa",
+        "statementHash": "0xf7badad772e5cb01ca87bd755f5783b8fdb8199ea7a1cd100b629023b853fed6"
+      }
+    },
+    {
+      "context": {
+        "chainId": "31337",
+        "protocolAddress": "0x0000000000000000000000000000000000001234"
+      },
+      "operation": "transact",
+      "capacity": 30,
+      "words": [
+        "31337",
+        "4660",
+        "2"
+      ],
+      "digest": "0xc559ededfed47403c2b86d0e8f1737b9ee9c5f73e3af5d54194bb4e0d1f79039",
+      "message": {
+        "operation": "0xbd121e5b46d2c5edc1fe3a980404964e2364cb4d2899c799cdf30a05875176fa",
+        "statementHash": "0x97ab12576525bc3084ff80f62ff519024e037bde145228b498516dfe137e08e7"
+      }
+    },
+    {
+      "context": {
+        "chainId": "31337",
+        "protocolAddress": "0x0000000000000000000000000000000000001234"
+      },
+      "operation": "transact",
+      "capacity": 40,
+      "words": [
+        "31337",
+        "4660",
+        "2"
+      ],
+      "digest": "0x588d69605a55c27c4b1fee02914d03a1f45719a0fc4a203eaef5bf0d40780c00",
+      "message": {
+        "operation": "0xbd121e5b46d2c5edc1fe3a980404964e2364cb4d2899c799cdf30a05875176fa",
+        "statementHash": "0x1642c058635c43b130cd818da0ee31c0324159ec75ab5b774d4959c92dfa2371"
+      }
+    },
+    {
+      "context": {
+        "chainId": "31337",
+        "protocolAddress": "0x0000000000000000000000000000000000001234"
+      },
+      "operation": "transact",
+      "capacity": 50,
+      "words": [
+        "31337",
+        "4660",
+        "2"
+      ],
+      "digest": "0x515c21e9de9fff9354ec5f7a6d6cca6d485bca53e4634e09ba83a7ea84786110",
+      "message": {
+        "operation": "0xbd121e5b46d2c5edc1fe3a980404964e2364cb4d2899c799cdf30a05875176fa",
+        "statementHash": "0x4c437b97499a91424781c95d3f7b45f3d2e4705f4fc92c00013c5e28836d9024"
+      }
+    },
+    {
+      "context": {
+        "chainId": "31337",
+        "protocolAddress": "0x0000000000000000000000000000000000001234"
+      },
+      "operation": "transact",
+      "capacity": 60,
+      "words": [
+        "31337",
+        "4660",
+        "2"
+      ],
+      "digest": "0xc7cec6a84828955d4de940a09014d9529e56a33a3720fd0b231d347bc7d8246a",
+      "message": {
+        "operation": "0xbd121e5b46d2c5edc1fe3a980404964e2364cb4d2899c799cdf30a05875176fa",
+        "statementHash": "0x90d45097a98600b3e76ca8ee5dbb90340c1a54da64ab3040f8748874384d9b3f"
+      }
+    },
+    {
+      "context": {
+        "chainId": "31337",
+        "protocolAddress": "0x0000000000000000000000000000000000001234"
+      },
+      "operation": "transact",
+      "capacity": 70,
+      "words": [
+        "31337",
+        "4660",
+        "2"
+      ],
+      "digest": "0x586b2f0994f48e13c3506b02175b1ed4aad779f24bb6f7b4fb739873bfe1b7d6",
+      "message": {
+        "operation": "0xbd121e5b46d2c5edc1fe3a980404964e2364cb4d2899c799cdf30a05875176fa",
+        "statementHash": "0x30d4647afe63a4a5bb4fe6937ccb76f7f573396b910378a3228faf71ec389117"
+      }
+    },
+    {
+      "context": {
+        "chainId": "31337",
+        "protocolAddress": "0x0000000000000000000000000000000000001234"
+      },
+      "operation": "transact",
+      "capacity": 80,
+      "words": [
+        "31337",
+        "4660",
+        "2"
+      ],
+      "digest": "0x215e8a3dcc9b02b04583aac033ba7512e0c3baa2737c3e165255ce8aa01c5df9",
+      "message": {
+        "operation": "0xbd121e5b46d2c5edc1fe3a980404964e2364cb4d2899c799cdf30a05875176fa",
+        "statementHash": "0xc944d91b7212859bf43afc0627117af89d10ab46e48f3c5bd1d39253891a33c2"
+      }
+    },
+    {
+      "context": {
+        "chainId": "31337",
+        "protocolAddress": "0x0000000000000000000000000000000000001234"
+      },
+      "operation": "transact",
+      "capacity": 90,
+      "words": [
+        "31337",
+        "4660",
+        "2"
+      ],
+      "digest": "0x41168edea4b5bff01fe374e7a92d3b199eda403d88794d4dcaa9b1b5e9ce5ac6",
+      "message": {
+        "operation": "0xbd121e5b46d2c5edc1fe3a980404964e2364cb4d2899c799cdf30a05875176fa",
+        "statementHash": "0xd70b53a2c440a564a302f224c00085b83aa21a65896119fa662587d65445eff1"
+      }
+    },
+    {
+      "context": {
+        "chainId": "31337",
+        "protocolAddress": "0x0000000000000000000000000000000000001234"
+      },
+      "operation": "transact",
+      "capacity": 100,
+      "words": [
+        "31337",
+        "4660",
+        "2"
+      ],
+      "digest": "0x831fa4153380c535e96347cc3aeaa8b5f9be61f81b718e14abb225b53dd7308f",
+      "message": {
+        "operation": "0xbd121e5b46d2c5edc1fe3a980404964e2364cb4d2899c799cdf30a05875176fa",
+        "statementHash": "0x9958d3913a48a2a1a5597b9fb5f18db89da7f00196d0be08709de1b9d65e77b9"
+      }
+    },
+    {
+      "context": {
+        "chainId": "31337",
+        "protocolAddress": "0x0000000000000000000000000000000000001234"
+      },
+      "operation": "transact",
+      "capacity": 110,
+      "words": [
+        "31337",
+        "4660",
+        "2"
+      ],
+      "digest": "0x0c768dd519d5c15489cef7e5ef4fbebfd723178db6cc91560a88f0e704c04f2a",
+      "message": {
+        "operation": "0xbd121e5b46d2c5edc1fe3a980404964e2364cb4d2899c799cdf30a05875176fa",
+        "statementHash": "0xf1b12afe9a1d787fa24a7fec2a0aa6441cb0ca9112ccb65d626dfc3fe9c24f59"
+      }
+    },
+    {
+      "context": {
+        "chainId": "31337",
+        "protocolAddress": "0x0000000000000000000000000000000000001234"
+      },
+      "operation": "transact",
+      "capacity": 120,
+      "words": [
+        "31337",
+        "4660",
+        "2"
+      ],
+      "digest": "0xad79fba5ebdd0e25b898790b52983e0c8cd5da187a1cfa17fe96efe54923ed45",
+      "message": {
+        "operation": "0xbd121e5b46d2c5edc1fe3a980404964e2364cb4d2899c799cdf30a05875176fa",
+        "statementHash": "0xb5eda32401dca138ca6998cee52092a0010863df5b47d4bf571583fdc0494d80"
+      }
+    },
+    {
+      "context": {
+        "chainId": "31337",
+        "protocolAddress": "0x0000000000000000000000000000000000001234"
+      },
+      "operation": "transact",
+      "capacity": 130,
+      "words": [
+        "31337",
+        "4660",
+        "2"
+      ],
+      "digest": "0xe343496e604ab50d49fbfd57355f8ce0e7b76fe205a8d945f92d5b5348627a42",
+      "message": {
+        "operation": "0xbd121e5b46d2c5edc1fe3a980404964e2364cb4d2899c799cdf30a05875176fa",
+        "statementHash": "0xc4708346dc7210b60f0f01a42ca2a255745b06f893dcf656b05c9e5d3322e1c4"
+      }
+    },
+    {
+      "context": {
+        "chainId": "31337",
+        "protocolAddress": "0x0000000000000000000000000000000000001234"
+      },
+      "operation": "transact",
+      "capacity": 140,
+      "words": [
+        "31337",
+        "4660",
+        "2"
+      ],
+      "digest": "0xe3b2f854ae95ce611b7ecaa5a780217164930b915923c738ab83156a1d60b953",
+      "message": {
+        "operation": "0xbd121e5b46d2c5edc1fe3a980404964e2364cb4d2899c799cdf30a05875176fa",
+        "statementHash": "0x6322ca4949a7ef0bde4940567b3a66bce3aac356461f7d3eda9aaf386f1cf8fc"
+      }
+    },
+    {
+      "context": {
+        "chainId": "31337",
+        "protocolAddress": "0x0000000000000000000000000000000000001234"
+      },
+      "operation": "transact",
+      "capacity": 150,
+      "words": [
+        "31337",
+        "4660",
+        "2"
+      ],
+      "digest": "0x7a3e25ab737e1a465ba8fb849fb8cf426d307bb7a092cee77212e8ca1459f3f3",
+      "message": {
+        "operation": "0xbd121e5b46d2c5edc1fe3a980404964e2364cb4d2899c799cdf30a05875176fa",
+        "statementHash": "0xe6566cf1bdf900f5f167819415047703505441a3def64ef940278317ef82c08d"
+      }
+    },
+    {
+      "context": {
+        "chainId": "31337",
+        "protocolAddress": "0x0000000000000000000000000000000000001234"
+      },
+      "operation": "transact",
+      "capacity": 160,
+      "words": [
+        "31337",
+        "4660",
+        "2"
+      ],
+      "digest": "0x6d3985f26619f46c035f608d745081899daf46e04f12a780c44da3173cffcebc",
+      "message": {
+        "operation": "0xbd121e5b46d2c5edc1fe3a980404964e2364cb4d2899c799cdf30a05875176fa",
+        "statementHash": "0x202b941bf8af9c1bf8b6ca5cb78bd316e0e19b0c70b4a563db16d664bbee4cab"
+      }
+    },
+    {
+      "context": {
+        "chainId": "31337",
+        "protocolAddress": "0x0000000000000000000000000000000000001234"
+      },
+      "operation": "transact",
+      "capacity": 170,
+      "words": [
+        "31337",
+        "4660",
+        "2"
+      ],
+      "digest": "0x530cbb3263588b5bb407b65f4d4d88163dc53d1b9c28ad97a19f940563b56197",
+      "message": {
+        "operation": "0xbd121e5b46d2c5edc1fe3a980404964e2364cb4d2899c799cdf30a05875176fa",
+        "statementHash": "0x04a6349acb72d6f8f75859f09b7f213d14fe4cfb83287e70e1aa2aa6b7bb884a"
+      }
+    },
+    {
+      "context": {
+        "chainId": "31337",
+        "protocolAddress": "0x0000000000000000000000000000000000001234"
+      },
+      "operation": "transact",
+      "capacity": 180,
+      "words": [
+        "31337",
+        "4660",
+        "2"
+      ],
+      "digest": "0xf7efb2bab70c30b7ca83045fcb788ba0aa93c11bfa1d50726b49d717de90b54b",
+      "message": {
+        "operation": "0xbd121e5b46d2c5edc1fe3a980404964e2364cb4d2899c799cdf30a05875176fa",
+        "statementHash": "0x5fec42483bd2a235a50eff3a496b1da14c9b925637ac2bab777596556b4eec31"
+      }
+    },
+    {
+      "context": {
+        "chainId": "31337",
+        "protocolAddress": "0x0000000000000000000000000000000000001234"
+      },
+      "operation": "transact",
+      "capacity": 190,
+      "words": [
+        "31337",
+        "4660",
+        "2"
+      ],
+      "digest": "0x5b0fd6b927024731e9b21d0176a1b5133055446205884d0d5026cfff94b037cf",
+      "message": {
+        "operation": "0xbd121e5b46d2c5edc1fe3a980404964e2364cb4d2899c799cdf30a05875176fa",
+        "statementHash": "0x23afd8dc25c18dc743a4214cbf113fe438f891f18473c35360f809020a714d26"
       }
     },
     {
@@ -143,32 +511,16 @@
         "protocolAddress": "0x0000000000000000000000000000000000001234"
       },
       "operation": "create-credit",
-      "capacity": 10,
+      "capacity": 1,
       "words": [
         "31337",
         "4660",
-        "1",
-        "2048",
-        "177147",
-        "4194304",
-        "48828125",
-        "362797056",
-        "1977326743",
-        "8589934592",
-        "31381059609",
-        "100000000000",
-        "285311670611",
-        "743008370688",
-        "1792160394037",
-        "4049565169664",
-        "8649755859375",
-        "17592186044416",
-        "34271896307633"
+        "2"
       ],
-      "digest": "0x001b981b0c7a52993bfe27bbd6175c332b2593fffeb040ece1aa6c209b36b216",
+      "digest": "0x5e32fa1d56ce3d88578c42f3a3038f9b2a178a0dcf653c4f3608a45e2ed252b2",
       "message": {
-        "operation": "0xf8f8d967a2a4c06216ca5aac25f3b18dbac140212317cb9670256f5e82b3e800",
-        "statementHash": "0x72089ab38599f83ce6c1dc7e862c27cb3a952d2c89d430889a072a6bedb6cdb0"
+        "operation": "0xeefd8bca95bb0c0692bc417e3fe4e1174c11f039deefde3dbfee7150cdf2ce7f",
+        "statementHash": "0x54543b8b2068985a8357a2067bf7be86475b0fcf906a15c78f0fca9739522a37"
       }
     },
     {
@@ -181,28 +533,12 @@
       "words": [
         "31337",
         "4660",
-        "1",
-        "2048",
-        "177147",
-        "4194304",
-        "48828125",
-        "362797056",
-        "1977326743",
-        "8589934592",
-        "31381059609",
-        "100000000000",
-        "285311670611",
-        "743008370688",
-        "1792160394037",
-        "4049565169664",
-        "8649755859375",
-        "17592186044416",
-        "34271896307633"
+        "2"
       ],
-      "digest": "0x01b2efecd930b097bf6bb025b8e7b97fc65c26ebb22a19dee85dc38905d90681",
+      "digest": "0x992873a0484239c6b5e62aaeb94fe9841234bf4f14d9d143658cf41517589cbc",
       "message": {
-        "operation": "0xb7d57c9eaffe54cb4deae7ccd434cf9609a840d62e350b7dc60e05d5bce42107",
-        "statementHash": "0xbe66734004ce361fbc484565b2ce660b2a0bf67028a2673d2d5e702539046705"
+        "operation": "0x1953cc6f4a4dbc0eb9d9abdbb5fab62c210c4f59239981e5d43c3b651c477d0f",
+        "statementHash": "0x54543b8b2068985a8357a2067bf7be86475b0fcf906a15c78f0fca9739522a37"
       }
     },
     {
@@ -211,32 +547,142 @@
         "protocolAddress": "0x0000000000000000000000000000000000001234"
       },
       "operation": "credit-draw",
-      "capacity": 12,
+      "capacity": 2,
       "words": [
         "31337",
         "4660",
-        "1",
-        "2048",
-        "177147",
-        "4194304",
-        "48828125",
-        "362797056",
-        "1977326743",
-        "8589934592",
-        "31381059609",
-        "100000000000",
-        "285311670611",
-        "743008370688",
-        "1792160394037",
-        "4049565169664",
-        "8649755859375",
-        "17592186044416",
-        "34271896307633"
+        "2"
       ],
-      "digest": "0xd8f76b68e741ef38f56098fad44e7d0b1f18db104686162fb7fc54d52af1aa91",
+      "digest": "0xabe54bcbbc2b5aa31d0b9ee5aaddcd46f274093fdf1d21b71dca13474997720d",
       "message": {
-        "operation": "0xb7d57c9eaffe54cb4deae7ccd434cf9609a840d62e350b7dc60e05d5bce42107",
-        "statementHash": "0x45c1ff27564fea739f1c5bfd49762a0b5ee2c56281d7ef3a88adc270a147f8f1"
+        "operation": "0x1953cc6f4a4dbc0eb9d9abdbb5fab62c210c4f59239981e5d43c3b651c477d0f",
+        "statementHash": "0x5f2fc017a66b1a889e8a4c321057e96a4d0e6b30fc7ca09e434e2b4a87b13cca"
+      }
+    },
+    {
+      "context": {
+        "chainId": "31337",
+        "protocolAddress": "0x0000000000000000000000000000000000001234"
+      },
+      "operation": "credit-draw",
+      "capacity": 3,
+      "words": [
+        "31337",
+        "4660",
+        "2"
+      ],
+      "digest": "0x9f3bccb8de72c7e77f3b5b65beddaee7cf81035d8406ceeb3e6412e1b3b39228",
+      "message": {
+        "operation": "0x1953cc6f4a4dbc0eb9d9abdbb5fab62c210c4f59239981e5d43c3b651c477d0f",
+        "statementHash": "0x916d95b95c393d041edeb2f7ca35b1be4de97f7e756e162f36a4c7dbcde08966"
+      }
+    },
+    {
+      "context": {
+        "chainId": "31337",
+        "protocolAddress": "0x0000000000000000000000000000000000001234"
+      },
+      "operation": "credit-draw",
+      "capacity": 4,
+      "words": [
+        "31337",
+        "4660",
+        "2"
+      ],
+      "digest": "0xc5fcb824f501cbe0c4cdccf0634054bdc13cbc5483cf93bcf929ead9920b3c59",
+      "message": {
+        "operation": "0x1953cc6f4a4dbc0eb9d9abdbb5fab62c210c4f59239981e5d43c3b651c477d0f",
+        "statementHash": "0xd7759be4e27c5f2807e4564578077ef02c3bb94675516531aa95d618d6ddc89b"
+      }
+    },
+    {
+      "context": {
+        "chainId": "31337",
+        "protocolAddress": "0x0000000000000000000000000000000000001234"
+      },
+      "operation": "credit-draw",
+      "capacity": 5,
+      "words": [
+        "31337",
+        "4660",
+        "2"
+      ],
+      "digest": "0x352de405721b8cb01007eee7b6789316c50cc76202c5e326efd87c6e06955442",
+      "message": {
+        "operation": "0x1953cc6f4a4dbc0eb9d9abdbb5fab62c210c4f59239981e5d43c3b651c477d0f",
+        "statementHash": "0xff510ffdc3d6bc981f53140a25a8418af4d7785952daa6674907cd160c6e709e"
+      }
+    },
+    {
+      "context": {
+        "chainId": "31337",
+        "protocolAddress": "0x0000000000000000000000000000000000001234"
+      },
+      "operation": "credit-draw",
+      "capacity": 10,
+      "words": [
+        "31337",
+        "4660",
+        "2"
+      ],
+      "digest": "0xd1198cbca36034c377579fd9eecb19b9cf8899f3456e7a1062ff78c1c6e6553f",
+      "message": {
+        "operation": "0x1953cc6f4a4dbc0eb9d9abdbb5fab62c210c4f59239981e5d43c3b651c477d0f",
+        "statementHash": "0xb5c4c6792570229e0beb4b0e7556445aaaa04304cf30e1f7bd71e583e899b749"
+      }
+    },
+    {
+      "context": {
+        "chainId": "31337",
+        "protocolAddress": "0x0000000000000000000000000000000000001234"
+      },
+      "operation": "credit-draw",
+      "capacity": 20,
+      "words": [
+        "31337",
+        "4660",
+        "2"
+      ],
+      "digest": "0x8046ae3c1a1d6e6820aa474bd6ab7838b5bbf52068eee537f2bb8a0573088bb9",
+      "message": {
+        "operation": "0x1953cc6f4a4dbc0eb9d9abdbb5fab62c210c4f59239981e5d43c3b651c477d0f",
+        "statementHash": "0xf7badad772e5cb01ca87bd755f5783b8fdb8199ea7a1cd100b629023b853fed6"
+      }
+    },
+    {
+      "context": {
+        "chainId": "31337",
+        "protocolAddress": "0x0000000000000000000000000000000000001234"
+      },
+      "operation": "credit-draw",
+      "capacity": 30,
+      "words": [
+        "31337",
+        "4660",
+        "2"
+      ],
+      "digest": "0xe97d6464c4ea279f75789b2a3237bd7acd278047391a1dd0b97a0d2750370017",
+      "message": {
+        "operation": "0x1953cc6f4a4dbc0eb9d9abdbb5fab62c210c4f59239981e5d43c3b651c477d0f",
+        "statementHash": "0x97ab12576525bc3084ff80f62ff519024e037bde145228b498516dfe137e08e7"
+      }
+    },
+    {
+      "context": {
+        "chainId": "31337",
+        "protocolAddress": "0x0000000000000000000000000000000000001234"
+      },
+      "operation": "credit-draw",
+      "capacity": 40,
+      "words": [
+        "31337",
+        "4660",
+        "2"
+      ],
+      "digest": "0xf567efb7daa13ddbe1b541a253a7e6f8cd3f93c56191975492ffb68172b3b1e8",
+      "message": {
+        "operation": "0x1953cc6f4a4dbc0eb9d9abdbb5fab62c210c4f59239981e5d43c3b651c477d0f",
+        "statementHash": "0x1642c058635c43b130cd818da0ee31c0324159ec75ab5b774d4959c92dfa2371"
       }
     },
     {
@@ -249,28 +695,12 @@
       "words": [
         "31337",
         "4660",
-        "1",
-        "2048",
-        "177147",
-        "4194304",
-        "48828125",
-        "362797056",
-        "1977326743",
-        "8589934592",
-        "31381059609",
-        "100000000000",
-        "285311670611",
-        "743008370688",
-        "1792160394037",
-        "4049565169664",
-        "8649755859375",
-        "17592186044416",
-        "34271896307633"
+        "2"
       ],
-      "digest": "0xcb52c6d942d7fd655acf6cee9b53dacc344ea61ef3681db47fa9fe478b24b3c3",
+      "digest": "0x8abcf84ecc934d25adf0042732603e496dad955269495c59c1c4ef150b5da861",
       "message": {
-        "operation": "0xb7d57c9eaffe54cb4deae7ccd434cf9609a840d62e350b7dc60e05d5bce42107",
-        "statementHash": "0xcdb4da7d4507e474e4b0a2721d9682fa5b29dddecbdded92854cbbb09dc4e4b7"
+        "operation": "0x1953cc6f4a4dbc0eb9d9abdbb5fab62c210c4f59239981e5d43c3b651c477d0f",
+        "statementHash": "0x4c437b97499a91424781c95d3f7b45f3d2e4705f4fc92c00013c5e28836d9024"
       }
     },
     {
@@ -279,32 +709,16 @@
         "protocolAddress": "0x0000000000000000000000000000000000001234"
       },
       "operation": "credit-draw",
-      "capacity": 120,
+      "capacity": 60,
       "words": [
         "31337",
         "4660",
-        "1",
-        "2048",
-        "177147",
-        "4194304",
-        "48828125",
-        "362797056",
-        "1977326743",
-        "8589934592",
-        "31381059609",
-        "100000000000",
-        "285311670611",
-        "743008370688",
-        "1792160394037",
-        "4049565169664",
-        "8649755859375",
-        "17592186044416",
-        "34271896307633"
+        "2"
       ],
-      "digest": "0x95aec833262dea67fa0fb608964796bfa1e72985fe1f5208bb18a6651dfebd2b",
+      "digest": "0x59237ca1bc2c1566202c8e7c6b53075063691d8a06154ffd404b552748738e78",
       "message": {
-        "operation": "0xb7d57c9eaffe54cb4deae7ccd434cf9609a840d62e350b7dc60e05d5bce42107",
-        "statementHash": "0xabd0a215c9a68199b2753ead198997eb7e06a3658b35c042df73425731761844"
+        "operation": "0x1953cc6f4a4dbc0eb9d9abdbb5fab62c210c4f59239981e5d43c3b651c477d0f",
+        "statementHash": "0x90d45097a98600b3e76ca8ee5dbb90340c1a54da64ab3040f8748874384d9b3f"
       }
     },
     {
@@ -312,67 +726,53 @@
         "chainId": "31337",
         "protocolAddress": "0x0000000000000000000000000000000000001234"
       },
-      "operation": "cancel-credit",
+      "operation": "credit-draw",
+      "capacity": 70,
+      "words": [
+        "31337",
+        "4660",
+        "2"
+      ],
+      "digest": "0xb219620e4a14fc6cf7c1cf7679c9e36efe810ae1e3654205b7d595fad6013c03",
+      "message": {
+        "operation": "0x1953cc6f4a4dbc0eb9d9abdbb5fab62c210c4f59239981e5d43c3b651c477d0f",
+        "statementHash": "0x30d4647afe63a4a5bb4fe6937ccb76f7f573396b910378a3228faf71ec389117"
+      }
+    },
+    {
+      "context": {
+        "chainId": "31337",
+        "protocolAddress": "0x0000000000000000000000000000000000001234"
+      },
+      "operation": "credit-draw",
+      "capacity": 80,
+      "words": [
+        "31337",
+        "4660",
+        "2"
+      ],
+      "digest": "0x4b09d01f57d61d1bfa5a20fc0e6e4672d3853556e1ddd5e4fa3a858402f87506",
+      "message": {
+        "operation": "0x1953cc6f4a4dbc0eb9d9abdbb5fab62c210c4f59239981e5d43c3b651c477d0f",
+        "statementHash": "0xc944d91b7212859bf43afc0627117af89d10ab46e48f3c5bd1d39253891a33c2"
+      }
+    },
+    {
+      "context": {
+        "chainId": "31337",
+        "protocolAddress": "0x0000000000000000000000000000000000001234"
+      },
+      "operation": "update-credit",
       "capacity": 1,
       "words": [
         "31337",
         "4660",
-        "1",
-        "2048",
-        "177147",
-        "4194304",
-        "48828125",
-        "362797056",
-        "1977326743",
-        "8589934592",
-        "31381059609",
-        "100000000000",
-        "285311670611",
-        "743008370688",
-        "1792160394037",
-        "4049565169664",
-        "8649755859375",
-        "17592186044416",
-        "34271896307633"
+        "2"
       ],
-      "digest": "0x1668c4baeed83ea4fa096997f1a9823b38fe4a55b5de8e57e7f13269fc660f49",
+      "digest": "0x0b67e319ed4fd45fab8617934c47a312b028c35ede0cb7bb43c9f9e09f0f7853",
       "message": {
-        "operation": "0x2ea35012305d24092fa01a2bf50e9a8cc8b1821ae85c0d9afa37ddeaaf2fc15c",
-        "statementHash": "0xbe66734004ce361fbc484565b2ce660b2a0bf67028a2673d2d5e702539046705"
-      }
-    },
-    {
-      "context": {
-        "chainId": "31337",
-        "protocolAddress": "0x0000000000000000000000000000000000001234"
-      },
-      "operation": "top-up-credit",
-      "capacity": 10,
-      "words": [
-        "31337",
-        "4660",
-        "1",
-        "2048",
-        "177147",
-        "4194304",
-        "48828125",
-        "362797056",
-        "1977326743",
-        "8589934592",
-        "31381059609",
-        "100000000000",
-        "285311670611",
-        "743008370688",
-        "1792160394037",
-        "4049565169664",
-        "8649755859375",
-        "17592186044416",
-        "34271896307633"
-      ],
-      "digest": "0x320b2ed62b3d6021d3d2479c40e1d1cceed2f8c84e76feb0144ac9d561566088",
-      "message": {
-        "operation": "0x802e59594b16f61f1919bb0693322a2643a7d98c14cbdfb1f4fca7c794e10588",
-        "statementHash": "0x72089ab38599f83ce6c1dc7e862c27cb3a952d2c89d430889a072a6bedb6cdb0"
+        "operation": "0xb4518b3ef9b4c38663bc3665497e206ff6e345b4f15ccdf59da1df5d9fe3fda8",
+        "statementHash": "0x54543b8b2068985a8357a2067bf7be86475b0fcf906a15c78f0fca9739522a37"
       }
     }
   ]

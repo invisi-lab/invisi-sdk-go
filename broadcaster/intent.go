@@ -61,7 +61,7 @@ func decode(data []byte, strip bool) (*abi.Method, []any, Intent, error) {
 		return nil, nil, out, e
 	}
 	switch m.RawName {
-	case "shield", "transact", "createCredit", "topUpCredit", "cancelCredit":
+	case "shield", "transact", "createCredit", "creditDraw", "updateCredit", "revokeCredit":
 	default:
 		return nil, nil, out, errors.New("unsupported broadcaster method")
 	}
@@ -77,24 +77,28 @@ func decode(data []byte, strip bool) (*abi.Method, []any, Intent, error) {
 		return nil, nil, out, errors.New("noncanonical broadcaster calldata")
 	}
 	var p reflect.Value
-	switch m.RawName {
-	case "shield":
-		p = reflect.ValueOf(args[0])
-	case "transact":
-		p = field(reflect.ValueOf(args[1]), "Params")
-	case "topUpCredit":
-		p = field(reflect.ValueOf(args[1]), "Creation")
-	default:
-		p = reflect.ValueOf(args[1])
+	if m.RawName == "revokeCredit" {
+		out = Intent{m.RawName, args[0].(common.Address), args[5].(common.Address), args[6].(*big.Int), args[4].(*big.Int)}
+	} else {
+		if m.RawName == "shield" {
+			p = reflect.ValueOf(args[0])
+		} else if m.RawName == "transact" {
+			p = field(reflect.ValueOf(args[1]), "Params")
+		} else {
+			p = reflect.ValueOf(args[1])
+		}
+		token, recipient, amount, deadline := field(p, "Token"), field(p, "FeeRecipient"), field(p, "FeeAmount"), field(p, "Deadline")
+		if !token.IsValid() || !recipient.IsValid() || !amount.IsValid() || !deadline.IsValid() {
+			return nil, nil, out, errors.New("unsupported fee parameters")
+		}
+		out = Intent{m.RawName, token.Interface().(common.Address), recipient.Interface().(common.Address), amount.Interface().(*big.Int), deadline.Interface().(*big.Int)}
 	}
-	token, recipient, amount, deadline := field(p, "Token"), field(p, "FeeRecipient"), field(p, "FeeAmount"), field(p, "Deadline")
-	if !token.IsValid() || !recipient.IsValid() || !amount.IsValid() || !deadline.IsValid() {
-		return nil, nil, out, errors.New("unsupported fee parameters")
-	}
-	out = Intent{m.RawName, token.Interface().(common.Address), recipient.Interface().(common.Address), amount.Interface().(*big.Int), deadline.Interface().(*big.Int)}
 	if strip {
-		if m.RawName != "shield" {
+		if m.RawName != "shield" && m.RawName != "revokeCredit" {
 			args[0] = []byte{}
+		}
+		if m.RawName == "revokeCredit" {
+			args[7] = []byte{}
 		}
 		if m.RawName == "transact" {
 			v := reflect.ValueOf(args[1])
@@ -104,7 +108,7 @@ func decode(data []byte, strip bool) (*abi.Method, []any, Intent, error) {
 			sig := field(f, "Signature")
 			sig.SetBytes(nil)
 			args[1] = copy.Interface()
-		} else if m.RawName != "cancelCredit" {
+		} else if m.RawName == "shield" {
 			v := reflect.ValueOf(args[3])
 			copy := reflect.New(v.Type()).Elem()
 			copy.Set(v)

@@ -5,8 +5,6 @@ import (
 	transaction "github.com/invisi-lab/invisi-sdk-go/internal/transaction"
 )
 
-type CreditOpening = transaction.CreditOpening
-
 type Disclosure = transaction.Disclosure
 
 type DisclosureContext = transaction.DisclosureContext
@@ -14,10 +12,6 @@ type DisclosureContext = transaction.DisclosureContext
 type DisclosureEvidence = transaction.DisclosureEvidence
 
 type DisclosureExport = transaction.DisclosureExport
-
-func DisclosureFromCredit(note core.CreditNote) (*Disclosure, error) {
-	return transaction.DisclosureFromCredit(note)
-}
 
 func DisclosureFromExport(data []byte) (*Disclosure, error) {
 	return transaction.DisclosureFromExport(data)

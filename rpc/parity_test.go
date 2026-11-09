@@ -29,7 +29,7 @@ func TestMaxUpdateBlocksExactBoundaryAndEmptyPage(t *testing.T) {
 		if req.Method == "invisi_getStatus" {
 			result = map[string]any{"apiVersion": "v1", "protocolVersion": "1", "deployment": deployment, "indexedHead": block, "checkedBits": 8, "detectionEnabled": true}
 		} else {
-			result = map[string]any{"blockHash": block.Hash, "outputs": []any{}, "creditTransitions": []any{}}
+			result = map[string]any{"blockHash": block.Hash, "notes": []any{}, "creditTransitions": []any{}}
 		}
 		json.NewEncoder(w).Encode(map[string]any{"jsonrpc": "2.0", "id": req.ID, "result": result})
 	}))
@@ -37,30 +37,30 @@ func TestMaxUpdateBlocksExactBoundaryAndEmptyPage(t *testing.T) {
 	c, _ := NewProtocolRpcClient(server.URL+"/v1", ClientOptions{Deployment: &deployment})
 	c = c.WithProvider(provider)
 	scope := DeploymentContext{31337, deployment.Protocol.Address}
-	if _, e := c.GetUpdates(context.Background(), scope, ProtocolUpdateRange{FromBlock: 1, ToBlock: 10000}); e != nil {
+	if _, e := c.GetNoteUpdates(context.Background(), scope, ProtocolUpdateRange{FromBlock: 1, ToBlock: 10000}); e != nil {
 		t.Fatal(e)
 	}
 	before := calls
-	if _, e := c.GetUpdates(context.Background(), scope, ProtocolUpdateRange{FromBlock: 1, ToBlock: 10001}); e == nil {
+	if _, e := c.GetNoteUpdates(context.Background(), scope, ProtocolUpdateRange{FromBlock: 1, ToBlock: 10001}); e == nil {
 		t.Fatal("10001 blocks accepted")
 	}
 	if calls != before {
 		t.Fatal("oversized request reached RPC")
 	}
-	if _, e := c.GetOutputs(context.Background(), scope, ProtocolUpdateRange{FromBlock: 1, ToBlock: 10000}); e != nil {
+	if _, e := c.GetNoteUpdates(context.Background(), scope, ProtocolUpdateRange{FromBlock: 1, ToBlock: 10000}); e != nil {
 		t.Fatal(e)
 	}
 }
 func TestEmptyDeliveryPreservesOriginalLeafPosition(t *testing.T) {
 	row := map[string]any{"block": CanonicalBlock{Number: 10}, "treeId": 1, "leafIndex": 7, "commitment": common.HexToHash("0x03"), "token": common.HexToAddress("0x11"), "ciphertext": "0x", "clue": "0x", "transactionHash": common.HexToHash("0x04"), "logIndex": 1, "kind": "Shield"}
 	raw, _ := json.Marshal(row)
-	out, e := parseOutput(raw)
+	out, e := parseNoteOutput(raw)
 	if e != nil || out.LeafIndex != 7 || len(out.Ciphertext) != 0 {
 		t.Fatal(out, e)
 	}
 	row["clue"] = "0x" + repeatZero(68)
 	raw, _ = json.Marshal(row)
-	if _, e = parseOutput(raw); e == nil {
+	if _, e = parseNoteOutput(raw); e == nil {
 		t.Fatal("unpaired empty delivery accepted")
 	}
 }
@@ -74,11 +74,11 @@ func TestUpdateReadersRejectStaleIndexedHead(t *testing.T) {
 		read func(*ProtocolRpcClient) error
 	}{
 		{"updates", func(c *ProtocolRpcClient) error {
-			_, e := c.GetUpdates(context.Background(), DeploymentContext{31337, deployment.Protocol.Address}, ProtocolUpdateRange{FromBlock: 1, ToBlock: 10})
+			_, e := c.GetNoteUpdates(context.Background(), DeploymentContext{31337, deployment.Protocol.Address}, ProtocolUpdateRange{FromBlock: 1, ToBlock: 10})
 			return e
 		}},
 		{"outputs", func(c *ProtocolRpcClient) error {
-			_, e := c.GetOutputs(context.Background(), DeploymentContext{31337, deployment.Protocol.Address}, ProtocolUpdateRange{FromBlock: 1, ToBlock: 10})
+			_, e := c.GetNoteUpdates(context.Background(), DeploymentContext{31337, deployment.Protocol.Address}, ProtocolUpdateRange{FromBlock: 1, ToBlock: 10})
 			return e
 		}},
 	}
@@ -106,7 +106,7 @@ func TestUpdateReadersRejectStaleIndexedHead(t *testing.T) {
 						result = map[string]any{"apiVersion": "v1", "protocolVersion": "1", "deployment": deployment, "indexedHead": stale, "checkedBits": 8, "detectionEnabled": true}
 					} else {
 						updateCalls++
-						result = map[string]any{"blockHash": block.Hash, "outputs": []any{}, "creditTransitions": []any{}}
+						result = map[string]any{"blockHash": block.Hash, "notes": []any{}, "creditTransitions": []any{}}
 					}
 					json.NewEncoder(w).Encode(map[string]any{"jsonrpc": "2.0", "id": req.ID, "result": result})
 				}))

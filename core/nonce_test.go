@@ -34,23 +34,6 @@ func TestFieldModulusValue(t *testing.T) {
 	}
 }
 
-func TestGenerateCreditSharedKey(t *testing.T) {
-	seen := map[string]bool{}
-	for i := 0; i < 32; i++ {
-		key, err := GenerateCreditSharedKey()
-		if err != nil {
-			t.Fatal(err)
-		}
-		if key.IsZero() {
-			t.Fatal("zero Credit shared key")
-		}
-		encoded := ElementToHex(key)
-		if seen[encoded] {
-			t.Fatal("repeated Credit shared key")
-		}
-		seen[encoded] = true
-	}
-}
 func TestFieldModulusReturnsIndependentCopy(t *testing.T) {
 	value := FieldModulus()
 	value.SetUint64(1)

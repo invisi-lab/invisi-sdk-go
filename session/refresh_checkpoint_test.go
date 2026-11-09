@@ -53,7 +53,7 @@ func refreshFixture(t *testing.T, failSecond bool, entered, release chan struct{
 		switch request.Method {
 		case "invisi_getStatus":
 			result = map[string]any{"apiVersion": "v1", "protocolVersion": "1", "deployment": deployment, "indexedHead": block, "checkedBits": 8, "detectionEnabled": true}
-		case "invisi_getUpdates":
+		case "invisi_getNoteUpdates":
 			count := calls.Add(1)
 			if entered != nil && count == 1 {
 				close(entered)
@@ -70,7 +70,9 @@ func refreshFixture(t *testing.T, failSecond bool, entered, release chan struct{
 			if selected.ToBlock == 5 {
 				block = protocolrpc.CanonicalBlock{Number: 5, Hash: middle.Hash(), ParentHash: middle.ParentHash, Timestamp: middle.Time}
 			}
-			result = map[string]any{"blockHash": block.Hash, "outputs": []any{}, "creditTransitions": []any{}}
+			result = map[string]any{"blockHash": block.Hash, "notes": []any{}}
+		case "invisi_getCreditTransitions":
+			result = []any{}
 		default:
 			t.Errorf("unexpected method %s", request.Method)
 		}

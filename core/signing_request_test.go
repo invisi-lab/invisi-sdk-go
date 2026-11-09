@@ -18,7 +18,7 @@ func TestExternalWalletSignatureAndJSONRequest(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	request := WalletAuthorizationRequest{Context: ProtocolContext{ElementFromUint64(97), ElementFromUint64(2)}, Operation: WalletTransact, Capacity: 14, Words: []fr.Element{ElementFromUint64(97), ElementFromUint64(2), ElementFromUint64(9)}}
+	request := WalletAuthorizationRequest{Context: ProtocolContext{ElementFromUint64(97), ElementFromUint64(2)}, Operation: WalletTransact, Capacity: 1, Words: []fr.Element{ElementFromUint64(97), ElementFromUint64(2), ElementFromUint64(9)}}
 	typed, err := WalletAuthorizationTypedData(request)
 	if err != nil {
 		t.Fatal(err)
@@ -117,7 +117,7 @@ func TestSigningRequestPreservesLargeIntegersAndCopies(t *testing.T) {
 func TestExternalWalletSignatureRejectsHighS(t *testing.T) {
 	private := bytes.Repeat([]byte{1}, 32)
 	wallet, _ := DeriveWallet(private)
-	request := WalletAuthorizationRequest{Context: ProtocolContext{ElementFromUint64(97), ElementFromUint64(2)}, Operation: WalletTransact, Capacity: 14, Words: []fr.Element{ElementFromUint64(97), ElementFromUint64(2)}}
+	request := WalletAuthorizationRequest{Context: ProtocolContext{ElementFromUint64(97), ElementFromUint64(2)}, Operation: WalletTransact, Capacity: 1, Words: []fr.Element{ElementFromUint64(97), ElementFromUint64(2)}}
 	digest, _ := ComputeWalletAuthorizationDigest(request)
 	key, _ := ethcrypto.ToECDSA(private)
 	signature, _ := ethcrypto.Sign(digest[:], key)
@@ -132,7 +132,7 @@ func TestExternalWalletSignatureRejectsHighS(t *testing.T) {
 func TestExternalWalletSignatureAcceptsCompactEncoding(t *testing.T) {
 	private := bytes.Repeat([]byte{1}, 32)
 	wallet, _ := DeriveWallet(private)
-	request := WalletAuthorizationRequest{Context: ProtocolContext{ElementFromUint64(97), ElementFromUint64(2)}, Operation: WalletTransact, Capacity: 14, Words: []fr.Element{ElementFromUint64(97), ElementFromUint64(2)}}
+	request := WalletAuthorizationRequest{Context: ProtocolContext{ElementFromUint64(97), ElementFromUint64(2)}, Operation: WalletTransact, Capacity: 1, Words: []fr.Element{ElementFromUint64(97), ElementFromUint64(2)}}
 	digest, _ := ComputeWalletAuthorizationDigest(request)
 	key, _ := ethcrypto.ToECDSA(private)
 	signature, _ := ethcrypto.Sign(digest[:], key)

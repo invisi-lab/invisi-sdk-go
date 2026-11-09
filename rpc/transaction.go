@@ -26,22 +26,42 @@ type ProtocolCreditTransition struct {
 	Data            json.RawMessage `json:"data"`
 }
 
-// ProtocolTransactionUpdates preserves nil collections until the transaction is indexed.
-// IndexedHead is only an observed checkpoint in availability states and can be on a stale fork.
-type ProtocolTransactionUpdates struct {
-	TransactionHash   common.Hash
-	Status            TransactionUpdateStatus
-	IndexedHead       *CanonicalBlock
-	Block             *CanonicalBlock
-	ReceiptStatus     *uint64
-	Outputs           []ProtocolOutput
-	CreditTransitions []ProtocolCreditTransition
+type TransactionAvailability struct {
+	TransactionHash common.Hash
+	Status          TransactionUpdateStatus
+	IndexedHead     *CanonicalBlock
+	Block           *CanonicalBlock
+	ReceiptStatus   *uint64
+}
+type ProtocolTransactionNoteUpdates struct {
+	TransactionAvailability
+	Notes []ProtocolNoteOutput
+}
+type ProtocolTransactionCreditUpdates struct {
+	TransactionAvailability
+	States      []IndexedCreditState
+	Transitions []ProtocolCreditTransition
+}
+type transactionUpdates struct {
+	TransactionAvailability
+	Notes       []ProtocolNoteOutput
+	States      []IndexedCreditState
+	Transitions []ProtocolCreditTransition
 }
 
-// GetTransactionUpdates queries RPC 1.1.4+ without scanning ranges or changing wallet state.
+func (c *ProtocolRpcClient) GetTransactionNoteUpdates(ctx context.Context, scope DeploymentContext, hash common.Hash) (ProtocolTransactionNoteUpdates, error) {
+	v, e := c.readTransaction(ctx, scope, hash, false)
+	return ProtocolTransactionNoteUpdates{v.TransactionAvailability, v.Notes}, e
+}
+func (c *ProtocolRpcClient) GetTransactionCreditUpdates(ctx context.Context, scope DeploymentContext, hash common.Hash) (ProtocolTransactionCreditUpdates, error) {
+	v, e := c.readTransaction(ctx, scope, hash, true)
+	return ProtocolTransactionCreditUpdates{v.TransactionAvailability, v.States, v.Transitions}, e
+}
+
+// readTransaction validates availability before selecting a typed business collection.
 // Context controls cancellation. ReceiptStatus is 0 for reverted or 1 for successful execution.
-func (c *ProtocolRpcClient) GetTransactionUpdates(ctx context.Context, scope DeploymentContext, transactionHash common.Hash) (ProtocolTransactionUpdates, error) {
-	var result ProtocolTransactionUpdates
+func (c *ProtocolRpcClient) readTransaction(ctx context.Context, scope DeploymentContext, transactionHash common.Hash, credit bool) (transactionUpdates, error) {
+	var result transactionUpdates
 	if transactionHash == (common.Hash{}) {
 		return result, errors.New("nonzero transaction hash required")
 	}
@@ -52,8 +72,14 @@ func (c *ProtocolRpcClient) GetTransactionUpdates(ctx context.Context, scope Dep
 	if _, err = c.readStatus(ctx, scope, false); err != nil {
 		return result, err
 	}
+	method := "invisi_getTransactionNoteUpdates"
+	fields := []string{"notes"}
+	if credit {
+		method = "invisi_getTransactionCreditUpdates"
+		fields = []string{"states", "transitions"}
+	}
 	var raw json.RawMessage
-	if err = c.call(ctx, scope.ChainID, "invisi_getTransactionUpdates", []any{transactionHash.Hex()}, &raw); err != nil {
+	if err = c.call(ctx, scope.ChainID, method, []any{transactionHash.Hex()}, &raw); err != nil {
 		return result, err
 	}
 	wire, err := wireObject(raw)
@@ -65,144 +91,121 @@ func (c *ProtocolRpcClient) GetTransactionUpdates(ctx context.Context, scope Dep
 		return result, errors.New("RPC transaction hash mismatch")
 	}
 	if err = json.Unmarshal(wire["status"], &result.Status); err != nil {
-		return ProtocolTransactionUpdates{}, err
+		return transactionUpdates{}, err
 	}
 	switch result.Status {
 	case TransactionNotFound, TransactionPendingIndex, TransactionIndexed:
 	default:
-		return ProtocolTransactionUpdates{}, errors.New("invalid transaction update status")
+		return transactionUpdates{}, errors.New("invalid transaction update status")
 	}
 	result.TransactionHash = transactionHash
 	headRaw, exists := wire["indexedHead"]
 	if !exists {
-		return ProtocolTransactionUpdates{}, errors.New("missing indexed head")
+		return transactionUpdates{}, errors.New("missing indexed head")
 	}
 	if string(headRaw) != "null" {
 		head, err := wireBlock(headRaw)
 		if err != nil {
-			return ProtocolTransactionUpdates{}, err
+			return transactionUpdates{}, err
 		}
 		if result.Status == TransactionIndexed {
 			head, err = c.canonical(ctx, head)
 			if err != nil {
-				return ProtocolTransactionUpdates{}, err
+				return transactionUpdates{}, err
 			}
 		}
 		result.IndexedHead = &head
 	}
 	if result.Status == TransactionNotFound {
-		if len(wire["blockNumber"]) != 0 || len(wire["blockHash"]) != 0 || len(wire["receiptStatus"]) != 0 || string(wire["outputs"]) != "null" || string(wire["creditTransitions"]) != "null" {
-			return ProtocolTransactionUpdates{}, errors.New("invalid not_found transaction updates")
+		if len(wire["blockNumber"]) != 0 || len(wire["blockHash"]) != 0 || len(wire["receiptStatus"]) != 0 || !nullCollections(wire, fields) {
+			return transactionUpdates{}, errors.New("invalid not_found transaction updates")
 		}
 		return result, nil
 	}
 	number, err := wireUint(wire["blockNumber"], 64)
 	if err != nil {
-		return ProtocolTransactionUpdates{}, err
+		return transactionUpdates{}, err
 	}
 	start := deployment.Protocol.FromBlock
 	if deployment.Registry != nil && deployment.Registry.FromBlock < start {
 		start = deployment.Registry.FromBlock
 	}
+	if deployment.BroadcasterRegistry != nil && deployment.BroadcasterRegistry.FromBlock < start {
+		start = deployment.BroadcasterRegistry.FromBlock
+	}
 	if number < start {
-		return ProtocolTransactionUpdates{}, errors.New("transaction predates indexed deployment")
+		return transactionUpdates{}, errors.New("transaction predates indexed deployment")
 	}
 	blockHash, err := wireHash(wire["blockHash"])
 	if err != nil {
-		return ProtocolTransactionUpdates{}, err
+		return transactionUpdates{}, err
 	}
 	block, err := c.block(ctx, number)
 	if err != nil {
-		return ProtocolTransactionUpdates{}, err
+		return transactionUpdates{}, err
 	}
 	if block.Hash != blockHash {
-		return ProtocolTransactionUpdates{}, errors.New("RPC transaction block mismatch")
+		return transactionUpdates{}, errors.New("RPC transaction block mismatch")
 	}
 	receiptStatus, err := wireUint(wire["receiptStatus"], 1)
 	if err != nil {
-		return ProtocolTransactionUpdates{}, err
+		return transactionUpdates{}, err
 	}
 	result.Block = &block
 	result.ReceiptStatus = &receiptStatus
 	if result.Status == TransactionPendingIndex {
-		if string(wire["outputs"]) != "null" || string(wire["creditTransitions"]) != "null" {
-			return ProtocolTransactionUpdates{}, errors.New("unindexed transaction must not contain updates")
+		if !nullCollections(wire, fields) {
+			return transactionUpdates{}, errors.New("unindexed transaction must not contain updates")
 		}
 		return result, nil
 	}
 	if result.IndexedHead == nil || result.IndexedHead.Number < number || (result.IndexedHead.Number == number && result.IndexedHead.Hash != block.Hash) {
-		return ProtocolTransactionUpdates{}, errors.New("transaction exceeds indexed head")
+		return transactionUpdates{}, errors.New("transaction exceeds indexed head")
 	}
-	var outputs, transitions []json.RawMessage
-	if json.Unmarshal(wire["outputs"], &outputs) != nil || outputs == nil || json.Unmarshal(wire["creditTransitions"], &transitions) != nil || transitions == nil {
-		return ProtocolTransactionUpdates{}, errors.New("indexed transaction requires arrays")
-	}
-	if receiptStatus == 0 && (len(outputs) > 0 || len(transitions) > 0) {
-		return ProtocolTransactionUpdates{}, errors.New("reverted transaction cannot contain updates")
-	}
-	for _, row := range append(append([]json.RawMessage{}, outputs...), transitions...) {
-		item, err := wireObject(row)
-		if err != nil {
-			return ProtocolTransactionUpdates{}, err
+
+	collections := map[string][]json.RawMessage{}
+	for _, field := range fields {
+		var rows []json.RawMessage
+		if json.Unmarshal(wire[field], &rows) != nil || rows == nil {
+			return transactionUpdates{}, errors.New("indexed transaction requires arrays")
 		}
-		hash, err := wireHash(item["transactionHash"])
-		if err != nil || hash != transactionHash {
-			return ProtocolTransactionUpdates{}, errors.New("updates contain a different transaction")
+		if receiptStatus == 0 && len(rows) > 0 {
+			return transactionUpdates{}, errors.New("reverted transaction cannot contain updates")
 		}
+		for _, row := range rows {
+			item, e := wireObject(row)
+			if e != nil {
+				return transactionUpdates{}, e
+			}
+			h, e := wireHash(item["transactionHash"])
+			if e != nil || h != transactionHash {
+				return transactionUpdates{}, errors.New("updates contain a different transaction")
+			}
+		}
+		collections[field] = rows
 	}
-	parsed, err := c.parseOutputRows(ctx, block, outputs, ProtocolUpdateRange{FromBlock: number, ToBlock: number}, 2)
+	r := ProtocolUpdateRange{FromBlock: number, ToBlock: number}
+	if credit {
+		result.States, err = parseRows(ctx, c, block, collections["states"], r, parseCreditState)
+		if err == nil {
+			result.Transitions, err = c.parseTransitions(ctx, collections["transitions"], r)
+		}
+	} else {
+		result.Notes, err = parseRows(ctx, c, block, collections["notes"], r, parseNoteOutput)
+	}
 	if err != nil {
-		return ProtocolTransactionUpdates{}, err
-	}
-	result.Outputs = parsed.Outputs
-	result.CreditTransitions = []ProtocolCreditTransition{}
-	seen := map[uint32]string{}
-	for _, row := range transitions {
-		item, err := wireObject(row)
-		if err != nil {
-			return ProtocolTransactionUpdates{}, err
-		}
-		reference, err := wireBlock(item["block"])
-		if err != nil {
-			return ProtocolTransactionUpdates{}, err
-		}
-		if reference != block {
-			return ProtocolTransactionUpdates{}, errors.New("Credit transition block mismatch")
-		}
-		var name string
-		if json.Unmarshal(item["name"], &name) != nil {
-			return ProtocolTransactionUpdates{}, errors.New("invalid Credit transition name")
-		}
-		switch name {
-		case "CreditCreated", "CreditDraw", "CreditCancelled", "CreditToppedUp":
-		default:
-			return ProtocolTransactionUpdates{}, errors.New("invalid Credit transition name")
-		}
-		index, err := wireUint(item["logIndex"], 32)
-		if err != nil {
-			return ProtocolTransactionUpdates{}, err
-		}
-		data, err := wireObject(item["data"])
-		if err != nil {
-			return ProtocolTransactionUpdates{}, err
-		}
-		normalized, err := json.Marshal(data)
-		if err != nil {
-			return ProtocolTransactionUpdates{}, err
-		}
-		event := ProtocolCreditTransition{reference, name, transactionHash, uint32(index), normalized}
-		encoded, _ := json.Marshal(event)
-		previous, exists := seen[event.LogIndex]
-		if exists && previous != string(encoded) {
-			return ProtocolTransactionUpdates{}, errors.New("conflicting Credit transition")
-		}
-		if !exists {
-			result.CreditTransitions = append(result.CreditTransitions, event)
-		}
-		seen[event.LogIndex] = string(encoded)
+		return transactionUpdates{}, err
 	}
 	if _, err = c.canonical(ctx, block); err != nil {
-		return ProtocolTransactionUpdates{}, err
+		return transactionUpdates{}, err
 	}
 	return result, nil
+}
+func nullCollections(wire map[string]json.RawMessage, fields []string) bool {
+	for _, field := range fields {
+		if string(wire[field]) != "null" {
+			return false
+		}
+	}
+	return true
 }

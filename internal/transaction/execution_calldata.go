@@ -25,14 +25,7 @@ func (o *Execution) Words() ([][32]byte, error) {
 	switch o.Plan.Kind {
 	case "transact":
 		return protocol.TransactUserPublicInputs(o.Plan.Context, o.Plan.Params, o.Deliveries(), o.Plan.Funding)
-	case "create-credit":
-		return protocol.CreateCreditPublicInputs(o.Plan.Context, *o.Plan.CreateCredit, o.Deliveries(), o.Plan.Funding)
-	case "credit-draw":
-		return protocol.CreditDrawPublicInputs(o.Plan.Context, *o.Plan.DrawCredit, o.Deliveries())
-	case "cancel-credit":
-		return protocol.CancelCreditPublicInputs(o.Plan.Context, *o.Plan.CancelCredit)
-	case "top-up-credit":
-		return protocol.TopUpCreditPublicInputs(o.Plan.Context, *o.Plan.TopUpCredit, o.Deliveries(), o.Plan.Funding)
+
 	}
 	return nil, errors.New("operation has no private proof")
 }
@@ -87,7 +80,7 @@ func (o *Execution) Encode() error {
 	case "transact":
 		call, e = protocol.BuildTransactCalldata(protocol.BuildTransactCalldataParams{Context: o.Plan.Context, Proof: proof, Params: o.Plan.Params, Deliveries: o.Deliveries(), Funding: o.Plan.Funding, Caller: caller})
 	default:
-		call, e = o.EncodeCredit(proof, caller)
+		return errors.New("unsupported Note operation")
 	}
 	if e != nil {
 		return e

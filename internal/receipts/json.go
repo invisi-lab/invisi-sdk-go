@@ -3,6 +3,7 @@ package receipts
 import (
 	"math/big"
 	"reflect"
+	"strconv"
 	"strings"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -12,6 +13,8 @@ import (
 // eventJSON keeps EVM integers lossless for JavaScript consumers and bytes in hex.
 func eventJSON(value any) any {
 	switch v := value.(type) {
+	case uint64:
+		return strconv.FormatUint(v, 10)
 	case *big.Int:
 		return v.String()
 	case common.Address:

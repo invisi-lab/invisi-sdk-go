@@ -6,7 +6,7 @@ import (
 )
 
 func TestApplicationCodecsAreExplicitAndMemoOnly(t *testing.T) {
-	for _, codec := range []payloadCodecV1{FundsV1, CreditV1} {
+	for _, codec := range []payloadCodecV1{FundsV1} {
 		for _, memo := range [][]byte{nil, []byte("invoice"), {0xff, 0, 0xfe}, bytes.Repeat([]byte{1}, 256)} {
 			payload, err := codec.Encode(PayloadDataV1{Memo: memo})
 			if err != nil {

@@ -29,27 +29,13 @@ var (
 	_ = abi.ConvertType
 )
 
-// IInvisiProtocolCancelCreditParams is an auto generated low-level Go binding around an user-defined struct.
-type IInvisiProtocolCancelCreditParams struct {
-	Token        common.Address
-	Source       IInvisiProtocolInputSource
-	Nullifier    [32]byte
-	Owner        common.Address
-	Amount       *big.Int
-	Deadline     *big.Int
-	FeeRecipient common.Address
-	FeeAmount    *big.Int
-}
-
 // IInvisiProtocolCreateCreditParams is an auto generated low-level Go binding around an user-defined struct.
 type IInvisiProtocolCreateCreditParams struct {
 	Token            common.Address
-	Sources          []IInvisiProtocolInputSource
-	Nullifiers       [][32]byte
-	CreditCommitment [32]byte
-	ChangeCommitment [32]byte
 	Owner            common.Address
-	Expiry           *big.Int
+	RevocationShard  uint64
+	RevocationSlot   uint16
+	CreditCommitment [32]byte
 	Deadline         *big.Int
 	FeeRecipient     common.Address
 	FeeAmount        *big.Int
@@ -57,15 +43,31 @@ type IInvisiProtocolCreateCreditParams struct {
 
 // IInvisiProtocolCreditDrawParams is an auto generated low-level Go binding around an user-defined struct.
 type IInvisiProtocolCreditDrawParams struct {
-	Token                common.Address
-	Sources              []IInvisiProtocolInputSource
-	Nullifiers           [][32]byte
-	RemainderCommitments [][32]byte
-	Expiries             []*big.Int
-	RecoveryAmounts      [][32]byte
-	Spender              common.Address
-	TotalAmount          *big.Int
-	Deadline             *big.Int
+	Token            common.Address
+	Sources          []IInvisiProtocolInputSource
+	Payers           []IInvisiProtocolCreditPayer
+	GrantRefs        []IInvisiProtocolCreditGrantRef
+	Nullifiers       [][32]byte
+	StateCommitments [][32]byte
+	RecoveryAmounts  [][32]byte
+	NoteCommitment   [32]byte
+	TotalAmount      *big.Int
+	Deadline         *big.Int
+	FeeRecipient     common.Address
+	FeeAmount        *big.Int
+}
+
+// IInvisiProtocolCreditGrantRef is an auto generated low-level Go binding around an user-defined struct.
+type IInvisiProtocolCreditGrantRef struct {
+	PayerIndex *big.Int
+	Shard      uint64
+	Slot       uint16
+}
+
+// IInvisiProtocolCreditPayer is an auto generated low-level Go binding around an user-defined struct.
+type IInvisiProtocolCreditPayer struct {
+	Payer  common.Address
+	Amount *big.Int
 }
 
 // IInvisiProtocolCrossTreeTransactParams is an auto generated low-level Go binding around an user-defined struct.
@@ -118,19 +120,25 @@ type IInvisiProtocolShieldParams struct {
 	FeeAmount         *big.Int
 }
 
-// IInvisiProtocolTopUpCreditParams is an auto generated low-level Go binding around an user-defined struct.
-type IInvisiProtocolTopUpCreditParams struct {
-	Creation        IInvisiProtocolCreateCreditParams
-	CreditSource    IInvisiProtocolInputSource
-	CreditNullifier [32]byte
-	PreviousExpiry  *big.Int
-}
-
 // IInvisiProtocolTransactRequest is an auto generated low-level Go binding around an user-defined struct.
 type IInvisiProtocolTransactRequest struct {
 	Params     IInvisiProtocolCrossTreeTransactParams
 	Deliveries []IInvisiProtocolDelivery
 	Funding    IInvisiProtocolFundingParams
+}
+
+// IInvisiProtocolUpdateCreditParams is an auto generated low-level Go binding around an user-defined struct.
+type IInvisiProtocolUpdateCreditParams struct {
+	Token            common.Address
+	Owner            common.Address
+	Source           IInvisiProtocolInputSource
+	Nullifier        [32]byte
+	CreditCommitment [32]byte
+	RevocationShard  uint64
+	RevocationSlot   uint16
+	Deadline         *big.Int
+	FeeRecipient     common.Address
+	FeeAmount        *big.Int
 }
 
 // IMetaTxTokenPermit is an auto generated low-level Go binding around an user-defined struct.
@@ -152,7 +160,7 @@ type InstanceParams struct {
 
 // InvisiProtocolMetaData contains all meta data concerning the InvisiProtocol contract.
 var InvisiProtocolMetaData = &bind.MetaData{
-	ABI: "[{\"type\":\"constructor\",\"inputs\":[{\"name\":\"params\",\"type\":\"tuple\",\"internalType\":\"structInstanceParams\",\"components\":[{\"name\":\"factory\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"initialOwner\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"globalEmergency\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"emergencyAdmin\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"verifierRouter\",\"type\":\"address\",\"internalType\":\"contractIVerifierRouter\"}]},{\"name\":\"_screener\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"_addressRegistry\",\"type\":\"address\",\"internalType\":\"address\"}],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"CHAIN_ID\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"FUND_SHIELD_TYPEHASH\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"FUND_TRANSACT_TYPEHASH\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"VERSION\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"acceptOwnership\",\"inputs\":[],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"activeNoteTreeId\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"addressRegistry\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"address\",\"internalType\":\"contractIAddressRegistry\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"broadcasterFeeBalance\",\"inputs\":[{\"name\":\"token\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"recipient\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[{\"name\":\"\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"cancelCredit\",\"inputs\":[{\"name\":\"\",\"type\":\"bytes\",\"internalType\":\"bytes\"},{\"name\":\"p\",\"type\":\"tuple\",\"internalType\":\"structIInvisiProtocol.CancelCreditParams\",\"components\":[{\"name\":\"token\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"source\",\"type\":\"tuple\",\"internalType\":\"structIInvisiProtocol.InputSource\",\"components\":[{\"name\":\"treeId\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"merkleRoot\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}]},{\"name\":\"nullifier\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"owner\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"amount\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"deadline\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"feeRecipient\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"feeAmount\",\"type\":\"uint256\",\"internalType\":\"uint256\"}]}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"circuitPaused\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"bool\",\"internalType\":\"bool\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"createCredit\",\"inputs\":[{\"name\":\"\",\"type\":\"bytes\",\"internalType\":\"bytes\"},{\"name\":\"p\",\"type\":\"tuple\",\"internalType\":\"structIInvisiProtocol.CreateCreditParams\",\"components\":[{\"name\":\"token\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"sources\",\"type\":\"tuple[]\",\"internalType\":\"structIInvisiProtocol.InputSource[]\",\"components\":[{\"name\":\"treeId\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"merkleRoot\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}]},{\"name\":\"nullifiers\",\"type\":\"bytes32[]\",\"internalType\":\"bytes32[]\"},{\"name\":\"creditCommitment\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"changeCommitment\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"owner\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"expiry\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"deadline\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"feeRecipient\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"feeAmount\",\"type\":\"uint256\",\"internalType\":\"uint256\"}]},{\"name\":\"\",\"type\":\"tuple[]\",\"internalType\":\"structIInvisiProtocol.Delivery[]\",\"components\":[{\"name\":\"ciphertext\",\"type\":\"bytes\",\"internalType\":\"bytes\"},{\"name\":\"clue\",\"type\":\"bytes\",\"internalType\":\"bytes\"}]},{\"name\":\"\",\"type\":\"tuple\",\"internalType\":\"structIInvisiProtocol.FundingParams\",\"components\":[{\"name\":\"payer\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"amount\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"sigNonce\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"deadline\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"signature\",\"type\":\"bytes\",\"internalType\":\"bytes\"},{\"name\":\"permit\",\"type\":\"tuple\",\"internalType\":\"structIMetaTx.TokenPermit\",\"components\":[{\"name\":\"deadline\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"v\",\"type\":\"uint8\",\"internalType\":\"uint8\"},{\"name\":\"r\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"s\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}]}]}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"creditDraw\",\"inputs\":[{\"name\":\"\",\"type\":\"bytes\",\"internalType\":\"bytes\"},{\"name\":\"p\",\"type\":\"tuple\",\"internalType\":\"structIInvisiProtocol.CreditDrawParams\",\"components\":[{\"name\":\"token\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"sources\",\"type\":\"tuple[]\",\"internalType\":\"structIInvisiProtocol.InputSource[]\",\"components\":[{\"name\":\"treeId\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"merkleRoot\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}]},{\"name\":\"nullifiers\",\"type\":\"bytes32[]\",\"internalType\":\"bytes32[]\"},{\"name\":\"remainderCommitments\",\"type\":\"bytes32[]\",\"internalType\":\"bytes32[]\"},{\"name\":\"expiries\",\"type\":\"uint256[]\",\"internalType\":\"uint256[]\"},{\"name\":\"recoveryAmounts\",\"type\":\"bytes32[]\",\"internalType\":\"bytes32[]\"},{\"name\":\"spender\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"totalAmount\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"deadline\",\"type\":\"uint256\",\"internalType\":\"uint256\"}]},{\"name\":\"\",\"type\":\"tuple[]\",\"internalType\":\"structIInvisiProtocol.Delivery[]\",\"components\":[{\"name\":\"ciphertext\",\"type\":\"bytes\",\"internalType\":\"bytes\"},{\"name\":\"clue\",\"type\":\"bytes\",\"internalType\":\"bytes\"}]}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"eip712Domain\",\"inputs\":[],\"outputs\":[{\"name\":\"fields\",\"type\":\"bytes1\",\"internalType\":\"bytes1\"},{\"name\":\"name\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"version\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"chainId\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"verifyingContract\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"salt\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"extensions\",\"type\":\"uint256[]\",\"internalType\":\"uint256[]\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"emergencyAdmin\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"address\",\"internalType\":\"address\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"factory\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"address\",\"internalType\":\"address\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getNoteTreeNextLeafIndex\",\"inputs\":[{\"name\":\"treeId\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[{\"name\":\"\",\"type\":\"uint32\",\"internalType\":\"uint32\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getNoteTreeRoot\",\"inputs\":[{\"name\":\"treeId\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[{\"name\":\"\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getTreeCount\",\"inputs\":[],\"outputs\":[{\"name\":\"count\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"globalEmergency\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"address\",\"internalType\":\"address\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"invalidateNonce\",\"inputs\":[],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"isCommitmentPaid\",\"inputs\":[{\"name\":\"noteCommitment\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}],\"outputs\":[{\"name\":\"\",\"type\":\"bool\",\"internalType\":\"bool\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"isNullifierSpent\",\"inputs\":[{\"name\":\"nullifier\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}],\"outputs\":[{\"name\":\"\",\"type\":\"bool\",\"internalType\":\"bool\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"isTreeFull\",\"inputs\":[{\"name\":\"treeId\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[{\"name\":\"\",\"type\":\"bool\",\"internalType\":\"bool\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"nonces\",\"inputs\":[{\"name\":\"\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[{\"name\":\"\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"owner\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"address\",\"internalType\":\"address\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"pause\",\"inputs\":[],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"pauseCircuit\",\"inputs\":[],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"paused\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"bool\",\"internalType\":\"bool\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"pendingOwner\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"address\",\"internalType\":\"address\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"renounceOwnership\",\"inputs\":[],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"rootHistory\",\"inputs\":[{\"name\":\"\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}],\"outputs\":[{\"name\":\"\",\"type\":\"bool\",\"internalType\":\"bool\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"screener\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"address\",\"internalType\":\"address\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"setScreener\",\"inputs\":[{\"name\":\"newScreener\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"shield\",\"inputs\":[{\"name\":\"p\",\"type\":\"tuple\",\"internalType\":\"structIInvisiProtocol.ShieldParams\",\"components\":[{\"name\":\"token\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"outputCommitments\",\"type\":\"bytes32[]\",\"internalType\":\"bytes32[]\"},{\"name\":\"deadline\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"feeRecipient\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"feeAmount\",\"type\":\"uint256\",\"internalType\":\"uint256\"}]},{\"name\":\"\",\"type\":\"tuple[]\",\"internalType\":\"structIInvisiProtocol.ShieldOutput[]\",\"components\":[{\"name\":\"identity\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"amount\",\"type\":\"uint256\",\"internalType\":\"uint256\"}]},{\"name\":\"\",\"type\":\"tuple[]\",\"internalType\":\"structIInvisiProtocol.Delivery[]\",\"components\":[{\"name\":\"ciphertext\",\"type\":\"bytes\",\"internalType\":\"bytes\"},{\"name\":\"clue\",\"type\":\"bytes\",\"internalType\":\"bytes\"}]},{\"name\":\"\",\"type\":\"tuple\",\"internalType\":\"structIInvisiProtocol.FundingParams\",\"components\":[{\"name\":\"payer\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"amount\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"sigNonce\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"deadline\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"signature\",\"type\":\"bytes\",\"internalType\":\"bytes\"},{\"name\":\"permit\",\"type\":\"tuple\",\"internalType\":\"structIMetaTx.TokenPermit\",\"components\":[{\"name\":\"deadline\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"v\",\"type\":\"uint8\",\"internalType\":\"uint8\"},{\"name\":\"r\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"s\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}]}]}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"topUpCredit\",\"inputs\":[{\"name\":\"\",\"type\":\"bytes\",\"internalType\":\"bytes\"},{\"name\":\"p\",\"type\":\"tuple\",\"internalType\":\"structIInvisiProtocol.TopUpCreditParams\",\"components\":[{\"name\":\"creation\",\"type\":\"tuple\",\"internalType\":\"structIInvisiProtocol.CreateCreditParams\",\"components\":[{\"name\":\"token\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"sources\",\"type\":\"tuple[]\",\"internalType\":\"structIInvisiProtocol.InputSource[]\",\"components\":[{\"name\":\"treeId\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"merkleRoot\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}]},{\"name\":\"nullifiers\",\"type\":\"bytes32[]\",\"internalType\":\"bytes32[]\"},{\"name\":\"creditCommitment\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"changeCommitment\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"owner\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"expiry\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"deadline\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"feeRecipient\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"feeAmount\",\"type\":\"uint256\",\"internalType\":\"uint256\"}]},{\"name\":\"creditSource\",\"type\":\"tuple\",\"internalType\":\"structIInvisiProtocol.InputSource\",\"components\":[{\"name\":\"treeId\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"merkleRoot\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}]},{\"name\":\"creditNullifier\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"previousExpiry\",\"type\":\"uint256\",\"internalType\":\"uint256\"}]},{\"name\":\"\",\"type\":\"tuple[]\",\"internalType\":\"structIInvisiProtocol.Delivery[]\",\"components\":[{\"name\":\"ciphertext\",\"type\":\"bytes\",\"internalType\":\"bytes\"},{\"name\":\"clue\",\"type\":\"bytes\",\"internalType\":\"bytes\"}]},{\"name\":\"\",\"type\":\"tuple\",\"internalType\":\"structIInvisiProtocol.FundingParams\",\"components\":[{\"name\":\"payer\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"amount\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"sigNonce\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"deadline\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"signature\",\"type\":\"bytes\",\"internalType\":\"bytes\"},{\"name\":\"permit\",\"type\":\"tuple\",\"internalType\":\"structIMetaTx.TokenPermit\",\"components\":[{\"name\":\"deadline\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"v\",\"type\":\"uint8\",\"internalType\":\"uint8\"},{\"name\":\"r\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"s\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}]}]}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"transact\",\"inputs\":[{\"name\":\"\",\"type\":\"bytes\",\"internalType\":\"bytes\"},{\"name\":\"r\",\"type\":\"tuple\",\"internalType\":\"structIInvisiProtocol.TransactRequest\",\"components\":[{\"name\":\"params\",\"type\":\"tuple\",\"internalType\":\"structIInvisiProtocol.CrossTreeTransactParams\",\"components\":[{\"name\":\"token\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"sources\",\"type\":\"tuple[]\",\"internalType\":\"structIInvisiProtocol.InputSource[]\",\"components\":[{\"name\":\"treeId\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"merkleRoot\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}]},{\"name\":\"nullifiers\",\"type\":\"bytes32[]\",\"internalType\":\"bytes32[]\"},{\"name\":\"outputCommitments\",\"type\":\"bytes32[]\",\"internalType\":\"bytes32[]\"},{\"name\":\"withdrawalAddress\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"withdrawalAmount\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"deadline\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"feeRecipient\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"feeAmount\",\"type\":\"uint256\",\"internalType\":\"uint256\"}]},{\"name\":\"deliveries\",\"type\":\"tuple[]\",\"internalType\":\"structIInvisiProtocol.Delivery[]\",\"components\":[{\"name\":\"ciphertext\",\"type\":\"bytes\",\"internalType\":\"bytes\"},{\"name\":\"clue\",\"type\":\"bytes\",\"internalType\":\"bytes\"}]},{\"name\":\"funding\",\"type\":\"tuple\",\"internalType\":\"structIInvisiProtocol.FundingParams\",\"components\":[{\"name\":\"payer\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"amount\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"sigNonce\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"deadline\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"signature\",\"type\":\"bytes\",\"internalType\":\"bytes\"},{\"name\":\"permit\",\"type\":\"tuple\",\"internalType\":\"structIMetaTx.TokenPermit\",\"components\":[{\"name\":\"deadline\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"v\",\"type\":\"uint8\",\"internalType\":\"uint8\"},{\"name\":\"r\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"s\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}]}]}]}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"transact\",\"inputs\":[{\"name\":\"\",\"type\":\"bytes\",\"internalType\":\"bytes\"},{\"name\":\"requests\",\"type\":\"tuple[]\",\"internalType\":\"structIInvisiProtocol.TransactRequest[]\",\"components\":[{\"name\":\"params\",\"type\":\"tuple\",\"internalType\":\"structIInvisiProtocol.CrossTreeTransactParams\",\"components\":[{\"name\":\"token\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"sources\",\"type\":\"tuple[]\",\"internalType\":\"structIInvisiProtocol.InputSource[]\",\"components\":[{\"name\":\"treeId\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"merkleRoot\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}]},{\"name\":\"nullifiers\",\"type\":\"bytes32[]\",\"internalType\":\"bytes32[]\"},{\"name\":\"outputCommitments\",\"type\":\"bytes32[]\",\"internalType\":\"bytes32[]\"},{\"name\":\"withdrawalAddress\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"withdrawalAmount\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"deadline\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"feeRecipient\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"feeAmount\",\"type\":\"uint256\",\"internalType\":\"uint256\"}]},{\"name\":\"deliveries\",\"type\":\"tuple[]\",\"internalType\":\"structIInvisiProtocol.Delivery[]\",\"components\":[{\"name\":\"ciphertext\",\"type\":\"bytes\",\"internalType\":\"bytes\"},{\"name\":\"clue\",\"type\":\"bytes\",\"internalType\":\"bytes\"}]},{\"name\":\"funding\",\"type\":\"tuple\",\"internalType\":\"structIInvisiProtocol.FundingParams\",\"components\":[{\"name\":\"payer\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"amount\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"sigNonce\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"deadline\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"signature\",\"type\":\"bytes\",\"internalType\":\"bytes\"},{\"name\":\"permit\",\"type\":\"tuple\",\"internalType\":\"structIMetaTx.TokenPermit\",\"components\":[{\"name\":\"deadline\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"v\",\"type\":\"uint8\",\"internalType\":\"uint8\"},{\"name\":\"r\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"s\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}]}]}]}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"transferOwnership\",\"inputs\":[{\"name\":\"newOwner\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"unpause\",\"inputs\":[],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"unpauseCircuit\",\"inputs\":[],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"verifierRouter\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"address\",\"internalType\":\"contractIVerifierRouter\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"withdrawBroadcasterFees\",\"inputs\":[{\"name\":\"token\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"recipient\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[{\"name\":\"\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"stateMutability\":\"nonpayable\"},{\"type\":\"event\",\"name\":\"BatchOutputs\",\"inputs\":[{\"name\":\"treeId\",\"type\":\"uint256\",\"indexed\":true,\"internalType\":\"uint256\"},{\"name\":\"startLeafIndex\",\"type\":\"uint32\",\"indexed\":false,\"internalType\":\"uint32\"},{\"name\":\"firstOutputOffset\",\"type\":\"uint256\",\"indexed\":false,\"internalType\":\"uint256\"},{\"name\":\"tokens\",\"type\":\"address[]\",\"indexed\":false,\"internalType\":\"address[]\"},{\"name\":\"commitments\",\"type\":\"bytes32[]\",\"indexed\":false,\"internalType\":\"bytes32[]\"},{\"name\":\"packedDeliveries\",\"type\":\"bytes\",\"indexed\":false,\"internalType\":\"bytes\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"BatchRequest\",\"inputs\":[{\"name\":\"token\",\"type\":\"address\",\"indexed\":false,\"internalType\":\"address\"},{\"name\":\"requestIndex\",\"type\":\"uint256\",\"indexed\":true,\"internalType\":\"uint256\"},{\"name\":\"capacity\",\"type\":\"uint256\",\"indexed\":false,\"internalType\":\"uint256\"},{\"name\":\"sources\",\"type\":\"tuple[]\",\"indexed\":false,\"internalType\":\"structIInvisiProtocol.InputSource[]\",\"components\":[{\"name\":\"treeId\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"merkleRoot\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}]},{\"name\":\"nullifiers\",\"type\":\"bytes32[]\",\"indexed\":false,\"internalType\":\"bytes32[]\"},{\"name\":\"outputCount\",\"type\":\"uint256\",\"indexed\":false,\"internalType\":\"uint256\"},{\"name\":\"payer\",\"type\":\"address\",\"indexed\":false,\"internalType\":\"address\"},{\"name\":\"depositAmount\",\"type\":\"uint256\",\"indexed\":false,\"internalType\":\"uint256\"},{\"name\":\"withdrawalAddress\",\"type\":\"address\",\"indexed\":false,\"internalType\":\"address\"},{\"name\":\"withdrawalAmount\",\"type\":\"uint256\",\"indexed\":false,\"internalType\":\"uint256\"},{\"name\":\"deadline\",\"type\":\"uint256\",\"indexed\":false,\"internalType\":\"uint256\"},{\"name\":\"statementHash\",\"type\":\"bytes32\",\"indexed\":false,\"internalType\":\"bytes32\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"BroadcasterFee\",\"inputs\":[{\"name\":\"token\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"recipient\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"amount\",\"type\":\"uint256\",\"indexed\":false,\"internalType\":\"uint256\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"BroadcasterFeeWithdrawn\",\"inputs\":[{\"name\":\"token\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"recipient\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"amount\",\"type\":\"uint256\",\"indexed\":false,\"internalType\":\"uint256\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"CircuitPauseUpdated\",\"inputs\":[{\"name\":\"paused\",\"type\":\"bool\",\"indexed\":false,\"internalType\":\"bool\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"CommitmentsInserted\",\"inputs\":[{\"name\":\"treeId\",\"type\":\"uint256\",\"indexed\":true,\"internalType\":\"uint256\"},{\"name\":\"startLeafIndex\",\"type\":\"uint32\",\"indexed\":false,\"internalType\":\"uint32\"},{\"name\":\"commitments\",\"type\":\"bytes32[]\",\"indexed\":false,\"internalType\":\"bytes32[]\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"CreditCancelled\",\"inputs\":[{\"name\":\"token\",\"type\":\"address\",\"indexed\":false,\"internalType\":\"address\"},{\"name\":\"owner\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"inputTreeId\",\"type\":\"uint256\",\"indexed\":true,\"internalType\":\"uint256\"},{\"name\":\"nullifier\",\"type\":\"bytes32\",\"indexed\":true,\"internalType\":\"bytes32\"},{\"name\":\"amount\",\"type\":\"uint256\",\"indexed\":false,\"internalType\":\"uint256\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"CreditCreated\",\"inputs\":[{\"name\":\"token\",\"type\":\"address\",\"indexed\":false,\"internalType\":\"address\"},{\"name\":\"owner\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"outputTreeId\",\"type\":\"uint256\",\"indexed\":true,\"internalType\":\"uint256\"},{\"name\":\"sources\",\"type\":\"tuple[]\",\"indexed\":false,\"internalType\":\"structIInvisiProtocol.InputSource[]\",\"components\":[{\"name\":\"treeId\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"merkleRoot\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}]},{\"name\":\"nullifiers\",\"type\":\"bytes32[]\",\"indexed\":false,\"internalType\":\"bytes32[]\"},{\"name\":\"creditCommitment\",\"type\":\"bytes32\",\"indexed\":false,\"internalType\":\"bytes32\"},{\"name\":\"changeCommitment\",\"type\":\"bytes32\",\"indexed\":false,\"internalType\":\"bytes32\"},{\"name\":\"leafIndices\",\"type\":\"uint32[]\",\"indexed\":false,\"internalType\":\"uint32[]\"},{\"name\":\"deliveries\",\"type\":\"tuple[]\",\"indexed\":false,\"internalType\":\"structIInvisiProtocol.Delivery[]\",\"components\":[{\"name\":\"ciphertext\",\"type\":\"bytes\",\"internalType\":\"bytes\"},{\"name\":\"clue\",\"type\":\"bytes\",\"internalType\":\"bytes\"}]},{\"name\":\"expiry\",\"type\":\"uint256\",\"indexed\":false,\"internalType\":\"uint256\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"CreditDraw\",\"inputs\":[{\"name\":\"spender\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"outputTreeId\",\"type\":\"uint256\",\"indexed\":true,\"internalType\":\"uint256\"},{\"name\":\"params\",\"type\":\"tuple\",\"indexed\":false,\"internalType\":\"structIInvisiProtocol.CreditDrawParams\",\"components\":[{\"name\":\"token\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"sources\",\"type\":\"tuple[]\",\"internalType\":\"structIInvisiProtocol.InputSource[]\",\"components\":[{\"name\":\"treeId\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"merkleRoot\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}]},{\"name\":\"nullifiers\",\"type\":\"bytes32[]\",\"internalType\":\"bytes32[]\"},{\"name\":\"remainderCommitments\",\"type\":\"bytes32[]\",\"internalType\":\"bytes32[]\"},{\"name\":\"expiries\",\"type\":\"uint256[]\",\"internalType\":\"uint256[]\"},{\"name\":\"recoveryAmounts\",\"type\":\"bytes32[]\",\"internalType\":\"bytes32[]\"},{\"name\":\"spender\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"totalAmount\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"deadline\",\"type\":\"uint256\",\"internalType\":\"uint256\"}]},{\"name\":\"remainderLeafIndices\",\"type\":\"uint32[]\",\"indexed\":false,\"internalType\":\"uint32[]\"},{\"name\":\"deliveries\",\"type\":\"tuple[]\",\"indexed\":false,\"internalType\":\"structIInvisiProtocol.Delivery[]\",\"components\":[{\"name\":\"ciphertext\",\"type\":\"bytes\",\"internalType\":\"bytes\"},{\"name\":\"clue\",\"type\":\"bytes\",\"internalType\":\"bytes\"}]}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"CreditToppedUp\",\"inputs\":[{\"name\":\"owner\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"outputTreeId\",\"type\":\"uint256\",\"indexed\":true,\"internalType\":\"uint256\"},{\"name\":\"params\",\"type\":\"tuple\",\"indexed\":false,\"internalType\":\"structIInvisiProtocol.TopUpCreditParams\",\"components\":[{\"name\":\"creation\",\"type\":\"tuple\",\"internalType\":\"structIInvisiProtocol.CreateCreditParams\",\"components\":[{\"name\":\"token\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"sources\",\"type\":\"tuple[]\",\"internalType\":\"structIInvisiProtocol.InputSource[]\",\"components\":[{\"name\":\"treeId\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"merkleRoot\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}]},{\"name\":\"nullifiers\",\"type\":\"bytes32[]\",\"internalType\":\"bytes32[]\"},{\"name\":\"creditCommitment\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"changeCommitment\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"owner\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"expiry\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"deadline\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"feeRecipient\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"feeAmount\",\"type\":\"uint256\",\"internalType\":\"uint256\"}]},{\"name\":\"creditSource\",\"type\":\"tuple\",\"internalType\":\"structIInvisiProtocol.InputSource\",\"components\":[{\"name\":\"treeId\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"merkleRoot\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}]},{\"name\":\"creditNullifier\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"previousExpiry\",\"type\":\"uint256\",\"internalType\":\"uint256\"}]},{\"name\":\"leafIndices\",\"type\":\"uint32[]\",\"indexed\":false,\"internalType\":\"uint32[]\"},{\"name\":\"deliveries\",\"type\":\"tuple[]\",\"indexed\":false,\"internalType\":\"structIInvisiProtocol.Delivery[]\",\"components\":[{\"name\":\"ciphertext\",\"type\":\"bytes\",\"internalType\":\"bytes\"},{\"name\":\"clue\",\"type\":\"bytes\",\"internalType\":\"bytes\"}]}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"CrossTreeTransact\",\"inputs\":[{\"name\":\"token\",\"type\":\"address\",\"indexed\":false,\"internalType\":\"address\"},{\"name\":\"outputTreeId\",\"type\":\"uint256\",\"indexed\":true,\"internalType\":\"uint256\"},{\"name\":\"sources\",\"type\":\"tuple[]\",\"indexed\":false,\"internalType\":\"structIInvisiProtocol.InputSource[]\",\"components\":[{\"name\":\"treeId\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"merkleRoot\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}]},{\"name\":\"nullifiers\",\"type\":\"bytes32[]\",\"indexed\":false,\"internalType\":\"bytes32[]\"},{\"name\":\"outputCommitments\",\"type\":\"bytes32[]\",\"indexed\":false,\"internalType\":\"bytes32[]\"},{\"name\":\"leafIndices\",\"type\":\"uint32[]\",\"indexed\":false,\"internalType\":\"uint32[]\"},{\"name\":\"deliveries\",\"type\":\"tuple[]\",\"indexed\":false,\"internalType\":\"structIInvisiProtocol.Delivery[]\",\"components\":[{\"name\":\"ciphertext\",\"type\":\"bytes\",\"internalType\":\"bytes\"},{\"name\":\"clue\",\"type\":\"bytes\",\"internalType\":\"bytes\"}]},{\"name\":\"withdrawalAddress\",\"type\":\"address\",\"indexed\":false,\"internalType\":\"address\"},{\"name\":\"withdrawalAmount\",\"type\":\"uint256\",\"indexed\":false,\"internalType\":\"uint256\"},{\"name\":\"deadline\",\"type\":\"uint256\",\"indexed\":false,\"internalType\":\"uint256\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"EIP712DomainChanged\",\"inputs\":[],\"anonymous\":false},{\"type\":\"event\",\"name\":\"NonceInvalidated\",\"inputs\":[{\"name\":\"signer\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"newNonce\",\"type\":\"uint256\",\"indexed\":false,\"internalType\":\"uint256\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"OwnershipTransferStarted\",\"inputs\":[{\"name\":\"previousOwner\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"newOwner\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"OwnershipTransferred\",\"inputs\":[{\"name\":\"previousOwner\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"newOwner\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"Paused\",\"inputs\":[{\"name\":\"account\",\"type\":\"address\",\"indexed\":false,\"internalType\":\"address\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"PublicDeposit\",\"inputs\":[{\"name\":\"token\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"payer\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"amount\",\"type\":\"uint256\",\"indexed\":false,\"internalType\":\"uint256\"},{\"name\":\"proofHash\",\"type\":\"bytes32\",\"indexed\":false,\"internalType\":\"bytes32\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"ScreenerUpdated\",\"inputs\":[{\"name\":\"newScreener\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"Shield\",\"inputs\":[{\"name\":\"token\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"payer\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"amount\",\"type\":\"uint256\",\"indexed\":false,\"internalType\":\"uint256\"},{\"name\":\"treeId\",\"type\":\"uint256\",\"indexed\":true,\"internalType\":\"uint256\"},{\"name\":\"startLeafIndex\",\"type\":\"uint32\",\"indexed\":false,\"internalType\":\"uint32\"},{\"name\":\"deliveries\",\"type\":\"tuple[]\",\"indexed\":false,\"internalType\":\"structIInvisiProtocol.Delivery[]\",\"components\":[{\"name\":\"ciphertext\",\"type\":\"bytes\",\"internalType\":\"bytes\"},{\"name\":\"clue\",\"type\":\"bytes\",\"internalType\":\"bytes\"}]},{\"name\":\"deadline\",\"type\":\"uint256\",\"indexed\":false,\"internalType\":\"uint256\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"Transact\",\"inputs\":[{\"name\":\"token\",\"type\":\"address\",\"indexed\":false,\"internalType\":\"address\"},{\"name\":\"inputTreeId\",\"type\":\"uint256\",\"indexed\":true,\"internalType\":\"uint256\"},{\"name\":\"outputTreeId\",\"type\":\"uint256\",\"indexed\":true,\"internalType\":\"uint256\"},{\"name\":\"nullifiers\",\"type\":\"bytes32[]\",\"indexed\":false,\"internalType\":\"bytes32[]\"},{\"name\":\"outputCommitments\",\"type\":\"bytes32[]\",\"indexed\":false,\"internalType\":\"bytes32[]\"},{\"name\":\"leafIndices\",\"type\":\"uint32[]\",\"indexed\":false,\"internalType\":\"uint32[]\"},{\"name\":\"deliveries\",\"type\":\"tuple[]\",\"indexed\":false,\"internalType\":\"structIInvisiProtocol.Delivery[]\",\"components\":[{\"name\":\"ciphertext\",\"type\":\"bytes\",\"internalType\":\"bytes\"},{\"name\":\"clue\",\"type\":\"bytes\",\"internalType\":\"bytes\"}]},{\"name\":\"withdrawalAddress\",\"type\":\"address\",\"indexed\":false,\"internalType\":\"address\"},{\"name\":\"withdrawalAmount\",\"type\":\"uint256\",\"indexed\":false,\"internalType\":\"uint256\"},{\"name\":\"deadline\",\"type\":\"uint256\",\"indexed\":false,\"internalType\":\"uint256\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"TransactAggregated\",\"inputs\":[{\"name\":\"proofHash\",\"type\":\"bytes32\",\"indexed\":true,\"internalType\":\"bytes32\"},{\"name\":\"requestCount\",\"type\":\"uint256\",\"indexed\":false,\"internalType\":\"uint256\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"TreeCreated\",\"inputs\":[{\"name\":\"treeId\",\"type\":\"uint256\",\"indexed\":true,\"internalType\":\"uint256\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"Unpaused\",\"inputs\":[{\"name\":\"account\",\"type\":\"address\",\"indexed\":false,\"internalType\":\"address\"}],\"anonymous\":false},{\"type\":\"error\",\"name\":\"AddressEmptyCode\",\"inputs\":[{\"name\":\"target\",\"type\":\"address\",\"internalType\":\"address\"}]},{\"type\":\"error\",\"name\":\"AddressInsufficientBalance\",\"inputs\":[{\"name\":\"account\",\"type\":\"address\",\"internalType\":\"address\"}]},{\"type\":\"error\",\"name\":\"AddressScreeningFailed\",\"inputs\":[{\"name\":\"account\",\"type\":\"address\",\"internalType\":\"address\"}]},{\"type\":\"error\",\"name\":\"ChainIdMismatch\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"CommitmentAlreadyPaid\",\"inputs\":[{\"name\":\"commitment\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}]},{\"type\":\"error\",\"name\":\"CreditDrawWindowClosed\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"DoubleSpend\",\"inputs\":[{\"name\":\"nullifier\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}]},{\"type\":\"error\",\"name\":\"EnforcedPause\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"ExpectedPause\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"ExpiryInPast\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"FailedInnerCall\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"InexactTokenReceipt\",\"inputs\":[{\"name\":\"requested\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"received\",\"type\":\"uint256\",\"internalType\":\"uint256\"}]},{\"type\":\"error\",\"name\":\"InvalidAddressRegistry\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"InvalidAggregateBatch\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"InvalidAmount\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"InvalidBatchSize\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"InvalidCommitment\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"InvalidCreditExpiry\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"InvalidDelivery\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"InvalidFunding\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"InvalidIdentityCommitment\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"InvalidMerkleRoot\",\"inputs\":[{\"name\":\"root\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}]},{\"type\":\"error\",\"name\":\"InvalidNonce\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"InvalidNullifierKeyHash\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"InvalidOwnerIdentityCommitment\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"InvalidPrivateTransferCiphertext\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"InvalidPrivateTransferContext\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"InvalidPrivateTransferShape\",\"inputs\":[{\"name\":\"inputs\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"outputs\",\"type\":\"uint256\",\"internalType\":\"uint256\"}]},{\"type\":\"error\",\"name\":\"InvalidProof\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"InvalidReceivingAddress\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"InvalidShieldContext\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"InvalidShieldOutputCount\",\"inputs\":[{\"name\":\"outputs\",\"type\":\"uint256\",\"internalType\":\"uint256\"}]},{\"type\":\"error\",\"name\":\"InvalidShortString\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"InvalidSignature\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"InvalidToken\",\"inputs\":[{\"name\":\"token\",\"type\":\"address\",\"internalType\":\"address\"}]},{\"type\":\"error\",\"name\":\"InvalidTree\",\"inputs\":[{\"name\":\"treeId\",\"type\":\"uint256\",\"internalType\":\"uint256\"}]},{\"type\":\"error\",\"name\":\"LengthMismatch\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"NoBroadcasterFees\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"NotEmergencyAdmin\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"NotGlobalEmergency\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"NullifierAlreadySpent\",\"inputs\":[{\"name\":\"nullifier\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}]},{\"type\":\"error\",\"name\":\"NullifiersEmpty\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"OwnableInvalidOwner\",\"inputs\":[{\"name\":\"owner\",\"type\":\"address\",\"internalType\":\"address\"}]},{\"type\":\"error\",\"name\":\"OwnableUnauthorizedAccount\",\"inputs\":[{\"name\":\"account\",\"type\":\"address\",\"internalType\":\"address\"}]},{\"type\":\"error\",\"name\":\"PrivateTransferExpired\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"ReentrancyGuardReentrantCall\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"SafeERC20FailedOperation\",\"inputs\":[{\"name\":\"token\",\"type\":\"address\",\"internalType\":\"address\"}]},{\"type\":\"error\",\"name\":\"ShieldExpired\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"SignatureExpired\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"StaleRoot\",\"inputs\":[{\"name\":\"root\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}]},{\"type\":\"error\",\"name\":\"StringTooLong\",\"inputs\":[{\"name\":\"str\",\"type\":\"string\",\"internalType\":\"string\"}]},{\"type\":\"error\",\"name\":\"TransferFailed\",\"inputs\":[{\"name\":\"token\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"to\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"amount\",\"type\":\"uint256\",\"internalType\":\"uint256\"}]},{\"type\":\"error\",\"name\":\"TreeFull\",\"inputs\":[{\"name\":\"treeId\",\"type\":\"uint256\",\"internalType\":\"uint256\"}]},{\"type\":\"error\",\"name\":\"WrongPermitToken\",\"inputs\":[{\"name\":\"provided\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"expected\",\"type\":\"address\",\"internalType\":\"address\"}]},{\"type\":\"error\",\"name\":\"ZeroNullifier\",\"inputs\":[]}]",
+	ABI: "[{\"type\":\"constructor\",\"inputs\":[{\"name\":\"params\",\"type\":\"tuple\",\"internalType\":\"structInstanceParams\",\"components\":[{\"name\":\"factory\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"initialOwner\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"globalEmergency\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"emergencyAdmin\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"verifierRouter\",\"type\":\"address\",\"internalType\":\"contractIVerifierRouter\"}]},{\"name\":\"_screener\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"_addressRegistry\",\"type\":\"address\",\"internalType\":\"address\"}],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"CHAIN_ID\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"FUND_SHIELD_TYPEHASH\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"FUND_TRANSACT_TYPEHASH\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"VERSION\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"acceptOwnership\",\"inputs\":[],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"activeNoteTreeId\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"addressRegistry\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"address\",\"internalType\":\"contractIAddressRegistry\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"broadcasterFeeBalance\",\"inputs\":[{\"name\":\"token\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"recipient\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[{\"name\":\"\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"circuitPaused\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"bool\",\"internalType\":\"bool\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"createCredit\",\"inputs\":[{\"name\":\"\",\"type\":\"bytes\",\"internalType\":\"bytes\"},{\"name\":\"p\",\"type\":\"tuple\",\"internalType\":\"structIInvisiProtocol.CreateCreditParams\",\"components\":[{\"name\":\"token\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"owner\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"revocationShard\",\"type\":\"uint64\",\"internalType\":\"uint64\"},{\"name\":\"revocationSlot\",\"type\":\"uint16\",\"internalType\":\"uint16\"},{\"name\":\"creditCommitment\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"deadline\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"feeRecipient\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"feeAmount\",\"type\":\"uint256\",\"internalType\":\"uint256\"}]},{\"name\":\"\",\"type\":\"tuple[]\",\"internalType\":\"structIInvisiProtocol.Delivery[]\",\"components\":[{\"name\":\"ciphertext\",\"type\":\"bytes\",\"internalType\":\"bytes\"},{\"name\":\"clue\",\"type\":\"bytes\",\"internalType\":\"bytes\"}]}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"creditAllocation\",\"inputs\":[{\"name\":\"owner\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"token\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[{\"name\":\"shard\",\"type\":\"uint64\",\"internalType\":\"uint64\"},{\"name\":\"slot\",\"type\":\"uint16\",\"internalType\":\"uint16\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"creditDraw\",\"inputs\":[{\"name\":\"\",\"type\":\"bytes\",\"internalType\":\"bytes\"},{\"name\":\"p\",\"type\":\"tuple\",\"internalType\":\"structIInvisiProtocol.CreditDrawParams\",\"components\":[{\"name\":\"token\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"sources\",\"type\":\"tuple[]\",\"internalType\":\"structIInvisiProtocol.InputSource[]\",\"components\":[{\"name\":\"treeId\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"merkleRoot\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}]},{\"name\":\"payers\",\"type\":\"tuple[]\",\"internalType\":\"structIInvisiProtocol.CreditPayer[]\",\"components\":[{\"name\":\"payer\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"amount\",\"type\":\"uint256\",\"internalType\":\"uint256\"}]},{\"name\":\"grantRefs\",\"type\":\"tuple[]\",\"internalType\":\"structIInvisiProtocol.CreditGrantRef[]\",\"components\":[{\"name\":\"payerIndex\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"shard\",\"type\":\"uint64\",\"internalType\":\"uint64\"},{\"name\":\"slot\",\"type\":\"uint16\",\"internalType\":\"uint16\"}]},{\"name\":\"nullifiers\",\"type\":\"bytes32[]\",\"internalType\":\"bytes32[]\"},{\"name\":\"stateCommitments\",\"type\":\"bytes32[]\",\"internalType\":\"bytes32[]\"},{\"name\":\"recoveryAmounts\",\"type\":\"bytes32[]\",\"internalType\":\"bytes32[]\"},{\"name\":\"noteCommitment\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"totalAmount\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"deadline\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"feeRecipient\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"feeAmount\",\"type\":\"uint256\",\"internalType\":\"uint256\"}]},{\"name\":\"\",\"type\":\"tuple[]\",\"internalType\":\"structIInvisiProtocol.Delivery[]\",\"components\":[{\"name\":\"ciphertext\",\"type\":\"bytes\",\"internalType\":\"bytes\"},{\"name\":\"clue\",\"type\":\"bytes\",\"internalType\":\"bytes\"}]}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"creditRevocationBitmap\",\"inputs\":[{\"name\":\"owner\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"token\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"shard\",\"type\":\"uint64\",\"internalType\":\"uint64\"},{\"name\":\"word\",\"type\":\"uint8\",\"internalType\":\"uint8\"}],\"outputs\":[{\"name\":\"\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"eip712Domain\",\"inputs\":[],\"outputs\":[{\"name\":\"fields\",\"type\":\"bytes1\",\"internalType\":\"bytes1\"},{\"name\":\"name\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"version\",\"type\":\"string\",\"internalType\":\"string\"},{\"name\":\"chainId\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"verifyingContract\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"salt\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"extensions\",\"type\":\"uint256[]\",\"internalType\":\"uint256[]\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"emergencyAdmin\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"address\",\"internalType\":\"address\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"factory\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"address\",\"internalType\":\"address\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getNoteTreeNextLeafIndex\",\"inputs\":[{\"name\":\"treeId\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[{\"name\":\"\",\"type\":\"uint32\",\"internalType\":\"uint32\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getNoteTreeRoot\",\"inputs\":[{\"name\":\"treeId\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[{\"name\":\"\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getTreeCount\",\"inputs\":[],\"outputs\":[{\"name\":\"count\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"globalEmergency\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"address\",\"internalType\":\"address\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"invalidateNonce\",\"inputs\":[],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"isCommitmentPaid\",\"inputs\":[{\"name\":\"noteCommitment\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}],\"outputs\":[{\"name\":\"\",\"type\":\"bool\",\"internalType\":\"bool\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"isNullifierSpent\",\"inputs\":[{\"name\":\"nullifier\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}],\"outputs\":[{\"name\":\"\",\"type\":\"bool\",\"internalType\":\"bool\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"isTreeFull\",\"inputs\":[{\"name\":\"treeId\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[{\"name\":\"\",\"type\":\"bool\",\"internalType\":\"bool\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"nonces\",\"inputs\":[{\"name\":\"\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[{\"name\":\"\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"owner\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"address\",\"internalType\":\"address\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"pause\",\"inputs\":[],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"pauseCircuit\",\"inputs\":[],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"paused\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"bool\",\"internalType\":\"bool\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"pendingOwner\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"address\",\"internalType\":\"address\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"renounceOwnership\",\"inputs\":[],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"revokeCredit\",\"inputs\":[{\"name\":\"token\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"owner\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"shard\",\"type\":\"uint64\",\"internalType\":\"uint64\"},{\"name\":\"slot\",\"type\":\"uint16\",\"internalType\":\"uint16\"},{\"name\":\"deadline\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"feeRecipient\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"feeAmount\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"signature\",\"type\":\"bytes\",\"internalType\":\"bytes\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"rootHistory\",\"inputs\":[{\"name\":\"\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}],\"outputs\":[{\"name\":\"\",\"type\":\"bool\",\"internalType\":\"bool\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"screener\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"address\",\"internalType\":\"address\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"setScreener\",\"inputs\":[{\"name\":\"newScreener\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"shield\",\"inputs\":[{\"name\":\"p\",\"type\":\"tuple\",\"internalType\":\"structIInvisiProtocol.ShieldParams\",\"components\":[{\"name\":\"token\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"outputCommitments\",\"type\":\"bytes32[]\",\"internalType\":\"bytes32[]\"},{\"name\":\"deadline\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"feeRecipient\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"feeAmount\",\"type\":\"uint256\",\"internalType\":\"uint256\"}]},{\"name\":\"\",\"type\":\"tuple[]\",\"internalType\":\"structIInvisiProtocol.ShieldOutput[]\",\"components\":[{\"name\":\"identity\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"amount\",\"type\":\"uint256\",\"internalType\":\"uint256\"}]},{\"name\":\"\",\"type\":\"tuple[]\",\"internalType\":\"structIInvisiProtocol.Delivery[]\",\"components\":[{\"name\":\"ciphertext\",\"type\":\"bytes\",\"internalType\":\"bytes\"},{\"name\":\"clue\",\"type\":\"bytes\",\"internalType\":\"bytes\"}]},{\"name\":\"\",\"type\":\"tuple\",\"internalType\":\"structIInvisiProtocol.FundingParams\",\"components\":[{\"name\":\"payer\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"amount\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"sigNonce\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"deadline\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"signature\",\"type\":\"bytes\",\"internalType\":\"bytes\"},{\"name\":\"permit\",\"type\":\"tuple\",\"internalType\":\"structIMetaTx.TokenPermit\",\"components\":[{\"name\":\"deadline\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"v\",\"type\":\"uint8\",\"internalType\":\"uint8\"},{\"name\":\"r\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"s\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}]}]}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"transact\",\"inputs\":[{\"name\":\"\",\"type\":\"bytes\",\"internalType\":\"bytes\"},{\"name\":\"r\",\"type\":\"tuple\",\"internalType\":\"structIInvisiProtocol.TransactRequest\",\"components\":[{\"name\":\"params\",\"type\":\"tuple\",\"internalType\":\"structIInvisiProtocol.CrossTreeTransactParams\",\"components\":[{\"name\":\"token\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"sources\",\"type\":\"tuple[]\",\"internalType\":\"structIInvisiProtocol.InputSource[]\",\"components\":[{\"name\":\"treeId\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"merkleRoot\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}]},{\"name\":\"nullifiers\",\"type\":\"bytes32[]\",\"internalType\":\"bytes32[]\"},{\"name\":\"outputCommitments\",\"type\":\"bytes32[]\",\"internalType\":\"bytes32[]\"},{\"name\":\"withdrawalAddress\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"withdrawalAmount\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"deadline\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"feeRecipient\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"feeAmount\",\"type\":\"uint256\",\"internalType\":\"uint256\"}]},{\"name\":\"deliveries\",\"type\":\"tuple[]\",\"internalType\":\"structIInvisiProtocol.Delivery[]\",\"components\":[{\"name\":\"ciphertext\",\"type\":\"bytes\",\"internalType\":\"bytes\"},{\"name\":\"clue\",\"type\":\"bytes\",\"internalType\":\"bytes\"}]},{\"name\":\"funding\",\"type\":\"tuple\",\"internalType\":\"structIInvisiProtocol.FundingParams\",\"components\":[{\"name\":\"payer\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"amount\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"sigNonce\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"deadline\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"signature\",\"type\":\"bytes\",\"internalType\":\"bytes\"},{\"name\":\"permit\",\"type\":\"tuple\",\"internalType\":\"structIMetaTx.TokenPermit\",\"components\":[{\"name\":\"deadline\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"v\",\"type\":\"uint8\",\"internalType\":\"uint8\"},{\"name\":\"r\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"s\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}]}]}]}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"transact\",\"inputs\":[{\"name\":\"\",\"type\":\"bytes\",\"internalType\":\"bytes\"},{\"name\":\"requests\",\"type\":\"tuple[]\",\"internalType\":\"structIInvisiProtocol.TransactRequest[]\",\"components\":[{\"name\":\"params\",\"type\":\"tuple\",\"internalType\":\"structIInvisiProtocol.CrossTreeTransactParams\",\"components\":[{\"name\":\"token\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"sources\",\"type\":\"tuple[]\",\"internalType\":\"structIInvisiProtocol.InputSource[]\",\"components\":[{\"name\":\"treeId\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"merkleRoot\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}]},{\"name\":\"nullifiers\",\"type\":\"bytes32[]\",\"internalType\":\"bytes32[]\"},{\"name\":\"outputCommitments\",\"type\":\"bytes32[]\",\"internalType\":\"bytes32[]\"},{\"name\":\"withdrawalAddress\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"withdrawalAmount\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"deadline\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"feeRecipient\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"feeAmount\",\"type\":\"uint256\",\"internalType\":\"uint256\"}]},{\"name\":\"deliveries\",\"type\":\"tuple[]\",\"internalType\":\"structIInvisiProtocol.Delivery[]\",\"components\":[{\"name\":\"ciphertext\",\"type\":\"bytes\",\"internalType\":\"bytes\"},{\"name\":\"clue\",\"type\":\"bytes\",\"internalType\":\"bytes\"}]},{\"name\":\"funding\",\"type\":\"tuple\",\"internalType\":\"structIInvisiProtocol.FundingParams\",\"components\":[{\"name\":\"payer\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"amount\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"sigNonce\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"deadline\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"signature\",\"type\":\"bytes\",\"internalType\":\"bytes\"},{\"name\":\"permit\",\"type\":\"tuple\",\"internalType\":\"structIMetaTx.TokenPermit\",\"components\":[{\"name\":\"deadline\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"v\",\"type\":\"uint8\",\"internalType\":\"uint8\"},{\"name\":\"r\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"s\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}]}]}]}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"transferOwnership\",\"inputs\":[{\"name\":\"newOwner\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"unpause\",\"inputs\":[],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"unpauseCircuit\",\"inputs\":[],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"updateCredit\",\"inputs\":[{\"name\":\"\",\"type\":\"bytes\",\"internalType\":\"bytes\"},{\"name\":\"p\",\"type\":\"tuple\",\"internalType\":\"structIInvisiProtocol.UpdateCreditParams\",\"components\":[{\"name\":\"token\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"owner\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"source\",\"type\":\"tuple\",\"internalType\":\"structIInvisiProtocol.InputSource\",\"components\":[{\"name\":\"treeId\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"merkleRoot\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}]},{\"name\":\"nullifier\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"creditCommitment\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"revocationShard\",\"type\":\"uint64\",\"internalType\":\"uint64\"},{\"name\":\"revocationSlot\",\"type\":\"uint16\",\"internalType\":\"uint16\"},{\"name\":\"deadline\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"feeRecipient\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"feeAmount\",\"type\":\"uint256\",\"internalType\":\"uint256\"}]},{\"name\":\"\",\"type\":\"tuple[]\",\"internalType\":\"structIInvisiProtocol.Delivery[]\",\"components\":[{\"name\":\"ciphertext\",\"type\":\"bytes\",\"internalType\":\"bytes\"},{\"name\":\"clue\",\"type\":\"bytes\",\"internalType\":\"bytes\"}]}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"verifierRouter\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"address\",\"internalType\":\"contractIVerifierRouter\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"withdrawBroadcasterFees\",\"inputs\":[{\"name\":\"token\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"recipient\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[{\"name\":\"\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"stateMutability\":\"nonpayable\"},{\"type\":\"event\",\"name\":\"BatchOutputs\",\"inputs\":[{\"name\":\"treeId\",\"type\":\"uint256\",\"indexed\":true,\"internalType\":\"uint256\"},{\"name\":\"startLeafIndex\",\"type\":\"uint32\",\"indexed\":false,\"internalType\":\"uint32\"},{\"name\":\"firstOutputOffset\",\"type\":\"uint256\",\"indexed\":false,\"internalType\":\"uint256\"},{\"name\":\"tokens\",\"type\":\"address[]\",\"indexed\":false,\"internalType\":\"address[]\"},{\"name\":\"commitments\",\"type\":\"bytes32[]\",\"indexed\":false,\"internalType\":\"bytes32[]\"},{\"name\":\"packedDeliveries\",\"type\":\"bytes\",\"indexed\":false,\"internalType\":\"bytes\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"BatchRequest\",\"inputs\":[{\"name\":\"token\",\"type\":\"address\",\"indexed\":false,\"internalType\":\"address\"},{\"name\":\"requestIndex\",\"type\":\"uint256\",\"indexed\":true,\"internalType\":\"uint256\"},{\"name\":\"capacity\",\"type\":\"uint256\",\"indexed\":false,\"internalType\":\"uint256\"},{\"name\":\"sources\",\"type\":\"tuple[]\",\"indexed\":false,\"internalType\":\"structIInvisiProtocol.InputSource[]\",\"components\":[{\"name\":\"treeId\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"merkleRoot\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}]},{\"name\":\"nullifiers\",\"type\":\"bytes32[]\",\"indexed\":false,\"internalType\":\"bytes32[]\"},{\"name\":\"outputCount\",\"type\":\"uint256\",\"indexed\":false,\"internalType\":\"uint256\"},{\"name\":\"payer\",\"type\":\"address\",\"indexed\":false,\"internalType\":\"address\"},{\"name\":\"depositAmount\",\"type\":\"uint256\",\"indexed\":false,\"internalType\":\"uint256\"},{\"name\":\"withdrawalAddress\",\"type\":\"address\",\"indexed\":false,\"internalType\":\"address\"},{\"name\":\"withdrawalAmount\",\"type\":\"uint256\",\"indexed\":false,\"internalType\":\"uint256\"},{\"name\":\"deadline\",\"type\":\"uint256\",\"indexed\":false,\"internalType\":\"uint256\"},{\"name\":\"statementHash\",\"type\":\"bytes32\",\"indexed\":false,\"internalType\":\"bytes32\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"BroadcasterFee\",\"inputs\":[{\"name\":\"token\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"recipient\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"amount\",\"type\":\"uint256\",\"indexed\":false,\"internalType\":\"uint256\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"BroadcasterFeeWithdrawn\",\"inputs\":[{\"name\":\"token\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"recipient\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"amount\",\"type\":\"uint256\",\"indexed\":false,\"internalType\":\"uint256\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"CircuitPauseUpdated\",\"inputs\":[{\"name\":\"paused\",\"type\":\"bool\",\"indexed\":false,\"internalType\":\"bool\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"CommitmentsInserted\",\"inputs\":[{\"name\":\"treeId\",\"type\":\"uint256\",\"indexed\":true,\"internalType\":\"uint256\"},{\"name\":\"startLeafIndex\",\"type\":\"uint32\",\"indexed\":false,\"internalType\":\"uint32\"},{\"name\":\"commitments\",\"type\":\"bytes32[]\",\"indexed\":false,\"internalType\":\"bytes32[]\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"CreditCreated\",\"inputs\":[{\"name\":\"token\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"owner\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"outputTreeId\",\"type\":\"uint256\",\"indexed\":true,\"internalType\":\"uint256\"},{\"name\":\"revocationShard\",\"type\":\"uint64\",\"indexed\":false,\"internalType\":\"uint64\"},{\"name\":\"revocationSlot\",\"type\":\"uint16\",\"indexed\":false,\"internalType\":\"uint16\"},{\"name\":\"creditCommitment\",\"type\":\"bytes32\",\"indexed\":false,\"internalType\":\"bytes32\"},{\"name\":\"leafIndex\",\"type\":\"uint32\",\"indexed\":false,\"internalType\":\"uint32\"},{\"name\":\"deliveries\",\"type\":\"tuple[]\",\"indexed\":false,\"internalType\":\"structIInvisiProtocol.Delivery[]\",\"components\":[{\"name\":\"ciphertext\",\"type\":\"bytes\",\"internalType\":\"bytes\"},{\"name\":\"clue\",\"type\":\"bytes\",\"internalType\":\"bytes\"}]},{\"name\":\"deadline\",\"type\":\"uint256\",\"indexed\":false,\"internalType\":\"uint256\"},{\"name\":\"feeRecipient\",\"type\":\"address\",\"indexed\":false,\"internalType\":\"address\"},{\"name\":\"feeAmount\",\"type\":\"uint256\",\"indexed\":false,\"internalType\":\"uint256\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"CreditDraw\",\"inputs\":[{\"name\":\"outputTreeId\",\"type\":\"uint256\",\"indexed\":true,\"internalType\":\"uint256\"},{\"name\":\"params\",\"type\":\"tuple\",\"indexed\":false,\"internalType\":\"structIInvisiProtocol.CreditDrawParams\",\"components\":[{\"name\":\"token\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"sources\",\"type\":\"tuple[]\",\"internalType\":\"structIInvisiProtocol.InputSource[]\",\"components\":[{\"name\":\"treeId\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"merkleRoot\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}]},{\"name\":\"payers\",\"type\":\"tuple[]\",\"internalType\":\"structIInvisiProtocol.CreditPayer[]\",\"components\":[{\"name\":\"payer\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"amount\",\"type\":\"uint256\",\"internalType\":\"uint256\"}]},{\"name\":\"grantRefs\",\"type\":\"tuple[]\",\"internalType\":\"structIInvisiProtocol.CreditGrantRef[]\",\"components\":[{\"name\":\"payerIndex\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"shard\",\"type\":\"uint64\",\"internalType\":\"uint64\"},{\"name\":\"slot\",\"type\":\"uint16\",\"internalType\":\"uint16\"}]},{\"name\":\"nullifiers\",\"type\":\"bytes32[]\",\"internalType\":\"bytes32[]\"},{\"name\":\"stateCommitments\",\"type\":\"bytes32[]\",\"internalType\":\"bytes32[]\"},{\"name\":\"recoveryAmounts\",\"type\":\"bytes32[]\",\"internalType\":\"bytes32[]\"},{\"name\":\"noteCommitment\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"totalAmount\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"deadline\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"feeRecipient\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"feeAmount\",\"type\":\"uint256\",\"internalType\":\"uint256\"}]},{\"name\":\"leafIndices\",\"type\":\"uint32[]\",\"indexed\":false,\"internalType\":\"uint32[]\"},{\"name\":\"deliveries\",\"type\":\"tuple[]\",\"indexed\":false,\"internalType\":\"structIInvisiProtocol.Delivery[]\",\"components\":[{\"name\":\"ciphertext\",\"type\":\"bytes\",\"internalType\":\"bytes\"},{\"name\":\"clue\",\"type\":\"bytes\",\"internalType\":\"bytes\"}]}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"CreditRevoked\",\"inputs\":[{\"name\":\"owner\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"token\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"shard\",\"type\":\"uint64\",\"indexed\":true,\"internalType\":\"uint64\"},{\"name\":\"slot\",\"type\":\"uint16\",\"indexed\":false,\"internalType\":\"uint16\"},{\"name\":\"feeRecipient\",\"type\":\"address\",\"indexed\":false,\"internalType\":\"address\"},{\"name\":\"feeAmount\",\"type\":\"uint256\",\"indexed\":false,\"internalType\":\"uint256\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"CreditUpdated\",\"inputs\":[{\"name\":\"owner\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"outputTreeId\",\"type\":\"uint256\",\"indexed\":true,\"internalType\":\"uint256\"},{\"name\":\"params\",\"type\":\"tuple\",\"indexed\":false,\"internalType\":\"structIInvisiProtocol.UpdateCreditParams\",\"components\":[{\"name\":\"token\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"owner\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"source\",\"type\":\"tuple\",\"internalType\":\"structIInvisiProtocol.InputSource\",\"components\":[{\"name\":\"treeId\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"merkleRoot\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}]},{\"name\":\"nullifier\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"creditCommitment\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"revocationShard\",\"type\":\"uint64\",\"internalType\":\"uint64\"},{\"name\":\"revocationSlot\",\"type\":\"uint16\",\"internalType\":\"uint16\"},{\"name\":\"deadline\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"feeRecipient\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"feeAmount\",\"type\":\"uint256\",\"internalType\":\"uint256\"}]},{\"name\":\"leafIndex\",\"type\":\"uint32\",\"indexed\":false,\"internalType\":\"uint32\"},{\"name\":\"deliveries\",\"type\":\"tuple[]\",\"indexed\":false,\"internalType\":\"structIInvisiProtocol.Delivery[]\",\"components\":[{\"name\":\"ciphertext\",\"type\":\"bytes\",\"internalType\":\"bytes\"},{\"name\":\"clue\",\"type\":\"bytes\",\"internalType\":\"bytes\"}]}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"CrossTreeTransact\",\"inputs\":[{\"name\":\"token\",\"type\":\"address\",\"indexed\":false,\"internalType\":\"address\"},{\"name\":\"outputTreeId\",\"type\":\"uint256\",\"indexed\":true,\"internalType\":\"uint256\"},{\"name\":\"sources\",\"type\":\"tuple[]\",\"indexed\":false,\"internalType\":\"structIInvisiProtocol.InputSource[]\",\"components\":[{\"name\":\"treeId\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"merkleRoot\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}]},{\"name\":\"nullifiers\",\"type\":\"bytes32[]\",\"indexed\":false,\"internalType\":\"bytes32[]\"},{\"name\":\"outputCommitments\",\"type\":\"bytes32[]\",\"indexed\":false,\"internalType\":\"bytes32[]\"},{\"name\":\"leafIndices\",\"type\":\"uint32[]\",\"indexed\":false,\"internalType\":\"uint32[]\"},{\"name\":\"deliveries\",\"type\":\"tuple[]\",\"indexed\":false,\"internalType\":\"structIInvisiProtocol.Delivery[]\",\"components\":[{\"name\":\"ciphertext\",\"type\":\"bytes\",\"internalType\":\"bytes\"},{\"name\":\"clue\",\"type\":\"bytes\",\"internalType\":\"bytes\"}]},{\"name\":\"withdrawalAddress\",\"type\":\"address\",\"indexed\":false,\"internalType\":\"address\"},{\"name\":\"withdrawalAmount\",\"type\":\"uint256\",\"indexed\":false,\"internalType\":\"uint256\"},{\"name\":\"deadline\",\"type\":\"uint256\",\"indexed\":false,\"internalType\":\"uint256\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"EIP712DomainChanged\",\"inputs\":[],\"anonymous\":false},{\"type\":\"event\",\"name\":\"NonceInvalidated\",\"inputs\":[{\"name\":\"signer\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"newNonce\",\"type\":\"uint256\",\"indexed\":false,\"internalType\":\"uint256\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"OwnershipTransferStarted\",\"inputs\":[{\"name\":\"previousOwner\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"newOwner\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"OwnershipTransferred\",\"inputs\":[{\"name\":\"previousOwner\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"newOwner\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"Paused\",\"inputs\":[{\"name\":\"account\",\"type\":\"address\",\"indexed\":false,\"internalType\":\"address\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"PublicDeposit\",\"inputs\":[{\"name\":\"token\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"payer\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"amount\",\"type\":\"uint256\",\"indexed\":false,\"internalType\":\"uint256\"},{\"name\":\"proofHash\",\"type\":\"bytes32\",\"indexed\":false,\"internalType\":\"bytes32\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"ScreenerUpdated\",\"inputs\":[{\"name\":\"newScreener\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"Shield\",\"inputs\":[{\"name\":\"token\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"payer\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"amount\",\"type\":\"uint256\",\"indexed\":false,\"internalType\":\"uint256\"},{\"name\":\"treeId\",\"type\":\"uint256\",\"indexed\":true,\"internalType\":\"uint256\"},{\"name\":\"startLeafIndex\",\"type\":\"uint32\",\"indexed\":false,\"internalType\":\"uint32\"},{\"name\":\"deliveries\",\"type\":\"tuple[]\",\"indexed\":false,\"internalType\":\"structIInvisiProtocol.Delivery[]\",\"components\":[{\"name\":\"ciphertext\",\"type\":\"bytes\",\"internalType\":\"bytes\"},{\"name\":\"clue\",\"type\":\"bytes\",\"internalType\":\"bytes\"}]},{\"name\":\"deadline\",\"type\":\"uint256\",\"indexed\":false,\"internalType\":\"uint256\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"Transact\",\"inputs\":[{\"name\":\"token\",\"type\":\"address\",\"indexed\":false,\"internalType\":\"address\"},{\"name\":\"inputTreeId\",\"type\":\"uint256\",\"indexed\":true,\"internalType\":\"uint256\"},{\"name\":\"outputTreeId\",\"type\":\"uint256\",\"indexed\":true,\"internalType\":\"uint256\"},{\"name\":\"nullifiers\",\"type\":\"bytes32[]\",\"indexed\":false,\"internalType\":\"bytes32[]\"},{\"name\":\"outputCommitments\",\"type\":\"bytes32[]\",\"indexed\":false,\"internalType\":\"bytes32[]\"},{\"name\":\"leafIndices\",\"type\":\"uint32[]\",\"indexed\":false,\"internalType\":\"uint32[]\"},{\"name\":\"deliveries\",\"type\":\"tuple[]\",\"indexed\":false,\"internalType\":\"structIInvisiProtocol.Delivery[]\",\"components\":[{\"name\":\"ciphertext\",\"type\":\"bytes\",\"internalType\":\"bytes\"},{\"name\":\"clue\",\"type\":\"bytes\",\"internalType\":\"bytes\"}]},{\"name\":\"withdrawalAddress\",\"type\":\"address\",\"indexed\":false,\"internalType\":\"address\"},{\"name\":\"withdrawalAmount\",\"type\":\"uint256\",\"indexed\":false,\"internalType\":\"uint256\"},{\"name\":\"deadline\",\"type\":\"uint256\",\"indexed\":false,\"internalType\":\"uint256\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"TransactAggregated\",\"inputs\":[{\"name\":\"proofHash\",\"type\":\"bytes32\",\"indexed\":true,\"internalType\":\"bytes32\"},{\"name\":\"requestCount\",\"type\":\"uint256\",\"indexed\":false,\"internalType\":\"uint256\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"TreeCreated\",\"inputs\":[{\"name\":\"treeId\",\"type\":\"uint256\",\"indexed\":true,\"internalType\":\"uint256\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"Unpaused\",\"inputs\":[{\"name\":\"account\",\"type\":\"address\",\"indexed\":false,\"internalType\":\"address\"}],\"anonymous\":false},{\"type\":\"error\",\"name\":\"AddressEmptyCode\",\"inputs\":[{\"name\":\"target\",\"type\":\"address\",\"internalType\":\"address\"}]},{\"type\":\"error\",\"name\":\"AddressInsufficientBalance\",\"inputs\":[{\"name\":\"account\",\"type\":\"address\",\"internalType\":\"address\"}]},{\"type\":\"error\",\"name\":\"AddressScreeningFailed\",\"inputs\":[{\"name\":\"account\",\"type\":\"address\",\"internalType\":\"address\"}]},{\"type\":\"error\",\"name\":\"ChainIdMismatch\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"CommitmentAlreadyPaid\",\"inputs\":[{\"name\":\"commitment\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}]},{\"type\":\"error\",\"name\":\"CreditAlreadyRevoked\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"DoubleSpend\",\"inputs\":[{\"name\":\"nullifier\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}]},{\"type\":\"error\",\"name\":\"EnforcedPause\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"ExpectedPause\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"FailedInnerCall\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"InexactTokenReceipt\",\"inputs\":[{\"name\":\"requested\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"received\",\"type\":\"uint256\",\"internalType\":\"uint256\"}]},{\"type\":\"error\",\"name\":\"InvalidAddressRegistry\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"InvalidAggregateBatch\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"InvalidAmount\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"InvalidBatchSize\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"InvalidCommitment\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"InvalidCreditAllocation\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"InvalidDelivery\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"InvalidFunding\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"InvalidMerkleRoot\",\"inputs\":[{\"name\":\"root\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}]},{\"type\":\"error\",\"name\":\"InvalidNonce\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"InvalidPrivateTransferContext\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"InvalidPrivateTransferShape\",\"inputs\":[{\"name\":\"inputs\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"outputs\",\"type\":\"uint256\",\"internalType\":\"uint256\"}]},{\"type\":\"error\",\"name\":\"InvalidProof\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"InvalidReceivingAddress\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"InvalidShieldContext\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"InvalidShieldOutputCount\",\"inputs\":[{\"name\":\"outputs\",\"type\":\"uint256\",\"internalType\":\"uint256\"}]},{\"type\":\"error\",\"name\":\"InvalidShortString\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"InvalidSignature\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"InvalidToken\",\"inputs\":[{\"name\":\"token\",\"type\":\"address\",\"internalType\":\"address\"}]},{\"type\":\"error\",\"name\":\"InvalidTree\",\"inputs\":[{\"name\":\"treeId\",\"type\":\"uint256\",\"internalType\":\"uint256\"}]},{\"type\":\"error\",\"name\":\"LengthMismatch\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"NoBroadcasterFees\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"NotEmergencyAdmin\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"NotGlobalEmergency\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"OwnableInvalidOwner\",\"inputs\":[{\"name\":\"owner\",\"type\":\"address\",\"internalType\":\"address\"}]},{\"type\":\"error\",\"name\":\"OwnableUnauthorizedAccount\",\"inputs\":[{\"name\":\"account\",\"type\":\"address\",\"internalType\":\"address\"}]},{\"type\":\"error\",\"name\":\"PrivateTransferExpired\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"ReentrancyGuardReentrantCall\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"SafeERC20FailedOperation\",\"inputs\":[{\"name\":\"token\",\"type\":\"address\",\"internalType\":\"address\"}]},{\"type\":\"error\",\"name\":\"ShieldExpired\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"SignatureExpired\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"StaleRoot\",\"inputs\":[{\"name\":\"root\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}]},{\"type\":\"error\",\"name\":\"StringTooLong\",\"inputs\":[{\"name\":\"str\",\"type\":\"string\",\"internalType\":\"string\"}]},{\"type\":\"error\",\"name\":\"ZeroNullifier\",\"inputs\":[]}]",
 }
 
 // InvisiProtocolABI is the input ABI used to generate the binding from.
@@ -547,6 +555,82 @@ func (_InvisiProtocol *InvisiProtocolSession) CircuitPaused() (bool, error) {
 // Solidity: function circuitPaused() view returns(bool)
 func (_InvisiProtocol *InvisiProtocolCallerSession) CircuitPaused() (bool, error) {
 	return _InvisiProtocol.Contract.CircuitPaused(&_InvisiProtocol.CallOpts)
+}
+
+// CreditAllocation is a free data retrieval call binding the contract method 0x70a7588f.
+//
+// Solidity: function creditAllocation(address owner, address token) view returns(uint64 shard, uint16 slot)
+func (_InvisiProtocol *InvisiProtocolCaller) CreditAllocation(opts *bind.CallOpts, owner common.Address, token common.Address) (struct {
+	Shard uint64
+	Slot  uint16
+}, error) {
+	var out []interface{}
+	err := _InvisiProtocol.contract.Call(opts, &out, "creditAllocation", owner, token)
+
+	outstruct := new(struct {
+		Shard uint64
+		Slot  uint16
+	})
+	if err != nil {
+		return *outstruct, err
+	}
+
+	outstruct.Shard = *abi.ConvertType(out[0], new(uint64)).(*uint64)
+	outstruct.Slot = *abi.ConvertType(out[1], new(uint16)).(*uint16)
+
+	return *outstruct, err
+
+}
+
+// CreditAllocation is a free data retrieval call binding the contract method 0x70a7588f.
+//
+// Solidity: function creditAllocation(address owner, address token) view returns(uint64 shard, uint16 slot)
+func (_InvisiProtocol *InvisiProtocolSession) CreditAllocation(owner common.Address, token common.Address) (struct {
+	Shard uint64
+	Slot  uint16
+}, error) {
+	return _InvisiProtocol.Contract.CreditAllocation(&_InvisiProtocol.CallOpts, owner, token)
+}
+
+// CreditAllocation is a free data retrieval call binding the contract method 0x70a7588f.
+//
+// Solidity: function creditAllocation(address owner, address token) view returns(uint64 shard, uint16 slot)
+func (_InvisiProtocol *InvisiProtocolCallerSession) CreditAllocation(owner common.Address, token common.Address) (struct {
+	Shard uint64
+	Slot  uint16
+}, error) {
+	return _InvisiProtocol.Contract.CreditAllocation(&_InvisiProtocol.CallOpts, owner, token)
+}
+
+// CreditRevocationBitmap is a free data retrieval call binding the contract method 0xc91ae210.
+//
+// Solidity: function creditRevocationBitmap(address owner, address token, uint64 shard, uint8 word) view returns(uint256)
+func (_InvisiProtocol *InvisiProtocolCaller) CreditRevocationBitmap(opts *bind.CallOpts, owner common.Address, token common.Address, shard uint64, word uint8) (*big.Int, error) {
+	var out []interface{}
+	err := _InvisiProtocol.contract.Call(opts, &out, "creditRevocationBitmap", owner, token, shard, word)
+
+	if err != nil {
+		return *new(*big.Int), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
+
+	return out0, err
+
+}
+
+// CreditRevocationBitmap is a free data retrieval call binding the contract method 0xc91ae210.
+//
+// Solidity: function creditRevocationBitmap(address owner, address token, uint64 shard, uint8 word) view returns(uint256)
+func (_InvisiProtocol *InvisiProtocolSession) CreditRevocationBitmap(owner common.Address, token common.Address, shard uint64, word uint8) (*big.Int, error) {
+	return _InvisiProtocol.Contract.CreditRevocationBitmap(&_InvisiProtocol.CallOpts, owner, token, shard, word)
+}
+
+// CreditRevocationBitmap is a free data retrieval call binding the contract method 0xc91ae210.
+//
+// Solidity: function creditRevocationBitmap(address owner, address token, uint64 shard, uint8 word) view returns(uint256)
+func (_InvisiProtocol *InvisiProtocolCallerSession) CreditRevocationBitmap(owner common.Address, token common.Address, shard uint64, word uint8) (*big.Int, error) {
+	return _InvisiProtocol.Contract.CreditRevocationBitmap(&_InvisiProtocol.CallOpts, owner, token, shard, word)
 }
 
 // Eip712Domain is a free data retrieval call binding the contract method 0x84b0196e.
@@ -1136,65 +1220,44 @@ func (_InvisiProtocol *InvisiProtocolTransactorSession) AcceptOwnership() (*type
 	return _InvisiProtocol.Contract.AcceptOwnership(&_InvisiProtocol.TransactOpts)
 }
 
-// CancelCredit is a paid mutator transaction binding the contract method 0x60f438c7.
+// CreateCredit is a paid mutator transaction binding the contract method 0x5550f27a.
 //
-// Solidity: function cancelCredit(bytes , (address,(uint256,bytes32),bytes32,address,uint256,uint256,address,uint256) p) returns()
-func (_InvisiProtocol *InvisiProtocolTransactor) CancelCredit(opts *bind.TransactOpts, arg0 []byte, p IInvisiProtocolCancelCreditParams) (*types.Transaction, error) {
-	return _InvisiProtocol.contract.Transact(opts, "cancelCredit", arg0, p)
+// Solidity: function createCredit(bytes , (address,address,uint64,uint16,bytes32,uint256,address,uint256) p, (bytes,bytes)[] ) returns()
+func (_InvisiProtocol *InvisiProtocolTransactor) CreateCredit(opts *bind.TransactOpts, arg0 []byte, p IInvisiProtocolCreateCreditParams, arg2 []IInvisiProtocolDelivery) (*types.Transaction, error) {
+	return _InvisiProtocol.contract.Transact(opts, "createCredit", arg0, p, arg2)
 }
 
-// CancelCredit is a paid mutator transaction binding the contract method 0x60f438c7.
+// CreateCredit is a paid mutator transaction binding the contract method 0x5550f27a.
 //
-// Solidity: function cancelCredit(bytes , (address,(uint256,bytes32),bytes32,address,uint256,uint256,address,uint256) p) returns()
-func (_InvisiProtocol *InvisiProtocolSession) CancelCredit(arg0 []byte, p IInvisiProtocolCancelCreditParams) (*types.Transaction, error) {
-	return _InvisiProtocol.Contract.CancelCredit(&_InvisiProtocol.TransactOpts, arg0, p)
+// Solidity: function createCredit(bytes , (address,address,uint64,uint16,bytes32,uint256,address,uint256) p, (bytes,bytes)[] ) returns()
+func (_InvisiProtocol *InvisiProtocolSession) CreateCredit(arg0 []byte, p IInvisiProtocolCreateCreditParams, arg2 []IInvisiProtocolDelivery) (*types.Transaction, error) {
+	return _InvisiProtocol.Contract.CreateCredit(&_InvisiProtocol.TransactOpts, arg0, p, arg2)
 }
 
-// CancelCredit is a paid mutator transaction binding the contract method 0x60f438c7.
+// CreateCredit is a paid mutator transaction binding the contract method 0x5550f27a.
 //
-// Solidity: function cancelCredit(bytes , (address,(uint256,bytes32),bytes32,address,uint256,uint256,address,uint256) p) returns()
-func (_InvisiProtocol *InvisiProtocolTransactorSession) CancelCredit(arg0 []byte, p IInvisiProtocolCancelCreditParams) (*types.Transaction, error) {
-	return _InvisiProtocol.Contract.CancelCredit(&_InvisiProtocol.TransactOpts, arg0, p)
+// Solidity: function createCredit(bytes , (address,address,uint64,uint16,bytes32,uint256,address,uint256) p, (bytes,bytes)[] ) returns()
+func (_InvisiProtocol *InvisiProtocolTransactorSession) CreateCredit(arg0 []byte, p IInvisiProtocolCreateCreditParams, arg2 []IInvisiProtocolDelivery) (*types.Transaction, error) {
+	return _InvisiProtocol.Contract.CreateCredit(&_InvisiProtocol.TransactOpts, arg0, p, arg2)
 }
 
-// CreateCredit is a paid mutator transaction binding the contract method 0xcf76ba23.
+// CreditDraw is a paid mutator transaction binding the contract method 0xa288961c.
 //
-// Solidity: function createCredit(bytes , (address,(uint256,bytes32)[],bytes32[],bytes32,bytes32,address,uint256,uint256,address,uint256) p, (bytes,bytes)[] , (address,uint256,uint256,uint256,bytes,(uint256,uint8,bytes32,bytes32)) ) returns()
-func (_InvisiProtocol *InvisiProtocolTransactor) CreateCredit(opts *bind.TransactOpts, arg0 []byte, p IInvisiProtocolCreateCreditParams, arg2 []IInvisiProtocolDelivery, arg3 IInvisiProtocolFundingParams) (*types.Transaction, error) {
-	return _InvisiProtocol.contract.Transact(opts, "createCredit", arg0, p, arg2, arg3)
-}
-
-// CreateCredit is a paid mutator transaction binding the contract method 0xcf76ba23.
-//
-// Solidity: function createCredit(bytes , (address,(uint256,bytes32)[],bytes32[],bytes32,bytes32,address,uint256,uint256,address,uint256) p, (bytes,bytes)[] , (address,uint256,uint256,uint256,bytes,(uint256,uint8,bytes32,bytes32)) ) returns()
-func (_InvisiProtocol *InvisiProtocolSession) CreateCredit(arg0 []byte, p IInvisiProtocolCreateCreditParams, arg2 []IInvisiProtocolDelivery, arg3 IInvisiProtocolFundingParams) (*types.Transaction, error) {
-	return _InvisiProtocol.Contract.CreateCredit(&_InvisiProtocol.TransactOpts, arg0, p, arg2, arg3)
-}
-
-// CreateCredit is a paid mutator transaction binding the contract method 0xcf76ba23.
-//
-// Solidity: function createCredit(bytes , (address,(uint256,bytes32)[],bytes32[],bytes32,bytes32,address,uint256,uint256,address,uint256) p, (bytes,bytes)[] , (address,uint256,uint256,uint256,bytes,(uint256,uint8,bytes32,bytes32)) ) returns()
-func (_InvisiProtocol *InvisiProtocolTransactorSession) CreateCredit(arg0 []byte, p IInvisiProtocolCreateCreditParams, arg2 []IInvisiProtocolDelivery, arg3 IInvisiProtocolFundingParams) (*types.Transaction, error) {
-	return _InvisiProtocol.Contract.CreateCredit(&_InvisiProtocol.TransactOpts, arg0, p, arg2, arg3)
-}
-
-// CreditDraw is a paid mutator transaction binding the contract method 0xc0d95212.
-//
-// Solidity: function creditDraw(bytes , (address,(uint256,bytes32)[],bytes32[],bytes32[],uint256[],bytes32[],address,uint256,uint256) p, (bytes,bytes)[] ) returns()
+// Solidity: function creditDraw(bytes , (address,(uint256,bytes32)[],(address,uint256)[],(uint256,uint64,uint16)[],bytes32[],bytes32[],bytes32[],bytes32,uint256,uint256,address,uint256) p, (bytes,bytes)[] ) returns()
 func (_InvisiProtocol *InvisiProtocolTransactor) CreditDraw(opts *bind.TransactOpts, arg0 []byte, p IInvisiProtocolCreditDrawParams, arg2 []IInvisiProtocolDelivery) (*types.Transaction, error) {
 	return _InvisiProtocol.contract.Transact(opts, "creditDraw", arg0, p, arg2)
 }
 
-// CreditDraw is a paid mutator transaction binding the contract method 0xc0d95212.
+// CreditDraw is a paid mutator transaction binding the contract method 0xa288961c.
 //
-// Solidity: function creditDraw(bytes , (address,(uint256,bytes32)[],bytes32[],bytes32[],uint256[],bytes32[],address,uint256,uint256) p, (bytes,bytes)[] ) returns()
+// Solidity: function creditDraw(bytes , (address,(uint256,bytes32)[],(address,uint256)[],(uint256,uint64,uint16)[],bytes32[],bytes32[],bytes32[],bytes32,uint256,uint256,address,uint256) p, (bytes,bytes)[] ) returns()
 func (_InvisiProtocol *InvisiProtocolSession) CreditDraw(arg0 []byte, p IInvisiProtocolCreditDrawParams, arg2 []IInvisiProtocolDelivery) (*types.Transaction, error) {
 	return _InvisiProtocol.Contract.CreditDraw(&_InvisiProtocol.TransactOpts, arg0, p, arg2)
 }
 
-// CreditDraw is a paid mutator transaction binding the contract method 0xc0d95212.
+// CreditDraw is a paid mutator transaction binding the contract method 0xa288961c.
 //
-// Solidity: function creditDraw(bytes , (address,(uint256,bytes32)[],bytes32[],bytes32[],uint256[],bytes32[],address,uint256,uint256) p, (bytes,bytes)[] ) returns()
+// Solidity: function creditDraw(bytes , (address,(uint256,bytes32)[],(address,uint256)[],(uint256,uint64,uint16)[],bytes32[],bytes32[],bytes32[],bytes32,uint256,uint256,address,uint256) p, (bytes,bytes)[] ) returns()
 func (_InvisiProtocol *InvisiProtocolTransactorSession) CreditDraw(arg0 []byte, p IInvisiProtocolCreditDrawParams, arg2 []IInvisiProtocolDelivery) (*types.Transaction, error) {
 	return _InvisiProtocol.Contract.CreditDraw(&_InvisiProtocol.TransactOpts, arg0, p, arg2)
 }
@@ -1283,6 +1346,27 @@ func (_InvisiProtocol *InvisiProtocolTransactorSession) RenounceOwnership() (*ty
 	return _InvisiProtocol.Contract.RenounceOwnership(&_InvisiProtocol.TransactOpts)
 }
 
+// RevokeCredit is a paid mutator transaction binding the contract method 0x400b3547.
+//
+// Solidity: function revokeCredit(address token, address owner, uint64 shard, uint16 slot, uint256 deadline, address feeRecipient, uint256 feeAmount, bytes signature) returns()
+func (_InvisiProtocol *InvisiProtocolTransactor) RevokeCredit(opts *bind.TransactOpts, token common.Address, owner common.Address, shard uint64, slot uint16, deadline *big.Int, feeRecipient common.Address, feeAmount *big.Int, signature []byte) (*types.Transaction, error) {
+	return _InvisiProtocol.contract.Transact(opts, "revokeCredit", token, owner, shard, slot, deadline, feeRecipient, feeAmount, signature)
+}
+
+// RevokeCredit is a paid mutator transaction binding the contract method 0x400b3547.
+//
+// Solidity: function revokeCredit(address token, address owner, uint64 shard, uint16 slot, uint256 deadline, address feeRecipient, uint256 feeAmount, bytes signature) returns()
+func (_InvisiProtocol *InvisiProtocolSession) RevokeCredit(token common.Address, owner common.Address, shard uint64, slot uint16, deadline *big.Int, feeRecipient common.Address, feeAmount *big.Int, signature []byte) (*types.Transaction, error) {
+	return _InvisiProtocol.Contract.RevokeCredit(&_InvisiProtocol.TransactOpts, token, owner, shard, slot, deadline, feeRecipient, feeAmount, signature)
+}
+
+// RevokeCredit is a paid mutator transaction binding the contract method 0x400b3547.
+//
+// Solidity: function revokeCredit(address token, address owner, uint64 shard, uint16 slot, uint256 deadline, address feeRecipient, uint256 feeAmount, bytes signature) returns()
+func (_InvisiProtocol *InvisiProtocolTransactorSession) RevokeCredit(token common.Address, owner common.Address, shard uint64, slot uint16, deadline *big.Int, feeRecipient common.Address, feeAmount *big.Int, signature []byte) (*types.Transaction, error) {
+	return _InvisiProtocol.Contract.RevokeCredit(&_InvisiProtocol.TransactOpts, token, owner, shard, slot, deadline, feeRecipient, feeAmount, signature)
+}
+
 // SetScreener is a paid mutator transaction binding the contract method 0xc2ebd23d.
 //
 // Solidity: function setScreener(address newScreener) returns()
@@ -1323,27 +1407,6 @@ func (_InvisiProtocol *InvisiProtocolSession) Shield(p IInvisiProtocolShieldPara
 // Solidity: function shield((address,bytes32[],uint256,address,uint256) p, (bytes32,uint256)[] , (bytes,bytes)[] , (address,uint256,uint256,uint256,bytes,(uint256,uint8,bytes32,bytes32)) ) returns()
 func (_InvisiProtocol *InvisiProtocolTransactorSession) Shield(p IInvisiProtocolShieldParams, arg1 []IInvisiProtocolShieldOutput, arg2 []IInvisiProtocolDelivery, arg3 IInvisiProtocolFundingParams) (*types.Transaction, error) {
 	return _InvisiProtocol.Contract.Shield(&_InvisiProtocol.TransactOpts, p, arg1, arg2, arg3)
-}
-
-// TopUpCredit is a paid mutator transaction binding the contract method 0xce3c6911.
-//
-// Solidity: function topUpCredit(bytes , ((address,(uint256,bytes32)[],bytes32[],bytes32,bytes32,address,uint256,uint256,address,uint256),(uint256,bytes32),bytes32,uint256) p, (bytes,bytes)[] , (address,uint256,uint256,uint256,bytes,(uint256,uint8,bytes32,bytes32)) ) returns()
-func (_InvisiProtocol *InvisiProtocolTransactor) TopUpCredit(opts *bind.TransactOpts, arg0 []byte, p IInvisiProtocolTopUpCreditParams, arg2 []IInvisiProtocolDelivery, arg3 IInvisiProtocolFundingParams) (*types.Transaction, error) {
-	return _InvisiProtocol.contract.Transact(opts, "topUpCredit", arg0, p, arg2, arg3)
-}
-
-// TopUpCredit is a paid mutator transaction binding the contract method 0xce3c6911.
-//
-// Solidity: function topUpCredit(bytes , ((address,(uint256,bytes32)[],bytes32[],bytes32,bytes32,address,uint256,uint256,address,uint256),(uint256,bytes32),bytes32,uint256) p, (bytes,bytes)[] , (address,uint256,uint256,uint256,bytes,(uint256,uint8,bytes32,bytes32)) ) returns()
-func (_InvisiProtocol *InvisiProtocolSession) TopUpCredit(arg0 []byte, p IInvisiProtocolTopUpCreditParams, arg2 []IInvisiProtocolDelivery, arg3 IInvisiProtocolFundingParams) (*types.Transaction, error) {
-	return _InvisiProtocol.Contract.TopUpCredit(&_InvisiProtocol.TransactOpts, arg0, p, arg2, arg3)
-}
-
-// TopUpCredit is a paid mutator transaction binding the contract method 0xce3c6911.
-//
-// Solidity: function topUpCredit(bytes , ((address,(uint256,bytes32)[],bytes32[],bytes32,bytes32,address,uint256,uint256,address,uint256),(uint256,bytes32),bytes32,uint256) p, (bytes,bytes)[] , (address,uint256,uint256,uint256,bytes,(uint256,uint8,bytes32,bytes32)) ) returns()
-func (_InvisiProtocol *InvisiProtocolTransactorSession) TopUpCredit(arg0 []byte, p IInvisiProtocolTopUpCreditParams, arg2 []IInvisiProtocolDelivery, arg3 IInvisiProtocolFundingParams) (*types.Transaction, error) {
-	return _InvisiProtocol.Contract.TopUpCredit(&_InvisiProtocol.TransactOpts, arg0, p, arg2, arg3)
 }
 
 // Transact is a paid mutator transaction binding the contract method 0x2eb90f9b.
@@ -1449,6 +1512,27 @@ func (_InvisiProtocol *InvisiProtocolSession) UnpauseCircuit() (*types.Transacti
 // Solidity: function unpauseCircuit() returns()
 func (_InvisiProtocol *InvisiProtocolTransactorSession) UnpauseCircuit() (*types.Transaction, error) {
 	return _InvisiProtocol.Contract.UnpauseCircuit(&_InvisiProtocol.TransactOpts)
+}
+
+// UpdateCredit is a paid mutator transaction binding the contract method 0x2dab44e5.
+//
+// Solidity: function updateCredit(bytes , (address,address,(uint256,bytes32),bytes32,bytes32,uint64,uint16,uint256,address,uint256) p, (bytes,bytes)[] ) returns()
+func (_InvisiProtocol *InvisiProtocolTransactor) UpdateCredit(opts *bind.TransactOpts, arg0 []byte, p IInvisiProtocolUpdateCreditParams, arg2 []IInvisiProtocolDelivery) (*types.Transaction, error) {
+	return _InvisiProtocol.contract.Transact(opts, "updateCredit", arg0, p, arg2)
+}
+
+// UpdateCredit is a paid mutator transaction binding the contract method 0x2dab44e5.
+//
+// Solidity: function updateCredit(bytes , (address,address,(uint256,bytes32),bytes32,bytes32,uint64,uint16,uint256,address,uint256) p, (bytes,bytes)[] ) returns()
+func (_InvisiProtocol *InvisiProtocolSession) UpdateCredit(arg0 []byte, p IInvisiProtocolUpdateCreditParams, arg2 []IInvisiProtocolDelivery) (*types.Transaction, error) {
+	return _InvisiProtocol.Contract.UpdateCredit(&_InvisiProtocol.TransactOpts, arg0, p, arg2)
+}
+
+// UpdateCredit is a paid mutator transaction binding the contract method 0x2dab44e5.
+//
+// Solidity: function updateCredit(bytes , (address,address,(uint256,bytes32),bytes32,bytes32,uint64,uint16,uint256,address,uint256) p, (bytes,bytes)[] ) returns()
+func (_InvisiProtocol *InvisiProtocolTransactorSession) UpdateCredit(arg0 []byte, p IInvisiProtocolUpdateCreditParams, arg2 []IInvisiProtocolDelivery) (*types.Transaction, error) {
+	return _InvisiProtocol.Contract.UpdateCredit(&_InvisiProtocol.TransactOpts, arg0, p, arg2)
 }
 
 // WithdrawBroadcasterFees is a paid mutator transaction binding the contract method 0x099e7064.
@@ -2364,170 +2448,6 @@ func (_InvisiProtocol *InvisiProtocolFilterer) ParseCommitmentsInserted(log type
 	return event, nil
 }
 
-// InvisiProtocolCreditCancelledIterator is returned from FilterCreditCancelled and is used to iterate over the raw logs and unpacked data for CreditCancelled events raised by the InvisiProtocol contract.
-type InvisiProtocolCreditCancelledIterator struct {
-	Event *InvisiProtocolCreditCancelled // Event containing the contract specifics and raw log
-
-	contract *bind.BoundContract // Generic contract to use for unpacking event data
-	event    string              // Event name to use for unpacking event data
-
-	logs chan types.Log        // Log channel receiving the found contract events
-	sub  ethereum.Subscription // Subscription for errors, completion and termination
-	done bool                  // Whether the subscription completed delivering logs
-	fail error                 // Occurred error to stop iteration
-}
-
-// Next advances the iterator to the subsequent event, returning whether there
-// are any more events found. In case of a retrieval or parsing error, false is
-// returned and Error() can be queried for the exact failure.
-func (it *InvisiProtocolCreditCancelledIterator) Next() bool {
-	// If the iterator failed, stop iterating
-	if it.fail != nil {
-		return false
-	}
-	// If the iterator completed, deliver directly whatever's available
-	if it.done {
-		select {
-		case log := <-it.logs:
-			it.Event = new(InvisiProtocolCreditCancelled)
-			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
-				it.fail = err
-				return false
-			}
-			it.Event.Raw = log
-			return true
-
-		default:
-			return false
-		}
-	}
-	// Iterator still in progress, wait for either a data or an error event
-	select {
-	case log := <-it.logs:
-		it.Event = new(InvisiProtocolCreditCancelled)
-		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
-			it.fail = err
-			return false
-		}
-		it.Event.Raw = log
-		return true
-
-	case err := <-it.sub.Err():
-		it.done = true
-		it.fail = err
-		return it.Next()
-	}
-}
-
-// Error returns any retrieval or parsing error occurred during filtering.
-func (it *InvisiProtocolCreditCancelledIterator) Error() error {
-	return it.fail
-}
-
-// Close terminates the iteration process, releasing any pending underlying
-// resources.
-func (it *InvisiProtocolCreditCancelledIterator) Close() error {
-	it.sub.Unsubscribe()
-	return nil
-}
-
-// InvisiProtocolCreditCancelled represents a CreditCancelled event raised by the InvisiProtocol contract.
-type InvisiProtocolCreditCancelled struct {
-	Token       common.Address
-	Owner       common.Address
-	InputTreeId *big.Int
-	Nullifier   [32]byte
-	Amount      *big.Int
-	Raw         types.Log // Blockchain specific contextual infos
-}
-
-// FilterCreditCancelled is a free log retrieval operation binding the contract event 0x58374f55652a28461e61af12a55e457c3052d2255c44f30516a833e78e9e21f1.
-//
-// Solidity: event CreditCancelled(address token, address indexed owner, uint256 indexed inputTreeId, bytes32 indexed nullifier, uint256 amount)
-func (_InvisiProtocol *InvisiProtocolFilterer) FilterCreditCancelled(opts *bind.FilterOpts, owner []common.Address, inputTreeId []*big.Int, nullifier [][32]byte) (*InvisiProtocolCreditCancelledIterator, error) {
-
-	var ownerRule []interface{}
-	for _, ownerItem := range owner {
-		ownerRule = append(ownerRule, ownerItem)
-	}
-	var inputTreeIdRule []interface{}
-	for _, inputTreeIdItem := range inputTreeId {
-		inputTreeIdRule = append(inputTreeIdRule, inputTreeIdItem)
-	}
-	var nullifierRule []interface{}
-	for _, nullifierItem := range nullifier {
-		nullifierRule = append(nullifierRule, nullifierItem)
-	}
-
-	logs, sub, err := _InvisiProtocol.contract.FilterLogs(opts, "CreditCancelled", ownerRule, inputTreeIdRule, nullifierRule)
-	if err != nil {
-		return nil, err
-	}
-	return &InvisiProtocolCreditCancelledIterator{contract: _InvisiProtocol.contract, event: "CreditCancelled", logs: logs, sub: sub}, nil
-}
-
-// WatchCreditCancelled is a free log subscription operation binding the contract event 0x58374f55652a28461e61af12a55e457c3052d2255c44f30516a833e78e9e21f1.
-//
-// Solidity: event CreditCancelled(address token, address indexed owner, uint256 indexed inputTreeId, bytes32 indexed nullifier, uint256 amount)
-func (_InvisiProtocol *InvisiProtocolFilterer) WatchCreditCancelled(opts *bind.WatchOpts, sink chan<- *InvisiProtocolCreditCancelled, owner []common.Address, inputTreeId []*big.Int, nullifier [][32]byte) (event.Subscription, error) {
-
-	var ownerRule []interface{}
-	for _, ownerItem := range owner {
-		ownerRule = append(ownerRule, ownerItem)
-	}
-	var inputTreeIdRule []interface{}
-	for _, inputTreeIdItem := range inputTreeId {
-		inputTreeIdRule = append(inputTreeIdRule, inputTreeIdItem)
-	}
-	var nullifierRule []interface{}
-	for _, nullifierItem := range nullifier {
-		nullifierRule = append(nullifierRule, nullifierItem)
-	}
-
-	logs, sub, err := _InvisiProtocol.contract.WatchLogs(opts, "CreditCancelled", ownerRule, inputTreeIdRule, nullifierRule)
-	if err != nil {
-		return nil, err
-	}
-	return event.NewSubscription(func(quit <-chan struct{}) error {
-		defer sub.Unsubscribe()
-		for {
-			select {
-			case log := <-logs:
-				// New log arrived, parse the event and forward to the user
-				event := new(InvisiProtocolCreditCancelled)
-				if err := _InvisiProtocol.contract.UnpackLog(event, "CreditCancelled", log); err != nil {
-					return err
-				}
-				event.Raw = log
-
-				select {
-				case sink <- event:
-				case err := <-sub.Err():
-					return err
-				case <-quit:
-					return nil
-				}
-			case err := <-sub.Err():
-				return err
-			case <-quit:
-				return nil
-			}
-		}
-	}), nil
-}
-
-// ParseCreditCancelled is a log parse operation binding the contract event 0x58374f55652a28461e61af12a55e457c3052d2255c44f30516a833e78e9e21f1.
-//
-// Solidity: event CreditCancelled(address token, address indexed owner, uint256 indexed inputTreeId, bytes32 indexed nullifier, uint256 amount)
-func (_InvisiProtocol *InvisiProtocolFilterer) ParseCreditCancelled(log types.Log) (*InvisiProtocolCreditCancelled, error) {
-	event := new(InvisiProtocolCreditCancelled)
-	if err := _InvisiProtocol.contract.UnpackLog(event, "CreditCancelled", log); err != nil {
-		return nil, err
-	}
-	event.Raw = log
-	return event, nil
-}
-
 // InvisiProtocolCreditCreatedIterator is returned from FilterCreditCreated and is used to iterate over the raw logs and unpacked data for CreditCreated events raised by the InvisiProtocol contract.
 type InvisiProtocolCreditCreatedIterator struct {
 	Event *InvisiProtocolCreditCreated // Event containing the contract specifics and raw log
@@ -2600,21 +2520,26 @@ type InvisiProtocolCreditCreated struct {
 	Token            common.Address
 	Owner            common.Address
 	OutputTreeId     *big.Int
-	Sources          []IInvisiProtocolInputSource
-	Nullifiers       [][32]byte
+	RevocationShard  uint64
+	RevocationSlot   uint16
 	CreditCommitment [32]byte
-	ChangeCommitment [32]byte
-	LeafIndices      []uint32
+	LeafIndex        uint32
 	Deliveries       []IInvisiProtocolDelivery
-	Expiry           *big.Int
+	Deadline         *big.Int
+	FeeRecipient     common.Address
+	FeeAmount        *big.Int
 	Raw              types.Log // Blockchain specific contextual infos
 }
 
-// FilterCreditCreated is a free log retrieval operation binding the contract event 0x828883169779e1627961ddba06c40d10b993a21b4980a8ae6b8148f964acc92b.
+// FilterCreditCreated is a free log retrieval operation binding the contract event 0x3ff78f0284d33ce5183bc7c13bbedfddbf90722c4b3d90a5b8e59da9bbd70565.
 //
-// Solidity: event CreditCreated(address token, address indexed owner, uint256 indexed outputTreeId, (uint256,bytes32)[] sources, bytes32[] nullifiers, bytes32 creditCommitment, bytes32 changeCommitment, uint32[] leafIndices, (bytes,bytes)[] deliveries, uint256 expiry)
-func (_InvisiProtocol *InvisiProtocolFilterer) FilterCreditCreated(opts *bind.FilterOpts, owner []common.Address, outputTreeId []*big.Int) (*InvisiProtocolCreditCreatedIterator, error) {
+// Solidity: event CreditCreated(address indexed token, address indexed owner, uint256 indexed outputTreeId, uint64 revocationShard, uint16 revocationSlot, bytes32 creditCommitment, uint32 leafIndex, (bytes,bytes)[] deliveries, uint256 deadline, address feeRecipient, uint256 feeAmount)
+func (_InvisiProtocol *InvisiProtocolFilterer) FilterCreditCreated(opts *bind.FilterOpts, token []common.Address, owner []common.Address, outputTreeId []*big.Int) (*InvisiProtocolCreditCreatedIterator, error) {
 
+	var tokenRule []interface{}
+	for _, tokenItem := range token {
+		tokenRule = append(tokenRule, tokenItem)
+	}
 	var ownerRule []interface{}
 	for _, ownerItem := range owner {
 		ownerRule = append(ownerRule, ownerItem)
@@ -2624,18 +2549,22 @@ func (_InvisiProtocol *InvisiProtocolFilterer) FilterCreditCreated(opts *bind.Fi
 		outputTreeIdRule = append(outputTreeIdRule, outputTreeIdItem)
 	}
 
-	logs, sub, err := _InvisiProtocol.contract.FilterLogs(opts, "CreditCreated", ownerRule, outputTreeIdRule)
+	logs, sub, err := _InvisiProtocol.contract.FilterLogs(opts, "CreditCreated", tokenRule, ownerRule, outputTreeIdRule)
 	if err != nil {
 		return nil, err
 	}
 	return &InvisiProtocolCreditCreatedIterator{contract: _InvisiProtocol.contract, event: "CreditCreated", logs: logs, sub: sub}, nil
 }
 
-// WatchCreditCreated is a free log subscription operation binding the contract event 0x828883169779e1627961ddba06c40d10b993a21b4980a8ae6b8148f964acc92b.
+// WatchCreditCreated is a free log subscription operation binding the contract event 0x3ff78f0284d33ce5183bc7c13bbedfddbf90722c4b3d90a5b8e59da9bbd70565.
 //
-// Solidity: event CreditCreated(address token, address indexed owner, uint256 indexed outputTreeId, (uint256,bytes32)[] sources, bytes32[] nullifiers, bytes32 creditCommitment, bytes32 changeCommitment, uint32[] leafIndices, (bytes,bytes)[] deliveries, uint256 expiry)
-func (_InvisiProtocol *InvisiProtocolFilterer) WatchCreditCreated(opts *bind.WatchOpts, sink chan<- *InvisiProtocolCreditCreated, owner []common.Address, outputTreeId []*big.Int) (event.Subscription, error) {
+// Solidity: event CreditCreated(address indexed token, address indexed owner, uint256 indexed outputTreeId, uint64 revocationShard, uint16 revocationSlot, bytes32 creditCommitment, uint32 leafIndex, (bytes,bytes)[] deliveries, uint256 deadline, address feeRecipient, uint256 feeAmount)
+func (_InvisiProtocol *InvisiProtocolFilterer) WatchCreditCreated(opts *bind.WatchOpts, sink chan<- *InvisiProtocolCreditCreated, token []common.Address, owner []common.Address, outputTreeId []*big.Int) (event.Subscription, error) {
 
+	var tokenRule []interface{}
+	for _, tokenItem := range token {
+		tokenRule = append(tokenRule, tokenItem)
+	}
 	var ownerRule []interface{}
 	for _, ownerItem := range owner {
 		ownerRule = append(ownerRule, ownerItem)
@@ -2645,7 +2574,7 @@ func (_InvisiProtocol *InvisiProtocolFilterer) WatchCreditCreated(opts *bind.Wat
 		outputTreeIdRule = append(outputTreeIdRule, outputTreeIdItem)
 	}
 
-	logs, sub, err := _InvisiProtocol.contract.WatchLogs(opts, "CreditCreated", ownerRule, outputTreeIdRule)
+	logs, sub, err := _InvisiProtocol.contract.WatchLogs(opts, "CreditCreated", tokenRule, ownerRule, outputTreeIdRule)
 	if err != nil {
 		return nil, err
 	}
@@ -2677,9 +2606,9 @@ func (_InvisiProtocol *InvisiProtocolFilterer) WatchCreditCreated(opts *bind.Wat
 	}), nil
 }
 
-// ParseCreditCreated is a log parse operation binding the contract event 0x828883169779e1627961ddba06c40d10b993a21b4980a8ae6b8148f964acc92b.
+// ParseCreditCreated is a log parse operation binding the contract event 0x3ff78f0284d33ce5183bc7c13bbedfddbf90722c4b3d90a5b8e59da9bbd70565.
 //
-// Solidity: event CreditCreated(address token, address indexed owner, uint256 indexed outputTreeId, (uint256,bytes32)[] sources, bytes32[] nullifiers, bytes32 creditCommitment, bytes32 changeCommitment, uint32[] leafIndices, (bytes,bytes)[] deliveries, uint256 expiry)
+// Solidity: event CreditCreated(address indexed token, address indexed owner, uint256 indexed outputTreeId, uint64 revocationShard, uint16 revocationSlot, bytes32 creditCommitment, uint32 leafIndex, (bytes,bytes)[] deliveries, uint256 deadline, address feeRecipient, uint256 feeAmount)
 func (_InvisiProtocol *InvisiProtocolFilterer) ParseCreditCreated(log types.Log) (*InvisiProtocolCreditCreated, error) {
 	event := new(InvisiProtocolCreditCreated)
 	if err := _InvisiProtocol.contract.UnpackLog(event, "CreditCreated", log); err != nil {
@@ -2758,50 +2687,41 @@ func (it *InvisiProtocolCreditDrawIterator) Close() error {
 
 // InvisiProtocolCreditDraw represents a CreditDraw event raised by the InvisiProtocol contract.
 type InvisiProtocolCreditDraw struct {
-	Spender              common.Address
-	OutputTreeId         *big.Int
-	Params               IInvisiProtocolCreditDrawParams
-	RemainderLeafIndices []uint32
-	Deliveries           []IInvisiProtocolDelivery
-	Raw                  types.Log // Blockchain specific contextual infos
+	OutputTreeId *big.Int
+	Params       IInvisiProtocolCreditDrawParams
+	LeafIndices  []uint32
+	Deliveries   []IInvisiProtocolDelivery
+	Raw          types.Log // Blockchain specific contextual infos
 }
 
-// FilterCreditDraw is a free log retrieval operation binding the contract event 0x536a097c53ca39edbed88d1a6e2c38044f9a77047e6d76a34b1b926da0bd7c97.
+// FilterCreditDraw is a free log retrieval operation binding the contract event 0xa68be504130022fbd729573715873c6c515c318a014d5273815e20abcc08439d.
 //
-// Solidity: event CreditDraw(address indexed spender, uint256 indexed outputTreeId, (address,(uint256,bytes32)[],bytes32[],bytes32[],uint256[],bytes32[],address,uint256,uint256) params, uint32[] remainderLeafIndices, (bytes,bytes)[] deliveries)
-func (_InvisiProtocol *InvisiProtocolFilterer) FilterCreditDraw(opts *bind.FilterOpts, spender []common.Address, outputTreeId []*big.Int) (*InvisiProtocolCreditDrawIterator, error) {
+// Solidity: event CreditDraw(uint256 indexed outputTreeId, (address,(uint256,bytes32)[],(address,uint256)[],(uint256,uint64,uint16)[],bytes32[],bytes32[],bytes32[],bytes32,uint256,uint256,address,uint256) params, uint32[] leafIndices, (bytes,bytes)[] deliveries)
+func (_InvisiProtocol *InvisiProtocolFilterer) FilterCreditDraw(opts *bind.FilterOpts, outputTreeId []*big.Int) (*InvisiProtocolCreditDrawIterator, error) {
 
-	var spenderRule []interface{}
-	for _, spenderItem := range spender {
-		spenderRule = append(spenderRule, spenderItem)
-	}
 	var outputTreeIdRule []interface{}
 	for _, outputTreeIdItem := range outputTreeId {
 		outputTreeIdRule = append(outputTreeIdRule, outputTreeIdItem)
 	}
 
-	logs, sub, err := _InvisiProtocol.contract.FilterLogs(opts, "CreditDraw", spenderRule, outputTreeIdRule)
+	logs, sub, err := _InvisiProtocol.contract.FilterLogs(opts, "CreditDraw", outputTreeIdRule)
 	if err != nil {
 		return nil, err
 	}
 	return &InvisiProtocolCreditDrawIterator{contract: _InvisiProtocol.contract, event: "CreditDraw", logs: logs, sub: sub}, nil
 }
 
-// WatchCreditDraw is a free log subscription operation binding the contract event 0x536a097c53ca39edbed88d1a6e2c38044f9a77047e6d76a34b1b926da0bd7c97.
+// WatchCreditDraw is a free log subscription operation binding the contract event 0xa68be504130022fbd729573715873c6c515c318a014d5273815e20abcc08439d.
 //
-// Solidity: event CreditDraw(address indexed spender, uint256 indexed outputTreeId, (address,(uint256,bytes32)[],bytes32[],bytes32[],uint256[],bytes32[],address,uint256,uint256) params, uint32[] remainderLeafIndices, (bytes,bytes)[] deliveries)
-func (_InvisiProtocol *InvisiProtocolFilterer) WatchCreditDraw(opts *bind.WatchOpts, sink chan<- *InvisiProtocolCreditDraw, spender []common.Address, outputTreeId []*big.Int) (event.Subscription, error) {
+// Solidity: event CreditDraw(uint256 indexed outputTreeId, (address,(uint256,bytes32)[],(address,uint256)[],(uint256,uint64,uint16)[],bytes32[],bytes32[],bytes32[],bytes32,uint256,uint256,address,uint256) params, uint32[] leafIndices, (bytes,bytes)[] deliveries)
+func (_InvisiProtocol *InvisiProtocolFilterer) WatchCreditDraw(opts *bind.WatchOpts, sink chan<- *InvisiProtocolCreditDraw, outputTreeId []*big.Int) (event.Subscription, error) {
 
-	var spenderRule []interface{}
-	for _, spenderItem := range spender {
-		spenderRule = append(spenderRule, spenderItem)
-	}
 	var outputTreeIdRule []interface{}
 	for _, outputTreeIdItem := range outputTreeId {
 		outputTreeIdRule = append(outputTreeIdRule, outputTreeIdItem)
 	}
 
-	logs, sub, err := _InvisiProtocol.contract.WatchLogs(opts, "CreditDraw", spenderRule, outputTreeIdRule)
+	logs, sub, err := _InvisiProtocol.contract.WatchLogs(opts, "CreditDraw", outputTreeIdRule)
 	if err != nil {
 		return nil, err
 	}
@@ -2833,9 +2753,9 @@ func (_InvisiProtocol *InvisiProtocolFilterer) WatchCreditDraw(opts *bind.WatchO
 	}), nil
 }
 
-// ParseCreditDraw is a log parse operation binding the contract event 0x536a097c53ca39edbed88d1a6e2c38044f9a77047e6d76a34b1b926da0bd7c97.
+// ParseCreditDraw is a log parse operation binding the contract event 0xa68be504130022fbd729573715873c6c515c318a014d5273815e20abcc08439d.
 //
-// Solidity: event CreditDraw(address indexed spender, uint256 indexed outputTreeId, (address,(uint256,bytes32)[],bytes32[],bytes32[],uint256[],bytes32[],address,uint256,uint256) params, uint32[] remainderLeafIndices, (bytes,bytes)[] deliveries)
+// Solidity: event CreditDraw(uint256 indexed outputTreeId, (address,(uint256,bytes32)[],(address,uint256)[],(uint256,uint64,uint16)[],bytes32[],bytes32[],bytes32[],bytes32,uint256,uint256,address,uint256) params, uint32[] leafIndices, (bytes,bytes)[] deliveries)
 func (_InvisiProtocol *InvisiProtocolFilterer) ParseCreditDraw(log types.Log) (*InvisiProtocolCreditDraw, error) {
 	event := new(InvisiProtocolCreditDraw)
 	if err := _InvisiProtocol.contract.UnpackLog(event, "CreditDraw", log); err != nil {
@@ -2845,9 +2765,9 @@ func (_InvisiProtocol *InvisiProtocolFilterer) ParseCreditDraw(log types.Log) (*
 	return event, nil
 }
 
-// InvisiProtocolCreditToppedUpIterator is returned from FilterCreditToppedUp and is used to iterate over the raw logs and unpacked data for CreditToppedUp events raised by the InvisiProtocol contract.
-type InvisiProtocolCreditToppedUpIterator struct {
-	Event *InvisiProtocolCreditToppedUp // Event containing the contract specifics and raw log
+// InvisiProtocolCreditRevokedIterator is returned from FilterCreditRevoked and is used to iterate over the raw logs and unpacked data for CreditRevoked events raised by the InvisiProtocol contract.
+type InvisiProtocolCreditRevokedIterator struct {
+	Event *InvisiProtocolCreditRevoked // Event containing the contract specifics and raw log
 
 	contract *bind.BoundContract // Generic contract to use for unpacking event data
 	event    string              // Event name to use for unpacking event data
@@ -2861,7 +2781,7 @@ type InvisiProtocolCreditToppedUpIterator struct {
 // Next advances the iterator to the subsequent event, returning whether there
 // are any more events found. In case of a retrieval or parsing error, false is
 // returned and Error() can be queried for the exact failure.
-func (it *InvisiProtocolCreditToppedUpIterator) Next() bool {
+func (it *InvisiProtocolCreditRevokedIterator) Next() bool {
 	// If the iterator failed, stop iterating
 	if it.fail != nil {
 		return false
@@ -2870,7 +2790,7 @@ func (it *InvisiProtocolCreditToppedUpIterator) Next() bool {
 	if it.done {
 		select {
 		case log := <-it.logs:
-			it.Event = new(InvisiProtocolCreditToppedUp)
+			it.Event = new(InvisiProtocolCreditRevoked)
 			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
 				it.fail = err
 				return false
@@ -2885,7 +2805,7 @@ func (it *InvisiProtocolCreditToppedUpIterator) Next() bool {
 	// Iterator still in progress, wait for either a data or an error event
 	select {
 	case log := <-it.logs:
-		it.Event = new(InvisiProtocolCreditToppedUp)
+		it.Event = new(InvisiProtocolCreditRevoked)
 		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
 			it.fail = err
 			return false
@@ -2901,63 +2821,72 @@ func (it *InvisiProtocolCreditToppedUpIterator) Next() bool {
 }
 
 // Error returns any retrieval or parsing error occurred during filtering.
-func (it *InvisiProtocolCreditToppedUpIterator) Error() error {
+func (it *InvisiProtocolCreditRevokedIterator) Error() error {
 	return it.fail
 }
 
 // Close terminates the iteration process, releasing any pending underlying
 // resources.
-func (it *InvisiProtocolCreditToppedUpIterator) Close() error {
+func (it *InvisiProtocolCreditRevokedIterator) Close() error {
 	it.sub.Unsubscribe()
 	return nil
 }
 
-// InvisiProtocolCreditToppedUp represents a CreditToppedUp event raised by the InvisiProtocol contract.
-type InvisiProtocolCreditToppedUp struct {
+// InvisiProtocolCreditRevoked represents a CreditRevoked event raised by the InvisiProtocol contract.
+type InvisiProtocolCreditRevoked struct {
 	Owner        common.Address
-	OutputTreeId *big.Int
-	Params       IInvisiProtocolTopUpCreditParams
-	LeafIndices  []uint32
-	Deliveries   []IInvisiProtocolDelivery
+	Token        common.Address
+	Shard        uint64
+	Slot         uint16
+	FeeRecipient common.Address
+	FeeAmount    *big.Int
 	Raw          types.Log // Blockchain specific contextual infos
 }
 
-// FilterCreditToppedUp is a free log retrieval operation binding the contract event 0xeeccd9f35013ad4dbdb9334ce745ea7206efd062c7b5f1e89cce2ba3ec701c5f.
+// FilterCreditRevoked is a free log retrieval operation binding the contract event 0x417df449bda975b802268d8343b7ebb855bdc3f24c8b5c75d8772f56642c9710.
 //
-// Solidity: event CreditToppedUp(address indexed owner, uint256 indexed outputTreeId, ((address,(uint256,bytes32)[],bytes32[],bytes32,bytes32,address,uint256,uint256,address,uint256),(uint256,bytes32),bytes32,uint256) params, uint32[] leafIndices, (bytes,bytes)[] deliveries)
-func (_InvisiProtocol *InvisiProtocolFilterer) FilterCreditToppedUp(opts *bind.FilterOpts, owner []common.Address, outputTreeId []*big.Int) (*InvisiProtocolCreditToppedUpIterator, error) {
+// Solidity: event CreditRevoked(address indexed owner, address indexed token, uint64 indexed shard, uint16 slot, address feeRecipient, uint256 feeAmount)
+func (_InvisiProtocol *InvisiProtocolFilterer) FilterCreditRevoked(opts *bind.FilterOpts, owner []common.Address, token []common.Address, shard []uint64) (*InvisiProtocolCreditRevokedIterator, error) {
 
 	var ownerRule []interface{}
 	for _, ownerItem := range owner {
 		ownerRule = append(ownerRule, ownerItem)
 	}
-	var outputTreeIdRule []interface{}
-	for _, outputTreeIdItem := range outputTreeId {
-		outputTreeIdRule = append(outputTreeIdRule, outputTreeIdItem)
+	var tokenRule []interface{}
+	for _, tokenItem := range token {
+		tokenRule = append(tokenRule, tokenItem)
+	}
+	var shardRule []interface{}
+	for _, shardItem := range shard {
+		shardRule = append(shardRule, shardItem)
 	}
 
-	logs, sub, err := _InvisiProtocol.contract.FilterLogs(opts, "CreditToppedUp", ownerRule, outputTreeIdRule)
+	logs, sub, err := _InvisiProtocol.contract.FilterLogs(opts, "CreditRevoked", ownerRule, tokenRule, shardRule)
 	if err != nil {
 		return nil, err
 	}
-	return &InvisiProtocolCreditToppedUpIterator{contract: _InvisiProtocol.contract, event: "CreditToppedUp", logs: logs, sub: sub}, nil
+	return &InvisiProtocolCreditRevokedIterator{contract: _InvisiProtocol.contract, event: "CreditRevoked", logs: logs, sub: sub}, nil
 }
 
-// WatchCreditToppedUp is a free log subscription operation binding the contract event 0xeeccd9f35013ad4dbdb9334ce745ea7206efd062c7b5f1e89cce2ba3ec701c5f.
+// WatchCreditRevoked is a free log subscription operation binding the contract event 0x417df449bda975b802268d8343b7ebb855bdc3f24c8b5c75d8772f56642c9710.
 //
-// Solidity: event CreditToppedUp(address indexed owner, uint256 indexed outputTreeId, ((address,(uint256,bytes32)[],bytes32[],bytes32,bytes32,address,uint256,uint256,address,uint256),(uint256,bytes32),bytes32,uint256) params, uint32[] leafIndices, (bytes,bytes)[] deliveries)
-func (_InvisiProtocol *InvisiProtocolFilterer) WatchCreditToppedUp(opts *bind.WatchOpts, sink chan<- *InvisiProtocolCreditToppedUp, owner []common.Address, outputTreeId []*big.Int) (event.Subscription, error) {
+// Solidity: event CreditRevoked(address indexed owner, address indexed token, uint64 indexed shard, uint16 slot, address feeRecipient, uint256 feeAmount)
+func (_InvisiProtocol *InvisiProtocolFilterer) WatchCreditRevoked(opts *bind.WatchOpts, sink chan<- *InvisiProtocolCreditRevoked, owner []common.Address, token []common.Address, shard []uint64) (event.Subscription, error) {
 
 	var ownerRule []interface{}
 	for _, ownerItem := range owner {
 		ownerRule = append(ownerRule, ownerItem)
 	}
-	var outputTreeIdRule []interface{}
-	for _, outputTreeIdItem := range outputTreeId {
-		outputTreeIdRule = append(outputTreeIdRule, outputTreeIdItem)
+	var tokenRule []interface{}
+	for _, tokenItem := range token {
+		tokenRule = append(tokenRule, tokenItem)
+	}
+	var shardRule []interface{}
+	for _, shardItem := range shard {
+		shardRule = append(shardRule, shardItem)
 	}
 
-	logs, sub, err := _InvisiProtocol.contract.WatchLogs(opts, "CreditToppedUp", ownerRule, outputTreeIdRule)
+	logs, sub, err := _InvisiProtocol.contract.WatchLogs(opts, "CreditRevoked", ownerRule, tokenRule, shardRule)
 	if err != nil {
 		return nil, err
 	}
@@ -2967,8 +2896,8 @@ func (_InvisiProtocol *InvisiProtocolFilterer) WatchCreditToppedUp(opts *bind.Wa
 			select {
 			case log := <-logs:
 				// New log arrived, parse the event and forward to the user
-				event := new(InvisiProtocolCreditToppedUp)
-				if err := _InvisiProtocol.contract.UnpackLog(event, "CreditToppedUp", log); err != nil {
+				event := new(InvisiProtocolCreditRevoked)
+				if err := _InvisiProtocol.contract.UnpackLog(event, "CreditRevoked", log); err != nil {
 					return err
 				}
 				event.Raw = log
@@ -2989,12 +2918,168 @@ func (_InvisiProtocol *InvisiProtocolFilterer) WatchCreditToppedUp(opts *bind.Wa
 	}), nil
 }
 
-// ParseCreditToppedUp is a log parse operation binding the contract event 0xeeccd9f35013ad4dbdb9334ce745ea7206efd062c7b5f1e89cce2ba3ec701c5f.
+// ParseCreditRevoked is a log parse operation binding the contract event 0x417df449bda975b802268d8343b7ebb855bdc3f24c8b5c75d8772f56642c9710.
 //
-// Solidity: event CreditToppedUp(address indexed owner, uint256 indexed outputTreeId, ((address,(uint256,bytes32)[],bytes32[],bytes32,bytes32,address,uint256,uint256,address,uint256),(uint256,bytes32),bytes32,uint256) params, uint32[] leafIndices, (bytes,bytes)[] deliveries)
-func (_InvisiProtocol *InvisiProtocolFilterer) ParseCreditToppedUp(log types.Log) (*InvisiProtocolCreditToppedUp, error) {
-	event := new(InvisiProtocolCreditToppedUp)
-	if err := _InvisiProtocol.contract.UnpackLog(event, "CreditToppedUp", log); err != nil {
+// Solidity: event CreditRevoked(address indexed owner, address indexed token, uint64 indexed shard, uint16 slot, address feeRecipient, uint256 feeAmount)
+func (_InvisiProtocol *InvisiProtocolFilterer) ParseCreditRevoked(log types.Log) (*InvisiProtocolCreditRevoked, error) {
+	event := new(InvisiProtocolCreditRevoked)
+	if err := _InvisiProtocol.contract.UnpackLog(event, "CreditRevoked", log); err != nil {
+		return nil, err
+	}
+	event.Raw = log
+	return event, nil
+}
+
+// InvisiProtocolCreditUpdatedIterator is returned from FilterCreditUpdated and is used to iterate over the raw logs and unpacked data for CreditUpdated events raised by the InvisiProtocol contract.
+type InvisiProtocolCreditUpdatedIterator struct {
+	Event *InvisiProtocolCreditUpdated // Event containing the contract specifics and raw log
+
+	contract *bind.BoundContract // Generic contract to use for unpacking event data
+	event    string              // Event name to use for unpacking event data
+
+	logs chan types.Log        // Log channel receiving the found contract events
+	sub  ethereum.Subscription // Subscription for errors, completion and termination
+	done bool                  // Whether the subscription completed delivering logs
+	fail error                 // Occurred error to stop iteration
+}
+
+// Next advances the iterator to the subsequent event, returning whether there
+// are any more events found. In case of a retrieval or parsing error, false is
+// returned and Error() can be queried for the exact failure.
+func (it *InvisiProtocolCreditUpdatedIterator) Next() bool {
+	// If the iterator failed, stop iterating
+	if it.fail != nil {
+		return false
+	}
+	// If the iterator completed, deliver directly whatever's available
+	if it.done {
+		select {
+		case log := <-it.logs:
+			it.Event = new(InvisiProtocolCreditUpdated)
+			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+				it.fail = err
+				return false
+			}
+			it.Event.Raw = log
+			return true
+
+		default:
+			return false
+		}
+	}
+	// Iterator still in progress, wait for either a data or an error event
+	select {
+	case log := <-it.logs:
+		it.Event = new(InvisiProtocolCreditUpdated)
+		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+			it.fail = err
+			return false
+		}
+		it.Event.Raw = log
+		return true
+
+	case err := <-it.sub.Err():
+		it.done = true
+		it.fail = err
+		return it.Next()
+	}
+}
+
+// Error returns any retrieval or parsing error occurred during filtering.
+func (it *InvisiProtocolCreditUpdatedIterator) Error() error {
+	return it.fail
+}
+
+// Close terminates the iteration process, releasing any pending underlying
+// resources.
+func (it *InvisiProtocolCreditUpdatedIterator) Close() error {
+	it.sub.Unsubscribe()
+	return nil
+}
+
+// InvisiProtocolCreditUpdated represents a CreditUpdated event raised by the InvisiProtocol contract.
+type InvisiProtocolCreditUpdated struct {
+	Owner        common.Address
+	OutputTreeId *big.Int
+	Params       IInvisiProtocolUpdateCreditParams
+	LeafIndex    uint32
+	Deliveries   []IInvisiProtocolDelivery
+	Raw          types.Log // Blockchain specific contextual infos
+}
+
+// FilterCreditUpdated is a free log retrieval operation binding the contract event 0x4a3fdcaf61cef0446996557873d07793a373211d25c66949a80fe711b29b8d15.
+//
+// Solidity: event CreditUpdated(address indexed owner, uint256 indexed outputTreeId, (address,address,(uint256,bytes32),bytes32,bytes32,uint64,uint16,uint256,address,uint256) params, uint32 leafIndex, (bytes,bytes)[] deliveries)
+func (_InvisiProtocol *InvisiProtocolFilterer) FilterCreditUpdated(opts *bind.FilterOpts, owner []common.Address, outputTreeId []*big.Int) (*InvisiProtocolCreditUpdatedIterator, error) {
+
+	var ownerRule []interface{}
+	for _, ownerItem := range owner {
+		ownerRule = append(ownerRule, ownerItem)
+	}
+	var outputTreeIdRule []interface{}
+	for _, outputTreeIdItem := range outputTreeId {
+		outputTreeIdRule = append(outputTreeIdRule, outputTreeIdItem)
+	}
+
+	logs, sub, err := _InvisiProtocol.contract.FilterLogs(opts, "CreditUpdated", ownerRule, outputTreeIdRule)
+	if err != nil {
+		return nil, err
+	}
+	return &InvisiProtocolCreditUpdatedIterator{contract: _InvisiProtocol.contract, event: "CreditUpdated", logs: logs, sub: sub}, nil
+}
+
+// WatchCreditUpdated is a free log subscription operation binding the contract event 0x4a3fdcaf61cef0446996557873d07793a373211d25c66949a80fe711b29b8d15.
+//
+// Solidity: event CreditUpdated(address indexed owner, uint256 indexed outputTreeId, (address,address,(uint256,bytes32),bytes32,bytes32,uint64,uint16,uint256,address,uint256) params, uint32 leafIndex, (bytes,bytes)[] deliveries)
+func (_InvisiProtocol *InvisiProtocolFilterer) WatchCreditUpdated(opts *bind.WatchOpts, sink chan<- *InvisiProtocolCreditUpdated, owner []common.Address, outputTreeId []*big.Int) (event.Subscription, error) {
+
+	var ownerRule []interface{}
+	for _, ownerItem := range owner {
+		ownerRule = append(ownerRule, ownerItem)
+	}
+	var outputTreeIdRule []interface{}
+	for _, outputTreeIdItem := range outputTreeId {
+		outputTreeIdRule = append(outputTreeIdRule, outputTreeIdItem)
+	}
+
+	logs, sub, err := _InvisiProtocol.contract.WatchLogs(opts, "CreditUpdated", ownerRule, outputTreeIdRule)
+	if err != nil {
+		return nil, err
+	}
+	return event.NewSubscription(func(quit <-chan struct{}) error {
+		defer sub.Unsubscribe()
+		for {
+			select {
+			case log := <-logs:
+				// New log arrived, parse the event and forward to the user
+				event := new(InvisiProtocolCreditUpdated)
+				if err := _InvisiProtocol.contract.UnpackLog(event, "CreditUpdated", log); err != nil {
+					return err
+				}
+				event.Raw = log
+
+				select {
+				case sink <- event:
+				case err := <-sub.Err():
+					return err
+				case <-quit:
+					return nil
+				}
+			case err := <-sub.Err():
+				return err
+			case <-quit:
+				return nil
+			}
+		}
+	}), nil
+}
+
+// ParseCreditUpdated is a log parse operation binding the contract event 0x4a3fdcaf61cef0446996557873d07793a373211d25c66949a80fe711b29b8d15.
+//
+// Solidity: event CreditUpdated(address indexed owner, uint256 indexed outputTreeId, (address,address,(uint256,bytes32),bytes32,bytes32,uint64,uint16,uint256,address,uint256) params, uint32 leafIndex, (bytes,bytes)[] deliveries)
+func (_InvisiProtocol *InvisiProtocolFilterer) ParseCreditUpdated(log types.Log) (*InvisiProtocolCreditUpdated, error) {
+	event := new(InvisiProtocolCreditUpdated)
+	if err := _InvisiProtocol.contract.UnpackLog(event, "CreditUpdated", log); err != nil {
 		return nil, err
 	}
 	event.Raw = log

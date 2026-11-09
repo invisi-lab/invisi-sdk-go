@@ -1,3 +1,4 @@
+// Package protocol decodes events using the current built Protocol ABI.
 package receipts
 
 import (
@@ -12,7 +13,6 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
-
 	"github.com/invisi-lab/invisi-sdk-go/protocol/contracts"
 )
 
@@ -149,17 +149,11 @@ func (d *Decoder) Decode(block Block, logs []types.Log) (batch Batch, err error)
 	for _, e := range events {
 		m, l := e.values, e.log
 		addNull := func(v any) { batch.Nullifiers = append(batch.Nullifiers, hashes(v)...) }
-		add := func(id uint64, leaf uint32, c common.Hash, token common.Address, v delivery, credit bool) error {
-			// Receipt transport preserves opaque envelopes. The selected wallet
-			// authenticates its own fixed envelope version when decrypting.
-			empty := len(v.Ciphertext) == 0 && len(v.Clue) == 0
-			if (empty && credit) || (!empty && (len(v.Ciphertext) == 0 || len(v.Ciphertext) > 4096 || len(v.Clue) != 68 || v.Clue[64] != 24)) {
-				return fmt.Errorf("%s: invalid delivery envelope or clue", e.name)
-			}
+		add := func(id uint64, leaf uint32, c common.Hash, token common.Address, v delivery) error {
 			if actual, ok := inserted[location{l.TxHash, id, leaf}]; !ok || actual != c {
 				return fmt.Errorf("%s: output does not match transaction insertion", e.name)
 			}
-			batch.Outputs = append(batch.Outputs, Output{Block: block, TreeID: id, LeafIndex: leaf, Commitment: c, Token: token, Ciphertext: append([]byte(nil), v.Ciphertext...), Clue: append([]byte(nil), v.Clue...), TransactionHash: l.TxHash, LogIndex: l.Index, Kind: e.name, Role: "funds"})
+			batch.Outputs = append(batch.Outputs, Output{Block: block, TreeID: id, LeafIndex: leaf, Commitment: c, Token: token, Ciphertext: append([]byte(nil), v.Ciphertext...), Clue: append([]byte(nil), v.Clue...), TransactionHash: l.TxHash, LogIndex: l.Index, Kind: e.name})
 			return nil
 		}
 		switch e.name {
@@ -174,30 +168,35 @@ func (d *Decoder) Decode(block Block, logs []types.Log) (batch Batch, err error)
 			if len(ts) != len(cs) {
 				return Batch{}, fmt.Errorf("BatchOutputs: array lengths differ")
 			}
+			cursor := 0
 			for i, c := range cs {
-				if len(p) < 2 {
-					return Batch{}, fmt.Errorf("BatchOutputs: missing ciphertext length")
+				if len(p)-cursor < 2 {
+					return Batch{}, fmt.Errorf("BatchOutputs: truncated envelope length")
 				}
-				length := int(binary.BigEndian.Uint16(p[:2]))
-				p = p[2:]
-				if length == 0 {
-					if err = add(id, m["startLeafIndex"].(uint32)+uint32(i), c, ts[i], delivery{}, false); err != nil {
+				size := int(binary.BigEndian.Uint16(p[cursor : cursor+2]))
+				cursor += 2
+				if size == 0 {
+					if err = add(id, m["startLeafIndex"].(uint32)+uint32(i), c, ts[i], delivery{}); err != nil {
 						return Batch{}, err
 					}
 					continue
 				}
-				if length > 4096 || len(p) < length+68 {
-					return Batch{}, fmt.Errorf("BatchOutputs: invalid or truncated delivery length")
+				if size > 4096 || len(p)-cursor < size+68 {
+					return Batch{}, fmt.Errorf("BatchOutputs: invalid envelope length")
 				}
-				if err = add(id, m["startLeafIndex"].(uint32)+uint32(i), c, ts[i], delivery{p[:length], p[length : length+68]}, false); err != nil {
+				cipher, clue := p[cursor:cursor+size], p[cursor+size:cursor+size+68]
+				// Ciphertext versions and payload schemas are interpreted only by wallets.
+				if clue[64] != 24 {
+					return Batch{}, fmt.Errorf("BatchOutputs: invalid clue precision")
+				}
+				cursor += size + 68
+				if err = add(id, m["startLeafIndex"].(uint32)+uint32(i), c, ts[i], delivery{cipher, clue}); err != nil {
 					return Batch{}, err
 				}
-				p = p[length+68:]
 			}
-			if len(p) != 0 {
+			if cursor != len(p) {
 				return Batch{}, fmt.Errorf("BatchOutputs: trailing delivery bytes")
 			}
-
 		case "Shield":
 			id, x := tree(m["treeId"])
 			if x != nil {
@@ -214,7 +213,7 @@ func (d *Decoder) Decode(block Block, logs []types.Log) (batch Batch, err error)
 				if !ok {
 					return Batch{}, fmt.Errorf("Shield: missing transaction insertion")
 				}
-				if err = add(id, leaf, c, m["token"].(common.Address), v, false); err != nil {
+				if err = add(id, leaf, c, m["token"].(common.Address), v); err != nil {
 					return Batch{}, err
 				}
 			}
@@ -231,80 +230,89 @@ func (d *Decoder) Decode(block Block, logs []types.Log) (batch Batch, err error)
 				return Batch{}, fmt.Errorf("%s: array lengths differ", e.name)
 			}
 			for i, c := range cs {
-				if err = add(id, ls[i], c, m["token"].(common.Address), vs[i], false); err != nil {
+				if err = add(id, ls[i], c, m["token"].(common.Address), vs[i]); err != nil {
 					return Batch{}, err
 				}
 			}
 		case "BatchRequest":
 			addNull(m["nullifiers"])
-		case "CreditCancelled":
-			batch.Nullifiers = append(batch.Nullifiers, m["nullifier"].([32]byte))
-		case "CreditCreated", "CreditToppedUp":
+		case "CreditCreated", "CreditUpdated":
 			p := m
-			if e.name == "CreditToppedUp" {
-				q := fields(m["params"])
-				p = fields(q["creation"])
-				batch.Nullifiers = append(batch.Nullifiers, q["creditNullifier"].([32]byte))
+			if e.name == "CreditUpdated" {
+				p = fields(m["params"])
+				batch.CreditNullifiers = append(batch.CreditNullifiers, p["nullifier"].([32]byte))
 			}
-			addNull(p["nullifiers"])
 			id, x := tree(m["outputTreeId"])
 			if x != nil {
 				return Batch{}, x
 			}
-			ls := m["leafIndices"].([]uint32)
+			c := common.Hash(p["creditCommitment"].([32]byte))
+			leaf := m["leafIndex"].(uint32)
 			vs := tuple[[]delivery](m["deliveries"])
-			credit := common.Hash(p["creditCommitment"].([32]byte))
-			change := common.Hash(p["changeCommitment"].([32]byte))
-			want := 1
-			if change != (common.Hash{}) {
-				want = 2
+			if len(vs) != 2 {
+				return Batch{}, fmt.Errorf("%s: expected owner and spender state deliveries", e.name)
 			}
-			if len(ls) != want || len(vs) != 3 {
-				return Batch{}, fmt.Errorf("%s: array lengths differ", e.name)
-			}
-			for i := 0; i < 2; i++ {
-				if err = add(id, ls[0], credit, p["token"].(common.Address), vs[i], true); err != nil {
+			for _, v := range vs {
+				if err = add(id, leaf, c, p["token"].(common.Address), v); err != nil {
 					return Batch{}, err
 				}
-				batch.Outputs[len(batch.Outputs)-1].Role = []string{"owner", "spender"}[i]
-			}
-			if want == 2 {
-				if err = add(id, ls[1], change, p["token"].(common.Address), vs[2], false); err != nil {
-					return Batch{}, err
-				}
-			} else if len(vs[2].Ciphertext) != 0 || len(vs[2].Clue) != 0 {
-				return Batch{}, fmt.Errorf("nonempty absent change delivery")
+				last := len(batch.Outputs) - 1
+				batch.CreditStates = append(batch.CreditStates, StateFromOutput(batch.Outputs[last], []Delivery{{Ciphertext: v.Ciphertext, Clue: v.Clue}}))
+				batch.Outputs = batch.Outputs[:last]
 			}
 		case "CreditDraw":
 			p := fields(m["params"])
-			addNull(p["nullifiers"])
-			cs := hashes(p["remainderCommitments"])
-			ls := m["remainderLeafIndices"].([]uint32)
+			ns := hashes(p["nullifiers"])
+			batch.CreditNullifiers = append(batch.CreditNullifiers, ns...)
+			cs := hashes(p["stateCommitments"])
+			ls := m["leafIndices"].([]uint32)
 			vs := tuple[[]delivery](m["deliveries"])
 			n := len(cs)
-			if len(ls) != n || len(vs) != 2*n || len(hashes(p["nullifiers"])) != n || reflect.ValueOf(p["expiries"]).Len() != n || len(hashes(p["recoveryAmounts"])) != n {
-				return Batch{}, fmt.Errorf("CreditDraw: array lengths differ")
+			if n == 0 || len(ns) != n || len(ls) != n+1 || len(vs) != 2*n+1 || len(hashes(p["recoveryAmounts"])) != n {
+				return Batch{}, fmt.Errorf("CreditDraw: inconsistent state and Note dimensions")
 			}
 			id, x := tree(m["outputTreeId"])
 			if x != nil {
 				return Batch{}, x
 			}
 			for i, c := range cs {
-				for j := 0; j < 2; j++ {
-					v := vs[2*i+j]
-					if c == (common.Hash{}) {
-						if ls[i] != 0 || len(v.Ciphertext) != 0 || len(v.Clue) != 0 {
-							return Batch{}, fmt.Errorf("CreditDraw: nonempty absent remainder")
-						}
-						continue
-					}
-					if err = add(id, ls[i], c, p["token"].(common.Address), v, true); err != nil {
+				if c == (common.Hash{}) {
+					return Batch{}, fmt.Errorf("CreditDraw: zero successor state")
+				}
+				for _, v := range vs[2*i : 2*i+2] {
+					if err = add(id, ls[i], c, p["token"].(common.Address), v); err != nil {
 						return Batch{}, err
 					}
-					batch.Outputs[len(batch.Outputs)-1].Role = []string{"owner", "spender"}[j]
+					last := len(batch.Outputs) - 1
+					batch.CreditStates = append(batch.CreditStates, StateFromOutput(batch.Outputs[last], []Delivery{{Ciphertext: v.Ciphertext, Clue: v.Clue}}))
+					batch.Outputs = batch.Outputs[:last]
 				}
 			}
+			if err = add(id, ls[n], common.Hash(p["noteCommitment"].([32]byte)), p["token"].(common.Address), vs[2*n]); err != nil {
+				return Batch{}, err
+			}
+
 		}
 	}
+	combined := []CreditState{}
+	for _, state := range batch.CreditStates {
+		if len(combined) > 0 {
+			last := &combined[len(combined)-1]
+			if last.TransactionHash == state.TransactionHash && last.TreeID == state.TreeID && last.LeafIndex == state.LeafIndex {
+				last.Deliveries = append(last.Deliveries, state.Deliveries...)
+				continue
+			}
+		}
+		combined = append(combined, state)
+	}
+	for _, state := range combined {
+		if len(state.Deliveries) != 2 {
+			return Batch{}, fmt.Errorf("Credit state must have exactly two deliveries")
+		}
+	}
+	for i := range batch.Outputs {
+		batch.Outputs[i].Role = "funds"
+	}
+	batch.CreditStates = combined
 	return batch, nil
 }

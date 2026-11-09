@@ -40,16 +40,16 @@ func TestLocalWitnessCopiesInputsAndRedactsSerialization(t *testing.T) {
 	}
 }
 func TestUnpublishedTargetAndWrongStatementWidthRejected(t *testing.T) {
-	if _, e := Statement("credit_cancel", "noir-recursive", make([]common.Hash, 11)); e == nil {
+	if _, e := Statement("credit_update", "noir-recursive", make([]common.Hash, 11)); e == nil {
 		t.Fatal("unpublished proof target accepted")
 	}
-	if _, e := Statement("credit_cancel", "evm", make([]common.Hash, 12)); e == nil {
+	if _, e := Statement("credit_update", "evm", make([]common.Hash, 12)); e == nil {
 		t.Fatal("wrong statement width accepted")
 	}
 }
 
 func TestProofBundleUsesTypeScriptExchangeFormat(t *testing.T) {
-	original := ProofBundle{FormatVersion: 1, CircuitName: "credit_cancel", Target: "evm", BBVersion: "6.0.0", Proof: []byte{0x12, 0x34}, PublicInputs: []common.Hash{common.HexToHash("0x01")}}
+	original := ProofBundle{FormatVersion: 1, CircuitName: "credit_update", Target: "evm", BBVersion: "6.0.0", Proof: []byte{0x12, 0x34}, PublicInputs: []common.Hash{common.HexToHash("0x01")}}
 	raw, err := json.Marshal(original)
 	if err != nil {
 		t.Fatal(err)
@@ -67,7 +67,7 @@ func TestProofBundleUsesTypeScriptExchangeFormat(t *testing.T) {
 }
 
 func TestProofBundleRejectsPreviousBBVersion(t *testing.T) {
-	statement, err := Statement("credit_cancel", "evm", make([]common.Hash, 13))
+	statement, err := Statement("credit_update", "evm", make([]common.Hash, 17))
 	if err != nil {
 		t.Fatal(err)
 	}

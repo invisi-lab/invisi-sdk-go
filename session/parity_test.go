@@ -61,19 +61,6 @@ func TestManagedStagesAreImmutableAndProofFailureIsRetryable(t *testing.T) {
 	}
 }
 
-func TestCreditPreviewIncludesActualPayoutAndInputs(t *testing.T) {
-	session, token, _ := testSession(t)
-	leaf := seedCredit(t, session, token)
-	operation, err := session.PrepareDrawCredit(context.Background(), sdk.DrawCreditPreparation{TokenAddress: token, Credits: []sdk.CreditDrawInput{{Credit: leaf, Amount: big.NewInt(30)}}})
-	if err != nil {
-		t.Fatal(err)
-	}
-	preview := operation.Preview()
-	if preview.Kind != "draw-credit" || preview.InputCount != 1 || preview.WithdrawalAmount.Cmp(big.NewInt(30)) != 0 || preview.WithdrawalAddress != session.wallet.OwnerAddress() {
-		t.Fatalf("incorrect review: %+v", preview)
-	}
-}
-
 func TestResumeRejectsModifiedCallAndProof(t *testing.T) {
 	for _, change := range []string{"calldata", "proof", "owner"} {
 		t.Run(change, func(t *testing.T) {

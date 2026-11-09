@@ -73,11 +73,6 @@ type TransactionReference struct {
 	LogIndex        uint64         `json:"logIndex"`
 	Block           CanonicalBlock `json:"block"`
 }
-type ProtocolUpdates struct {
-	References        []TransactionReference
-	Block             CanonicalBlock
-	TransactionHashes []common.Hash
-}
 type MembershipInput struct {
 	TreeID     uint64
 	LeafIndex  uint32

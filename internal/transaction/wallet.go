@@ -9,6 +9,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 
 	"github.com/invisi-lab/invisi-sdk-go/core"
+	"github.com/invisi-lab/invisi-sdk-go/credit"
 )
 
 // Wallet holds permissions locally. Formatting and JSON never export private material.
@@ -176,11 +177,6 @@ func (v *ViewingCapability) decryptNote(data []byte, context core.NoteDecryption
 	return core.DecryptPrivateTransferNote(v.key, data, context)
 }
 
-func (v *ViewingCapability) decryptCredit(data []byte, context core.CreditNoteDecryptionContext) (core.CreditDeliveryState, error) {
-	context.OwnerAddress = core.BigIntToElement(v.identity.Big())
-	return core.DecryptCreditNote(v.key, data, context)
-}
-
 func FieldHash(e fr.Element) common.Hash { return common.Hash(e.Bytes()) }
 
 func (w *PublicWallet) ViewingPublicKey() []byte {
@@ -193,6 +189,9 @@ func (v *ViewingCapability) DecryptNote(envelope []byte, context core.NoteDecryp
 	return v.decryptNote(envelope, context)
 }
 
-func (v *ViewingCapability) DecryptCredit(envelope []byte, context core.CreditNoteDecryptionContext) (core.CreditDeliveryState, error) {
-	return v.decryptCredit(envelope, context)
+func (v *ViewingCapability) DecryptCreditState(envelope []byte, context credit.DeliveryContext, role credit.Role) (credit.DeliveryState, error) {
+	if v == nil || len(v.key) == 0 {
+		return credit.DeliveryState{}, errors.New("viewing capability required")
+	}
+	return credit.Decrypt(v.key, envelope, context, role)
 }

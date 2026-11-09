@@ -1,14 +1,14 @@
 # Go examples
 
-Each numbered directory is one runnable example with one `main.go`. Read it from top to bottom: configuration, connection, inputs and outputs, preparation, authorization, proof, submission, and confirmation are shown directly. Setup code is intentionally repeated so a reader does not need to follow a shared business workflow or choose a `--mode`.
+Each numbered directory is one runnable example with one `main.go`. Note examples show their stages directly. Credit examples select a specific lifecycle entrypoint in [shared/credit.go](shared/credit.go), which shares current authority, delivery and gross/net rules. There is no mode-selection CLI.
 
-Run commands from the repository root. Transaction examples require `--execute` before loading accounts or making network requests. Wallet and output examples are offline. Session restore, operation reconciliation, and disclosures read chain/RPC state but do not submit transactions. Only category 05 imports `session` and `session/sqlite`; other workflows use stateless `sdk` preparation.
+Run commands from the repository root. Transaction examples require `--execute` before loading accounts or making network requests. Wallet and output examples are offline. Session restore, operation reconciliation, and disclosures read chain/RPC state but do not submit transactions. Category 05 demonstrates durable managed wallets. Grant discovery also composes the canonical managed refresh algorithm with an ephemeral Store; transaction preparation in category 04 uses the independent `credit` package.
 
 ## Setup
 
 Edit [shared/settings.go](shared/settings.go) for the chain, Chain RPC, Protocol RPC, token, native currency, account/database paths, and prover binaries. Defaults target chain 97. Use a Chain RPC that retains historical state.
 
-Local proofs require Barretenberg 6.0.0 and `noir-execute` compatible with Noir 1.0.0-rc.6. Set `Settings.Prover.BBBinary` and `Settings.Prover.NoirBinary`. Witnesses stay local.
+Local proofs require Barretenberg 6.0.0 and `noir-execute` compatible with Noir 1.0.0. Set `Settings.Prover.BBBinary` and `Settings.Prover.NoirBinary`. Witnesses stay local.
 
 ```sh
 go run ./examples/scripts/init-accounts
@@ -46,8 +46,8 @@ Each path below can be run with `go run ./examples/<path>`. Add `--execute` for 
 | `04-credit/01-bob-create` | Bob creates a Credit for Alice. |
 | `04-credit/01b-charlie-create` | Charlie creates a separate Credit for Alice. |
 | `04-credit/02-alice-batch-draw` | Alice draws from grants belonging to two distinct owners in one transaction. |
-| `04-credit/03-bob-top-up` | Bob tops up an unexpired Credit and extends expiry. |
-| `04-credit/04-charlie-cancel` | Charlie cancels his remaining Credit, including after expiry. |
+| `04-credit/03-bob-update` | Bob updates private policy/expiry without clearing usage. |
+| `04-credit/04-charlie-revoke` | Charlie revokes an original grant reference without latest state or ZK. |
 | `05-wallet-session/01-restore-session` | Restore Alice's encrypted SQLite inventory, refresh and inspect balance. |
 | `05-wallet-session/02-notes-to-bob` | Alice selects/reserves notes, authorizes, proves, submits and reconciles through a session. |
 | `05-wallet-session/03-recover-operation` | Resume an existing persisted operation and reconcile its transaction. |
@@ -66,19 +66,19 @@ go run ./examples/02-transparent-amount/01-alice-to-bob --execute
 go run ./examples/03-hidden-amount/03-notes-with-change --execute
 ```
 
-An exact-value input produces no change. For a partial withdrawal demonstration, first give Bob more notes than the amount withdrawn. Hidden examples select at most 12 inputs; creation/top-up examples select at most 10. These limits keep the walkthrough focused, and preparation independently validates available funds and circuit capacity.
+An exact-value input produces no change. For a partial withdrawal demonstration, first give Bob more notes than the amount withdrawn. Hidden examples select at most 12 Note inputs; grant creation consumes no Note inputs. These limits keep the walkthrough focused, and preparation independently validates available funds and circuit capacity.
 
-The examples are separate scenarios, not a script to run all transactions against the same finite inventory. To try the Credit lifecycle, first give Bob and Charlie enough unspent private notes. Repeating `02-transparent-amount/02-alice-to-nine` supplies both owners. Then:
+The examples are separate scenarios, not a script to run all transactions against the same finite inventory. To try Credit, fund the owner ERC20 wallets and approve the selected Protocol to collect gross draw receipts. Creation registers authority without depositing principal. Then:
 
 ```sh
 go run ./examples/04-credit/01-bob-create --execute
 go run ./examples/04-credit/01b-charlie-create --execute
 go run ./examples/04-credit/02-alice-batch-draw --execute
-go run ./examples/04-credit/03-bob-top-up --execute
-go run ./examples/04-credit/04-charlie-cancel --execute
+go run ./examples/04-credit/03-bob-update --execute
+go run ./examples/04-credit/04-charlie-revoke --execute --shard 1 --slot 0
 ```
 
-Each grant starts with 20 base units, a one-day expiry, and single/daily/monthly limits equal to the grant. Draw consumes 10 units from each owner. Top-up adds 5 units, preserving payload, policy usage, shared keys and historical receiving-key snapshots.
+Creation prints the original owner/token/shard/slot reference for later revocation. The draw selects up to two active grants, debits seven base units gross per grant and issues one ordinary Note to another recipient. Update preserves all usage and immutable grant identity. Direct self-submitted examples use zero fees; operator attachment can quote a positive fee before authorization, deducting it from the final Note net amount for draws.
 
 Aggregation needs two distinct unspent notes of at least two units for each of Bob and Charlie. Each owner authorizes independently; the four transfers are proved with `Execution: "aggregate"` before Alice submits the combined public members. Applications must reserve inputs until the aggregate outcome is resolved.
 
@@ -88,7 +88,7 @@ Run broadcaster Shield with an appropriate maximum token fee:
 go run ./examples/02-transparent-amount/05-shield-via-broadcaster --execute --max-fee 1000
 ```
 
-The example discovers token-compatible clients from Protocol RPC. Applications may quote several clients and select one. The final quote includes its fee before funding authorization. Private transfers and Credit creation/top-up/cancellation support the same attachment stages; Credit draw and registration remain self-submitted.
+The example discovers token-compatible clients from Protocol RPC. Applications may quote several clients and select one. The final quote includes its fee before funding authorization. Private transfers and all four Credit lifecycle operations support paid operator attachment. Registration is self-submitted. See the main README for `credit.Prepared.WithBroadcaster`, and the genuine native lifecycle test for create/draw/update proof plus quote/submission interoperability; the operator transport in that test is controlled, not a real funded chain service.
 
 For managed recovery, use the operation ID persisted by the session and optionally its already submitted hash:
 
@@ -100,9 +100,9 @@ This command only tracks/reconciles; it never signs or resubmits. Uncertain oper
 
 ## Shared helpers and verification
 
-Only public settings, account loading and authenticated note/Credit discovery remain under `shared`. Discovery pages real RPC outputs, validates owner/role, token and commitment, rejects conflicts, and checks nullifiers. Credit discovery binds historical keys and ciphertext to canonical receipts. Preparation rechecks membership and current spent state.
+Public settings, account loading, canonical discovery and the focused Credit lifecycle runner live under `shared`. Discovery pages real RPC outputs, validates owner/role, token and commitment, rejects conflicts, and checks nullifiers. Credit discovery binds historical keys and ciphertext to canonical receipts. Preparation rechecks membership and current spent state.
 
-Each transaction example shows geth submission directly. Persist hashes before waiting in a production application. Stateless examples leave durable reservations and recovery to the application. Disclosure exports stay local and are never logged.
+Each transaction example shows geth submission directly. Persist hashes before waiting in a production application. Stateless examples leave durable reservations and recovery to the application. Disclosure examples explicitly print sensitive exports locally; do not forward that output to public application logs.
 
 ```sh
 go test ./examples/...

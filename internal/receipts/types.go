@@ -33,6 +33,26 @@ type Output struct {
 	Kind            string         `json:"kind"`
 	Role            string         `json:"role"`
 }
+type Delivery struct {
+	Ciphertext hexutil.Bytes `json:"ciphertext"`
+	Clue       hexutil.Bytes `json:"clue"`
+}
+type CreditState struct {
+	Block           Block          `json:"block"`
+	TreeID          uint64         `json:"treeId"`
+	LeafIndex       uint32         `json:"leafIndex"`
+	Commitment      common.Hash    `json:"commitment"`
+	Token           common.Address `json:"token"`
+	Deliveries      []Delivery     `json:"deliveries"`
+	TransactionHash common.Hash    `json:"transactionHash"`
+	LogIndex        uint           `json:"logIndex"`
+	Kind            string         `json:"kind"`
+}
+
+func StateFromOutput(o Output, ds []Delivery) CreditState {
+	return CreditState{o.Block, o.TreeID, o.LeafIndex, o.Commitment, o.Token, ds, o.TransactionHash, o.LogIndex, o.Kind}
+}
+
 type Event struct {
 	Block           Block           `json:"block"`
 	Name            string          `json:"name"`
@@ -41,11 +61,13 @@ type Event struct {
 	Data            json.RawMessage `json:"data"`
 }
 type Batch struct {
-	Block        Block         `json:"block"`
-	Logs         []types.Log   `json:"logs"`
-	Events       []Event       `json:"events"`
-	CreatedTrees []uint64      `json:"createdTrees"`
-	Insertions   []Insertion   `json:"insertions"`
-	Outputs      []Output      `json:"outputs"`
-	Nullifiers   []common.Hash `json:"nullifiers"`
+	Block            Block         `json:"block"`
+	Logs             []types.Log   `json:"logs"`
+	Events           []Event       `json:"events"`
+	CreatedTrees     []uint64      `json:"createdTrees"`
+	Insertions       []Insertion   `json:"insertions"`
+	Outputs          []Output      `json:"outputs"`
+	CreditStates     []CreditState `json:"creditStates"`
+	CreditNullifiers []common.Hash `json:"creditNullifiers"`
+	Nullifiers       []common.Hash `json:"nullifiers"`
 }

@@ -153,7 +153,7 @@ func TestEverySupportedIntentCanonicalHash(t *testing.T) {
 	found := map[string]bool{}
 	for _, m := range a.Methods {
 		switch m.RawName {
-		case "shield", "transact", "createCredit", "topUpCredit", "cancelCredit":
+		case "shield", "transact", "createCredit", "creditDraw", "updateCredit", "revokeCredit":
 		default:
 			continue
 		}
@@ -175,8 +175,11 @@ func TestEverySupportedIntentCanonicalHash(t *testing.T) {
 		if err != nil {
 			t.Fatal(m.RawName, err)
 		}
-		if m.RawName != "shield" {
+		if m.RawName != "shield" && m.RawName != "revokeCredit" {
 			args[0] = []byte{1, 2, 3}
+		}
+		if m.RawName == "revokeCredit" {
+			args[7] = []byte{4, 5}
 		}
 		if m.RawName == "transact" {
 			v := reflect.ValueOf(args[1])
@@ -184,7 +187,7 @@ func TestEverySupportedIntentCanonicalHash(t *testing.T) {
 			copy.Set(v)
 			field(field(copy, "Funding"), "Signature").SetBytes([]byte{4, 5})
 			args[1] = copy.Interface()
-		} else if m.RawName != "cancelCredit" {
+		} else if m.RawName == "shield" {
 			v := reflect.ValueOf(args[3])
 			copy := reflect.New(v.Type()).Elem()
 			copy.Set(v)
@@ -202,7 +205,7 @@ func TestEverySupportedIntentCanonicalHash(t *testing.T) {
 		}
 		found[m.RawName] = true
 	}
-	if len(found) != 5 {
+	if len(found) != 6 {
 		t.Fatal(found)
 	}
 }

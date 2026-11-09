@@ -69,9 +69,6 @@ func envelopeCipher(private, peerKey, salt []byte, domain string, ephemeral, rec
 
 func sealEnvelope(viewingKey, plaintext []byte, context NoteEncryptionContext, token fr.Element, version, role byte, entropy io.Reader) ([]byte, error) {
 	domain := ordinaryNoteDomain
-	if version == 0x81 {
-		domain = creditNoteDomain
-	}
 	private := make([]byte, 32)
 	defer clear(private)
 	var public []byte
@@ -109,9 +106,6 @@ func sealEnvelope(viewingKey, plaintext []byte, context NoteEncryptionContext, t
 
 func openEnvelope(private, envelope []byte, context NoteDecryptionContext, version, role byte) ([]byte, error) {
 	length, domain := 160, ordinaryNoteDomain
-	if version == 0x81 {
-		length, domain = 498, creditNoteDomain
-	}
 	if len(envelope) < length || len(envelope) > MaxCiphertextBytes {
 		return nil, fmt.Errorf("expected %d..%d envelope bytes", length, MaxCiphertextBytes)
 	}

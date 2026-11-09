@@ -3,22 +3,16 @@ package session
 import (
 	"bytes"
 	"context"
-	"encoding/json"
-	"fmt"
 	"math/big"
-	"net/http"
-	"net/http/httptest"
 	"sync"
 	"testing"
 
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
 
 	"github.com/invisi-lab/invisi-sdk-go/core"
 	transaction "github.com/invisi-lab/invisi-sdk-go/internal/transaction"
-	"github.com/invisi-lab/invisi-sdk-go/protocol"
 	protocolrpc "github.com/invisi-lab/invisi-sdk-go/rpc"
 	sdk "github.com/invisi-lab/invisi-sdk-go/sdk"
 )
@@ -41,84 +35,6 @@ func TestMemoPreparationCopiesAndPersists(t *testing.T) {
 	}
 	if !bytes.Equal(resumed.plan.Outputs[0].Note.Payload, []byte{0xff, 0, 1}) {
 		t.Fatal("memo lost on resume")
-	}
-}
-func TestCreditPayloadsDoNotInheritConsumedMetadata(t *testing.T) {
-	for _, kind := range []string{"draw", "topup"} {
-		for _, override := range [][]byte{nil, {}, []byte("changed")} {
-			t.Run(kind+string(override), func(t *testing.T) {
-				session, token, _ := testSession(t)
-				leaf := seedCredit(t, session, token)
-				ctx := context.Background()
-				if err := session.options.Store.Update(ctx, session.scope, func(state *WalletState) error {
-					for key, credit := range state.Credits {
-						credit.State.Note.Payload = []byte("parent")
-						state.Credits[key] = credit
-					}
-					return nil
-				}); err != nil {
-					t.Fatal(err)
-				}
-				var operation *Operation
-				var err error
-				if kind == "draw" {
-					operation, err = session.PrepareDrawCredit(ctx, sdk.DrawCreditPreparation{TokenAddress: token, Credits: []sdk.CreditDrawInput{{Credit: leaf, Amount: big.NewInt(30), Payload: override}}})
-				} else {
-					operation, err = session.PrepareTopUpCredit(ctx, sdk.TopUpCreditPreparation{TokenAddress: token, Credit: leaf, AdditionalAmount: big.NewInt(10), Payload: override})
-				}
-				if err != nil {
-					t.Fatal(err)
-				}
-				expected := override
-				for i, role := range []core.CreditDeliveryRole{core.CreditOwner, core.CreditSpender} {
-					commitment := leaf
-					if kind == "draw" {
-						commitment = operation.plan.DrawCredit.RemainderCommitments[0]
-					} else {
-						commitment = operation.plan.CreateCredit.CreditCommitment
-					}
-					decoded, err := session.viewing.DecryptCredit(operation.plan.Deliveries[i].Ciphertext, core.CreditNoteDecryptionContext{NoteDecryptionContext: core.NoteDecryptionContext{NoteEncryptionContext: core.NoteEncryptionContext{ProtocolContext: session.coreContext(), OutputCommitment: core.BigIntToElement(commitment.Big())}, TokenAddress: core.BigIntToElement(token.Big()), OwnerAddress: transaction.PrivateMaterial(session.wallet).OwnerAddress}, Role: role})
-					if err != nil || !bytes.Equal(decoded.Note.Payload, expected) {
-						t.Fatal("memo inheritance", err, decoded.Note.Payload, expected)
-					}
-				}
-			})
-		}
-	}
-}
-func TestCreditCreationAndDisclosureMemoBoundary(t *testing.T) {
-	session, token, _ := testSession(t)
-	address, _ := session.wallet.GetAddress()
-	memo := []byte("invoice")
-	operation, err := session.PrepareCreateCredit(context.Background(), sdk.CreateCreditPreparation{TokenAddress: token, Spender: address, Amount: big.NewInt(70), Expiry: big.NewInt(1000), Payload: memo})
-	if err != nil {
-		t.Fatal(err)
-	}
-	memo[0] = 'x'
-	note := operation.plan.CreditOutput.Note
-	if string(note.Payload) != "invoice" {
-		t.Fatal("credit memo alias")
-	}
-	opening, err := sdk.DisclosureFromCredit(note)
-	if err != nil {
-		t.Fatal(err)
-	}
-	raw, _ := json.Marshal(opening.Export())
-	if bytes.Contains(raw, []byte("invoice")) {
-		t.Fatal("opening leaked memo")
-	}
-	output := sdk.DisclosureOutput{ProtocolContext: note.ProtocolContext, TokenAddress: note.TokenAddress, OutputCommitment: operation.plan.CreateCredit.CreditCommitment, Role: "owner", Ciphertext: operation.plan.Deliveries[0].Ciphertext}
-	result, err := opening.Verify(output)
-	if err != nil || len(result.Credit.Payload) != 0 {
-		t.Fatal("opening claimed memo", err)
-	}
-	payload, err := session.viewing.DiscloseCredit(output.Ciphertext, core.CreditNoteDecryptionContext{NoteDecryptionContext: core.NoteDecryptionContext{NoteEncryptionContext: core.NoteEncryptionContext{ProtocolContext: note.ProtocolContext, OutputCommitment: core.BigIntToElement(output.OutputCommitment.Big())}, TokenAddress: note.TokenAddress, OwnerAddress: note.OwnerWalletIdentity}, Role: core.CreditOwner})
-	if err != nil {
-		t.Fatal(err)
-	}
-	result, err = payload.Verify(output)
-	if err != nil || string(result.Credit.Payload) != "invoice" {
-		t.Fatal("payload memo lost", err)
 	}
 }
 
@@ -204,136 +120,6 @@ func TestMemoProtocolGuardAcceptsVersionOneAndRejectsVersionTwo(t *testing.T) {
 	}
 	if err = pool.ValidateDeployment(context.Background(), unsupportedProtocolProvider{base}); err == nil {
 		t.Fatal("Protocol VERSION 2 accepted")
-	}
-}
-
-func TestRefreshKeepsAuthenticatedChildMemoAndOmitsUnknownMemo(t *testing.T) {
-	for _, corrupt := range []bool{false, true} {
-		t.Run(fmt.Sprint("corrupt=", corrupt), func(t *testing.T) {
-			ctx := context.Background()
-			session, token, _ := testSession(t)
-			leaf := seedCredit(t, session, token)
-			err := session.options.Store.Update(ctx, session.scope, func(state *WalletState) error {
-				for key, credit := range state.Credits {
-					credit.State.Note.Payload = []byte("parent")
-					state.Credits[key] = credit
-				}
-				return nil
-			})
-			if err != nil {
-				t.Fatal(err)
-			}
-			operation, err := session.PrepareDrawCredit(ctx, sdk.DrawCreditPreparation{TokenAddress: token, Credits: []sdk.CreditDrawInput{{Credit: leaf, Amount: big.NewInt(30), Payload: []byte("child")}}})
-			if err != nil {
-				t.Fatal(err)
-			}
-			base := session.options.Provider.(sessionProvider)
-			childLeaf := common.Hash(operation.plan.DrawCredit.RemainderCommitments[0])
-			base.leaves.Store(uint64(3), childLeaf)
-			deliveries := operation.plan.Deliveries
-			if corrupt {
-				for i := range deliveries {
-					deliveries[i].Ciphertext[len(deliveries[i].Ciphertext)-1] ^= 1
-				}
-			}
-			contractABI, err := protocol.ProtocolABI()
-			if err != nil {
-				t.Fatal(err)
-			}
-			tx := common.HexToHash("0x1234")
-			insertion := contractABI.Events["CommitmentsInserted"]
-			insertionData, err := insertion.Inputs.NonIndexed().Pack(uint32(0), [][32]byte{childLeaf})
-			if err != nil {
-				t.Fatal(err)
-			}
-			draw := contractABI.Events["CreditDraw"]
-			drawData, err := draw.Inputs.NonIndexed().Pack(*operation.plan.DrawCredit, []uint32{0}, deliveries)
-			if err != nil {
-				t.Fatal(err)
-			}
-			makeLog := func(topics []common.Hash, data []byte, index uint) *types.Log {
-				return &types.Log{Address: session.scope.ProtocolAddress, Topics: topics, Data: data, Index: index, TxHash: tx, BlockHash: base.head.Hash(), BlockNumber: 10}
-			}
-			receipt := &types.Receipt{TxHash: tx, Status: types.ReceiptStatusSuccessful, BlockNumber: big.NewInt(10), BlockHash: base.head.Hash(), Logs: []*types.Log{
-				makeLog([]common.Hash{insertion.ID, common.BigToHash(big.NewInt(3))}, insertionData, 0),
-				makeLog([]common.Hash{draw.ID, common.BytesToHash(session.wallet.OwnerAddress().Bytes()), common.BigToHash(big.NewInt(3))}, drawData, 1),
-			}}
-			provider := receiptProvider{base, receipt}
-			deployment := session.protocol.Deployment()
-			block := protocolrpc.CanonicalBlock{Number: 10, Hash: base.head.Hash(), ParentHash: base.head.ParentHash, Timestamp: base.head.Time}
-			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-				var request struct {
-					ID     uint64
-					Method string
-					Params []json.RawMessage
-				}
-				if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
-					t.Error(err)
-					return
-				}
-				var result any
-				switch request.Method {
-				case "invisi_getStatus":
-					result = map[string]any{"apiVersion": "v1", "protocolVersion": "1", "deployment": deployment, "indexedHead": block, "checkedBits": 8, "detectionEnabled": true}
-				case "invisi_getUpdates":
-					result = map[string]any{"blockHash": block.Hash, "creditTransitions": []any{map[string]any{"transactionHash": tx, "logIndex": 1, "block": block}}}
-				case "invisi_getRoots", "invisi_getMembership":
-					var tree uint64
-					if err := json.Unmarshal(request.Params[0], &tree); err != nil {
-						t.Error(err)
-						return
-					}
-					stored, ok := base.leaves.Load(tree)
-					if !ok {
-						t.Error("unknown tree")
-						return
-					}
-					commitment := stored.(common.Hash)
-					value := core.BigIntToElement(commitment.Big())
-					for range 16 {
-						value, _ = core.Poseidon2Hash(value, core.ElementFromUint64(0))
-					}
-					anchor := map[string]any{"treeId": tree, "root": transaction.FieldHash(value), "leafCount": 1, "block": block}
-					if request.Method == "invisi_getRoots" {
-						result = []any{anchor}
-					} else {
-						result = map[string]any{"anchor": anchor, "leafIndex": 0, "commitment": commitment, "siblings": make([]common.Hash, 16)}
-					}
-				default:
-					t.Error("unexpected method", request.Method)
-				}
-				if err := json.NewEncoder(w).Encode(map[string]any{"jsonrpc": "2.0", "id": request.ID, "result": result}); err != nil {
-					t.Error(err)
-				}
-			}))
-			defer server.Close()
-			client, err := sdk.NewProtocolRpcClient(server.URL+"/v1", protocolrpc.ClientOptions{Deployment: &deployment})
-			if err != nil {
-				t.Fatal(err)
-			}
-			session.options.Provider = provider
-			session.rpc = client.WithProvider(provider)
-			if _, err = session.Refresh(ctx, RefreshOptions{FromBlock: 10}); err != nil {
-				t.Fatal(err)
-			}
-			snapshot, err := session.options.Store.ReadSnapshot(ctx, session.scope)
-			if err != nil {
-				t.Fatal(err)
-			}
-			for _, role := range []string{"owner", "spender"} {
-				child, ok := snapshot.Credits[transaction.CreditKey(childLeaf, role)]
-				if !ok || child.State.Note.Amount != core.ElementFromUint64(70) {
-					t.Fatal("financial recovery failed")
-				}
-				expected := "child"
-				if corrupt {
-					expected = ""
-				}
-				if string(child.State.Note.Payload) != expected {
-					t.Fatal("wrong child memo", string(child.State.Note.Payload), expected)
-				}
-			}
-		})
 	}
 }
 

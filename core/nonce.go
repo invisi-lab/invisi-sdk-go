@@ -18,16 +18,3 @@ func GenerateNonce() (fr.Element, error) {
 	}
 	return BigIntToElement(n), nil
 }
-
-// GenerateCreditSharedKey samples an independent, uniformly random nonzero field secret.
-func GenerateCreditSharedKey() (fr.Element, error) {
-	for {
-		key, err := GenerateNonce()
-		if err != nil {
-			return fr.Element{}, err
-		}
-		if !key.IsZero() {
-			return key, nil
-		}
-	}
-}

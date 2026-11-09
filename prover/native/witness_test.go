@@ -15,7 +15,7 @@ import (
 )
 
 func TestExecutorMetadataDoesNotChangePublishedCircuit(t *testing.T) {
-	original, err := resources.ReadFile("circuits/credit_cancel.json")
+	original, err := resources.ReadFile("circuits/credit_update.json")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -70,7 +70,7 @@ func TestExecutorRejectsArtifactMismatchAndHonorsCancellation(t *testing.T) {
 	if _, err = executor.Execute(context.Background(), []byte(`{"noir_version":"old"}`), witness); err == nil {
 		t.Fatal("obsolete artifact accepted")
 	}
-	artifact, err := resources.ReadFile("circuits/credit_cancel.json")
+	artifact, err := resources.ReadFile("circuits/credit_update.json")
 	if err != nil {
 		t.Fatal(err)
 	}

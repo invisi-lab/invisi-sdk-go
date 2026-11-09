@@ -14,19 +14,6 @@
   },
   {
     "type": "function",
-    "name": "getCreditCancelVerifier",
-    "inputs": [],
-    "outputs": [
-      {
-        "name": "",
-        "type": "address",
-        "internalType": "contract IVerifier"
-      }
-    ],
-    "stateMutability": "view"
-  },
-  {
-    "type": "function",
     "name": "getCreditDrawVerifier",
     "inputs": [
       {
@@ -46,7 +33,7 @@
   },
   {
     "type": "function",
-    "name": "getCreditTopUpVerifier",
+    "name": "getCreditUpdateVerifier",
     "inputs": [],
     "outputs": [
       {

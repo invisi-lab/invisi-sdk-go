@@ -30,9 +30,7 @@ func Detached(op *Execution, err error) (*PreparedTransaction, error) {
 	if err != nil {
 		return nil, err
 	}
-	if len(op.Plan.CreditInputs) != len(op.Runtime.ExplicitInventory.Credits) {
-		return nil, errors.New("Credit inputs must exactly match the requested operation")
-	}
+
 	return &PreparedTransaction{operation: op, lifecycle: &TransactionLifecycle{}}, nil
 }
 

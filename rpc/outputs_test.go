@@ -14,8 +14,8 @@ import (
 )
 
 func TestNormalizeOutputOpaqueAndConflicts(t *testing.T) {
-	raw := json.RawMessage(`{"block":{"number":10,"hash":"0x0000000000000000000000000000000000000000000000000000000000000001","parentHash":"0x0000000000000000000000000000000000000000000000000000000000000002","timestamp":3},"treeId":1,"leafIndex":0,"commitment":"0x0000000000000000000000000000000000000000000000000000000000000003","token":"0x1111111111111111111111111111111111111111","ciphertext":"0x81","clue":"0x` + repeatZero(68) + `","transactionHash":"0x0000000000000000000000000000000000000000000000000000000000000004","logIndex":0,"kind":"CreditCreated"}`)
-	out, e := parseOutput(raw)
+	raw := json.RawMessage(`{"block":{"number":10,"hash":"0x0000000000000000000000000000000000000000000000000000000000000001","parentHash":"0x0000000000000000000000000000000000000000000000000000000000000002","timestamp":3},"treeId":1,"leafIndex":0,"commitment":"0x0000000000000000000000000000000000000000000000000000000000000003","token":"0x1111111111111111111111111111111111111111","ciphertext":"0x81","clue":"0x` + repeatZero(68) + `","transactionHash":"0x0000000000000000000000000000000000000000000000000000000000000004","logIndex":0,"kind":"Transact"}`)
+	out, e := parseNoteOutput(raw)
 	if e != nil || len(out.Ciphertext) != 1 {
 		t.Fatal(out, e)
 	}
@@ -23,7 +23,7 @@ func TestNormalizeOutputOpaqueAndConflicts(t *testing.T) {
 	json.Unmarshal(raw, &m)
 	delete(m, "logIndex")
 	bad, _ := json.Marshal(m)
-	if _, e := parseOutput(bad); e == nil {
+	if _, e := parseNoteOutput(bad); e == nil {
 		t.Fatal("missing logIndex accepted")
 	}
 }
@@ -35,15 +35,15 @@ func repeatZero(n int) string {
 	return s
 }
 
-func TestOutputPagesAuthenticateAndPreserveCreditRoles(t *testing.T) {
-	provider := testProvider{&types.Header{Number: big.NewInt(10), Time: 123, ParentHash: common.HexToHash("0x09")}}
+func TestCreditCandidatesAuthenticateAndRetainRoleEnvelopes(t *testing.T) {
+	provider := testProvider{&types.Header{Number: big.NewInt(10), Time: 123}}
 	block := CanonicalBlock{10, provider.header.Hash(), provider.header.ParentHash, 123}
-	deployment := ProtocolDeployment{ChainID: "31337", Protocol: ContractDeployment{common.HexToAddress("0x1111111111111111111111111111111111111111"), crypto.Keccak256Hash([]byte{0x60, 0}), 1}}
-	clue := "0x" + repeatZero(68)
-	output := func(ciphertext string) map[string]any {
-		return map[string]any{"block": block, "treeId": "1", "leafIndex": "0", "commitment": common.HexToHash("0x03"), "token": deployment.Protocol.Address, "ciphertext": ciphertext, "clue": clue, "transactionHash": common.HexToHash("0x04"), "logIndex": "0", "kind": "CreditCreated"}
+	dep := ProtocolDeployment{ChainID: "31337", Protocol: ContractDeployment{common.HexToAddress("11"), crypto.Keccak256Hash([]byte{1}), 1}}
+	state := func() map[string]any {
+		return map[string]any{"block": block, "treeId": 1, "leafIndex": 0, "commitment": common.HexToHash("3"), "token": common.HexToAddress("22"), "transactionHash": common.HexToHash("4"), "logIndex": 0, "kind": "CreditCreated", "deliveries": []any{map[string]any{"ciphertext": "0x81", "clue": "0x" + repeatZero(68)}, map[string]any{"ciphertext": "0x8101", "clue": "0x" + repeatZero(68)}}}
 	}
-	rows := []any{output("0x81"), output("0x8101"), output("0x81")}
+	raw := state()
+	rows := []any{map[string]any{"state": raw, "fallback": false}, map[string]any{"state": raw, "fallback": false}}
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		var req struct {
 			ID     uint64
@@ -52,48 +52,38 @@ func TestOutputPagesAuthenticateAndPreserveCreditRoles(t *testing.T) {
 		json.NewDecoder(r.Body).Decode(&req)
 		var result any
 		if req.Method == "invisi_getStatus" {
-			result = map[string]any{"apiVersion": "v1", "protocolVersion": "1", "deployment": deployment, "indexedHead": block, "checkedBits": 8, "detectionEnabled": true}
+			result = map[string]any{"apiVersion": "v1", "protocolVersion": "1", "deployment": dep, "indexedHead": block, "checkedBits": 8, "detectionEnabled": true}
+		} else if req.Method == "invisi_detectCreditStates" {
+			result = map[string]any{"blockHash": block.Hash, "checkedBits": 8, "candidates": rows}
 		} else {
-			result = map[string]any{"blockHash": block.Hash, "outputs": rows, "creditTransitions": []any{}}
+			t.Error("unexpected method", req.Method)
 		}
 		json.NewEncoder(w).Encode(map[string]any{"jsonrpc": "2.0", "id": req.ID, "result": result})
 	}))
 	defer server.Close()
-	c, e := NewProtocolRpcClient(server.URL+"/v1", ClientOptions{Deployment: &deployment})
-	if e != nil {
-		t.Fatal(e)
-	}
+	c, _ := NewProtocolRpcClient(server.URL+"/v1", ClientOptions{Deployment: &dep})
 	c = c.WithProvider(provider)
-	d := DeploymentContext{31337, deployment.Protocol.Address}
-	r := ProtocolUpdateRange{FromBlock: 10, ToBlock: 10}
-	page, e := c.GetCreditOutputs(context.Background(), d, r)
-	if e != nil || len(page.Outputs) != 2 {
+	scope := DeploymentContext{31337, dep.Protocol.Address}
+	r := ProtocolUpdateRange{FromBlock: 10, ToBlock: 10, DetectionKey: append([]byte{1}, make([]byte, 31)...)}
+	page, e := c.DetectCreditStates(context.Background(), scope, r)
+	if e != nil || len(page.States) != 1 || len(page.States[0].Deliveries) != 2 {
 		t.Fatal(page, e)
 	}
-	page.Outputs[0].Ciphertext[0] = 0
-	next, e := c.GetCreditOutputs(context.Background(), d, r)
-	if e != nil || next.Outputs[0].Ciphertext[0] != 129 {
-		t.Fatal("mutable output boundary", e)
+	page.States[0].Deliveries[0].Ciphertext[0] = 0
+	next, e := c.DetectCreditStates(context.Background(), scope, r)
+	if e != nil || next.States[0].Deliveries[0].Ciphertext[0] != 129 {
+		t.Fatal("mutable state boundary", e)
 	}
-	rows = append(rows, output("0x8102"))
-	if _, e = c.GetCreditOutputs(context.Background(), d, r); e == nil {
-		t.Fatal("third role accepted")
+	other := state()
+	other["token"] = common.HexToAddress("33")
+	rows = append(rows, map[string]any{"state": other, "fallback": false})
+	if _, e = c.DetectCreditStates(context.Background(), scope, r); e == nil {
+		t.Fatal("conflicting state accepted")
 	}
-	rows = []any{output("0x81"), output("0x8101")}
-	rows[1].(map[string]any)["token"] = common.HexToAddress("0x2222222222222222222222222222222222222222")
-	if _, e = c.GetCreditOutputs(context.Background(), d, r); e == nil {
-		t.Fatal("conflicting leaf accepted")
-	}
-	rows = []any{output("0x01")}
-	funds, e := c.GetOutputs(context.Background(), d, r)
-	if e != nil || len(funds.Outputs) != 1 {
-		t.Fatal("funds candidate in credit event lost", e)
-	}
-	forged := block
-	forged.Timestamp++
-	rows[0].(map[string]any)["block"] = forged
-	if _, e = c.GetEncryptedOutputs(context.Background(), d, r); e == nil {
-		t.Fatal("forged timestamp accepted")
+	rows = []any{map[string]any{"state": state(), "fallback": false}}
+	rows[0].(map[string]any)["state"].(map[string]any)["deliveries"] = []any{}
+	if _, e = c.DetectCreditStates(context.Background(), scope, r); e == nil {
+		t.Fatal("missing role envelopes accepted")
 	}
 }
 

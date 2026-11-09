@@ -105,7 +105,7 @@ func TestCurrentTSProtocolStatementsAndCalldata(t *testing.T) {
 	var context TransactionContext
 	decodeReference(t, all.Context, &context)
 	context.Now = numberFromReference(t, all.Context["timestamp"])
-	for _, name := range []string{"transact1", "transact15", "transact57", "transact113", "create", "draw1", "draw2", "draw13", "draw51", "cancel", "topUp", "shield", "single", "crossTwo"} {
+	for _, name := range []string{"transact1", "transact15", "transact57", "transact113", "shield", "single", "crossTwo"} {
 		t.Run(name, func(t *testing.T) {
 			f := all.Fixtures[name]
 			var deliveries []Delivery
@@ -139,42 +139,7 @@ func TestCurrentTSProtocolStatementsAndCalldata(t *testing.T) {
 				} else {
 					inputs = nil
 				}
-			case name == "create":
-				var p CreateCreditParams
-				decodeReference(t, f["params"], &p)
-				inputs, err = CreateCreditPublicInputs(context, p, deliveries, funding)
-				hash, e := CreateCreditRequestHash(p, deliveries, funding)
-				if e != nil || hash.Hex() != f["requestHash"].(string) {
-					t.Fatal("Credit creation request hash differs", e)
-				}
-				funding.Signature = []byte{0xab, 0xcd}
-				call, err = BuildCreateCreditCalldata(BuildCreateCreditCalldataParams{Context: context, Proof: []byte{0x12, 0x34}, Params: p, Deliveries: deliveries, Funding: funding})
-			case strings.HasPrefix(name, "draw"):
-				var p CreditDrawParams
-				decodeReference(t, f["params"], &p)
-				inputs, err = CreditDrawPublicInputs(context, p, deliveries)
-				if name == "draw1" {
-					call, err = BuildCreditDrawCalldata(BuildCreditDrawCalldataParams{Context: context, Proof: []byte{0x12, 0x34}, Params: p, Deliveries: deliveries})
-				}
-			case name == "cancel":
-				var p CancelCreditParams
-				decodeReference(t, f["params"], &p)
-				inputs, err = CancelCreditPublicInputs(context, p)
-				hash, e := CancelCreditRequestHash(p)
-				if e != nil || hash.Hex() != f["requestHash"].(string) {
-					t.Fatal("Credit cancellation request hash differs", e)
-				}
-				call, err = BuildCancelCreditCalldata(BuildCancelCreditCalldataParams{Context: context, Proof: []byte{0x12, 0x34}, Params: p})
-			case name == "topUp":
-				var p TopUpCreditParams
-				decodeReference(t, f["params"], &p)
-				inputs, err = TopUpCreditPublicInputs(context, p, deliveries, funding)
-				hash, e := TopUpCreditRequestHash(p, deliveries, funding)
-				if e != nil || hash.Hex() != f["requestHash"].(string) {
-					t.Fatal("Credit top-up request hash differs", e)
-				}
-				funding.Signature = []byte{0xab, 0xcd}
-				call, err = BuildTopUpCreditCalldata(BuildTopUpCreditCalldataParams{Context: context, Proof: []byte{0x12, 0x34}, Params: p, Deliveries: deliveries, Funding: funding})
+
 			case name == "shield":
 				var p ShieldParams
 				var outputs []ShieldOutput

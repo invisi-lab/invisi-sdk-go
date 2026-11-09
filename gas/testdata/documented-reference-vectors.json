@@ -1,0 +1,1761 @@
+{
+  "formatVersion": 1,
+  "catalogSha256": "3211a956d8d0adc79d7debbc063b4b450bec1defe193b8300f81fbc5ac18d7b0",
+  "packagedCreditIdentity": {
+    "creditManifestVersion": 7,
+    "creditFormatVersion": 8
+  },
+  "vectors": [
+    {
+      "query": {
+        "kind": "create-credit",
+        "scenario": "first-allocation-empty-tree",
+        "feeEnabled": false,
+        "feeMechanism": "none"
+      },
+      "available": true,
+      "gasUnits": "1569348"
+    },
+    {
+      "query": {
+        "kind": "create-credit",
+        "scenario": "first-allocation-empty-tree",
+        "feeEnabled": true,
+        "feeMechanism": "owner-pull"
+      },
+      "available": true,
+      "gasUnits": "1633102"
+    },
+    {
+      "query": {
+        "kind": "update-credit",
+        "scenario": "after-draw-preserve-usage",
+        "feeEnabled": false,
+        "feeMechanism": "none"
+      },
+      "available": true,
+      "gasUnits": "1549486"
+    },
+    {
+      "query": {
+        "kind": "update-credit",
+        "scenario": "after-draw-preserve-usage",
+        "feeEnabled": true,
+        "feeMechanism": "owner-pull"
+      },
+      "available": true,
+      "gasUnits": "1595996"
+    },
+    {
+      "query": {
+        "kind": "revoke-credit",
+        "authorization": "direct",
+        "bitmapWord": "empty",
+        "feeEnabled": false,
+        "feeMechanism": "none"
+      },
+      "available": true,
+      "gasUnits": "60867"
+    },
+    {
+      "query": {
+        "kind": "revoke-credit",
+        "authorization": "direct",
+        "bitmapWord": "empty",
+        "feeEnabled": true,
+        "feeMechanism": "owner-pull"
+      },
+      "available": true,
+      "gasUnits": "126893"
+    },
+    {
+      "query": {
+        "kind": "revoke-credit",
+        "authorization": "direct",
+        "bitmapWord": "nonempty",
+        "feeEnabled": false,
+        "feeMechanism": "none"
+      },
+      "available": true,
+      "gasUnits": "43779"
+    },
+    {
+      "query": {
+        "kind": "revoke-credit",
+        "authorization": "direct",
+        "bitmapWord": "nonempty",
+        "feeEnabled": true,
+        "feeMechanism": "owner-pull"
+      },
+      "available": true,
+      "gasUnits": "109805"
+    },
+    {
+      "query": {
+        "kind": "revoke-credit",
+        "authorization": "eoa",
+        "bitmapWord": "empty",
+        "feeEnabled": false,
+        "feeMechanism": "none"
+      },
+      "available": true,
+      "gasUnits": "66625"
+    },
+    {
+      "query": {
+        "kind": "revoke-credit",
+        "authorization": "eoa",
+        "bitmapWord": "empty",
+        "feeEnabled": true,
+        "feeMechanism": "owner-pull"
+      },
+      "available": true,
+      "gasUnits": "132651"
+    },
+    {
+      "query": {
+        "kind": "revoke-credit",
+        "authorization": "eoa",
+        "bitmapWord": "nonempty",
+        "feeEnabled": false,
+        "feeMechanism": "none"
+      },
+      "available": true,
+      "gasUnits": "49537"
+    },
+    {
+      "query": {
+        "kind": "revoke-credit",
+        "authorization": "eoa",
+        "bitmapWord": "nonempty",
+        "feeEnabled": true,
+        "feeMechanism": "owner-pull"
+      },
+      "available": true,
+      "gasUnits": "115551"
+    },
+    {
+      "query": {
+        "kind": "revoke-credit",
+        "authorization": "erc1271",
+        "bitmapWord": "empty",
+        "feeEnabled": false,
+        "feeMechanism": "none"
+      },
+      "available": true,
+      "gasUnits": "73187"
+    },
+    {
+      "query": {
+        "kind": "revoke-credit",
+        "authorization": "erc1271",
+        "bitmapWord": "empty",
+        "feeEnabled": true,
+        "feeMechanism": "owner-pull"
+      },
+      "available": true,
+      "gasUnits": "139213"
+    },
+    {
+      "query": {
+        "kind": "revoke-credit",
+        "authorization": "erc1271",
+        "bitmapWord": "nonempty",
+        "feeEnabled": false,
+        "feeMechanism": "none"
+      },
+      "available": true,
+      "gasUnits": "56099"
+    },
+    {
+      "query": {
+        "kind": "revoke-credit",
+        "authorization": "erc1271",
+        "bitmapWord": "nonempty",
+        "feeEnabled": true,
+        "feeMechanism": "owner-pull"
+      },
+      "available": true,
+      "gasUnits": "122113"
+    },
+    {
+      "query": {
+        "kind": "draw-credit",
+        "capacity": 1,
+        "creditInputs": 1,
+        "distinctPayers": 1,
+        "sourceTrees": 1,
+        "noteOutputs": 1,
+        "creditOutputs": 1,
+        "creditCiphertextBytes": 484,
+        "noteCiphertextBytes": 160,
+        "clueBytes": 68,
+        "scenario": "distinct-payers",
+        "feeEnabled": false,
+        "feeMechanism": "none"
+      },
+      "available": true,
+      "gasUnits": "1684004"
+    },
+    {
+      "query": {
+        "kind": "draw-credit",
+        "capacity": 1,
+        "creditInputs": 1,
+        "distinctPayers": 1,
+        "sourceTrees": 1,
+        "noteOutputs": 1,
+        "creditOutputs": 1,
+        "creditCiphertextBytes": 484,
+        "noteCiphertextBytes": 160,
+        "clueBytes": 68,
+        "scenario": "distinct-payers",
+        "feeEnabled": true,
+        "feeMechanism": "draw-deduction"
+      },
+      "available": true,
+      "gasUnits": "1708385"
+    },
+    {
+      "query": {
+        "kind": "draw-credit",
+        "capacity": 2,
+        "creditInputs": 2,
+        "distinctPayers": 2,
+        "sourceTrees": 1,
+        "noteOutputs": 1,
+        "creditOutputs": 2,
+        "creditCiphertextBytes": 484,
+        "noteCiphertextBytes": 160,
+        "clueBytes": 68,
+        "scenario": "distinct-payers",
+        "feeEnabled": false,
+        "feeMechanism": "none"
+      },
+      "available": true,
+      "gasUnits": "1837311"
+    },
+    {
+      "query": {
+        "kind": "draw-credit",
+        "capacity": 2,
+        "creditInputs": 2,
+        "distinctPayers": 2,
+        "sourceTrees": 1,
+        "noteOutputs": 1,
+        "creditOutputs": 2,
+        "creditCiphertextBytes": 484,
+        "noteCiphertextBytes": 160,
+        "clueBytes": 68,
+        "scenario": "distinct-payers",
+        "feeEnabled": true,
+        "feeMechanism": "draw-deduction"
+      },
+      "available": true,
+      "gasUnits": "1861632"
+    },
+    {
+      "query": {
+        "kind": "draw-credit",
+        "capacity": 3,
+        "creditInputs": 3,
+        "distinctPayers": 3,
+        "sourceTrees": 1,
+        "noteOutputs": 1,
+        "creditOutputs": 3,
+        "creditCiphertextBytes": 484,
+        "noteCiphertextBytes": 160,
+        "clueBytes": 68,
+        "scenario": "distinct-payers",
+        "feeEnabled": false,
+        "feeMechanism": "none"
+      },
+      "available": true,
+      "gasUnits": "1991219"
+    },
+    {
+      "query": {
+        "kind": "draw-credit",
+        "capacity": 3,
+        "creditInputs": 3,
+        "distinctPayers": 3,
+        "sourceTrees": 1,
+        "noteOutputs": 1,
+        "creditOutputs": 3,
+        "creditCiphertextBytes": 484,
+        "noteCiphertextBytes": 160,
+        "clueBytes": 68,
+        "scenario": "distinct-payers",
+        "feeEnabled": true,
+        "feeMechanism": "draw-deduction"
+      },
+      "available": true,
+      "gasUnits": "2015636"
+    },
+    {
+      "query": {
+        "kind": "draw-credit",
+        "capacity": 4,
+        "creditInputs": 4,
+        "distinctPayers": 4,
+        "sourceTrees": 1,
+        "noteOutputs": 1,
+        "creditOutputs": 4,
+        "creditCiphertextBytes": 484,
+        "noteCiphertextBytes": 160,
+        "clueBytes": 68,
+        "scenario": "distinct-payers",
+        "feeEnabled": false,
+        "feeMechanism": "none"
+      },
+      "available": true,
+      "gasUnits": "2139800"
+    },
+    {
+      "query": {
+        "kind": "draw-credit",
+        "capacity": 4,
+        "creditInputs": 4,
+        "distinctPayers": 4,
+        "sourceTrees": 1,
+        "noteOutputs": 1,
+        "creditOutputs": 4,
+        "creditCiphertextBytes": 484,
+        "noteCiphertextBytes": 160,
+        "clueBytes": 68,
+        "scenario": "distinct-payers",
+        "feeEnabled": true,
+        "feeMechanism": "draw-deduction"
+      },
+      "available": true,
+      "gasUnits": "2164193"
+    },
+    {
+      "query": {
+        "kind": "draw-credit",
+        "capacity": 5,
+        "creditInputs": 5,
+        "distinctPayers": 5,
+        "sourceTrees": 1,
+        "noteOutputs": 1,
+        "creditOutputs": 5,
+        "creditCiphertextBytes": 484,
+        "noteCiphertextBytes": 160,
+        "clueBytes": 68,
+        "scenario": "distinct-payers",
+        "feeEnabled": false,
+        "feeMechanism": "none"
+      },
+      "available": true,
+      "gasUnits": "2296101"
+    },
+    {
+      "query": {
+        "kind": "draw-credit",
+        "capacity": 5,
+        "creditInputs": 5,
+        "distinctPayers": 5,
+        "sourceTrees": 1,
+        "noteOutputs": 1,
+        "creditOutputs": 5,
+        "creditCiphertextBytes": 484,
+        "noteCiphertextBytes": 160,
+        "clueBytes": 68,
+        "scenario": "distinct-payers",
+        "feeEnabled": true,
+        "feeMechanism": "draw-deduction"
+      },
+      "available": true,
+      "gasUnits": "2320530"
+    },
+    {
+      "query": {
+        "kind": "draw-credit",
+        "capacity": 10,
+        "creditInputs": 6,
+        "distinctPayers": 6,
+        "sourceTrees": 1,
+        "noteOutputs": 1,
+        "creditOutputs": 6,
+        "creditCiphertextBytes": 484,
+        "noteCiphertextBytes": 160,
+        "clueBytes": 68,
+        "scenario": "distinct-payers",
+        "feeEnabled": false,
+        "feeMechanism": "none"
+      },
+      "available": true,
+      "gasUnits": "2510585"
+    },
+    {
+      "query": {
+        "kind": "draw-credit",
+        "capacity": 10,
+        "creditInputs": 6,
+        "distinctPayers": 6,
+        "sourceTrees": 1,
+        "noteOutputs": 1,
+        "creditOutputs": 6,
+        "creditCiphertextBytes": 484,
+        "noteCiphertextBytes": 160,
+        "clueBytes": 68,
+        "scenario": "distinct-payers",
+        "feeEnabled": true,
+        "feeMechanism": "draw-deduction"
+      },
+      "available": true,
+      "gasUnits": "2535062"
+    },
+    {
+      "query": {
+        "kind": "draw-credit",
+        "capacity": 10,
+        "creditInputs": 10,
+        "distinctPayers": 10,
+        "sourceTrees": 1,
+        "noteOutputs": 1,
+        "creditOutputs": 10,
+        "creditCiphertextBytes": 484,
+        "noteCiphertextBytes": 160,
+        "clueBytes": 68,
+        "scenario": "distinct-payers",
+        "feeEnabled": false,
+        "feeMechanism": "none"
+      },
+      "available": true,
+      "gasUnits": "3085232"
+    },
+    {
+      "query": {
+        "kind": "draw-credit",
+        "capacity": 10,
+        "creditInputs": 10,
+        "distinctPayers": 10,
+        "sourceTrees": 1,
+        "noteOutputs": 1,
+        "creditOutputs": 10,
+        "creditCiphertextBytes": 484,
+        "noteCiphertextBytes": 160,
+        "clueBytes": 68,
+        "scenario": "distinct-payers",
+        "feeEnabled": true,
+        "feeMechanism": "draw-deduction"
+      },
+      "available": true,
+      "gasUnits": "3109661"
+    },
+    {
+      "query": {
+        "kind": "draw-credit",
+        "capacity": 20,
+        "creditInputs": 11,
+        "distinctPayers": 11,
+        "sourceTrees": 1,
+        "noteOutputs": 1,
+        "creditOutputs": 11,
+        "creditCiphertextBytes": 484,
+        "noteCiphertextBytes": 160,
+        "clueBytes": 68,
+        "scenario": "distinct-payers",
+        "feeEnabled": false,
+        "feeMechanism": "none"
+      },
+      "available": true,
+      "gasUnits": "3349059"
+    },
+    {
+      "query": {
+        "kind": "draw-credit",
+        "capacity": 20,
+        "creditInputs": 11,
+        "distinctPayers": 11,
+        "sourceTrees": 1,
+        "noteOutputs": 1,
+        "creditOutputs": 11,
+        "creditCiphertextBytes": 484,
+        "noteCiphertextBytes": 160,
+        "clueBytes": 68,
+        "scenario": "distinct-payers",
+        "feeEnabled": true,
+        "feeMechanism": "draw-deduction"
+      },
+      "available": true,
+      "gasUnits": "3373320"
+    },
+    {
+      "query": {
+        "kind": "draw-credit",
+        "capacity": 20,
+        "creditInputs": 20,
+        "distinctPayers": 20,
+        "sourceTrees": 1,
+        "noteOutputs": 1,
+        "creditOutputs": 20,
+        "creditCiphertextBytes": 484,
+        "noteCiphertextBytes": 160,
+        "clueBytes": 68,
+        "scenario": "distinct-payers",
+        "feeEnabled": false,
+        "feeMechanism": "none"
+      },
+      "available": true,
+      "gasUnits": "4643032"
+    },
+    {
+      "query": {
+        "kind": "draw-credit",
+        "capacity": 20,
+        "creditInputs": 20,
+        "distinctPayers": 20,
+        "sourceTrees": 1,
+        "noteOutputs": 1,
+        "creditOutputs": 20,
+        "creditCiphertextBytes": 484,
+        "noteCiphertextBytes": 160,
+        "clueBytes": 68,
+        "scenario": "distinct-payers",
+        "feeEnabled": true,
+        "feeMechanism": "draw-deduction"
+      },
+      "available": true,
+      "gasUnits": "4667449"
+    },
+    {
+      "query": {
+        "kind": "draw-credit",
+        "capacity": 30,
+        "creditInputs": 21,
+        "distinctPayers": 21,
+        "sourceTrees": 1,
+        "noteOutputs": 1,
+        "creditOutputs": 21,
+        "creditCiphertextBytes": 484,
+        "noteCiphertextBytes": 160,
+        "clueBytes": 68,
+        "scenario": "distinct-payers",
+        "feeEnabled": false,
+        "feeMechanism": "none"
+      },
+      "available": true,
+      "gasUnits": "4886355"
+    },
+    {
+      "query": {
+        "kind": "draw-credit",
+        "capacity": 30,
+        "creditInputs": 21,
+        "distinctPayers": 21,
+        "sourceTrees": 1,
+        "noteOutputs": 1,
+        "creditOutputs": 21,
+        "creditCiphertextBytes": 484,
+        "noteCiphertextBytes": 160,
+        "clueBytes": 68,
+        "scenario": "distinct-payers",
+        "feeEnabled": true,
+        "feeMechanism": "draw-deduction"
+      },
+      "available": true,
+      "gasUnits": "4910700"
+    },
+    {
+      "query": {
+        "kind": "draw-credit",
+        "capacity": 30,
+        "creditInputs": 30,
+        "distinctPayers": 30,
+        "sourceTrees": 1,
+        "noteOutputs": 1,
+        "creditOutputs": 30,
+        "creditCiphertextBytes": 484,
+        "noteCiphertextBytes": 160,
+        "clueBytes": 68,
+        "scenario": "distinct-payers",
+        "feeEnabled": false,
+        "feeMechanism": "none"
+      },
+      "available": true,
+      "gasUnits": "6197268"
+    },
+    {
+      "query": {
+        "kind": "draw-credit",
+        "capacity": 30,
+        "creditInputs": 30,
+        "distinctPayers": 30,
+        "sourceTrees": 1,
+        "noteOutputs": 1,
+        "creditOutputs": 30,
+        "creditCiphertextBytes": 484,
+        "noteCiphertextBytes": 160,
+        "clueBytes": 68,
+        "scenario": "distinct-payers",
+        "feeEnabled": true,
+        "feeMechanism": "draw-deduction"
+      },
+      "available": true,
+      "gasUnits": "6221829"
+    },
+    {
+      "query": {
+        "kind": "draw-credit",
+        "capacity": 40,
+        "creditInputs": 31,
+        "distinctPayers": 31,
+        "sourceTrees": 1,
+        "noteOutputs": 1,
+        "creditOutputs": 31,
+        "creditCiphertextBytes": 484,
+        "noteCiphertextBytes": 160,
+        "clueBytes": 68,
+        "scenario": "distinct-payers",
+        "feeEnabled": false,
+        "feeMechanism": "none"
+      },
+      "available": true,
+      "gasUnits": "6466663"
+    },
+    {
+      "query": {
+        "kind": "draw-credit",
+        "capacity": 40,
+        "creditInputs": 31,
+        "distinctPayers": 31,
+        "sourceTrees": 1,
+        "noteOutputs": 1,
+        "creditOutputs": 31,
+        "creditCiphertextBytes": 484,
+        "noteCiphertextBytes": 160,
+        "clueBytes": 68,
+        "scenario": "distinct-payers",
+        "feeEnabled": true,
+        "feeMechanism": "draw-deduction"
+      },
+      "available": true,
+      "gasUnits": "6491044"
+    },
+    {
+      "query": {
+        "kind": "draw-credit",
+        "capacity": 40,
+        "creditInputs": 40,
+        "distinctPayers": 40,
+        "sourceTrees": 1,
+        "noteOutputs": 1,
+        "creditOutputs": 40,
+        "creditCiphertextBytes": 484,
+        "noteCiphertextBytes": 160,
+        "clueBytes": 68,
+        "scenario": "distinct-payers",
+        "feeEnabled": false,
+        "feeMechanism": "none"
+      },
+      "available": true,
+      "gasUnits": "7775790"
+    },
+    {
+      "query": {
+        "kind": "draw-credit",
+        "capacity": 40,
+        "creditInputs": 40,
+        "distinctPayers": 40,
+        "sourceTrees": 1,
+        "noteOutputs": 1,
+        "creditOutputs": 40,
+        "creditCiphertextBytes": 484,
+        "noteCiphertextBytes": 160,
+        "clueBytes": 68,
+        "scenario": "distinct-payers",
+        "feeEnabled": true,
+        "feeMechanism": "draw-deduction"
+      },
+      "available": true,
+      "gasUnits": "7800135"
+    },
+    {
+      "query": {
+        "kind": "draw-credit",
+        "capacity": 50,
+        "creditInputs": 41,
+        "distinctPayers": 41,
+        "sourceTrees": 1,
+        "noteOutputs": 1,
+        "creditOutputs": 41,
+        "creditCiphertextBytes": 484,
+        "noteCiphertextBytes": 160,
+        "clueBytes": 68,
+        "scenario": "distinct-payers",
+        "feeEnabled": false,
+        "feeMechanism": "none"
+      },
+      "available": true,
+      "gasUnits": "8024436"
+    },
+    {
+      "query": {
+        "kind": "draw-credit",
+        "capacity": 50,
+        "creditInputs": 41,
+        "distinctPayers": 41,
+        "sourceTrees": 1,
+        "noteOutputs": 1,
+        "creditOutputs": 41,
+        "creditCiphertextBytes": 484,
+        "noteCiphertextBytes": 160,
+        "clueBytes": 68,
+        "scenario": "distinct-payers",
+        "feeEnabled": true,
+        "feeMechanism": "draw-deduction"
+      },
+      "available": true,
+      "gasUnits": "8048685"
+    },
+    {
+      "query": {
+        "kind": "draw-credit",
+        "capacity": 50,
+        "creditInputs": 50,
+        "distinctPayers": 50,
+        "sourceTrees": 1,
+        "noteOutputs": 1,
+        "creditOutputs": 50,
+        "creditCiphertextBytes": 484,
+        "noteCiphertextBytes": 160,
+        "clueBytes": 68,
+        "scenario": "distinct-payers",
+        "feeEnabled": false,
+        "feeMechanism": "none"
+      },
+      "available": true,
+      "gasUnits": "9355547"
+    },
+    {
+      "query": {
+        "kind": "draw-credit",
+        "capacity": 50,
+        "creditInputs": 50,
+        "distinctPayers": 50,
+        "sourceTrees": 1,
+        "noteOutputs": 1,
+        "creditOutputs": 50,
+        "creditCiphertextBytes": 484,
+        "noteCiphertextBytes": 160,
+        "clueBytes": 68,
+        "scenario": "distinct-payers",
+        "feeEnabled": true,
+        "feeMechanism": "draw-deduction"
+      },
+      "available": true,
+      "gasUnits": "9380288"
+    },
+    {
+      "query": {
+        "kind": "draw-credit",
+        "capacity": 60,
+        "creditInputs": 51,
+        "distinctPayers": 51,
+        "sourceTrees": 1,
+        "noteOutputs": 1,
+        "creditOutputs": 51,
+        "creditCiphertextBytes": 484,
+        "noteCiphertextBytes": 160,
+        "clueBytes": 68,
+        "scenario": "distinct-payers",
+        "feeEnabled": false,
+        "feeMechanism": "none"
+      },
+      "available": true,
+      "gasUnits": "9604908"
+    },
+    {
+      "query": {
+        "kind": "draw-credit",
+        "capacity": 60,
+        "creditInputs": 51,
+        "distinctPayers": 51,
+        "sourceTrees": 1,
+        "noteOutputs": 1,
+        "creditOutputs": 51,
+        "creditCiphertextBytes": 484,
+        "noteCiphertextBytes": 160,
+        "clueBytes": 68,
+        "scenario": "distinct-payers",
+        "feeEnabled": true,
+        "feeMechanism": "draw-deduction"
+      },
+      "available": true,
+      "gasUnits": "9629277"
+    },
+    {
+      "query": {
+        "kind": "draw-credit",
+        "capacity": 60,
+        "creditInputs": 60,
+        "distinctPayers": 60,
+        "sourceTrees": 1,
+        "noteOutputs": 1,
+        "creditOutputs": 60,
+        "creditCiphertextBytes": 484,
+        "noteCiphertextBytes": 160,
+        "clueBytes": 68,
+        "scenario": "distinct-payers",
+        "feeEnabled": false,
+        "feeMechanism": "none"
+      },
+      "available": true,
+      "gasUnits": "10947326"
+    },
+    {
+      "query": {
+        "kind": "draw-credit",
+        "capacity": 60,
+        "creditInputs": 60,
+        "distinctPayers": 60,
+        "sourceTrees": 1,
+        "noteOutputs": 1,
+        "creditOutputs": 60,
+        "creditCiphertextBytes": 484,
+        "noteCiphertextBytes": 160,
+        "clueBytes": 68,
+        "scenario": "distinct-payers",
+        "feeEnabled": true,
+        "feeMechanism": "draw-deduction"
+      },
+      "available": true,
+      "gasUnits": "10971755"
+    },
+    {
+      "query": {
+        "kind": "draw-credit",
+        "capacity": 70,
+        "creditInputs": 61,
+        "distinctPayers": 61,
+        "sourceTrees": 1,
+        "noteOutputs": 1,
+        "creditOutputs": 61,
+        "creditCiphertextBytes": 484,
+        "noteCiphertextBytes": 160,
+        "clueBytes": 68,
+        "scenario": "distinct-payers",
+        "feeEnabled": false,
+        "feeMechanism": "none"
+      },
+      "available": true,
+      "gasUnits": "11201234"
+    },
+    {
+      "query": {
+        "kind": "draw-credit",
+        "capacity": 70,
+        "creditInputs": 61,
+        "distinctPayers": 61,
+        "sourceTrees": 1,
+        "noteOutputs": 1,
+        "creditOutputs": 61,
+        "creditCiphertextBytes": 484,
+        "noteCiphertextBytes": 160,
+        "clueBytes": 68,
+        "scenario": "distinct-payers",
+        "feeEnabled": true,
+        "feeMechanism": "draw-deduction"
+      },
+      "available": true,
+      "gasUnits": "11225615"
+    },
+    {
+      "query": {
+        "kind": "draw-credit",
+        "capacity": 70,
+        "creditInputs": 70,
+        "distinctPayers": 70,
+        "sourceTrees": 1,
+        "noteOutputs": 1,
+        "creditOutputs": 70,
+        "creditCiphertextBytes": 484,
+        "noteCiphertextBytes": 160,
+        "clueBytes": 68,
+        "scenario": "distinct-payers",
+        "feeEnabled": false,
+        "feeMechanism": "none"
+      },
+      "available": true,
+      "gasUnits": "12547610"
+    },
+    {
+      "query": {
+        "kind": "draw-credit",
+        "capacity": 70,
+        "creditInputs": 70,
+        "distinctPayers": 70,
+        "sourceTrees": 1,
+        "noteOutputs": 1,
+        "creditOutputs": 70,
+        "creditCiphertextBytes": 484,
+        "noteCiphertextBytes": 160,
+        "clueBytes": 68,
+        "scenario": "distinct-payers",
+        "feeEnabled": true,
+        "feeMechanism": "draw-deduction"
+      },
+      "available": true,
+      "gasUnits": "12572339"
+    },
+    {
+      "query": {
+        "kind": "draw-credit",
+        "capacity": 80,
+        "creditInputs": 71,
+        "distinctPayers": 71,
+        "sourceTrees": 1,
+        "noteOutputs": 1,
+        "creditOutputs": 71,
+        "creditCiphertextBytes": 484,
+        "noteCiphertextBytes": 160,
+        "clueBytes": 68,
+        "scenario": "distinct-payers",
+        "feeEnabled": false,
+        "feeMechanism": "none"
+      },
+      "available": true,
+      "gasUnits": "12828129"
+    },
+    {
+      "query": {
+        "kind": "draw-credit",
+        "capacity": 80,
+        "creditInputs": 71,
+        "distinctPayers": 71,
+        "sourceTrees": 1,
+        "noteOutputs": 1,
+        "creditOutputs": 71,
+        "creditCiphertextBytes": 484,
+        "noteCiphertextBytes": 160,
+        "clueBytes": 68,
+        "scenario": "distinct-payers",
+        "feeEnabled": true,
+        "feeMechanism": "draw-deduction"
+      },
+      "available": true,
+      "gasUnits": "12852798"
+    },
+    {
+      "query": {
+        "kind": "draw-credit",
+        "capacity": 80,
+        "creditInputs": 80,
+        "distinctPayers": 80,
+        "sourceTrees": 1,
+        "noteOutputs": 1,
+        "creditOutputs": 80,
+        "creditCiphertextBytes": 484,
+        "noteCiphertextBytes": 160,
+        "clueBytes": 68,
+        "scenario": "distinct-payers",
+        "feeEnabled": false,
+        "feeMechanism": "none"
+      },
+      "available": true,
+      "gasUnits": "14185678"
+    },
+    {
+      "query": {
+        "kind": "draw-credit",
+        "capacity": 80,
+        "creditInputs": 80,
+        "distinctPayers": 80,
+        "sourceTrees": 1,
+        "noteOutputs": 1,
+        "creditOutputs": 80,
+        "creditCiphertextBytes": 484,
+        "noteCiphertextBytes": 160,
+        "clueBytes": 68,
+        "scenario": "distinct-payers",
+        "feeEnabled": true,
+        "feeMechanism": "draw-deduction"
+      },
+      "available": true,
+      "gasUnits": "14210299"
+    },
+    {
+      "query": {
+        "kind": "transact",
+        "capacity": 1,
+        "noteInputs": 1,
+        "noteOutputs": 0,
+        "sourceTrees": 1,
+        "noteCiphertextBytes": 160,
+        "clueBytes": 68,
+        "scenario": "mixed"
+      },
+      "available": true,
+      "gasUnits": "1083512"
+    },
+    {
+      "query": {
+        "kind": "transact",
+        "capacity": 2,
+        "noteInputs": 0,
+        "noteOutputs": 2,
+        "sourceTrees": 0,
+        "noteCiphertextBytes": 160,
+        "clueBytes": 68,
+        "scenario": "public-funding"
+      },
+      "available": true,
+      "gasUnits": "1647980"
+    },
+    {
+      "query": {
+        "kind": "transact",
+        "capacity": 3,
+        "noteInputs": 0,
+        "noteOutputs": 3,
+        "sourceTrees": 0,
+        "noteCiphertextBytes": 160,
+        "clueBytes": 68,
+        "scenario": "public-funding"
+      },
+      "available": true,
+      "gasUnits": "1736133"
+    },
+    {
+      "query": {
+        "kind": "transact",
+        "capacity": 4,
+        "noteInputs": 1,
+        "noteOutputs": 3,
+        "sourceTrees": 1,
+        "noteCiphertextBytes": 160,
+        "clueBytes": 68,
+        "scenario": "mixed"
+      },
+      "available": true,
+      "gasUnits": "1768554"
+    },
+    {
+      "query": {
+        "kind": "transact",
+        "capacity": 5,
+        "noteInputs": 0,
+        "noteOutputs": 5,
+        "sourceTrees": 0,
+        "noteCiphertextBytes": 160,
+        "clueBytes": 68,
+        "scenario": "public-funding"
+      },
+      "available": true,
+      "gasUnits": "1868166"
+    },
+    {
+      "query": {
+        "kind": "transact",
+        "capacity": 6,
+        "noteInputs": 0,
+        "noteOutputs": 6,
+        "sourceTrees": 0,
+        "noteCiphertextBytes": 160,
+        "clueBytes": 68,
+        "scenario": "public-funding"
+      },
+      "available": true,
+      "gasUnits": "1907330"
+    },
+    {
+      "query": {
+        "kind": "transact",
+        "capacity": 7,
+        "noteInputs": 0,
+        "noteOutputs": 7,
+        "sourceTrees": 0,
+        "noteCiphertextBytes": 160,
+        "clueBytes": 68,
+        "scenario": "public-funding"
+      },
+      "available": true,
+      "gasUnits": "1995386"
+    },
+    {
+      "query": {
+        "kind": "transact",
+        "capacity": 8,
+        "noteInputs": 1,
+        "noteOutputs": 7,
+        "sourceTrees": 1,
+        "noteCiphertextBytes": 160,
+        "clueBytes": 68,
+        "scenario": "mixed"
+      },
+      "available": true,
+      "gasUnits": "2032430"
+    },
+    {
+      "query": {
+        "kind": "transact",
+        "capacity": 9,
+        "noteInputs": 0,
+        "noteOutputs": 9,
+        "sourceTrees": 0,
+        "noteCiphertextBytes": 160,
+        "clueBytes": 68,
+        "scenario": "public-funding"
+      },
+      "available": true,
+      "gasUnits": "2132031"
+    },
+    {
+      "query": {
+        "kind": "transact",
+        "capacity": 10,
+        "noteInputs": 0,
+        "noteOutputs": 10,
+        "sourceTrees": 0,
+        "noteCiphertextBytes": 160,
+        "clueBytes": 68,
+        "scenario": "public-funding"
+      },
+      "available": true,
+      "gasUnits": "2171135"
+    },
+    {
+      "query": {
+        "kind": "transact",
+        "capacity": 20,
+        "noteInputs": 0,
+        "noteOutputs": 11,
+        "sourceTrees": 0,
+        "noteCiphertextBytes": 160,
+        "clueBytes": 68,
+        "scenario": "public-funding"
+      },
+      "available": true,
+      "gasUnits": "2309382"
+    },
+    {
+      "query": {
+        "kind": "transact",
+        "capacity": 20,
+        "noteInputs": 1,
+        "noteOutputs": 19,
+        "sourceTrees": 1,
+        "noteCiphertextBytes": 160,
+        "clueBytes": 68,
+        "scenario": "mixed"
+      },
+      "available": true,
+      "gasUnits": "2845840"
+    },
+    {
+      "query": {
+        "kind": "transact",
+        "capacity": 30,
+        "noteInputs": 0,
+        "noteOutputs": 21,
+        "sourceTrees": 0,
+        "noteCiphertextBytes": 160,
+        "clueBytes": 68,
+        "scenario": "public-funding"
+      },
+      "available": true,
+      "gasUnits": "2970146"
+    },
+    {
+      "query": {
+        "kind": "transact",
+        "capacity": 30,
+        "noteInputs": 0,
+        "noteOutputs": 30,
+        "sourceTrees": 0,
+        "noteCiphertextBytes": 160,
+        "clueBytes": 68,
+        "scenario": "public-funding"
+      },
+      "available": true,
+      "gasUnits": "3510478"
+    },
+    {
+      "query": {
+        "kind": "transact",
+        "capacity": 40,
+        "noteInputs": 0,
+        "noteOutputs": 31,
+        "sourceTrees": 0,
+        "noteCiphertextBytes": 160,
+        "clueBytes": 68,
+        "scenario": "public-funding"
+      },
+      "available": true,
+      "gasUnits": "3623541"
+    },
+    {
+      "query": {
+        "kind": "transact",
+        "capacity": 40,
+        "noteInputs": 1,
+        "noteOutputs": 39,
+        "sourceTrees": 1,
+        "noteCiphertextBytes": 160,
+        "clueBytes": 68,
+        "scenario": "mixed"
+      },
+      "available": true,
+      "gasUnits": "4171574"
+    },
+    {
+      "query": {
+        "kind": "transact",
+        "capacity": 50,
+        "noteInputs": 0,
+        "noteOutputs": 41,
+        "sourceTrees": 0,
+        "noteCiphertextBytes": 160,
+        "clueBytes": 68,
+        "scenario": "public-funding"
+      },
+      "available": true,
+      "gasUnits": "4296498"
+    },
+    {
+      "query": {
+        "kind": "transact",
+        "capacity": 50,
+        "noteInputs": 0,
+        "noteOutputs": 50,
+        "sourceTrees": 0,
+        "noteCiphertextBytes": 160,
+        "clueBytes": 68,
+        "scenario": "public-funding"
+      },
+      "available": true,
+      "gasUnits": "4843150"
+    },
+    {
+      "query": {
+        "kind": "transact",
+        "capacity": 60,
+        "noteInputs": 0,
+        "noteOutputs": 51,
+        "sourceTrees": 0,
+        "noteCiphertextBytes": 160,
+        "clueBytes": 68,
+        "scenario": "public-funding"
+      },
+      "available": true,
+      "gasUnits": "4981418"
+    },
+    {
+      "query": {
+        "kind": "transact",
+        "capacity": 60,
+        "noteInputs": 1,
+        "noteOutputs": 59,
+        "sourceTrees": 1,
+        "noteCiphertextBytes": 160,
+        "clueBytes": 68,
+        "scenario": "mixed"
+      },
+      "available": true,
+      "gasUnits": "5517267"
+    },
+    {
+      "query": {
+        "kind": "transact",
+        "capacity": 70,
+        "noteInputs": 0,
+        "noteOutputs": 61,
+        "sourceTrees": 0,
+        "noteCiphertextBytes": 160,
+        "clueBytes": 68,
+        "scenario": "public-funding"
+      },
+      "available": true,
+      "gasUnits": "5642748"
+    },
+    {
+      "query": {
+        "kind": "transact",
+        "capacity": 70,
+        "noteInputs": 0,
+        "noteOutputs": 70,
+        "sourceTrees": 0,
+        "noteCiphertextBytes": 160,
+        "clueBytes": 68,
+        "scenario": "public-funding"
+      },
+      "available": true,
+      "gasUnits": "6200517"
+    },
+    {
+      "query": {
+        "kind": "transact",
+        "capacity": 80,
+        "noteInputs": 0,
+        "noteOutputs": 71,
+        "sourceTrees": 0,
+        "noteCiphertextBytes": 160,
+        "clueBytes": 68,
+        "scenario": "public-funding"
+      },
+      "available": true,
+      "gasUnits": "6314206"
+    },
+    {
+      "query": {
+        "kind": "transact",
+        "capacity": 80,
+        "noteInputs": 1,
+        "noteOutputs": 79,
+        "sourceTrees": 1,
+        "noteCiphertextBytes": 160,
+        "clueBytes": 68,
+        "scenario": "mixed"
+      },
+      "available": true,
+      "gasUnits": "6860640"
+    },
+    {
+      "query": {
+        "kind": "transact",
+        "capacity": 90,
+        "noteInputs": 0,
+        "noteOutputs": 81,
+        "sourceTrees": 0,
+        "noteCiphertextBytes": 160,
+        "clueBytes": 68,
+        "scenario": "public-funding"
+      },
+      "available": true,
+      "gasUnits": "6986714"
+    },
+    {
+      "query": {
+        "kind": "transact",
+        "capacity": 90,
+        "noteInputs": 0,
+        "noteOutputs": 90,
+        "sourceTrees": 0,
+        "noteCiphertextBytes": 160,
+        "clueBytes": 68,
+        "scenario": "public-funding"
+      },
+      "available": true,
+      "gasUnits": "7532207"
+    },
+    {
+      "query": {
+        "kind": "transact",
+        "capacity": 100,
+        "noteInputs": 0,
+        "noteOutputs": 91,
+        "sourceTrees": 0,
+        "noteCiphertextBytes": 160,
+        "clueBytes": 68,
+        "scenario": "public-funding"
+      },
+      "available": true,
+      "gasUnits": "7646618"
+    },
+    {
+      "query": {
+        "kind": "transact",
+        "capacity": 100,
+        "noteInputs": 1,
+        "noteOutputs": 99,
+        "sourceTrees": 1,
+        "noteCiphertextBytes": 160,
+        "clueBytes": 68,
+        "scenario": "mixed"
+      },
+      "available": true,
+      "gasUnits": "8194247"
+    },
+    {
+      "query": {
+        "kind": "transact",
+        "capacity": 110,
+        "noteInputs": 0,
+        "noteOutputs": 101,
+        "sourceTrees": 0,
+        "noteCiphertextBytes": 160,
+        "clueBytes": 68,
+        "scenario": "public-funding"
+      },
+      "available": true,
+      "gasUnits": "8321133"
+    },
+    {
+      "query": {
+        "kind": "transact",
+        "capacity": 110,
+        "noteInputs": 0,
+        "noteOutputs": 110,
+        "sourceTrees": 0,
+        "noteCiphertextBytes": 160,
+        "clueBytes": 68,
+        "scenario": "public-funding"
+      },
+      "available": true,
+      "gasUnits": "8868005"
+    },
+    {
+      "query": {
+        "kind": "transact",
+        "capacity": 120,
+        "noteInputs": 0,
+        "noteOutputs": 111,
+        "sourceTrees": 0,
+        "noteCiphertextBytes": 160,
+        "clueBytes": 68,
+        "scenario": "public-funding"
+      },
+      "available": true,
+      "gasUnits": "9007923"
+    },
+    {
+      "query": {
+        "kind": "transact",
+        "capacity": 120,
+        "noteInputs": 1,
+        "noteOutputs": 119,
+        "sourceTrees": 1,
+        "noteCiphertextBytes": 160,
+        "clueBytes": 68,
+        "scenario": "mixed"
+      },
+      "available": true,
+      "gasUnits": "9557324"
+    },
+    {
+      "query": {
+        "kind": "transact",
+        "capacity": 130,
+        "noteInputs": 0,
+        "noteOutputs": 121,
+        "sourceTrees": 0,
+        "noteCiphertextBytes": 160,
+        "clueBytes": 68,
+        "scenario": "public-funding"
+      },
+      "available": true,
+      "gasUnits": "9684767"
+    },
+    {
+      "query": {
+        "kind": "transact",
+        "capacity": 130,
+        "noteInputs": 0,
+        "noteOutputs": 130,
+        "sourceTrees": 0,
+        "noteCiphertextBytes": 160,
+        "clueBytes": 68,
+        "scenario": "public-funding"
+      },
+      "available": true,
+      "gasUnits": "10252048"
+    },
+    {
+      "query": {
+        "kind": "transact",
+        "capacity": 140,
+        "noteInputs": 0,
+        "noteOutputs": 131,
+        "sourceTrees": 0,
+        "noteCiphertextBytes": 160,
+        "clueBytes": 68,
+        "scenario": "public-funding"
+      },
+      "available": true,
+      "gasUnits": "10367109"
+    },
+    {
+      "query": {
+        "kind": "transact",
+        "capacity": 140,
+        "noteInputs": 1,
+        "noteOutputs": 139,
+        "sourceTrees": 1,
+        "noteCiphertextBytes": 160,
+        "clueBytes": 68,
+        "scenario": "mixed"
+      },
+      "available": true,
+      "gasUnits": "10908725"
+    },
+    {
+      "query": {
+        "kind": "transact",
+        "capacity": 150,
+        "noteInputs": 0,
+        "noteOutputs": 141,
+        "sourceTrees": 0,
+        "noteCiphertextBytes": 160,
+        "clueBytes": 68,
+        "scenario": "public-funding"
+      },
+      "available": true,
+      "gasUnits": "11036655"
+    },
+    {
+      "query": {
+        "kind": "transact",
+        "capacity": 150,
+        "noteInputs": 0,
+        "noteOutputs": 150,
+        "sourceTrees": 0,
+        "noteCiphertextBytes": 160,
+        "clueBytes": 68,
+        "scenario": "public-funding"
+      },
+      "available": true,
+      "gasUnits": "11591647"
+    },
+    {
+      "query": {
+        "kind": "transact",
+        "capacity": 160,
+        "noteInputs": 0,
+        "noteOutputs": 151,
+        "sourceTrees": 0,
+        "noteCiphertextBytes": 160,
+        "clueBytes": 68,
+        "scenario": "public-funding"
+      },
+      "available": true,
+      "gasUnits": "11707311"
+    },
+    {
+      "query": {
+        "kind": "transact",
+        "capacity": 160,
+        "noteInputs": 1,
+        "noteOutputs": 159,
+        "sourceTrees": 1,
+        "noteCiphertextBytes": 160,
+        "clueBytes": 68,
+        "scenario": "mixed"
+      },
+      "available": true,
+      "gasUnits": "12264284"
+    },
+    {
+      "query": {
+        "kind": "transact",
+        "capacity": 170,
+        "noteInputs": 0,
+        "noteOutputs": 161,
+        "sourceTrees": 0,
+        "noteCiphertextBytes": 160,
+        "clueBytes": 68,
+        "scenario": "public-funding"
+      },
+      "available": true,
+      "gasUnits": "12392735"
+    },
+    {
+      "query": {
+        "kind": "transact",
+        "capacity": 170,
+        "noteInputs": 0,
+        "noteOutputs": 170,
+        "sourceTrees": 0,
+        "noteCiphertextBytes": 160,
+        "clueBytes": 68,
+        "scenario": "public-funding"
+      },
+      "available": true,
+      "gasUnits": "12944828"
+    },
+    {
+      "query": {
+        "kind": "transact",
+        "capacity": 180,
+        "noteInputs": 0,
+        "noteOutputs": 171,
+        "sourceTrees": 0,
+        "noteCiphertextBytes": 160,
+        "clueBytes": 68,
+        "scenario": "public-funding"
+      },
+      "available": true,
+      "gasUnits": "13060878"
+    },
+    {
+      "query": {
+        "kind": "transact",
+        "capacity": 180,
+        "noteInputs": 1,
+        "noteOutputs": 179,
+        "sourceTrees": 1,
+        "noteCiphertextBytes": 160,
+        "clueBytes": 68,
+        "scenario": "mixed"
+      },
+      "available": true,
+      "gasUnits": "13610187"
+    },
+    {
+      "query": {
+        "kind": "transact",
+        "capacity": 190,
+        "noteInputs": 0,
+        "noteOutputs": 181,
+        "sourceTrees": 0,
+        "noteCiphertextBytes": 160,
+        "clueBytes": 68,
+        "scenario": "public-funding"
+      },
+      "available": true,
+      "gasUnits": "13739353"
+    },
+    {
+      "query": {
+        "kind": "transact",
+        "capacity": 190,
+        "noteInputs": 0,
+        "noteOutputs": 190,
+        "sourceTrees": 0,
+        "noteCiphertextBytes": 160,
+        "clueBytes": 68,
+        "scenario": "public-funding"
+      },
+      "available": true,
+      "gasUnits": "14293268"
+    },
+    {
+      "query": {
+        "kind": "transact",
+        "capacity": 2,
+        "noteInputs": 0,
+        "noteOutputs": 2,
+        "sourceTrees": 0,
+        "noteCiphertextBytes": 160,
+        "clueBytes": 68,
+        "scenario": "public-funding"
+      },
+      "available": true,
+      "gasUnits": "1647980"
+    },
+    {
+      "query": {
+        "kind": "transact",
+        "capacity": 2,
+        "noteInputs": 1,
+        "noteOutputs": 1,
+        "sourceTrees": 1,
+        "noteCiphertextBytes": 160,
+        "clueBytes": 68,
+        "scenario": "private"
+      },
+      "available": true,
+      "gasUnits": "1541975"
+    },
+    {
+      "query": {
+        "kind": "transact",
+        "capacity": 2,
+        "noteInputs": 2,
+        "noteOutputs": 0,
+        "sourceTrees": 1,
+        "noteCiphertextBytes": 160,
+        "clueBytes": 68,
+        "scenario": "withdrawal"
+      },
+      "available": true,
+      "gasUnits": "1069449"
+    },
+    {
+      "query": {
+        "kind": "transact",
+        "capacity": 10,
+        "noteInputs": 0,
+        "noteOutputs": 10,
+        "sourceTrees": 0,
+        "noteCiphertextBytes": 160,
+        "clueBytes": 68,
+        "scenario": "public-funding"
+      },
+      "available": true,
+      "gasUnits": "2171135"
+    },
+    {
+      "query": {
+        "kind": "transact",
+        "capacity": 10,
+        "noteInputs": 1,
+        "noteOutputs": 9,
+        "sourceTrees": 1,
+        "noteCiphertextBytes": 160,
+        "clueBytes": 68,
+        "scenario": "private"
+      },
+      "available": true,
+      "gasUnits": "2068161"
+    },
+    {
+      "query": {
+        "kind": "transact",
+        "capacity": 10,
+        "noteInputs": 10,
+        "noteOutputs": 0,
+        "sourceTrees": 1,
+        "noteCiphertextBytes": 160,
+        "clueBytes": 68,
+        "scenario": "withdrawal"
+      },
+      "available": true,
+      "gasUnits": "1284946"
+    },
+    {
+      "query": {
+        "kind": "transact",
+        "capacity": 190,
+        "noteInputs": 0,
+        "noteOutputs": 190,
+        "sourceTrees": 0,
+        "noteCiphertextBytes": 160,
+        "clueBytes": 68,
+        "scenario": "public-funding"
+      },
+      "available": true,
+      "gasUnits": "14293268"
+    },
+    {
+      "query": {
+        "kind": "transact",
+        "capacity": 190,
+        "noteInputs": 1,
+        "noteOutputs": 189,
+        "sourceTrees": 1,
+        "noteCiphertextBytes": 160,
+        "clueBytes": 68,
+        "scenario": "private"
+      },
+      "available": true,
+      "gasUnits": "14188641"
+    },
+    {
+      "query": {
+        "kind": "transact",
+        "capacity": 190,
+        "noteInputs": 190,
+        "noteOutputs": 0,
+        "sourceTrees": 1,
+        "noteCiphertextBytes": 160,
+        "clueBytes": 68,
+        "scenario": "withdrawal"
+      },
+      "available": true,
+      "gasUnits": "6223162"
+    }
+  ],
+  "unsupported": [
+    {
+      "kind": "aggregate"
+    },
+    {
+      "kind": "draw-credit",
+      "capacity": 2,
+      "creditInputs": 2,
+      "distinctPayers": 1
+    }
+  ]
+}

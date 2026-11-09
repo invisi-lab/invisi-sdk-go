@@ -52,9 +52,6 @@ func CloneMemo(memo []byte) []byte {
 // Clone returns an independent note including its opaque payload.
 func (n Note) Clone() Note { n.Payload = CloneMemo(n.Payload); return n }
 
-// Clone returns an independent Credit note including its opaque payload.
-func (n CreditNote) Clone() CreditNote { n.Payload = CloneMemo(n.Payload); return n }
-
 // Equal compares the preimage and optional delivery metadata.
 func (n Note) Equal(other Note) bool {
 	return n.ProtocolContext == other.ProtocolContext && n.OwnerAddress == other.OwnerAddress && n.TokenAddress == other.TokenAddress && n.Amount == other.Amount && n.Nonce == other.Nonce && bytes.Equal(n.Payload, other.Payload)

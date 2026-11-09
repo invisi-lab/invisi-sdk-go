@@ -9,24 +9,14 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 
-	"github.com/invisi-lab/invisi-sdk-go/core"
 	"github.com/invisi-lab/invisi-sdk-go/protocol"
 	"github.com/invisi-lab/invisi-sdk-go/protocol/contracts"
 )
 
 func (o *Execution) Sources() []protocol.InputSource {
 	p := o.Plan
-	switch {
-	case p.Kind == "transact":
+	if p.Kind == "transact" {
 		return p.Params.Sources
-	case p.TopUpCredit != nil:
-		return append(append([]protocol.InputSource{}, p.TopUpCredit.Creation.Sources...), p.TopUpCredit.CreditSource)
-	case p.CreateCredit != nil:
-		return p.CreateCredit.Sources
-	case p.DrawCredit != nil:
-		return p.DrawCredit.Sources
-	case p.CancelCredit != nil:
-		return []protocol.InputSource{p.CancelCredit.Source}
 	}
 	return nil
 }
@@ -81,9 +71,7 @@ func (o *Execution) ValidateExport(ctx context.Context) error {
 	for _, n := range o.Plan.Inputs {
 		nullifiers = append(nullifiers, n.Nullifier)
 	}
-	for _, c := range o.Plan.CreditInputs {
-		nullifiers = append(nullifiers, c.Nullifier)
-	}
+
 	for _, nf := range nullifiers {
 		spent, err := caller.IsNullifierSpent(options, nf)
 		if err != nil {
@@ -100,39 +88,6 @@ func OperationExpired(p Plan, now uint64) bool {
 	if now > p.Deadline {
 		return true
 	}
-	timestamp := new(big.Int).SetUint64(now)
-	if p.TopUpCredit != nil && timestamp.Cmp(p.TopUpCredit.PreviousExpiry) >= 0 {
-		return true
-	}
-	if p.CreateCredit != nil && timestamp.Cmp(p.CreateCredit.Expiry) >= 0 {
-		return true
-	}
-	if p.DrawCredit != nil {
-		if core.CreditPeriods(now) != core.CreditPeriods(p.Block.Timestamp) {
-			return true
-		}
-		for _, expiry := range p.DrawCredit.Expiries {
-			if timestamp.Cmp(expiry) >= 0 {
-				return true
-			}
-		}
-	}
-	return false
-}
 
-func (o *Execution) CheckDrawPeriod(ctx context.Context) error {
-	if o.Plan.DrawCredit == nil {
-		return nil
-	}
-	header, err := o.Runtime.Options.Provider.HeaderByNumber(ctx, nil)
-	if err != nil {
-		return err
-	}
-	if header == nil || header.Number == nil {
-		return errors.New("latest block unavailable")
-	}
-	if core.CreditPeriods(header.Time) != core.CreditPeriods(o.Plan.Block.Timestamp) {
-		return errors.New("Credit draw crossed a UTC period; prepare again")
-	}
-	return nil
+	return false
 }

@@ -9,20 +9,19 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 
 	"github.com/invisi-lab/invisi-sdk-go/core"
-	gasmodel "github.com/invisi-lab/invisi-sdk-go/internal/gas"
 	"github.com/invisi-lab/invisi-sdk-go/protocol"
 	protocolrpc "github.com/invisi-lab/invisi-sdk-go/rpc"
 )
 
 type Inventory struct {
-	Notes                           map[common.Hash]NoteRecord
-	Credits                         map[string]CreditRecord
+	Notes map[common.Hash]NoteRecord
+
 	Invalidated                     bool
 	ObservedThrough, CheckedThrough *protocolrpc.CanonicalBlock
 }
 
 func EmptyInventory() Inventory {
-	return Inventory{Notes: map[common.Hash]NoteRecord{}, Credits: map[string]CreditRecord{}}
+	return Inventory{Notes: map[common.Hash]NoteRecord{}}
 }
 
 type RuntimeOptions struct {
@@ -50,7 +49,6 @@ type Runtime struct {
 
 func (i *Invisi) GetInfrastructure() InvisiOptions {
 	o := i.options
-	o.GasBenchmarks = gasmodel.CopyGasProfiles(o.GasBenchmarks)
 	return o
 }
 func SnapshotWallet(ref WalletReference) (*Wallet, error) {

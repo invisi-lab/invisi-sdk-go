@@ -130,7 +130,7 @@ func TestProtocolRPCRejectsUnsupportedNamespaceAndMetadata(t *testing.T) {
 			t.Fatal("unsupported RPC namespace accepted")
 		}
 	}
-	for _, versions := range [][2]string{{"v2", "2"}, {"v1", "2"}, {"v2", "1"}} {
+	for _, versions := range [][2]string{{"v2", "1"}, {"v1", "2"}, {"v2", "2"}} {
 		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			json.NewEncoder(w).Encode(map[string]any{"apiVersion": versions[0], "chains": []any{map[string]any{"chainId": "31337", "protocolVersion": versions[1], "rpcPath": "/v1/chains/31337"}}})
 		}))

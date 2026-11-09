@@ -36,7 +36,7 @@ func TestUpdatesAuthenticateTransitionBlockTimestamp(t *testing.T) {
 			if corrupt.Load() {
 				claimed.Timestamp++
 			}
-			result = map[string]any{"blockHash": block.Hash, "creditTransitions": []any{map[string]any{"transactionHash": common.HexToHash("0x1234"), "logIndex": 1, "block": claimed}}}
+			result = []any{map[string]any{"transactionHash": common.HexToHash("0x1234"), "logIndex": 1, "block": claimed, "name": "CreditDraw", "data": map[string]any{}}}
 		}
 		json.NewEncoder(w).Encode(map[string]any{"jsonrpc": "2.0", "id": request.ID, "result": result})
 	}))
@@ -47,15 +47,15 @@ func TestUpdatesAuthenticateTransitionBlockTimestamp(t *testing.T) {
 	}
 	c = c.WithProvider(provider)
 	ctx := DeploymentContext{31337, deployment.Protocol.Address}
-	updates, e := c.GetUpdates(context.Background(), ctx, ProtocolUpdateRange{FromBlock: 10, ToBlock: 10})
+	updates, e := c.GetCreditTransitions(context.Background(), ctx, ProtocolUpdateRange{FromBlock: 10, ToBlock: 10})
 	if e != nil {
 		t.Fatal(e)
 	}
-	if len(updates.References) != 1 || updates.References[0].Block.Timestamp != provider.header.Time {
+	if len(updates.Transitions) != 1 || updates.Transitions[0].Block.Timestamp != provider.header.Time {
 		t.Fatal("timestamp not retained")
 	}
 	corrupt.Store(true)
-	if _, e = c.GetUpdates(context.Background(), ctx, ProtocolUpdateRange{FromBlock: 10, ToBlock: 10}); e == nil {
+	if _, e = c.GetCreditTransitions(context.Background(), ctx, ProtocolUpdateRange{FromBlock: 10, ToBlock: 10}); e == nil {
 		t.Fatal("forged transition timestamp accepted")
 	}
 }

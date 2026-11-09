@@ -66,17 +66,7 @@ func (o *Operation) reconcileSpendState(ctx context.Context) (transaction.Confir
 					state.Notes[input.Commitment] = note
 				}
 			}
-			for _, input := range o.plan.CreditInputs {
-				for key, credit := range state.Credits {
-					if credit.Commitment == input.Commitment {
-						credit.Spent = credit.Spent || spent[input.Commitment]
-						if credit.ReservedBy == o.plan.ID {
-							credit.ReservedBy = ""
-						}
-						state.Credits[key] = credit
-					}
-				}
-			}
+
 			record.ResolvedAt = &block
 			state.CheckedThrough = &block
 		} else if !record.Externalized && o.transactionHash == (common.Hash{}) {
@@ -109,13 +99,7 @@ func (o *Operation) spentAt(ctx context.Context, height *big.Int) (map[common.Ha
 		}
 		result[input.Commitment] = value
 	}
-	for _, input := range o.plan.CreditInputs {
-		value, err := caller.IsNullifierSpent(options, input.Nullifier)
-		if err != nil {
-			return nil, err
-		}
-		result[input.Commitment] = value
-	}
+
 	return result, nil
 }
 
