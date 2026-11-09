@@ -32,3 +32,6 @@ go.work.sum
 .vscode/
 
 .worktrees/
+
+# Authenticated local provenance artifacts (independent of main circuit assets)
+.cache/provenance/

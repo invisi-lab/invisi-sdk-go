@@ -1,0 +1,135 @@
+{
+  "testOnlySyntheticStatement": true,
+  "cryptographicProofMock": true,
+  "scope": {
+    "chainId": "31337",
+    "protocolAddress": "1",
+    "policyId": "3"
+  },
+  "providerId": "1",
+  "signingKeyId": "0x0000000000000000000000000000000000000000000000000000000000000002",
+  "publicKey": "0xea4a6c63e29c520abef5507b132ec5f9954776aebebe7b92421eea691446d22c",
+  "manifestSha256": "f90f2ce43218de158c6392fa19e6517dda703c35823a4aa5bfc20b50788ad282",
+  "intent": {
+    "chainId": "31337",
+    "protocolAddress": "1",
+    "policyId": "3",
+    "tokenAddress": "2",
+    "operationDigest": "4",
+    "inputNullifiers": [
+      "17057820379407777908177551715212694371742026589151898573368165276953626157056"
+    ],
+    "calldata": "0x1234",
+    "calldataHash": "0x56570de287d73cd1cb6092bb8fdee6173974955fdef345ae579ee9f475ea7432",
+    "signedRequestHash": "0x000000000000000000000000000000000000000000000000000000000000007b",
+    "operationIndex": "0"
+  },
+  "sidecars": [
+    {
+      "operationIndex": "0",
+      "proofBundle": {
+        "format": "invisi-provenance-proof-v1",
+        "circuitId": "provenance_k1",
+        "manifestSha256": "f90f2ce43218de158c6392fa19e6517dda703c35823a4aa5bfc20b50788ad282",
+        "target": "evm",
+        "publicInputs": [
+          "0x0000000000000000000000000000000000000000000000000000000000007a69",
+          "0x0000000000000000000000000000000000000000000000000000000000000001",
+          "0x0000000000000000000000000000000000000000000000000000000000000002",
+          "0x0000000000000000000000000000000000000000000000000000000000000000",
+          "0x0000000000000000000000000000000000000000000000000000000000000003",
+          "0x0000000000000000000000000000000000000000000000000000000000000001",
+          "0x0000000000000000000000000000000000000000000000000000000000000001",
+          "0x2c2d6ec50247acc679ea2a8d039fb3276f233b2204ae8f31f63306c377ba74da",
+          "0x0000000000000000000000000000000000000000000000000000000000000001",
+          "0x0000000000000000000000000000000000000000000000000000000000000000",
+          "0x0000000000000000000000000000000000000000000000000000000000000004",
+          "0x27d199049032364494e055c75ae1ea280d4ef39f406fb327c090c9723b88fee6",
+          "0x127735f24357b47e1fafef2de7c5b96b8b76e2ce858c12b98492b7138f9202eb"
+        ],
+        "proof": "0x01",
+        "rootCertificates": [
+          {
+            "certificateVersion": "1",
+            "providerId": "1",
+            "signingKeyId": "2",
+            "policyId": "3",
+            "chainId": "31337",
+            "protocolAddress": "1",
+            "chainGeneration": "1",
+            "rootSequence": "7",
+            "treeId": "1",
+            "leafCount": "1",
+            "root": "7492229630650750135880755997619876180134700446007425352409240157726225580657",
+            "confirmedBlockNumber": "11",
+            "confirmedBlockHash": "12",
+            "decisionLogHash": "13",
+            "previousCheckpointHash": "14",
+            "issuedAt": "15",
+            "signature": "0x636de1f7bafc68abb2410e2071519c2cb31c0e4a7bb5426829f6dcc909780966bb6e190a594f7b98879c32e2d08a2e416e898946d4e47aa5d175a013c2c9290c"
+          }
+        ]
+      }
+    },
+    {
+      "operationIndex": "0",
+      "proofBundle": {
+        "format": "invisi-provenance-proof-v1",
+        "circuitId": "provenance_k1",
+        "manifestSha256": "f90f2ce43218de158c6392fa19e6517dda703c35823a4aa5bfc20b50788ad282",
+        "target": "evm",
+        "publicInputs": [
+          "0x0000000000000000000000000000000000000000000000000000000000007a69",
+          "0x0000000000000000000000000000000000000000000000000000000000000001",
+          "0x0000000000000000000000000000000000000000000000000000000000000002",
+          "0x0000000000000000000000000000000000000000000000000000000000000000",
+          "0x0000000000000000000000000000000000000000000000000000000000000003",
+          "0x0000000000000000000000000000000000000000000000000000000000000002",
+          "0x0000000000000000000000000000000000000000000000000000000000000001",
+          "0x13aa7fc376ea61350924c1b35fd518babd81090939699c0d6820ce1fb3354388",
+          "0x0000000000000000000000000000000000000000000000000000000000000001",
+          "0x0000000000000000000000000000000000000000000000000000000000000000",
+          "0x0000000000000000000000000000000000000000000000000000000000000004",
+          "0x27d199049032364494e055c75ae1ea280d4ef39f406fb327c090c9723b88fee6",
+          "0x1c522df3223e730e79a15e06b44f6022a283817d134b339f712a2462c605f84c"
+        ],
+        "proof": "0x01",
+        "rootCertificates": [
+          {
+            "certificateVersion": "1",
+            "providerId": "1",
+            "signingKeyId": "2",
+            "policyId": "3",
+            "chainId": "31337",
+            "protocolAddress": "1",
+            "chainGeneration": "2",
+            "rootSequence": "7",
+            "treeId": "1",
+            "leafCount": "1",
+            "root": "7492229630650750135880755997619876180134700446007425352409240157726225580657",
+            "confirmedBlockNumber": "11",
+            "confirmedBlockHash": "12",
+            "decisionLogHash": "13",
+            "previousCheckpointHash": "14",
+            "issuedAt": "15",
+            "signature": "0xe3fd85d5c456770bf60c1ca08cce7579296374ee4bff3edb68e61723c157b106cf1f8534a9bd799bc5fd3ec05f0ea20fe3d49267bb6ca0c4b7765446e97c9e0c"
+          }
+        ]
+      }
+    }
+  ],
+  "submissionKeys": [
+    "stable:d8acf653cdf74e721e26d77f7228faecc7e242f2d09f7b4de53e4ba635d8979e",
+    "stable:4a86f9e240eaed936ec82906fd3b35c72c9715a59da8c8d4a8747a7a4ac7ceb0"
+  ],
+  "idempotencyLimits": {
+    "baseMaxAsciiBytes": 63,
+    "derivedMaxAsciiBytes": 128,
+    "rejectedBaseByteLengths": [
+      64,
+      128
+    ],
+    "maxBaseSubmissionKey": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa:d8acf653cdf74e721e26d77f7228faecc7e242f2d09f7b4de53e4ba635d8979e"
+  },
+  "revisionMaxSafeInteger": "9007199254740991"
+}
