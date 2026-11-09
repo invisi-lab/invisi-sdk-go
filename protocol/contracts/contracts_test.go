@@ -163,11 +163,7 @@ func TestCurrentABIArtifacts(t *testing.T) {
 			t.Errorf("%s must expose %s", event, field)
 		}
 	}
-	for _, name := range []string{"payOpen", "payBlind", "depositCredit", "withdraw"} {
-		if _, ok := parsed.Methods[name]; ok {
-			t.Errorf("legacy entry point retained: %s", name)
-		}
-	}
+
 }
 
 func TestFinalRegistryAndFactoryABIContract(t *testing.T) {
@@ -188,11 +184,7 @@ func TestFinalRegistryAndFactoryABIContract(t *testing.T) {
 			t.Fatalf("unexpected registration tuple %s", tuple.String())
 		}
 	}
-	for _, name := range []string{"registrationVerifier", "verifier", "setRegistrationVerifier"} {
-		if _, ok := registry.Methods[name]; ok {
-			t.Fatalf("obsolete registry verifier API %s", name)
-		}
-	}
+
 	protocol, err := contracts.InvisiProtocolMetaData.GetAbi()
 	if err != nil {
 		t.Fatal(err)

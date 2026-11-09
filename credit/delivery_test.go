@@ -51,9 +51,9 @@ func TestCanonicalDeferredDelivery(t *testing.T) {
 		if _, e := Decrypt(private, roundtrip, context, role); e != nil {
 			t.Fatal(e)
 		}
-		cipher[0] = 0x81
+		cipher[0] = 0xff
 		if _, e := Decrypt(private, cipher, context, role); e == nil {
-			t.Fatal("accepted retired envelope")
+			t.Fatal("accepted unknown envelope format")
 		}
 		context.RecipientIdentity = core.ElementFromUint64(999)
 		if _, e := Decrypt(private, roundtrip, context, role); e == nil {

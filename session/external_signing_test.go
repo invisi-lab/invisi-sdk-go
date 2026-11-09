@@ -155,7 +155,7 @@ func TestManagedExplicitCommitmentsConsumeEntireSelectedSubset(t *testing.T) {
 	}
 }
 
-func TestOwnerFullPayoutRemainsUnifiedTransfer(t *testing.T) {
+func TestOwnerFullPayoutUsesTransfer(t *testing.T) {
 	invisi, input, _ := explicitFixture(t)
 	input.Outputs = nil
 	input.Withdrawal = &sdk.Withdrawal{To: input.Wallet.OwnerAddress(), Amount: big.NewInt(100)}
@@ -164,7 +164,7 @@ func TestOwnerFullPayoutRemainsUnifiedTransfer(t *testing.T) {
 		t.Fatal(err)
 	}
 	if prepared.Kind() != "transfer" {
-		t.Fatal("legacy operation kind remains", prepared.Kind())
+		t.Fatal("unexpected transfer operation kind", prepared.Kind())
 	}
 	if prepared.Preview().NeedsWalletAuthorization {
 		t.Fatal("full owner payout must not require arbitrary spending authority")

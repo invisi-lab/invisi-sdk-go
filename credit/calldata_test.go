@@ -51,18 +51,17 @@ func TestLifecycleCalldataUsesCurrentSignatures(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	for _, name := range []string{"createCredit", "creditDraw", "updateCredit", "revokeCredit"} {
+	if len(a.Methods) != 6 {
+		t.Fatal("unexpected Credit lifecycle method count", len(a.Methods))
+	}
+	for _, name := range []string{"createCredit", "creditDraw", "updateCredit", "revokeCredit", "creditAllocation", "creditRevocationBitmap"} {
 		if _, ok := a.Methods[name]; !ok {
 			t.Fatalf("missing %s", name)
 		}
 	}
-	for _, name := range []string{"topUpCredit", "cancelCredit"} {
-		if _, ok := a.Methods[name]; ok {
-			t.Fatalf("retired method %s", name)
-		}
-	}
+
 	if len(a.Methods["createCredit"].Inputs) != 3 || len(a.Methods["updateCredit"].Inputs) != 3 {
-		t.Fatal("Credit carries obsolete funding ABI")
+		t.Fatal("unexpected Credit proof/params/delivery signature")
 	}
 	for _, name := range []string{"CreditCreated", "CreditDraw", "CreditUpdated", "CreditRevoked"} {
 		if _, ok := a.Events[name]; !ok {

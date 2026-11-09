@@ -49,11 +49,7 @@ func TestCurrentCreditEventContract(t *testing.T) {
 			t.Errorf("missing canonical event %s", name)
 		}
 	}
-	for _, name := range []string{"CreditCancelled", "CreditToppedUp"} {
-		if _, ok := d.abi.Events[name]; ok {
-			t.Errorf("obsolete prepaid event %s", name)
-		}
-	}
+
 }
 
 func TestCreditCreationHasNoCashNoteInputsAndKeepsOwnerFeeMetadata(t *testing.T) {

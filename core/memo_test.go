@@ -94,7 +94,7 @@ func TestMemoTextValidation(t *testing.T) {
 		t.Fatal("257 byte text accepted")
 	}
 }
-func TestMalformedMemoLengthsAndRetiredVersions(t *testing.T) {
+func TestMalformedMemoLengthsAndUnknownEnvelopeFormat(t *testing.T) {
 	note, private, public, context := memoNote(t)
 	for _, tail := range [][]byte{{}, {0}, {1, 1}, {0, 0, 1}} {
 		plain := append(encodeNote(note)[:80], tail...)
@@ -112,6 +112,6 @@ func TestMalformedMemoLengthsAndRetiredVersions(t *testing.T) {
 	}
 	ciphertext[0] = 2
 	if _, err = DecryptPrivateTransferNote(private, ciphertext, context); err == nil {
-		t.Fatal("retired version accepted")
+		t.Fatal("unknown envelope format accepted")
 	}
 }

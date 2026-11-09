@@ -54,7 +54,7 @@ func TestUnknownApplicationPayloadIsOpaque(t *testing.T) {
 		bad := bytes.Clone(ciphertext)
 		bad[0] = header
 		if _, err = DecryptPrivateTransferNote(private, bad, context); err == nil {
-			t.Fatal("retired/unknown envelope accepted")
+			t.Fatal("unknown Note envelope accepted")
 		}
 	}
 }

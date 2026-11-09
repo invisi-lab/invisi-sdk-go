@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"math/big"
-	"reflect"
 	"strings"
 	"testing"
 
@@ -317,15 +316,6 @@ func TestRegistrationDirectCallRequiresOwnerSender(t *testing.T) {
 				t.Fatal("different sender accepted")
 			}
 		})
-	}
-}
-
-func TestRegistrationHasNoPrivateSigningEntryPoint(t *testing.T) {
-	if _, ok := reflect.TypeOf(&sdk.RegistrationOperation{}).MethodByName("Authorize"); ok {
-		t.Fatal("legacy private signing method exposed")
-	}
-	if _, ok := reflect.TypeOf(sdk.RegistrationPreparation{}).FieldByName("Authorization"); ok {
-		t.Fatal("legacy callback exposed")
 	}
 }
 

@@ -67,8 +67,8 @@ func TestExecutorRejectsArtifactMismatchAndHonorsCancellation(t *testing.T) {
 		t.Fatal(err)
 	}
 	executor := noirWitnessExecutor{binary: "must-not-execute", timeout: time.Minute}
-	if _, err = executor.Execute(context.Background(), []byte(`{"noir_version":"old"}`), witness); err == nil {
-		t.Fatal("obsolete artifact accepted")
+	if _, err = executor.Execute(context.Background(), []byte(`{"noir_version":"invalid-version"}`), witness); err == nil {
+		t.Fatal("mismatched Noir artifact accepted")
 	}
 	artifact, err := resources.ReadFile("circuits/credit_update.json")
 	if err != nil {

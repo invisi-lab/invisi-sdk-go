@@ -66,7 +66,7 @@ func TestProofBundleUsesTypeScriptExchangeFormat(t *testing.T) {
 	}
 }
 
-func TestProofBundleRejectsPreviousBBVersion(t *testing.T) {
+func TestProofBundleRejectsMismatchedBackendVersion(t *testing.T) {
 	statement, err := Statement("credit_update", "evm", make([]common.Hash, 17))
 	if err != nil {
 		t.Fatal(err)
@@ -77,14 +77,14 @@ func TestProofBundleRejectsPreviousBBVersion(t *testing.T) {
 	if err := AssertProofBundle(bundle, statement); err != nil {
 		t.Fatal(err)
 	}
-	bundle.BBVersion = "5.2.1"
+	bundle.BBVersion = "invalid-backend-version"
 	if err := AssertProofBundle(bundle, statement); err == nil {
-		t.Fatal("previous BB proof accepted")
+		t.Fatal("mismatched backend proof accepted")
 	}
 }
 
-func TestRegistrationIsNotAProofCircuit(t *testing.T) {
-	if _, err := Statement("wallet_registration", "evm", make([]common.Hash, 3)); err == nil {
-		t.Fatal("removed registration circuit accepted")
+func TestUnknownCircuitIsRejected(t *testing.T) {
+	if _, err := Statement("not_a_circuit", "evm", make([]common.Hash, 3)); err == nil {
+		t.Fatal("unknown circuit accepted")
 	}
 }

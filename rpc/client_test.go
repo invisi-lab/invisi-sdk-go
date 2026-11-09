@@ -121,7 +121,7 @@ func TestHTTPOverloadCarriesRetryGuidance(t *testing.T) {
 
 func TestProtocolRPCRejectsUnsupportedNamespaceAndMetadata(t *testing.T) {
 	ctx := context.Background()
-	for _, endpoint := range []string{"https://example.com/v2", "https://example.com/v2/chains/31337"} {
+	for _, endpoint := range []string{"https://example.com/unsupported", "https://example.com/unsupported/chains/31337"} {
 		client, err := NewProtocolRpcClient(endpoint)
 		if err != nil {
 			t.Fatal(err)
@@ -130,7 +130,7 @@ func TestProtocolRPCRejectsUnsupportedNamespaceAndMetadata(t *testing.T) {
 			t.Fatal("unsupported RPC namespace accepted")
 		}
 	}
-	for _, versions := range [][2]string{{"v2", "1"}, {"v1", "2"}, {"v2", "2"}} {
+	for _, versions := range [][2]string{{"unsupported", "1"}, {"v1", "unsupported"}, {"unsupported", "unsupported"}} {
 		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			json.NewEncoder(w).Encode(map[string]any{"apiVersion": versions[0], "chains": []any{map[string]any{"chainId": "31337", "protocolVersion": versions[1], "rpcPath": "/v1/chains/31337"}}})
 		}))

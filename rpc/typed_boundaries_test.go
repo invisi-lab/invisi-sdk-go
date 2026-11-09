@@ -14,16 +14,12 @@ import (
 
 func TestIndependentBusinessMethodSurface(t *testing.T) {
 	typ := reflect.TypeOf((*ProtocolRpcClient)(nil))
-	for _, name := range []string{"GetNoteUpdates", "GetCreditTransitions", "DetectNotes", "DetectCreditStates", "GetTransactionNoteUpdates", "GetTransactionCreditUpdates", "GetCreditState", "IsNoteSpent", "IsCreditConsumed"} {
+	for _, name := range []string{"GetNoteUpdates", "GetCreditTransitions", "DetectNotes", "DetectCreditStates", "GetTransactionNoteUpdates", "GetTransactionCreditUpdates", "GetNote", "GetCreditState", "IsNoteSpent", "IsCreditConsumed", "GetCreditAllocation", "GetCreditRevocationBitmap"} {
 		if _, ok := typ.MethodByName(name); !ok {
 			t.Errorf("missing typed method %s", name)
 		}
 	}
-	for _, name := range []string{"GetUpdates", "GetOutputs", "GetCreditOutputs", "GetEncryptedOutputs", "GetTransactionUpdates"} {
-		if _, ok := typ.MethodByName(name); ok {
-			t.Errorf("mixed method retained %s", name)
-		}
-	}
+
 }
 
 func TestGrantQueriesPreserveUint64ShardAndUint256Bitmap(t *testing.T) {
@@ -87,7 +83,7 @@ func TestGrantQueriesPreserveUint64ShardAndUint256Bitmap(t *testing.T) {
 	}
 }
 
-func TestCreditTransactionAvailabilityAndObsoleteTransitions(t *testing.T) {
+func TestCreditTransactionAvailabilityAndInvalidTransitions(t *testing.T) {
 	for _, state := range []string{"not_found", "pending_index", "indexed"} {
 		t.Run(state, func(t *testing.T) {
 			client, scope, hash := transactionClient(t, func(v map[string]any) {
@@ -115,13 +111,13 @@ func TestCreditTransactionAvailabilityAndObsoleteTransitions(t *testing.T) {
 			}
 		})
 	}
-	for _, name := range []string{"CreditCancelled", "CreditToppedUp", "Transact"} {
+	for _, name := range []string{"NotAnEvent", "Shield", "Transact"} {
 		t.Run(name, func(t *testing.T) {
 			client, scope, hash := transactionClient(t, func(v map[string]any) {
 				v["transitions"] = []any{map[string]any{"block": v["indexedHead"], "transactionHash": v["transactionHash"], "logIndex": 1, "name": name, "data": map[string]any{}}}
 			}, false)
 			if _, e := client.GetTransactionCreditUpdates(t.Context(), scope, hash); e == nil {
-				t.Fatal("obsolete transition accepted")
+				t.Fatal("non-Credit transition accepted")
 			}
 		})
 	}

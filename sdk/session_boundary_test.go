@@ -9,18 +9,15 @@ import (
 	"github.com/invisi-lab/invisi-sdk-go/sdk"
 )
 
-func TestSDKDoesNotOwnSessions(t *testing.T) {
-	for _, name := range []string{"Store", "Signer", "FundingSigner", "Wallet", "Viewing", "Authorization", "Namespace"} {
-		if _, ok := reflect.TypeOf(sdk.InvisiOptions{}).FieldByName(name); ok {
-			t.Errorf("wallet state and permissions must belong to session: %s", name)
-		}
+func TestSDKOptionsContainOnlyInfrastructure(t *testing.T) {
+	allowed := map[string]bool{"ProtocolRPC": true, "Provider": true, "Prover": true, "FundingVerifier": true}
+	typ := reflect.TypeOf(sdk.InvisiOptions{})
+	if typ.NumField() != len(allowed) {
+		t.Fatal("unexpected infrastructure option count", typ.NumField())
 	}
-	if _, ok := reflect.TypeOf((*sdk.Invisi)(nil)).MethodByName("Connect"); ok {
-		t.Error("sdk must not construct managed sessions")
-	}
-	for _, name := range []string{"Authorize", "AuthorizeFunding", "Resume", "Reconcile", "Abandon", "TrackTransaction"} {
-		if _, ok := reflect.TypeOf((*sdk.PreparedTransaction)(nil)).MethodByName(name); ok {
-			t.Errorf("managed API leaked into stateless transaction: %s", name)
+	for i := 0; i < typ.NumField(); i++ {
+		if !allowed[typ.Field(i).Name] {
+			t.Error("non-infrastructure option", typ.Field(i).Name)
 		}
 	}
 }

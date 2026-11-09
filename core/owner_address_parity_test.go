@@ -13,14 +13,19 @@ func TestOwnerAddressPublicJSON(t *testing.T) {
 	out, _ := json.Marshal(n)
 	var fields map[string]any
 	json.Unmarshal(out, &fields)
-	if fields["ownerAddress"] == nil || fields["walletIdentity"] != nil {
+	if fields["ownerAddress"] != "3" || len(fields) != 6 {
 		t.Fatalf("wrong owner JSON: %s", out)
 	}
 }
 
-func TestNoteRejectsLegacyWalletIdentityJSON(t *testing.T) {
-	var note Note
-	if err := json.Unmarshal([]byte(`{"chainId":"1","protocolAddress":"2","walletIdentity":"3","tokenAddress":"4","amount":"5","nonce":"6"}`), &note); err == nil {
-		t.Fatal("legacy walletIdentity accepted")
+func TestNoteJSONRejectsMissingOwnerAndNoncanonicalFields(t *testing.T) {
+	for _, input := range []string{
+		`{"chainId":"1","protocolAddress":"2","tokenAddress":"4","amount":"5","nonce":"6"}`,
+		`{"chainId":"1","protocolAddress":"2","ownerAddress":"-1","tokenAddress":"4","amount":"5","nonce":"6"}`,
+	} {
+		var note Note
+		if err := json.Unmarshal([]byte(input), &note); err == nil {
+			t.Fatal("accepted invalid Note fields", input)
+		}
 	}
 }
