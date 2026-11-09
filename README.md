@@ -124,7 +124,7 @@ IPN contains no viewing/spending key, ciphertext, payload or membership path. Ex
 
 `gas.Reference(shape)` matches a complete documented benchmark shape and returns a detached result with source hash, docs commit, conditions and measured median. Unsupported shapes return unavailable; there is no arbitrary linear fallback or current aggregate gas claim based on historical private-pin experiments.
 
-Credit measurements must match the packaged manifest/format identity, raw Credit manifest SHA256 (`creditManifestSha256`) and fee mechanism. Rows without the exact manifest hash are unavailable; the preserved 58 Credit measurements do not establish current available-quota gas. Historical rows remain identifiable; they cannot impersonate a new release. Use Chain RPC `eth_estimateGas` on the final calldata and real caller for actual submission.
+Credit measurements must match the packaged manifest/format identity, raw Credit manifest SHA256 (`creditManifestSha256`) and fee mechanism. Rows without the exact manifest hash are unavailable. The current catalog contains 58 measured Credit references for the available-quota model and 55 Note references. Historical rows remain identifiable; they cannot impersonate a new release. Use Chain RPC `eth_estimateGas` on the final calldata and real caller for actual submission.
 
 ## Development and validation
 

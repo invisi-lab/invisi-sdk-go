@@ -1,6 +1,6 @@
 {
   "formatVersion": 1,
-  "catalogSha256": "3211a956d8d0adc79d7debbc063b4b450bec1defe193b8300f81fbc5ac18d7b0",
+  "catalogSha256": "9be3508fa154e85a50817a81b5c604ffb6350e5f7a97ae60f0724c17fda5c708",
   "packagedCreditIdentity": {
     "creditManifestSha256": "11b6b4191e8a62ae891fae41b2d3f37ccae00add26701eb5171a4e296400e861",
     "creditManifestVersion": 7,
@@ -14,8 +14,8 @@
         "feeEnabled": false,
         "feeMechanism": "none"
       },
-      "available": false,
-      "gasUnits": "1569348"
+      "available": true,
+      "gasUnits": "1569564"
     },
     {
       "query": {
@@ -24,8 +24,8 @@
         "feeEnabled": true,
         "feeMechanism": "owner-pull"
       },
-      "available": false,
-      "gasUnits": "1633102"
+      "available": true,
+      "gasUnits": "1633090"
     },
     {
       "query": {
@@ -34,8 +34,8 @@
         "feeEnabled": false,
         "feeMechanism": "none"
       },
-      "available": false,
-      "gasUnits": "1549486"
+      "available": true,
+      "gasUnits": "1549474"
     },
     {
       "query": {
@@ -44,8 +44,8 @@
         "feeEnabled": true,
         "feeMechanism": "owner-pull"
       },
-      "available": false,
-      "gasUnits": "1595996"
+      "available": true,
+      "gasUnits": "1595900"
     },
     {
       "query": {
@@ -55,7 +55,7 @@
         "feeEnabled": false,
         "feeMechanism": "none"
       },
-      "available": false,
+      "available": true,
       "gasUnits": "60867"
     },
     {
@@ -66,7 +66,7 @@
         "feeEnabled": true,
         "feeMechanism": "owner-pull"
       },
-      "available": false,
+      "available": true,
       "gasUnits": "126893"
     },
     {
@@ -77,7 +77,7 @@
         "feeEnabled": false,
         "feeMechanism": "none"
       },
-      "available": false,
+      "available": true,
       "gasUnits": "43779"
     },
     {
@@ -88,7 +88,7 @@
         "feeEnabled": true,
         "feeMechanism": "owner-pull"
       },
-      "available": false,
+      "available": true,
       "gasUnits": "109805"
     },
     {
@@ -99,7 +99,7 @@
         "feeEnabled": false,
         "feeMechanism": "none"
       },
-      "available": false,
+      "available": true,
       "gasUnits": "66625"
     },
     {
@@ -110,7 +110,7 @@
         "feeEnabled": true,
         "feeMechanism": "owner-pull"
       },
-      "available": false,
+      "available": true,
       "gasUnits": "132651"
     },
     {
@@ -121,7 +121,7 @@
         "feeEnabled": false,
         "feeMechanism": "none"
       },
-      "available": false,
+      "available": true,
       "gasUnits": "49537"
     },
     {
@@ -132,7 +132,7 @@
         "feeEnabled": true,
         "feeMechanism": "owner-pull"
       },
-      "available": false,
+      "available": true,
       "gasUnits": "115551"
     },
     {
@@ -143,7 +143,7 @@
         "feeEnabled": false,
         "feeMechanism": "none"
       },
-      "available": false,
+      "available": true,
       "gasUnits": "73187"
     },
     {
@@ -154,7 +154,7 @@
         "feeEnabled": true,
         "feeMechanism": "owner-pull"
       },
-      "available": false,
+      "available": true,
       "gasUnits": "139213"
     },
     {
@@ -165,7 +165,7 @@
         "feeEnabled": false,
         "feeMechanism": "none"
       },
-      "available": false,
+      "available": true,
       "gasUnits": "56099"
     },
     {
@@ -176,7 +176,7 @@
         "feeEnabled": true,
         "feeMechanism": "owner-pull"
       },
-      "available": false,
+      "available": true,
       "gasUnits": "122113"
     },
     {
@@ -188,15 +188,15 @@
         "sourceTrees": 1,
         "noteOutputs": 1,
         "creditOutputs": 1,
-        "creditCiphertextBytes": 484,
+        "creditCiphertextBytes": 485,
         "noteCiphertextBytes": 160,
         "clueBytes": 68,
         "scenario": "distinct-payers",
         "feeEnabled": false,
         "feeMechanism": "none"
       },
-      "available": false,
-      "gasUnits": "1684004"
+      "available": true,
+      "gasUnits": "1684086"
     },
     {
       "query": {
@@ -207,15 +207,15 @@
         "sourceTrees": 1,
         "noteOutputs": 1,
         "creditOutputs": 1,
-        "creditCiphertextBytes": 484,
+        "creditCiphertextBytes": 485,
         "noteCiphertextBytes": 160,
         "clueBytes": 68,
         "scenario": "distinct-payers",
         "feeEnabled": true,
         "feeMechanism": "draw-deduction"
       },
-      "available": false,
-      "gasUnits": "1708385"
+      "available": true,
+      "gasUnits": "1708515"
     },
     {
       "query": {
@@ -226,15 +226,15 @@
         "sourceTrees": 1,
         "noteOutputs": 1,
         "creditOutputs": 2,
-        "creditCiphertextBytes": 484,
+        "creditCiphertextBytes": 485,
         "noteCiphertextBytes": 160,
         "clueBytes": 68,
         "scenario": "distinct-payers",
         "feeEnabled": false,
         "feeMechanism": "none"
       },
-      "available": false,
-      "gasUnits": "1837311"
+      "available": true,
+      "gasUnits": "1837285"
     },
     {
       "query": {
@@ -245,15 +245,15 @@
         "sourceTrees": 1,
         "noteOutputs": 1,
         "creditOutputs": 2,
-        "creditCiphertextBytes": 484,
+        "creditCiphertextBytes": 485,
         "noteCiphertextBytes": 160,
         "clueBytes": 68,
         "scenario": "distinct-payers",
         "feeEnabled": true,
         "feeMechanism": "draw-deduction"
       },
-      "available": false,
-      "gasUnits": "1861632"
+      "available": true,
+      "gasUnits": "1861846"
     },
     {
       "query": {
@@ -264,15 +264,15 @@
         "sourceTrees": 1,
         "noteOutputs": 1,
         "creditOutputs": 3,
-        "creditCiphertextBytes": 484,
+        "creditCiphertextBytes": 485,
         "noteCiphertextBytes": 160,
         "clueBytes": 68,
         "scenario": "distinct-payers",
         "feeEnabled": false,
         "feeMechanism": "none"
       },
-      "available": false,
-      "gasUnits": "1991219"
+      "available": true,
+      "gasUnits": "1991361"
     },
     {
       "query": {
@@ -283,15 +283,15 @@
         "sourceTrees": 1,
         "noteOutputs": 1,
         "creditOutputs": 3,
-        "creditCiphertextBytes": 484,
+        "creditCiphertextBytes": 485,
         "noteCiphertextBytes": 160,
         "clueBytes": 68,
         "scenario": "distinct-payers",
         "feeEnabled": true,
         "feeMechanism": "draw-deduction"
       },
-      "available": false,
-      "gasUnits": "2015636"
+      "available": true,
+      "gasUnits": "2015934"
     },
     {
       "query": {
@@ -302,15 +302,15 @@
         "sourceTrees": 1,
         "noteOutputs": 1,
         "creditOutputs": 4,
-        "creditCiphertextBytes": 484,
+        "creditCiphertextBytes": 485,
         "noteCiphertextBytes": 160,
         "clueBytes": 68,
         "scenario": "distinct-payers",
         "feeEnabled": false,
         "feeMechanism": "none"
       },
-      "available": false,
-      "gasUnits": "2139800"
+      "available": true,
+      "gasUnits": "2139954"
     },
     {
       "query": {
@@ -321,15 +321,15 @@
         "sourceTrees": 1,
         "noteOutputs": 1,
         "creditOutputs": 4,
-        "creditCiphertextBytes": 484,
+        "creditCiphertextBytes": 485,
         "noteCiphertextBytes": 160,
         "clueBytes": 68,
         "scenario": "distinct-payers",
         "feeEnabled": true,
         "feeMechanism": "draw-deduction"
       },
-      "available": false,
-      "gasUnits": "2164193"
+      "available": true,
+      "gasUnits": "2164407"
     },
     {
       "query": {
@@ -340,15 +340,15 @@
         "sourceTrees": 1,
         "noteOutputs": 1,
         "creditOutputs": 5,
-        "creditCiphertextBytes": 484,
+        "creditCiphertextBytes": 485,
         "noteCiphertextBytes": 160,
         "clueBytes": 68,
         "scenario": "distinct-payers",
         "feeEnabled": false,
         "feeMechanism": "none"
       },
-      "available": false,
-      "gasUnits": "2296101"
+      "available": true,
+      "gasUnits": "2296231"
     },
     {
       "query": {
@@ -359,15 +359,15 @@
         "sourceTrees": 1,
         "noteOutputs": 1,
         "creditOutputs": 5,
-        "creditCiphertextBytes": 484,
+        "creditCiphertextBytes": 485,
         "noteCiphertextBytes": 160,
         "clueBytes": 68,
         "scenario": "distinct-payers",
         "feeEnabled": true,
         "feeMechanism": "draw-deduction"
       },
-      "available": false,
-      "gasUnits": "2320530"
+      "available": true,
+      "gasUnits": "2320756"
     },
     {
       "query": {
@@ -378,15 +378,15 @@
         "sourceTrees": 1,
         "noteOutputs": 1,
         "creditOutputs": 6,
-        "creditCiphertextBytes": 484,
+        "creditCiphertextBytes": 485,
         "noteCiphertextBytes": 160,
         "clueBytes": 68,
         "scenario": "distinct-payers",
         "feeEnabled": false,
         "feeMechanism": "none"
       },
-      "available": false,
-      "gasUnits": "2510585"
+      "available": true,
+      "gasUnits": "2510811"
     },
     {
       "query": {
@@ -397,15 +397,15 @@
         "sourceTrees": 1,
         "noteOutputs": 1,
         "creditOutputs": 6,
-        "creditCiphertextBytes": 484,
+        "creditCiphertextBytes": 485,
         "noteCiphertextBytes": 160,
         "clueBytes": 68,
         "scenario": "distinct-payers",
         "feeEnabled": true,
         "feeMechanism": "draw-deduction"
       },
-      "available": false,
-      "gasUnits": "2535062"
+      "available": true,
+      "gasUnits": "2535396"
     },
     {
       "query": {
@@ -416,15 +416,15 @@
         "sourceTrees": 1,
         "noteOutputs": 1,
         "creditOutputs": 10,
-        "creditCiphertextBytes": 484,
+        "creditCiphertextBytes": 485,
         "noteCiphertextBytes": 160,
         "clueBytes": 68,
         "scenario": "distinct-payers",
         "feeEnabled": false,
         "feeMechanism": "none"
       },
-      "available": false,
-      "gasUnits": "3085232"
+      "available": true,
+      "gasUnits": "3085446"
     },
     {
       "query": {
@@ -435,15 +435,15 @@
         "sourceTrees": 1,
         "noteOutputs": 1,
         "creditOutputs": 10,
-        "creditCiphertextBytes": 484,
+        "creditCiphertextBytes": 485,
         "noteCiphertextBytes": 160,
         "clueBytes": 68,
         "scenario": "distinct-payers",
         "feeEnabled": true,
         "feeMechanism": "draw-deduction"
       },
-      "available": false,
-      "gasUnits": "3109661"
+      "available": true,
+      "gasUnits": "3109887"
     },
     {
       "query": {
@@ -454,15 +454,15 @@
         "sourceTrees": 1,
         "noteOutputs": 1,
         "creditOutputs": 11,
-        "creditCiphertextBytes": 484,
+        "creditCiphertextBytes": 485,
         "noteCiphertextBytes": 160,
         "clueBytes": 68,
         "scenario": "distinct-payers",
         "feeEnabled": false,
         "feeMechanism": "none"
       },
-      "available": false,
-      "gasUnits": "3349059"
+      "available": true,
+      "gasUnits": "3349297"
     },
     {
       "query": {
@@ -473,15 +473,15 @@
         "sourceTrees": 1,
         "noteOutputs": 1,
         "creditOutputs": 11,
-        "creditCiphertextBytes": 484,
+        "creditCiphertextBytes": 485,
         "noteCiphertextBytes": 160,
         "clueBytes": 68,
         "scenario": "distinct-payers",
         "feeEnabled": true,
         "feeMechanism": "draw-deduction"
       },
-      "available": false,
-      "gasUnits": "3373320"
+      "available": true,
+      "gasUnits": "3373798"
     },
     {
       "query": {
@@ -492,15 +492,15 @@
         "sourceTrees": 1,
         "noteOutputs": 1,
         "creditOutputs": 20,
-        "creditCiphertextBytes": 484,
+        "creditCiphertextBytes": 485,
         "noteCiphertextBytes": 160,
         "clueBytes": 68,
         "scenario": "distinct-payers",
         "feeEnabled": false,
         "feeMechanism": "none"
       },
-      "available": false,
-      "gasUnits": "4643032"
+      "available": true,
+      "gasUnits": "4643522"
     },
     {
       "query": {
@@ -511,15 +511,15 @@
         "sourceTrees": 1,
         "noteOutputs": 1,
         "creditOutputs": 20,
-        "creditCiphertextBytes": 484,
+        "creditCiphertextBytes": 485,
         "noteCiphertextBytes": 160,
         "clueBytes": 68,
         "scenario": "distinct-payers",
         "feeEnabled": true,
         "feeMechanism": "draw-deduction"
       },
-      "available": false,
-      "gasUnits": "4667449"
+      "available": true,
+      "gasUnits": "4668131"
     },
     {
       "query": {
@@ -530,15 +530,15 @@
         "sourceTrees": 1,
         "noteOutputs": 1,
         "creditOutputs": 21,
-        "creditCiphertextBytes": 484,
+        "creditCiphertextBytes": 485,
         "noteCiphertextBytes": 160,
         "clueBytes": 68,
         "scenario": "distinct-payers",
         "feeEnabled": false,
         "feeMechanism": "none"
       },
-      "available": false,
-      "gasUnits": "4886355"
+      "available": true,
+      "gasUnits": "4886701"
     },
     {
       "query": {
@@ -549,15 +549,15 @@
         "sourceTrees": 1,
         "noteOutputs": 1,
         "creditOutputs": 21,
-        "creditCiphertextBytes": 484,
+        "creditCiphertextBytes": 485,
         "noteCiphertextBytes": 160,
         "clueBytes": 68,
         "scenario": "distinct-payers",
         "feeEnabled": true,
         "feeMechanism": "draw-deduction"
       },
-      "available": false,
-      "gasUnits": "4910700"
+      "available": true,
+      "gasUnits": "4911298"
     },
     {
       "query": {
@@ -568,15 +568,15 @@
         "sourceTrees": 1,
         "noteOutputs": 1,
         "creditOutputs": 30,
-        "creditCiphertextBytes": 484,
+        "creditCiphertextBytes": 485,
         "noteCiphertextBytes": 160,
         "clueBytes": 68,
         "scenario": "distinct-payers",
         "feeEnabled": false,
         "feeMechanism": "none"
       },
-      "available": false,
-      "gasUnits": "6197268"
+      "available": true,
+      "gasUnits": "6198106"
     },
     {
       "query": {
@@ -587,15 +587,15 @@
         "sourceTrees": 1,
         "noteOutputs": 1,
         "creditOutputs": 30,
-        "creditCiphertextBytes": 484,
+        "creditCiphertextBytes": 485,
         "noteCiphertextBytes": 160,
         "clueBytes": 68,
         "scenario": "distinct-payers",
         "feeEnabled": true,
         "feeMechanism": "draw-deduction"
       },
-      "available": false,
-      "gasUnits": "6221829"
+      "available": true,
+      "gasUnits": "6222547"
     },
     {
       "query": {
@@ -606,15 +606,15 @@
         "sourceTrees": 1,
         "noteOutputs": 1,
         "creditOutputs": 31,
-        "creditCiphertextBytes": 484,
+        "creditCiphertextBytes": 485,
         "noteCiphertextBytes": 160,
         "clueBytes": 68,
         "scenario": "distinct-payers",
         "feeEnabled": false,
         "feeMechanism": "none"
       },
-      "available": false,
-      "gasUnits": "6466663"
+      "available": true,
+      "gasUnits": "6467489"
     },
     {
       "query": {
@@ -625,15 +625,15 @@
         "sourceTrees": 1,
         "noteOutputs": 1,
         "creditOutputs": 31,
-        "creditCiphertextBytes": 484,
+        "creditCiphertextBytes": 485,
         "noteCiphertextBytes": 160,
         "clueBytes": 68,
         "scenario": "distinct-payers",
         "feeEnabled": true,
         "feeMechanism": "draw-deduction"
       },
-      "available": false,
-      "gasUnits": "6491044"
+      "available": true,
+      "gasUnits": "6491942"
     },
     {
       "query": {
@@ -644,15 +644,15 @@
         "sourceTrees": 1,
         "noteOutputs": 1,
         "creditOutputs": 40,
-        "creditCiphertextBytes": 484,
+        "creditCiphertextBytes": 485,
         "noteCiphertextBytes": 160,
         "clueBytes": 68,
         "scenario": "distinct-payers",
         "feeEnabled": false,
         "feeMechanism": "none"
       },
-      "available": false,
-      "gasUnits": "7775790"
+      "available": true,
+      "gasUnits": "7776508"
     },
     {
       "query": {
@@ -663,15 +663,15 @@
         "sourceTrees": 1,
         "noteOutputs": 1,
         "creditOutputs": 40,
-        "creditCiphertextBytes": 484,
+        "creditCiphertextBytes": 485,
         "noteCiphertextBytes": 160,
         "clueBytes": 68,
         "scenario": "distinct-payers",
         "feeEnabled": true,
         "feeMechanism": "draw-deduction"
       },
-      "available": false,
-      "gasUnits": "7800135"
+      "available": true,
+      "gasUnits": "7801069"
     },
     {
       "query": {
@@ -682,15 +682,15 @@
         "sourceTrees": 1,
         "noteOutputs": 1,
         "creditOutputs": 41,
-        "creditCiphertextBytes": 484,
+        "creditCiphertextBytes": 485,
         "noteCiphertextBytes": 160,
         "clueBytes": 68,
         "scenario": "distinct-payers",
         "feeEnabled": false,
         "feeMechanism": "none"
       },
-      "available": false,
-      "gasUnits": "8024436"
+      "available": true,
+      "gasUnits": "8025394"
     },
     {
       "query": {
@@ -701,15 +701,15 @@
         "sourceTrees": 1,
         "noteOutputs": 1,
         "creditOutputs": 41,
-        "creditCiphertextBytes": 484,
+        "creditCiphertextBytes": 485,
         "noteCiphertextBytes": 160,
         "clueBytes": 68,
         "scenario": "distinct-payers",
         "feeEnabled": true,
         "feeMechanism": "draw-deduction"
       },
-      "available": false,
-      "gasUnits": "8048685"
+      "available": true,
+      "gasUnits": "8049799"
     },
     {
       "query": {
@@ -720,15 +720,15 @@
         "sourceTrees": 1,
         "noteOutputs": 1,
         "creditOutputs": 50,
-        "creditCiphertextBytes": 484,
+        "creditCiphertextBytes": 485,
         "noteCiphertextBytes": 160,
         "clueBytes": 68,
         "scenario": "distinct-payers",
         "feeEnabled": false,
         "feeMechanism": "none"
       },
-      "available": false,
-      "gasUnits": "9355547"
+      "available": true,
+      "gasUnits": "9356709"
     },
     {
       "query": {
@@ -739,15 +739,15 @@
         "sourceTrees": 1,
         "noteOutputs": 1,
         "creditOutputs": 50,
-        "creditCiphertextBytes": 484,
+        "creditCiphertextBytes": 485,
         "noteCiphertextBytes": 160,
         "clueBytes": 68,
         "scenario": "distinct-payers",
         "feeEnabled": true,
         "feeMechanism": "draw-deduction"
       },
-      "available": false,
-      "gasUnits": "9380288"
+      "available": true,
+      "gasUnits": "9381474"
     },
     {
       "query": {
@@ -758,15 +758,15 @@
         "sourceTrees": 1,
         "noteOutputs": 1,
         "creditOutputs": 51,
-        "creditCiphertextBytes": 484,
+        "creditCiphertextBytes": 485,
         "noteCiphertextBytes": 160,
         "clueBytes": 68,
         "scenario": "distinct-payers",
         "feeEnabled": false,
         "feeMechanism": "none"
       },
-      "available": false,
-      "gasUnits": "9604908"
+      "available": true,
+      "gasUnits": "9606202"
     },
     {
       "query": {
@@ -777,15 +777,15 @@
         "sourceTrees": 1,
         "noteOutputs": 1,
         "creditOutputs": 51,
-        "creditCiphertextBytes": 484,
+        "creditCiphertextBytes": 485,
         "noteCiphertextBytes": 160,
         "clueBytes": 68,
         "scenario": "distinct-payers",
         "feeEnabled": true,
         "feeMechanism": "draw-deduction"
       },
-      "available": false,
-      "gasUnits": "9629277"
+      "available": true,
+      "gasUnits": "9630739"
     },
     {
       "query": {
@@ -796,15 +796,15 @@
         "sourceTrees": 1,
         "noteOutputs": 1,
         "creditOutputs": 60,
-        "creditCiphertextBytes": 484,
+        "creditCiphertextBytes": 485,
         "noteCiphertextBytes": 160,
         "clueBytes": 68,
         "scenario": "distinct-payers",
         "feeEnabled": false,
         "feeMechanism": "none"
       },
-      "available": false,
-      "gasUnits": "10947326"
+      "available": true,
+      "gasUnits": "10949040"
     },
     {
       "query": {
@@ -815,15 +815,15 @@
         "sourceTrees": 1,
         "noteOutputs": 1,
         "creditOutputs": 60,
-        "creditCiphertextBytes": 484,
+        "creditCiphertextBytes": 485,
         "noteCiphertextBytes": 160,
         "clueBytes": 68,
         "scenario": "distinct-payers",
         "feeEnabled": true,
         "feeMechanism": "draw-deduction"
       },
-      "available": false,
-      "gasUnits": "10971755"
+      "available": true,
+      "gasUnits": "10973553"
     },
     {
       "query": {
@@ -834,15 +834,15 @@
         "sourceTrees": 1,
         "noteOutputs": 1,
         "creditOutputs": 61,
-        "creditCiphertextBytes": 484,
+        "creditCiphertextBytes": 485,
         "noteCiphertextBytes": 160,
         "clueBytes": 68,
         "scenario": "distinct-payers",
         "feeEnabled": false,
         "feeMechanism": "none"
       },
-      "available": false,
-      "gasUnits": "11201234"
+      "available": true,
+      "gasUnits": "11203008"
     },
     {
       "query": {
@@ -853,15 +853,15 @@
         "sourceTrees": 1,
         "noteOutputs": 1,
         "creditOutputs": 61,
-        "creditCiphertextBytes": 484,
+        "creditCiphertextBytes": 485,
         "noteCiphertextBytes": 160,
         "clueBytes": 68,
         "scenario": "distinct-payers",
         "feeEnabled": true,
         "feeMechanism": "draw-deduction"
       },
-      "available": false,
-      "gasUnits": "11225615"
+      "available": true,
+      "gasUnits": "11227581"
     },
     {
       "query": {
@@ -872,15 +872,15 @@
         "sourceTrees": 1,
         "noteOutputs": 1,
         "creditOutputs": 70,
-        "creditCiphertextBytes": 484,
+        "creditCiphertextBytes": 485,
         "noteCiphertextBytes": 160,
         "clueBytes": 68,
         "scenario": "distinct-payers",
         "feeEnabled": false,
         "feeMechanism": "none"
       },
-      "available": false,
-      "gasUnits": "12547610"
+      "available": true,
+      "gasUnits": "12549144"
     },
     {
       "query": {
@@ -891,15 +891,15 @@
         "sourceTrees": 1,
         "noteOutputs": 1,
         "creditOutputs": 70,
-        "creditCiphertextBytes": 484,
+        "creditCiphertextBytes": 485,
         "noteCiphertextBytes": 160,
         "clueBytes": 68,
         "scenario": "distinct-payers",
         "feeEnabled": true,
         "feeMechanism": "draw-deduction"
       },
-      "available": false,
-      "gasUnits": "12572339"
+      "available": true,
+      "gasUnits": "12573681"
     },
     {
       "query": {
@@ -910,15 +910,15 @@
         "sourceTrees": 1,
         "noteOutputs": 1,
         "creditOutputs": 71,
-        "creditCiphertextBytes": 484,
+        "creditCiphertextBytes": 485,
         "noteCiphertextBytes": 160,
         "clueBytes": 68,
         "scenario": "distinct-payers",
         "feeEnabled": false,
         "feeMechanism": "none"
       },
-      "available": false,
-      "gasUnits": "12828129"
+      "available": true,
+      "gasUnits": "12829603"
     },
     {
       "query": {
@@ -929,15 +929,15 @@
         "sourceTrees": 1,
         "noteOutputs": 1,
         "creditOutputs": 71,
-        "creditCiphertextBytes": 484,
+        "creditCiphertextBytes": 485,
         "noteCiphertextBytes": 160,
         "clueBytes": 68,
         "scenario": "distinct-payers",
         "feeEnabled": true,
         "feeMechanism": "draw-deduction"
       },
-      "available": false,
-      "gasUnits": "12852798"
+      "available": true,
+      "gasUnits": "12854068"
     },
     {
       "query": {
@@ -948,15 +948,15 @@
         "sourceTrees": 1,
         "noteOutputs": 1,
         "creditOutputs": 80,
-        "creditCiphertextBytes": 484,
+        "creditCiphertextBytes": 485,
         "noteCiphertextBytes": 160,
         "clueBytes": 68,
         "scenario": "distinct-payers",
         "feeEnabled": false,
         "feeMechanism": "none"
       },
-      "available": false,
-      "gasUnits": "14185678"
+      "available": true,
+      "gasUnits": "14187692"
     },
     {
       "query": {
@@ -967,15 +967,15 @@
         "sourceTrees": 1,
         "noteOutputs": 1,
         "creditOutputs": 80,
-        "creditCiphertextBytes": 484,
+        "creditCiphertextBytes": 485,
         "noteCiphertextBytes": 160,
         "clueBytes": 68,
         "scenario": "distinct-payers",
         "feeEnabled": true,
         "feeMechanism": "draw-deduction"
       },
-      "available": false,
-      "gasUnits": "14210299"
+      "available": true,
+      "gasUnits": "14212265"
     },
     {
       "query": {

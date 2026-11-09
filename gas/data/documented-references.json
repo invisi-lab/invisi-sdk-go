@@ -1,27 +1,27 @@
 {
   "formatVersion": 1,
   "kind": "documented-reference",
-  "docsCommit": "c39bcf66c6beb6d00ee3cd0746f98cbaf9e7d124",
+  "docsCommit": "d9fc93e5993cdc539c3f1c01a6f392d1e2516b6c",
   "sources": [
     {
       "path": "05-benchmarks/5.1-credit-create.md",
-      "sha256": "61ba6f5960d368111e82deefd6bebb8fd1b4bf53eb10d5760f74e1544844902f",
+      "sha256": "8e1b8eef4aec2375ca21379ca0ce139e07c45f1a68f3a5f5343e6ee57a236ba5",
       "conditions": "First owner/token grant allocation at shard1/slot0, empty protocol tree, two Credit deliveries. See the hashed source for exact fee and policy configuration."
     },
     {
       "path": "05-benchmarks/5.2-credit-update.md",
-      "sha256": "df02a68a87ac35286dc33b0407df77f1f84ba5137693feb60e75030d4147e8f0",
+      "sha256": "3a28081632e0a8445aca7df3cb59beef88214bc5ec8b0ca255a31b24b2992544",
       "conditions": "Update after a successful debit of7 base units; preserve all usage fields and change limits/expiry. Preparation transactions excluded. See the hashed source for exact fee configuration."
     },
     {
       "path": "05-benchmarks/5.3-credit-revoke.md",
-      "sha256": "63c2a3caace40e62738b749abe6ac4e430941a9bb33ebe08ac728451341d8bdc",
+      "sha256": "ad91db9fd6f47ce1b6a67fd26c00ba3b5a708ca728296343494791f33dd374be",
       "conditions": "Owner direct, EOA relay or reference ERC1271/EIP7702 relay; first bitmap-word write or an already nonempty word. Three successful receipt medians per scenario; preparation and delegation excluded."
     },
     {
       "path": "05-benchmarks/5.4-credit-draw.md",
-      "sha256": "5b1b9434cd93348755cd8d03363bc07a0e151cd9c79f0e7f629090e10cd9f997",
-      "conditions": "Local Anvil31337, Prague, real verifiers, MockERC20Permit, owners preminted and max-approved. Each distinct payer contributes7 base units; one spender, one ordinary recipient Note. Inputs in tree1, cursor=N; timestamp2000000000, deadline+86400. Credit ciphertext484 bytes, Note160, clue68. No memo/FMD. One independently verified proof per statement reused across three successful snapshot-isolated transactions with distinct gasPrice/transaction hashes. Block30m, transaction budget16777216; preparation/mint/approve excluded. See the hashed source for exact fee and private limits."
+      "sha256": "b77d97e552d927bf8060c30dcd79d51b11a2c6a6f27b352ec1429a94b10cbbfc",
+      "conditions": "Local Anvil31337, Prague, real verifiers, MockERC20Permit, owners preminted and max-approved. Each distinct payer contributes7 base units; one spender, one ordinary recipient Note. Inputs in tree1, cursor=N; timestamp2000000000, deadline+86400. Credit ciphertext size/layout from the hashed measured source, Note160, clue68. No memo/FMD. One independently verified proof per statement reused across three successful snapshot-isolated transactions with distinct gasPrice/transaction hashes. Block30m, transaction budget16777216; preparation/mint/approve excluded. See the hashed source for exact fee and private limits."
     },
     {
       "path": "05-benchmarks/5.5-daily-transact.md",
@@ -43,6 +43,7 @@
   "references": [
     {
       "releaseIdentity": {
+        "creditManifestSha256": "11b6b4191e8a62ae891fae41b2d3f37ccae00add26701eb5171a4e296400e861",
         "creditManifestVersion": 7,
         "creditFormatVersion": 8
       },
@@ -54,12 +55,13 @@
         "feeEnabled": false,
         "feeMechanism": "none"
       },
-      "gasUnits": "1569348",
+      "gasUnits": "1569564",
       "statistic": "median",
       "sampleCount": 3
     },
     {
       "releaseIdentity": {
+        "creditManifestSha256": "11b6b4191e8a62ae891fae41b2d3f37ccae00add26701eb5171a4e296400e861",
         "creditManifestVersion": 7,
         "creditFormatVersion": 8
       },
@@ -71,12 +73,13 @@
         "feeEnabled": true,
         "feeMechanism": "owner-pull"
       },
-      "gasUnits": "1633102",
+      "gasUnits": "1633090",
       "statistic": "median",
       "sampleCount": 3
     },
     {
       "releaseIdentity": {
+        "creditManifestSha256": "11b6b4191e8a62ae891fae41b2d3f37ccae00add26701eb5171a4e296400e861",
         "creditManifestVersion": 7,
         "creditFormatVersion": 8
       },
@@ -88,12 +91,13 @@
         "feeEnabled": false,
         "feeMechanism": "none"
       },
-      "gasUnits": "1549486",
+      "gasUnits": "1549474",
       "statistic": "median",
       "sampleCount": 3
     },
     {
       "releaseIdentity": {
+        "creditManifestSha256": "11b6b4191e8a62ae891fae41b2d3f37ccae00add26701eb5171a4e296400e861",
         "creditManifestVersion": 7,
         "creditFormatVersion": 8
       },
@@ -105,12 +109,13 @@
         "feeEnabled": true,
         "feeMechanism": "owner-pull"
       },
-      "gasUnits": "1595996",
+      "gasUnits": "1595900",
       "statistic": "median",
       "sampleCount": 3
     },
     {
       "releaseIdentity": {
+        "creditManifestSha256": "11b6b4191e8a62ae891fae41b2d3f37ccae00add26701eb5171a4e296400e861",
         "creditManifestVersion": 7,
         "creditFormatVersion": 8
       },
@@ -129,6 +134,7 @@
     },
     {
       "releaseIdentity": {
+        "creditManifestSha256": "11b6b4191e8a62ae891fae41b2d3f37ccae00add26701eb5171a4e296400e861",
         "creditManifestVersion": 7,
         "creditFormatVersion": 8
       },
@@ -147,6 +153,7 @@
     },
     {
       "releaseIdentity": {
+        "creditManifestSha256": "11b6b4191e8a62ae891fae41b2d3f37ccae00add26701eb5171a4e296400e861",
         "creditManifestVersion": 7,
         "creditFormatVersion": 8
       },
@@ -165,6 +172,7 @@
     },
     {
       "releaseIdentity": {
+        "creditManifestSha256": "11b6b4191e8a62ae891fae41b2d3f37ccae00add26701eb5171a4e296400e861",
         "creditManifestVersion": 7,
         "creditFormatVersion": 8
       },
@@ -183,6 +191,7 @@
     },
     {
       "releaseIdentity": {
+        "creditManifestSha256": "11b6b4191e8a62ae891fae41b2d3f37ccae00add26701eb5171a4e296400e861",
         "creditManifestVersion": 7,
         "creditFormatVersion": 8
       },
@@ -201,6 +210,7 @@
     },
     {
       "releaseIdentity": {
+        "creditManifestSha256": "11b6b4191e8a62ae891fae41b2d3f37ccae00add26701eb5171a4e296400e861",
         "creditManifestVersion": 7,
         "creditFormatVersion": 8
       },
@@ -219,6 +229,7 @@
     },
     {
       "releaseIdentity": {
+        "creditManifestSha256": "11b6b4191e8a62ae891fae41b2d3f37ccae00add26701eb5171a4e296400e861",
         "creditManifestVersion": 7,
         "creditFormatVersion": 8
       },
@@ -237,6 +248,7 @@
     },
     {
       "releaseIdentity": {
+        "creditManifestSha256": "11b6b4191e8a62ae891fae41b2d3f37ccae00add26701eb5171a4e296400e861",
         "creditManifestVersion": 7,
         "creditFormatVersion": 8
       },
@@ -255,6 +267,7 @@
     },
     {
       "releaseIdentity": {
+        "creditManifestSha256": "11b6b4191e8a62ae891fae41b2d3f37ccae00add26701eb5171a4e296400e861",
         "creditManifestVersion": 7,
         "creditFormatVersion": 8
       },
@@ -273,6 +286,7 @@
     },
     {
       "releaseIdentity": {
+        "creditManifestSha256": "11b6b4191e8a62ae891fae41b2d3f37ccae00add26701eb5171a4e296400e861",
         "creditManifestVersion": 7,
         "creditFormatVersion": 8
       },
@@ -291,6 +305,7 @@
     },
     {
       "releaseIdentity": {
+        "creditManifestSha256": "11b6b4191e8a62ae891fae41b2d3f37ccae00add26701eb5171a4e296400e861",
         "creditManifestVersion": 7,
         "creditFormatVersion": 8
       },
@@ -309,6 +324,7 @@
     },
     {
       "releaseIdentity": {
+        "creditManifestSha256": "11b6b4191e8a62ae891fae41b2d3f37ccae00add26701eb5171a4e296400e861",
         "creditManifestVersion": 7,
         "creditFormatVersion": 8
       },
@@ -327,6 +343,7 @@
     },
     {
       "releaseIdentity": {
+        "creditManifestSha256": "11b6b4191e8a62ae891fae41b2d3f37ccae00add26701eb5171a4e296400e861",
         "creditManifestVersion": 7,
         "creditFormatVersion": 8
       },
@@ -340,19 +357,20 @@
         "sourceTrees": 1,
         "noteOutputs": 1,
         "creditOutputs": 1,
-        "creditCiphertextBytes": 484,
+        "creditCiphertextBytes": 485,
         "noteCiphertextBytes": 160,
         "clueBytes": 68,
         "scenario": "distinct-payers",
         "feeEnabled": false,
         "feeMechanism": "none"
       },
-      "gasUnits": "1684004",
+      "gasUnits": "1684086",
       "statistic": "median",
       "sampleCount": 3
     },
     {
       "releaseIdentity": {
+        "creditManifestSha256": "11b6b4191e8a62ae891fae41b2d3f37ccae00add26701eb5171a4e296400e861",
         "creditManifestVersion": 7,
         "creditFormatVersion": 8
       },
@@ -366,19 +384,20 @@
         "sourceTrees": 1,
         "noteOutputs": 1,
         "creditOutputs": 1,
-        "creditCiphertextBytes": 484,
+        "creditCiphertextBytes": 485,
         "noteCiphertextBytes": 160,
         "clueBytes": 68,
         "scenario": "distinct-payers",
         "feeEnabled": true,
         "feeMechanism": "draw-deduction"
       },
-      "gasUnits": "1708385",
+      "gasUnits": "1708515",
       "statistic": "median",
       "sampleCount": 3
     },
     {
       "releaseIdentity": {
+        "creditManifestSha256": "11b6b4191e8a62ae891fae41b2d3f37ccae00add26701eb5171a4e296400e861",
         "creditManifestVersion": 7,
         "creditFormatVersion": 8
       },
@@ -392,19 +411,20 @@
         "sourceTrees": 1,
         "noteOutputs": 1,
         "creditOutputs": 2,
-        "creditCiphertextBytes": 484,
+        "creditCiphertextBytes": 485,
         "noteCiphertextBytes": 160,
         "clueBytes": 68,
         "scenario": "distinct-payers",
         "feeEnabled": false,
         "feeMechanism": "none"
       },
-      "gasUnits": "1837311",
+      "gasUnits": "1837285",
       "statistic": "median",
       "sampleCount": 3
     },
     {
       "releaseIdentity": {
+        "creditManifestSha256": "11b6b4191e8a62ae891fae41b2d3f37ccae00add26701eb5171a4e296400e861",
         "creditManifestVersion": 7,
         "creditFormatVersion": 8
       },
@@ -418,19 +438,20 @@
         "sourceTrees": 1,
         "noteOutputs": 1,
         "creditOutputs": 2,
-        "creditCiphertextBytes": 484,
+        "creditCiphertextBytes": 485,
         "noteCiphertextBytes": 160,
         "clueBytes": 68,
         "scenario": "distinct-payers",
         "feeEnabled": true,
         "feeMechanism": "draw-deduction"
       },
-      "gasUnits": "1861632",
+      "gasUnits": "1861846",
       "statistic": "median",
       "sampleCount": 3
     },
     {
       "releaseIdentity": {
+        "creditManifestSha256": "11b6b4191e8a62ae891fae41b2d3f37ccae00add26701eb5171a4e296400e861",
         "creditManifestVersion": 7,
         "creditFormatVersion": 8
       },
@@ -444,19 +465,20 @@
         "sourceTrees": 1,
         "noteOutputs": 1,
         "creditOutputs": 3,
-        "creditCiphertextBytes": 484,
+        "creditCiphertextBytes": 485,
         "noteCiphertextBytes": 160,
         "clueBytes": 68,
         "scenario": "distinct-payers",
         "feeEnabled": false,
         "feeMechanism": "none"
       },
-      "gasUnits": "1991219",
+      "gasUnits": "1991361",
       "statistic": "median",
       "sampleCount": 3
     },
     {
       "releaseIdentity": {
+        "creditManifestSha256": "11b6b4191e8a62ae891fae41b2d3f37ccae00add26701eb5171a4e296400e861",
         "creditManifestVersion": 7,
         "creditFormatVersion": 8
       },
@@ -470,19 +492,20 @@
         "sourceTrees": 1,
         "noteOutputs": 1,
         "creditOutputs": 3,
-        "creditCiphertextBytes": 484,
+        "creditCiphertextBytes": 485,
         "noteCiphertextBytes": 160,
         "clueBytes": 68,
         "scenario": "distinct-payers",
         "feeEnabled": true,
         "feeMechanism": "draw-deduction"
       },
-      "gasUnits": "2015636",
+      "gasUnits": "2015934",
       "statistic": "median",
       "sampleCount": 3
     },
     {
       "releaseIdentity": {
+        "creditManifestSha256": "11b6b4191e8a62ae891fae41b2d3f37ccae00add26701eb5171a4e296400e861",
         "creditManifestVersion": 7,
         "creditFormatVersion": 8
       },
@@ -496,19 +519,20 @@
         "sourceTrees": 1,
         "noteOutputs": 1,
         "creditOutputs": 4,
-        "creditCiphertextBytes": 484,
+        "creditCiphertextBytes": 485,
         "noteCiphertextBytes": 160,
         "clueBytes": 68,
         "scenario": "distinct-payers",
         "feeEnabled": false,
         "feeMechanism": "none"
       },
-      "gasUnits": "2139800",
+      "gasUnits": "2139954",
       "statistic": "median",
       "sampleCount": 3
     },
     {
       "releaseIdentity": {
+        "creditManifestSha256": "11b6b4191e8a62ae891fae41b2d3f37ccae00add26701eb5171a4e296400e861",
         "creditManifestVersion": 7,
         "creditFormatVersion": 8
       },
@@ -522,19 +546,20 @@
         "sourceTrees": 1,
         "noteOutputs": 1,
         "creditOutputs": 4,
-        "creditCiphertextBytes": 484,
+        "creditCiphertextBytes": 485,
         "noteCiphertextBytes": 160,
         "clueBytes": 68,
         "scenario": "distinct-payers",
         "feeEnabled": true,
         "feeMechanism": "draw-deduction"
       },
-      "gasUnits": "2164193",
+      "gasUnits": "2164407",
       "statistic": "median",
       "sampleCount": 3
     },
     {
       "releaseIdentity": {
+        "creditManifestSha256": "11b6b4191e8a62ae891fae41b2d3f37ccae00add26701eb5171a4e296400e861",
         "creditManifestVersion": 7,
         "creditFormatVersion": 8
       },
@@ -548,19 +573,20 @@
         "sourceTrees": 1,
         "noteOutputs": 1,
         "creditOutputs": 5,
-        "creditCiphertextBytes": 484,
+        "creditCiphertextBytes": 485,
         "noteCiphertextBytes": 160,
         "clueBytes": 68,
         "scenario": "distinct-payers",
         "feeEnabled": false,
         "feeMechanism": "none"
       },
-      "gasUnits": "2296101",
+      "gasUnits": "2296231",
       "statistic": "median",
       "sampleCount": 3
     },
     {
       "releaseIdentity": {
+        "creditManifestSha256": "11b6b4191e8a62ae891fae41b2d3f37ccae00add26701eb5171a4e296400e861",
         "creditManifestVersion": 7,
         "creditFormatVersion": 8
       },
@@ -574,19 +600,20 @@
         "sourceTrees": 1,
         "noteOutputs": 1,
         "creditOutputs": 5,
-        "creditCiphertextBytes": 484,
+        "creditCiphertextBytes": 485,
         "noteCiphertextBytes": 160,
         "clueBytes": 68,
         "scenario": "distinct-payers",
         "feeEnabled": true,
         "feeMechanism": "draw-deduction"
       },
-      "gasUnits": "2320530",
+      "gasUnits": "2320756",
       "statistic": "median",
       "sampleCount": 3
     },
     {
       "releaseIdentity": {
+        "creditManifestSha256": "11b6b4191e8a62ae891fae41b2d3f37ccae00add26701eb5171a4e296400e861",
         "creditManifestVersion": 7,
         "creditFormatVersion": 8
       },
@@ -600,19 +627,20 @@
         "sourceTrees": 1,
         "noteOutputs": 1,
         "creditOutputs": 6,
-        "creditCiphertextBytes": 484,
+        "creditCiphertextBytes": 485,
         "noteCiphertextBytes": 160,
         "clueBytes": 68,
         "scenario": "distinct-payers",
         "feeEnabled": false,
         "feeMechanism": "none"
       },
-      "gasUnits": "2510585",
+      "gasUnits": "2510811",
       "statistic": "median",
       "sampleCount": 3
     },
     {
       "releaseIdentity": {
+        "creditManifestSha256": "11b6b4191e8a62ae891fae41b2d3f37ccae00add26701eb5171a4e296400e861",
         "creditManifestVersion": 7,
         "creditFormatVersion": 8
       },
@@ -626,19 +654,20 @@
         "sourceTrees": 1,
         "noteOutputs": 1,
         "creditOutputs": 6,
-        "creditCiphertextBytes": 484,
+        "creditCiphertextBytes": 485,
         "noteCiphertextBytes": 160,
         "clueBytes": 68,
         "scenario": "distinct-payers",
         "feeEnabled": true,
         "feeMechanism": "draw-deduction"
       },
-      "gasUnits": "2535062",
+      "gasUnits": "2535396",
       "statistic": "median",
       "sampleCount": 3
     },
     {
       "releaseIdentity": {
+        "creditManifestSha256": "11b6b4191e8a62ae891fae41b2d3f37ccae00add26701eb5171a4e296400e861",
         "creditManifestVersion": 7,
         "creditFormatVersion": 8
       },
@@ -652,19 +681,20 @@
         "sourceTrees": 1,
         "noteOutputs": 1,
         "creditOutputs": 10,
-        "creditCiphertextBytes": 484,
+        "creditCiphertextBytes": 485,
         "noteCiphertextBytes": 160,
         "clueBytes": 68,
         "scenario": "distinct-payers",
         "feeEnabled": false,
         "feeMechanism": "none"
       },
-      "gasUnits": "3085232",
+      "gasUnits": "3085446",
       "statistic": "median",
       "sampleCount": 3
     },
     {
       "releaseIdentity": {
+        "creditManifestSha256": "11b6b4191e8a62ae891fae41b2d3f37ccae00add26701eb5171a4e296400e861",
         "creditManifestVersion": 7,
         "creditFormatVersion": 8
       },
@@ -678,19 +708,20 @@
         "sourceTrees": 1,
         "noteOutputs": 1,
         "creditOutputs": 10,
-        "creditCiphertextBytes": 484,
+        "creditCiphertextBytes": 485,
         "noteCiphertextBytes": 160,
         "clueBytes": 68,
         "scenario": "distinct-payers",
         "feeEnabled": true,
         "feeMechanism": "draw-deduction"
       },
-      "gasUnits": "3109661",
+      "gasUnits": "3109887",
       "statistic": "median",
       "sampleCount": 3
     },
     {
       "releaseIdentity": {
+        "creditManifestSha256": "11b6b4191e8a62ae891fae41b2d3f37ccae00add26701eb5171a4e296400e861",
         "creditManifestVersion": 7,
         "creditFormatVersion": 8
       },
@@ -704,19 +735,20 @@
         "sourceTrees": 1,
         "noteOutputs": 1,
         "creditOutputs": 11,
-        "creditCiphertextBytes": 484,
+        "creditCiphertextBytes": 485,
         "noteCiphertextBytes": 160,
         "clueBytes": 68,
         "scenario": "distinct-payers",
         "feeEnabled": false,
         "feeMechanism": "none"
       },
-      "gasUnits": "3349059",
+      "gasUnits": "3349297",
       "statistic": "median",
       "sampleCount": 3
     },
     {
       "releaseIdentity": {
+        "creditManifestSha256": "11b6b4191e8a62ae891fae41b2d3f37ccae00add26701eb5171a4e296400e861",
         "creditManifestVersion": 7,
         "creditFormatVersion": 8
       },
@@ -730,19 +762,20 @@
         "sourceTrees": 1,
         "noteOutputs": 1,
         "creditOutputs": 11,
-        "creditCiphertextBytes": 484,
+        "creditCiphertextBytes": 485,
         "noteCiphertextBytes": 160,
         "clueBytes": 68,
         "scenario": "distinct-payers",
         "feeEnabled": true,
         "feeMechanism": "draw-deduction"
       },
-      "gasUnits": "3373320",
+      "gasUnits": "3373798",
       "statistic": "median",
       "sampleCount": 3
     },
     {
       "releaseIdentity": {
+        "creditManifestSha256": "11b6b4191e8a62ae891fae41b2d3f37ccae00add26701eb5171a4e296400e861",
         "creditManifestVersion": 7,
         "creditFormatVersion": 8
       },
@@ -756,19 +789,20 @@
         "sourceTrees": 1,
         "noteOutputs": 1,
         "creditOutputs": 20,
-        "creditCiphertextBytes": 484,
+        "creditCiphertextBytes": 485,
         "noteCiphertextBytes": 160,
         "clueBytes": 68,
         "scenario": "distinct-payers",
         "feeEnabled": false,
         "feeMechanism": "none"
       },
-      "gasUnits": "4643032",
+      "gasUnits": "4643522",
       "statistic": "median",
       "sampleCount": 3
     },
     {
       "releaseIdentity": {
+        "creditManifestSha256": "11b6b4191e8a62ae891fae41b2d3f37ccae00add26701eb5171a4e296400e861",
         "creditManifestVersion": 7,
         "creditFormatVersion": 8
       },
@@ -782,19 +816,20 @@
         "sourceTrees": 1,
         "noteOutputs": 1,
         "creditOutputs": 20,
-        "creditCiphertextBytes": 484,
+        "creditCiphertextBytes": 485,
         "noteCiphertextBytes": 160,
         "clueBytes": 68,
         "scenario": "distinct-payers",
         "feeEnabled": true,
         "feeMechanism": "draw-deduction"
       },
-      "gasUnits": "4667449",
+      "gasUnits": "4668131",
       "statistic": "median",
       "sampleCount": 3
     },
     {
       "releaseIdentity": {
+        "creditManifestSha256": "11b6b4191e8a62ae891fae41b2d3f37ccae00add26701eb5171a4e296400e861",
         "creditManifestVersion": 7,
         "creditFormatVersion": 8
       },
@@ -808,19 +843,20 @@
         "sourceTrees": 1,
         "noteOutputs": 1,
         "creditOutputs": 21,
-        "creditCiphertextBytes": 484,
+        "creditCiphertextBytes": 485,
         "noteCiphertextBytes": 160,
         "clueBytes": 68,
         "scenario": "distinct-payers",
         "feeEnabled": false,
         "feeMechanism": "none"
       },
-      "gasUnits": "4886355",
+      "gasUnits": "4886701",
       "statistic": "median",
       "sampleCount": 3
     },
     {
       "releaseIdentity": {
+        "creditManifestSha256": "11b6b4191e8a62ae891fae41b2d3f37ccae00add26701eb5171a4e296400e861",
         "creditManifestVersion": 7,
         "creditFormatVersion": 8
       },
@@ -834,19 +870,20 @@
         "sourceTrees": 1,
         "noteOutputs": 1,
         "creditOutputs": 21,
-        "creditCiphertextBytes": 484,
+        "creditCiphertextBytes": 485,
         "noteCiphertextBytes": 160,
         "clueBytes": 68,
         "scenario": "distinct-payers",
         "feeEnabled": true,
         "feeMechanism": "draw-deduction"
       },
-      "gasUnits": "4910700",
+      "gasUnits": "4911298",
       "statistic": "median",
       "sampleCount": 3
     },
     {
       "releaseIdentity": {
+        "creditManifestSha256": "11b6b4191e8a62ae891fae41b2d3f37ccae00add26701eb5171a4e296400e861",
         "creditManifestVersion": 7,
         "creditFormatVersion": 8
       },
@@ -860,19 +897,20 @@
         "sourceTrees": 1,
         "noteOutputs": 1,
         "creditOutputs": 30,
-        "creditCiphertextBytes": 484,
+        "creditCiphertextBytes": 485,
         "noteCiphertextBytes": 160,
         "clueBytes": 68,
         "scenario": "distinct-payers",
         "feeEnabled": false,
         "feeMechanism": "none"
       },
-      "gasUnits": "6197268",
+      "gasUnits": "6198106",
       "statistic": "median",
       "sampleCount": 3
     },
     {
       "releaseIdentity": {
+        "creditManifestSha256": "11b6b4191e8a62ae891fae41b2d3f37ccae00add26701eb5171a4e296400e861",
         "creditManifestVersion": 7,
         "creditFormatVersion": 8
       },
@@ -886,19 +924,20 @@
         "sourceTrees": 1,
         "noteOutputs": 1,
         "creditOutputs": 30,
-        "creditCiphertextBytes": 484,
+        "creditCiphertextBytes": 485,
         "noteCiphertextBytes": 160,
         "clueBytes": 68,
         "scenario": "distinct-payers",
         "feeEnabled": true,
         "feeMechanism": "draw-deduction"
       },
-      "gasUnits": "6221829",
+      "gasUnits": "6222547",
       "statistic": "median",
       "sampleCount": 3
     },
     {
       "releaseIdentity": {
+        "creditManifestSha256": "11b6b4191e8a62ae891fae41b2d3f37ccae00add26701eb5171a4e296400e861",
         "creditManifestVersion": 7,
         "creditFormatVersion": 8
       },
@@ -912,19 +951,20 @@
         "sourceTrees": 1,
         "noteOutputs": 1,
         "creditOutputs": 31,
-        "creditCiphertextBytes": 484,
+        "creditCiphertextBytes": 485,
         "noteCiphertextBytes": 160,
         "clueBytes": 68,
         "scenario": "distinct-payers",
         "feeEnabled": false,
         "feeMechanism": "none"
       },
-      "gasUnits": "6466663",
+      "gasUnits": "6467489",
       "statistic": "median",
       "sampleCount": 3
     },
     {
       "releaseIdentity": {
+        "creditManifestSha256": "11b6b4191e8a62ae891fae41b2d3f37ccae00add26701eb5171a4e296400e861",
         "creditManifestVersion": 7,
         "creditFormatVersion": 8
       },
@@ -938,19 +978,20 @@
         "sourceTrees": 1,
         "noteOutputs": 1,
         "creditOutputs": 31,
-        "creditCiphertextBytes": 484,
+        "creditCiphertextBytes": 485,
         "noteCiphertextBytes": 160,
         "clueBytes": 68,
         "scenario": "distinct-payers",
         "feeEnabled": true,
         "feeMechanism": "draw-deduction"
       },
-      "gasUnits": "6491044",
+      "gasUnits": "6491942",
       "statistic": "median",
       "sampleCount": 3
     },
     {
       "releaseIdentity": {
+        "creditManifestSha256": "11b6b4191e8a62ae891fae41b2d3f37ccae00add26701eb5171a4e296400e861",
         "creditManifestVersion": 7,
         "creditFormatVersion": 8
       },
@@ -964,19 +1005,20 @@
         "sourceTrees": 1,
         "noteOutputs": 1,
         "creditOutputs": 40,
-        "creditCiphertextBytes": 484,
+        "creditCiphertextBytes": 485,
         "noteCiphertextBytes": 160,
         "clueBytes": 68,
         "scenario": "distinct-payers",
         "feeEnabled": false,
         "feeMechanism": "none"
       },
-      "gasUnits": "7775790",
+      "gasUnits": "7776508",
       "statistic": "median",
       "sampleCount": 3
     },
     {
       "releaseIdentity": {
+        "creditManifestSha256": "11b6b4191e8a62ae891fae41b2d3f37ccae00add26701eb5171a4e296400e861",
         "creditManifestVersion": 7,
         "creditFormatVersion": 8
       },
@@ -990,19 +1032,20 @@
         "sourceTrees": 1,
         "noteOutputs": 1,
         "creditOutputs": 40,
-        "creditCiphertextBytes": 484,
+        "creditCiphertextBytes": 485,
         "noteCiphertextBytes": 160,
         "clueBytes": 68,
         "scenario": "distinct-payers",
         "feeEnabled": true,
         "feeMechanism": "draw-deduction"
       },
-      "gasUnits": "7800135",
+      "gasUnits": "7801069",
       "statistic": "median",
       "sampleCount": 3
     },
     {
       "releaseIdentity": {
+        "creditManifestSha256": "11b6b4191e8a62ae891fae41b2d3f37ccae00add26701eb5171a4e296400e861",
         "creditManifestVersion": 7,
         "creditFormatVersion": 8
       },
@@ -1016,19 +1059,20 @@
         "sourceTrees": 1,
         "noteOutputs": 1,
         "creditOutputs": 41,
-        "creditCiphertextBytes": 484,
+        "creditCiphertextBytes": 485,
         "noteCiphertextBytes": 160,
         "clueBytes": 68,
         "scenario": "distinct-payers",
         "feeEnabled": false,
         "feeMechanism": "none"
       },
-      "gasUnits": "8024436",
+      "gasUnits": "8025394",
       "statistic": "median",
       "sampleCount": 3
     },
     {
       "releaseIdentity": {
+        "creditManifestSha256": "11b6b4191e8a62ae891fae41b2d3f37ccae00add26701eb5171a4e296400e861",
         "creditManifestVersion": 7,
         "creditFormatVersion": 8
       },
@@ -1042,19 +1086,20 @@
         "sourceTrees": 1,
         "noteOutputs": 1,
         "creditOutputs": 41,
-        "creditCiphertextBytes": 484,
+        "creditCiphertextBytes": 485,
         "noteCiphertextBytes": 160,
         "clueBytes": 68,
         "scenario": "distinct-payers",
         "feeEnabled": true,
         "feeMechanism": "draw-deduction"
       },
-      "gasUnits": "8048685",
+      "gasUnits": "8049799",
       "statistic": "median",
       "sampleCount": 3
     },
     {
       "releaseIdentity": {
+        "creditManifestSha256": "11b6b4191e8a62ae891fae41b2d3f37ccae00add26701eb5171a4e296400e861",
         "creditManifestVersion": 7,
         "creditFormatVersion": 8
       },
@@ -1068,19 +1113,20 @@
         "sourceTrees": 1,
         "noteOutputs": 1,
         "creditOutputs": 50,
-        "creditCiphertextBytes": 484,
+        "creditCiphertextBytes": 485,
         "noteCiphertextBytes": 160,
         "clueBytes": 68,
         "scenario": "distinct-payers",
         "feeEnabled": false,
         "feeMechanism": "none"
       },
-      "gasUnits": "9355547",
+      "gasUnits": "9356709",
       "statistic": "median",
       "sampleCount": 3
     },
     {
       "releaseIdentity": {
+        "creditManifestSha256": "11b6b4191e8a62ae891fae41b2d3f37ccae00add26701eb5171a4e296400e861",
         "creditManifestVersion": 7,
         "creditFormatVersion": 8
       },
@@ -1094,19 +1140,20 @@
         "sourceTrees": 1,
         "noteOutputs": 1,
         "creditOutputs": 50,
-        "creditCiphertextBytes": 484,
+        "creditCiphertextBytes": 485,
         "noteCiphertextBytes": 160,
         "clueBytes": 68,
         "scenario": "distinct-payers",
         "feeEnabled": true,
         "feeMechanism": "draw-deduction"
       },
-      "gasUnits": "9380288",
+      "gasUnits": "9381474",
       "statistic": "median",
       "sampleCount": 3
     },
     {
       "releaseIdentity": {
+        "creditManifestSha256": "11b6b4191e8a62ae891fae41b2d3f37ccae00add26701eb5171a4e296400e861",
         "creditManifestVersion": 7,
         "creditFormatVersion": 8
       },
@@ -1120,19 +1167,20 @@
         "sourceTrees": 1,
         "noteOutputs": 1,
         "creditOutputs": 51,
-        "creditCiphertextBytes": 484,
+        "creditCiphertextBytes": 485,
         "noteCiphertextBytes": 160,
         "clueBytes": 68,
         "scenario": "distinct-payers",
         "feeEnabled": false,
         "feeMechanism": "none"
       },
-      "gasUnits": "9604908",
+      "gasUnits": "9606202",
       "statistic": "median",
       "sampleCount": 3
     },
     {
       "releaseIdentity": {
+        "creditManifestSha256": "11b6b4191e8a62ae891fae41b2d3f37ccae00add26701eb5171a4e296400e861",
         "creditManifestVersion": 7,
         "creditFormatVersion": 8
       },
@@ -1146,19 +1194,20 @@
         "sourceTrees": 1,
         "noteOutputs": 1,
         "creditOutputs": 51,
-        "creditCiphertextBytes": 484,
+        "creditCiphertextBytes": 485,
         "noteCiphertextBytes": 160,
         "clueBytes": 68,
         "scenario": "distinct-payers",
         "feeEnabled": true,
         "feeMechanism": "draw-deduction"
       },
-      "gasUnits": "9629277",
+      "gasUnits": "9630739",
       "statistic": "median",
       "sampleCount": 3
     },
     {
       "releaseIdentity": {
+        "creditManifestSha256": "11b6b4191e8a62ae891fae41b2d3f37ccae00add26701eb5171a4e296400e861",
         "creditManifestVersion": 7,
         "creditFormatVersion": 8
       },
@@ -1172,19 +1221,20 @@
         "sourceTrees": 1,
         "noteOutputs": 1,
         "creditOutputs": 60,
-        "creditCiphertextBytes": 484,
+        "creditCiphertextBytes": 485,
         "noteCiphertextBytes": 160,
         "clueBytes": 68,
         "scenario": "distinct-payers",
         "feeEnabled": false,
         "feeMechanism": "none"
       },
-      "gasUnits": "10947326",
+      "gasUnits": "10949040",
       "statistic": "median",
       "sampleCount": 3
     },
     {
       "releaseIdentity": {
+        "creditManifestSha256": "11b6b4191e8a62ae891fae41b2d3f37ccae00add26701eb5171a4e296400e861",
         "creditManifestVersion": 7,
         "creditFormatVersion": 8
       },
@@ -1198,19 +1248,20 @@
         "sourceTrees": 1,
         "noteOutputs": 1,
         "creditOutputs": 60,
-        "creditCiphertextBytes": 484,
+        "creditCiphertextBytes": 485,
         "noteCiphertextBytes": 160,
         "clueBytes": 68,
         "scenario": "distinct-payers",
         "feeEnabled": true,
         "feeMechanism": "draw-deduction"
       },
-      "gasUnits": "10971755",
+      "gasUnits": "10973553",
       "statistic": "median",
       "sampleCount": 3
     },
     {
       "releaseIdentity": {
+        "creditManifestSha256": "11b6b4191e8a62ae891fae41b2d3f37ccae00add26701eb5171a4e296400e861",
         "creditManifestVersion": 7,
         "creditFormatVersion": 8
       },
@@ -1224,19 +1275,20 @@
         "sourceTrees": 1,
         "noteOutputs": 1,
         "creditOutputs": 61,
-        "creditCiphertextBytes": 484,
+        "creditCiphertextBytes": 485,
         "noteCiphertextBytes": 160,
         "clueBytes": 68,
         "scenario": "distinct-payers",
         "feeEnabled": false,
         "feeMechanism": "none"
       },
-      "gasUnits": "11201234",
+      "gasUnits": "11203008",
       "statistic": "median",
       "sampleCount": 3
     },
     {
       "releaseIdentity": {
+        "creditManifestSha256": "11b6b4191e8a62ae891fae41b2d3f37ccae00add26701eb5171a4e296400e861",
         "creditManifestVersion": 7,
         "creditFormatVersion": 8
       },
@@ -1250,19 +1302,20 @@
         "sourceTrees": 1,
         "noteOutputs": 1,
         "creditOutputs": 61,
-        "creditCiphertextBytes": 484,
+        "creditCiphertextBytes": 485,
         "noteCiphertextBytes": 160,
         "clueBytes": 68,
         "scenario": "distinct-payers",
         "feeEnabled": true,
         "feeMechanism": "draw-deduction"
       },
-      "gasUnits": "11225615",
+      "gasUnits": "11227581",
       "statistic": "median",
       "sampleCount": 3
     },
     {
       "releaseIdentity": {
+        "creditManifestSha256": "11b6b4191e8a62ae891fae41b2d3f37ccae00add26701eb5171a4e296400e861",
         "creditManifestVersion": 7,
         "creditFormatVersion": 8
       },
@@ -1276,19 +1329,20 @@
         "sourceTrees": 1,
         "noteOutputs": 1,
         "creditOutputs": 70,
-        "creditCiphertextBytes": 484,
+        "creditCiphertextBytes": 485,
         "noteCiphertextBytes": 160,
         "clueBytes": 68,
         "scenario": "distinct-payers",
         "feeEnabled": false,
         "feeMechanism": "none"
       },
-      "gasUnits": "12547610",
+      "gasUnits": "12549144",
       "statistic": "median",
       "sampleCount": 3
     },
     {
       "releaseIdentity": {
+        "creditManifestSha256": "11b6b4191e8a62ae891fae41b2d3f37ccae00add26701eb5171a4e296400e861",
         "creditManifestVersion": 7,
         "creditFormatVersion": 8
       },
@@ -1302,19 +1356,20 @@
         "sourceTrees": 1,
         "noteOutputs": 1,
         "creditOutputs": 70,
-        "creditCiphertextBytes": 484,
+        "creditCiphertextBytes": 485,
         "noteCiphertextBytes": 160,
         "clueBytes": 68,
         "scenario": "distinct-payers",
         "feeEnabled": true,
         "feeMechanism": "draw-deduction"
       },
-      "gasUnits": "12572339",
+      "gasUnits": "12573681",
       "statistic": "median",
       "sampleCount": 3
     },
     {
       "releaseIdentity": {
+        "creditManifestSha256": "11b6b4191e8a62ae891fae41b2d3f37ccae00add26701eb5171a4e296400e861",
         "creditManifestVersion": 7,
         "creditFormatVersion": 8
       },
@@ -1328,19 +1383,20 @@
         "sourceTrees": 1,
         "noteOutputs": 1,
         "creditOutputs": 71,
-        "creditCiphertextBytes": 484,
+        "creditCiphertextBytes": 485,
         "noteCiphertextBytes": 160,
         "clueBytes": 68,
         "scenario": "distinct-payers",
         "feeEnabled": false,
         "feeMechanism": "none"
       },
-      "gasUnits": "12828129",
+      "gasUnits": "12829603",
       "statistic": "median",
       "sampleCount": 3
     },
     {
       "releaseIdentity": {
+        "creditManifestSha256": "11b6b4191e8a62ae891fae41b2d3f37ccae00add26701eb5171a4e296400e861",
         "creditManifestVersion": 7,
         "creditFormatVersion": 8
       },
@@ -1354,19 +1410,20 @@
         "sourceTrees": 1,
         "noteOutputs": 1,
         "creditOutputs": 71,
-        "creditCiphertextBytes": 484,
+        "creditCiphertextBytes": 485,
         "noteCiphertextBytes": 160,
         "clueBytes": 68,
         "scenario": "distinct-payers",
         "feeEnabled": true,
         "feeMechanism": "draw-deduction"
       },
-      "gasUnits": "12852798",
+      "gasUnits": "12854068",
       "statistic": "median",
       "sampleCount": 3
     },
     {
       "releaseIdentity": {
+        "creditManifestSha256": "11b6b4191e8a62ae891fae41b2d3f37ccae00add26701eb5171a4e296400e861",
         "creditManifestVersion": 7,
         "creditFormatVersion": 8
       },
@@ -1380,19 +1437,20 @@
         "sourceTrees": 1,
         "noteOutputs": 1,
         "creditOutputs": 80,
-        "creditCiphertextBytes": 484,
+        "creditCiphertextBytes": 485,
         "noteCiphertextBytes": 160,
         "clueBytes": 68,
         "scenario": "distinct-payers",
         "feeEnabled": false,
         "feeMechanism": "none"
       },
-      "gasUnits": "14185678",
+      "gasUnits": "14187692",
       "statistic": "median",
       "sampleCount": 3
     },
     {
       "releaseIdentity": {
+        "creditManifestSha256": "11b6b4191e8a62ae891fae41b2d3f37ccae00add26701eb5171a4e296400e861",
         "creditManifestVersion": 7,
         "creditFormatVersion": 8
       },
@@ -1406,14 +1464,14 @@
         "sourceTrees": 1,
         "noteOutputs": 1,
         "creditOutputs": 80,
-        "creditCiphertextBytes": 484,
+        "creditCiphertextBytes": 485,
         "noteCiphertextBytes": 160,
         "clueBytes": 68,
         "scenario": "distinct-payers",
         "feeEnabled": true,
         "feeMechanism": "draw-deduction"
       },
-      "gasUnits": "14210299",
+      "gasUnits": "14212265",
       "statistic": "median",
       "sampleCount": 3
     },
