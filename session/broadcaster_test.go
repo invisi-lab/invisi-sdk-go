@@ -235,8 +235,8 @@ func TestBroadcasterPrivateShortfallSelectsAndAtomicallyReservesAnotherNote(t *t
 	note.Amount = core.ElementFromUint64(50)
 	note.Nonce = core.ElementFromUint64(456)
 	identity, _ := core.ComputeNoteIdentity(note.OwnerAddress, note.Nonce)
-	commit, _ := core.ComputeNoteCommitment(note.ChainID, identity, note.TokenAddress, note.Amount)
-	nf, _ := core.ComputeNoteNullifier(note.ChainID, note.Nonce, commit)
+	commit, _ := core.ComputeNoteCommitment(note.ChainID, note.ProtocolAddress, identity, note.TokenAddress, note.Amount)
+	nf, _ := core.ComputeNoteNullifier(note.ChainID, note.ProtocolAddress, note.Nonce, commit)
 	leaf := transaction.FieldHash(commit)
 	s.options.Provider.(sessionProvider).leaves.Store(uint64(2), leaf)
 	if e = s.options.Store.Update(ctx, s.scope, func(state *WalletState) error {

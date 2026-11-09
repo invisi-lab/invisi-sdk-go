@@ -1,9 +1,9 @@
 {
   "transact_user_slots1": {
-    "artifactSha256": "f0395e81f96d21f7dc27b091a3036022fb53d30e35d3a15b62c097344d35e5b5",
+    "artifactSha256": "98125d7d1a2f91f777dcdd9f5ba41f63eb71842ce7c6825af0dc4252d74cf12c",
     "keys": {
-      "evm": "edfb46d3473076e188a276f037b071554e1005f949d70278595cc988772972df",
-      "noir-recursive": "7048b094b1b86427cb78bae2fb4d8b239925d80109805b9498c7cf987840f8e0"
+      "evm": "9d4e089c3d6e9d56ac1819e90495d3463a3c81cfcb98758abc399a3e8a0c3264",
+      "noir-recursive": "acd2910993fd5a86bc7bdb930be72d7855759770328a64a87f87110627ae1fc8"
     },
     "publicInputCount": 20,
     "public": [
@@ -122,10 +122,10 @@
     ]
   },
   "transact_user_slots2": {
-    "artifactSha256": "59ddefde47d8f9296426b3c6325ba9b66ccbe8f8fe323264e0020089451a1ce2",
+    "artifactSha256": "003bfabd074411981225d9a8ac360fcab1103087992a2daadc0149d17e82e0a3",
     "keys": {
-      "evm": "011a9853ee2b36e433aca6f2711d969f72a141c6da8be1df31eb9881e9fe1f16",
-      "noir-recursive": "c85c38583b022fde499a51370e25f08508963e96c7f3a8efbd7cda2dfc83a902"
+      "evm": "d5c5314a361f6fd14c0be42c457bc60ef4aa76d7e8907c530c926f69dd4468bf",
+      "noir-recursive": "7e217338870c1491ee16ccde3598af978e0b1484387aa64d6e69491cad442b8b"
     },
     "publicInputCount": 23,
     "public": [
@@ -244,10 +244,10 @@
     ]
   },
   "transact_user_slots3": {
-    "artifactSha256": "b5bd9575b763eb72be8e5572546d0b7034f463ec32d74e550886b405a528af53",
+    "artifactSha256": "94f274a54407532371ec18eb677005057cb3573965d6176eb1aea1377af50189",
     "keys": {
-      "evm": "061fac510d4193973de69b64b44abab7e56ae219a5e19096bb3c62d5cf1a5fa5",
-      "noir-recursive": "8d265788516fb6ea85888df86b05151751fad4a63de71e1671519e2e193c5487"
+      "evm": "25b0031b43b406999225defd4c86311302bb88dccff4ca9754d4c404bdfb4e4c",
+      "noir-recursive": "206318e7c2f246d623629da0e5a12c049e5877da45fc8cdcd1cca0ab5c33a25c"
     },
     "publicInputCount": 26,
     "public": [
@@ -366,10 +366,10 @@
     ]
   },
   "transact_user_slots4": {
-    "artifactSha256": "cd1e9714c8eb47c5c010e9206cdab05d08bf9700ce11fe603f8e22122693c733",
+    "artifactSha256": "8d872e95a0dc13e243013109ad10a8253f7477c22b3d64a421d202e445868825",
     "keys": {
-      "evm": "419233810aa28caaa36d07f270b14048ebc1f152bbba9156b43e9220cd488d5f",
-      "noir-recursive": "5ca7b5e9b0bfc5b3af20b18fd6a41fae3b0a830a2c8352dad000d644f9b1cff0"
+      "evm": "63cd2ca2dd05fffbd5118099e9a1985c14e992fedf66c98dbea4e0888dbef1fe",
+      "noir-recursive": "8d4e833262f54e07b1b4f4e11230bb23179d1433b61964c2c1401f0bfa1223dc"
     },
     "publicInputCount": 29,
     "public": [
@@ -488,10 +488,10 @@
     ]
   },
   "transact_user_slots5": {
-    "artifactSha256": "9592c701240eca567def32900076715315e4bdddafd8491fad3a31ca1f4a68f1",
+    "artifactSha256": "f671dcc2e24bbc1cd4a471ad08e02d195d2974fa3341f6f9efe39787d3ab0d14",
     "keys": {
-      "evm": "86b8f71834405f530cc90497eac12d82d5a279b119ba249d9eb5f1b3a33a8467",
-      "noir-recursive": "0289e2e19a6250803d2d279eccfefae4b1545fa2409690e23416fbbf2f571c90"
+      "evm": "7821e36f8a00c90512ad0b15372d7689b3c3c8e103913d4f1039f265a16266f5",
+      "noir-recursive": "6dae2013733368bcfa5de8c3c96fe172afa2c92c909d21d7ada7dcad7a1c3d5b"
     },
     "publicInputCount": 32,
     "public": [
@@ -610,10 +610,10 @@
     ]
   },
   "transact_user_slots6": {
-    "artifactSha256": "6b48461a356dfb4bf4034054ef4eef5153b0bf9673cf83a415f7b4795744cc97",
+    "artifactSha256": "36b84d7ac57dbac5b68365038ee5aa2d3c1b1eb8158afb5ce45b0f003f7a4856",
     "keys": {
-      "evm": "1e78d01ba8b9ec2fb4eaaf18325505789d69ae26acd1a5ed74939bedd2dcdf57",
-      "noir-recursive": "fd72f2e991e2b045df604e56cac11b5895f36af85a39ba0fbe40fbd0772ec12b"
+      "evm": "4b8cdd71e67433f778c9ca94f44dbcf9c3963ea6af5830846de02434229abb83",
+      "noir-recursive": "3dca7cba0523276ba8162bf0f7c25dcc9b39dbf5b1514b672c67a09498feec2c"
     },
     "publicInputCount": 35,
     "public": [
@@ -732,10 +732,10 @@
     ]
   },
   "transact_user_slots7": {
-    "artifactSha256": "e56514e249550aa906daf985ee90bdd21018dffd065cc5f9c8e89b3f2d81390f",
+    "artifactSha256": "48a6290c738baf54f530df01a72de5e32b85cd0b7ce7eecf2a5ac70350166d4a",
     "keys": {
-      "evm": "d20ed8e8672540fee867e7670f03f2e550762d2d80d4774e82003f7b3b5f13a7",
-      "noir-recursive": "e03bb8845fd4a3965503efa22b5a75756bd716bfb6ce2511d7049e63020c1925"
+      "evm": "94378a2acff6ca9f6de20c2be181f638f82c643c530e560b4bc4f058814568dd",
+      "noir-recursive": "aa098ba47cdd9930a4bcc5791a4bfd82db5f8b4d52f49d19c1ad36a5934311fc"
     },
     "publicInputCount": 38,
     "public": [
@@ -854,10 +854,10 @@
     ]
   },
   "transact_user_slots8": {
-    "artifactSha256": "a6c7c6c1857ac1d1ad6087df849f0028ff5f3baa404e62890d2b42080e9f4814",
+    "artifactSha256": "6f5eaede173c6dac18bb972b5f8254ded20c31a18983d5f0a0d7c3809a221a48",
     "keys": {
-      "evm": "4a21a4ac86ee2e3b18d24c4b45575bf90ef9956cfd5f822c4c17538b148bbd94",
-      "noir-recursive": "203c3bd59544ee9f08bfb5943afd273b000dbace15234cd524007ef229fa9a7a"
+      "evm": "829691975be106d9c77093811b93af52d40bedb4749aa2219c97a5e2a3fc8ca3",
+      "noir-recursive": "8cce670233573b680063903ff38ab8128747561e4c1c8f5aa195dc26ff83fcba"
     },
     "publicInputCount": 41,
     "public": [
@@ -976,10 +976,10 @@
     ]
   },
   "transact_user_slots9": {
-    "artifactSha256": "ed12a2fb776b5479a422d3dc3730768311abfbc8cb4e27d35dedc7a54e14e288",
+    "artifactSha256": "cf327a39295d7ecafbe030af9bbca9654093838f0ef012f8f6878009488b1748",
     "keys": {
-      "evm": "011c232676bcb618f2ba15d3e4c38b01944f6a18fb3cb02269c83deb1d9eddd0",
-      "noir-recursive": "e71950186ac001dd7f47614af1c899b69d29b2a9f5335ddfa13d5bf2f9eec07d"
+      "evm": "a98cc35b5769165a2d87ed4d43ba5e9bb82b39c375d37d221f0f9f08a5100c9b",
+      "noir-recursive": "e645fd473e1feab6a90537658278541f47417bfe705b81beb6fa2edbb14d7705"
     },
     "publicInputCount": 44,
     "public": [
@@ -1098,10 +1098,10 @@
     ]
   },
   "transact_user_slots10": {
-    "artifactSha256": "53170a212ba3dae93e5de92deabb8b3a612e8ac899f66c035de8469ab32bfae4",
+    "artifactSha256": "66e29f362e8785e0fda8f300d596f8793a5f088e5560f83c97eb6b46bc8197bc",
     "keys": {
-      "evm": "81c7506bbfcf18cf22c6ef10bd67f2f97a1c95924b5cde9996130ad6d5ee039c",
-      "noir-recursive": "9650aac1dc6093748fec9a4c59ee91635162fc53aeea31e7d6c1843836a7a020"
+      "evm": "dc99887057b754edc9b7d5abb5fa12e33eb36d21abaf3fa719b76d7f986c7eb2",
+      "noir-recursive": "bfc7dd02d20a2d11a491801b848c26b446cd8731118465213da21d349a005ef2"
     },
     "publicInputCount": 47,
     "public": [
@@ -1220,9 +1220,9 @@
     ]
   },
   "transact_user_slots20": {
-    "artifactSha256": "0082fd203ec4f5823abd054a4eb19cf1453fe484379692297fbee640fbb1a52b",
+    "artifactSha256": "12665b1adf00dddb84681e33e2fd309477d8825f69ff8e25af62e0bd352fa962",
     "keys": {
-      "evm": "b45dfb3e8ce8585699bb018327cfb8417bdbf21e95c47602cc660df97e2682fb"
+      "evm": "02c8f2ad6ab711ddd1fec36077b285b250a8da9987cacc5fc4b2b4ae5aadc33d"
     },
     "publicInputCount": 77,
     "public": [
@@ -1341,9 +1341,9 @@
     ]
   },
   "transact_user_slots30": {
-    "artifactSha256": "8226f19bbc2b3ac764d635ab645b2bd2ef3051b252c146c31767a1cc04286409",
+    "artifactSha256": "4e981587ff9911234b38606b24d7880a152d43eb2253336bd430839ae0145b6c",
     "keys": {
-      "evm": "ab7fe244c71058c43b377c469e69bbebfc60d41f661abf00f424d50667811607"
+      "evm": "865650c00836b73e06109606ecd182bc862086c7c785fa9a1464b0295430e865"
     },
     "publicInputCount": 107,
     "public": [
@@ -1462,9 +1462,9 @@
     ]
   },
   "transact_user_slots40": {
-    "artifactSha256": "9f6df2ebf19bc524d47dfb8bf14ebe3336a9de14cc0f04c39bf71c5594a149b3",
+    "artifactSha256": "68fe2eae207ab8ecb4cbb29e9f4f9271e2bc0dc44ef4e3347c0a088d8dda6607",
     "keys": {
-      "evm": "fec0898fe4aab090677dbb2fc9961e13e2e9fcdf778c5a7c7ddf735d8be4fd59"
+      "evm": "b03885a22bb62f3688f450893ad3a34c82a70b1d855f6eba50468338518617d9"
     },
     "publicInputCount": 137,
     "public": [
@@ -1583,9 +1583,9 @@
     ]
   },
   "transact_user_slots50": {
-    "artifactSha256": "aec370cb1609092b15ac8a4757a77d3efae8aea75150981fe8e50040ce05ef79",
+    "artifactSha256": "d604683632241102eb721ca54fdc32cd7f7783719fc84d6de13cad7dc351a508",
     "keys": {
-      "evm": "dbc3a0b7675800dd8cdeec4607777c9d144e76672096bd869d0f9c94a6f9842c"
+      "evm": "252d988b7adf6c849774c54181226cff731f1323beaf5d11abcd54d924932372"
     },
     "publicInputCount": 167,
     "public": [
@@ -1704,9 +1704,9 @@
     ]
   },
   "transact_user_slots60": {
-    "artifactSha256": "a8be16536434b05668db76282954230accd21334493102cf9697ee3171719b04",
+    "artifactSha256": "095bee5e870d8469a176fc446e2a2f39dd42c52cd49b3fa62712c7b030087f99",
     "keys": {
-      "evm": "24c989495f036f98724f86913f62882b83bd4bb7873cd2b8e90e5f539d2e4f13"
+      "evm": "fd095c05ab1b2bea4e24d31a036603b2a2dc21742ea224a0968c6ceb70e93223"
     },
     "publicInputCount": 197,
     "public": [
@@ -1825,9 +1825,9 @@
     ]
   },
   "transact_user_slots70": {
-    "artifactSha256": "2013680c7d501f98bf58cbf70997a5d2064c9dcd65b603fc47271b6103990ee5",
+    "artifactSha256": "bc1bcc226924d7b89767cb649bf9ed88a57d9d3fa0fe7b1d2a3ec1b6e4700963",
     "keys": {
-      "evm": "8a172b5dcfcce7baad2c5b89c793504babcbb4199f082986d81e00639752a8f2"
+      "evm": "0a0828ba6fcd1a4a4d2f8aacb816893b91a95adefb07ac31d1825192240ae8ab"
     },
     "publicInputCount": 227,
     "public": [
@@ -1946,9 +1946,9 @@
     ]
   },
   "transact_user_slots80": {
-    "artifactSha256": "f938c701a4fb31b49782067676c86a3539cee81707f409ee3b1c75b04c7d154a",
+    "artifactSha256": "bb63abd1d170be72fa09d083cdd7f0a3ccc3a87f561ab1305110fdbf5827385c",
     "keys": {
-      "evm": "4ca0f780a296f95589dc722760ea2149ae8a139f87e23432c78d3bfe262a17af"
+      "evm": "fcb451eb5bda3ed4cfd5c9f3f5f4b51b3780a4d100a024a170eb39dc3b0cb2ab"
     },
     "publicInputCount": 257,
     "public": [
@@ -2067,9 +2067,9 @@
     ]
   },
   "transact_user_slots90": {
-    "artifactSha256": "0ac127bb14274cd649fa5b3b49afa35203d3c99de7b3fc262b694b79a6dc7102",
+    "artifactSha256": "b4b19cf14aadf83233d643266089af6b8c7d84eb8457a6149f6805adf75fd455",
     "keys": {
-      "evm": "46fb940aaadd6b72dda04ff5126bb056bfc308ef6f263918dac31872d334d1d6"
+      "evm": "8f7d93da4f983ee366f9c67fbdfa03a352c37ecb09b4ae4b5e56e82ea89e589e"
     },
     "publicInputCount": 287,
     "public": [
@@ -2188,9 +2188,9 @@
     ]
   },
   "transact_user_slots100": {
-    "artifactSha256": "37af47445a8c20412caac4f09c31a22de312b6f9d0869783614359fae250ba9e",
+    "artifactSha256": "df253e9503124eeba8e0c82a982cfabe063ceac92dbfa45ea870c1a5c432d3b3",
     "keys": {
-      "evm": "4fe80c914b41d92902b32ceb034c90c105f8697afba8f714dd2f40790e162a3b"
+      "evm": "7752c49994fa2e6d699b1d8739800e1a5a83cf9a6d27d9dde7bafb952fb0940f"
     },
     "publicInputCount": 317,
     "public": [
@@ -2309,9 +2309,9 @@
     ]
   },
   "transact_user_slots110": {
-    "artifactSha256": "18a65c5dc7db67696a23fd0a1d82f23e7dea14dfb8c8eb4ce979be53d12df07e",
+    "artifactSha256": "5016add404c3cac2c179e85476ac9f965e884b9ebeee41a79d8475c46c111fb1",
     "keys": {
-      "evm": "759892222897b2fc449053bcffc76c710fbd70af21ce1e0855b2c4bb7422c850"
+      "evm": "babc3357f778f96c533fba2c0183b54a5c1f6004ccc7729414e8a8a941a6c8a5"
     },
     "publicInputCount": 347,
     "public": [
@@ -2430,9 +2430,9 @@
     ]
   },
   "transact_user_slots120": {
-    "artifactSha256": "757caffc2229ab4a34bbb42f91f1a6681433339a7b6b4bc4ddbb8d593a25b41e",
+    "artifactSha256": "c1787c1c26cbf67ea46189f66d2051396e98c7da4050741aae40169d491938ee",
     "keys": {
-      "evm": "0ba206851fefba7c04dd4a7e9d02684f003b015aeb156f59a8940f93ee0dc681"
+      "evm": "7285d99e766cd7610974247502d8fbf4d2b09775be01e2fb17b58ce5588e0858"
     },
     "publicInputCount": 377,
     "public": [
@@ -2551,9 +2551,9 @@
     ]
   },
   "transact_user_slots130": {
-    "artifactSha256": "6b44844f01f3f08be6ec3453695d302efdc524cdbb9b46e6754e39dd24ef88fb",
+    "artifactSha256": "eacf744825be874c1d6454367ab7526ad6e2d3585348515ed362dcf620732cd2",
     "keys": {
-      "evm": "e387423b7e299a86efae088fb6dffc9f651405568028e1e522eea973c76c50bd"
+      "evm": "0cba569aff9a3ee129e1a3c8bef5eb0784c8791404a8feae457b392f4d4cf7c4"
     },
     "publicInputCount": 407,
     "public": [
@@ -2672,9 +2672,9 @@
     ]
   },
   "transact_user_slots140": {
-    "artifactSha256": "6d270c2192f5d963034b7cad9f425b94851bb6cfddad4b818428ec6a31f7a523",
+    "artifactSha256": "680e784099ae8354b14ba4556aa9f7085e4f05fed414716b393ae8f0eec32491",
     "keys": {
-      "evm": "611568a04cef3c10d1228432692890e98921081ca5a3e578da1e27c21e0846b1"
+      "evm": "f51aca98180a03f3a67d35947bf28ad51bc598acb97e0ced0081bd586c956771"
     },
     "publicInputCount": 437,
     "public": [
@@ -2793,9 +2793,9 @@
     ]
   },
   "transact_user_slots150": {
-    "artifactSha256": "415151f7bf4cda8f92df93ffdee57220d708e648c9fcb46ac9ba32404e9faf93",
+    "artifactSha256": "520d9b27e3eb10ee5f7ac7065102e025bcfa80c4498b6aa913a8b3dab526ec81",
     "keys": {
-      "evm": "f21ddf6c031a1b2c775e2eb66c4884dc6215af7463d269fa7c4c9d6f6d2bdbc0"
+      "evm": "6d6f189e728d836136e6510ff7d66425f2833cf6423c160895d635727c156092"
     },
     "publicInputCount": 467,
     "public": [
@@ -2914,9 +2914,9 @@
     ]
   },
   "transact_user_slots160": {
-    "artifactSha256": "14906a83b2d4e9a007b44e91e64b9337b0e28bb1c3e0887cf72d6e5d1e2ce017",
+    "artifactSha256": "e8437ab725d8713fb1f33f338796da12a003b471e37509289625cb964d5bfae2",
     "keys": {
-      "evm": "ccab603e82dd05c73df944117f954d5fcd08cb19779df86a19aa6584ee606c3b"
+      "evm": "62db47dd1d053bf02ed171662398d95103bd7abf7bc53bb2a0eeca6650fb3546"
     },
     "publicInputCount": 497,
     "public": [
@@ -3035,9 +3035,9 @@
     ]
   },
   "transact_user_slots170": {
-    "artifactSha256": "d2bb03d6afe97409e5fa16584f008d8bc28aeee85dd9b4c52bd251a2a48489dd",
+    "artifactSha256": "f3ee50ad80360aa71faf95723d434ad3a97f953003e1db64949c44144eaa045e",
     "keys": {
-      "evm": "dde389b4274b135098ae4cbce408a79503f06399407e57b806817e615724eedc"
+      "evm": "7e19e4f71d9ccadac51cdd0ee700d4af607675ea709795fa07bdc162f88c7483"
     },
     "publicInputCount": 527,
     "public": [
@@ -3156,9 +3156,9 @@
     ]
   },
   "transact_user_slots180": {
-    "artifactSha256": "d714fcc35e2673ba101e733179ff38105450694a7f8567dd7233b473c7b7c5f3",
+    "artifactSha256": "2d7a2f49883620c0b486ae30c1c01c7ab4083d5347a8d84050b78f54a039f8c1",
     "keys": {
-      "evm": "874414c319d78fa1b825d80181fba065ca715b76b8c0e1ffd00c0299824176e3"
+      "evm": "0a38b949a6b8efd4d832cf344448bd544f2f5d5e50da36fe5a2c67207631a875"
     },
     "publicInputCount": 557,
     "public": [
@@ -3277,9 +3277,9 @@
     ]
   },
   "transact_user_slots190": {
-    "artifactSha256": "f22646cf42ef7d2c4f2add98df5b61c9cdcbb0636ee72ccea4ac8ffb08aefdb0",
+    "artifactSha256": "7fcdd2af5676b36d02c14d2b945b3a0ba7210e862b085926536de042c461d116",
     "keys": {
-      "evm": "d540965294e8c3d3473e9d94fb329c974c6fee19d01ae87d1262e3eca2ce2c5c"
+      "evm": "6be0578318cdbcfd56c9d2a560c9989667bfb0a6b5c735559da0d2e07b39972c"
     },
     "publicInputCount": 587,
     "public": [
@@ -4325,9 +4325,9 @@
     ]
   },
   "credit_draw_slots1": {
-    "artifactSha256": "66eaca3a47d061be19532344d5215b670247abb7886a686a122aad518f86bf32",
+    "artifactSha256": "b700bbb1472310a46c78410aebb91642512266da27892eaba2c7fce97f9955c0",
     "keys": {
-      "evm": "980930a2c7d934b0fa2afec25dbea120e446076094bae786fbe6ce1fd810d9be"
+      "evm": "15fcfee759347510fd9d99a80920474efa0aa1c950b97c1f083097533b87fe15"
     },
     "publicInputCount": 27,
     "public": [
@@ -4487,9 +4487,9 @@
     ]
   },
   "credit_draw_slots2": {
-    "artifactSha256": "ddd83c236ffb72a56edd2f0715a695dd23163c87563d81589bfbabbbf3b82b58",
+    "artifactSha256": "b5488cc95a1315f453381d04d4657edac4fa817a64b426ba6470fc60acc59196",
     "keys": {
-      "evm": "8273dc7966273838e6bd9468b482225c1c1888753cff4ff1789456bcf66d490d"
+      "evm": "cdf66fffb47d80635ecd64926129ce03fbecd722f6505fa805ed134ce79ce021"
     },
     "publicInputCount": 37,
     "public": [
@@ -4649,9 +4649,9 @@
     ]
   },
   "credit_draw_slots3": {
-    "artifactSha256": "af547ff131afe3e692604f7be9174e6b749b9735b0b1e203dd89d3f780460b94",
+    "artifactSha256": "8de790ee3aad1d680f2fe27208769f1edd4e1744b4e3058375a14c4d980a8287",
     "keys": {
-      "evm": "f41fb7ffc6d4c85f4c19baa3c14a552d30be950aade7946dd3d814b8f5edabc2"
+      "evm": "48f7d68591dca71ab40759ab2966054ed8e52652f9aad1363c7c5d8bbdf0a4e9"
     },
     "publicInputCount": 47,
     "public": [
@@ -4811,9 +4811,9 @@
     ]
   },
   "credit_draw_slots4": {
-    "artifactSha256": "e2a21e29d97fa73695a2cde0a8656cf8fce35f2515a5238827714dc1a35624a8",
+    "artifactSha256": "8b19f7b174d56bef8b2d2fa1bda0be4f7d63531c44190aa5cd77c4951bed1a42",
     "keys": {
-      "evm": "53dcc48c48a5e52faf83ea7e62f2f8a4dae1a12043b42332d01bbc9bda5bd9b9"
+      "evm": "e0c867da35cb5b5efb82e97ce0681c469cd7f49981a56e0bb6a772079ee6fb8b"
     },
     "publicInputCount": 57,
     "public": [
@@ -4973,9 +4973,9 @@
     ]
   },
   "credit_draw_slots5": {
-    "artifactSha256": "b58c30e5edc1382f3f11d4760a671fc36b518153a90dfb56376c0aca48e50428",
+    "artifactSha256": "dd37ce70319eed4c292a76774d68f1040d03df95697842a1def78b7fdd4b75af",
     "keys": {
-      "evm": "f096698f720d1646fe65284e1534efa1b28579b5650b7305f5deae2b078dc70b"
+      "evm": "a91742641014e910ce6ac5872c183c3f13896674f506b5b83ee864a4107da9dc"
     },
     "publicInputCount": 67,
     "public": [
@@ -5135,9 +5135,9 @@
     ]
   },
   "credit_draw_slots10": {
-    "artifactSha256": "ec806453005c5e6f5d98c93e33d1a58831ac41a7b3b13ebf43b4f8626717d44a",
+    "artifactSha256": "24ad5a62fc6d7b608f52934a6cc463f63baea1a7c564587bd1acfd077b187524",
     "keys": {
-      "evm": "76460a341e0aa74d7702f8030bf800f0561e33de1ad28fcc56731b990fb675ed"
+      "evm": "9f214e607a437025b66898b77572c0e6ca0ac1e6270519ccb9be54ee203044a5"
     },
     "publicInputCount": 117,
     "public": [
@@ -5297,9 +5297,9 @@
     ]
   },
   "credit_draw_slots20": {
-    "artifactSha256": "57b9d603f7980a2faf3ee3e3cb4775afe5ba96b8d3ab855203f40a0bf7b23ac5",
+    "artifactSha256": "3491412abfa06cb62673299fd466c94014dd8c4b2778e1f4d513a2da63879e28",
     "keys": {
-      "evm": "4140b9d93d2aff54f750ca272f52a02884fa9e60ba5916634a00eb741618d5a8"
+      "evm": "55d68a6d497d61415a396a8095812b0d69032c1c413f4f6beda59b6bb286e9de"
     },
     "publicInputCount": 217,
     "public": [
@@ -5459,9 +5459,9 @@
     ]
   },
   "credit_draw_slots30": {
-    "artifactSha256": "a73abad65c6b5e4eecdcc254c37025578e11924eaaa0cc4586875cc9e6f8b089",
+    "artifactSha256": "5fdeac9350afc1b34904bdb6dc85063d0dd6f728c85d2c25ccef1f2d06e99e0e",
     "keys": {
-      "evm": "c3fc33bc0577175473aebdae0528a1a6a5dab28d44be738058ac116724f2f837"
+      "evm": "51d8c65b69cb9ec0246b6e6d22e049759b62b542da49c1940a876a5793815e6e"
     },
     "publicInputCount": 317,
     "public": [
@@ -5621,9 +5621,9 @@
     ]
   },
   "credit_draw_slots40": {
-    "artifactSha256": "1eca78c6bca366c121c2e53b85801167a0610941cb4c5fe298ad4b362fc0620e",
+    "artifactSha256": "1abac6d221e7803f26fa5d8508217373609ac54c48d6b36cc288cae5617924cb",
     "keys": {
-      "evm": "4b490cfc6ca96cdc75b1201ac1e235c2e75215bdc5f060a82f85962b936f3481"
+      "evm": "7800e1618ea7e32d2b7f4b10209ca51731fea7bbfd039e3eb7ee68dfd680c739"
     },
     "publicInputCount": 417,
     "public": [
@@ -5783,9 +5783,9 @@
     ]
   },
   "credit_draw_slots50": {
-    "artifactSha256": "dd3519bf1336d00d205c43aa7e6160f308ed7594161d92ab4417e768afde636f",
+    "artifactSha256": "9d1d4ae9af3cb04c32ea9837a27b713ae65fd13afc2ac7dad4031ee4395cb9a1",
     "keys": {
-      "evm": "6cc08c3d7181f254235a5f4621b4c48fe06df583ab875ca4bb4dc5f237ec722f"
+      "evm": "d098fa18d9310801aa03f7612ddcfa5494647c3b3d4a8410c4c28d121157a2d8"
     },
     "publicInputCount": 517,
     "public": [
@@ -5945,9 +5945,9 @@
     ]
   },
   "credit_draw_slots60": {
-    "artifactSha256": "6737cb9b9f48ae4fb861a67330cfc3ddab1a55b7325fecd05b4ce7dfcb48545e",
+    "artifactSha256": "4e19054b8e5768062635c157ed102c5821c85ed8021fee0741ee0017f0797c6c",
     "keys": {
-      "evm": "0b1a72c1ea2850e467f655b5f75a052ca5be3dacde99a27b41325f2f94b101bf"
+      "evm": "4bf2b115d65a96211e7498e56dd3e8a08c43edeaec33f6821bd4de8fc915afc7"
     },
     "publicInputCount": 617,
     "public": [
@@ -6107,9 +6107,9 @@
     ]
   },
   "credit_draw_slots70": {
-    "artifactSha256": "366576a49948196804cecc812946ab8f86b699e0234d945b60fe074af0b29928",
+    "artifactSha256": "9a43c21f801744d31145651101a6fa4287dc3e0778c8cb1dbd5d3d5f1cbb8b71",
     "keys": {
-      "evm": "b3c7d6cca0e3254b93d97b51e109ef80e18ef474efb1fec067d6440b3439f706"
+      "evm": "fa61d5982830b1120fcc260124b2725c7f348a06c24404bde06cf5954f2d0381"
     },
     "publicInputCount": 717,
     "public": [
@@ -6269,9 +6269,9 @@
     ]
   },
   "credit_draw_slots80": {
-    "artifactSha256": "537d511699d3b278f7dbdf24a4b7ea47220e979e3f5d6d15899f270adafa0f7d",
+    "artifactSha256": "123ea52a3b459fd1b8d5075a3ea634a7e90a1efd561f4cba0ede4aa50f137a70",
     "keys": {
-      "evm": "b96753ac9866b953c7783b9095637c1943d1c31ee7490097ac293eb653704f14"
+      "evm": "2796833f0e04658fee386eb603791fd9b15f5462a1f43a942948a80cb7bcec86"
     },
     "publicInputCount": 817,
     "public": [

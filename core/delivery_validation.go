@@ -31,7 +31,7 @@ func verifyNote(context NoteEncryptionContext, note Note) error {
 	if err != nil {
 		return err
 	}
-	leaf, err := ComputeNoteCommitment(context.ChainID, identity, note.TokenAddress, note.Amount)
+	leaf, err := ComputeNoteCommitment(context.ChainID, context.ProtocolAddress, identity, note.TokenAddress, note.Amount)
 	if err != nil {
 		return err
 	}

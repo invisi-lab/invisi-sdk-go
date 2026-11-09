@@ -93,7 +93,7 @@ func TestDrawAndUpdateWitnessBindMembershipAndOrdinaryNote(t *testing.T) {
 		t.Fatal(err)
 	}
 	outputIdentity := core.ElementFromUint64(999)
-	out, err := core.ComputeNoteCommitment(c.ChainID, outputIdentity, s.TokenAddress, located.Debit)
+	out, err := core.ComputeNoteCommitment(c.ChainID, c.ProtocolAddress, outputIdentity, s.TokenAddress, located.Debit)
 	if err != nil {
 		t.Fatal(err)
 	}

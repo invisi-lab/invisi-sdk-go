@@ -90,7 +90,7 @@ func createNoteOutput(o PaymentRequest) (NoteOutput, error) {
 		}
 		p.Identity = FieldHash(id)
 	}
-	commitment, e := core.ComputeNoteCommitment(p.Context.ChainID, core.BigIntToElement(p.Identity.Big()), core.BigIntToElement(o.TokenAddress.Big()), core.BigIntToElement(o.Amount))
+	commitment, e := core.ComputeNoteCommitment(p.Context.ChainID, p.Context.ProtocolAddress, core.BigIntToElement(p.Identity.Big()), core.BigIntToElement(o.TokenAddress.Big()), core.BigIntToElement(o.Amount))
 	if e != nil {
 		return fail(e)
 	}

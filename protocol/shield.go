@@ -47,7 +47,7 @@ func ValidateShieldRequest(p BuildShieldCalldataParams) (FundingParams, error) {
 		if err := ValidateDelivery(p.Deliveries[i], false, false); err != nil {
 			return f, err
 		}
-		commitment, err := core.ComputeNoteCommitment(core.BigIntToElement(p.Context.ChainID), core.BigIntToElement(number(o.Identity)), core.BigIntToElement(p.Context.TokenAddress.Big()), core.BigIntToElement(o.Amount))
+		commitment, err := core.ComputeNoteCommitment(core.BigIntToElement(p.Context.ChainID), core.BigIntToElement(p.Context.ProtocolAddress.Big()), core.BigIntToElement(number(o.Identity)), core.BigIntToElement(p.Context.TokenAddress.Big()), core.BigIntToElement(o.Amount))
 		if err != nil {
 			return f, err
 		}

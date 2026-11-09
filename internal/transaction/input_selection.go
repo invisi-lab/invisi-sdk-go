@@ -47,7 +47,7 @@ func (s *Runtime) SelectInputs(ctx context.Context, token common.Address, amount
 		if e != nil {
 			return nil, nil, e
 		}
-		leaf, e := core.ComputeNoteCommitment(n.Note.ChainID, identity, n.Note.TokenAddress, n.Note.Amount)
+		leaf, e := core.ComputeNoteCommitment(n.Note.ChainID, n.Note.ProtocolAddress, identity, n.Note.TokenAddress, n.Note.Amount)
 		if e != nil || FieldHash(leaf) != n.Commitment {
 			return nil, nil, errors.New("stored note commitment mismatch")
 		}

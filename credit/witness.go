@@ -280,7 +280,7 @@ func (p DrawParams) Witness(c Context, deliveries []protocol.Delivery, credits [
 	}
 	fee, _ := normalizeFee(p.FeeRecipient, p.FeeAmount)
 	net := new(big.Int).Sub(p.TotalAmount, fee)
-	out, err := core.Poseidon2Hash(core.ElementFromUint64(3), c.ChainID, outputIdentity, core.BigIntToElement(p.Token.Big()), core.BigIntToElement(net))
+	out, err := core.Poseidon2Hash(core.ElementFromUint64(3), c.ChainID, c.ProtocolAddress, outputIdentity, core.BigIntToElement(p.Token.Big()), core.BigIntToElement(net))
 	if err != nil {
 		return nil, err
 	}

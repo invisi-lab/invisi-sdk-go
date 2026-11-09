@@ -88,11 +88,11 @@ func (n *NullifierCapability) ForNote(note core.Note) (common.Hash, error) {
 	if e != nil {
 		return common.Hash{}, e
 	}
-	leaf, e := core.ComputeNoteCommitment(note.ChainID, id, note.TokenAddress, note.Amount)
+	leaf, e := core.ComputeNoteCommitment(note.ChainID, note.ProtocolAddress, id, note.TokenAddress, note.Amount)
 	if e != nil {
 		return common.Hash{}, e
 	}
-	nf, e := core.ComputeNoteNullifier(note.ChainID, note.Nonce, leaf)
+	nf, e := core.ComputeNoteNullifier(note.ChainID, note.ProtocolAddress, note.Nonce, leaf)
 	return common.Hash(nf.Bytes()), e
 }
 

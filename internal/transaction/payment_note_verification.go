@@ -198,7 +198,7 @@ func (n *PaymentNote) verify(ctx context.Context, pool *Protocol, wallet *Wallet
 			return fail(e)
 		}
 		note := paymentNoteOpening(n.data)
-		nf, e := core.ComputeNoteNullifier(note.ChainID, note.Nonce, core.BigIntToElement(n.data.Commitment.Big()))
+		nf, e := core.ComputeNoteNullifier(note.ChainID, note.ProtocolAddress, note.Nonce, core.BigIntToElement(n.data.Commitment.Big()))
 		if e != nil {
 			return fail(e)
 		}

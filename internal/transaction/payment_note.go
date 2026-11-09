@@ -25,7 +25,7 @@ func PaymentNoteFromIPN(ipn string) (*PaymentNote, error) {
 	if e != nil {
 		return nil, e
 	}
-	commitment, e := core.ComputeNoteCommitment(n.ChainID, identity, n.TokenAddress, n.Amount)
+	commitment, e := core.ComputeNoteCommitment(n.ChainID, n.ProtocolAddress, identity, n.TokenAddress, n.Amount)
 	if e != nil {
 		return nil, e
 	}

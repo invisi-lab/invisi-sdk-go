@@ -363,7 +363,7 @@ func PrepareDrawToNote(c Context, p DrawParams, stateDeliveries []protocol.Deliv
 	if err != nil {
 		return nil, err
 	}
-	commitment, err := core.ComputeNoteCommitment(note.ChainID, identity, note.TokenAddress, note.Amount)
+	commitment, err := core.ComputeNoteCommitment(note.ChainID, note.ProtocolAddress, identity, note.TokenAddress, note.Amount)
 	if err != nil {
 		return nil, err
 	}
@@ -390,7 +390,7 @@ func noteDelivery(note core.Note, keys *core.ReceivingKeys) (protocol.Delivery, 
 	if err != nil {
 		return protocol.Delivery{}, err
 	}
-	commitment, err := core.ComputeNoteCommitment(note.ChainID, identity, note.TokenAddress, note.Amount)
+	commitment, err := core.ComputeNoteCommitment(note.ChainID, note.ProtocolAddress, identity, note.TokenAddress, note.Amount)
 	if err != nil {
 		return protocol.Delivery{}, err
 	}

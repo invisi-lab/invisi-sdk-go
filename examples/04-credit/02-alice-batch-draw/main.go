@@ -227,7 +227,7 @@ func main() {
 	if e != nil {
 		log.Fatal(e)
 	}
-	commitment, e := core.ComputeNoteCommitment(note.ChainID, identity, note.TokenAddress, note.Amount)
+	commitment, e := core.ComputeNoteCommitment(note.ChainID, note.ProtocolAddress, identity, note.TokenAddress, note.Amount)
 	if e != nil {
 		log.Fatal(e)
 	}

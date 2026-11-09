@@ -91,11 +91,11 @@ func TestRealNativeAggregation(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		leaf, err := core.ComputeNoteCommitment(input.Note.ChainID, identity, input.Note.TokenAddress, input.Note.Amount)
+		leaf, err := core.ComputeNoteCommitment(input.Note.ChainID, input.Note.ProtocolAddress, identity, input.Note.TokenAddress, input.Note.Amount)
 		if err != nil {
 			t.Fatal(err)
 		}
-		nullifier, err := core.ComputeNoteNullifier(input.Note.ChainID, input.Note.Nonce, leaf)
+		nullifier, err := core.ComputeNoteNullifier(input.Note.ChainID, input.Note.ProtocolAddress, input.Note.Nonce, leaf)
 		if err != nil {
 			t.Fatal(err)
 		}

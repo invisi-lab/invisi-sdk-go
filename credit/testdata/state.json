@@ -50,8 +50,8 @@
     "recoveryAmount": "0x02de9ee3828c9d1c006a595e7719e2f293769216bc5e78dc0a033c84c9abe464"
   },
   "provenance": {
-    "create-credit-client.mjs": "c7c4a7db3605d4aed24b86be06ab5047ea0de421aca45cbdc63489d9625318bb",
-    "credit-lifecycle-client.mjs": "4455e5c00ea0b6cb9b2f7c460eb6b08c90f3a210c721dedc618ca2dc28e07a87"
+    "create-credit-client.mjs": "c47c756f9daeb7fee98e564b01c5222925634da26b8fc616ed30ee56e7c3a9dc",
+    "credit-lifecycle-client.mjs": "7ea115eb296f209ab82acca73b850facea606c1a8b452d82bb606699ecb9b97b"
   },
   "delivery": {
     "ownerPrivateKey": "0x000000000000000000000000000000000000000000000000000000000000004d",

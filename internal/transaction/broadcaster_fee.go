@@ -76,7 +76,7 @@ func (o *Execution) ApplyBroadcasterFee(ctx context.Context, base Plan, recipien
 			}
 			note := *out.Note
 			note.Amount = core.BigIntToElement(amount)
-			commit, e := core.ComputeNoteCommitment(note.ChainID, core.BigIntToElement(out.Identity.Big()), note.TokenAddress, note.Amount)
+			commit, e := core.ComputeNoteCommitment(note.ChainID, note.ProtocolAddress, core.BigIntToElement(out.Identity.Big()), note.TokenAddress, note.Amount)
 			if e != nil {
 				return e
 			}

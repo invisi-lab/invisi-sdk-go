@@ -108,11 +108,11 @@ func TestCurrentNoteDeliveryVectors(t *testing.T) {
 	if e != nil || identity != currentField(t, v.Note["identity"]) {
 		t.Fatal("identity mismatch", e)
 	}
-	leaf, e := ComputeNoteCommitment(note.ChainID, identity, token, note.Amount)
+	leaf, e := ComputeNoteCommitment(note.ChainID, note.ProtocolAddress, identity, token, note.Amount)
 	if e != nil || leaf != currentField(t, v.Note["commitment"]) {
 		t.Fatal("note commitment mismatch", e)
 	}
-	nf, e := ComputeNoteNullifier(note.ChainID, note.Nonce, leaf)
+	nf, e := ComputeNoteNullifier(note.ChainID, note.ProtocolAddress, note.Nonce, leaf)
 	if e != nil || nf != currentField(t, v.Note["nullifier"]) {
 		t.Fatal("nullifier mismatch", e)
 	}

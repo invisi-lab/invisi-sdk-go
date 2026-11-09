@@ -12,6 +12,7 @@ type VerifyNoteCommitmentParams struct {
 	ChainID               *big.Int
 	OwnerAddress          common.Hash
 	TokenAddress          common.Address
+	ProtocolAddress       common.Address
 	Amount                *big.Int
 	Nonce, NoteCommitment common.Hash
 }
@@ -32,7 +33,7 @@ func VerifyNoteCommitment(p VerifyNoteCommitmentParams) (bool, error) {
 	if err != nil {
 		return false, err
 	}
-	expected, err := core.ComputeNoteCommitment(core.BigIntToElement(p.ChainID), identity, core.BigIntToElement(p.TokenAddress.Big()), core.BigIntToElement(p.Amount))
+	expected, err := core.ComputeNoteCommitment(core.BigIntToElement(p.ChainID), core.BigIntToElement(p.ProtocolAddress.Big()), identity, core.BigIntToElement(p.TokenAddress.Big()), core.BigIntToElement(p.Amount))
 	if err != nil {
 		return false, err
 	}

@@ -125,7 +125,7 @@ func TestCurrentCreditNativeLifecycle(t *testing.T) {
 	if e != nil {
 		t.Fatal(e)
 	}
-	noteCommitment, e := core.ComputeNoteCommitment(state.ChainID, outputIdentity, state.TokenAddress, core.ElementFromUint64(6))
+	noteCommitment, e := core.ComputeNoteCommitment(state.ChainID, state.ProtocolAddress, outputIdentity, state.TokenAddress, core.ElementFromUint64(6))
 	if e != nil {
 		t.Fatal(e)
 	}

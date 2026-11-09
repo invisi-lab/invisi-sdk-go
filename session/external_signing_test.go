@@ -132,7 +132,7 @@ func TestManagedExplicitCommitmentsConsumeEntireSelectedSubset(t *testing.T) {
 	second.TreeID = 2
 	second.Note.Nonce = core.ElementFromUint64(124)
 	identity, _ := core.ComputeNoteIdentity(second.Note.OwnerAddress, second.Note.Nonce)
-	leaf, err := core.ComputeNoteCommitment(second.Note.ChainID, identity, second.Note.TokenAddress, second.Note.Amount)
+	leaf, err := core.ComputeNoteCommitment(second.Note.ChainID, second.Note.ProtocolAddress, identity, second.Note.TokenAddress, second.Note.Amount)
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -94,7 +94,7 @@ func reprice(i Intent, recipient common.Address, amount *big.Int) (Intent, error
 		next.Draw.FeeRecipient = recipient
 		next.Draw.FeeAmount = fee
 		net := new(big.Int).Sub(next.Draw.TotalAmount, fee)
-		commitment, err := core.ComputeNoteCommitment(next.Context.ChainID, next.OutputIdentity, core.BigIntToElement(next.Draw.Token.Big()), core.BigIntToElement(net))
+		commitment, err := core.ComputeNoteCommitment(next.Context.ChainID, next.Context.ProtocolAddress, next.OutputIdentity, core.BigIntToElement(next.Draw.Token.Big()), core.BigIntToElement(net))
 		if err != nil {
 			return Intent{}, err
 		}

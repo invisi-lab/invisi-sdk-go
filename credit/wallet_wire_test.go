@@ -37,7 +37,7 @@ func TestCreditPreparedWalletWireAuthorization(t *testing.T) {
 		t.Fatal(err)
 	}
 	identity := core.ElementFromUint64(1)
-	noteCommitment, err := core.ComputeNoteCommitment(s.ChainID, identity, s.TokenAddress, core.ElementFromUint64(7))
+	noteCommitment, err := core.ComputeNoteCommitment(s.ChainID, s.ProtocolAddress, identity, s.TokenAddress, core.ElementFromUint64(7))
 	if err != nil {
 		t.Fatal(err)
 	}

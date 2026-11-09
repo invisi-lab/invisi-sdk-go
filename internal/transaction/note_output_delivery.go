@@ -31,7 +31,7 @@ func (s *Runtime) Output(ctx context.Context, token common.Address, n NoteOutput
 	if p.Context != s.CoreContext() || p.Token != token {
 		return PreparedOutput{}, errors.New("note output chain, protocol or token mismatch")
 	}
-	commitment, e := core.ComputeNoteCommitment(p.Context.ChainID, core.BigIntToElement(p.Identity.Big()), core.BigIntToElement(token.Big()), core.BigIntToElement(p.Amount))
+	commitment, e := core.ComputeNoteCommitment(p.Context.ChainID, p.Context.ProtocolAddress, core.BigIntToElement(p.Identity.Big()), core.BigIntToElement(token.Big()), core.BigIntToElement(p.Amount))
 	if e != nil || FieldHash(commitment) != p.Commitment {
 		return PreparedOutput{}, errors.New("note output commitment mismatch")
 	}

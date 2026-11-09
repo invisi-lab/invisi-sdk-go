@@ -6,4 +6,4 @@ const CreditFormatVersion = 8
 const UserManifestVersion = 4
 const UserFormatVersion = 7
 const AggregateFormatVersion = 10
-const CreditManifestSHA256 = "11b6b4191e8a62ae891fae41b2d3f37ccae00add26701eb5171a4e296400e861"
+const CreditManifestSHA256 = "c84fe8b0817f722428d9f888c0e38f2b1b48f15b670e74a75e8dd84776b14d66"

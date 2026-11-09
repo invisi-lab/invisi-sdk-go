@@ -23,7 +23,7 @@ func (o *Execution) ValidateRecovered() error {
 			return err
 		}
 		identity := core.BigIntToElement(output.Identity.Big())
-		leaf, err := core.ComputeNoteCommitment(o.Runtime.CoreContext().ChainID, identity, core.BigIntToElement(p.Context.TokenAddress.Big()), core.BigIntToElement(output.Amount))
+		leaf, err := core.ComputeNoteCommitment(o.Runtime.CoreContext().ChainID, o.Runtime.CoreContext().ProtocolAddress, identity, core.BigIntToElement(p.Context.TokenAddress.Big()), core.BigIntToElement(output.Amount))
 		if err != nil || FieldHash(leaf) != output.Commitment {
 			return errors.New("recovered output commitment mismatch")
 		}
@@ -50,7 +50,7 @@ func (o *Execution) ValidateRecovered() error {
 		if err != nil {
 			return err
 		}
-		leaf, err := core.ComputeNoteCommitment(note.ChainID, identity, note.TokenAddress, note.Amount)
+		leaf, err := core.ComputeNoteCommitment(note.ChainID, note.ProtocolAddress, identity, note.TokenAddress, note.Amount)
 		if err != nil || FieldHash(leaf) != input.Commitment {
 			return errors.New("recovered note commitment mismatch")
 		}

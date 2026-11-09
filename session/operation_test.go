@@ -119,8 +119,8 @@ func testSession(t *testing.T, timestamps ...uint64) (*WalletSession, common.Add
 	block := protocolrpc.CanonicalBlock{Number: 10, Hash: provider.head.Hash(), ParentHash: provider.head.ParentHash, Timestamp: timestamp}
 	note := core.Note{ProtocolContext: core.ProtocolContext{ChainID: core.ElementFromUint64(31337), ProtocolAddress: core.BigIntToElement(address.Big())}, OwnerAddress: core.BigIntToElement(wallet.OwnerAddress().Big()), TokenAddress: core.BigIntToElement(token.Big()), Amount: core.ElementFromUint64(100), Nonce: core.ElementFromUint64(123)}
 	identity, _ := core.ComputeNoteIdentity(note.OwnerAddress, note.Nonce)
-	leaf, _ := core.ComputeNoteCommitment(note.ChainID, identity, note.TokenAddress, note.Amount)
-	nf, _ := core.ComputeNoteNullifier(note.ChainID, note.Nonce, leaf)
+	leaf, _ := core.ComputeNoteCommitment(note.ChainID, note.ProtocolAddress, identity, note.TokenAddress, note.Amount)
+	nf, _ := core.ComputeNoteNullifier(note.ChainID, note.ProtocolAddress, note.Nonce, leaf)
 	root := leaf
 	for range 16 {
 		root, _ = core.Poseidon2Hash(root, core.ElementFromUint64(0))

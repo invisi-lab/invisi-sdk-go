@@ -89,7 +89,7 @@ func DisclosureFromNote(note core.Note) (*Disclosure, error) {
 	if e != nil {
 		return nil, e
 	}
-	leaf, e := core.ComputeNoteCommitment(note.ChainID, identity, note.TokenAddress, note.Amount)
+	leaf, e := core.ComputeNoteCommitment(note.ChainID, note.ProtocolAddress, identity, note.TokenAddress, note.Amount)
 	if e != nil {
 		return nil, e
 	}
@@ -238,7 +238,7 @@ func (d *Disclosure) Verify(output DisclosureOutput) (DisclosureResult, error) {
 		if e != nil {
 			return DisclosureResult{}, e
 		}
-		leaf, e := core.ComputeNoteCommitment(note.ChainID, identity, note.TokenAddress, note.Amount)
+		leaf, e := core.ComputeNoteCommitment(note.ChainID, note.ProtocolAddress, identity, note.TokenAddress, note.Amount)
 		if e != nil || FieldHash(leaf) != output.OutputCommitment {
 			return DisclosureResult{}, errors.New("disclosed note commitment mismatch")
 		}
