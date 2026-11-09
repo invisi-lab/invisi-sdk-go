@@ -115,7 +115,7 @@ func RunCreditExample(kind string, actorIndex int) {
 		if e != nil {
 			log.Fatal(e)
 		}
-		state := credit.State{ProtocolContext: coreContext, TokenAddress: core.BigIntToElement(token.Big()), OwnerWalletIdentity: core.BigIntToElement(actor.PublicWallet.OwnerAddress().Big()), SpenderWalletIdentity: core.BigIntToElement(alice.PublicWallet.OwnerAddress().Big()), RevocationShard: core.ElementFromUint64(allocation.Shard), RevocationSlot: core.ElementFromUint64(uint64(allocation.Slot)), Nonce: nonce, Expiry: core.ElementFromUint64(head.Time + 7*86400), SharedKey: key, Policy: credit.Policy{SingleLimit: core.ElementFromUint64(100), DailyLimit: core.ElementFromUint64(1000), MonthlyLimit: core.ElementFromUint64(10000), LifetimeLimit: core.ElementFromUint64(100000)}}
+		state := credit.State{AvailableCredit: core.ElementFromUint64(400), ProtocolContext: coreContext, TokenAddress: core.BigIntToElement(token.Big()), OwnerWalletIdentity: core.BigIntToElement(actor.PublicWallet.OwnerAddress().Big()), SpenderWalletIdentity: core.BigIntToElement(alice.PublicWallet.OwnerAddress().Big()), RevocationShard: core.ElementFromUint64(allocation.Shard), RevocationSlot: core.ElementFromUint64(uint64(allocation.Slot)), Nonce: nonce, Expiry: core.ElementFromUint64(head.Time + 7*86400), SharedKey: key, Policy: credit.Policy{SingleLimit: core.ElementFromUint64(100), DailyLimit: core.ElementFromUint64(1000), MonthlyLimit: core.ElementFromUint64(10000)}}
 		snapshot := credit.DeliveryState{State: state, OwnerReceivingKeys: core.ReceivingKeys{ViewingPublicKey: actor.PublicWallet.ViewingPublicKey(), ClueKey: actor.PublicWallet.ClueKey()}, SpenderReceivingKeys: core.ReceivingKeys{ViewingPublicKey: alice.PublicWallet.ViewingPublicKey(), ClueKey: alice.PublicWallet.ClueKey()}}
 		ds, e := CreditDeliveries(snapshot)
 		if e != nil {
@@ -229,9 +229,9 @@ func RunCreditExample(kind string, actorIndex int) {
 		selected := candidates[0]
 		old := selected.Input.State
 		policy := old.Policy
-		policy.LifetimeLimit = core.ElementFromUint64(200000)
 		expiry := core.ElementFromUint64(head.Time + 14*86400)
-		next, e := old.Update(policy, expiry, deadline.Uint64())
+		change := credit.Change{Policy: policy, Expiry: expiry, IncreaseAvailableCredit: core.ElementFromUint64(100000)}
+		next, e := old.Update(change, deadline.Uint64())
 		if e != nil {
 			log.Fatal(e)
 		}
@@ -241,7 +241,7 @@ func RunCreditExample(kind string, actorIndex int) {
 		if e != nil {
 			log.Fatal(e)
 		}
-		prepared, err = credit.PrepareUpdate(c, credit.UpdateParams{Token: token, Owner: actor.PublicWallet.OwnerAddress(), Source: protocol.InputSource{TreeId: new(big.Int).SetUint64(selected.Input.TreeID), MerkleRoot: selected.Membership.Root}, Nullifier: common.Hash(next.Nullifier.Bytes()), CreditCommitment: common.Hash(next.StateCommitment.Bytes()), RevocationShard: core.ElementToBigInt(old.RevocationShard).Uint64(), RevocationSlot: uint16(core.ElementToBigInt(old.RevocationSlot).Uint64()), Deadline: deadline}, ds, selected.Input, policy, expiry)
+		prepared, err = credit.PrepareUpdate(c, credit.UpdateParams{Token: token, Owner: actor.PublicWallet.OwnerAddress(), Source: protocol.InputSource{TreeId: new(big.Int).SetUint64(selected.Input.TreeID), MerkleRoot: selected.Membership.Root}, Nullifier: common.Hash(next.Nullifier.Bytes()), CreditCommitment: common.Hash(next.StateCommitment.Bytes()), RevocationShard: core.ElementToBigInt(old.RevocationShard).Uint64(), RevocationSlot: uint16(core.ElementToBigInt(old.RevocationSlot).Uint64()), Deadline: deadline}, ds, selected.Input, change)
 	case "revoke":
 		prepared, err = credit.PrepareRevoke(c, credit.RevokeParams{Token: token, Owner: actor.PublicWallet.OwnerAddress(), Shard: *shard, Slot: uint16(*slot), Deadline: deadline})
 	default:

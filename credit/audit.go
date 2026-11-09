@@ -54,6 +54,8 @@ func Disclose(state State) (*AuditDisclosure, error) {
 		return nil, err
 	}
 	encoded.Fields["keyHash"] = keyHash.String()
+	flag := boolField(state.Unlimited)
+	encoded.Fields["unlimited"] = flag.String()
 	return &AuditDisclosure{AuditExport{AuditContext{state.ChainID.String(), common.BigToAddress(core.ElementToBigInt(state.ProtocolAddress)), common.BigToAddress(core.ElementToBigInt(state.TokenAddress))}, encoded.Fields, state.SharedKey.String(), common.Hash(commitment.Bytes())}}, nil
 }
 func (d *AuditDisclosure) Export() AuditExport {
@@ -82,15 +84,22 @@ func (d *AuditDisclosure) Verify(expected common.Hash) (State, error) {
 	if m.Fields["keyHash"] != keyHash.String() {
 		return State{}, fmt.Errorf("grant view key hash mismatch")
 	}
+	flag, ok := m.Fields["unlimited"]
+	if !ok || flag != "0" && flag != "1" {
+		return State{}, fmt.Errorf("invalid audit unlimited flag")
+	}
+	unlimited := flag == "1"
+	delete(m.Fields, "unlimited")
 	delete(m.Fields, "keyHash")
 	m.Fields["chainId"] = m.Context.ChainID
 	m.Fields["protocolAddress"] = m.Context.ProtocolAddress.Big().String()
 	m.Fields["tokenAddress"] = m.Context.TokenAddress.Big().String()
 	m.Fields["creditSharedKey"] = m.GrantViewKey
 	raw, err := json.Marshal(struct {
-		Version int               `json:"version"`
-		Fields  map[string]string `json:"fields"`
-	}{2, m.Fields})
+		Version   int               `json:"version"`
+		Unlimited bool              `json:"unlimited"`
+		Fields    map[string]string `json:"fields"`
+	}{2, unlimited, m.Fields})
 	if err != nil {
 		return State{}, err
 	}

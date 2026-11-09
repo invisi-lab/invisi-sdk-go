@@ -10,17 +10,18 @@ import (
 )
 
 type GrantSummary struct {
-	Commitment                                           common.Hash
-	Owner, Spender, Token                                common.Address
-	Role                                                 credit.Role
-	Shard                                                uint64
-	Slot                                                 uint16
-	Expiry                                               uint64
-	Consumed, Revoked                                    bool
-	ReservedBy                                           string
-	SingleLimit, DailyLimit, MonthlyLimit, LifetimeLimit *big.Int
-	LastDay, LastMonth                                   uint64
-	DailySpent, MonthlySpent, TotalSpent                 *big.Int
+	Commitment                                             common.Hash
+	Owner, Spender, Token                                  common.Address
+	Role                                                   credit.Role
+	Shard                                                  uint64
+	Slot                                                   uint16
+	Expiry                                                 uint64
+	Unlimited                                              bool
+	Consumed, Revoked                                      bool
+	ReservedBy                                             string
+	SingleLimit, DailyLimit, MonthlyLimit, AvailableCredit *big.Int
+	LastDay, LastMonth                                     uint64
+	DailySpent, MonthlySpent, TotalSpent                   *big.Int
 }
 type OperationSummary struct {
 	ID, Kind, Status string
@@ -42,7 +43,7 @@ func (s *Session) GetHistory(ctx context.Context) (History, error) {
 	result := History{Grants: []GrantSummary{}, Operations: []OperationSummary{}}
 	for _, record := range state.Grants {
 		n := record.Delivery.State
-		result.Grants = append(result.Grants, GrantSummary{Commitment: record.Commitment, Owner: common.BigToAddress(core.ElementToBigInt(n.OwnerWalletIdentity)), Spender: common.BigToAddress(core.ElementToBigInt(n.SpenderWalletIdentity)), Token: common.BigToAddress(core.ElementToBigInt(n.TokenAddress)), Role: record.Role, Shard: core.ElementToBigInt(n.RevocationShard).Uint64(), Slot: uint16(core.ElementToBigInt(n.RevocationSlot).Uint64()), Expiry: core.ElementToBigInt(n.Expiry).Uint64(), Consumed: record.Consumed, Revoked: record.Revoked, ReservedBy: record.ReservedBy, SingleLimit: core.ElementToBigInt(n.SingleLimit), DailyLimit: core.ElementToBigInt(n.DailyLimit), MonthlyLimit: core.ElementToBigInt(n.MonthlyLimit), LifetimeLimit: core.ElementToBigInt(n.LifetimeLimit), LastDay: core.ElementToBigInt(n.LastDay).Uint64(), LastMonth: core.ElementToBigInt(n.LastMonth).Uint64(), DailySpent: core.ElementToBigInt(n.DailySpent), MonthlySpent: core.ElementToBigInt(n.MonthlySpent), TotalSpent: core.ElementToBigInt(n.TotalSpent)})
+		result.Grants = append(result.Grants, GrantSummary{Commitment: record.Commitment, Owner: common.BigToAddress(core.ElementToBigInt(n.OwnerWalletIdentity)), Spender: common.BigToAddress(core.ElementToBigInt(n.SpenderWalletIdentity)), Token: common.BigToAddress(core.ElementToBigInt(n.TokenAddress)), Role: record.Role, Shard: core.ElementToBigInt(n.RevocationShard).Uint64(), Slot: uint16(core.ElementToBigInt(n.RevocationSlot).Uint64()), Expiry: core.ElementToBigInt(n.Expiry).Uint64(), Consumed: record.Consumed, Revoked: record.Revoked, ReservedBy: record.ReservedBy, SingleLimit: core.ElementToBigInt(n.SingleLimit), DailyLimit: core.ElementToBigInt(n.DailyLimit), MonthlyLimit: core.ElementToBigInt(n.MonthlyLimit), AvailableCredit: core.ElementToBigInt(n.AvailableCredit), Unlimited: n.Unlimited, LastDay: core.ElementToBigInt(n.LastDay).Uint64(), LastMonth: core.ElementToBigInt(n.LastMonth).Uint64(), DailySpent: core.ElementToBigInt(n.DailySpent), MonthlySpent: core.ElementToBigInt(n.MonthlySpent), TotalSpent: core.ElementToBigInt(n.TotalSpent)})
 	}
 	for _, record := range state.Operations {
 		prepared, err := credit.Restore(ctx, record.Intent, nil, nil)

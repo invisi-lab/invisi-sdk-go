@@ -9,7 +9,7 @@ const load=name=>import(pathToFileURL(path.join(protocol,'scripts',name)).href);
 const {creditCommitment,encryptCreditNote,createCreditPublicInputs,encodeCreateCreditTypedData}=await load('create-credit-client.mjs');
 const {deriveCreditState,creditDrawPublicInputs,updateCreditPublicInputs,encodeCreditDrawTypedData,encodeUpdateCreditTypedData}=await load('credit-lifecycle-client.mjs');
 const context={chainId:31337n,protocolAddress:'0x0000000000000000000000000000000000000011',tokenAddress:'0x0000000000000000000000000000000000000022',timestamp:2000000000n};
-const state={spenderWalletIdentity:33n,ownerWalletIdentity:44n,revocationShard:1n,revocationSlot:0n,nonce:55n,expiry:2100000000n,creditSharedKey:66n,singleLimit:100n,dailyLimit:200n,monthlyLimit:300n,lifetimeLimit:400n,lastDay:0n,dailySpent:0n,lastMonth:0n,monthlySpent:0n,totalSpent:0n};
+const state={spenderWalletIdentity:33n,ownerWalletIdentity:44n,revocationShard:1n,revocationSlot:0n,nonce:55n,expiry:2100000000n,creditSharedKey:66n,singleLimit:100n,dailyLimit:200n,monthlyLimit:300n,availableCredit:400n,unlimited:false,lastDay:0n,dailySpent:0n,lastMonth:0n,monthlySpent:0n,totalSpent:0n};
 const key=n=>Buffer.from(n.toString(16).padStart(64,'0'),'hex');
 const pub=n=>{const e=createECDH('secp256k1');e.setPrivateKey(key(n));return '0x'+e.getPublicKey(undefined,'compressed').toString('hex')};
 const receiving=n=>({viewingPublicKey:pub(n),clueKey:'0x'+key(1).toString('hex')});

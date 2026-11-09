@@ -24,8 +24,7 @@ type Intent struct {
 	Deliveries        []protocol.Delivery
 	CreatedState      *State
 	Inputs            []LocatedState
-	UpdatedPolicy     Policy
-	UpdatedExpiry     fr.Element
+	UpdateChange      *Change
 	OutputIdentity    fr.Element
 	OutputNote        *core.Note
 	NoteRecipientKeys *core.ReceivingKeys
@@ -88,13 +87,25 @@ func prepare(i Intent) (*Prepared, error) {
 	if _, _, err = frozen.statement(); err != nil {
 		return nil, err
 	}
+	if frozen.Update != nil {
+		if len(frozen.Inputs) != 1 || frozen.UpdateChange == nil {
+			return nil, fmt.Errorf("update requires one Credit input and change")
+		}
+		next, err := frozen.Inputs[0].State.Update(*frozen.UpdateChange, frozen.Update.Deadline.Uint64())
+		if err != nil {
+			return nil, err
+		}
+		if common.Hash(next.Nullifier.Bytes()) != frozen.Update.Nullifier || common.Hash(next.StateCommitment.Bytes()) != frozen.Update.CreditCommitment {
+			return nil, fmt.Errorf("update change differs from frozen transition")
+		}
+	}
 	return &Prepared{intent: frozen}, nil
 }
 func PrepareCreate(c Context, p CreateParams, ds []protocol.Delivery, state State) (*Prepared, error) {
 	return prepare(Intent{Version: 2, Context: c, Create: &p, Deliveries: ds, CreatedState: &state})
 }
-func PrepareUpdate(c Context, p UpdateParams, ds []protocol.Delivery, input LocatedState, policy Policy, expiry fr.Element) (*Prepared, error) {
-	return prepare(Intent{Version: 2, Context: c, Update: &p, Deliveries: ds, Inputs: []LocatedState{input}, UpdatedPolicy: policy, UpdatedExpiry: expiry})
+func PrepareUpdate(c Context, p UpdateParams, ds []protocol.Delivery, input LocatedState, change Change) (*Prepared, error) {
+	return prepare(Intent{Version: 2, Context: c, Update: &p, Deliveries: ds, Inputs: []LocatedState{input}, UpdateChange: &change})
 }
 func PrepareDraw(c Context, p DrawParams, ds []protocol.Delivery, inputs []LocatedState, outputIdentity fr.Element) (*Prepared, error) {
 	return prepare(Intent{Version: 2, Context: c, Draw: &p, Deliveries: ds, Inputs: inputs, OutputIdentity: outputIdentity})
@@ -124,10 +135,10 @@ func (p *Prepared) witness(auth Authority) (*prover.LocalWitness, error) {
 		}
 		return i.Create.Witness(i.Context, i.Deliveries, *i.CreatedState, auth)
 	case i.Update != nil:
-		if len(i.Inputs) != 1 {
+		if len(i.Inputs) != 1 || i.UpdateChange == nil {
 			return nil, fmt.Errorf("update requires one Credit input")
 		}
-		return i.Update.Witness(i.Context, i.Deliveries, i.Inputs[0], i.UpdatedPolicy, i.UpdatedExpiry, auth)
+		return i.Update.Witness(i.Context, i.Deliveries, i.Inputs[0], *i.UpdateChange, auth)
 	case i.Draw != nil:
 		return i.Draw.Witness(i.Context, i.Deliveries, i.Inputs, i.OutputIdentity, auth)
 	}

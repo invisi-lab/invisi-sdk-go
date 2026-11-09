@@ -93,6 +93,8 @@ func (p CreateParams) Witness(c Context, deliveries []protocol.Delivery, state S
 	private["expiry"] = state.Expiry.String()
 	private["credit_shared_key"] = state.SharedKey.String()
 	private["limits"] = stringFields(state.Policy.Fields())
+	private["available_credit"] = state.AvailableCredit.String()
+	private["unlimited"] = state.Unlimited
 	return makeWitness(private, createNames, inputs)
 }
 
@@ -135,7 +137,7 @@ func (s LocatedState) pathFields() []string {
 	}
 	return values
 }
-func (p UpdateParams) Witness(c Context, deliveries []protocol.Delivery, input LocatedState, policy Policy, expiry fr.Element, auth Authority) (*prover.LocalWitness, error) {
+func (p UpdateParams) Witness(c Context, deliveries []protocol.Delivery, input LocatedState, change Change, auth Authority) (*prover.LocalWitness, error) {
 	inputs, typed, err := p.Statement(c, deliveries)
 	if err != nil {
 		return nil, err
@@ -144,7 +146,7 @@ func (p UpdateParams) Witness(c Context, deliveries []protocol.Delivery, input L
 	if s.ProtocolContext != c.ProtocolContext || core.ElementToBigInt(s.TokenAddress).Cmp(p.Token.Big()) != 0 || core.ElementToBigInt(s.OwnerWalletIdentity).Cmp(p.Owner.Big()) != 0 || core.ElementToBigInt(s.RevocationShard).Uint64() != p.RevocationShard || core.ElementToBigInt(s.RevocationSlot).Uint64() != uint64(p.RevocationSlot) {
 		return nil, fmt.Errorf("updated grant namespace mismatch")
 	}
-	next, err := s.Update(policy, expiry, p.Deadline.Uint64())
+	next, err := s.Update(change, p.Deadline.Uint64())
 	if err != nil {
 		return nil, err
 	}
@@ -162,11 +164,16 @@ func (p UpdateParams) Witness(c Context, deliveries []protocol.Delivery, input L
 	if err != nil {
 		return nil, err
 	}
-	for k, v := range map[string]fr.Element{"spender_wallet_identity": s.SpenderWalletIdentity, "input_nonce": s.Nonce, "old_expiry": s.Expiry, "new_expiry": expiry, "credit_shared_key": s.SharedKey} {
+	for k, v := range map[string]fr.Element{"spender_wallet_identity": s.SpenderWalletIdentity, "input_nonce": s.Nonce, "old_expiry": s.Expiry, "new_expiry": change.Expiry, "credit_shared_key": s.SharedKey} {
 		private[k] = v.String()
 	}
+	private["old_available_credit"] = s.AvailableCredit.String()
+	private["old_unlimited"] = s.Unlimited
+	private["new_unlimited"] = next.State.Unlimited
+	private["increase_available_credit"] = change.IncreaseAvailableCredit.String()
+	private["decrease_available_credit"] = change.DecreaseAvailableCredit.String()
 	private["old_limits"] = stringFields(s.Policy.Fields())
-	private["new_limits"] = stringFields(policy.Fields())
+	private["new_limits"] = stringFields(change.Policy.Fields())
 	private["usage"] = stringFields(s.Usage.Fields())
 	private["leaf_index"] = new(big.Int).SetUint64(uint64(input.LeafIndex)).String()
 	private["merkle_path"] = input.pathFields()
@@ -188,15 +195,16 @@ func (p DrawParams) Witness(c Context, deliveries []protocol.Delivery, credits [
 	}
 	private["spender_wallet_identity"] = identity.String()
 	arrays := map[string][]string{}
-	for _, name := range []string{"input_nonces", "expiries", "credit_shared_keys", "leaf_indices", "input_source_indices", "draw_amounts"} {
+	for _, name := range []string{"input_nonces", "expiries", "credit_shared_keys", "leaf_indices", "input_source_indices", "draw_amounts", "available_credits"} {
 		arrays[name] = make([]string, capacity)
 		for i := range arrays[name] {
 			arrays[name][i] = "0"
 		}
 	}
+	unlimitedFlags := make([]bool, capacity)
 	limits, usages, paths := make([][]string, capacity), make([][]string, capacity), make([][]string, capacity)
 	for i := 0; i < capacity; i++ {
-		limits[i] = []string{"0", "0", "0", "0"}
+		limits[i] = []string{"0", "0", "0"}
 		usages[i] = []string{"0", "0", "0", "0", "0"}
 		paths[i] = make([]string, 16)
 		for j := range paths[i] {
@@ -247,6 +255,8 @@ func (p DrawParams) Witness(c Context, deliveries []protocol.Delivery, credits [
 		arrays["leaf_indices"][i] = new(big.Int).SetUint64(uint64(input.LeafIndex)).String()
 		arrays["input_source_indices"][i] = big.NewInt(int64(si)).String()
 		arrays["draw_amounts"][i] = input.Debit.String()
+		arrays["available_credits"][i] = s.AvailableCredit.String()
+		unlimitedFlags[i] = s.Unlimited
 		limits[i] = stringFields(s.Policy.Fields())
 		usages[i] = stringFields(s.Usage.Fields())
 		paths[i] = input.pathFields()
@@ -278,6 +288,7 @@ func (p DrawParams) Witness(c Context, deliveries []protocol.Delivery, credits [
 	for k, a := range arrays {
 		private[k] = a
 	}
+	private["unlimited_flags"] = unlimitedFlags
 	private["limits"] = limits
 	private["usages"] = usages
 	private["merkle_paths"] = paths

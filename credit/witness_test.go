@@ -45,7 +45,7 @@ func TestCreateWitnessAuthenticatesOwnerAndZeroUsage(t *testing.T) {
 		t.Fatal(err)
 	}
 	if err = witness.WithInputs(func(m map[string]any) error {
-		if len(m) != 22 {
+		if len(m) != 24 {
 			t.Fatalf("witness fields %d", len(m))
 		}
 		if m["spender_wallet_identity"] != "33" {
@@ -129,8 +129,8 @@ func TestDrawAndUpdateWitnessBindMembershipAndOrdinaryNote(t *testing.T) {
 	if _, err = draw.Witness(c, dds, []LocatedState{located}, core.ElementFromUint64(998), auth); err == nil {
 		t.Fatal("accepted wrong ordinary Note")
 	}
-	policy := Policy{LifetimeLimit: core.ElementFromUint64(100)}
-	updated, err := s.Update(policy, s.Expiry, deadline.Uint64())
+	policy := Policy{SingleLimit: core.ElementFromUint64(100)}
+	updated, err := s.Update(Change{Policy: policy, Expiry: s.Expiry}, deadline.Uint64())
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -145,10 +145,10 @@ func TestDrawAndUpdateWitnessBindMembershipAndOrdinaryNote(t *testing.T) {
 		t.Fatal(err)
 	}
 	auth = Authority{PublicKey: crypto.FromECDSAPub(&key1.PublicKey), Signature: sig[:64]}
-	if _, err = p.Witness(c, ds, located, policy, s.Expiry, auth); err != nil {
+	if _, err = p.Witness(c, ds, located, Change{Policy: policy, Expiry: s.Expiry}, auth); err != nil {
 		t.Fatal(err)
 	}
-	if _, err = p.Witness(c, ds, bad, policy, s.Expiry, auth); err == nil {
+	if _, err = p.Witness(c, ds, bad, Change{Policy: policy, Expiry: s.Expiry}, auth); err == nil {
 		t.Fatal("accepted altered update membership")
 	}
 }

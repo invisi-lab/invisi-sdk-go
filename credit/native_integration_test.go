@@ -32,7 +32,7 @@ func TestCurrentCreditNativeLifecycle(t *testing.T) {
 	owner, spender := crypto.PubkeyToAddress(ownerKey.PublicKey), crypto.PubkeyToAddress(spenderKey.PublicKey)
 	ownerWallet, _ := core.DeriveWallet(crypto.FromECDSA(ownerKey))
 	spenderWallet, _ := core.DeriveWallet(crypto.FromECDSA(spenderKey))
-	state := State{ProtocolContext: core.ProtocolContext{ChainID: core.ElementFromUint64(31337), ProtocolAddress: core.ElementFromUint64(17)}, TokenAddress: core.ElementFromUint64(34), SpenderWalletIdentity: core.BigIntToElement(spender.Big()), OwnerWalletIdentity: core.BigIntToElement(owner.Big()), RevocationShard: core.ElementFromUint64(1), Nonce: core.ElementFromUint64(55), Expiry: core.ElementFromUint64(2100000000), SharedKey: core.ElementFromUint64(66), Policy: Policy{SingleLimit: core.ElementFromUint64(100), DailyLimit: core.ElementFromUint64(200), MonthlyLimit: core.ElementFromUint64(300), LifetimeLimit: core.ElementFromUint64(400)}}
+	state := State{AvailableCredit: core.ElementFromUint64(400), ProtocolContext: core.ProtocolContext{ChainID: core.ElementFromUint64(31337), ProtocolAddress: core.ElementFromUint64(17)}, TokenAddress: core.ElementFromUint64(34), SpenderWalletIdentity: core.BigIntToElement(spender.Big()), OwnerWalletIdentity: core.BigIntToElement(owner.Big()), RevocationShard: core.ElementFromUint64(1), Nonce: core.ElementFromUint64(55), Expiry: core.ElementFromUint64(2100000000), SharedKey: core.ElementFromUint64(66), Policy: Policy{SingleLimit: core.ElementFromUint64(100), DailyLimit: core.ElementFromUint64(200), MonthlyLimit: core.ElementFromUint64(300)}}
 	c := Context{ProtocolContext: state.ProtocolContext, TokenAddress: common.BigToAddress(big.NewInt(34)), Timestamp: 2000000000}
 	deadline := big.NewInt(2000000300)
 	collector := common.HexToAddress("0x1234")
@@ -132,8 +132,8 @@ func TestCurrentCreditNativeLifecycle(t *testing.T) {
 		t.Fatal(e)
 	}
 	prove("draw", draw, spenderKey)
-	changedPolicy := Policy{SingleLimit: core.ElementFromUint64(10), DailyLimit: core.ElementFromUint64(40), MonthlyLimit: core.ElementFromUint64(60), LifetimeLimit: core.ElementFromUint64(100)}
-	updated, e := drawn.State.Update(changedPolicy, core.ElementFromUint64(2200000000), deadline.Uint64())
+	changedPolicy := Policy{SingleLimit: core.ElementFromUint64(10), DailyLimit: core.ElementFromUint64(40), MonthlyLimit: core.ElementFromUint64(60)}
+	updated, e := drawn.State.Update(Change{Policy: changedPolicy, Expiry: core.ElementFromUint64(2200000000)}, deadline.Uint64())
 	if e != nil {
 		t.Fatal(e)
 	}
@@ -142,7 +142,7 @@ func TestCurrentCreditNativeLifecycle(t *testing.T) {
 	if e != nil {
 		t.Fatal(e)
 	}
-	update, e := PrepareUpdate(c, UpdateParams{Token: c.TokenAddress, Owner: owner, Source: protocol.InputSource{TreeId: big.NewInt(1), MerkleRoot: updateRoot}, Nullifier: common.Hash(updated.Nullifier.Bytes()), CreditCommitment: common.Hash(updated.StateCommitment.Bytes()), RevocationShard: 1, Deadline: deadline, FeeRecipient: collector, FeeAmount: fee}, deliveries(updated.State), updateInput, changedPolicy, updated.State.Expiry)
+	update, e := PrepareUpdate(c, UpdateParams{Token: c.TokenAddress, Owner: owner, Source: protocol.InputSource{TreeId: big.NewInt(1), MerkleRoot: updateRoot}, Nullifier: common.Hash(updated.Nullifier.Bytes()), CreditCommitment: common.Hash(updated.StateCommitment.Bytes()), RevocationShard: 1, Deadline: deadline, FeeRecipient: collector, FeeAmount: fee}, deliveries(updated.State), updateInput, Change{Policy: changedPolicy, Expiry: updated.State.Expiry})
 	if e != nil {
 		t.Fatal(e)
 	}

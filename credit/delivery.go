@@ -135,6 +135,12 @@ func encodeDelivery(d DeliveryState) []byte {
 	for _, v := range s.Policy.Fields() {
 		out = put(out, v, 16)
 	}
+	out = put(out, s.AvailableCredit, 16)
+	if s.Unlimited {
+		out = append(out, 1)
+	} else {
+		out = append(out, 0)
+	}
 	for i, v := range s.Usage.Fields() {
 		n := 16
 		if i == 0 || i == 2 {
@@ -154,7 +160,7 @@ func Encrypt(d DeliveryState, c DeliveryContext, role Role) ([]byte, error) {
 		return nil, err
 	}
 	keys, _ := roleKey(d, role)
-	if len(d.State.Payload) > 4096-484 {
+	if len(d.State.Payload) > 4096-485 {
 		return nil, fmt.Errorf("Credit envelope exceeds resource bound")
 	}
 	private, err := ethcrypto.GenerateKey()
@@ -181,7 +187,7 @@ func Decrypt(private, envelope []byte, c DeliveryContext, role Role) (DeliverySt
 	if role != Owner && role != Spender {
 		return DeliveryState{}, fmt.Errorf("invalid Credit delivery role")
 	}
-	if len(envelope) < 484 || len(envelope) > 4096 || envelope[0] != 0x82 {
+	if len(envelope) < 485 || len(envelope) > 4096 || envelope[0] != 0x82 {
 		return DeliveryState{}, fmt.Errorf("unsupported Credit envelope")
 	}
 	recipient, err := core.ViewingPublicKey(private)
@@ -197,14 +203,21 @@ func Decrypt(private, envelope []byte, c DeliveryContext, role Role) (DeliverySt
 		return DeliveryState{}, fmt.Errorf("Credit authentication failed")
 	}
 	defer clear(plain)
-	if len(plain) < 406 || int(binary.BigEndian.Uint16(plain[404:406])) != len(plain)-406 {
+	if len(plain) < 407 || int(binary.BigEndian.Uint16(plain[405:407])) != len(plain)-407 {
 		return DeliveryState{}, fmt.Errorf("invalid Credit plaintext length")
 	}
-	s := State{ProtocolContext: c.ProtocolContext, TokenAddress: c.TokenAddress, Payload: append([]byte(nil), plain[406:]...)}
-	fields := []*fr.Element{&s.SpenderWalletIdentity, &s.OwnerWalletIdentity, &s.RevocationShard, &s.RevocationSlot, &s.Nonce, &s.Expiry, &s.SharedKey, &s.SingleLimit, &s.DailyLimit, &s.MonthlyLimit, &s.LifetimeLimit, &s.LastDay, &s.DailySpent, &s.LastMonth, &s.MonthlySpent, &s.TotalSpent}
+	s := State{ProtocolContext: c.ProtocolContext, TokenAddress: c.TokenAddress, Payload: append([]byte(nil), plain[407:]...)}
+	fields := []*fr.Element{&s.SpenderWalletIdentity, &s.OwnerWalletIdentity, &s.RevocationShard, &s.RevocationSlot, &s.Nonce, &s.Expiry, &s.SharedKey, &s.SingleLimit, &s.DailyLimit, &s.MonthlyLimit, &s.AvailableCredit, &s.LastDay, &s.DailySpent, &s.LastMonth, &s.MonthlySpent, &s.TotalSpent}
 	sizes := []int{32, 32, 8, 2, 32, 8, 32, 16, 16, 16, 16, 8, 16, 8, 16, 16}
 	at := 0
 	for i, target := range fields {
+		if i == 11 {
+			if plain[at] > 1 {
+				return DeliveryState{}, fmt.Errorf("invalid unlimited flag")
+			}
+			s.Unlimited = plain[at] == 1
+			at++
+		}
 		*target, err = read(plain[at : at+sizes[i]])
 		if err != nil {
 			return DeliveryState{}, err

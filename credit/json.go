@@ -46,47 +46,49 @@ func parseFields(raw []byte, names ...string) (map[string]fr.Element, error) {
 	return out, nil
 }
 func (p Policy) MarshalJSON() ([]byte, error) {
-	return fieldsJSON(map[string]fr.Element{"singleLimit": p.SingleLimit, "dailyLimit": p.DailyLimit, "monthlyLimit": p.MonthlyLimit, "lifetimeLimit": p.LifetimeLimit})
+	return fieldsJSON(map[string]fr.Element{"singleLimit": p.SingleLimit, "dailyLimit": p.DailyLimit, "monthlyLimit": p.MonthlyLimit})
 }
 func (p *Policy) UnmarshalJSON(raw []byte) error {
-	v, err := parseFields(raw, "singleLimit", "dailyLimit", "monthlyLimit", "lifetimeLimit")
+	v, err := parseFields(raw, "singleLimit", "dailyLimit", "monthlyLimit")
 	if err != nil {
 		return err
 	}
-	*p = Policy{v["singleLimit"], v["dailyLimit"], v["monthlyLimit"], v["lifetimeLimit"]}
+	*p = Policy{v["singleLimit"], v["dailyLimit"], v["monthlyLimit"]}
 	return nil
 }
 func (s State) MarshalJSON() ([]byte, error) {
-	values := map[string]string{"chainId": s.ChainID.String(), "protocolAddress": s.ProtocolAddress.String(), "tokenAddress": s.TokenAddress.String(), "spenderWalletIdentity": s.SpenderWalletIdentity.String(), "ownerWalletIdentity": s.OwnerWalletIdentity.String(), "revocationShard": s.RevocationShard.String(), "revocationSlot": s.RevocationSlot.String(), "nonce": s.Nonce.String(), "expiry": s.Expiry.String(), "creditSharedKey": s.SharedKey.String()}
-	for i, k := range []string{"singleLimit", "dailyLimit", "monthlyLimit", "lifetimeLimit"} {
+	values := map[string]string{"chainId": s.ChainID.String(), "protocolAddress": s.ProtocolAddress.String(), "tokenAddress": s.TokenAddress.String(), "spenderWalletIdentity": s.SpenderWalletIdentity.String(), "ownerWalletIdentity": s.OwnerWalletIdentity.String(), "revocationShard": s.RevocationShard.String(), "revocationSlot": s.RevocationSlot.String(), "nonce": s.Nonce.String(), "expiry": s.Expiry.String(), "creditSharedKey": s.SharedKey.String(), "availableCredit": s.AvailableCredit.String()}
+	for i, k := range []string{"singleLimit", "dailyLimit", "monthlyLimit"} {
 		values[k] = s.Policy.Fields()[i].String()
 	}
 	for i, k := range []string{"lastDay", "dailySpent", "lastMonth", "monthlySpent", "totalSpent"} {
 		values[k] = s.Usage.Fields()[i].String()
 	}
 	return json.Marshal(struct {
-		Version int               `json:"version"`
-		Fields  map[string]string `json:"fields"`
-		Payload []byte            `json:"payload,omitempty"`
-	}{2, values, s.Payload})
+		Version   int               `json:"version"`
+		Unlimited bool              `json:"unlimited"`
+		Fields    map[string]string `json:"fields"`
+		Payload   []byte            `json:"payload,omitempty"`
+	}{2, s.Unlimited, values, s.Payload})
 }
 func (s *State) UnmarshalJSON(raw []byte) error {
 	var envelope struct {
-		Version int             `json:"version"`
-		Fields  json.RawMessage `json:"fields"`
-		Payload []byte          `json:"payload"`
+		Version   int             `json:"version"`
+		Unlimited *bool           `json:"unlimited"`
+		Fields    json.RawMessage `json:"fields"`
+		Payload   []byte          `json:"payload"`
 	}
 	if err := json.Unmarshal(raw, &envelope); err != nil {
 		return err
 	}
-	if envelope.Version != 2 {
-		return fmt.Errorf("legacy Credit state is unsupported; import Notes separately and rescan current grants")
+	if envelope.Version != 2 || envelope.Unlimited == nil {
+		return fmt.Errorf("unsupported Credit state schema")
 	}
-	v, err := parseFields(envelope.Fields, "chainId", "protocolAddress", "tokenAddress", "spenderWalletIdentity", "ownerWalletIdentity", "revocationShard", "revocationSlot", "nonce", "expiry", "creditSharedKey", "singleLimit", "dailyLimit", "monthlyLimit", "lifetimeLimit", "lastDay", "dailySpent", "lastMonth", "monthlySpent", "totalSpent")
+	v, err := parseFields(envelope.Fields, "chainId", "protocolAddress", "tokenAddress", "spenderWalletIdentity", "ownerWalletIdentity", "revocationShard", "revocationSlot", "nonce", "expiry", "creditSharedKey", "singleLimit", "dailyLimit", "monthlyLimit", "availableCredit", "lastDay", "dailySpent", "lastMonth", "monthlySpent", "totalSpent")
 	if err != nil {
 		return err
 	}
-	next := State{ProtocolContext: core.ProtocolContext{ChainID: v["chainId"], ProtocolAddress: v["protocolAddress"]}, TokenAddress: v["tokenAddress"], SpenderWalletIdentity: v["spenderWalletIdentity"], OwnerWalletIdentity: v["ownerWalletIdentity"], RevocationShard: v["revocationShard"], RevocationSlot: v["revocationSlot"], Nonce: v["nonce"], Expiry: v["expiry"], SharedKey: v["creditSharedKey"], Policy: Policy{v["singleLimit"], v["dailyLimit"], v["monthlyLimit"], v["lifetimeLimit"]}, Usage: Usage{v["lastDay"], v["dailySpent"], v["lastMonth"], v["monthlySpent"], v["totalSpent"]}, Payload: append([]byte(nil), envelope.Payload...)}
+	next := State{ProtocolContext: core.ProtocolContext{ChainID: v["chainId"], ProtocolAddress: v["protocolAddress"]}, TokenAddress: v["tokenAddress"], SpenderWalletIdentity: v["spenderWalletIdentity"], OwnerWalletIdentity: v["ownerWalletIdentity"], RevocationShard: v["revocationShard"], RevocationSlot: v["revocationSlot"], Nonce: v["nonce"], Expiry: v["expiry"], SharedKey: v["creditSharedKey"], Policy: Policy{v["singleLimit"], v["dailyLimit"], v["monthlyLimit"]}, AvailableCredit: v["availableCredit"], Unlimited: *envelope.Unlimited, Usage: Usage{v["lastDay"], v["dailySpent"], v["lastMonth"], v["monthlySpent"], v["totalSpent"]}, Payload: append([]byte(nil), envelope.Payload...)}
 	if err = next.Validate(); err != nil {
 		return err
 	}
@@ -148,12 +150,11 @@ func (s *LocatedState) UnmarshalJSON(raw []byte) error {
 type intentAlias Intent
 type intentJSON struct {
 	*intentAlias
-	UpdatedExpiry  string
 	OutputIdentity string
 }
 
 func (i Intent) MarshalJSON() ([]byte, error) {
-	return json.Marshal(intentJSON{(*intentAlias)(&i), i.UpdatedExpiry.String(), i.OutputIdentity.String()})
+	return json.Marshal(intentJSON{(*intentAlias)(&i), i.OutputIdentity.String()})
 }
 func (i *Intent) UnmarshalJSON(raw []byte) error {
 	var next Intent
@@ -161,16 +162,43 @@ func (i *Intent) UnmarshalJSON(raw []byte) error {
 	if err := json.Unmarshal(raw, &value); err != nil {
 		return err
 	}
-	expiry, err := canonicalField(value.UpdatedExpiry)
-	if err != nil {
-		return err
-	}
 	identity, err := canonicalField(value.OutputIdentity)
 	if err != nil {
 		return err
 	}
-	next.UpdatedExpiry = expiry
 	next.OutputIdentity = identity
 	*i = next
+	return nil
+}
+
+type changeJSON struct {
+	Policy                  Policy
+	Expiry                  string
+	Unlimited               *bool `json:",omitempty"`
+	IncreaseAvailableCredit string
+	DecreaseAvailableCredit string
+}
+
+func (c Change) MarshalJSON() ([]byte, error) {
+	return json.Marshal(changeJSON{c.Policy, c.Expiry.String(), c.Unlimited, c.IncreaseAvailableCredit.String(), c.DecreaseAvailableCredit.String()})
+}
+func (c *Change) UnmarshalJSON(raw []byte) error {
+	var v changeJSON
+	if err := json.Unmarshal(raw, &v); err != nil {
+		return err
+	}
+	expiry, err := canonicalField(v.Expiry)
+	if err != nil {
+		return err
+	}
+	inc, err := canonicalField(v.IncreaseAvailableCredit)
+	if err != nil {
+		return err
+	}
+	dec, err := canonicalField(v.DecreaseAvailableCredit)
+	if err != nil {
+		return err
+	}
+	*c = Change{v.Policy, expiry, v.Unlimited, inc, dec}
 	return nil
 }

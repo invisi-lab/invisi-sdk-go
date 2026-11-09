@@ -22,7 +22,7 @@ import (
 )
 
 func syncGrantState() credit.State {
-	return credit.State{ProtocolContext: core.ProtocolContext{ChainID: core.ElementFromUint64(31337), ProtocolAddress: core.ElementFromUint64(17)}, TokenAddress: core.ElementFromUint64(34), OwnerWalletIdentity: core.ElementFromUint64(1), SpenderWalletIdentity: core.ElementFromUint64(2), RevocationShard: core.ElementFromUint64(1), Nonce: core.ElementFromUint64(3), Expiry: core.ElementFromUint64(2000000000), SharedKey: core.ElementFromUint64(4)}
+	return credit.State{AvailableCredit: core.ElementFromUint64(400), ProtocolContext: core.ProtocolContext{ChainID: core.ElementFromUint64(31337), ProtocolAddress: core.ElementFromUint64(17)}, TokenAddress: core.ElementFromUint64(34), OwnerWalletIdentity: core.ElementFromUint64(1), SpenderWalletIdentity: core.ElementFromUint64(2), RevocationShard: core.ElementFromUint64(1), Nonce: core.ElementFromUint64(3), Expiry: core.ElementFromUint64(2000000000), SharedKey: core.ElementFromUint64(4)}
 }
 func TestRefreshRestoresUnresolvedCreditReservationsForBothRoles(t *testing.T) {
 	grant := syncGrantState()
@@ -282,7 +282,7 @@ func TestRefreshKeepsAuthenticatedChildPayloadAndDropsUnknownRecoveredPayload(t 
 			}
 			for _, role := range []credit.Role{credit.Owner, credit.Spender} {
 				got := wallet.PostpaidCredit.Grants[creditsession.GrantKey(leaf, role)]
-				if core.ElementToBigInt(got.Delivery.State.TotalSpent).Uint64() != 7 {
+				if core.ElementToBigInt(got.Delivery.State.TotalSpent).Uint64() != 7 || got.Delivery.State.AvailableCredit != core.ElementFromUint64(393) {
 					t.Fatal("recovered usage lost")
 				}
 				if corrupt && len(got.Delivery.State.Payload) != 0 {

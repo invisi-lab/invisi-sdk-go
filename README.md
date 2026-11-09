@@ -63,7 +63,7 @@ Managed Note operations use `session.Connect`, reservations and durable journals
 
 The shared Note Tree is a storage/membership primitive. A Credit state remains a distinct business model from an ordinary spendable Note.
 
-Limits are single/day/month/lifetime. Zero disables a check, never usage accumulation. Draw and recovery use canonical chain time. State recovery authenticates the masked **gross debit**, deterministic next nonce and successor commitment; unknown child payload is not copied from the parent.
+Policy limits are single/day/month; zero disables only that check. State carries uint128 `AvailableCredit` and an independent `Unlimited` flag. Finite zero is exhausted; a finite draw subtracts gross debit. Unlimited grants keep zero balance and still accumulate daily/monthly/total usage. Draw and recovery use canonical chain time. State recovery authenticates the masked **gross debit**, deterministic next nonce and successor commitment; unknown child payload is not copied from the parent.
 
 `credit.DeliveryState` retains both receiving-key snapshots. Current Credit envelopes use `0x82`; older financial models/envelopes are rejected. `Payload` is opaque authenticated application data outside commitments. `credit.MemoV1` is an optional memo codec independent of the envelope version.
 
@@ -138,5 +138,7 @@ python3 scripts/test-sync-reference.py
 Native integration tests additionally use `BB_BINARY_PATH` and `NOIR_EXECUTE_PATH`. The backend checks exact Noir/BB versions and authenticated artifact/VK identity, does not automatically download tools and never uploads witnesses.
 
 Maintainers regenerate bindings with `INVISI_PROTOCOL_ROOT=/path/to/invisi-protocol go generate ./protocol/contracts`. `python3 scripts/sync-reference.py --proving-only` authenticates the current 28 daily Note circuits, 34 aggregate outers and 15 direct Credit routes, with recursive certificates for C1..C10. User manifest4/format7, aggregate receipts10 and Credit manifest7/format8 have separate identities.
+
+`State.Update(Change, deadline)` applies mutually exclusive uint128 increase/decrease deltas to the authenticated input balance. `Change.Unlimited == nil` preserves the mode; entering unlimited clears the balance and requires zero deltas, and leaving unlimited starts at zero plus this increase. Update preserves historical usage. Owner-pulled create/update/revoke fees do not consume available credit. `PrepareUpdate` freezes the original change; quotes never apply the delta again. An explicit new preparation applies that change to the latest accepted state; an externalized journal always resumes its original calldata.
 
 Current configurable examples live under [examples](examples/README.md). Real native proof tests establish cryptographic interoperability; mocked operator/provider tests establish stage and journal behavior and do not claim real token accounting.

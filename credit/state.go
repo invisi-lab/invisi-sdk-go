@@ -8,7 +8,7 @@ import (
 	"math/big"
 )
 
-type Policy struct{ SingleLimit, DailyLimit, MonthlyLimit, LifetimeLimit fr.Element }
+type Policy struct{ SingleLimit, DailyLimit, MonthlyLimit fr.Element }
 type Usage struct{ LastDay, DailySpent, LastMonth, MonthlySpent, TotalSpent fr.Element }
 type State struct {
 	core.ProtocolContext
@@ -16,15 +16,62 @@ type State struct {
 	Usage
 	TokenAddress, SpenderWalletIdentity, OwnerWalletIdentity  fr.Element
 	RevocationShard, RevocationSlot, Nonce, Expiry, SharedKey fr.Element
+	AvailableCredit                                           fr.Element
+	Unlimited                                                 bool
 	Payload                                                   []byte
 }
+type Change struct {
+	Policy                                           Policy
+	Expiry                                           fr.Element
+	Unlimited                                        *bool
+	IncreaseAvailableCredit, DecreaseAvailableCredit fr.Element
+}
+
+func boolField(v bool) fr.Element {
+	if v {
+		return core.ElementFromUint64(1)
+	}
+	return fr.Element{}
+}
+func (c Change) quota(s State) (fr.Element, bool, error) {
+	for _, delta := range []fr.Element{c.IncreaseAvailableCredit, c.DecreaseAvailableCredit} {
+		if err := uintField(delta, 128, "quota delta"); err != nil {
+			return fr.Element{}, false, err
+		}
+	}
+	if !c.IncreaseAvailableCredit.IsZero() && !c.DecreaseAvailableCredit.IsZero() {
+		return fr.Element{}, false, fmt.Errorf("quota deltas are mutually exclusive")
+	}
+	unlimited := s.Unlimited
+	if c.Unlimited != nil {
+		unlimited = *c.Unlimited
+	}
+	if unlimited {
+		if !c.IncreaseAvailableCredit.IsZero() || !c.DecreaseAvailableCredit.IsZero() {
+			return fr.Element{}, false, fmt.Errorf("unlimited quota requires zero deltas")
+		}
+		return fr.Element{}, true, nil
+	}
+	balance := core.ElementToBigInt(s.AvailableCredit)
+	decrease := core.ElementToBigInt(c.DecreaseAvailableCredit)
+	if decrease.Cmp(balance) > 0 {
+		return fr.Element{}, false, fmt.Errorf("quota decrease exceeds available credit")
+	}
+	balance.Add(balance, core.ElementToBigInt(c.IncreaseAvailableCredit))
+	balance.Sub(balance, decrease)
+	if balance.BitLen() > 128 {
+		return fr.Element{}, false, fmt.Errorf("available credit exceeds uint128")
+	}
+	return core.BigIntToElement(balance), false, nil
+}
+
 type Transition struct {
 	State                                      State
 	Nullifier, StateCommitment, RecoveryAmount fr.Element
 }
 
 func (p Policy) Fields() []fr.Element {
-	return []fr.Element{p.SingleLimit, p.DailyLimit, p.MonthlyLimit, p.LifetimeLimit}
+	return []fr.Element{p.SingleLimit, p.DailyLimit, p.MonthlyLimit}
 }
 func (u Usage) Fields() []fr.Element {
 	return []fr.Element{u.LastDay, u.DailySpent, u.LastMonth, u.MonthlySpent, u.TotalSpent}
@@ -56,6 +103,12 @@ func (s State) Validate() error {
 	if s.SharedKey.IsZero() {
 		return fmt.Errorf("grant shared key must be nonzero")
 	}
+	if err := uintField(s.AvailableCredit, 128, "available credit"); err != nil {
+		return err
+	}
+	if s.Unlimited && !s.AvailableCredit.IsZero() {
+		return fmt.Errorf("unlimited credit requires zero balance")
+	}
 	for _, v := range s.Policy.Fields() {
 		if err := uintField(v, 126, "limit"); err != nil {
 			return err
@@ -86,6 +139,7 @@ func (s State) Commitment() (fr.Element, error) {
 	}
 	fields := []fr.Element{core.ElementFromUint64(5), s.ChainID, s.ProtocolAddress, s.SpenderWalletIdentity, s.OwnerWalletIdentity, s.TokenAddress, s.RevocationShard, s.RevocationSlot, s.Nonce, s.Expiry, key}
 	fields = append(fields, s.Policy.Fields()...)
+	fields = append(fields, s.AvailableCredit, boolField(s.Unlimited))
 	fields = append(fields, s.Usage.Fields()...)
 	return core.Poseidon2Hash(fields...)
 }
@@ -146,8 +200,8 @@ func (s State) drawUsage(debit fr.Element, timestamp uint64) (Usage, error) {
 		return Usage{}, err
 	}
 	total := new(big.Int).Add(core.ElementToBigInt(s.TotalSpent), core.ElementToBigInt(debit))
-	if total.BitLen() > 128 || !s.LifetimeLimit.IsZero() && total.Cmp(core.ElementToBigInt(s.LifetimeLimit)) > 0 {
-		return Usage{}, fmt.Errorf("lifetime usage exceeds limit or uint128")
+	if total.BitLen() > 128 {
+		return Usage{}, fmt.Errorf("total usage exceeds uint128")
 	}
 	u.TotalSpent = core.BigIntToElement(total)
 	return u, nil
@@ -166,6 +220,12 @@ func (s State) Draw(debit fr.Element, timestamp uint64) (Transition, error) {
 		return Transition{}, err
 	}
 	next := s.Clone()
+	if !next.Unlimited {
+		if debit.Cmp(&next.AvailableCredit) > 0 {
+			return Transition{}, fmt.Errorf("gross debit exceeds available credit")
+		}
+		next.AvailableCredit.Sub(&next.AvailableCredit, &debit)
+	}
 	next.Usage = usage
 	next.Nonce = nonce
 	c, err := next.Commitment()
@@ -204,12 +264,12 @@ func (s State) Recover(nf, commitment, recovery fr.Element, timestamp uint64) (S
 }
 
 // Update preserves grant identity and every usage counter, including when limits are disabled.
-func (s State) Update(policy Policy, expiry fr.Element, deadline uint64) (Transition, error) {
+func (s State) Update(change Change, deadline uint64) (Transition, error) {
 	if err := s.Validate(); err != nil {
 		return Transition{}, err
 	}
 	d := core.ElementFromUint64(deadline)
-	if d.Cmp(&s.Expiry) > 0 || d.Cmp(&expiry) > 0 {
+	if d.Cmp(&s.Expiry) > 0 || d.Cmp(&change.Expiry) > 0 {
 		return Transition{}, fmt.Errorf("expiry before request deadline")
 	}
 	nf, err := s.Nullifier()
@@ -221,8 +281,12 @@ func (s State) Update(policy Policy, expiry fr.Element, deadline uint64) (Transi
 		return Transition{}, err
 	}
 	next := s.Clone()
-	next.Policy = policy
-	next.Expiry = expiry
+	next.Policy = change.Policy
+	next.Expiry = change.Expiry
+	next.AvailableCredit, next.Unlimited, err = change.quota(s)
+	if err != nil {
+		return Transition{}, err
+	}
 	next.Nonce = nonce
 	c, err := next.Commitment()
 	if err != nil {

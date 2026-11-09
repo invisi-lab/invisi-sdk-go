@@ -27,7 +27,7 @@ func fixture(t *testing.T) (State, map[string]any) {
 		}
 		return v
 	}
-	s := State{ProtocolContext: core.ProtocolContext{ChainID: core.ElementFromUint64(31337), ProtocolAddress: core.ElementFromUint64(17)}, TokenAddress: core.ElementFromUint64(34), SpenderWalletIdentity: e("spenderWalletIdentity"), OwnerWalletIdentity: e("ownerWalletIdentity"), RevocationShard: e("revocationShard"), RevocationSlot: e("revocationSlot"), Nonce: e("nonce"), Expiry: e("expiry"), SharedKey: e("creditSharedKey"), Policy: Policy{SingleLimit: e("singleLimit"), DailyLimit: e("dailyLimit"), MonthlyLimit: e("monthlyLimit"), LifetimeLimit: e("lifetimeLimit")}}
+	s := State{AvailableCredit: e("availableCredit"), Unlimited: n["unlimited"].(bool), ProtocolContext: core.ProtocolContext{ChainID: core.ElementFromUint64(31337), ProtocolAddress: core.ElementFromUint64(17)}, TokenAddress: core.ElementFromUint64(34), SpenderWalletIdentity: e("spenderWalletIdentity"), OwnerWalletIdentity: e("ownerWalletIdentity"), RevocationShard: e("revocationShard"), RevocationSlot: e("revocationSlot"), Nonce: e("nonce"), Expiry: e("expiry"), SharedKey: e("creditSharedKey"), Policy: Policy{SingleLimit: e("singleLimit"), DailyLimit: e("dailyLimit"), MonthlyLimit: e("monthlyLimit")}}
 	return s, f
 }
 func hex(v fr.Element) string {
@@ -59,7 +59,7 @@ func TestCanonicalStateAndDraw(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if recovered.Nonce != next.State.Nonce || recovered.TotalSpent != core.ElementFromUint64(7) {
+	if recovered.Nonce != next.State.Nonce || recovered.TotalSpent != core.ElementFromUint64(7) || recovered.AvailableCredit != core.ElementFromUint64(393) {
 		t.Fatal("recovery mismatch")
 	}
 	next.RecoveryAmount.Add(&next.RecoveryAmount, &next.RecoveryAmount)
@@ -67,20 +67,21 @@ func TestCanonicalStateAndDraw(t *testing.T) {
 		t.Fatal("accepted corrupt recovery")
 	}
 }
-func TestLifetimeAndPeriods(t *testing.T) {
+func TestQuotaAndPeriods(t *testing.T) {
 	s, _ := fixture(t)
-	s.LifetimeLimit = core.ElementFromUint64(10)
+	s.AvailableCredit = core.ElementFromUint64(10)
 	next, err := s.Draw(core.ElementFromUint64(7), 2000000000)
 	if err != nil {
 		t.Fatal(err)
 	}
 	if _, err := next.State.Draw(core.ElementFromUint64(4), 2000000000+86400*40); err == nil {
-		t.Fatal("lifetime reset across periods")
+		t.Fatal("quota restored across periods")
 	}
 	if _, err := next.State.Draw(core.ElementFromUint64(1), 1900000000); err == nil {
 		t.Fatal("accepted period rollback")
 	}
-	s.LifetimeLimit = fr.Element{}
+	s.AvailableCredit = fr.Element{}
+	s.Unlimited = true
 	s.TotalSpent = core.ElementFromUint64(1000)
 	next, err = s.Draw(core.ElementFromUint64(7), 2000000000)
 	if err != nil || next.State.TotalSpent != core.ElementFromUint64(1007) {
@@ -95,17 +96,17 @@ func TestUpdatePreservesUsageAndNamespace(t *testing.T) {
 		t.Fatal(err)
 	}
 	current := draw.State
-	next, err := current.Update(Policy{}, core.ElementFromUint64(2200000000), 2000000100)
+	next, err := current.Update(Change{Policy: Policy{}, Expiry: core.ElementFromUint64(2200000000)}, 2000000100)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if next.State.Usage != current.Usage || next.State.RevocationShard != current.RevocationShard || next.State.RevocationSlot != current.RevocationSlot || next.State.SharedKey != current.SharedKey || next.State.Nonce == current.Nonce {
+	if next.State.Usage != current.Usage || next.State.AvailableCredit != current.AvailableCredit || next.State.Unlimited != current.Unlimited || next.State.RevocationShard != current.RevocationShard || next.State.RevocationSlot != current.RevocationSlot || next.State.SharedKey != current.SharedKey || next.State.Nonce == current.Nonce {
 		t.Fatal("update changed immutable identity or usage")
 	}
-	if _, err := current.Update(Policy{}, core.ElementFromUint64(1999999999), 2000000100); err == nil {
+	if _, err := current.Update(Change{Policy: Policy{}, Expiry: core.ElementFromUint64(1999999999)}, 2000000100); err == nil {
 		t.Fatal("accepted expired successor")
 	}
-	if _, err := current.Update(Policy{}, core.ElementFromUint64(2200000000), 2100000001); err == nil {
+	if _, err := current.Update(Change{Policy: Policy{}, Expiry: core.ElementFromUint64(2200000000)}, 2100000001); err == nil {
 		t.Fatal("accepted expired previous grant")
 	}
 }

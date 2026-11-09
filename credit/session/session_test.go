@@ -13,7 +13,7 @@ import (
 
 func testPlan(t *testing.T) (*credit.Prepared, StoredState) {
 	t.Helper()
-	s := credit.State{ProtocolContext: core.ProtocolContext{ChainID: core.ElementFromUint64(1), ProtocolAddress: core.ElementFromUint64(17)}, TokenAddress: core.ElementFromUint64(34), SpenderWalletIdentity: core.ElementFromUint64(33), OwnerWalletIdentity: core.ElementFromUint64(44), RevocationShard: core.ElementFromUint64(1), Nonce: core.ElementFromUint64(1), Expiry: core.ElementFromUint64(2100000000), SharedKey: core.ElementFromUint64(2)}
+	s := credit.State{AvailableCredit: core.ElementFromUint64(400), ProtocolContext: core.ProtocolContext{ChainID: core.ElementFromUint64(1), ProtocolAddress: core.ElementFromUint64(17)}, TokenAddress: core.ElementFromUint64(34), SpenderWalletIdentity: core.ElementFromUint64(33), OwnerWalletIdentity: core.ElementFromUint64(44), RevocationShard: core.ElementFromUint64(1), Nonce: core.ElementFromUint64(1), Expiry: core.ElementFromUint64(2100000000), SharedKey: core.ElementFromUint64(2)}
 	transition, err := s.Draw(core.ElementFromUint64(7), 2000000000)
 	if err != nil {
 		t.Fatal(err)
@@ -164,5 +164,60 @@ func TestManagedValidationFailureDoesNotReserveInputs(t *testing.T) {
 	}
 	if len(snapshot.Operations) != 0 || snapshot.Grants[GrantKey(grant.Commitment, grant.Role)].ReservedBy != "" {
 		t.Fatal("failed preparation reserved a grant")
+	}
+}
+
+func TestUpdateJournalPreservesDeltaAndResumesWithoutReapplying(t *testing.T) {
+	ctx := context.Background()
+	store := NewMemoryStore()
+	managed, err := New(Options{Store: store})
+	if err != nil {
+		t.Fatal(err)
+	}
+	draw, grant := testPlan(t)
+	grant.Role = credit.Owner
+	if err = managed.Track(ctx, grant); err != nil {
+		t.Fatal(err)
+	}
+	original, err := draw.ExportIntent()
+	if err != nil {
+		t.Fatal(err)
+	}
+	current := grant.Delivery.State
+	change := credit.Change{Policy: current.Policy, Expiry: current.Expiry, IncreaseAvailableCredit: core.ElementFromUint64(5)}
+	next, err := current.Update(change, 2000000300)
+	if err != nil {
+		t.Fatal(err)
+	}
+	p := credit.UpdateParams{Token: original.Context.TokenAddress, Owner: common.BigToAddress(core.ElementToBigInt(current.OwnerWalletIdentity)), Source: original.Draw.Sources[0], Nullifier: common.Hash(next.Nullifier.Bytes()), CreditCommitment: common.Hash(next.StateCommitment.Bytes()), RevocationShard: 1, Deadline: big.NewInt(2000000300)}
+	prepared, err := credit.PrepareUpdate(original.Context, p, original.Deliveries[:2], credit.LocatedState{State: current, TreeID: 1}, change)
+	if err != nil {
+		t.Fatal(err)
+	}
+	_, err = managed.Prepare(ctx, "quota-update", prepared)
+	if err != nil {
+		t.Fatal(err)
+	}
+	resumed, err := managed.Resume(ctx, "quota-update", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	snapshot, err := store.ReadSnapshot(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	record := snapshot.Operations["quota-update"]
+	if record.Intent.UpdateChange.IncreaseAvailableCredit != core.ElementFromUint64(5) || record.Intent.Inputs[0].State.AvailableCredit != core.ElementFromUint64(400) {
+		t.Fatal("journal replaced delta with a target balance")
+	}
+	history, err := managed.GetHistory(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(history.Operations) != 1 || history.Operations[0].Preview.AvailableCredit.Cmp(big.NewInt(405)) != 0 {
+		t.Fatal("resume applied quota delta twice")
+	}
+	if err = resumed.Cancel(ctx); err != nil {
+		t.Fatal(err)
 	}
 }

@@ -43,7 +43,7 @@ func TestStateJSONRejectsInvalidSchemaAndFields(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	for _, change := range []string{"format", "missing", "decimal"} {
+	for _, change := range []string{"format", "missing", "decimal", "boolean", "missingBoolean", "unlimitedBalance"} {
 		t.Run(change, func(t *testing.T) {
 			var encoded map[string]any
 			if err := json.Unmarshal(raw, &encoded); err != nil {
@@ -55,6 +55,12 @@ func TestStateJSONRejectsInvalidSchemaAndFields(t *testing.T) {
 				encoded["version"] = 999
 			case "missing":
 				delete(fields, "creditSharedKey")
+			case "boolean":
+				encoded["unlimited"] = 1
+			case "missingBoolean":
+				delete(encoded, "unlimited")
+			case "unlimitedBalance":
+				encoded["unlimited"] = true
 			case "decimal":
 				fields["creditSharedKey"] = "01"
 			}
