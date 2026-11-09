@@ -295,11 +295,11 @@ func (s *WalletSession) Refresh(ctx context.Context, options RefreshOptions) (Re
 					if previous.Nullifier != common.Hash(nf) {
 						continue
 					}
-					recovered, e := previous.Delivery.State.Recover(core.BigIntToElement(new(big.Int).SetBytes(nf[:])), core.BigIntToElement(new(big.Int).SetBytes(draw.Params.StateCommitments[j][:])), core.BigIntToElement(new(big.Int).SetBytes(draw.Params.RecoveryAmounts[j][:])), draw.Timestamp)
+					recovered, e := previous.Delivery.State.Recover(core.BigIntToElement(new(big.Int).SetBytes(nf[:])), core.BigIntToElement(new(big.Int).SetBytes(draw.Params.CreditCommitments[j][:])), core.BigIntToElement(new(big.Int).SetBytes(draw.Params.RecoveryAmounts[j][:])), draw.Timestamp)
 					if e != nil {
 						return result, e
 					}
-					commitment := common.Hash(draw.Params.StateCommitments[j])
+					commitment := common.Hash(draw.Params.CreditCommitments[j])
 					if _, ok := before.PostpaidCredit.Grants[creditsession.GrantKey(commitment, previous.Role)]; ok {
 						continue
 					}

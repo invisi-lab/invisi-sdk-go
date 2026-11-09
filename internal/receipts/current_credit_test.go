@@ -81,18 +81,18 @@ type refTuple struct {
 	Slot       uint16
 }
 type currentDrawTuple struct {
-	Token            common.Address
-	Sources          []sourceTuple
-	Payers           []payerTuple
-	GrantRefs        []refTuple
-	Nullifiers       [][32]byte
-	StateCommitments [][32]byte
-	RecoveryAmounts  [][32]byte
-	NoteCommitment   [32]byte
-	TotalAmount      *big.Int
-	Deadline         *big.Int
-	FeeRecipient     common.Address
-	FeeAmount        *big.Int
+	Token             common.Address
+	Sources           []sourceTuple
+	Payers            []payerTuple
+	GrantRefs         []refTuple
+	Nullifiers        [][32]byte
+	CreditCommitments [][32]byte
+	RecoveryAmounts   [][32]byte
+	NoteCommitment    [32]byte
+	TotalAmount       *big.Int
+	Deadline          *big.Int
+	FeeRecipient      common.Address
+	FeeAmount         *big.Int
 }
 type updateTuple struct {
 	Token            common.Address
@@ -111,7 +111,7 @@ func TestCreditDrawAndUpdateHaveDistinctStateAndNoteProjections(t *testing.T) {
 	d, log := fixture(t)
 	tx := common.HexToHash("1")
 	token := common.HexToAddress("2")
-	p := currentDrawTuple{Token: token, Sources: []sourceTuple{{big.NewInt(1), [32]byte{9}}}, Payers: []payerTuple{{common.HexToAddress("1"), big.NewInt(3)}, {common.HexToAddress("2"), big.NewInt(4)}}, GrantRefs: []refTuple{{big.NewInt(0), 1, 0}, {big.NewInt(1), 1, 0}}, Nullifiers: [][32]byte{{1}, {2}}, StateCommitments: [][32]byte{{3}, {4}}, RecoveryAmounts: [][32]byte{{5}, {6}}, NoteCommitment: [32]byte{7}, TotalAmount: big.NewInt(7), Deadline: big.NewInt(99), FeeRecipient: common.HexToAddress("44"), FeeAmount: big.NewInt(1)}
+	p := currentDrawTuple{Token: token, Sources: []sourceTuple{{big.NewInt(1), [32]byte{9}}}, Payers: []payerTuple{{common.HexToAddress("1"), big.NewInt(3)}, {common.HexToAddress("2"), big.NewInt(4)}}, GrantRefs: []refTuple{{big.NewInt(0), 1, 0}, {big.NewInt(1), 1, 0}}, Nullifiers: [][32]byte{{1}, {2}}, CreditCommitments: [][32]byte{{3}, {4}}, RecoveryAmounts: [][32]byte{{5}, {6}}, NoteCommitment: [32]byte{7}, TotalAmount: big.NewInt(7), Deadline: big.NewInt(99), FeeRecipient: common.HexToAddress("44"), FeeAmount: big.NewInt(1)}
 	ins := log("CommitmentsInserted", 1, tx, []any{big.NewInt(1)}, uint32(0), [][32]byte{{3}, {4}, {7}})
 	draw := log("CreditDraw", 2, tx, []any{big.NewInt(1)}, p, []uint32{0, 1, 2}, []delivery{{[]byte{1}, nil}, {[]byte{2}, nil}, {[]byte{3}, nil}, {[]byte{4}, nil}, {[]byte{5}, nil}})
 	b, e := d.Decode(Block{Number: 10, Timestamp: 100}, []types.Log{ins, draw})

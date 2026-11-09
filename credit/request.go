@@ -44,15 +44,15 @@ type GrantRef struct {
 	Slot       uint16
 }
 type DrawParams struct {
-	Token                                         common.Address
-	Sources                                       []protocol.InputSource
-	Payers                                        []Payer
-	GrantRefs                                     []GrantRef
-	Nullifiers, StateCommitments, RecoveryAmounts []common.Hash
-	NoteCommitment                                common.Hash
-	TotalAmount, Deadline                         *big.Int
-	FeeRecipient                                  common.Address
-	FeeAmount                                     *big.Int
+	Token                                          common.Address
+	Sources                                        []protocol.InputSource
+	Payers                                         []Payer
+	GrantRefs                                      []GrantRef
+	Nullifiers, CreditCommitments, RecoveryAmounts []common.Hash
+	NoteCommitment                                 common.Hash
+	TotalAmount, Deadline                          *big.Int
+	FeeRecipient                                   common.Address
+	FeeAmount                                      *big.Int
 }
 
 func DrawCapacity(count int) (int, error) {
@@ -206,7 +206,7 @@ func (p DrawParams) Statement(c Context, deliveries []protocol.Delivery) ([]comm
 	if err != nil {
 		return nil, apitypes.TypedData{}, err
 	}
-	if len(p.StateCommitments) != n || len(p.RecoveryAmounts) != n || len(p.GrantRefs) != n || len(p.Payers) < 1 || len(p.Payers) > n {
+	if len(p.CreditCommitments) != n || len(p.RecoveryAmounts) != n || len(p.GrantRefs) != n || len(p.Payers) < 1 || len(p.Payers) > n {
 		return nil, apitypes.TypedData{}, fmt.Errorf("Credit group count mismatch")
 	}
 	sources, err := protocol.NormalizeSources(p.Sources, n, capacity)
@@ -222,7 +222,7 @@ func (p DrawParams) Statement(c Context, deliveries []protocol.Delivery) ([]comm
 			return nil, apitypes.TypedData{}, fmt.Errorf("duplicate nullifier")
 		}
 		seenN[nf] = true
-		h := p.StateCommitments[i]
+		h := p.CreditCommitments[i]
 		if err = fieldHash(h, true); err != nil {
 			return nil, apitypes.TypedData{}, err
 		}
@@ -284,7 +284,7 @@ func (p DrawParams) Statement(c Context, deliveries []protocol.Delivery) ([]comm
 		arrays[5] = append(arrays[5], new(big.Int).SetUint64(r.Shard))
 		arrays[6] = append(arrays[6], new(big.Int).SetUint64(uint64(r.Slot)))
 		arrays[7] = append(arrays[7], p.Nullifiers[i].Big())
-		arrays[8] = append(arrays[8], p.StateCommitments[i].Big())
+		arrays[8] = append(arrays[8], p.CreditCommitments[i].Big())
 		arrays[9] = append(arrays[9], p.RecoveryAmounts[i].Big())
 	}
 	for _, a := range arrays {

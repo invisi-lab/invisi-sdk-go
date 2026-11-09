@@ -238,7 +238,7 @@ func (p DrawParams) Witness(c Context, deliveries []protocol.Delivery, credits [
 		if err != nil {
 			return nil, err
 		}
-		if common.Hash(next.Nullifier.Bytes()) != p.Nullifiers[i] || common.Hash(next.StateCommitment.Bytes()) != p.StateCommitments[i] || common.Hash(next.RecoveryAmount.Bytes()) != p.RecoveryAmounts[i] {
+		if common.Hash(next.Nullifier.Bytes()) != p.Nullifiers[i] || common.Hash(next.StateCommitment.Bytes()) != p.CreditCommitments[i] || common.Hash(next.RecoveryAmount.Bytes()) != p.RecoveryAmounts[i] {
 			return nil, fmt.Errorf("Credit draw transition mismatch")
 		}
 		arrays["input_nonces"][i] = s.Nonce.String()

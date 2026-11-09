@@ -55,7 +55,7 @@ func TestOwnedReceiptRequiresCanonicalInsertionAndMembership(t *testing.T) {
 			value = big.NewInt(0)
 		case "startLeafIndex":
 			value = uint32(0)
-		case "commitments":
+		case "noteCommitments":
 			value = [][32]byte{stored.Commitment}
 		case "tokens":
 			value = []common.Address{token}

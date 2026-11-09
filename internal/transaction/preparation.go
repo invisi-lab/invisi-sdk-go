@@ -225,7 +225,7 @@ func (s *Runtime) PrepareFunds(ctx context.Context, p TransferPreparation, withd
 		params.Sources = append(params.Sources, protocol.InputSource{TreeId: new(big.Int).SetUint64(id), MerkleRoot: roots[id]})
 	}
 	for _, out := range outputs {
-		params.OutputCommitments = append(params.OutputCommitments, out.Commitment)
+		params.NoteCommitments = append(params.NoteCommitments, out.Commitment)
 	}
 	plan := Plan{Kind: "transact", Target: target, Context: c, Block: block, Deadline: deadline, Inputs: inputs, Memberships: memberships, Outputs: outputs, Funding: funding, FundingMode: mode, Params: params, Capacity: capacity, NeedsAuthorization: len(inputs) > 0 && !(withdrawal == s.Wallet.identity && withdrawAmount.Cmp(sum) == 0 && len(outputs) == 0 && funding.Amount.Sign() == 0)}
 	return s.PersistPlan(ctx, plan)
@@ -275,7 +275,7 @@ func (s *Runtime) PrepareShield(ctx context.Context, p ShieldPreparation) (resul
 			return nil, OutputFailure(e, index, out.To(), "")
 		}
 		plan.Outputs = append(plan.Outputs, o)
-		plan.Shield.OutputCommitments = append(plan.Shield.OutputCommitments, o.Commitment)
+		plan.Shield.NoteCommitments = append(plan.Shield.NoteCommitments, o.Commitment)
 		sum.Add(sum, out.Amount())
 	}
 	if sum.Cmp(funding.Amount) != 0 {

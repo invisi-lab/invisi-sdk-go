@@ -39,7 +39,7 @@ func TestBatchOutputsOpaqueApplicationFrames(t *testing.T) {
 				value = big.NewInt(0)
 			case "startLeafIndex":
 				value = uint32(4)
-			case "commitments":
+			case "noteCommitments":
 				value = [][32]byte{{1}, {2}, {3}}
 			case "tokens":
 				value = []common.Address{{1}, {2}, {3}}

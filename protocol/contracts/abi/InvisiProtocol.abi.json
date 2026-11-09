@@ -356,7 +356,7 @@
             "internalType": "bytes32[]"
           },
           {
-            "name": "stateCommitments",
+            "name": "creditCommitments",
             "type": "bytes32[]",
             "internalType": "bytes32[]"
           },
@@ -589,10 +589,10 @@
   },
   {
     "type": "function",
-    "name": "isCommitmentPaid",
+    "name": "isCommitmentRegistered",
     "inputs": [
       {
-        "name": "noteCommitment",
+        "name": "commitment",
         "type": "bytes32",
         "internalType": "bytes32"
       }
@@ -836,7 +836,7 @@
             "internalType": "address"
           },
           {
-            "name": "outputCommitments",
+            "name": "noteCommitments",
             "type": "bytes32[]",
             "internalType": "bytes32[]"
           },
@@ -1001,7 +1001,7 @@
                 "internalType": "bytes32[]"
               },
               {
-                "name": "outputCommitments",
+                "name": "noteCommitments",
                 "type": "bytes32[]",
                 "internalType": "bytes32[]"
               },
@@ -1161,7 +1161,7 @@
                 "internalType": "bytes32[]"
               },
               {
-                "name": "outputCommitments",
+                "name": "noteCommitments",
                 "type": "bytes32[]",
                 "internalType": "bytes32[]"
               },
@@ -1466,7 +1466,7 @@
         "internalType": "address[]"
       },
       {
-        "name": "commitments",
+        "name": "noteCommitments",
         "type": "bytes32[]",
         "indexed": false,
         "internalType": "bytes32[]"
@@ -1827,7 +1827,7 @@
             "internalType": "bytes32[]"
           },
           {
-            "name": "stateCommitments",
+            "name": "creditCommitments",
             "type": "bytes32[]",
             "internalType": "bytes32[]"
           },
@@ -2087,7 +2087,7 @@
         "internalType": "bytes32[]"
       },
       {
-        "name": "outputCommitments",
+        "name": "noteCommitments",
         "type": "bytes32[]",
         "indexed": false,
         "internalType": "bytes32[]"
@@ -2347,7 +2347,7 @@
         "internalType": "bytes32[]"
       },
       {
-        "name": "outputCommitments",
+        "name": "noteCommitments",
         "type": "bytes32[]",
         "indexed": false,
         "internalType": "bytes32[]"
@@ -2482,7 +2482,7 @@
   },
   {
     "type": "error",
-    "name": "CommitmentAlreadyPaid",
+    "name": "CommitmentAlreadyRegistered",
     "inputs": [
       {
         "name": "commitment",

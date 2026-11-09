@@ -108,10 +108,10 @@ func (r creditReconciler) Reconcile(ctx context.Context, intent credit.Intent, d
 						if common.Hash(expected.Bytes()) != common.Hash(nf) {
 							continue
 						}
-						if i >= len(draw.Params.StateCommitments) || i >= len(draw.Params.RecoveryAmounts) || i >= len(draw.LeafIndices) {
+						if i >= len(draw.Params.CreditCommitments) || i >= len(draw.Params.RecoveryAmounts) || i >= len(draw.LeafIndices) {
 							return nil, errors.New("Credit draw event vector mismatch")
 						}
-						next, err := input.State.Recover(core.BigIntToElement(common.Hash(nf).Big()), core.BigIntToElement(common.Hash(draw.Params.StateCommitments[i]).Big()), core.BigIntToElement(common.Hash(draw.Params.RecoveryAmounts[i]).Big()), draw.Timestamp)
+						next, err := input.State.Recover(core.BigIntToElement(common.Hash(nf).Big()), core.BigIntToElement(common.Hash(draw.Params.CreditCommitments[i]).Big()), core.BigIntToElement(common.Hash(draw.Params.RecoveryAmounts[i]).Big()), draw.Timestamp)
 						if err != nil {
 							return nil, err
 						}
@@ -123,7 +123,7 @@ func (r creditReconciler) Reconcile(ctx context.Context, intent credit.Intent, d
 							if old.Commitment != common.Hash(previousCommitment.Bytes()) {
 								continue
 							}
-							commitment := common.Hash(draw.Params.StateCommitments[i])
+							commitment := common.Hash(draw.Params.CreditCommitments[i])
 							key := creditsession.GrantKey(commitment, old.Role)
 							if seen[key] {
 								continue

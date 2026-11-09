@@ -171,7 +171,7 @@ func RunCreditExample(kind string, actorIndex int) {
 			}
 			p.GrantRefs = append(p.GrantRefs, credit.GrantRef{PayerIndex: big.NewInt(int64(pi)), Shard: core.ElementToBigInt(s.RevocationShard).Uint64(), Slot: uint16(core.ElementToBigInt(s.RevocationSlot).Uint64())})
 			p.Nullifiers = append(p.Nullifiers, common.Hash(next.Nullifier.Bytes()))
-			p.StateCommitments = append(p.StateCommitments, common.Hash(next.StateCommitment.Bytes()))
+			p.CreditCommitments = append(p.CreditCommitments, common.Hash(next.StateCommitment.Bytes()))
 			p.RecoveryAmounts = append(p.RecoveryAmounts, common.Hash(next.RecoveryAmount.Bytes()))
 			p.TotalAmount.Add(p.TotalAmount, big.NewInt(7))
 			candidate.Input.Debit = debit

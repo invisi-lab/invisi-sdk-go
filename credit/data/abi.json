@@ -186,7 +186,7 @@
             "internalType": "bytes32[]"
           },
           {
-            "name": "stateCommitments",
+            "name": "creditCommitments",
             "type": "bytes32[]",
             "internalType": "bytes32[]"
           },
@@ -592,7 +592,7 @@
             "internalType": "bytes32[]"
           },
           {
-            "name": "stateCommitments",
+            "name": "creditCommitments",
             "type": "bytes32[]",
             "internalType": "bytes32[]"
           },

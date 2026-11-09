@@ -95,9 +95,9 @@ func (o *Execution) ApplyBroadcasterFee(ctx context.Context, base Plan, recipien
 			o.Plan.Outputs[change] = out
 		}
 		if p.Kind == "transact" {
-			o.Plan.Params.OutputCommitments = nil
+			o.Plan.Params.NoteCommitments = nil
 			for _, out := range o.Plan.Outputs {
-				o.Plan.Params.OutputCommitments = append(o.Plan.Params.OutputCommitments, out.Commitment)
+				o.Plan.Params.NoteCommitments = append(o.Plan.Params.NoteCommitments, out.Commitment)
 			}
 			o.Plan.Capacity, e = protocol.SelectTransactCapacity(len(p.Inputs), len(o.Plan.Outputs))
 			if e != nil {

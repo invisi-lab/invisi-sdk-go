@@ -97,7 +97,7 @@ func TestDrawAndUpdateWitnessBindMembershipAndOrdinaryNote(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	draw := DrawParams{Token: c.TokenAddress, Sources: []protocol.InputSource{source}, Payers: []Payer{{Payer: owner, Amount: big.NewInt(7)}}, GrantRefs: []GrantRef{{PayerIndex: big.NewInt(0), Shard: 1}}, Nullifiers: []common.Hash{common.Hash(transition.Nullifier.Bytes())}, StateCommitments: []common.Hash{common.Hash(transition.StateCommitment.Bytes())}, RecoveryAmounts: []common.Hash{common.Hash(transition.RecoveryAmount.Bytes())}, NoteCommitment: common.Hash(out.Bytes()), TotalAmount: big.NewInt(7), Deadline: deadline}
+	draw := DrawParams{Token: c.TokenAddress, Sources: []protocol.InputSource{source}, Payers: []Payer{{Payer: owner, Amount: big.NewInt(7)}}, GrantRefs: []GrantRef{{PayerIndex: big.NewInt(0), Shard: 1}}, Nullifiers: []common.Hash{common.Hash(transition.Nullifier.Bytes())}, CreditCommitments: []common.Hash{common.Hash(transition.StateCommitment.Bytes())}, RecoveryAmounts: []common.Hash{common.Hash(transition.RecoveryAmount.Bytes())}, NoteCommitment: common.Hash(out.Bytes()), TotalAmount: big.NewInt(7), Deadline: deadline}
 	dds := append(ds, protocol.Delivery{})
 	_, typed, err := draw.Statement(c, dds)
 	if err != nil {

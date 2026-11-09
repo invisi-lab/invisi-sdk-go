@@ -23,10 +23,10 @@ func ValidateShieldRequest(p BuildShieldCalldataParams) (FundingParams, error) {
 		return FundingParams{}, err
 	}
 	n := len(p.Outputs)
-	if n < 1 || n > 10 || len(p.Params.OutputCommitments) != n || len(p.Deliveries) != n {
+	if n < 1 || n > 10 || len(p.Params.NoteCommitments) != n || len(p.Deliveries) != n {
 		return FundingParams{}, fmt.Errorf("shield requires 1..10 outputs and matching deliveries")
 	}
-	if err := ValidateNotes(p.Params.OutputCommitments); err != nil {
+	if err := ValidateNotes(p.Params.NoteCommitments); err != nil {
 		return FundingParams{}, err
 	}
 	f, err := NormalizeFunding(p.Funding)
@@ -51,7 +51,7 @@ func ValidateShieldRequest(p BuildShieldCalldataParams) (FundingParams, error) {
 		if err != nil {
 			return f, err
 		}
-		if commitment.Bytes() != p.Params.OutputCommitments[i] {
+		if commitment.Bytes() != p.Params.NoteCommitments[i] {
 			return f, fmt.Errorf("output commitment mismatch")
 		}
 		total.Add(total, o.Amount)

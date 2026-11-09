@@ -63,7 +63,7 @@ func TestInvisiProtocolKeyMethods(t *testing.T) {
 		t.Fatalf("failed to parse ABI: %v", err)
 	}
 
-	required := []string{"shield", "transact", "createCredit", "creditDraw", "updateCredit", "revokeCredit", "creditAllocation", "creditRevocationBitmap", "activeNoteTreeId", "getNoteTreeRoot", "getNoteTreeNextLeafIndex", "isCommitmentPaid", "isNullifierSpent"}
+	required := []string{"shield", "transact", "createCredit", "creditDraw", "updateCredit", "revokeCredit", "creditAllocation", "creditRevocationBitmap", "activeNoteTreeId", "getNoteTreeRoot", "getNoteTreeNextLeafIndex", "isCommitmentRegistered", "isNullifierSpent"}
 	for _, name := range required {
 		if _, ok := parsed.Methods[name]; !ok {
 			t.Errorf("InvisiProtocol ABI missing method: %s", name)
@@ -152,6 +152,15 @@ func TestCurrentABIArtifacts(t *testing.T) {
 	for _, name := range []string{"CommitmentsInserted", "BatchOutputs", "TreeCreated", "Shield", "CreditCreated"} {
 		if _, ok := parsed.Events[name]; !ok {
 			t.Errorf("missing current event %s", name)
+		}
+	}
+	for event, field := range map[string]string{"BatchOutputs": "noteCommitments", "CommitmentsInserted": "commitments"} {
+		found := false
+		for _, input := range parsed.Events[event].Inputs {
+			found = found || input.Name == field
+		}
+		if !found {
+			t.Errorf("%s must expose %s", event, field)
 		}
 	}
 	for _, name := range []string{"payOpen", "payBlind", "depositCredit", "withdraw"} {

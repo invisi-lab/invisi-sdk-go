@@ -150,7 +150,7 @@
       "nullifiers": [
         "0x2fea1ac534920baed47ff64b29330361aa261f5cd590fbf5e303629b66ca3cbd"
       ],
-      "stateCommitments": [
+      "creditCommitments": [
         "0x0e8accd4e49b1da6ce7dce017a2e19fe57790a72883aabc98eade58a723dfd71"
       ],
       "recoveryAmounts": [

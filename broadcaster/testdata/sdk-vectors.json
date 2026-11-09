@@ -2,7 +2,7 @@
   {
     "method": "transact",
     "generatedBy": "independent ethers canonical Protocol ABI reference; SDK parity asserted separately",
-    "artifactSha256": "52614b5df9359e46ecba73e2f1ba150e3010dc222a2a11229e5b00d9e99e68fe",
+    "artifactSha256": "0af515ecf4eb8799759668edc96cff6447e36a22090e0ee4d22e003db5fd6f30",
     "privateKey": "0x0000000000000000000000000000000000000000000000000000000000000007",
     "trust": {
       "chainId": "56",
@@ -26,7 +26,7 @@
           "0x000000000000000000000000000000000000000000000000000000000000000b",
           "0x000000000000000000000000000000000000000000000000000000000000000c"
         ],
-        "outputCommitments": [
+        "noteCommitments": [
           "0x0000000000000000000000000000000000000000000000000000000000000015"
         ],
         "withdrawalAddress": "0x3333333333333333333333333333333333333333",
@@ -73,7 +73,7 @@
   {
     "method": "shield",
     "generatedBy": "independent ethers canonical Protocol ABI reference; SDK parity asserted separately",
-    "artifactSha256": "52614b5df9359e46ecba73e2f1ba150e3010dc222a2a11229e5b00d9e99e68fe",
+    "artifactSha256": "0af515ecf4eb8799759668edc96cff6447e36a22090e0ee4d22e003db5fd6f30",
     "privateKey": "0x0000000000000000000000000000000000000000000000000000000000000007",
     "trust": {
       "chainId": "56",
@@ -83,7 +83,7 @@
     "request": [
       {
         "token": "0x2222222222222222222222222222222222222222",
-        "outputCommitments": [
+        "noteCommitments": [
           "0x0000000000000000000000000000000000000000000000000000000000000015"
         ],
         "deadline": "2000000000",
@@ -134,7 +134,7 @@
   {
     "method": "createCredit",
     "generatedBy": "independent ethers canonical Protocol ABI reference; SDK parity asserted separately",
-    "artifactSha256": "52614b5df9359e46ecba73e2f1ba150e3010dc222a2a11229e5b00d9e99e68fe",
+    "artifactSha256": "0af515ecf4eb8799759668edc96cff6447e36a22090e0ee4d22e003db5fd6f30",
     "privateKey": "0x0000000000000000000000000000000000000000000000000000000000000007",
     "trust": {
       "chainId": "56",
@@ -182,7 +182,7 @@
   {
     "method": "creditDraw",
     "generatedBy": "independent ethers canonical Protocol ABI reference; SDK parity asserted separately",
-    "artifactSha256": "52614b5df9359e46ecba73e2f1ba150e3010dc222a2a11229e5b00d9e99e68fe",
+    "artifactSha256": "0af515ecf4eb8799759668edc96cff6447e36a22090e0ee4d22e003db5fd6f30",
     "privateKey": "0x0000000000000000000000000000000000000000000000000000000000000007",
     "trust": {
       "chainId": "56",
@@ -215,7 +215,7 @@
         "nullifiers": [
           "0x0000000000000000000000000000000000000000000000000000000000000029"
         ],
-        "stateCommitments": [
+        "creditCommitments": [
           "0x000000000000000000000000000000000000000000000000000000000000002a"
         ],
         "recoveryAmounts": [
@@ -260,7 +260,7 @@
   {
     "method": "updateCredit",
     "generatedBy": "independent ethers canonical Protocol ABI reference; SDK parity asserted separately",
-    "artifactSha256": "52614b5df9359e46ecba73e2f1ba150e3010dc222a2a11229e5b00d9e99e68fe",
+    "artifactSha256": "0af515ecf4eb8799759668edc96cff6447e36a22090e0ee4d22e003db5fd6f30",
     "privateKey": "0x0000000000000000000000000000000000000000000000000000000000000007",
     "trust": {
       "chainId": "56",
@@ -313,7 +313,7 @@
   {
     "method": "revokeCredit",
     "generatedBy": "independent ethers canonical Protocol ABI reference; SDK parity asserted separately",
-    "artifactSha256": "52614b5df9359e46ecba73e2f1ba150e3010dc222a2a11229e5b00d9e99e68fe",
+    "artifactSha256": "0af515ecf4eb8799759668edc96cff6447e36a22090e0ee4d22e003db5fd6f30",
     "privateKey": "0x0000000000000000000000000000000000000000000000000000000000000007",
     "trust": {
       "chainId": "56",

@@ -45,7 +45,7 @@ func NormalizeTransactRequest(c TransactionContext, p CrossTreeTransactParams, c
 	if err := ValidateContext(c); err != nil {
 		return r, err
 	}
-	capacity, err := SelectTransactCapacity(len(p.Nullifiers), len(p.OutputCommitments))
+	capacity, err := SelectTransactCapacity(len(p.Nullifiers), len(p.NoteCommitments))
 	if err != nil {
 		return r, err
 	}
@@ -53,14 +53,14 @@ func NormalizeTransactRequest(c TransactionContext, p CrossTreeTransactParams, c
 	if err := ValidateNotes(p.Nullifiers); err != nil {
 		return r, err
 	}
-	if err := ValidateNotes(p.OutputCommitments); err != nil {
+	if err := ValidateNotes(p.NoteCommitments); err != nil {
 		return r, err
 	}
 	r.Params.Sources, err = NormalizeSources(p.Sources, len(p.Nullifiers), capacity)
 	if err != nil {
 		return r, err
 	}
-	if len(cs) != len(p.OutputCommitments) {
+	if len(cs) != len(p.NoteCommitments) {
 		return r, fmt.Errorf("deliveries count mismatch")
 	}
 	for _, v := range cs {
@@ -71,7 +71,7 @@ func NormalizeTransactRequest(c TransactionContext, p CrossTreeTransactParams, c
 	if err := CheckUint(p.WithdrawalAmount, 128, "withdrawal amount"); err != nil {
 		return r, err
 	}
-	if (p.WithdrawalAmount.Sign() == 0) != (p.WithdrawalAddress == common.Address{}) || (len(p.OutputCommitments) == 0 && p.WithdrawalAmount.Sign() == 0 && r.Params.FeeAmount.Sign() == 0) {
+	if (p.WithdrawalAmount.Sign() == 0) != (p.WithdrawalAddress == common.Address{}) || (len(p.NoteCommitments) == 0 && p.WithdrawalAmount.Sign() == 0 && r.Params.FeeAmount.Sign() == 0) {
 		return r, fmt.Errorf("invalid withdrawal")
 	}
 	if err := CheckDeadline(c, p.Deadline); err != nil {
@@ -89,11 +89,11 @@ func NormalizeTransactRequest(c TransactionContext, p CrossTreeTransactParams, c
 		ids[i] = s.TreeId
 		roots[i] = number(s.MerkleRoot)
 	}
-	slots := make([]*big.Int, 0, len(p.Nullifiers)+len(p.OutputCommitments))
+	slots := make([]*big.Int, 0, len(p.Nullifiers)+len(p.NoteCommitments))
 	for _, v := range p.Nullifiers {
 		slots = append(slots, number(v))
 	}
-	for _, v := range p.OutputCommitments {
+	for _, v := range p.NoteCommitments {
 		slots = append(slots, number(v))
 	}
 	r.InputTreeIDs = padded(ids, capacity)
@@ -108,7 +108,7 @@ func NormalizeTransactRequest(c TransactionContext, p CrossTreeTransactParams, c
 func transactWords(c TransactionContext, r NormalizedTransact) []*big.Int {
 	high, low := splitHash(r.DeliveriesHash)
 	p := r.Params
-	out := []*big.Int{c.ChainID, c.ProtocolAddress.Big(), c.TokenAddress.Big(), big.NewInt(int64(len(p.Nullifiers))), big.NewInt(int64(len(p.OutputCommitments))), big.NewInt(int64(len(p.Sources)))}
+	out := []*big.Int{c.ChainID, c.ProtocolAddress.Big(), c.TokenAddress.Big(), big.NewInt(int64(len(p.Nullifiers))), big.NewInt(int64(len(p.NoteCommitments))), big.NewInt(int64(len(p.Sources)))}
 	out = append(out, r.InputTreeIDs...)
 	out = append(out, r.MerkleRoots...)
 	out = append(out, r.SlotValues...)
@@ -185,22 +185,22 @@ func TransactFundingRequestHash(proof []byte, p CrossTreeTransactParams, cs []De
 	if len(p.Sources) > 1 {
 		return HashABI(abi.Arguments{{Type: mustType("bytes32")}, {Type: mustType("bytes32")}, {Type: *method.Inputs[1].Type.TupleElems[0]}, {Type: mustType("bytes32")}}, crypto.Keccak256Hash([]byte("InvisiCrossTreeTransact")), crypto.Keccak256Hash(proof), p, deliveryHash)
 	}
-	components := []abi.ArgumentMarshaling{{Name: "token", Type: "address"}, {Name: "merkleRoot", Type: "bytes32"}, {Name: "nullifiers", Type: "bytes32[]"}, {Name: "outputCommitments", Type: "bytes32[]"}, {Name: "inputTreeId", Type: "uint256"}, {Name: "withdrawalAddress", Type: "address"}, {Name: "withdrawalAmount", Type: "uint256"}, {Name: "deadline", Type: "uint256"}, {Name: "feeRecipient", Type: "address"}, {Name: "feeAmount", Type: "uint256"}}
+	components := []abi.ArgumentMarshaling{{Name: "token", Type: "address"}, {Name: "merkleRoot", Type: "bytes32"}, {Name: "nullifiers", Type: "bytes32[]"}, {Name: "noteCommitments", Type: "bytes32[]"}, {Name: "inputTreeId", Type: "uint256"}, {Name: "withdrawalAddress", Type: "address"}, {Name: "withdrawalAmount", Type: "uint256"}, {Name: "deadline", Type: "uint256"}, {Name: "feeRecipient", Type: "address"}, {Name: "feeAmount", Type: "uint256"}}
 	singleType, err := abi.NewType("tuple", "", components)
 	if err != nil {
 		return common.Hash{}, err
 	}
 	single := struct {
-		Token                         common.Address
-		MerkleRoot                    [32]byte
-		Nullifiers, OutputCommitments [][32]byte
-		InputTreeId                   *big.Int
-		WithdrawalAddress             common.Address
-		WithdrawalAmount, Deadline    *big.Int
-		FeeRecipient                  common.Address
-		FeeAmount                     *big.Int
+		Token                       common.Address
+		MerkleRoot                  [32]byte
+		Nullifiers, NoteCommitments [][32]byte
+		InputTreeId                 *big.Int
+		WithdrawalAddress           common.Address
+		WithdrawalAmount, Deadline  *big.Int
+		FeeRecipient                common.Address
+		FeeAmount                   *big.Int
 	}{
-		Token: p.Token, Nullifiers: p.Nullifiers, OutputCommitments: p.OutputCommitments, InputTreeId: new(big.Int), WithdrawalAddress: p.WithdrawalAddress, WithdrawalAmount: p.WithdrawalAmount, Deadline: p.Deadline, FeeRecipient: p.FeeRecipient, FeeAmount: p.FeeAmount}
+		Token: p.Token, Nullifiers: p.Nullifiers, NoteCommitments: p.NoteCommitments, InputTreeId: new(big.Int), WithdrawalAddress: p.WithdrawalAddress, WithdrawalAmount: p.WithdrawalAmount, Deadline: p.Deadline, FeeRecipient: p.FeeRecipient, FeeAmount: p.FeeAmount}
 	if len(p.Sources) == 1 {
 		single.MerkleRoot = p.Sources[0].MerkleRoot
 		single.InputTreeId = p.Sources[0].TreeId
@@ -273,7 +273,7 @@ func SelectAggregateRoute(capacities []int) (int, error) {
 func aggregateRequestRoute(requests []TransactRequest) (int, error) {
 	capacities := []int{}
 	for _, r := range requests {
-		c, e := SelectTransactCapacity(len(r.Params.Nullifiers), len(r.Params.OutputCommitments))
+		c, e := SelectTransactCapacity(len(r.Params.Nullifiers), len(r.Params.NoteCommitments))
 		if e != nil {
 			return 0, e
 		}
@@ -300,7 +300,7 @@ func AggregatePublicInputs(c TransactionContext, requests []TransactRequest) ([]
 		if err != nil {
 			return nil, err
 		}
-		capacity, _ := SelectTransactCapacity(len(r.Params.Nullifiers), len(r.Params.OutputCommitments))
+		capacity, _ := SelectTransactCapacity(len(r.Params.Nullifiers), len(r.Params.NoteCommitments))
 		out = append(out, Word(big.NewInt(int64(capacity))))
 		out = append(out, v...)
 	}
@@ -348,7 +348,7 @@ func BuildTransactAggregateCalldata(p BuildTransactAggregateCalldataParams) (*Ca
 			}
 			seenN[v] = true
 		}
-		for _, v := range n.Params.OutputCommitments {
+		for _, v := range n.Params.NoteCommitments {
 			if seenO[v] {
 				return nil, fmt.Errorf("duplicate aggregate commitment")
 			}

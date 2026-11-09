@@ -48,7 +48,7 @@ func TestDrawToNoteFreezesOrdinaryOutputForFeeQuotation(t *testing.T) {
 	s, _ := fixture(t)
 	c := Context{ProtocolContext: s.ProtocolContext, TokenAddress: common.BigToAddress(big.NewInt(34)), Timestamp: 2000000000}
 	transition, _ := s.Draw(core.ElementFromUint64(7), c.Timestamp)
-	p := DrawParams{Token: c.TokenAddress, Sources: []protocol.InputSource{{TreeId: big.NewInt(1), MerkleRoot: common.HexToHash("0x01")}}, Payers: []Payer{{Payer: common.BigToAddress(big.NewInt(44)), Amount: big.NewInt(7)}}, GrantRefs: []GrantRef{{PayerIndex: big.NewInt(0), Shard: 1}}, Nullifiers: []common.Hash{common.Hash(transition.Nullifier.Bytes())}, StateCommitments: []common.Hash{common.Hash(transition.StateCommitment.Bytes())}, RecoveryAmounts: []common.Hash{common.Hash(transition.RecoveryAmount.Bytes())}, TotalAmount: big.NewInt(7), Deadline: big.NewInt(2000000300)}
+	p := DrawParams{Token: c.TokenAddress, Sources: []protocol.InputSource{{TreeId: big.NewInt(1), MerkleRoot: common.HexToHash("0x01")}}, Payers: []Payer{{Payer: common.BigToAddress(big.NewInt(44)), Amount: big.NewInt(7)}}, GrantRefs: []GrantRef{{PayerIndex: big.NewInt(0), Shard: 1}}, Nullifiers: []common.Hash{common.Hash(transition.Nullifier.Bytes())}, CreditCommitments: []common.Hash{common.Hash(transition.StateCommitment.Bytes())}, RecoveryAmounts: []common.Hash{common.Hash(transition.RecoveryAmount.Bytes())}, TotalAmount: big.NewInt(7), Deadline: big.NewInt(2000000300)}
 	receiver, _ := core.DeriveWallet(common.LeftPadBytes([]byte{99}, 32))
 	keys := &core.ReceivingKeys{ViewingPublicKey: receiver.ViewingPublicKey, ClueKey: receiver.ClueKey}
 	note := core.Note{ProtocolContext: s.ProtocolContext, OwnerAddress: receiver.OwnerAddress, TokenAddress: s.TokenAddress, Amount: core.ElementFromUint64(7), Nonce: core.ElementFromUint64(100), Payload: []byte("invoice")}
@@ -77,7 +77,7 @@ func TestDrawToNoteFreezesOrdinaryOutputForFeeQuotation(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if quoted.OutputIdentity != intent.OutputIdentity || quoted.Draw.TotalAmount.Cmp(big.NewInt(7)) != 0 || quoted.Inputs[0].Debit != core.ElementFromUint64(7) || quoted.Draw.StateCommitments[0] != intent.Draw.StateCommitments[0] {
+	if quoted.OutputIdentity != intent.OutputIdentity || quoted.Draw.TotalAmount.Cmp(big.NewInt(7)) != 0 || quoted.Inputs[0].Debit != core.ElementFromUint64(7) || quoted.Draw.CreditCommitments[0] != intent.Draw.CreditCommitments[0] {
 		t.Fatal("quote changed gross grant accounting or Note identity")
 	}
 	last := quoted.Deliveries[len(quoted.Deliveries)-1]
