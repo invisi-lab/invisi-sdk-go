@@ -1,0 +1,17 @@
+{
+  "endpoint": "https://your-provenance.example",
+  "chainRpcUrl": "https://your-primary-rpc.example",
+  "chainId": "31337",
+  "protocolAddress": "0x<20-byte-protocol-address>",
+  "policyId": "0x<32-byte-policy-id>",
+  "generation": "1",
+  "providerId": "0x<32-byte-provider-id>",
+  "signingKeyId": "0x<sha256-of-pinned-public-key>",
+  "signingPublicKey": "0x<32-byte-pinned-ed25519-public-key>",
+  "assetRoot": "/absolute/path/to/sdk/.cache/provenance",
+  "broadcaster": {
+    "endpoint": "https://your-broadcaster.example/v1/chains/31337",
+    "quoteSigner": "0x<registered-quote-signer>",
+    "feeRecipient": "0x<registered-fee-recipient>"
+  }
+}

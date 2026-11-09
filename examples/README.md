@@ -1,6 +1,6 @@
 # Go examples
 
-Each main is a flat walkthrough. No example loads account keys, creates a local wallet executor, signs EVM transactions or broadcasts a transaction. Wallet execution belongs to an external native host. `prover/native` runs proof computation and is separate from wallet execution.
+Each main is a flat walkthrough. No example loads account keys, creates a local wallet executor or signs EVM transactions. Existing Note/Credit examples export calldata; the separate Provenance walkthrough submits to a Broadcaster only with explicit `--submit`. Wallet execution belongs to an external native host. `prover/native` runs proof computation and is separate from wallet execution.
 
 Install Barretenberg 6.0.0 and a Noir 1.0.0 compatible `noir-execute` for proof examples. Live examples accept `--chain-rpc`, `--protocol-rpc`, `--wallet-address` (public long receiving address), and where applicable `--token` and `--recipient`. Chain and deployment checks run before preparation. Amounts are integer token base units.
 
@@ -65,3 +65,7 @@ Start with `04-credit`: those examples already use `managed.Credit()` with the s
 Go currently exposes managed lifecycle APIs (`Prepare`, `Resume`, authorization, proof, calldata and reconciliation), but it has no business-level `PrepareCreate`, `PrepareDraw`, `PrepareUpdate` or `PrepareRevoke` convenience methods on the Credit session. Consequently `04-credit` still constructs the quota transition, delivery envelopes and low-level `credit.Prepare*` intent explicitly. These examples demonstrate the available API rather than implying that transition construction is automatic.
 
 `05-wallet-session/04-recover-credit` reopens the same encrypted database, obtains the Credit journal through `managed.Credit()`, and resumes its frozen intent with `creditSession.Resume`. It does not reapply a quota change. A saved proof can be reused; an unproved transition requires a fresh native authorization exchange. After exporting a call, retain its operation ID and reconcile its external transaction hash before considering the reservation released. For any submission integration, call `Externalize` before handing the frozen calldata to the external signer; an uncertain outcome must remain reserved.
+
+## Provenance
+
+[`07-provenance`](07-provenance/README.md) shows local recognized-tree replay, real source proving, policy-bound Broadcaster quote/optional submission, and confirmed-transaction source-proof submission/publication waiting. These examples add an explicit `--submit` switch; the existing examples still only export unsigned transactions.

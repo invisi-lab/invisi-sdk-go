@@ -61,3 +61,7 @@ A generation change or reorg returns `needs_reproof` after host reconciliation. 
 Recovery state-machine tests use explicitly marked synthetic proof bytes and real signed root certificates; they validate recovery/encryption behavior and do not claim another native-prover or App integration test.
 
 Go: `NewSQLiteRecoveryRecords(ctx, callerOwnedDB)` creates only the independent `invisi_provenance_recovery` ciphertext table; pass it to `NewEncryptedRecoveryStore(records, key32)`. Alternatively implement `AtomicRecoveryRecords` for your KV. Construct `RecoveryCoordinator{Store: store, Trust: trust, Service: client, Host: capabilities}`; a successful `Prepare` is the broadcast permit. The caller owns the database/key lifecycle.
+
+## Flat examples
+
+See [`examples/07-provenance`](examples/07-provenance/README.md) for local proof generation, public sidecars, verified Broadcaster quote/explicit submission and confirmed source publication.
