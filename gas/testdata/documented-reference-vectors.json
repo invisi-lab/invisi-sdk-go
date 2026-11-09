@@ -2,9 +2,9 @@
   "formatVersion": 1,
   "catalogSha256": "3211a956d8d0adc79d7debbc063b4b450bec1defe193b8300f81fbc5ac18d7b0",
   "packagedCreditIdentity": {
+    "creditManifestSha256": "11b6b4191e8a62ae891fae41b2d3f37ccae00add26701eb5171a4e296400e861",
     "creditManifestVersion": 7,
-    "creditFormatVersion": 8,
-    "creditManifestSha256": "11b6b4191e8a62ae891fae41b2d3f37ccae00add26701eb5171a4e296400e861"
+    "creditFormatVersion": 8
   },
   "vectors": [
     {

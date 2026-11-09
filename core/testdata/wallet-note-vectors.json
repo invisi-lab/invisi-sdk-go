@@ -91,7 +91,7 @@
       "envelopeVersion": 2,
       "header": 130,
       "ciphertextBytes": 485,
-      "protocolClientSha256": "c7c4a7db3605d4aed24b86be06ab5047ea0de421aca45cbdc63489d9625318bb",
+      "protocolClientSha256": "c47c756f9daeb7fee98e564b01c5222925634da26b8fc616ed30ee56e7c3a9dc",
       "purpose": "Independent Node crypto delivery vectors; canonical fixture clue points do not claim FMD detectability."
     }
   },
@@ -181,20 +181,9 @@
       "ciphertext": "0x820256b328b30c8bf5839e24058747879408bdb36241dc9c2e7c619faa12b292096707070707070707070707070707070707080808080808080808080808537b2a7a92b05ca58e36d773618a27fcc9de7a69629ee9225af8082dd076252530ca837c88edd08b66f8059eb341621e8d23692c2e134481655f0afcffab1611bc7ed369a929072cbbc8fe4e235d88099cbd950fcdddd8d95498c6b13e89bfa0b0616d49b84402de8d675494ff79d9cfe2150059d99627358b80b03c1e1e034b958f535de7c9d5c526dcb60ba7f8d3c59ebde4320ee9f76609dc5ab902ca4bb0a448123658845f5f627bbddd451df9314757e3b3a484447276cc74aa7b07b9f9a13bdb1db67497a10da59b96bb9bd7d3f9600d8b0e76a8c14a96a44f9be7b48d1e8c1e85fd4b411517a09e7fdf28675342cacec2e8694398aa991d6599d6343cd191828c2961feeea235273bc0a7b5ae55da968f07c0e7daf0572ab194f268e161f8c60038568fbdcec9587b9260b112d34b5bbd9caccb6d2acb2815418359d7a3969684fa37b1027e332c37b6ebd29270dca88535f178fd10c402b380b9197cefb1358da4aecfb21affd3f3c991f12459f4816a9e0adf94f2b6cbe36c41d29cea24535f8145ba029de893bfae71ed1eea5ac087bc91c0022f11de3df7a885f0662166c482026f810dd5d6e51c57806785597d0c237eb90fcf4f40373d934ebf45c017286a09c9e684c8614d7db5e876d4fa77916876d71762a7e8c91297dace80058ababc8d060c1653bcf37f3b92ed77c5d873dd92a93057c8d3cb35507335651f1471813200b97f3616d3617b28109ede3c80675388ce656844d9486e393e46bcb41d532f5d20bae3f3ca9e54c6e7f39cf390781d98017c3c93db71117471f0cc303a296ab3c4cfc6619e321b400a305ed2bb543f5acd88cc71c2bc511bf3d818a2e5fe861e15e1d5e096624e7d1520c2f55e152204660181f4b0cea353fa784509df726524827f82636fe8ce4d75496530ad03d7d29714499deb228cbea8f24296aff850c70c"
     }
   ],
-  "creditPolicyCases": [
+  "creditStateCases": [
     {
       "name": "unlimited-tracks-actual-usage",
-      "policy": {
-        "singleLimit": "0",
-        "dailyLimit": "0",
-        "monthlyLimit": "0",
-        "lastDay": "23149",
-        "dailySpent": "10",
-        "lastMonth": "761",
-        "monthlySpent": "20",
-        "availableCredit": "0",
-        "unlimited": true
-      },
       "drawAmount": "30",
       "timestamp": "2000000000",
       "expected": {
@@ -209,11 +198,25 @@
         "monthlySpent": "50",
         "totalSpent": "30"
       },
-      "reject": false
+      "reject": false,
+      "fields": {
+        "singleLimit": "0",
+        "dailyLimit": "0",
+        "monthlyLimit": "0",
+        "lastDay": "23149",
+        "dailySpent": "10",
+        "lastMonth": "761",
+        "monthlySpent": "20",
+        "availableCredit": "0",
+        "unlimited": true
+      }
     },
     {
       "name": "lowered-daily-limit-freezes-period",
-      "policy": {
+      "drawAmount": "1",
+      "timestamp": "2000000000",
+      "reject": true,
+      "fields": {
         "singleLimit": "50",
         "dailyLimit": "5",
         "monthlyLimit": "90",
@@ -223,14 +226,14 @@
         "monthlySpent": "20",
         "availableCredit": "1000",
         "unlimited": false
-      },
-      "drawAmount": "1",
-      "timestamp": "2000000000",
-      "reject": true
+      }
     },
     {
       "name": "lowered-monthly-limit-freezes-period",
-      "policy": {
+      "drawAmount": "1",
+      "timestamp": "2000000000",
+      "reject": true,
+      "fields": {
         "singleLimit": "50",
         "dailyLimit": "60",
         "monthlyLimit": "15",
@@ -240,24 +243,10 @@
         "monthlySpent": "20",
         "availableCredit": "1000",
         "unlimited": false
-      },
-      "drawAmount": "1",
-      "timestamp": "2000000000",
-      "reject": true
+      }
     },
     {
       "name": "lowered-daily-limit-next-day",
-      "policy": {
-        "singleLimit": "50",
-        "dailyLimit": "5",
-        "monthlyLimit": "90",
-        "lastDay": "23149",
-        "dailySpent": "10",
-        "lastMonth": "761",
-        "monthlySpent": "20",
-        "availableCredit": "1000",
-        "unlimited": false
-      },
       "drawAmount": "3",
       "timestamp": "2000086400",
       "expected": {
@@ -272,21 +261,21 @@
         "monthlySpent": "23",
         "totalSpent": "3"
       },
-      "reject": false
-    },
-    {
-      "name": "lowered-monthly-limit-next-month",
-      "policy": {
+      "reject": false,
+      "fields": {
         "singleLimit": "50",
-        "dailyLimit": "60",
-        "monthlyLimit": "15",
+        "dailyLimit": "5",
+        "monthlyLimit": "90",
         "lastDay": "23149",
         "dailySpent": "10",
         "lastMonth": "761",
         "monthlySpent": "20",
         "availableCredit": "1000",
         "unlimited": false
-      },
+      }
+    },
+    {
+      "name": "lowered-monthly-limit-next-month",
       "drawAmount": "3",
       "timestamp": "2001196800",
       "expected": {
@@ -301,21 +290,21 @@
         "monthlySpent": "3",
         "totalSpent": "3"
       },
-      "reject": false
+      "reject": false,
+      "fields": {
+        "singleLimit": "50",
+        "dailyLimit": "60",
+        "monthlyLimit": "15",
+        "lastDay": "23149",
+        "dailySpent": "10",
+        "lastMonth": "761",
+        "monthlySpent": "20",
+        "availableCredit": "1000",
+        "unlimited": false
+      }
     },
     {
       "name": "unlimited-u128-counters",
-      "policy": {
-        "singleLimit": "0",
-        "dailyLimit": "0",
-        "monthlyLimit": "0",
-        "lastDay": "23149",
-        "dailySpent": "170141183460469231731687303715884105731",
-        "lastMonth": "761",
-        "monthlySpent": "170141183460469231731687303715884105733",
-        "availableCredit": "0",
-        "unlimited": true
-      },
       "drawAmount": "1",
       "timestamp": "2000000000",
       "expected": {
@@ -330,11 +319,25 @@
         "monthlySpent": "170141183460469231731687303715884105734",
         "totalSpent": "1"
       },
-      "reject": false
+      "reject": false,
+      "fields": {
+        "singleLimit": "0",
+        "dailyLimit": "0",
+        "monthlyLimit": "0",
+        "lastDay": "23149",
+        "dailySpent": "170141183460469231731687303715884105731",
+        "lastMonth": "761",
+        "monthlySpent": "170141183460469231731687303715884105733",
+        "availableCredit": "0",
+        "unlimited": true
+      }
     },
     {
       "name": "u128-counter-overflow",
-      "policy": {
+      "drawAmount": "1",
+      "timestamp": "2000000000",
+      "reject": true,
+      "fields": {
         "singleLimit": "0",
         "dailyLimit": "0",
         "monthlyLimit": "0",
@@ -344,14 +347,14 @@
         "monthlySpent": "20",
         "availableCredit": "1000",
         "unlimited": false
-      },
-      "drawAmount": "1",
-      "timestamp": "2000000000",
-      "reject": true
+      }
     },
     {
       "name": "zero-period-requires-zero-spent",
-      "policy": {
+      "drawAmount": "1",
+      "timestamp": "2000000000",
+      "reject": true,
+      "fields": {
         "singleLimit": "0",
         "dailyLimit": "0",
         "monthlyLimit": "0",
@@ -361,14 +364,14 @@
         "monthlySpent": "20",
         "availableCredit": "1000",
         "unlimited": false
-      },
-      "drawAmount": "1",
-      "timestamp": "2000000000",
-      "reject": true
+      }
     },
     {
       "name": "single-limit-applies-to-full-balance",
-      "policy": {
+      "drawAmount": "100",
+      "timestamp": "2000000000",
+      "reject": true,
+      "fields": {
         "singleLimit": "99",
         "dailyLimit": "0",
         "monthlyLimit": "0",
@@ -378,10 +381,7 @@
         "monthlySpent": "20",
         "availableCredit": "1000",
         "unlimited": false
-      },
-      "drawAmount": "100",
-      "timestamp": "2000000000",
-      "reject": true
+      }
     }
   ]
 }
