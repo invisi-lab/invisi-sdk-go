@@ -131,14 +131,17 @@ func main() {
 	c := credit.Context{ProtocolContext: coreContext, TokenAddress: token, Timestamp: head.Time}
 	deadline := new(big.Int).SetUint64(head.Time + 300)
 	var prepared *credit.Prepared
-	nativeWallet := shared.NativeWalletClient{Encoder: encoder, Decoder: decoder}
 	recipientWallet, err := sdk.WalletFromAddress(*recipientAddress)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	// Discover active role-bound grants; native decryption never replaces receipt, membership or bitmap checks.
-	candidates, e := shared.DiscoverCredits(ctx, provider, client, pool, publicWallet, nativeWallet, token, "spender")
+	// Reuse the encrypted inventory populated above; a second ephemeral discovery would repeat host prompts.
+	inventory, e := store.ReadSnapshot(ctx, managed.Scope())
+	if e != nil {
+		log.Fatal(e)
+	}
+	candidates, e := shared.CreditCandidates(ctx, provider, client, pool, inventory, token, credit.Spender)
 	if e != nil {
 		log.Fatal(e)
 	}
@@ -290,6 +293,10 @@ func main() {
 	// Export the unsigned call while retaining the managed grant reservation for reconciliation.
 	call, err := operation.Calldata(ctx, publicWallet.OwnerAddress())
 	if err != nil {
+		log.Fatal(err)
+	}
+	// Mark the call as externally visible before export so an uncertain submission keeps its reservation.
+	if err = operation.Externalize(ctx, common.Hash{}); err != nil {
 		log.Fatal(err)
 	}
 	if err = encoder.Encode(call); err != nil {

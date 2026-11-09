@@ -159,6 +159,10 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+	// Mark the call as externally visible before export so an uncertain submission keeps its reservation.
+	if err = operation.Externalize(ctx, common.Hash{}); err != nil {
+		log.Fatal(err)
+	}
 	if err = encoder.Encode(call); err != nil {
 		log.Fatal(err)
 	}

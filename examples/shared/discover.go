@@ -77,12 +77,17 @@ func DiscoverCredits(ctx context.Context, provider sdk.Provider, client *sdk.Pro
 	if err != nil {
 		return nil, err
 	}
+	return CreditCandidates(ctx, provider, client, pool, state, token, selected)
+}
+
+// CreditCandidates reuses a completed refresh so durable sessions do not ask the host to decrypt twice.
+func CreditCandidates(ctx context.Context, provider sdk.Provider, client *sdk.ProtocolRpcClient, pool *sdk.Protocol, state walletsession.WalletState, token common.Address, selected credit.Role) ([]CreditCandidate, error) {
 	if state.DiscoveryThrough == nil {
 		return nil, errors.New("canonical discovery anchor missing")
 	}
 	result := []CreditCandidate{}
 	for _, record := range state.PostpaidCredit.Grants {
-		if record.Role != selected || record.Consumed || record.Revoked || core.ElementToBigInt(record.Delivery.State.Expiry).Uint64() <= state.DiscoveryThrough.Timestamp || record.Delivery.State.TokenAddress != core.BigIntToElement(token.Big()) {
+		if record.Role != selected || record.ReservedBy != "" || record.Consumed || record.Revoked || core.ElementToBigInt(record.Delivery.State.Expiry).Uint64() <= state.DiscoveryThrough.Timestamp || record.Delivery.State.TokenAddress != core.BigIntToElement(token.Big()) {
 			continue
 		}
 		membership, err := client.WithProvider(provider).GetMembership(ctx, pool.Context(), rpc.MembershipInput{TreeID: record.TreeID, LeafIndex: uint32(record.LeafIndex), Commitment: record.Commitment}, *state.DiscoveryThrough)
