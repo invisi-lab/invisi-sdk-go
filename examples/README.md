@@ -5,22 +5,50 @@ Each main is a flat walkthrough. No example loads account keys, creates a local 
 Install Barretenberg 6.0.0 and a Noir 1.0.0 compatible `noir-execute` for proof examples. Live examples accept `--chain-rpc`, `--protocol-rpc`, `--wallet-address` (public long receiving address), and where applicable `--token` and `--recipient`. Chain and deployment checks run before preparation. Amounts are integer token base units.
 
 ```sh
-go run ./examples/00-wallet/01-wallet --owner 0x7e5f4552091a69125d5dfcb7b8c2659029395bdf
-go run ./examples/00-wallet/02-note-output
+go run ./examples/02-transparent-amount/00-note-output
 go run ./examples/03-hidden-amount/03-notes-with-change \
   --wallet-address '<public receiving address>' --recipient '<public receiving address>' \
   --token 0x2222222222222222222222222222222222222222
 ```
 
-The first command prints a `wallet.public` request array and waits for the native response array on stdin. The second runs offline using public fixture material only. Live commands use your selected deployment and token.
+The Note output command runs offline using public fixture material only. Live commands use your selected deployment and token.
+
+## Public Wallet initialization
+
+Use `sdk.WalletFromAddress(receivingAddress)` when the host already supplies a complete receiving address. Otherwise resolve a public owner through a native request/response exchange. Here `nativeWallet` is the application's external native client, and `ctx` is its request context.
+
+```go
+request, err := wallet.Prepare("public-profile", ownerAddress, wallet.Public, struct{}{})
+if err != nil {
+    return err
+}
+requests := []wallet.Request{request}
+responses, err := nativeWallet.Execute(ctx, requests)
+if err != nil {
+    return err
+}
+
+// Correlate responses before accepting public material for this owner.
+ordered, err := wallet.ValidateResponses(requests, responses)
+if err != nil {
+    return err
+}
+publicWallet, err := sdk.WalletFromResponse(request, ordered[0])
+if err != nil {
+    return err
+}
+```
+
+The snippet uses the `sdk` and `wallet` packages from `github.com/invisi-lab/invisi-sdk-go`. Account selection, unlock and keys stay in the native host.
+
+## Host request and response boundaries
 
 For an external wallet exchange, read the printed request array, execute it in your native host and write the response array to stdin. Responses may arrive in any order; their exact IDs and identity fields bind them to the original requests. Use explicit per-item errors such as `{"version":1,"id":"...","ownerAddress":"...","method":"wallet.decryptNote","error":{"code":"WALLET_NOT_RECIPIENT"}}`. Only this decrypt nonmatch is skipped during sync; cancellation and unlock failures leave inventory unchanged. Batches have at most 1024 items and 16 MiB serialized JSON, unique IDs and one owner. Do not put keys in requests, responses or command-line settings.
 
 | Directory | Scenario and stdin order |
 | --- | --- |
-| `00-wallet` | Public request/response bootstrap; offline encrypted Note output from public receiving material. |
 | `01-address-registry` | Prepare register/update and export an unsigned direct-owner call. The external transaction caller must be the owner. |
-| `02-transparent-amount` | Shield one/nine outputs, memo output, external payer authorization, or authenticated broadcaster pricing. The signature-funded Shield uses `--payer` for Bob while `--wallet-address` selects the recipient-side public wallet. Signature variants print a public EIP-712 funding request and read a JSON hex signature; they export the final unsigned call. |
+| `02-transparent-amount` | Offline Note output construction; Shield one/nine outputs, memo output, external payer authorization, or authenticated broadcaster pricing. The signature-funded Shield uses `--payer` for Bob while `--wallet-address` selects the recipient-side public wallet. Signature variants print a public EIP-712 funding request and read a JSON hex signature; they export the final unsigned call. |
 | `03-hidden-amount` | Public funding, Note inputs, change, withdrawal, owner-bound sweep and recursive aggregation. Note-funded examples automatically discover indexed candidates through canonical receipts and membership checks, print native decrypt request arrays and read response arrays, then print an authorization request array and read its response array. Full sweeps have no private-spending signature and pay only the original owner. Aggregate selects two discovered Notes for each of two owners, obtains one authorization batch per owner, proves four recursive members and exports one aggregate call. Use `--second-wallet-address` for the second owner. |
 | `04-credit` | Separate postpaid create/draw/update/revoke plans. The examples discover current role-bound grants automatically, build the business state transition and obtain current chain allocation/time; no grant input JSON is required. Create/update/draw print a wallet request array and read the native response array. Prepare through the managed Credit session for current roots, nullifiers, allocation, balances and cross-role reservations. Revoke exports a direct-owner call without a wallet-spending proof/signature. |
 | `05-wallet-session` | Encrypted SQLite restore/refresh, managed transfer and operation recovery. Every refresh prints its request array and reads the response array. Transfer then does the explicit authorization exchange and proof. Recovery uses `--operation-id`, reauthorizes if the saved plan has no proof, and exports calldata. |
