@@ -45,3 +45,40 @@ func TestGrantAuditIsScopedAndPreservesUint128Usage(t *testing.T) {
 		t.Fatal("audit accepted wrong canonical anchor")
 	}
 }
+
+func TestGrantAuditBindsAvailableCreditAndStrictUnlimitedFlag(t *testing.T) {
+	s, _ := fixture(t)
+	commitment, err := s.Commitment()
+	if err != nil {
+		t.Fatal(err)
+	}
+	disclosure, err := Disclose(s)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, change := range []string{"balance", "mode", "boolean"} {
+		t.Run(change, func(t *testing.T) {
+			exported := disclosure.Export()
+			switch change {
+			case "balance":
+				exported.Fields["availableCredit"] = "1"
+			case "mode":
+				exported.Fields["availableCredit"] = "0"
+				exported.Fields["unlimited"] = "1"
+			case "boolean":
+				exported.Fields["unlimited"] = "true"
+			}
+			raw, err := json.Marshal(exported)
+			if err != nil {
+				t.Fatal(err)
+			}
+			altered, err := DisclosureFromExport(raw)
+			if err == nil {
+				_, err = altered.Verify(common.Hash(commitment.Bytes()))
+			}
+			if err == nil {
+				t.Fatal("altered quota audit accepted")
+			}
+		})
+	}
+}

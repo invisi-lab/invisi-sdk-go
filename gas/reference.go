@@ -19,8 +19,9 @@ type Source struct {
 }
 
 type ReleaseIdentity struct {
-	CreditManifestVersion int `json:"creditManifestVersion"`
-	CreditFormatVersion   int `json:"creditFormatVersion"`
+	CreditManifestVersion int    `json:"creditManifestVersion"`
+	CreditFormatVersion   int    `json:"creditFormatVersion"`
+	CreditManifestSHA256  string `json:"creditManifestSha256"`
 }
 
 type Measurement struct {
@@ -75,7 +76,7 @@ func Reference(shape Shape) (Result, bool) {
 	c := DocumentedCatalog()
 	for _, row := range c.References {
 		if kind, ok := row.Shape["kind"].(string); ok && strings.Contains(kind, "credit") {
-			if row.ReleaseIdentity == nil || row.ReleaseIdentity.CreditManifestVersion != release.CreditManifestVersion || row.ReleaseIdentity.CreditFormatVersion != release.CreditFormatVersion {
+			if !currentCreditRelease(row.ReleaseIdentity) {
 				continue
 			}
 		}
@@ -89,4 +90,8 @@ func Reference(shape Shape) (Result, bool) {
 		}
 	}
 	return Result{}, false
+}
+
+func currentCreditRelease(identity *ReleaseIdentity) bool {
+	return identity != nil && identity.CreditManifestVersion == release.CreditManifestVersion && identity.CreditFormatVersion == release.CreditFormatVersion && identity.CreditManifestSHA256 != "" && identity.CreditManifestSHA256 == release.CreditManifestSHA256
 }

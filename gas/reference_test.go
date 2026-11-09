@@ -35,7 +35,7 @@ func TestDocumentedReferenceVectors(t *testing.T) {
 	if fixtures.CatalogSHA256 != fmt.Sprintf("%x", sha256.Sum256(compact.Bytes())) {
 		t.Fatal("catalog vectors do not authenticate the exact catalog")
 	}
-	if fixtures.PackagedCreditIdentity.CreditManifestVersion != release.CreditManifestVersion || fixtures.PackagedCreditIdentity.CreditFormatVersion != release.CreditFormatVersion {
+	if fixtures.PackagedCreditIdentity.CreditManifestVersion != release.CreditManifestVersion || fixtures.PackagedCreditIdentity.CreditFormatVersion != release.CreditFormatVersion || fixtures.PackagedCreditIdentity.CreditManifestSHA256 != release.CreditManifestSHA256 {
 		t.Fatal("vector release identity differs from packaged circuits")
 	}
 	for _, shape := range fixtures.Unsupported {
@@ -75,5 +75,22 @@ func TestReferenceCopiesProvenance(t *testing.T) {
 	again, ok := Reference(query)
 	if !ok || again.Shape["kind"] != expectedKind || again.Source.Conditions == "mutated" {
 		t.Fatal("reference aliases catalog")
+	}
+}
+
+func TestCreditReferencesRequireExactManifestIdentity(t *testing.T) {
+	current := ReleaseIdentity{CreditManifestVersion: release.CreditManifestVersion, CreditFormatVersion: release.CreditFormatVersion, CreditManifestSHA256: release.CreditManifestSHA256}
+	if !currentCreditRelease(&current) {
+		t.Fatal("current manifest identity rejected")
+	}
+	for _, sha := range []string{"", "00", "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"} {
+		bad := current
+		bad.CreditManifestSHA256 = sha
+		if currentCreditRelease(&bad) {
+			t.Fatal("reference accepted missing or mismatched manifest", sha)
+		}
+	}
+	if currentCreditRelease(nil) {
+		t.Fatal("missing release identity accepted")
 	}
 }

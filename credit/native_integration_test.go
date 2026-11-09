@@ -113,6 +113,9 @@ func TestCurrentCreditNativeLifecycle(t *testing.T) {
 	if e != nil {
 		t.Fatal(e)
 	}
+	if drawn.State.AvailableCredit != core.ElementFromUint64(393) || drawn.State.TotalSpent != core.ElementFromUint64(7) {
+		t.Fatal("gross fee-inclusive draw quota mismatch")
+	}
 	input := LocatedState{State: state, TreeID: 1, Debit: debit}
 	root, e := input.root()
 	if e != nil {
@@ -133,7 +136,8 @@ func TestCurrentCreditNativeLifecycle(t *testing.T) {
 	}
 	prove("draw", draw, spenderKey)
 	changedPolicy := Policy{SingleLimit: core.ElementFromUint64(10), DailyLimit: core.ElementFromUint64(40), MonthlyLimit: core.ElementFromUint64(60)}
-	updated, e := drawn.State.Update(Change{Policy: changedPolicy, Expiry: core.ElementFromUint64(2200000000)}, deadline.Uint64())
+	updateChange := Change{Policy: changedPolicy, Expiry: core.ElementFromUint64(2200000000), IncreaseAvailableCredit: core.ElementFromUint64(100)}
+	updated, e := drawn.State.Update(updateChange, deadline.Uint64())
 	if e != nil {
 		t.Fatal(e)
 	}
@@ -142,9 +146,12 @@ func TestCurrentCreditNativeLifecycle(t *testing.T) {
 	if e != nil {
 		t.Fatal(e)
 	}
-	update, e := PrepareUpdate(c, UpdateParams{Token: c.TokenAddress, Owner: owner, Source: protocol.InputSource{TreeId: big.NewInt(1), MerkleRoot: updateRoot}, Nullifier: common.Hash(updated.Nullifier.Bytes()), CreditCommitment: common.Hash(updated.StateCommitment.Bytes()), RevocationShard: 1, Deadline: deadline, FeeRecipient: collector, FeeAmount: fee}, deliveries(updated.State), updateInput, Change{Policy: changedPolicy, Expiry: updated.State.Expiry})
+	update, e := PrepareUpdate(c, UpdateParams{Token: c.TokenAddress, Owner: owner, Source: protocol.InputSource{TreeId: big.NewInt(1), MerkleRoot: updateRoot}, Nullifier: common.Hash(updated.Nullifier.Bytes()), CreditCommitment: common.Hash(updated.StateCommitment.Bytes()), RevocationShard: 1, Deadline: deadline, FeeRecipient: collector, FeeAmount: fee}, deliveries(updated.State), updateInput, updateChange)
 	if e != nil {
 		t.Fatal(e)
+	}
+	if updated.State.AvailableCredit != core.ElementFromUint64(493) || updated.State.TotalSpent != core.ElementFromUint64(7) {
+		t.Fatal("paid update changed historical usage or failed to increase quota")
 	}
 	prove("update", update, ownerKey)
 }

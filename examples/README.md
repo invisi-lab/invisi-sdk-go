@@ -161,3 +161,5 @@ _ = input // Use in the next explicit PrepareTransfer; authorization remains sep
 ```
 
 The sections are separate recipient/payer steps, using the chosen protocol, token and amount from the existing examples. `pool` comes from `sdk.ProtocolFromRPC(ctx, rpc, provider)`. Simple verification also accepts spent Notes; detailed verification does not. Neither method signs. EVM recipients may export IPN with or without a chain envelope; identity recipients cannot. See the root README for wire layouts, nonce execution overrides and explicit verification connections.
+
+Credit creation accepts `--available-credit=400`; finite zero is exhausted. To create an unlimited grant, use `--unlimited --available-credit=0`. Update accepts `--increase-available-credit=100` or `--decrease-available-credit=100` (mutually exclusive), plus `--new-unlimited=keep|true|false`. Switching to unlimited requires zero deltas; switching back to finite starts from zero plus the specified increase. These flags still require the explicit `--execute` submission opt-in.

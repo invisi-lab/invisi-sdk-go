@@ -4234,9 +4234,9 @@
     ]
   },
   "create_credit": {
-    "artifactSha256": "723c2f46637d6b592a262ddb69428c3cd89833d9247fa10e08176901d113a2dd",
+    "artifactSha256": "c388b176eb23dc6bc2539da1ae0b3464afa73398eddd5ad3714c0ff94663bf2e",
     "keys": {
-      "evm": "8160863f469b68f6517db33e3748755dae26dc13ad901b4442d444556dd4caf0"
+      "evm": "61d83881c2d481cb449e1c77e2e8ba8b4d04079aa618532ce1cb24398f39bd13"
     },
     "publicInputCount": 14,
     "public": [
@@ -4317,15 +4317,17 @@
       "expiry",
       "credit_shared_key",
       "limits",
+      "available_credit",
+      "unlimited",
       "public_key_x",
       "public_key_y",
       "signature"
     ]
   },
   "credit_draw_slots1": {
-    "artifactSha256": "f7db5b425f96f565e86ab3a28ee086c089a441de1c505504501da2b80893bb94",
+    "artifactSha256": "66eaca3a47d061be19532344d5215b670247abb7886a686a122aad518f86bf32",
     "keys": {
-      "evm": "9e445e01bda71592bcac9fadd09c230789ced0b6fbb00f5ebcfd77ae69ce5a67"
+      "evm": "980930a2c7d934b0fa2afec25dbea120e446076094bae786fbe6ce1fd810d9be"
     },
     "publicInputCount": 27,
     "public": [
@@ -4471,6 +4473,8 @@
       "expiries",
       "credit_shared_keys",
       "limits",
+      "available_credits",
+      "unlimited_flags",
       "usages",
       "leaf_indices",
       "merkle_paths",
@@ -4483,9 +4487,9 @@
     ]
   },
   "credit_draw_slots2": {
-    "artifactSha256": "381df3867feea84b659eb9d3ba19c2570dbf288733b3a0fc28dd7b76c4065e43",
+    "artifactSha256": "ddd83c236ffb72a56edd2f0715a695dd23163c87563d81589bfbabbbf3b82b58",
     "keys": {
-      "evm": "8587a2c9fe26ff7bdf0e02b40ea25feba87823cbe5bda36b97cf5464fe035c08"
+      "evm": "8273dc7966273838e6bd9468b482225c1c1888753cff4ff1789456bcf66d490d"
     },
     "publicInputCount": 37,
     "public": [
@@ -4631,6 +4635,8 @@
       "expiries",
       "credit_shared_keys",
       "limits",
+      "available_credits",
+      "unlimited_flags",
       "usages",
       "leaf_indices",
       "merkle_paths",
@@ -4643,9 +4649,9 @@
     ]
   },
   "credit_draw_slots3": {
-    "artifactSha256": "608eee4acabbafcf2c635c3bc7f980bb1dd5ef8206410a2e4f05f56307004a29",
+    "artifactSha256": "af547ff131afe3e692604f7be9174e6b749b9735b0b1e203dd89d3f780460b94",
     "keys": {
-      "evm": "21d4d677b529162e45b3373aa5a2d0c928fedb9b243ceb6a8c461274df5e8529"
+      "evm": "f41fb7ffc6d4c85f4c19baa3c14a552d30be950aade7946dd3d814b8f5edabc2"
     },
     "publicInputCount": 47,
     "public": [
@@ -4791,6 +4797,8 @@
       "expiries",
       "credit_shared_keys",
       "limits",
+      "available_credits",
+      "unlimited_flags",
       "usages",
       "leaf_indices",
       "merkle_paths",
@@ -4803,9 +4811,9 @@
     ]
   },
   "credit_draw_slots4": {
-    "artifactSha256": "c79667a92bcd9a174ac70c8b98923e46c27d7f045d8ba47c7bc44fa8a5e6bf93",
+    "artifactSha256": "e2a21e29d97fa73695a2cde0a8656cf8fce35f2515a5238827714dc1a35624a8",
     "keys": {
-      "evm": "df497924e69f5cf16f7ed641d14a6f0969735f8cda4ea6e777b266cea421a960"
+      "evm": "53dcc48c48a5e52faf83ea7e62f2f8a4dae1a12043b42332d01bbc9bda5bd9b9"
     },
     "publicInputCount": 57,
     "public": [
@@ -4951,6 +4959,8 @@
       "expiries",
       "credit_shared_keys",
       "limits",
+      "available_credits",
+      "unlimited_flags",
       "usages",
       "leaf_indices",
       "merkle_paths",
@@ -4963,9 +4973,9 @@
     ]
   },
   "credit_draw_slots5": {
-    "artifactSha256": "cc86daf0db14770a93f785595a85cb06ddca86fd1e35756fd4de2fc7858b217a",
+    "artifactSha256": "b58c30e5edc1382f3f11d4760a671fc36b518153a90dfb56376c0aca48e50428",
     "keys": {
-      "evm": "db524100ecb6b6b8fc88992d5772f660e2b9cc62b4e3e09423a55b6e7e348e79"
+      "evm": "f096698f720d1646fe65284e1534efa1b28579b5650b7305f5deae2b078dc70b"
     },
     "publicInputCount": 67,
     "public": [
@@ -5111,6 +5121,8 @@
       "expiries",
       "credit_shared_keys",
       "limits",
+      "available_credits",
+      "unlimited_flags",
       "usages",
       "leaf_indices",
       "merkle_paths",
@@ -5123,9 +5135,9 @@
     ]
   },
   "credit_draw_slots10": {
-    "artifactSha256": "bec184dce85a39a3986882acfb3096cccdac19ee0cdba3dcfa6341d951b70f06",
+    "artifactSha256": "ec806453005c5e6f5d98c93e33d1a58831ac41a7b3b13ebf43b4f8626717d44a",
     "keys": {
-      "evm": "11932bacaec12ba3ee63bc20f297c7a6eceab0e04716d4e89ec00af1dfb602a7"
+      "evm": "76460a341e0aa74d7702f8030bf800f0561e33de1ad28fcc56731b990fb675ed"
     },
     "publicInputCount": 117,
     "public": [
@@ -5271,6 +5283,8 @@
       "expiries",
       "credit_shared_keys",
       "limits",
+      "available_credits",
+      "unlimited_flags",
       "usages",
       "leaf_indices",
       "merkle_paths",
@@ -5283,9 +5297,9 @@
     ]
   },
   "credit_draw_slots20": {
-    "artifactSha256": "19741a32a3d1d75e0063208636589e373873d5a18fb634e6a15ed3b6fc367d1a",
+    "artifactSha256": "57b9d603f7980a2faf3ee3e3cb4775afe5ba96b8d3ab855203f40a0bf7b23ac5",
     "keys": {
-      "evm": "64a9915af5af9c755fa1fc470578c596c3e8291fc8efd9b31a4de4cde15af192"
+      "evm": "4140b9d93d2aff54f750ca272f52a02884fa9e60ba5916634a00eb741618d5a8"
     },
     "publicInputCount": 217,
     "public": [
@@ -5431,6 +5445,8 @@
       "expiries",
       "credit_shared_keys",
       "limits",
+      "available_credits",
+      "unlimited_flags",
       "usages",
       "leaf_indices",
       "merkle_paths",
@@ -5443,9 +5459,9 @@
     ]
   },
   "credit_draw_slots30": {
-    "artifactSha256": "e9a6e99f7c3ab6b9fa85cc992575bd8f2ada12e39b0fa11d0c67ff631c6ade3c",
+    "artifactSha256": "a73abad65c6b5e4eecdcc254c37025578e11924eaaa0cc4586875cc9e6f8b089",
     "keys": {
-      "evm": "d83c821681b84d321f200db1fe5e3a8898245b1bae18ede3fa89e7c9c716c669"
+      "evm": "c3fc33bc0577175473aebdae0528a1a6a5dab28d44be738058ac116724f2f837"
     },
     "publicInputCount": 317,
     "public": [
@@ -5591,6 +5607,8 @@
       "expiries",
       "credit_shared_keys",
       "limits",
+      "available_credits",
+      "unlimited_flags",
       "usages",
       "leaf_indices",
       "merkle_paths",
@@ -5603,9 +5621,9 @@
     ]
   },
   "credit_draw_slots40": {
-    "artifactSha256": "83fdbfe1ef8623573729936ecfecd23a6035c629b5a7a33e735414386ae3b5d3",
+    "artifactSha256": "1eca78c6bca366c121c2e53b85801167a0610941cb4c5fe298ad4b362fc0620e",
     "keys": {
-      "evm": "e00935f5a530a687f7f6d18ebe2a3f2acb8cbb3ebed4c17b42b70f6df8691a44"
+      "evm": "4b490cfc6ca96cdc75b1201ac1e235c2e75215bdc5f060a82f85962b936f3481"
     },
     "publicInputCount": 417,
     "public": [
@@ -5751,6 +5769,8 @@
       "expiries",
       "credit_shared_keys",
       "limits",
+      "available_credits",
+      "unlimited_flags",
       "usages",
       "leaf_indices",
       "merkle_paths",
@@ -5763,9 +5783,9 @@
     ]
   },
   "credit_draw_slots50": {
-    "artifactSha256": "0297349838359dea3340d1774ef3c1a3847e1f0889ff3dc6d485d95a0f6f29de",
+    "artifactSha256": "dd3519bf1336d00d205c43aa7e6160f308ed7594161d92ab4417e768afde636f",
     "keys": {
-      "evm": "9861da2c76f631ccba81797b97c6932ecf11516c505f7d135681472aa6a8f3c7"
+      "evm": "6cc08c3d7181f254235a5f4621b4c48fe06df583ab875ca4bb4dc5f237ec722f"
     },
     "publicInputCount": 517,
     "public": [
@@ -5911,6 +5931,8 @@
       "expiries",
       "credit_shared_keys",
       "limits",
+      "available_credits",
+      "unlimited_flags",
       "usages",
       "leaf_indices",
       "merkle_paths",
@@ -5923,9 +5945,9 @@
     ]
   },
   "credit_draw_slots60": {
-    "artifactSha256": "0c0393a31bc87ad5dfc90a3f81ec279dec31632d460db3a9224e3fba9afdae9c",
+    "artifactSha256": "6737cb9b9f48ae4fb861a67330cfc3ddab1a55b7325fecd05b4ce7dfcb48545e",
     "keys": {
-      "evm": "d722fa23cc2015c247acd1170c2f231663bef6b744ff0120545c292084928006"
+      "evm": "0b1a72c1ea2850e467f655b5f75a052ca5be3dacde99a27b41325f2f94b101bf"
     },
     "publicInputCount": 617,
     "public": [
@@ -6071,6 +6093,8 @@
       "expiries",
       "credit_shared_keys",
       "limits",
+      "available_credits",
+      "unlimited_flags",
       "usages",
       "leaf_indices",
       "merkle_paths",
@@ -6083,9 +6107,9 @@
     ]
   },
   "credit_draw_slots70": {
-    "artifactSha256": "3af97782ee5c88e7ec9dd832efceda18e0d593d51dcbb001e0226edd307df4d2",
+    "artifactSha256": "366576a49948196804cecc812946ab8f86b699e0234d945b60fe074af0b29928",
     "keys": {
-      "evm": "29f8d5799ab6053f872943b27fe3c2fe3d76f3f51afa84868bf1763515ad4edf"
+      "evm": "b3c7d6cca0e3254b93d97b51e109ef80e18ef474efb1fec067d6440b3439f706"
     },
     "publicInputCount": 717,
     "public": [
@@ -6231,6 +6255,8 @@
       "expiries",
       "credit_shared_keys",
       "limits",
+      "available_credits",
+      "unlimited_flags",
       "usages",
       "leaf_indices",
       "merkle_paths",
@@ -6243,9 +6269,9 @@
     ]
   },
   "credit_draw_slots80": {
-    "artifactSha256": "349943babdf43c85ac2f113c542ea55ccd94f162c9948d8b8ee8950b48085d4f",
+    "artifactSha256": "537d511699d3b278f7dbdf24a4b7ea47220e979e3f5d6d15899f270adafa0f7d",
     "keys": {
-      "evm": "709f30deca3dd0ac059050c5d9b8cccdb4df55d020a184e6084e96dd824d0a25"
+      "evm": "b96753ac9866b953c7783b9095637c1943d1c31ee7490097ac293eb653704f14"
     },
     "publicInputCount": 817,
     "public": [
@@ -6391,6 +6417,8 @@
       "expiries",
       "credit_shared_keys",
       "limits",
+      "available_credits",
+      "unlimited_flags",
       "usages",
       "leaf_indices",
       "merkle_paths",
@@ -6403,9 +6431,9 @@
     ]
   },
   "credit_update": {
-    "artifactSha256": "4727c114d68fc46b15a27636d08f09697b4d4f4db033cc0bd07682ea2b0f1009",
+    "artifactSha256": "7180fc8d51b87163a2cb71ed99a5e86965bf02e8391088b7e3e2aa159c9ece93",
     "keys": {
-      "evm": "9e7f33d93d7485d35eb14b287461e5fc660b14cabab98fb0ab09ddc2c7da69a6"
+      "evm": "d5acb3d6db615d9728180efeb87254aa443545770ae1541c2dec684a762c1847"
     },
     "publicInputCount": 17,
     "public": [
@@ -6503,6 +6531,11 @@
       "credit_shared_key",
       "old_limits",
       "new_limits",
+      "old_available_credit",
+      "old_unlimited",
+      "new_unlimited",
+      "increase_available_credit",
+      "decrease_available_credit",
       "usage",
       "leaf_index",
       "merkle_path",

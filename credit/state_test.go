@@ -18,18 +18,20 @@ func fixture(t *testing.T) (State, map[string]any) {
 	if err = json.Unmarshal(raw, &f); err != nil {
 		t.Fatal(err)
 	}
-	n := f["state"].(map[string]any)
+	return vectorState(t, f["state"].(map[string]any)), f
+}
+func vectorState(t *testing.T, n map[string]any) State {
+	t.Helper()
 	e := func(k string) fr.Element {
 		var v fr.Element
-		_, err := v.SetString(n[k].(string))
-		if err != nil {
+		if _, err := v.SetString(n[k].(string)); err != nil {
 			t.Fatal(err)
 		}
 		return v
 	}
-	s := State{AvailableCredit: e("availableCredit"), Unlimited: n["unlimited"].(bool), ProtocolContext: core.ProtocolContext{ChainID: core.ElementFromUint64(31337), ProtocolAddress: core.ElementFromUint64(17)}, TokenAddress: core.ElementFromUint64(34), SpenderWalletIdentity: e("spenderWalletIdentity"), OwnerWalletIdentity: e("ownerWalletIdentity"), RevocationShard: e("revocationShard"), RevocationSlot: e("revocationSlot"), Nonce: e("nonce"), Expiry: e("expiry"), SharedKey: e("creditSharedKey"), Policy: Policy{SingleLimit: e("singleLimit"), DailyLimit: e("dailyLimit"), MonthlyLimit: e("monthlyLimit")}}
-	return s, f
+	return State{AvailableCredit: e("availableCredit"), Unlimited: n["unlimited"].(bool), ProtocolContext: core.ProtocolContext{ChainID: core.ElementFromUint64(31337), ProtocolAddress: core.ElementFromUint64(17)}, TokenAddress: core.ElementFromUint64(34), SpenderWalletIdentity: e("spenderWalletIdentity"), OwnerWalletIdentity: e("ownerWalletIdentity"), RevocationShard: e("revocationShard"), RevocationSlot: e("revocationSlot"), Nonce: e("nonce"), Expiry: e("expiry"), SharedKey: e("creditSharedKey"), Policy: Policy{e("singleLimit"), e("dailyLimit"), e("monthlyLimit")}, Usage: Usage{e("lastDay"), e("dailySpent"), e("lastMonth"), e("monthlySpent"), e("totalSpent")}}
 }
+
 func hex(v fr.Element) string {
 	b := v.Bytes()
 	const chars = "0123456789abcdef"

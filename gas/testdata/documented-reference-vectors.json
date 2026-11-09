@@ -3,7 +3,8 @@
   "catalogSha256": "3211a956d8d0adc79d7debbc063b4b450bec1defe193b8300f81fbc5ac18d7b0",
   "packagedCreditIdentity": {
     "creditManifestVersion": 7,
-    "creditFormatVersion": 8
+    "creditFormatVersion": 8,
+    "creditManifestSha256": "11b6b4191e8a62ae891fae41b2d3f37ccae00add26701eb5171a4e296400e861"
   },
   "vectors": [
     {
@@ -13,7 +14,7 @@
         "feeEnabled": false,
         "feeMechanism": "none"
       },
-      "available": true,
+      "available": false,
       "gasUnits": "1569348"
     },
     {
@@ -23,7 +24,7 @@
         "feeEnabled": true,
         "feeMechanism": "owner-pull"
       },
-      "available": true,
+      "available": false,
       "gasUnits": "1633102"
     },
     {
@@ -33,7 +34,7 @@
         "feeEnabled": false,
         "feeMechanism": "none"
       },
-      "available": true,
+      "available": false,
       "gasUnits": "1549486"
     },
     {
@@ -43,7 +44,7 @@
         "feeEnabled": true,
         "feeMechanism": "owner-pull"
       },
-      "available": true,
+      "available": false,
       "gasUnits": "1595996"
     },
     {
@@ -54,7 +55,7 @@
         "feeEnabled": false,
         "feeMechanism": "none"
       },
-      "available": true,
+      "available": false,
       "gasUnits": "60867"
     },
     {
@@ -65,7 +66,7 @@
         "feeEnabled": true,
         "feeMechanism": "owner-pull"
       },
-      "available": true,
+      "available": false,
       "gasUnits": "126893"
     },
     {
@@ -76,7 +77,7 @@
         "feeEnabled": false,
         "feeMechanism": "none"
       },
-      "available": true,
+      "available": false,
       "gasUnits": "43779"
     },
     {
@@ -87,7 +88,7 @@
         "feeEnabled": true,
         "feeMechanism": "owner-pull"
       },
-      "available": true,
+      "available": false,
       "gasUnits": "109805"
     },
     {
@@ -98,7 +99,7 @@
         "feeEnabled": false,
         "feeMechanism": "none"
       },
-      "available": true,
+      "available": false,
       "gasUnits": "66625"
     },
     {
@@ -109,7 +110,7 @@
         "feeEnabled": true,
         "feeMechanism": "owner-pull"
       },
-      "available": true,
+      "available": false,
       "gasUnits": "132651"
     },
     {
@@ -120,7 +121,7 @@
         "feeEnabled": false,
         "feeMechanism": "none"
       },
-      "available": true,
+      "available": false,
       "gasUnits": "49537"
     },
     {
@@ -131,7 +132,7 @@
         "feeEnabled": true,
         "feeMechanism": "owner-pull"
       },
-      "available": true,
+      "available": false,
       "gasUnits": "115551"
     },
     {
@@ -142,7 +143,7 @@
         "feeEnabled": false,
         "feeMechanism": "none"
       },
-      "available": true,
+      "available": false,
       "gasUnits": "73187"
     },
     {
@@ -153,7 +154,7 @@
         "feeEnabled": true,
         "feeMechanism": "owner-pull"
       },
-      "available": true,
+      "available": false,
       "gasUnits": "139213"
     },
     {
@@ -164,7 +165,7 @@
         "feeEnabled": false,
         "feeMechanism": "none"
       },
-      "available": true,
+      "available": false,
       "gasUnits": "56099"
     },
     {
@@ -175,7 +176,7 @@
         "feeEnabled": true,
         "feeMechanism": "owner-pull"
       },
-      "available": true,
+      "available": false,
       "gasUnits": "122113"
     },
     {
@@ -194,7 +195,7 @@
         "feeEnabled": false,
         "feeMechanism": "none"
       },
-      "available": true,
+      "available": false,
       "gasUnits": "1684004"
     },
     {
@@ -213,7 +214,7 @@
         "feeEnabled": true,
         "feeMechanism": "draw-deduction"
       },
-      "available": true,
+      "available": false,
       "gasUnits": "1708385"
     },
     {
@@ -232,7 +233,7 @@
         "feeEnabled": false,
         "feeMechanism": "none"
       },
-      "available": true,
+      "available": false,
       "gasUnits": "1837311"
     },
     {
@@ -251,7 +252,7 @@
         "feeEnabled": true,
         "feeMechanism": "draw-deduction"
       },
-      "available": true,
+      "available": false,
       "gasUnits": "1861632"
     },
     {
@@ -270,7 +271,7 @@
         "feeEnabled": false,
         "feeMechanism": "none"
       },
-      "available": true,
+      "available": false,
       "gasUnits": "1991219"
     },
     {
@@ -289,7 +290,7 @@
         "feeEnabled": true,
         "feeMechanism": "draw-deduction"
       },
-      "available": true,
+      "available": false,
       "gasUnits": "2015636"
     },
     {
@@ -308,7 +309,7 @@
         "feeEnabled": false,
         "feeMechanism": "none"
       },
-      "available": true,
+      "available": false,
       "gasUnits": "2139800"
     },
     {
@@ -327,7 +328,7 @@
         "feeEnabled": true,
         "feeMechanism": "draw-deduction"
       },
-      "available": true,
+      "available": false,
       "gasUnits": "2164193"
     },
     {
@@ -346,7 +347,7 @@
         "feeEnabled": false,
         "feeMechanism": "none"
       },
-      "available": true,
+      "available": false,
       "gasUnits": "2296101"
     },
     {
@@ -365,7 +366,7 @@
         "feeEnabled": true,
         "feeMechanism": "draw-deduction"
       },
-      "available": true,
+      "available": false,
       "gasUnits": "2320530"
     },
     {
@@ -384,7 +385,7 @@
         "feeEnabled": false,
         "feeMechanism": "none"
       },
-      "available": true,
+      "available": false,
       "gasUnits": "2510585"
     },
     {
@@ -403,7 +404,7 @@
         "feeEnabled": true,
         "feeMechanism": "draw-deduction"
       },
-      "available": true,
+      "available": false,
       "gasUnits": "2535062"
     },
     {
@@ -422,7 +423,7 @@
         "feeEnabled": false,
         "feeMechanism": "none"
       },
-      "available": true,
+      "available": false,
       "gasUnits": "3085232"
     },
     {
@@ -441,7 +442,7 @@
         "feeEnabled": true,
         "feeMechanism": "draw-deduction"
       },
-      "available": true,
+      "available": false,
       "gasUnits": "3109661"
     },
     {
@@ -460,7 +461,7 @@
         "feeEnabled": false,
         "feeMechanism": "none"
       },
-      "available": true,
+      "available": false,
       "gasUnits": "3349059"
     },
     {
@@ -479,7 +480,7 @@
         "feeEnabled": true,
         "feeMechanism": "draw-deduction"
       },
-      "available": true,
+      "available": false,
       "gasUnits": "3373320"
     },
     {
@@ -498,7 +499,7 @@
         "feeEnabled": false,
         "feeMechanism": "none"
       },
-      "available": true,
+      "available": false,
       "gasUnits": "4643032"
     },
     {
@@ -517,7 +518,7 @@
         "feeEnabled": true,
         "feeMechanism": "draw-deduction"
       },
-      "available": true,
+      "available": false,
       "gasUnits": "4667449"
     },
     {
@@ -536,7 +537,7 @@
         "feeEnabled": false,
         "feeMechanism": "none"
       },
-      "available": true,
+      "available": false,
       "gasUnits": "4886355"
     },
     {
@@ -555,7 +556,7 @@
         "feeEnabled": true,
         "feeMechanism": "draw-deduction"
       },
-      "available": true,
+      "available": false,
       "gasUnits": "4910700"
     },
     {
@@ -574,7 +575,7 @@
         "feeEnabled": false,
         "feeMechanism": "none"
       },
-      "available": true,
+      "available": false,
       "gasUnits": "6197268"
     },
     {
@@ -593,7 +594,7 @@
         "feeEnabled": true,
         "feeMechanism": "draw-deduction"
       },
-      "available": true,
+      "available": false,
       "gasUnits": "6221829"
     },
     {
@@ -612,7 +613,7 @@
         "feeEnabled": false,
         "feeMechanism": "none"
       },
-      "available": true,
+      "available": false,
       "gasUnits": "6466663"
     },
     {
@@ -631,7 +632,7 @@
         "feeEnabled": true,
         "feeMechanism": "draw-deduction"
       },
-      "available": true,
+      "available": false,
       "gasUnits": "6491044"
     },
     {
@@ -650,7 +651,7 @@
         "feeEnabled": false,
         "feeMechanism": "none"
       },
-      "available": true,
+      "available": false,
       "gasUnits": "7775790"
     },
     {
@@ -669,7 +670,7 @@
         "feeEnabled": true,
         "feeMechanism": "draw-deduction"
       },
-      "available": true,
+      "available": false,
       "gasUnits": "7800135"
     },
     {
@@ -688,7 +689,7 @@
         "feeEnabled": false,
         "feeMechanism": "none"
       },
-      "available": true,
+      "available": false,
       "gasUnits": "8024436"
     },
     {
@@ -707,7 +708,7 @@
         "feeEnabled": true,
         "feeMechanism": "draw-deduction"
       },
-      "available": true,
+      "available": false,
       "gasUnits": "8048685"
     },
     {
@@ -726,7 +727,7 @@
         "feeEnabled": false,
         "feeMechanism": "none"
       },
-      "available": true,
+      "available": false,
       "gasUnits": "9355547"
     },
     {
@@ -745,7 +746,7 @@
         "feeEnabled": true,
         "feeMechanism": "draw-deduction"
       },
-      "available": true,
+      "available": false,
       "gasUnits": "9380288"
     },
     {
@@ -764,7 +765,7 @@
         "feeEnabled": false,
         "feeMechanism": "none"
       },
-      "available": true,
+      "available": false,
       "gasUnits": "9604908"
     },
     {
@@ -783,7 +784,7 @@
         "feeEnabled": true,
         "feeMechanism": "draw-deduction"
       },
-      "available": true,
+      "available": false,
       "gasUnits": "9629277"
     },
     {
@@ -802,7 +803,7 @@
         "feeEnabled": false,
         "feeMechanism": "none"
       },
-      "available": true,
+      "available": false,
       "gasUnits": "10947326"
     },
     {
@@ -821,7 +822,7 @@
         "feeEnabled": true,
         "feeMechanism": "draw-deduction"
       },
-      "available": true,
+      "available": false,
       "gasUnits": "10971755"
     },
     {
@@ -840,7 +841,7 @@
         "feeEnabled": false,
         "feeMechanism": "none"
       },
-      "available": true,
+      "available": false,
       "gasUnits": "11201234"
     },
     {
@@ -859,7 +860,7 @@
         "feeEnabled": true,
         "feeMechanism": "draw-deduction"
       },
-      "available": true,
+      "available": false,
       "gasUnits": "11225615"
     },
     {
@@ -878,7 +879,7 @@
         "feeEnabled": false,
         "feeMechanism": "none"
       },
-      "available": true,
+      "available": false,
       "gasUnits": "12547610"
     },
     {
@@ -897,7 +898,7 @@
         "feeEnabled": true,
         "feeMechanism": "draw-deduction"
       },
-      "available": true,
+      "available": false,
       "gasUnits": "12572339"
     },
     {
@@ -916,7 +917,7 @@
         "feeEnabled": false,
         "feeMechanism": "none"
       },
-      "available": true,
+      "available": false,
       "gasUnits": "12828129"
     },
     {
@@ -935,7 +936,7 @@
         "feeEnabled": true,
         "feeMechanism": "draw-deduction"
       },
-      "available": true,
+      "available": false,
       "gasUnits": "12852798"
     },
     {
@@ -954,7 +955,7 @@
         "feeEnabled": false,
         "feeMechanism": "none"
       },
-      "available": true,
+      "available": false,
       "gasUnits": "14185678"
     },
     {
@@ -973,7 +974,7 @@
         "feeEnabled": true,
         "feeMechanism": "draw-deduction"
       },
-      "available": true,
+      "available": false,
       "gasUnits": "14210299"
     },
     {

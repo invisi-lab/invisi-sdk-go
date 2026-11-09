@@ -7,7 +7,7 @@ const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..');
 const protocol=path.resolve(process.argv[2]??path.join(root,'../invisi-protocol'));
 const load=name=>import(pathToFileURL(path.join(protocol,'scripts',name)).href);
 const {creditCommitment,encryptCreditNote,createCreditPublicInputs,encodeCreateCreditTypedData}=await load('create-credit-client.mjs');
-const {deriveCreditState,creditDrawPublicInputs,updateCreditPublicInputs,encodeCreditDrawTypedData,encodeUpdateCreditTypedData}=await load('credit-lifecycle-client.mjs');
+const {deriveCreditUpdate,deriveCreditState,creditDrawPublicInputs,updateCreditPublicInputs,encodeCreditDrawTypedData,encodeUpdateCreditTypedData}=await load('credit-lifecycle-client.mjs');
 const context={chainId:31337n,protocolAddress:'0x0000000000000000000000000000000000000011',tokenAddress:'0x0000000000000000000000000000000000000022',timestamp:2000000000n};
 const state={spenderWalletIdentity:33n,ownerWalletIdentity:44n,revocationShard:1n,revocationSlot:0n,nonce:55n,expiry:2100000000n,creditSharedKey:66n,singleLimit:100n,dailyLimit:200n,monthlyLimit:300n,availableCredit:400n,unlimited:false,lastDay:0n,dailySpent:0n,lastMonth:0n,monthlySpent:0n,totalSpent:0n};
 const key=n=>Buffer.from(n.toString(16).padStart(64,'0'),'hex');
@@ -28,3 +28,14 @@ const update={...create,source:{treeId:1n,merkleRoot:b32(1)},nullifier:f.draw.nu
 const draw={token:context.tokenAddress,sources:[update.source],payers:[{payer:create.owner,amount:7n}],grantRefs:[{payerIndex:0n,shard:1n,slot:0n}],nullifiers:[f.draw.nullifier],creditCommitments:[f.draw.stateCommitment],recoveryAmounts:[f.draw.recoveryAmount],noteCommitment:b32(2),totalAmount:7n,deadline:2000000300n};
 const dd=[...ds,{ciphertext:'0x',clue:'0x'}];
 write('requests.json',{context,deliveries:ds,create:{params:create,publicInputs:createCreditPublicInputs(context,create,ds),typedData:encodeCreateCreditTypedData(context,create,ds)},update:{params:update,publicInputs:updateCreditPublicInputs(context,update,ds),typedData:encodeUpdateCreditTypedData(context,update,ds)},draw:{params:draw,deliveries:dd,publicInputs:creditDrawPublicInputs(context,draw,dd),typedData:encodeCreditDrawTypedData(context,draw,dd)}});
+
+const unlimited={...state,availableCredit:0n,unlimited:true};
+const quotaCases=[];
+for(const [name,input,changes] of [
+ ['increase',state,{increaseAvailableCredit:5n}],['decrease',state,{decreaseAvailableCredit:5n}],
+ ['to-unlimited',state,{unlimited:true}],['to-finite',unlimited,{unlimited:false,increaseAvailableCredit:7n}],
+ ['to-exhausted',unlimited,{unlimited:false}],['zero-delta',state,{}],
+ ['after-draw',f.draw.state,{increaseAvailableCredit:5n}]
+]) quotaCases.push({name,kind:'update',input,changes,result:await deriveCreditUpdate(context,input,changes,2000000300n)});
+quotaCases.push({name:'unlimited-draw',kind:'draw',input:unlimited,debit:7n,result:await deriveCreditState(context,unlimited,7n)});
+write('quota.json',{context,cases:quotaCases});

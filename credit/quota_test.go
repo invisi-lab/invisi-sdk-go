@@ -7,6 +7,7 @@ import (
 	"github.com/invisi-lab/invisi-sdk-go/core"
 	"github.com/invisi-lab/invisi-sdk-go/protocol"
 	"math/big"
+	"os"
 	"testing"
 )
 
@@ -55,6 +56,10 @@ func TestQuotaUpdateRejectsInvalidDeltasAndRetainsOriginalChange(t *testing.T) {
 		if _, err := s.Update(change, 2000000010); err == nil {
 			t.Fatal("accepted invalid quota delta")
 		}
+	}
+	cleared, err := s.Update(Change{Policy: s.Policy, Expiry: s.Expiry, Unlimited: &on}, 2000000010)
+	if err != nil || !cleared.State.Unlimited || !cleared.State.AvailableCredit.IsZero() {
+		t.Fatal("switch to unlimited failed to clear available balance", err)
 	}
 	change := Change{Policy: s.Policy, Expiry: s.Expiry, IncreaseAvailableCredit: core.ElementFromUint64(5)}
 	a, err := s.Update(change, 2000000010)
@@ -120,5 +125,67 @@ func TestUpdateChangeSurvivesPersistenceAndRepricing(t *testing.T) {
 	restored.Inputs[0].State.AvailableCredit = core.ElementFromUint64(1)
 	if _, err = Restore(context.Background(), restored, nil, nil); err == nil {
 		t.Fatal("restored stale successor with substituted input balance")
+	}
+}
+
+func TestCanonicalQuotaModeAndDeltaVectors(t *testing.T) {
+	raw, err := os.ReadFile("testdata/quota.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	var fixtures struct {
+		Cases []struct {
+			Name, Kind string
+			Input      map[string]any
+			Changes    map[string]any
+			Debit      string
+			Result     struct {
+				Nullifier, StateCommitment string
+				State                      map[string]any
+			}
+		}
+	}
+	if err = json.Unmarshal(raw, &fixtures); err != nil {
+		t.Fatal(err)
+	}
+	for _, v := range fixtures.Cases {
+		t.Run(v.Name, func(t *testing.T) {
+			input := vectorState(t, v.Input)
+			var transition Transition
+			var err error
+			if v.Kind == "draw" {
+				debit, e := canonicalField(v.Debit)
+				if e != nil {
+					t.Fatal(e)
+				}
+				transition, err = input.Draw(debit, 2000000000)
+			} else {
+				change := Change{Policy: input.Policy, Expiry: input.Expiry}
+				if unlimited, ok := v.Changes["unlimited"]; ok {
+					flag := unlimited.(bool)
+					change.Unlimited = &flag
+				}
+				if increase, ok := v.Changes["increaseAvailableCredit"]; ok {
+					change.IncreaseAvailableCredit, err = canonicalField(increase.(string))
+					if err != nil {
+						t.Fatal(err)
+					}
+				}
+				if decrease, ok := v.Changes["decreaseAvailableCredit"]; ok {
+					change.DecreaseAvailableCredit, err = canonicalField(decrease.(string))
+					if err != nil {
+						t.Fatal(err)
+					}
+				}
+				transition, err = input.Update(change, 2000000300)
+			}
+			if err != nil {
+				t.Fatal(err)
+			}
+			expected := vectorState(t, v.Result.State)
+			if hex(transition.Nullifier) != v.Result.Nullifier || hex(transition.StateCommitment) != v.Result.StateCommitment || transition.State.AvailableCredit != expected.AvailableCredit || transition.State.Unlimited != expected.Unlimited || transition.State.Usage != expected.Usage {
+				t.Fatal("canonical quota transition differs")
+			}
+		})
 	}
 }

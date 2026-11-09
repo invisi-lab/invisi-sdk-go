@@ -94,7 +94,7 @@ func (p CreateParams) Witness(c Context, deliveries []protocol.Delivery, state S
 	private["credit_shared_key"] = state.SharedKey.String()
 	private["limits"] = stringFields(state.Policy.Fields())
 	private["available_credit"] = state.AvailableCredit.String()
-	private["unlimited"] = state.Unlimited
+	private["unlimited"] = boolString(state.Unlimited)
 	return makeWitness(private, createNames, inputs)
 }
 
@@ -168,8 +168,8 @@ func (p UpdateParams) Witness(c Context, deliveries []protocol.Delivery, input L
 		private[k] = v.String()
 	}
 	private["old_available_credit"] = s.AvailableCredit.String()
-	private["old_unlimited"] = s.Unlimited
-	private["new_unlimited"] = next.State.Unlimited
+	private["old_unlimited"] = boolString(s.Unlimited)
+	private["new_unlimited"] = boolString(next.State.Unlimited)
 	private["increase_available_credit"] = change.IncreaseAvailableCredit.String()
 	private["decrease_available_credit"] = change.DecreaseAvailableCredit.String()
 	private["old_limits"] = stringFields(s.Policy.Fields())
@@ -201,7 +201,10 @@ func (p DrawParams) Witness(c Context, deliveries []protocol.Delivery, credits [
 			arrays[name][i] = "0"
 		}
 	}
-	unlimitedFlags := make([]bool, capacity)
+	unlimitedFlags := make([]string, capacity)
+	for i := range unlimitedFlags {
+		unlimitedFlags[i] = "0"
+	}
 	limits, usages, paths := make([][]string, capacity), make([][]string, capacity), make([][]string, capacity)
 	for i := 0; i < capacity; i++ {
 		limits[i] = []string{"0", "0", "0"}
@@ -256,7 +259,7 @@ func (p DrawParams) Witness(c Context, deliveries []protocol.Delivery, credits [
 		arrays["input_source_indices"][i] = big.NewInt(int64(si)).String()
 		arrays["draw_amounts"][i] = input.Debit.String()
 		arrays["available_credits"][i] = s.AvailableCredit.String()
-		unlimitedFlags[i] = s.Unlimited
+		unlimitedFlags[i] = boolString(s.Unlimited)
 		limits[i] = stringFields(s.Policy.Fields())
 		usages[i] = stringFields(s.Usage.Fields())
 		paths[i] = input.pathFields()
@@ -306,4 +309,11 @@ func (p DrawParams) Witness(c Context, deliveries []protocol.Delivery, credits [
 		at += capacity
 	}
 	return makeWitness(private, []string{"note_commitment", "total_amount", "deadline", "delivery_hash_high", "delivery_hash_low", "current_day", "current_month", "fee_recipient", "fee_amount", "auth_digest_high", "auth_digest_low"}, inputs[at:])
+}
+
+func boolString(v bool) string {
+	if v {
+		return "1"
+	}
+	return "0"
 }

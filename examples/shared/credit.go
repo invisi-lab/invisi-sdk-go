@@ -55,12 +55,40 @@ func RunCreditExample(kind string, actorIndex int) {
 	execute := flag.Bool("execute", false, "authorize local proving and chain submission after reviewing Settings")
 	shard := flag.Uint64("shard", 1, "original grant shard for revocation")
 	slot := flag.Uint("slot", 0, "original grant slot for revocation")
+	available := flag.String("available-credit", "400", "initial finite available credit, uint128")
+	unlimited := flag.Bool("unlimited", false, "create unlimited grant; available-credit must be zero")
+	increase := flag.String("increase-available-credit", "0", "update quota increase, uint128")
+	decrease := flag.String("decrease-available-credit", "0", "update quota decrease, uint128")
+	mode := flag.String("new-unlimited", "keep", "update mode: keep, true or false")
 	flag.Parse()
 	if !*execute {
 		log.Fatal("Review Settings and code, then add --execute; no network request or transaction was made")
 	}
 	if *slot > 65535 {
 		log.Fatal("slot exceeds uint16")
+	}
+	parseQuota := func(text string) *big.Int {
+		value, ok := new(big.Int).SetString(text, 10)
+		if !ok || value.Sign() < 0 || value.BitLen() > 128 || value.String() != text {
+			log.Fatal("quota must be canonical uint128 decimal")
+		}
+		return value
+	}
+	initial, increaseAmount, decreaseAmount := parseQuota(*available), parseQuota(*increase), parseQuota(*decrease)
+	var changedMode *bool
+	switch *mode {
+	case "keep":
+	case "true":
+		value := true
+		changedMode = &value
+	case "false":
+		value := false
+		changedMode = &value
+	default:
+		log.Fatal("new-unlimited must be keep, true or false")
+	}
+	if kind == "create" && *unlimited && initial.Sign() != 0 {
+		log.Fatal("unlimited create requires --available-credit=0")
 	}
 	ctx := context.Background()
 	accounts, err := GetAccounts(Settings.AccountsFile)
@@ -115,7 +143,7 @@ func RunCreditExample(kind string, actorIndex int) {
 		if e != nil {
 			log.Fatal(e)
 		}
-		state := credit.State{AvailableCredit: core.ElementFromUint64(400), ProtocolContext: coreContext, TokenAddress: core.BigIntToElement(token.Big()), OwnerWalletIdentity: core.BigIntToElement(actor.PublicWallet.OwnerAddress().Big()), SpenderWalletIdentity: core.BigIntToElement(alice.PublicWallet.OwnerAddress().Big()), RevocationShard: core.ElementFromUint64(allocation.Shard), RevocationSlot: core.ElementFromUint64(uint64(allocation.Slot)), Nonce: nonce, Expiry: core.ElementFromUint64(head.Time + 7*86400), SharedKey: key, Policy: credit.Policy{SingleLimit: core.ElementFromUint64(100), DailyLimit: core.ElementFromUint64(1000), MonthlyLimit: core.ElementFromUint64(10000)}}
+		state := credit.State{AvailableCredit: core.BigIntToElement(initial), Unlimited: *unlimited, ProtocolContext: coreContext, TokenAddress: core.BigIntToElement(token.Big()), OwnerWalletIdentity: core.BigIntToElement(actor.PublicWallet.OwnerAddress().Big()), SpenderWalletIdentity: core.BigIntToElement(alice.PublicWallet.OwnerAddress().Big()), RevocationShard: core.ElementFromUint64(allocation.Shard), RevocationSlot: core.ElementFromUint64(uint64(allocation.Slot)), Nonce: nonce, Expiry: core.ElementFromUint64(head.Time + 7*86400), SharedKey: key, Policy: credit.Policy{SingleLimit: core.ElementFromUint64(100), DailyLimit: core.ElementFromUint64(1000), MonthlyLimit: core.ElementFromUint64(10000)}}
 		snapshot := credit.DeliveryState{State: state, OwnerReceivingKeys: core.ReceivingKeys{ViewingPublicKey: actor.PublicWallet.ViewingPublicKey(), ClueKey: actor.PublicWallet.ClueKey()}, SpenderReceivingKeys: core.ReceivingKeys{ViewingPublicKey: alice.PublicWallet.ViewingPublicKey(), ClueKey: alice.PublicWallet.ClueKey()}}
 		ds, e := CreditDeliveries(snapshot)
 		if e != nil {
@@ -230,7 +258,7 @@ func RunCreditExample(kind string, actorIndex int) {
 		old := selected.Input.State
 		policy := old.Policy
 		expiry := core.ElementFromUint64(head.Time + 14*86400)
-		change := credit.Change{Policy: policy, Expiry: expiry, IncreaseAvailableCredit: core.ElementFromUint64(100000)}
+		change := credit.Change{Policy: policy, Expiry: expiry, Unlimited: changedMode, IncreaseAvailableCredit: core.BigIntToElement(increaseAmount), DecreaseAvailableCredit: core.BigIntToElement(decreaseAmount)}
 		next, e := old.Update(change, deadline.Uint64())
 		if e != nil {
 			log.Fatal(e)
