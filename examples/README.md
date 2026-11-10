@@ -66,6 +66,6 @@ Go currently exposes managed lifecycle APIs (`Prepare`, `Resume`, authorization,
 
 `05-wallet-session/04-recover-credit` reopens the same encrypted database, obtains the Credit journal through `managed.Credit()`, and resumes its frozen intent with `creditSession.Resume`. It does not reapply a quota change. A saved proof can be reused; an unproved transition requires a fresh native authorization exchange. After exporting a call, retain its operation ID and reconcile its external transaction hash before considering the reservation released. For any submission integration, call `Externalize` before handing the frozen calldata to the external signer; an uncertain outcome must remain reserved.
 
-## Provenance
+## Normal Note and Credit relay delivery
 
-[`07-provenance`](07-provenance/README.md) shows local recognized-tree replay, real source proving, policy-bound Broadcaster quote/optional submission, and confirmed-transaction source-proof submission/publication waiting. These examples add an explicit `--submit` switch; the existing examples still only export unsigned transactions.
+[`03-hidden-amount/07-via-broadcaster`](03-hidden-amount/README.md) uses normal discovery, preparation, automatic source proving/tracking through `WithBroadcaster`, external wallet authorization, main proving and `SubmitBroadcaster`, then primary reconciliation and publication waiting. Existing [Credit create/draw/update examples](04-credit/README.md) accept optional registered relay and required-policy flags without source sidecars. The Note relay variant and optional Credit relay flags require an explicit `--submit` switch. Other examples export unsigned transactions.

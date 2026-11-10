@@ -8,6 +8,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 
 	"github.com/invisi-lab/invisi-sdk-go/broadcaster"
+	"github.com/invisi-lab/invisi-sdk-go/provenance"
 )
 
 func (o *Execution) ExportBroadcasterQuoteInternal() (broadcaster.SignedQuote, error) {
@@ -72,6 +73,18 @@ func (o *Execution) SubmitBroadcaster(ctx context.Context, c *broadcaster.Client
 	if c.Configuration() != o.Plan.Broadcaster.Configuration {
 		return empty, errors.New("broadcaster differs from quoted registration")
 	}
+	var policy common.Hash
+	source := o.Plan.Broadcaster.Provenance
+	if source != nil {
+		policy = source.PolicyID
+	}
+	if policy != c.RequiredProvenancePolicy() {
+		return empty, errors.New("broadcaster provenance policy differs from stored plan")
+	}
+	// A known externalized request is queried by its original ID; it is never sent again.
+	if o.Status == "uncertain" || o.Status == "submitted" {
+		return c.Status(ctx, o.Plan.ID)
+	}
 	if o.Status != "ready" || len(o.Data) == 0 {
 		return empty, errors.New("ready transaction required")
 	}
@@ -85,7 +98,10 @@ func (o *Execution) SubmitBroadcaster(ctx context.Context, c *broadcaster.Client
 	if e != nil {
 		return empty, e
 	}
-	if e = broadcaster.VerifyQuote(signed, *signed.Context, o.Data, 0); e != nil {
+	if e = o.validateProvenance(ctx, source, true); e != nil {
+		return empty, e
+	}
+	if e = broadcaster.VerifyRequiredQuote(signed, *signed.Context, o.Data, 0, policy); e != nil {
 		return empty, e
 	}
 	if o.Runtime.OnExternalize != nil {
@@ -98,7 +114,11 @@ func (o *Execution) SubmitBroadcaster(ctx context.Context, c *broadcaster.Client
 	if e = o.Persist(context.WithoutCancel(ctx), o.Status); e != nil {
 		return empty, e
 	}
-	result, sendErr := c.Submit(ctx, o.Data, signed, o.Plan.ID)
+	var sidecars []provenance.ProofSidecar
+	if source != nil {
+		sidecars = source.Sidecars
+	}
+	result, sendErr := c.Submit(ctx, o.Data, signed, o.Plan.ID, sidecars)
 	if result.TransactionHash != "" {
 		o.TransactionHash = common.HexToHash(result.TransactionHash)
 	}
@@ -142,5 +162,12 @@ func (o *Execution) ValidateBroadcasterPlan() error {
 	if !bytes.Equal(data, saved.Intent) {
 		return errors.New("broadcaster intent differs from Frozen operation")
 	}
-	return broadcaster.VerifyQuote(saved.Signed, broadcaster.Trust{ChainID: saved.ChainID, Protocol: saved.Protocol, Signer: saved.Configuration.QuoteSigner}, data, 0)
+	var policy common.Hash
+	if saved.Provenance != nil {
+		policy = saved.Provenance.PolicyID
+	}
+	if e = o.validateProvenance(context.Background(), saved.Provenance, false); e != nil {
+		return e
+	}
+	return broadcaster.VerifyRequiredQuote(saved.Signed, broadcaster.Trust{ChainID: saved.ChainID, Protocol: saved.Protocol, Signer: saved.Configuration.QuoteSigner}, data, 0, policy)
 }

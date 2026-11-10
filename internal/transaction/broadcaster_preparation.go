@@ -10,6 +10,7 @@ import (
 
 	"github.com/invisi-lab/invisi-sdk-go/broadcaster"
 	"github.com/invisi-lab/invisi-sdk-go/protocol"
+	"github.com/invisi-lab/invisi-sdk-go/provenance"
 )
 
 type FundingPermitRequest struct {
@@ -38,6 +39,7 @@ type BroadcasterPlan struct {
 	ChainID       *big.Int
 	Protocol      common.Address
 	Intent        []byte
+	Provenance    *ProvenancePlan
 }
 
 func (o *Execution) BroadcasterIntent() ([]byte, error) {
@@ -103,6 +105,11 @@ func (o *Execution) WithBroadcaster(ctx context.Context, c *broadcaster.Client, 
 	if opt.MaxAttempts < 1 || opt.MaxAttempts > 16 {
 		return errors.New("max attempts must be 1..16")
 	}
+	if c.RequiredProvenancePolicy() != (common.Hash{}) && o.Plan.Kind == "transact" && len(o.Plan.Inputs) > 0 {
+		if _, e := o.sourceCapability(c.RequiredProvenancePolicy()); e != nil {
+			return e
+		}
+	}
 	base, e := ClonePlan(o.Plan)
 	if e != nil {
 		return e
@@ -166,14 +173,22 @@ func (o *Execution) WithBroadcaster(ctx context.Context, c *broadcaster.Client, 
 			}
 		}
 		trust := broadcaster.Trust{ChainID: o.Plan.Context.ChainID, Protocol: o.Plan.Context.ProtocolAddress}
-		signed, e := c.Quote(ctx, data, trust)
+		source, e := o.prepareProvenance(ctx, c.RequiredProvenancePolicy(), data)
 		if e != nil {
 			return e
 		}
-		if e = broadcaster.VerifyQuote(signed, broadcaster.Trust{ChainID: trust.ChainID, Protocol: trust.Protocol, Signer: c.Configuration().QuoteSigner}, data, o.Plan.Block.Timestamp); e != nil {
+		var sidecars []provenance.ProofSidecar
+		if source != nil {
+			sidecars = source.Sidecars
+		}
+		signed, e := c.Quote(ctx, data, trust, sidecars)
+		if e != nil {
 			return e
 		}
-		o.Plan.Broadcaster = &BroadcasterPlan{Configuration: c.Configuration(), Signed: signed, ChainID: new(big.Int).Set(trust.ChainID), Protocol: trust.Protocol, Intent: append([]byte{}, data...)}
+		if e = broadcaster.VerifyRequiredQuote(signed, broadcaster.Trust{ChainID: trust.ChainID, Protocol: trust.Protocol, Signer: c.Configuration().QuoteSigner}, data, o.Plan.Block.Timestamp, c.RequiredProvenancePolicy()); e != nil {
+			return e
+		}
+		o.Plan.Broadcaster = &BroadcasterPlan{Configuration: c.Configuration(), Signed: signed, ChainID: new(big.Int).Set(trust.ChainID), Protocol: trust.Protocol, Intent: append([]byte{}, data...), Provenance: source}
 		return o.CommitBroadcasterPlan(ctx)
 	}
 	return errors.New("broadcaster fee did not converge")

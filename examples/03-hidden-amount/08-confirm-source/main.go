@@ -48,7 +48,6 @@ func main() {
 	check(json.Unmarshal(must(os.ReadFile(os.Getenv("PROVENANCE_CONFIG"))), &config))
 	var record struct {
 		Data, BroadcastID, TrackingID, OperationDigest string
-		Sidecar                                        provenance.ProofSidecar
 	}
 	check(json.Unmarshal(must(os.ReadFile(os.Getenv("PROVENANCE_RECORD"))), &record))
 	trust := provenance.TrustContext{
@@ -64,7 +63,6 @@ func main() {
 			config.SigningKeyID: must(hex.DecodeString(strings.TrimPrefix(config.SigningPublicKey, "0x"))),
 		},
 	}
-	check(provenance.ValidateProofBundle(record.Sidecar.ProofBundle, trust))
 	primary := must(ethclient.DialContext(ctx, config.ChainRPCURL))
 	defer primary.Close()
 	if must(primary.ChainID(ctx)).Cmp(must(provenance.Uint(config.ChainID, 64))) != 0 {

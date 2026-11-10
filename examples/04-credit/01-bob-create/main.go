@@ -13,6 +13,7 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
+	"github.com/invisi-lab/invisi-sdk-go/broadcaster"
 	"github.com/invisi-lab/invisi-sdk-go/core"
 	"github.com/invisi-lab/invisi-sdk-go/credit"
 	"github.com/invisi-lab/invisi-sdk-go/examples/shared"
@@ -38,7 +39,21 @@ func main() {
 	spenderAddress := flag.String("spender", "", "spender public long receiving address")
 	available := flag.Int64("available-credit", 400, "initial finite credit in token base units")
 	unlimited := flag.Bool("unlimited", false, "unlimited mode requires available-credit zero")
+	relayURL := flag.String("broadcaster", "", "optional HTTPS registered Broadcaster endpoint")
+	relaySigner := flag.String("quote-signer", "", "registered quote signer")
+	relayRecipient := flag.String("fee-recipient", "", "registered fee recipient")
+	relayPolicy := flag.String("provenance-policy", "", "optional authenticated required policy ID")
+	relayMaxFee := flag.String("max-fee", "1", "maximum fee in token base units")
+	execute := flag.Bool("execute", false, "run the optional relay workflow")
+	submit := flag.Bool("submit", false, "explicitly submit the quoted request")
 	flag.Parse()
+	if *relayURL != "" && !*execute {
+		log.Print("add --execute to prepare/quote/prove; --submit broadcasts")
+		return
+	}
+	if *submit && *relayURL == "" {
+		log.Fatal("--submit requires --broadcaster")
+	}
 
 	publicWallet, err := sdk.WalletFromAddress(*address)
 	if err != nil {
@@ -215,6 +230,32 @@ func main() {
 		log.Fatal(err)
 	}
 
+	var relay *broadcaster.Client
+	if *relayURL != "" {
+		relay, err = broadcaster.NewClient(broadcaster.Configuration{Endpoint: *relayURL, QuoteSigner: common.HexToAddress(*relaySigner), FeeRecipient: common.HexToAddress(*relayRecipient)})
+		if err != nil {
+			log.Fatal(err)
+		}
+		if *relayPolicy != "" {
+			relay, err = relay.WithProvenancePolicy(common.HexToHash(*relayPolicy))
+			if err != nil {
+				log.Fatal(err)
+			}
+		}
+		maxFee, ok := new(big.Int).SetString(*relayMaxFee, 10)
+		if !ok {
+			log.Fatal("invalid maximum fee")
+		}
+		if err = operation.WithBroadcaster(ctx, relay, credit.WithBroadcasterOptions{MaxFeeAmount: maxFee}); err != nil {
+			log.Fatal(err)
+		}
+		preview, err := operation.Preview(ctx)
+		if err != nil {
+			log.Fatal(err)
+		}
+		log.Printf("Final quoted Credit preview: %+v", preview)
+	}
+
 	// Export the owner/spender request only after the managed Credit session validates current chain state.
 	request, err := operation.ExportWalletRequest(ctx, "credit-1")
 	if err != nil {
@@ -242,6 +283,19 @@ func main() {
 	// Generate and independently verify the Credit proof for the frozen grant transition.
 	if err = operation.Prove(ctx, backend, prover.Options{}); err != nil {
 		log.Fatal(err)
+	}
+
+	if relay != nil {
+		if *submit {
+			status, err := operation.SubmitBroadcaster(ctx, relay)
+			if err != nil {
+				log.Fatal(err)
+			}
+			log.Printf("Broadcaster operation=%s state=%s tx=%s", *operationID, status.State, status.TransactionHash)
+		} else {
+			log.Printf("Quoted/proved operation %s retained; --submit was not supplied", *operationID)
+		}
+		return
 	}
 
 	// Export the unsigned call while retaining the managed grant reservation for reconciliation.

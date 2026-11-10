@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/invisi-lab/invisi-sdk-go/provenance"
 	"io"
 	"math/big"
 	"net/http"
@@ -22,9 +23,10 @@ type Configuration struct {
 }
 type Options struct{ HTTPClient *http.Client }
 type Client struct {
-	configuration Configuration
-	http          *http.Client
-	sequence      atomic.Uint64
+	configuration  Configuration
+	http           *http.Client
+	sequence       atomic.Uint64
+	requiredPolicy common.Hash
 }
 type RPCError struct {
 	Code    int    `json:"code"`
@@ -133,13 +135,17 @@ func (c *Client) Fee(ctx context.Context, token common.Address, data []byte) (Fe
 	}
 	return f, nil
 }
-func (c *Client) Quote(ctx context.Context, data []byte, trust Trust) (SignedQuote, error) {
+func (c *Client) Quote(ctx context.Context, data []byte, trust Trust, sidecars ...[]provenance.ProofSidecar) (SignedQuote, error) {
 	var s SignedQuote
-	if e := c.call(ctx, "broadcaster_getQuote", map[string]any{"data": "0x" + common.Bytes2Hex(data)}, &s); e != nil {
+	params, e := c.sidecarParams(data, sidecars)
+	if e != nil {
+		return s, e
+	}
+	if e := c.call(ctx, "broadcaster_getQuote", params, &s); e != nil {
 		return s, e
 	}
 	trust.Signer = c.configuration.QuoteSigner
-	if e := VerifyQuote(s, trust, data, uint64(time.Now().Unix())); e != nil {
+	if e := VerifyRequiredQuote(s, trust, data, uint64(time.Now().Unix()), c.requiredPolicy); e != nil {
 		return s, e
 	}
 	if s.Quote.FeeRecipient != c.configuration.FeeRecipient {
@@ -166,20 +172,27 @@ func checkStatus(s Status, id string) error {
 	}
 	return nil
 }
-func (c *Client) Submit(ctx context.Context, data []byte, s SignedQuote, key string) (Status, error) {
+func (c *Client) Submit(ctx context.Context, data []byte, s SignedQuote, key string, sidecars ...[]provenance.ProofSidecar) (Status, error) {
 	var out Status
 	if s.Context == nil {
 		return out, errors.New("missing verified quote context")
 	}
 	t := *s.Context
 	t.Signer = c.configuration.QuoteSigner
-	if e := VerifyQuote(s, t, data, 0); e != nil {
+	if e := VerifyRequiredQuote(s, t, data, 0, c.requiredPolicy); e != nil {
 		return out, e
 	}
 	if s.Quote.FeeRecipient != c.configuration.FeeRecipient {
 		return out, errors.New("unregistered fee recipient")
 	}
-	e := c.call(ctx, "broadcaster_submitTransaction", map[string]any{"data": "0x" + common.Bytes2Hex(data), "quote": s.Quote, "signature": s.Signature, "idempotencyKey": key}, &out)
+	params, e := c.sidecarParams(data, sidecars)
+	if e != nil {
+		return out, e
+	}
+	params["quote"] = s.Quote
+	params["signature"] = s.Signature
+	params["idempotencyKey"] = key
+	e = c.call(ctx, "broadcaster_submitTransaction", params, &out)
 	if e != nil {
 		return out, e
 	}

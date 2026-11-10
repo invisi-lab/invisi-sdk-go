@@ -19,10 +19,11 @@ import (
 	"github.com/invisi-lab/invisi-sdk-go/core"
 	transaction "github.com/invisi-lab/invisi-sdk-go/internal/transaction"
 	"github.com/invisi-lab/invisi-sdk-go/protocol"
+	"github.com/invisi-lab/invisi-sdk-go/provenance"
 	sdk "github.com/invisi-lab/invisi-sdk-go/sdk"
 )
 
-func testBroadcaster(t *testing.T, p *Operation, fees []int64, failQuote bool) (*broadcaster.Client, *atomic.Int64) {
+func testBroadcaster(t *testing.T, p *Operation, fees []int64, failQuote bool, policies ...common.Hash) (*broadcaster.Client, *atomic.Int64) {
 	t.Helper()
 	key, _ := crypto.GenerateKey()
 	recipient := common.HexToAddress("0x8877")
@@ -40,6 +41,8 @@ func testBroadcaster(t *testing.T, p *Operation, fees []int64, failQuote bool) (
 		var param struct {
 			Data           string
 			IdempotencyKey string
+			ID             string
+			ProofSidecars  []provenance.ProofSidecar
 		}
 		json.Unmarshal(req.Params[0], &param)
 		var result any
@@ -66,13 +69,33 @@ func testBroadcaster(t *testing.T, p *Operation, fees []int64, failQuote bool) (
 				t.Error(e)
 				return
 			}
+			if len(policies) > 0 {
+				bound, err := provenance.ProvenanceIntentHash(h.Hex(), policies[0].Hex())
+				if err != nil {
+					t.Error(err)
+					return
+				}
+				h = common.HexToHash(bound)
+			}
 			q := broadcaster.Quote{Token: i.Token, FeeRecipient: i.FeeRecipient, FeeAmount: i.FeeAmount.String(), Deadline: i.Deadline.String(), MaxGas: "1000000", RequestHash: h}
 			trust := broadcaster.Trust{ChainID: p.plan.Context.ChainID, Protocol: p.plan.Context.ProtocolAddress, Signer: crypto.PubkeyToAddress(key.PublicKey)}
 			td, _ := broadcaster.QuoteTypedData(q, trust)
 			digest, _, _ := apitypes.TypedDataAndHash(td)
 			sig, _ := crypto.Sign(digest, key)
-			result = broadcaster.SignedQuote{Quote: q, Signature: "0x" + common.Bytes2Hex(sig)}
+			signed := broadcaster.SignedQuote{Quote: q, Signature: "0x" + common.Bytes2Hex(sig)}
+			if len(policies) > 0 {
+				signed.ProvenancePolicyID = &policies[0]
+				signed.RequestHashFormat = "invisi-broadcaster-provenance-intent-v1"
+			}
+			result = signed
+		case "broadcaster_getTransactionStatus":
+			result = broadcaster.Status{ID: param.ID, State: "uncertain"}
 		case "broadcaster_submitTransaction":
+			if len(policies) > 0 {
+				if len(param.ProofSidecars) != 1 || param.ProofSidecars[0].OperationIndex != "0" {
+					t.Error("submit did not automatically attach retained source proof")
+				}
+			}
 			result = broadcaster.Status{ID: param.IdempotencyKey, State: "uncertain"}
 		}
 		json.NewEncoder(w).Encode(map[string]any{"jsonrpc": "2.0", "id": req.ID, "result": result})
@@ -81,6 +104,12 @@ func testBroadcaster(t *testing.T, p *Operation, fees []int64, failQuote bool) (
 	c, e := broadcaster.NewClient(broadcaster.Configuration{Endpoint: server.URL, QuoteSigner: crypto.PubkeyToAddress(key.PublicKey), FeeRecipient: recipient}, broadcaster.Options{HTTPClient: server.Client()})
 	if e != nil {
 		t.Fatal(e)
+	}
+	if len(policies) > 0 {
+		c, e = c.WithProvenancePolicy(policies[0])
+		if e != nil {
+			t.Fatal(e)
+		}
 	}
 	return c, calls
 }
@@ -432,7 +461,7 @@ func TestBroadcasterDetachedFailedSubmitRetainsInspectableUncertainty(t *testing
 	if _, e = prepared.ExportBroadcasterQuote(ctx); e != nil {
 		t.Fatal("uncertain handle cannot inspect saved quote", e)
 	}
-	if _, e = prepared.SubmitBroadcaster(ctx, c); e == nil {
-		t.Fatal("uncertain handle sent automatically again")
+	if status, err := prepared.SubmitBroadcaster(ctx, c); err != nil || status.State != "uncertain" {
+		t.Fatal("uncertain handle must query the original ID without resending", status, err)
 	}
 }

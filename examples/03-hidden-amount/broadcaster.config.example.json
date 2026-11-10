@@ -13,5 +13,11 @@
     "endpoint": "https://your-broadcaster.example/v1/chains/31337",
     "quoteSigner": "0x<registered-quote-signer>",
     "feeRecipient": "0x<registered-fee-recipient>"
-  }
+  },
+  "protocolRpcUrl": "https://your-protocol-rpc.example/v1/chains/31337",
+  "walletAddress": "<sender-public-long-address>",
+  "recipient": "<recipient-public-long-address>",
+  "tokenAddress": "0x<20-byte-token-address>",
+  "amount": "10000000000000000",
+  "maxFeeAmount": "1000000000000000"
 }

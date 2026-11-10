@@ -55,7 +55,7 @@ func signed(t *testing.T, data []byte, trust Trust, key *ecdsa.PrivateKey) Signe
 	if e != nil {
 		t.Fatal(e)
 	}
-	return SignedQuote{q, "0x" + common.Bytes2Hex(sig), nil}
+	return SignedQuote{Quote: q, Signature: "0x" + common.Bytes2Hex(sig)}
 }
 func TestQuoteAuthenticatesActualContractCalldata(t *testing.T) {
 	data, trust, key := intent(t)

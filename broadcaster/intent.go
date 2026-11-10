@@ -30,9 +30,11 @@ type Quote struct {
 	RequestHash  common.Hash    `json:"requestHash"`
 }
 type SignedQuote struct {
-	Quote     Quote  `json:"quote"`
-	Signature string `json:"signature"`
-	Context   *Trust `json:"-"`
+	Quote              Quote        `json:"quote"`
+	Signature          string       `json:"signature"`
+	Context            *Trust       `json:"-"`
+	ProvenancePolicyID *common.Hash `json:"provenancePolicyId,omitempty"`
+	RequestHashFormat  string       `json:"requestHashFormat,omitempty"`
 }
 type Intent struct {
 	Method              string
@@ -151,6 +153,9 @@ func QuoteTypedData(q Quote, t Trust) (apitypes.TypedData, error) {
 	return apitypes.TypedData{Types: apitypes.Types{"EIP712Domain": {{Name: "name", Type: "string"}, {Name: "version", Type: "string"}, {Name: "chainId", Type: "uint256"}, {Name: "verifyingContract", Type: "address"}}, "Quote": {{Name: "token", Type: "address"}, {Name: "feeRecipient", Type: "address"}, {Name: "feeAmount", Type: "uint256"}, {Name: "deadline", Type: "uint256"}, {Name: "maxGas", Type: "uint256"}, {Name: "requestHash", Type: "bytes32"}}}, PrimaryType: "Quote", Domain: apitypes.TypedDataDomain{Name: "InvisiBroadcaster", Version: "1", ChainId: (*math.HexOrDecimal256)(new(big.Int).Set(t.ChainID)), VerifyingContract: t.Protocol.Hex()}, Message: apitypes.TypedDataMessage{"token": q.Token.Hex(), "feeRecipient": q.FeeRecipient.Hex(), "feeAmount": q.FeeAmount, "deadline": q.Deadline, "maxGas": q.MaxGas, "requestHash": q.RequestHash.Hex()}}, nil
 }
 func VerifyQuote(s SignedQuote, t Trust, data []byte, now uint64) error {
+	if s.ProvenancePolicyID != nil || s.RequestHashFormat != "" {
+		return errors.New("unexpected provenance policy on unconfigured broadcaster")
+	}
 	h, e := RequestHash(data)
 	if e != nil {
 		return e

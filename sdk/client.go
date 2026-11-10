@@ -11,3 +11,5 @@ type InvisiOptions = transaction.InvisiOptions
 func NewInvisi(options InvisiOptions) *Invisi { return transaction.NewInvisi(options) }
 
 type Provider = transaction.Provider
+
+type ProvenanceCapability = transaction.ProvenanceCapability

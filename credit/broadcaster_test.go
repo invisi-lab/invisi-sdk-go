@@ -10,6 +10,7 @@ import (
 	"github.com/invisi-lab/invisi-sdk-go/broadcaster"
 	"github.com/invisi-lab/invisi-sdk-go/core"
 	"github.com/invisi-lab/invisi-sdk-go/protocol"
+	"github.com/invisi-lab/invisi-sdk-go/provenance"
 	"io"
 	"math/big"
 	"net/http"
@@ -20,7 +21,7 @@ import (
 type creditRoundTrip func(*http.Request) (*http.Response, error)
 
 func (f creditRoundTrip) RoundTrip(r *http.Request) (*http.Response, error) { return f(r) }
-func creditBroadcaster(t *testing.T, c Context, signer *ecdsa.PrivateKey, collector common.Address) *broadcaster.Client {
+func creditBroadcaster(t *testing.T, c Context, signer *ecdsa.PrivateKey, collector common.Address, policies ...common.Hash) *broadcaster.Client {
 	t.Helper()
 	transport := creditRoundTrip(func(r *http.Request) (*http.Response, error) {
 		var request struct {
@@ -45,6 +46,16 @@ func creditBroadcaster(t *testing.T, c Context, signer *ecdsa.PrivateKey, collec
 			if err != nil {
 				t.Fatal(err)
 			}
+			if len(policies) > 0 {
+				bound, e := provenance.ProvenanceIntentHash(hash.Hex(), policies[0].Hex())
+				if e != nil {
+					t.Fatal(e)
+				}
+				hash = common.HexToHash(bound)
+				if sidecars, ok := request.Params[0]["proofSidecars"].([]any); !ok || len(sidecars) != 0 {
+					t.Fatal("Credit quote must carry empty source sidecars")
+				}
+			}
 			q := broadcaster.Quote{Token: intent.Token, FeeRecipient: intent.FeeRecipient, FeeAmount: intent.FeeAmount.String(), Deadline: intent.Deadline.String(), MaxGas: "2000000", RequestHash: hash}
 			typed, err := broadcaster.QuoteTypedData(q, broadcaster.Trust{ChainID: core.ElementToBigInt(c.ChainID), Protocol: common.BigToAddress(core.ElementToBigInt(c.ProtocolAddress)), Signer: crypto.PubkeyToAddress(signer.PublicKey)})
 			if err != nil {
@@ -58,7 +69,14 @@ func creditBroadcaster(t *testing.T, c Context, signer *ecdsa.PrivateKey, collec
 			if err != nil {
 				t.Fatal(err)
 			}
-			result = broadcaster.SignedQuote{Quote: q, Signature: "0x" + common.Bytes2Hex(signature)}
+			signed := broadcaster.SignedQuote{Quote: q, Signature: "0x" + common.Bytes2Hex(signature)}
+			if len(policies) > 0 {
+				signed.ProvenancePolicyID = &policies[0]
+				signed.RequestHashFormat = broadcaster.ProvenanceRequestHashFormat
+			}
+			result = signed
+		case "broadcaster_getTransactionStatus":
+			result = broadcaster.Status{ID: request.Params[0]["id"].(string), State: "uncertain"}
 		case "broadcaster_submitTransaction":
 			result = broadcaster.Status{ID: request.Params[0]["idempotencyKey"].(string), State: "submitted", TransactionHash: common.HexToHash("0x1234").Hex()}
 		default:
@@ -70,6 +88,12 @@ func creditBroadcaster(t *testing.T, c Context, signer *ecdsa.PrivateKey, collec
 	client, err := broadcaster.NewClient(broadcaster.Configuration{Endpoint: "https://operator.example", QuoteSigner: crypto.PubkeyToAddress(signer.PublicKey), FeeRecipient: collector}, broadcaster.Options{HTTPClient: &http.Client{Transport: transport}})
 	if err != nil {
 		t.Fatal(err)
+	}
+	if len(policies) > 0 {
+		client, err = client.WithProvenancePolicy(policies[0])
+		if err != nil {
+			t.Fatal(err)
+		}
 	}
 	return client
 }
@@ -106,5 +130,63 @@ func TestCreditQuoteFreezesFeeBeforeAuthorization(t *testing.T) {
 	}
 	if quoted.Create.FeeRecipient != collector || quoted.Create.FeeAmount.Cmp(big.NewInt(1)) != 0 || quoted.Create.CreditCommitment != p.CreditCommitment || quoted.CreatedState.SharedKey != s.SharedKey {
 		t.Fatal("quote changed grant or omitted fee")
+	}
+}
+
+func TestCreditRequiredPolicyQuoteWithoutSourceProver(t *testing.T) {
+	s, f := fixture(t)
+	c := Context{ProtocolContext: s.ProtocolContext, TokenAddress: common.BigToAddress(big.NewInt(34)), Timestamp: 2000000000}
+	commitment, _ := s.Commitment()
+	p := CreateParams{Token: c.TokenAddress, Owner: common.BigToAddress(big.NewInt(44)), RevocationShard: 1, CreditCommitment: common.Hash(commitment.Bytes()), Deadline: big.NewInt(2000000300)}
+	d := f["delivery"].(map[string]any)
+	clue := make([]byte, 68)
+	clue[64] = 24
+	ds := []protocol.Delivery{{Ciphertext: bytesHex(t, d["ownerCiphertext"].(string)), Clue: clue}, {Ciphertext: bytesHex(t, d["spenderCiphertext"].(string)), Clue: clue}}
+	prepared, err := PrepareCreate(c, p, ds, s)
+	if err != nil {
+		t.Fatal(err)
+	}
+	intent, err := prepared.ExportBroadcasterIntent()
+	if err != nil {
+		t.Fatal(err)
+	}
+	decoded, err := broadcaster.DecodeIntent(intent)
+	if err != nil || decoded.Method != "createCredit" || decoded.FeeAmount.Sign() != 0 {
+		t.Fatal("unsigned Credit intent", err)
+	}
+	key, _ := crypto.ToECDSA(common.LeftPadBytes([]byte{9}, 32))
+	collector := common.HexToAddress("0x1234")
+	client := creditBroadcaster(t, c, key, collector, common.HexToHash("0x77"))
+	if err = prepared.WithBroadcaster(context.Background(), client, WithBroadcasterOptions{MaxFeeAmount: big.NewInt(2)}); err != nil {
+		t.Fatal(err)
+	}
+	quoted, err := prepared.ExportIntent()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if quoted.Create.FeeRecipient != collector || quoted.Create.FeeAmount.Cmp(big.NewInt(1)) != 0 || quoted.Create.CreditCommitment != p.CreditCommitment || quoted.CreatedState.SharedKey != s.SharedKey {
+		t.Fatal("quote changed grant or omitted fee")
+	}
+}
+
+func TestCreditKnownSubmissionQueriesWithoutFreshProof(t *testing.T) {
+	s, _ := fixture(t)
+	c := Context{ProtocolContext: s.ProtocolContext, TokenAddress: common.BigToAddress(big.NewInt(34)), Timestamp: 2000000000}
+	clue := make([]byte, 68)
+	clue[64] = 24
+	commitment, _ := s.Commitment()
+	prepared, err := PrepareCreate(c, CreateParams{Token: c.TokenAddress, Owner: common.BigToAddress(big.NewInt(44)), RevocationShard: 1, CreditCommitment: common.Hash(commitment.Bytes()), Deadline: big.NewInt(2000000300)}, []protocol.Delivery{{Ciphertext: []byte{0x82}, Clue: clue}, {Ciphertext: []byte{0x82}, Clue: clue}}, s)
+	if err != nil {
+		t.Fatal(err)
+	}
+	key, _ := crypto.GenerateKey()
+	client := creditBroadcaster(t, c, key, common.HexToAddress("0x1234"), common.HexToHash("0x77"))
+	if err = prepared.WithBroadcaster(context.Background(), client, WithBroadcasterOptions{MaxFeeAmount: big.NewInt(2)}); err != nil {
+		t.Fatal(err)
+	}
+	prepared.submission = Submission{RequestID: "original", State: "uncertain"}
+	status, err := prepared.SubmitBroadcaster(context.Background(), client, "original")
+	if err != nil || status.State != "uncertain" {
+		t.Fatal("known externalized request needed a new proof/send", status, err)
 	}
 }

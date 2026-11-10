@@ -97,7 +97,9 @@ Every Credit request carries `FeeRecipient` and `FeeAmount`: either a complete z
 
 ## Paid broadcaster flow
 
-Note operations retain their `WithBroadcaster` flow. All four Credit operations support:
+Note operations use the same `*broadcaster.Client` for ordinary and required-policy relays. Configure optional `sdk.InvisiOptions.Provenance` with the trusted source client, authenticated manifest and local offline prover. `prepared.WithBroadcaster` finalizes fees, automatically builds source evidence/tracking for private inputs, and stores public attachments for `SubmitBroadcaster`; applications supply no manual sidecar. Managed sessions persist the same evidence and reservations. See [Provenance](PROVENANCE.md) and [normal Note broadcaster example](examples/03-hidden-amount/README.md).
+
+All four Credit operations support:
 
 1. Prepare the business request.
 2. Select `prepared.WithBroadcaster(ctx, client, credit.WithBroadcasterOptions{MaxFeeAmount: limit})` before authorization/proving.
@@ -163,4 +165,4 @@ Current configurable examples live under [examples](examples/README.md). Real na
 
 ## Optional Provenance tracking
 
-The independent [Provenance module](PROVENANCE.md) keeps source recognition separate from protocol spendability. Successful private-input preflight returns a durable tracking ID; default recovery persists it before broadcast permission and uses automatic chain matching, with bounded tracking waits and primary reconciliation. Normal confirmation does not require another `submitProof`. Explicit `prepareDirect` / `PrepareDirect` / `prepare_direct` and manual submission remain available for an intentionally selected self-broadcast/reproof fallback; missing tracking never silently switches modes. App integration, raw openings, signing and nonce reservations remain host-owned. See the flat [Provenance examples](examples/07-provenance/README.md).
+The independent [Provenance module](PROVENANCE.md) keeps source recognition separate from protocol spendability. Successful private-input preflight returns a durable tracking ID; default recovery persists it before broadcast permission and uses automatic chain matching, with bounded tracking waits and primary reconciliation. Normal confirmation does not require another `submitProof`. Explicit `prepareDirect` / `PrepareDirect` / `prepare_direct` and manual submission remain available for an intentionally selected self-broadcast/reproof fallback; missing tracking never silently switches modes. App integration, raw openings, signing and nonce reservations remain host-owned. See the flat [Provenance examples](examples/03-hidden-amount/README.md).

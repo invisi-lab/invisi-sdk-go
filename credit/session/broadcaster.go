@@ -46,6 +46,21 @@ func (o *Operation) WithBroadcaster(ctx context.Context, client *broadcaster.Cli
 func (o *Operation) SubmitBroadcaster(ctx context.Context, client *broadcaster.Client) (broadcaster.Status, error) {
 	o.mu.Lock()
 	defer o.mu.Unlock()
+	snapshot, err := o.session.store.ReadSnapshot(ctx)
+	if err != nil {
+		return broadcaster.Status{}, err
+	}
+	record, ok := snapshot.Operations[o.id]
+	if !ok || record.WorkerID != o.worker {
+		return broadcaster.Status{}, fmt.Errorf("Credit operation lease changed")
+	}
+	if record.Externalized {
+		binding := record.Intent.Broadcaster
+		if client == nil || binding == nil || binding.Configuration != client.Configuration() || binding.PolicyID != client.RequiredProvenancePolicy() {
+			return broadcaster.Status{}, fmt.Errorf("use the originally selected broadcaster")
+		}
+		return client.Status(ctx, o.id)
+	}
 	if err := o.checkFresh(ctx); err != nil {
 		return broadcaster.Status{}, err
 	}

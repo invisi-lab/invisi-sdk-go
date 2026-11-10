@@ -31,7 +31,7 @@ func TestProvenanceQuotePolicyBinding(t *testing.T) {
 	if e != nil {
 		t.Fatal(e)
 	}
-	s := ProvenanceSignedQuote{Quote: q, Signature: "0x" + common.Bytes2Hex(signature), ProvenancePolicyID: &policy, RequestHashFormat: ProvenanceRequestHashFormat}
+	s := SignedQuote{Quote: q, Signature: "0x" + common.Bytes2Hex(signature), ProvenancePolicyID: &policy, RequestHashFormat: ProvenanceRequestHashFormat}
 	if e := VerifyProvenanceQuote(s, trust, data, 0, policy); e != nil {
 		t.Fatal(e)
 	}
@@ -48,7 +48,10 @@ func TestProvenanceQuotePolicyBinding(t *testing.T) {
 	}
 	wire, _ := json.Marshal(s)
 	var decoded SignedQuote
-	if json.Unmarshal(wire, &decoded) == nil {
-		t.Fatal("legacy quote silently dropped policy metadata")
+	if json.Unmarshal(wire, &decoded) != nil || decoded.ProvenancePolicyID == nil || *decoded.ProvenancePolicyID != policy {
+		t.Fatal("quote policy metadata lost")
+	}
+	if VerifyQuote(decoded, trust, data, 0) == nil {
+		t.Fatal("unconfigured verification accepted a policy quote")
 	}
 }

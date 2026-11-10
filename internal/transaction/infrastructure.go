@@ -23,6 +23,7 @@ type InvisiOptions struct {
 	Provider        Provider
 	Prover          Prover
 	FundingVerifier FundingAuthorizationVerifier
+	Provenance      *ProvenanceCapability
 }
 
 type Invisi struct{ options InvisiOptions }

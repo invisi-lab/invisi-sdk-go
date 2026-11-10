@@ -10,7 +10,7 @@ import (
 )
 
 func TestSDKOptionsContainOnlyInfrastructure(t *testing.T) {
-	allowed := map[string]bool{"ProtocolRPC": true, "Provider": true, "Prover": true, "FundingVerifier": true}
+	allowed := map[string]bool{"ProtocolRPC": true, "Provider": true, "Prover": true, "FundingVerifier": true, "Provenance": true}
 	typ := reflect.TypeOf(sdk.InvisiOptions{})
 	if typ.NumField() != len(allowed) {
 		t.Fatal("unexpected infrastructure option count", typ.NumField())

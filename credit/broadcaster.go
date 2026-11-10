@@ -15,6 +15,7 @@ type WithBroadcasterOptions struct {
 	MaxAttempts  int
 }
 type BroadcasterBinding struct {
+	PolicyID      common.Hash
 	Configuration broadcaster.Configuration
 	Quote         broadcaster.SignedQuote
 	Intent        []byte
@@ -186,10 +187,10 @@ func (p *Prepared) WithBroadcaster(ctx context.Context, client *broadcaster.Clie
 		if err != nil {
 			return err
 		}
-		if err = broadcaster.VerifyQuote(signed, trust, data, uint64(time.Now().Unix())); err != nil {
+		if err = broadcaster.VerifyRequiredQuote(signed, trust, data, uint64(time.Now().Unix()), client.RequiredProvenancePolicy()); err != nil {
 			return err
 		}
-		proposal.Broadcaster = &BroadcasterBinding{Configuration: client.Configuration(), Quote: signed, Intent: append([]byte(nil), data...)}
+		proposal.Broadcaster = &BroadcasterBinding{PolicyID: client.RequiredProvenancePolicy(), Configuration: client.Configuration(), Quote: signed, Intent: append([]byte(nil), data...)}
 		frozen, err := freeze(proposal)
 		if err != nil {
 			return err
@@ -238,7 +239,7 @@ func (p *Prepared) ExportBroadcasterSubmission(client *broadcaster.Client) ([]by
 		return nil, broadcaster.SignedQuote{}, fmt.Errorf("broadcaster revocation requires owner signature")
 	}
 	p.mu.Unlock()
-	if binding.Configuration != client.Configuration() {
+	if binding.Configuration != client.Configuration() || binding.PolicyID != client.RequiredProvenancePolicy() {
 		return nil, broadcaster.SignedQuote{}, fmt.Errorf("use the originally selected broadcaster")
 	}
 	data, err := p.Calldata(common.Address{})
@@ -257,7 +258,7 @@ func (p *Prepared) ExportBroadcasterSubmission(client *broadcaster.Client) ([]by
 	if err != nil {
 		return nil, broadcaster.SignedQuote{}, err
 	}
-	if err = broadcaster.VerifyQuote(quote, *quote.Context, data, uint64(time.Now().Unix())); err != nil {
+	if err = broadcaster.VerifyRequiredQuote(quote, *quote.Context, data, uint64(time.Now().Unix()), binding.PolicyID); err != nil {
 		return nil, broadcaster.SignedQuote{}, err
 	}
 	return data, quote, nil
@@ -266,6 +267,22 @@ func (p *Prepared) SubmitBroadcaster(ctx context.Context, client *broadcaster.Cl
 	if requestID == "" {
 		return broadcaster.Status{}, fmt.Errorf("durable request ID required")
 	}
+	p.mu.Lock()
+	known := p.submission.RequestID
+	binding := p.intent.Broadcaster
+	if known != "" {
+		if known != requestID {
+			p.mu.Unlock()
+			return broadcaster.Status{}, fmt.Errorf("Credit submission already has another request ID")
+		}
+		if client == nil || binding == nil || binding.Configuration != client.Configuration() || binding.PolicyID != client.RequiredProvenancePolicy() {
+			p.mu.Unlock()
+			return broadcaster.Status{}, fmt.Errorf("use the originally selected broadcaster")
+		}
+		p.mu.Unlock()
+		return client.Status(ctx, known)
+	}
+	p.mu.Unlock()
 	data, quote, err := p.ExportBroadcasterSubmission(client)
 	if err != nil {
 		return broadcaster.Status{}, err
