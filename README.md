@@ -3,10 +3,10 @@
 Go client for the current Invisi Protocol. Requires Go 1.26.1 or newer.
 
 ```sh
-go get github.com/invisi-lab/invisi-sdk-go
+go get github.com/invisi-lab/invisi-sdk-go@v1.1.8
 ```
 
-The SDK remains in the v1 series. Source synchronization does not publish a new module version or upgrade deployed contracts.
+Release target: **1.1.8**. Module versions are repository tags; preparing this source does not create `v1.1.8` or publish a release. The `go 1.26.1` directive remains the toolchain requirement. The SDK remains in the v1 series. Source synchronization does not publish a new module version or upgrade deployed contracts.
 
 ## Packages
 
@@ -140,7 +140,19 @@ RPC candidates are authenticated against canonical receipts, insertion positions
 
 IPN contains no viewing/spending key, ciphertext, payload or membership path. Export is not a claim of payment. Identity-only outputs and Credit states cannot export IPN. Deliver only the recipient's final output after confirmation, never the payer's change.
 
-## Gas references
+## Gas estimates and references
+
+`ready.EstimateGas(ctx, from)` on `sdk.PreparedTransaction` or `session.Operation` calls the configured provider's `eth_estimateGas` with the exported final destination, calldata, zero value and actual caller. It returns `GasEstimate{Source:"rpc", GasUnits:...}` and requires a ready EVM transaction. The configured provider must additionally implement `protocol.GasEstimator` (geth `ethclient.Client` does); the base `sdk.Provider` contract is unchanged. Managed estimation uses `ExportTransaction`, including its durable externalization fence.
+
+For all four Credit operations (create, draw, update and revoke), use `prepared.EstimateGas(ctx, provider, from)` or `managedCreditOperation.EstimateGas(ctx, provider, from)`. These use `Calldata(from)` so proof requirements and revocation caller authorization remain enforced. Managed Credit estimation journals the final calldata through the existing ready transition. Estimation does not send a transaction; provider errors are returned unchanged.
+
+```go
+estimate, err := ready.EstimateGas(ctx, actualSender)
+if err != nil { return err }
+log.Printf("final RPC gas estimate: %d", estimate.GasUnits)
+```
+
+RPC estimates reflect current chain execution. Broadcaster quotes price a relay service, quote `maxGas` is a ceiling, and the catalog is a measured reference; these values serve different purposes.
 
 `gas.Reference(shape)` matches a complete documented benchmark shape and returns a detached result with source hash, docs commit, conditions and measured median. Unsupported shapes return unavailable; there is no arbitrary linear fallback or current aggregate gas claim based on historical private-pin experiments.
 
@@ -152,6 +164,8 @@ Credit measurements must match the packaged manifest/format identity, raw Credit
 go test ./...
 go test -race ./...
 go vet ./...
+go list ./...
+go mod verify
 python3 scripts/test-sync-reference.py
 ```
 
@@ -167,4 +181,4 @@ Current configurable examples live under [examples](examples/README.md). Real na
 
 The independent [Provenance module](PROVENANCE.md) keeps source recognition separate from protocol spendability. Relay use is optional and limited to operator-supported tokens. Source evidence is generated from the final ready statement; Broadcaster verifies and preflights it before sending. Direct payment submission and `SubmitProvenance` are independent App-controlled steps, in either order. The service automatically matches confirmed payments and publishes recognized outputs.
 
-`ExportProvenanceProof` returns a public recovery packet without private Note openings. Persist it before sending; a fresh client can call `sdk.SubmitProvenanceProof` without the original wallet, prover or transaction hash. If trust or chain generation changes, use `ProveProvenance(ctx, sdk.ProvenanceProveOptions{Reprove:true})` with the retained encrypted operation. Reproof preserves original payment calldata and the main proof. See [examples](examples/README.md).
+`ExportProvenanceProof` returns a public recovery packet without private Note openings. Persist it before sending; a fresh client can call `sdk.SubmitProvenanceProof` without the original wallet, prover or transaction hash. Repeated `ProveProvenance(ctx)` validates and reuses cached public evidence locally using the trusted Source client; it needs no Chain RPC, Source RPC, prover or manifest assets. If trust or chain generation changes, use `ProveProvenance(ctx, sdk.ProvenanceProveOptions{Reprove:true})` with the retained encrypted operation. Reproof preserves original payment calldata and the main proof. See [examples](examples/README.md).

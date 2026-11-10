@@ -7,6 +7,8 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
+	"errors"
+	"fmt"
 	"math/big"
 	"net/http"
 	"net/http/httptest"
@@ -127,6 +129,14 @@ func configureSourceFlowGeneration(t *testing.T, s *WalletSession, original *Ope
 		case "provenance_getRoot":
 			result["certificate"] = latest
 			result["allowedForNewProof"] = true
+			var query struct {
+				RootID string `json:"rootId"`
+			}
+			json.Unmarshal(req.Params[0], &query)
+			if query.RootID == generation+":1" {
+				result["certificate"] = cert
+				result["allowedForNewProof"] = len(historical) < 2 || !historical[1]
+			}
 		case "provenance_getRoots":
 			result["items"] = []provenance.RootCertificate{cert, latest}
 			result["nextCursor"] = ""
@@ -305,6 +315,17 @@ func TestBroadcasterAutomaticallyProvesOnlyFinalReadySource(t *testing.T) {
 	if e != nil {
 		t.Fatal(e)
 	}
+	provider := ready.session.options.Provider
+	ready.session.options.Provider = nil
+	_, missingErr := ready.SubmitBroadcaster(ctx, c)
+	var missing *sdk.MissingCapabilityError
+	if !errors.As(missingErr, &missing) {
+		t.Fatal("first broadcast without primary must fail with capability error", missingErr)
+	}
+	if prover.calls.Load() != 0 {
+		t.Fatal("missing primary invoked prover")
+	}
+	ready.session.options.Provider = provider
 	status, e := ready.SubmitBroadcaster(ctx, c)
 	if e != nil {
 		t.Fatal(e)
@@ -328,16 +349,22 @@ func TestProvenanceReproofRefreshesTrustWithoutChangingPayment(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	markSourceConfirmed(t, ready)
 	mainProof := append([]byte(nil), ready.bundle.Proof...)
 	refreshed, _ := configureSourceFlowGeneration(t, ready.session, ready, false, false, "2")
 	if _, err = ready.ProveProvenance(ctx); err == nil {
 		t.Fatal("stale cached Source evidence accepted")
 	}
 	// Failed explicit reproof must retain prior evidence and the original payment for retry.
+	beforeFailure, _ := ready.session.options.Store.ReadSnapshot(ctx, ready.session.scope)
 	cancelCtx, cancel := context.WithCancel(ctx)
 	refreshed.onProve = cancel
 	if _, err = ready.ProveProvenance(cancelCtx, sdk.ProvenanceProveOptions{Reprove: true}); err == nil {
 		t.Fatal("cancelled Source reproof succeeded")
+	}
+	afterFailure, _ := ready.session.options.Store.ReadSnapshot(ctx, ready.session.scope)
+	if !reflect.DeepEqual(beforeFailure.Operations[ready.ID()], afterFailure.Operations[ready.ID()]) {
+		t.Fatal("failed reproof changed journal")
 	}
 	unchanged, err := ready.ExportProvenanceProof(ctx)
 	if err != nil {
@@ -355,6 +382,9 @@ func TestProvenanceReproofRefreshesTrustWithoutChangingPayment(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	if ready.status != "confirmed" {
+		t.Fatal("reproof changed terminal status")
+	}
 	if original.Data != current.Data || original.OperationDigest != current.OperationDigest || !reflect.DeepEqual(original.PublicInputs, current.PublicInputs) || !bytes.Equal(mainProof, ready.bundle.Proof) {
 		t.Fatal("Source reproof changed the original payment")
 	}
@@ -365,5 +395,115 @@ func TestProvenanceReproofRefreshesTrustWithoutChangingPayment(t *testing.T) {
 	}
 	if err = protocol.ValidateProvenanceProof(current, ready.session.options.Provenance.Client.Trust); err != nil {
 		t.Fatal(err)
+	}
+}
+
+func TestProvenanceDeniedHistoricalRootNeverProves(t *testing.T) {
+	ready, _ := readySourceOperation(t, false)
+	backend, _ := configureSourceFlow(t, ready.session, ready, false, false, true, true)
+	if _, err := ready.ProveProvenance(context.Background()); err == nil {
+		t.Fatal("denied historical root accepted")
+	}
+	if backend.calls.Load() != 0 {
+		t.Fatal("prover called with denied historical root")
+	}
+}
+
+func TestProvenanceCachedProofNeedsOnlyTrustedClient(t *testing.T) {
+	ctx := context.Background()
+	ready, backend := readySourceOperation(t, false)
+	ready, err := ready.ProveProvenance(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	original, err := ready.ExportProvenanceProof(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	markSourceConfirmed(t, ready)
+	mainProof := append([]byte(nil), ready.bundle.Proof...)
+	capability := ready.session.options.Provenance
+	originalHTTP := capability.Client.HTTP
+	capability.Client.HTTP = &http.Client{Transport: offlineSourceTransport{t}}
+	capability.Prover = nil
+	capability.Manifest = provenance.ManifestIdentity{}
+	ready.session.options.Provider = nil
+	next, err := ready.ProveProvenance(ctx)
+	if err != nil {
+		t.Fatal("cached proof requires proving assets or network", err)
+	}
+	got, err := next.ExportProvenanceProof(ctx)
+	if err != nil || !reflect.DeepEqual(original, got) || !bytes.Equal(mainProof, next.bundle.Proof) || next.status != "confirmed" || backend.calls.Load() != 1 {
+		t.Fatal("cached proof changed", err)
+	}
+	capability.Client.HTTP = originalHTTP
+	if _, err := next.SubmitProvenance(ctx); err != nil {
+		t.Fatal("client-only cached submit failed", err)
+	}
+	if backend.calls.Load() != 1 {
+		t.Fatal("cached submission invoked prover")
+	}
+}
+
+type offlineSourceTransport struct{ t *testing.T }
+
+func (o offlineSourceTransport) RoundTrip(*http.Request) (*http.Response, error) {
+	o.t.Error("cached proof performed a Source RPC")
+	return nil, context.Canceled
+}
+
+func markSourceConfirmed(t *testing.T, op *Operation) {
+	t.Helper()
+	// This fixture establishes terminal state and spent inputs; separate tests cover chain confirmation.
+	err := op.session.options.Store.Update(context.Background(), op.session.scope, func(state *WalletState) error {
+		record := state.Operations[op.ID()]
+		record.Status = "confirmed"
+		state.Operations[op.ID()] = record
+		for key, note := range state.Notes {
+			if note.ReservedBy == op.ID() {
+				note.Spent = true
+				note.ReservedBy = ""
+				state.Notes[key] = note
+			}
+		}
+		return nil
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	op.status = "confirmed"
+}
+
+func TestProvenanceMissingPrimaryCapabilityPreservesJournal(t *testing.T) {
+	for _, cached := range []bool{false, true} {
+		t.Run(fmt.Sprint(cached), func(t *testing.T) {
+			ctx := context.Background()
+			ready, backend := readySourceOperation(t, false)
+			var err error
+			if cached {
+				ready, err = ready.ProveProvenance(ctx)
+				if err != nil {
+					t.Fatal(err)
+				}
+			}
+			before, _ := ready.session.options.Store.ReadSnapshot(ctx, ready.session.scope)
+			ready.session.options.Provider = nil
+			_, err = ready.ProveProvenance(ctx, sdk.ProvenanceProveOptions{Reprove: cached})
+			var missing *sdk.MissingCapabilityError
+			if !errors.As(err, &missing) {
+				t.Fatal("missing primary must return capability error", err)
+			}
+			after, _ := ready.session.options.Store.ReadSnapshot(ctx, ready.session.scope)
+			if !reflect.DeepEqual(before.Operations[ready.ID()], after.Operations[ready.ID()]) {
+				t.Fatal("failed proof changed journal")
+			}
+			expected := int64(0)
+			if cached {
+				expected = 1
+			}
+			if backend.calls.Load() != expected {
+				t.Fatal("missing primary invoked prover")
+			}
+		})
 	}
 }

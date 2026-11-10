@@ -67,6 +67,9 @@ func (o *Execution) prepareProvenance(ctx context.Context) (*ProvenancePlan, err
 	if o.Plan.Kind != "transact" || len(o.Plan.Inputs) == 0 {
 		return out, nil
 	}
+	if o.Runtime.Options.Provider == nil {
+		return nil, &MissingCapabilityError{Capability: "Chain RPC provider for fresh provenance proof"}
+	}
 	c, e := o.sourceCapability()
 	if e != nil {
 		return nil, e
@@ -288,6 +291,14 @@ func (o *Execution) prepareProvenance(ctx context.Context) (*ProvenancePlan, err
 			if old, ok := selected[key]; ok && old.certificate.RootSequence == cert.RootSequence {
 				continue
 			}
+			current, err := c.Client.GetRoot(ctx, cert.ChainGeneration+":"+cert.RootSequence)
+			if err != nil {
+				return nil, err
+			}
+			var allowed bool
+			if json.Unmarshal(current["allowedForNewProof"], &allowed) != nil || !allowed {
+				continue
+			}
 			if e = load(cert); e != nil {
 				return nil, e
 			}
@@ -354,11 +365,14 @@ func (o *Execution) validateProvenance(ctx context.Context, saved *ProvenancePla
 		}
 		return nil
 	}
-	c, e := o.sourceCapability()
-	if e != nil {
-		return e
+	c := o.Runtime.Options.Provenance
+	if c == nil || c.Client == nil {
+		return &MissingCapabilityError{Capability: "trusted Provenance client"}
 	}
 	trust := c.Client.Trust
+	if !sourceNumber(trust.ChainID, o.Plan.Context.ChainID.String()) || !sourceNumber(trust.ProtocolAddress, o.Plan.Context.ProtocolAddress.Hex()) {
+		return errors.New("provenance capability deployment mismatch")
+	}
 	if c.Client.Endpoint != saved.Endpoint || trust.ChainGeneration != saved.Generation || !sourceNumber(trust.ProviderID, saved.ProviderID) || trust.ManifestSHA256 != saved.ManifestSHA256 {
 		return errors.New("stored provenance trust changed; explicit preparation required")
 	}
@@ -391,6 +405,9 @@ func (o *Execution) validateProvenance(ctx context.Context, saved *ProvenancePla
 		return errors.New("stored provenance digest mismatch")
 	}
 	if remote {
+		if o.Runtime.Options.Provider == nil {
+			return &MissingCapabilityError{Capability: "Chain RPC provider for provenance anchor validation"}
+		}
 		for _, cert := range bundle.RootCertificates {
 			height, err := provenance.Uint(cert.ConfirmedBlockNumber, 64)
 			if err != nil {
@@ -451,7 +468,7 @@ func (o *Execution) ProveProvenance(ctx context.Context, options ...ProvenancePr
 		return errors.New("provenance proof requires private Note inputs")
 	}
 	if o.Plan.Provenance != nil && !reprove {
-		return o.validateProvenance(ctx, o.Plan.Provenance, true)
+		return o.validateProvenance(ctx, o.Plan.Provenance, false)
 	}
 	previous := o.Plan.Provenance
 	// Old Source trust may be stale; independently authenticate the native plan and main proof.
@@ -514,13 +531,10 @@ func (o *Execution) SubmitProvenance(ctx context.Context) (provenance.Result, er
 	if o.Plan.Provenance == nil {
 		return nil, errors.New("provenance proof unavailable")
 	}
-	if e := o.validateProvenance(ctx, o.Plan.Provenance, true); e != nil {
+	if e := o.validateProvenance(ctx, o.Plan.Provenance, false); e != nil {
 		return nil, e
 	}
-	c, e := o.sourceCapability()
-	if e != nil {
-		return nil, e
-	}
+	c := o.Runtime.Options.Provenance
 	packet, e := o.ExportProvenanceProof(ctx)
 	if e != nil {
 		return nil, e

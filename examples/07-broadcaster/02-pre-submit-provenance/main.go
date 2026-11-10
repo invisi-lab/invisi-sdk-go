@@ -69,6 +69,8 @@ func main() {
 	signature := must(shared.Sign(authorization, publicWallet.OwnerAddress(), "OWNER_PRIVATE_KEY"))
 	prepared = must(prepared.WithWalletSignature(ctx, signature))
 	ready := must(prepared.Prove(ctx))
+	estimate := must(ready.EstimateGas(ctx, publicWallet.OwnerAddress()))
+	log.Printf("Final RPC gas estimate: %d", estimate.GasUnits)
 	ready = must(ready.ProveProvenance(ctx))
 	packet := must(ready.ExportProvenanceProof(ctx))
 	log.Printf("Public Source proof: operation=%s sidecars=%d", packet.OperationDigest, len(packet.Sidecars))

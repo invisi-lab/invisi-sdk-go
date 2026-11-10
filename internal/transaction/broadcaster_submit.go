@@ -82,6 +82,9 @@ func (o *Execution) SubmitBroadcaster(ctx context.Context, c *broadcaster.Client
 		}
 	}
 	if !retry {
+		if o.Runtime.Options.Provider == nil {
+			return empty, &MissingCapabilityError{Capability: "Chain RPC provider for first broadcaster submission"}
+		}
 		if o.Status != "ready" || len(o.Data) == 0 {
 			return empty, errors.New("ready transaction required")
 		}

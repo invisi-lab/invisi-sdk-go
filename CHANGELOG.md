@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.1.8
+
+- Check historical Source root eligibility before replaying a tree for a new proof.
+- Reuse locally validated cached provenance evidence without network calls, local manifest assets or a prover; explicit reproof refreshes trust and preserves the original payment on failure or cancellation.
+- Add final provider-backed gas estimation for prepared and managed Note transactions and all four Credit operations, returning an explicit RPC source.
+- Verify token-filtered broadcaster discovery against live token, chain, protocol and registered signer identity.
+- Document release preparation and distinguish actual gas estimation from measured references, relay fees and quote ceilings.
+
 ## 1.1.7
 
 - Add canonical cross-language IPR payment requests and fixed-size IPN Note delivery.

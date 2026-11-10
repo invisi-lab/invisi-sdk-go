@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"sync/atomic"
 	"testing"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -15,6 +16,8 @@ import (
 )
 
 func TestDiscoveryReturnsTokenCompatibleRegisteredClient(t *testing.T) {
+	var wrongChain atomic.Bool
+	var wrongToken atomic.Bool
 	registry := protocolrpc.ContractDeployment{Address: common.HexToAddress("0x11"), RuntimeCodeHash: crypto.Keccak256Hash([]byte{1}), FromBlock: 1}
 	d := protocolrpc.ProtocolDeployment{ChainID: "97", Protocol: registry, BroadcasterRegistry: &registry}
 	token := common.HexToAddress("0x22")
@@ -42,7 +45,15 @@ func TestDiscoveryReturnsTokenCompatibleRegisteredClient(t *testing.T) {
 			if r.URL.Path == "/bad" {
 				feeRecipient = common.HexToAddress("0xff")
 			}
-			result = map[string]any{"apiVersion": "v1", "protocolVersion": "1", "chainId": "97", "protocol": registry.Address.Hex(), "sender": signer.Hex(), "feeRecipient": feeRecipient.Hex(), "submissionHalted": false, "provenance": map[string]any{"enabled": false}, "tokenAddress": token.Hex(), "supported": true}
+			chain := "97"
+			if wrongChain.Load() {
+				chain = "98"
+			}
+			returnedToken := token
+			if wrongToken.Load() {
+				returnedToken = common.HexToAddress("0xff")
+			}
+			result = map[string]any{"apiVersion": "v1", "protocolVersion": "1", "chainId": chain, "protocol": registry.Address.Hex(), "sender": signer.Hex(), "feeRecipient": feeRecipient.Hex(), "submissionHalted": false, "provenance": map[string]any{"enabled": false}, "tokenAddress": returnedToken.Hex(), "supported": true}
 		}
 		json.NewEncoder(w).Encode(map[string]any{"jsonrpc": "2.0", "id": req.ID, "result": result})
 	}))
@@ -55,8 +66,22 @@ func TestDiscoveryReturnsTokenCompatibleRegisteredClient(t *testing.T) {
 	if e != nil || len(clients) != 1 {
 		t.Fatal(clients, e)
 	}
+	if _, err := p.GetBroadcasters(context.Background(), BroadcasterOptions{}); err == nil {
+		t.Fatal("zero token accepted")
+	}
 	config := clients[0].Configuration()
 	if config.Endpoint != endpoint+"/good" || config.QuoteSigner != signer || config.FeeRecipient != recipient {
 		t.Fatal(config)
+	}
+	wrongChain.Store(true)
+	clients, e = p.GetBroadcasters(context.Background(), BroadcasterOptions{TokenAddress: token, ClientOptions: broadcaster.Options{HTTPClient: server.Client()}})
+	if e != nil || len(clients) != 0 {
+		t.Fatal("cross-chain service accepted", e)
+	}
+	wrongChain.Store(false)
+	wrongToken.Store(true)
+	clients, e = p.GetBroadcasters(context.Background(), BroadcasterOptions{TokenAddress: token, ClientOptions: broadcaster.Options{HTTPClient: server.Client()}})
+	if e != nil || len(clients) != 0 {
+		t.Fatal("different token service accepted", e)
 	}
 }
