@@ -16,15 +16,17 @@ import (
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/invisi-lab/invisi-sdk-go/broadcaster"
 	"github.com/invisi-lab/invisi-sdk-go/provenance"
 	sdk "github.com/invisi-lab/invisi-sdk-go/sdk"
 )
 
 // This prover exercises orchestration only; real Noir/BB acceptance is tested by the owned-chain harness.
 type sourceFlowProver struct {
-	calls    atomic.Int64
-	expected []string
-	onProve  func()
+	calls     atomic.Int64
+	expected  []string
+	statement atomic.Value
+	onProve   func()
 }
 
 func (p *sourceFlowProver) Prove(ctx context.Context, _ provenance.ManifestIdentity, k int, _ provenance.Witness, expected []string) (provenance.ProofResult, error) {
@@ -36,6 +38,7 @@ func (p *sourceFlowProver) Prove(ctx context.Context, _ provenance.ManifestIdent
 		return provenance.ProofResult{}, e
 	}
 	p.expected = append([]string(nil), expected...)
+	p.statement.Store(append([]string(nil), expected...))
 	if k != 1 {
 		panic("unexpected source capacity")
 	}
@@ -98,6 +101,7 @@ func configureSourceFlow(t *testing.T, s *WalletSession, original *Operation, de
 		latest.Signature = "0x" + hex.EncodeToString(ed25519.Sign(key, msg))
 	}
 	tracking := provenance.Tracking{ID: strings.Repeat("a", 48), Status: "pending_confirmation", ExpiresAt: "4102444800"}
+	prover := &sourceFlowProver{}
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		var req struct {
 			ID     uint64
@@ -144,6 +148,15 @@ func configureSourceFlow(t *testing.T, s *WalletSession, original *Operation, de
 			result["broadcastDecision"] = decision
 			result["operations"] = []any{map[string]any{"operationIndex": "0", "operationDigest": tracking.OperationDigest, "broadcastDecision": decision, "tracking": tracking}}
 		case "provenance_getTracking":
+			if raw := prover.statement.Load(); raw != nil {
+				pi := raw.([]string)
+				hi, _ := provenance.Uint(pi[9], 128)
+				lo, _ := provenance.Uint(pi[10], 128)
+				tracking.OperationDigest = common.BigToHash(new(big.Int).Or(new(big.Int).Lsh(hi, 128), lo)).Hex()
+			}
+			if deny {
+				tracking.Status = "expired"
+			}
 			result["tracking"] = tracking
 		default:
 			t.Errorf("unexpected source request %s; must not expose per-note interest", req.Method)
@@ -152,7 +165,6 @@ func configureSourceFlow(t *testing.T, s *WalletSession, original *Operation, de
 		json.NewEncoder(w).Encode(map[string]any{"jsonrpc": "2.0", "id": req.ID, "result": result})
 	}))
 	t.Cleanup(server.Close)
-	prover := &sourceFlowProver{}
 	s.options.Provenance = &sdk.ProvenanceCapability{Client: &provenance.Client{Endpoint: server.URL, Trust: trust}, Manifest: manifest, Prover: prover, MaxRootPages: 1, MaxLeaves: 1}
 	// Preparation already captured its runtime; this fixture installs the same explicit local capability.
 
@@ -181,7 +193,7 @@ func TestProvenanceFinalFeeAndAutomaticAttachments(t *testing.T) {
 	if e != nil {
 		t.Fatal(e)
 	}
-	if fees.Load() != 3 || prover.calls.Load() != 1 || evaluates.Load() != 1 {
+	if fees.Load() != 3 || prover.calls.Load() != 1 || evaluates.Load() != 0 {
 		t.Fatal("source proof ran before final fee", fees.Load(), prover.calls.Load(), evaluates.Load())
 	}
 	words, e := next.execution().Words()
@@ -215,7 +227,7 @@ func TestProvenanceFinalFeeAndAutomaticAttachments(t *testing.T) {
 	if _, e = next.SubmitBroadcaster(ctx, c); e != nil {
 		t.Fatal(e)
 	}
-	if prover.calls.Load() != 1 || evaluates.Load() != 1 {
+	if prover.calls.Load() != 1 || evaluates.Load() != 0 {
 		t.Fatal("submission regenerated source evidence")
 	}
 	s.options.Provenance = nil
@@ -426,5 +438,40 @@ func TestProvenanceSubmitRechecksPrimaryCheckpoint(t *testing.T) {
 	}
 	if next.Status() != "ready" {
 		t.Fatal("rejected submission advanced journal")
+	}
+}
+
+func TestProvenanceQuoteAcknowledgementFailsClosed(t *testing.T) {
+	for _, which := range []string{"missing", "expired", "digest", "unknown", "untrusted-id"} {
+		t.Run(which, func(t *testing.T) {
+			ctx := context.Background()
+			s, token, _ := testSession(t, uint64(time.Now().Unix()))
+			address, _ := s.wallet.GetAddress()
+			original, e := s.PrepareTransfer(ctx, sdk.TransferPreparation{TokenAddress: token, Outputs: testOutputs(s, []testPaymentOutput{{To: address, Amount: big.NewInt(30)}})})
+			if e != nil {
+				t.Fatal(e)
+			}
+			_, evaluates := configureSourceFlow(t, s, original, false, false)
+			c, _ := testBroadcasterQuote(t, original, []int64{5}, false, func(q *broadcaster.SignedQuote) {
+				switch which {
+				case "missing":
+					q.ProvenanceTracking = nil
+				case "expired":
+					q.ProvenanceTracking.Status = "expired"
+				case "digest":
+					q.ProvenanceTracking.OperationDigest = common.HexToHash("0x42").Hex()
+				case "unknown":
+					q.ProvenanceTracking.Status = "unexpected"
+				case "untrusted-id":
+					q.ProvenanceTracking.ID = strings.Repeat("b", 48)
+				}
+			}, common.HexToHash("0x77"))
+			if _, e = original.WithBroadcaster(ctx, c, sdk.WithBroadcasterOptions{MaxFeeAmount: big.NewInt(10)}); e == nil {
+				t.Fatal("untrusted relay tracking permitted preparation")
+			}
+			if original.Status() != "prepared" || original.plan.Broadcaster != nil || evaluates.Load() != 0 {
+				t.Fatal("quote failure mutated handle or directly evaluated source")
+			}
+		})
 	}
 }

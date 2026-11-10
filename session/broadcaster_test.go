@@ -7,6 +7,7 @@ import (
 	"math/big"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"sync/atomic"
 	"testing"
 	"time"
@@ -24,6 +25,10 @@ import (
 )
 
 func testBroadcaster(t *testing.T, p *Operation, fees []int64, failQuote bool, policies ...common.Hash) (*broadcaster.Client, *atomic.Int64) {
+	t.Helper()
+	return testBroadcasterQuote(t, p, fees, failQuote, nil, policies...)
+}
+func testBroadcasterQuote(t *testing.T, p *Operation, fees []int64, failQuote bool, transform func(*broadcaster.SignedQuote), policies ...common.Hash) (*broadcaster.Client, *atomic.Int64) {
 	t.Helper()
 	key, _ := crypto.GenerateKey()
 	recipient := common.HexToAddress("0x8877")
@@ -86,6 +91,17 @@ func testBroadcaster(t *testing.T, p *Operation, fees []int64, failQuote bool, p
 			if len(policies) > 0 {
 				signed.ProvenancePolicyID = &policies[0]
 				signed.RequestHashFormat = "invisi-broadcaster-provenance-intent-v1"
+			}
+			result = signed
+			if len(policies) > 0 && len(param.ProofSidecars) == 1 {
+				pi := param.ProofSidecars[0].ProofBundle.PublicInputs
+				hi, _ := provenance.Uint(pi[9], 128)
+				lo, _ := provenance.Uint(pi[10], 128)
+				digest := common.BigToHash(new(big.Int).Or(new(big.Int).Lsh(hi, 128), lo)).Hex()
+				signed.ProvenanceTracking = &provenance.Tracking{ID: strings.Repeat("a", 48), Status: "pending_confirmation", ExpiresAt: "4102444800", OperationDigest: digest}
+			}
+			if transform != nil {
+				transform(&signed)
 			}
 			result = signed
 		case "broadcaster_getTransactionStatus":

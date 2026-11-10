@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"math/big"
 	"sort"
+	"time"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/invisi-lab/invisi-sdk-go/core"
@@ -61,7 +62,7 @@ type sourceTree struct {
 	tree        *provenance.RecognizedTree
 }
 
-func (o *Execution) prepareProvenance(ctx context.Context, policy common.Hash, data []byte) (*ProvenancePlan, error) {
+func (o *Execution) prepareProvenance(ctx context.Context, policy common.Hash) (*ProvenancePlan, error) {
 	if policy == (common.Hash{}) {
 		return nil, nil
 	}
@@ -339,18 +340,65 @@ func (o *Execution) prepareProvenance(ctx context.Context, policy common.Hash, d
 	if e != nil {
 		return nil, e
 	}
-	evaluated, e := c.Client.EvaluateTransaction(ctx, "0x"+common.Bytes2Hex(data), []provenance.ProofSidecar{sidecar})
-	if e != nil {
-		return nil, e
-	}
-	tracking, e := provenance.PreflightTracking(evaluated, "0", digest)
-	if e != nil {
-		return nil, e
-	}
 	out.Sidecars = []provenance.ProofSidecar{sidecar}
-	out.Tracking = []provenance.Tracking{tracking}
 	return out, nil
 }
+func (o *Execution) acceptProvenanceTracking(ctx context.Context, saved *ProvenancePlan, ack *provenance.Tracking) error {
+	if saved == nil || len(saved.Sidecars) == 0 {
+		if ack != nil {
+			return errors.New("unexpected source tracking on operation without private inputs")
+		}
+		return nil
+	}
+	if ack == nil {
+		return errors.New("broadcaster quote omitted provenance tracking")
+	}
+	raw, e := json.Marshal(ack)
+	if e != nil {
+		return e
+	}
+	quoted, e := provenance.TrackingFromResult(provenance.Result{"tracking": raw}, ack.ID)
+	if e != nil {
+		return e
+	}
+	if e = allowedSourceTracking(quoted, saved.OperationDigest); e != nil {
+		return e
+	}
+	c, e := o.sourceCapability(saved.PolicyID)
+	if e != nil {
+		return e
+	}
+	result, e := c.Client.GetTracking(ctx, quoted.ID)
+	if e != nil {
+		return e
+	}
+	current, e := provenance.TrackingFromResult(result, quoted.ID)
+	if e != nil {
+		return e
+	}
+	if e = allowedSourceTracking(current, saved.OperationDigest); e != nil {
+		return e
+	}
+	saved.Tracking = []provenance.Tracking{current}
+	return nil
+}
+func allowedSourceTracking(t provenance.Tracking, digest string) error {
+	if t.OperationDigest != digest {
+		return errors.New("source tracking statement mismatch")
+	}
+	switch t.Status {
+	case "pending_confirmation":
+		expires, e := provenance.Uint(t.ExpiresAt, 64)
+		if e != nil || expires.Cmp(big.NewInt(time.Now().Unix())) <= 0 {
+			return errors.New("source tracking acknowledgement expired")
+		}
+	case "pending_source", "recognized":
+	default:
+		return errors.New("source tracking no longer permits broadcast")
+	}
+	return nil
+}
+
 func (o *Execution) validateProvenance(ctx context.Context, saved *ProvenancePlan, remote bool) error {
 	if saved == nil {
 		return nil

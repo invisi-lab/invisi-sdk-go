@@ -97,7 +97,7 @@ Every Credit request carries `FeeRecipient` and `FeeAmount`: either a complete z
 
 ## Paid broadcaster flow
 
-Note operations use the same `*broadcaster.Client` for ordinary and required-policy relays. Configure optional `sdk.InvisiOptions.Provenance` with the trusted source client, authenticated manifest and local offline prover. `prepared.WithBroadcaster` finalizes fees, automatically builds source evidence/tracking for private inputs, and stores public attachments for `SubmitBroadcaster`; applications supply no manual sidecar. Managed sessions persist the same evidence and reservations. See [Provenance](PROVENANCE.md) and [normal Note broadcaster example](examples/03-hidden-amount/README.md).
+Note operations use the same `*broadcaster.Client` for ordinary and required-policy relays. Configure optional `sdk.InvisiOptions.Provenance` with the trusted source client, authenticated manifest and local offline prover. `prepared.WithBroadcaster` finalizes fees, automatically builds local source evidence for private inputs, obtains and independently checks the relay-delegated tracking acknowledgement, and stores public attachments for `SubmitBroadcaster`; applications supply no manual sidecar. Managed sessions persist the same evidence and reservations. See [Provenance](PROVENANCE.md) and [normal Note broadcaster example](examples/03-hidden-amount/README.md).
 
 All four Credit operations support:
 

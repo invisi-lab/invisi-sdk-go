@@ -173,7 +173,7 @@ func (o *Execution) WithBroadcaster(ctx context.Context, c *broadcaster.Client, 
 			}
 		}
 		trust := broadcaster.Trust{ChainID: o.Plan.Context.ChainID, Protocol: o.Plan.Context.ProtocolAddress}
-		source, e := o.prepareProvenance(ctx, c.RequiredProvenancePolicy(), data)
+		source, e := o.prepareProvenance(ctx, c.RequiredProvenancePolicy())
 		if e != nil {
 			return e
 		}
@@ -186,6 +186,9 @@ func (o *Execution) WithBroadcaster(ctx context.Context, c *broadcaster.Client, 
 			return e
 		}
 		if e = broadcaster.VerifyRequiredQuote(signed, broadcaster.Trust{ChainID: trust.ChainID, Protocol: trust.Protocol, Signer: c.Configuration().QuoteSigner}, data, o.Plan.Block.Timestamp, c.RequiredProvenancePolicy()); e != nil {
+			return e
+		}
+		if e = o.acceptProvenanceTracking(ctx, source, signed.ProvenanceTracking); e != nil {
 			return e
 		}
 		o.Plan.Broadcaster = &BroadcasterPlan{Configuration: c.Configuration(), Signed: signed, ChainID: new(big.Int).Set(trust.ChainID), Protocol: trust.Protocol, Intent: append([]byte{}, data...), Provenance: source}
