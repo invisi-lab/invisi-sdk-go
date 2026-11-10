@@ -57,7 +57,15 @@ for name, base in MODULES:
                 continue
             if any(((base / pathlib.Path(*rel.parts[:i]) / 'go.mod').exists() for i in range(1, len(rel.parts)))):
                 continue
-            archive.write(p, module + '@' + VERSION + '/' + rel.as_posix())
+            target = module + '@' + VERSION + '/' + rel.as_posix()
+            if rel.as_posix() == 'go.sum':
+                # Checkout archives differ from immutable release tags; retain external
+                # checksums but let the isolated proxy authenticate synthetic siblings.
+                content = ''.join(line for line in p.read_text().splitlines(keepends=True)
+                                  if not (line.split() and line.split()[0].split('@')[0].startswith(PREFIX)))
+                archive.writestr(target, content)
+            else:
+                archive.write(p, target)
 env = {**os.environ, 'GOWORK': 'off', 'GOPROXY': proxy.as_uri() + ',https://proxy.golang.org', 'GOMODCACHE': str(cache), 'GONOSUMDB': PREFIX + '*', 'GONOPROXY': 'none', 'GOFLAGS': '-mod=mod'}
 for name, _ in MODULES:
     module = PREFIX + ('/' + name if name else '')
