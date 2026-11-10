@@ -4,11 +4,12 @@ package main
 import (
 	"context"
 	"database/sql"
-	"encoding/json"
 	"flag"
 	"log"
 	"math/big"
 	"os"
+
+	"github.com/invisi-lab/invisi-sdk-go/examples/shared"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
@@ -20,7 +21,7 @@ import (
 )
 
 func main() {
-	// Configure public actors and deployment; the native host retains account access.
+	// Configure public actors and deployment.
 	ctx := context.Background()
 	chainRPC := flag.String("chain-rpc", "http://127.0.0.1:18565", "Chain RPC URL")
 	protocolRPC := flag.String("protocol-rpc", "https://rpc.invisipay.fi/v1/chains/97", "Protocol RPC URL")
@@ -57,8 +58,6 @@ func main() {
 	}
 	invisi := sdk.NewInvisi(sdk.InvisiOptions{Provider: provider, ProtocolRPC: client, Prover: backend})
 	token := common.HexToAddress(*tokenText)
-	encoder := json.NewEncoder(os.Stdout)
-	decoder := json.NewDecoder(os.Stdin)
 
 	// The storage encryption key protects inventory and journals; it is independent of wallet keys.
 	database, err := sql.Open("sqlite", "examples/wallet.sqlite")
@@ -97,20 +96,10 @@ func main() {
 		log.Fatal(err)
 	}
 
-	// Send the complete request array to the native host, then read its explicit response array.
-	if err = encoder.Encode(pending.WalletRequests); err != nil {
+	if _, err = pending.Decrypt(ctx, shared.AppDeliveryDecryptor{}); err != nil {
 		log.Fatal(err)
 	}
 
-	var refreshResponses []wallet.Response
-	if err = decoder.Decode(&refreshResponses); err != nil {
-		log.Fatal(err)
-	}
-
-	// Apply only after every reply passes binding and financial validation; failures leave the store unchanged.
-	if _, err = pending.ApplyWalletResponses(ctx, refreshResponses); err != nil {
-		log.Fatal(err)
-	}
 	_ = operationID
 	output, err := sdk.NewNoteOutput(sdk.PaymentRequest{
 		ChainID:         new(big.Int).SetUint64(pool.Context().ChainID),
@@ -129,27 +118,16 @@ func main() {
 		log.Fatal(err)
 	}
 
-	// The host approves only this frozen spending statement; no wallet key is passed to the SDK.
-	request, err := prepared.ExportWalletRequest(ctx, "authorize-1")
+	// Authorize the frozen statement with an ordinary geth EIP-712 signature.
+	authorization, err := prepared.ExportWalletAuthorization(ctx)
 	if err != nil {
 		log.Fatal(err)
 	}
-	requests := []wallet.Request{request}
-	if err = encoder.Encode(requests); err != nil {
-		log.Fatal(err)
-	}
-
-	var responses []wallet.Response
-	if err = decoder.Decode(&responses); err != nil {
-		log.Fatal(err)
-	}
-
-	// Match by ID rather than arrival order; attachment independently verifies the signature and statement.
-	ordered, err := wallet.ValidateResponses(requests, responses)
+	signature, err := shared.Sign(authorization, publicWallet.OwnerAddress(), "OWNER_PRIVATE_KEY")
 	if err != nil {
 		log.Fatal(err)
 	}
-	prepared, err = prepared.WithWalletResponse(ctx, request, ordered[0])
+	prepared, err = prepared.WithWalletSignature(ctx, signature)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -165,7 +143,5 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	if err = encoder.Encode(call); err != nil {
-		log.Fatal(err)
-	}
+	log.Printf("%+v", call)
 }

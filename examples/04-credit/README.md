@@ -1,22 +1,9 @@
-# Credit plans and optional Broadcaster delivery
+# Managed Credit examples
 
-The create, draw and update examples retain their existing managed encrypted inventory, canonical discovery and external native wallet authorization. To choose a relay, supply its authenticated HTTPS registration and fee budget before authorization:
+Create, draw, update and revoke retain encrypted inventory and managed cross-role grant reservations. Refresh uses the App delivery decryptor placeholder in [shared/decryptor.go](../shared/decryptor.go); replace it with your secure App integration. Draw/update reuse the validated refresh inventory.
 
-```sh
-go run ./examples/04-credit/02-alice-batch-draw \
-  --chain-rpc '<primary>' --protocol-rpc '<protocol RPC>' \
-  --wallet-address '<public long address>' --recipient '<recipient long address>' \
-  --token '<token address>' --operation-id '<new stable journal ID>' \
-  --broadcaster '<registered HTTPS endpoint>' \
-  --quote-signer '<registered signer>' --fee-recipient '<registered recipient>' \
-  --provenance-policy '<authenticated policy ID>' --max-fee '1' \
-  --execute --submit
-```
+Create/update/draw export the frozen EIP-712 statement and sign with ordinary geth using `OWNER_PRIVATE_KEY`. The key must match the selected transition's owner/spender. Revoke exports a direct-owner call. Set `INVISI_EXAMPLE_STORAGE_KEY` to the retained application-owned 32-byte storage key; use a fresh `--operation-id` for each new transition.
 
-Use the same relay flags for `01-bob-create` and `03-bob-update`. An omitted policy selects an ordinary relay; a configured policy requires matching policy-bound signed quotes. Credit state transitions have no private Note inputs, so the source policy preflight needs no source circuit, source prover or manual sidecar. The relay validates the ordinary public funding facts. Credit draw creates a normal Note that can subsequently enter the Note flow under 03.
+Business quota transitions and delivery encryption are explicit in these walkthroughs. `managed.Credit().Prepare` validates chain state and reserves grants; local proving independently verifies the result. The examples log unsigned calldata and call `Externalize` before exposing it. Retain the encrypted journal until canonical reconciliation resolves the original operation.
 
-`WithBroadcaster` converges the fee and persists the quote before the external native wallet approves the final plan and before local main proving. Creation/update pay the fee through the owner's ERC20 wallet; draw debits each grant gross and emits a Note with the fee subtracted. `PrepareDrawToNote` retains recipient receiving keys so the SDK can reencrypt the final net Note after repricing. Inspect the logged safe preview and arrange required ERC20 allowance independently.
-
-`--execute` is required when relay flags are present. Without `--submit`, the quoted/proved managed operation is retained but no transaction is broadcast. With `--submit`, `operation.SubmitBroadcaster` records exact calldata and uncertainty before calling the selected relay. Keep the same encrypted journal and operation ID; a known externalized operation queries that original relay ID without repricing, reproving, signing or sending again. Expiry, spent state or source downtime must not prevent this status lookup. Canonical primary reconciliation remains necessary to release reservations. Do not rerun creation using a new ID to retry an uncertain payment.
-
-Without relay flags, examples retain their explicit unsigned-calldata export. Revocation currently demonstrates this direct-owner route; relay revocation separately requires the owner EIP-712 signature. No account signing key is accepted by these examples. Native wallet request arrays use stdout and responses use stdin; relay diagnostics use stderr.
+Relay delivery is consolidated under [07-broadcaster](../07-broadcaster/README.md). Source evidence applies to private Note ancestry; the ordinary Credit transitions shown here do not require a Source proof.

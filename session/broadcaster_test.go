@@ -1,13 +1,15 @@
 package session
 
 import (
+	"bytes"
 	"context"
+	"crypto/tls"
 	"encoding/json"
 	"errors"
+	"io"
 	"math/big"
 	"net/http"
 	"net/http/httptest"
-	"strings"
 	"sync/atomic"
 	"testing"
 	"time"
@@ -40,7 +42,7 @@ func testBroadcasterQuote(t *testing.T, p *Operation, fees []int64, failQuote bo
 			Params []json.RawMessage
 		}
 		json.NewDecoder(r.Body).Decode(&req)
-		if len(req.Params) != 1 {
+		if len(req.Params) != 1 && req.Method != "broadcaster_getStatus" {
 			t.Error("positional params required")
 		}
 		var param struct {
@@ -49,10 +51,12 @@ func testBroadcasterQuote(t *testing.T, p *Operation, fees []int64, failQuote bo
 			ID             string
 			ProofSidecars  []provenance.ProofSidecar
 		}
-		json.Unmarshal(req.Params[0], &param)
+		if len(req.Params) > 0 {
+			json.Unmarshal(req.Params[0], &param)
+		}
 		var result any
 		switch req.Method {
-		case "broadcaster_getFee":
+		case "broadcaster_estimateQuote":
 			j := int(calls.Add(1)) - 1
 			if j >= len(fees) {
 				j = len(fees) - 1
@@ -75,7 +79,7 @@ func testBroadcasterQuote(t *testing.T, p *Operation, fees []int64, failQuote bo
 				return
 			}
 			if len(policies) > 0 {
-				bound, err := provenance.ProvenanceIntentHash(h.Hex(), policies[0].Hex())
+				bound, err := provenance.ProvenanceIntentHash(h.Hex())
 				if err != nil {
 					t.Error(err)
 					return
@@ -89,21 +93,16 @@ func testBroadcasterQuote(t *testing.T, p *Operation, fees []int64, failQuote bo
 			sig, _ := crypto.Sign(digest, key)
 			signed := broadcaster.SignedQuote{Quote: q, Signature: "0x" + common.Bytes2Hex(sig)}
 			if len(policies) > 0 {
-				signed.ProvenancePolicyID = &policies[0]
+				signed.ProvenanceRequired = true
 				signed.RequestHashFormat = "invisi-broadcaster-provenance-intent-v1"
 			}
 			result = signed
-			if len(policies) > 0 && len(param.ProofSidecars) == 1 {
-				pi := param.ProofSidecars[0].ProofBundle.PublicInputs
-				hi, _ := provenance.Uint(pi[9], 128)
-				lo, _ := provenance.Uint(pi[10], 128)
-				digest := common.BigToHash(new(big.Int).Or(new(big.Int).Lsh(hi, 128), lo)).Hex()
-				signed.ProvenanceTracking = &provenance.Tracking{ID: strings.Repeat("a", 48), Status: "pending_confirmation", ExpiresAt: "4102444800", OperationDigest: digest}
-			}
 			if transform != nil {
 				transform(&signed)
 			}
 			result = signed
+		case "broadcaster_getStatus":
+			result = map[string]any{"apiVersion": "v1", "protocolVersion": "1", "chainId": p.plan.Context.ChainID.String(), "protocol": p.plan.Context.ProtocolAddress.Hex(), "sender": crypto.PubkeyToAddress(key.PublicKey).Hex(), "feeRecipient": recipient.Hex(), "submissionHalted": false, "provenance": map[string]any{"enabled": len(policies) > 0, "requestHashFormat": broadcaster.ProvenanceRequestHashFormat, "trackingRequired": true, "trackingSupported": true}}
 		case "broadcaster_getTransactionStatus":
 			result = broadcaster.Status{ID: param.ID, State: "uncertain"}
 		case "broadcaster_submitTransaction":
@@ -112,7 +111,7 @@ func testBroadcasterQuote(t *testing.T, p *Operation, fees []int64, failQuote bo
 					t.Error("submit did not automatically attach retained source proof")
 				}
 			}
-			result = broadcaster.Status{ID: param.IdempotencyKey, State: "uncertain"}
+			result = broadcaster.Status{ID: "server-request-id", State: "uncertain"}
 		}
 		json.NewEncoder(w).Encode(map[string]any{"jsonrpc": "2.0", "id": req.ID, "result": result})
 	}))
@@ -120,12 +119,6 @@ func testBroadcasterQuote(t *testing.T, p *Operation, fees []int64, failQuote bo
 	c, e := broadcaster.NewClient(broadcaster.Configuration{Endpoint: server.URL, QuoteSigner: crypto.PubkeyToAddress(key.PublicKey), FeeRecipient: recipient}, broadcaster.Options{HTTPClient: server.Client()})
 	if e != nil {
 		t.Fatal(e)
-	}
-	if len(policies) > 0 {
-		c, e = c.WithProvenancePolicy(policies[0])
-		if e != nil {
-			t.Fatal(e)
-		}
 	}
 	return c, calls
 }
@@ -365,10 +358,25 @@ func TestBroadcasterDetachedHandleAndPermitCallbackFinalGross(t *testing.T) {
 	}
 }
 
-type broadcasterFailTransport struct{}
+type broadcasterFailTransport struct{ base http.RoundTripper }
 
-func (broadcasterFailTransport) RoundTrip(*http.Request) (*http.Response, error) {
-	return nil, errors.New("simulated uncertain network failure")
+func (f broadcasterFailTransport) RoundTrip(r *http.Request) (*http.Response, error) {
+	body, e := io.ReadAll(r.Body)
+	if e != nil {
+		return nil, e
+	}
+	r.Body = io.NopCloser(bytes.NewReader(body))
+	var req struct{ Method string }
+	json.Unmarshal(body, &req)
+	if req.Method == "broadcaster_submitTransaction" {
+		return nil, errors.New("simulated uncertain network failure")
+	}
+	if f.base != nil {
+		return f.base.RoundTrip(r)
+	}
+	transport := http.DefaultTransport.(*http.Transport).Clone()
+	transport.TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
+	return transport.RoundTrip(r)
 }
 func TestBroadcasterTransportFailureStaysExternalizedAndResumeRetainsQuote(t *testing.T) {
 	ctx := context.Background()
@@ -478,6 +486,6 @@ func TestBroadcasterDetachedFailedSubmitRetainsInspectableUncertainty(t *testing
 		t.Fatal("uncertain handle cannot inspect saved quote", e)
 	}
 	if status, err := prepared.SubmitBroadcaster(ctx, c); err != nil || status.State != "uncertain" {
-		t.Fatal("uncertain handle must query the original ID without resending", status, err)
+		t.Fatal("retained request retry failed", status, err)
 	}
 }

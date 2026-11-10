@@ -2,7 +2,6 @@ package session
 
 import (
 	"context"
-	"crypto/rand"
 	"errors"
 	"fmt"
 	"sync"
@@ -55,27 +54,17 @@ func (p *refreshPages) credits(ctx context.Context, s *WalletSession, q protocol
 	return v, err
 }
 
-// PendingWalletRefresh holds public requests and captured candidate pages, never an executor.
+// PendingWalletRefresh retains canonical candidate pages until App decryption is validated.
 type PendingWalletRefresh struct {
-	WalletRequests []wallet.Request
-	Block          *protocolrpc.CanonicalBlock
-	mu             sync.Mutex
-	applied        bool
-	session        *WalletSession
-	base           WalletState
-	options        RefreshOptions
-	pages          *refreshPages
-	requests       []wallet.Request
+	Block   *protocolrpc.CanonicalBlock
+	mu      sync.Mutex
+	applied bool
+	session *WalletSession
+	base    WalletState
+	options RefreshOptions
+	pages   *refreshPages
 }
 
-func cloneRequests(q []wallet.Request) []wallet.Request {
-	out := make([]wallet.Request, len(q))
-	copy(out, q)
-	for i := range out {
-		out[i].Params = append([]byte(nil), out[i].Params...)
-	}
-	return out
-}
 func (s *WalletSession) cloneForRefresh(base WalletState) (*WalletSession, error) {
 	snapshot, err := CloneState(base)
 	if err != nil {
@@ -127,7 +116,7 @@ func resolveCredit(resolvers []walletResolver, envelope []byte, c credit.Deliver
 }
 
 // Refresh stages canonical candidate discovery without changing the real inventory.
-// The host executes WalletRequests externally and explicitly applies every response or nonmatch.
+// Inject an App DeliveryDecryptor to validate and atomically apply the staged inventory.
 func (s *WalletSession) Refresh(ctx context.Context, options RefreshOptions) (*PendingWalletRefresh, error) {
 	select {
 	case s.refreshGate <- struct{}{}:
@@ -144,19 +133,7 @@ func (s *WalletSession) Refresh(ctx context.Context, options RefreshOptions) (*P
 		options.ToBlock = &height
 	}
 	pending := &PendingWalletRefresh{session: s, base: base, options: options, pages: &refreshPages{notePages: map[string]protocolrpc.ProtocolNoteUpdates{}, creditPages: map[string]protocolrpc.ProtocolCreditUpdates{}}}
-	known := map[string]bool{}
-	record := func(method wallet.Method, params wallet.DecryptParams) (any, error) {
-		key := walletFingerprint(method, params)
-		if !known[key] {
-			q, err := s.wallet.PrepareRequest("refresh-"+rand.Text(), method, params)
-			if err != nil {
-				return nil, err
-			}
-			known[key] = true
-			pending.requests = append(pending.requests, q)
-		}
-		return nil, errors.New("wallet response pending")
-	}
+	record := func(wallet.Method, wallet.DecryptParams) (any, error) { return nil, wallet.ErrNotRecipient }
 	temp, err := s.cloneForRefresh(base)
 	if err != nil {
 		return nil, err
@@ -165,10 +142,6 @@ func (s *WalletSession) Refresh(ctx context.Context, options RefreshOptions) (*P
 	if err != nil {
 		return nil, err
 	}
-	if err := wallet.ValidateRequests(pending.requests); err != nil {
-		return nil, fmt.Errorf("refresh wallet batch exceeds transport contract; narrow the block range: %w", err)
-	}
-	pending.WalletRequests = cloneRequests(pending.requests)
 	if result.Block != nil {
 		block := *result.Block
 		pending.Block = &block
@@ -177,7 +150,7 @@ func (s *WalletSession) Refresh(ctx context.Context, options RefreshOptions) (*P
 	}
 	return pending, nil
 }
-func (p *PendingWalletRefresh) ApplyWalletResponses(ctx context.Context, replies []wallet.Response) (RefreshResult, error) {
+func (p *PendingWalletRefresh) Decrypt(ctx context.Context, decryptor wallet.DeliveryDecryptor) (RefreshResult, error) {
 	if !p.mu.TryLock() {
 		return RefreshResult{}, errors.New("wallet refresh apply already running")
 	}
@@ -199,37 +172,34 @@ func (p *PendingWalletRefresh) ApplyWalletResponses(ctx context.Context, replies
 	if current.Revision != p.base.Revision {
 		return RefreshResult{}, errors.New("wallet inventory changed during pending refresh")
 	}
-	ordered, err := wallet.ValidateResponses(p.requests, replies)
-	if err != nil {
-		return RefreshResult{}, err
-	}
-	decoded := map[string]any{}
-	for i, q := range p.requests {
-		r := ordered[i]
-		var params wallet.DecryptParams
-		if err = wallet.Decode(q.Params, &params); err != nil {
-			return RefreshResult{}, err
-		}
-		key := walletFingerprint(q.Method, params)
-		if r.Error == nil {
-			value, err := s.wallet.AcceptResponse(q, r)
-			if err != nil {
-				return RefreshResult{}, err
-			}
-			decoded[key] = value
-		} else {
-			if r.Error.Code != wallet.NotRecipient || (q.Method != wallet.DecryptNote && q.Method != wallet.DecryptCredit) {
-				return RefreshResult{}, r.Error
-			}
-			decoded[key] = nil
-		}
+	if decryptor == nil {
+		return RefreshResult{}, errors.New("App delivery decryptor required")
 	}
 	replay := func(method wallet.Method, params wallet.DecryptParams) (any, error) {
-		value, ok := decoded[walletFingerprint(method, params)]
-		if !ok || value == nil {
-			return nil, errors.New("wallet response nonmatch")
+		c, err := params.Context.ProtocolContext.Core()
+		if err != nil {
+			return nil, err
 		}
-		return value, nil
+		token, err := wallet.Element(params.Context.TokenAddress)
+		if err != nil {
+			return nil, err
+		}
+		commitment, err := wallet.Element(common.HexToHash(params.Context.OutputCommitment).Big().String())
+		if err != nil {
+			return nil, err
+		}
+		envelope, err := wallet.Bytes(params.Envelope, -1)
+		if err != nil {
+			return nil, err
+		}
+		if method == wallet.DecryptNote {
+			return s.wallet.DecryptNote(ctx, decryptor, envelope, core.NoteDecryptionContext{NoteEncryptionContext: core.NoteEncryptionContext{ProtocolContext: c, OutputCommitment: commitment}, TokenAddress: token})
+		}
+		role := credit.Owner
+		if params.Context.Role == "spender" {
+			role = credit.Spender
+		}
+		return s.wallet.DecryptCreditState(ctx, decryptor, envelope, credit.DeliveryContext{ProtocolContext: c, TokenAddress: token, Commitment: commitment}, role)
 	}
 	temp, err := s.cloneForRefresh(p.base)
 	if err != nil {
@@ -286,16 +256,30 @@ func (s *WalletSession) storedWalletResolver(ctx context.Context) walletResolver
 			}
 		}
 		if plaintext == nil {
-			return nil, errors.New("refresh wallet responses before reconciling unseen deliveries")
+			return nil, wallet.ErrNotRecipient
 		}
-		q, e := s.wallet.PrepareRequest("stored-"+rand.Text(), method, params)
-		if e != nil {
-			return nil, e
+		c, err := params.Context.ProtocolContext.Core()
+		if err != nil {
+			return nil, err
 		}
-		r := wallet.Response{Version: q.Version, ID: q.ID, OwnerAddress: q.OwnerAddress, Method: q.Method, Result: wallet.Encode(wallet.DecryptResult{Plaintext: wallet.Hex(plaintext)})}
-		return s.wallet.AcceptResponse(q, r)
+		token, err := wallet.Element(params.Context.TokenAddress)
+		if err != nil {
+			return nil, err
+		}
+		leaf, err := wallet.Element(common.HexToHash(params.Context.OutputCommitment).Big().String())
+		if err != nil {
+			return nil, err
+		}
+		if method == wallet.DecryptNote {
+			return core.DecodeNotePlaintext(plaintext, core.NoteDecryptionContext{NoteEncryptionContext: core.NoteEncryptionContext{ProtocolContext: c, OutputCommitment: leaf}, TokenAddress: token, OwnerAddress: core.BigIntToElement(s.wallet.OwnerAddress().Big())})
+		}
+		role := credit.Owner
+		if params.Context.Role == "spender" {
+			role = credit.Spender
+		}
+		return credit.DecodeDeliveryPlaintext(plaintext, credit.DeliveryContext{ProtocolContext: c, TokenAddress: token, Commitment: leaf, RecipientIdentity: core.BigIntToElement(s.wallet.OwnerAddress().Big())}, role, s.wallet.ViewingPublicKey())
 	}
 }
 
-func (p *PendingWalletRefresh) String() string   { return "PendingWalletRefresh([public requests])" }
+func (p *PendingWalletRefresh) String() string   { return "PendingWalletRefresh([staged pages])" }
 func (p *PendingWalletRefresh) GoString() string { return p.String() }

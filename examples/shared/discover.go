@@ -11,7 +11,6 @@ import (
 	"github.com/invisi-lab/invisi-sdk-go/rpc"
 	"github.com/invisi-lab/invisi-sdk-go/sdk"
 	walletsession "github.com/invisi-lab/invisi-sdk-go/session"
-	"github.com/invisi-lab/invisi-sdk-go/wallet"
 )
 
 type NoteCandidate struct {
@@ -25,9 +24,8 @@ type CreditCandidate struct {
 	Membership rpc.Membership
 }
 
-// Discovery uses canonical managed synchronization in an ephemeral inventory. The host
-// explicitly executes each captured request batch; no viewing key enters this process.
-func discover(ctx context.Context, provider sdk.Provider, client *sdk.ProtocolRpcClient, pool *sdk.Protocol, public *sdk.Wallet, nativeWallet wallet.Client) (walletsession.WalletState, error) {
+// Ephemeral inventory uses the same canonical synchronization and plaintext checks as durable sessions.
+func discover(ctx context.Context, provider sdk.Provider, client *sdk.ProtocolRpcClient, pool *sdk.Protocol, public *sdk.Wallet, decryptor sdk.DeliveryDecryptor) (walletsession.WalletState, error) {
 	store := walletsession.NewMemoryWalletStore()
 	managed, err := walletsession.Connect(ctx, walletsession.Options{Invisi: sdk.NewInvisi(sdk.InvisiOptions{Provider: provider, ProtocolRPC: client}), Wallet: public, Protocol: pool, Store: store})
 	if err != nil {
@@ -37,17 +35,14 @@ func discover(ctx context.Context, provider sdk.Provider, client *sdk.ProtocolRp
 	if err != nil {
 		return walletsession.WalletState{}, err
 	}
-	responses, err := nativeWallet.Execute(ctx, pending.WalletRequests)
-	if err != nil {
+	if _, err = pending.Decrypt(ctx, decryptor); err != nil {
 		return walletsession.WalletState{}, err
 	}
-	if _, err = pending.ApplyWalletResponses(ctx, responses); err != nil {
-		return walletsession.WalletState{}, err
-	}
+
 	return store.ReadSnapshot(ctx, managed.Scope())
 }
-func DiscoverNotes(ctx context.Context, provider sdk.Provider, client *sdk.ProtocolRpcClient, pool *sdk.Protocol, public *sdk.Wallet, nativeWallet wallet.Client, token common.Address) ([]NoteCandidate, error) {
-	state, err := discover(ctx, provider, client, pool, public, nativeWallet)
+func DiscoverNotes(ctx context.Context, provider sdk.Provider, client *sdk.ProtocolRpcClient, pool *sdk.Protocol, public *sdk.Wallet, decryptor sdk.DeliveryDecryptor, token common.Address) ([]NoteCandidate, error) {
+	state, err := discover(ctx, provider, client, pool, public, decryptor)
 	if err != nil {
 		return nil, err
 	}
@@ -66,14 +61,14 @@ func DiscoverNotes(ctx context.Context, provider sdk.Provider, client *sdk.Proto
 	})
 	return result, nil
 }
-func DiscoverCredits(ctx context.Context, provider sdk.Provider, client *sdk.ProtocolRpcClient, pool *sdk.Protocol, public *sdk.Wallet, nativeWallet wallet.Client, token common.Address, role string) ([]CreditCandidate, error) {
+func DiscoverCredits(ctx context.Context, provider sdk.Provider, client *sdk.ProtocolRpcClient, pool *sdk.Protocol, public *sdk.Wallet, decryptor sdk.DeliveryDecryptor, token common.Address, role string) ([]CreditCandidate, error) {
 	selected := credit.Owner
 	if role == "spender" {
 		selected = credit.Spender
 	} else if role != "owner" {
 		return nil, errors.New("invalid Credit role")
 	}
-	state, err := discover(ctx, provider, client, pool, public, nativeWallet)
+	state, err := discover(ctx, provider, client, pool, public, decryptor)
 	if err != nil {
 		return nil, err
 	}

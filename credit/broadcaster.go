@@ -2,6 +2,7 @@ package credit
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/invisi-lab/invisi-sdk-go/broadcaster"
@@ -15,7 +16,6 @@ type WithBroadcasterOptions struct {
 	MaxAttempts  int
 }
 type BroadcasterBinding struct {
-	PolicyID      common.Hash
 	Configuration broadcaster.Configuration
 	Quote         broadcaster.SignedQuote
 	Intent        []byte
@@ -159,7 +159,7 @@ func (p *Prepared) WithBroadcaster(ctx context.Context, client *broadcaster.Clie
 		if err != nil {
 			return err
 		}
-		estimated, err := client.Fee(ctx, proposal.Context.TokenAddress, data)
+		estimated, err := client.EstimateQuote(ctx, data)
 		if err != nil {
 			return err
 		}
@@ -183,14 +183,14 @@ func (p *Prepared) WithBroadcaster(ctx context.Context, client *broadcaster.Clie
 			continue
 		}
 		trust := broadcaster.Trust{ChainID: core.ElementToBigInt(proposal.Context.ChainID), Protocol: common.BigToAddress(core.ElementToBigInt(proposal.Context.ProtocolAddress)), Signer: client.Configuration().QuoteSigner}
-		signed, err := client.Quote(ctx, data, trust)
+		signed, err := client.GetQuote(ctx, data, trust)
 		if err != nil {
 			return err
 		}
-		if err = broadcaster.VerifyRequiredQuote(signed, trust, data, uint64(time.Now().Unix()), client.RequiredProvenancePolicy()); err != nil {
+		if err = broadcaster.VerifyQuote(signed, trust, data, uint64(time.Now().Unix())); err != nil {
 			return err
 		}
-		proposal.Broadcaster = &BroadcasterBinding{PolicyID: client.RequiredProvenancePolicy(), Configuration: client.Configuration(), Quote: signed, Intent: append([]byte(nil), data...)}
+		proposal.Broadcaster = &BroadcasterBinding{Configuration: client.Configuration(), Quote: signed, Intent: append([]byte(nil), data...)}
 		frozen, err := freeze(proposal)
 		if err != nil {
 			return err
@@ -239,7 +239,7 @@ func (p *Prepared) ExportBroadcasterSubmission(client *broadcaster.Client) ([]by
 		return nil, broadcaster.SignedQuote{}, fmt.Errorf("broadcaster revocation requires owner signature")
 	}
 	p.mu.Unlock()
-	if binding.Configuration != client.Configuration() || binding.PolicyID != client.RequiredProvenancePolicy() {
+	if binding.Configuration != client.Configuration() {
 		return nil, broadcaster.SignedQuote{}, fmt.Errorf("use the originally selected broadcaster")
 	}
 	data, err := p.Calldata(common.Address{})
@@ -258,49 +258,58 @@ func (p *Prepared) ExportBroadcasterSubmission(client *broadcaster.Client) ([]by
 	if err != nil {
 		return nil, broadcaster.SignedQuote{}, err
 	}
-	if err = broadcaster.VerifyRequiredQuote(quote, *quote.Context, data, uint64(time.Now().Unix()), binding.PolicyID); err != nil {
+	if err = broadcaster.VerifyQuote(quote, *quote.Context, data, uint64(time.Now().Unix())); err != nil {
 		return nil, broadcaster.SignedQuote{}, err
 	}
 	return data, quote, nil
 }
-func (p *Prepared) SubmitBroadcaster(ctx context.Context, client *broadcaster.Client, requestID string) (broadcaster.Status, error) {
-	if requestID == "" {
-		return broadcaster.Status{}, fmt.Errorf("durable request ID required")
-	}
+func (p *Prepared) SubmitBroadcaster(ctx context.Context, client *broadcaster.Client) (broadcaster.Status, error) {
 	p.mu.Lock()
-	known := p.submission.RequestID
+	known := p.submission
 	binding := p.intent.Broadcaster
-	if known != "" {
-		if known != requestID {
-			p.mu.Unlock()
-			return broadcaster.Status{}, fmt.Errorf("Credit submission already has another request ID")
-		}
-		if client == nil || binding == nil || binding.Configuration != client.Configuration() || binding.PolicyID != client.RequiredProvenancePolicy() {
-			p.mu.Unlock()
-			return broadcaster.Status{}, fmt.Errorf("use the originally selected broadcaster")
-		}
-		p.mu.Unlock()
-		return client.Status(ctx, known)
-	}
 	p.mu.Unlock()
-	data, quote, err := p.ExportBroadcasterSubmission(client)
+	if client == nil || binding == nil || binding.Configuration != client.Configuration() {
+		return broadcaster.Status{}, fmt.Errorf("use the originally selected broadcaster")
+	}
+	retry := known.State != ""
+	if retry && known.RequestID != "" {
+		status, err := client.Status(ctx, known.RequestID)
+		var rpc *broadcaster.RPCError
+		if !errors.As(err, &rpc) || rpc.Code != -32001 {
+			return status, err
+		}
+	}
+	var data []byte
+	var quote broadcaster.SignedQuote
+	var err error
+	if retry {
+		data, err = p.Calldata(common.Address{})
+		if err == nil {
+			quote, err = p.ExportBroadcasterQuote()
+		}
+	} else {
+		data, quote, err = p.ExportBroadcasterSubmission(client)
+	}
 	if err != nil {
 		return broadcaster.Status{}, err
 	}
-
-	p.mu.Lock()
-	if p.submission.RequestID != "" && p.submission.RequestID != requestID {
-		p.mu.Unlock()
-		return broadcaster.Status{}, fmt.Errorf("Credit submission already has another request ID")
+	if !retry {
+		if _, err = client.SubmissionRequirements(ctx, quote); err != nil {
+			return broadcaster.Status{}, err
+		}
 	}
-	p.submission = Submission{RequestID: requestID, State: "uncertain"}
+	p.mu.Lock()
+	p.submission = Submission{RequestID: known.RequestID, State: "uncertain"}
 	p.mu.Unlock()
-	status, err := client.Submit(ctx, append([]byte(nil), data...), quote, requestID)
+	status, err := client.Submit(ctx, append([]byte(nil), data...), quote)
 	if err != nil {
 		return status, err
 	}
+	if known.RequestID != "" && known.RequestID != status.ID {
+		return status, fmt.Errorf("broadcaster changed submission ID")
+	}
 	p.mu.Lock()
-	p.submission = Submission{RequestID: requestID, State: status.State, TransactionHash: status.TransactionHash}
+	p.submission = Submission{RequestID: status.ID, State: status.State, TransactionHash: status.TransactionHash}
 	p.mu.Unlock()
 	return status, nil
 }

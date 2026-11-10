@@ -3,125 +3,73 @@ package transaction
 import (
 	"bytes"
 	"context"
-	"crypto/rand"
 	"errors"
+	"fmt"
 	"strings"
 
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/invisi-lab/invisi-sdk-go/core"
 	"github.com/invisi-lab/invisi-sdk-go/credit"
 	"github.com/invisi-lab/invisi-sdk-go/wallet"
 )
 
-func (w *Wallet) request(ctx context.Context, client wallet.Client, method wallet.Method, params any, result any) error {
-	if w == nil || client == nil {
-		return errors.New("wallet client required")
+// DecryptNote validates App plaintext against this public wallet and the output commitment.
+func (w *Wallet) DecryptNote(ctx context.Context, decryptor wallet.DeliveryDecryptor, envelope []byte, c core.NoteDecryptionContext) (core.Note, error) {
+	if w == nil || decryptor == nil {
+		return core.Note{}, errors.New("App delivery decryptor required")
 	}
-	q := wallet.Request{Version: 1, ID: "go-" + rand.Text(), OwnerAddress: strings.ToLower(w.identity.Hex()), Method: method, Params: wallet.Encode(params)}
-	if err := wallet.ValidateRequests([]wallet.Request{q}); err != nil {
-		return err
+	if err := ctx.Err(); err != nil {
+		return core.Note{}, err
 	}
-	// Preserve the original transcript even if an in-process client mutates its copy.
-	sent := q
-	sent.Params = append([]byte(nil), q.Params...)
-	responses, err := client.Execute(ctx, []wallet.Request{sent})
-	if err != nil {
-		return err
+	if err := wallet.ValidateDeliveryEnvelope(envelope, 0x01); err != nil {
+		return core.Note{}, err
 	}
-	if err = ctx.Err(); err != nil {
-		return err
-	}
-	ordered, err := wallet.ValidateResponses([]wallet.Request{q}, responses)
-	if err != nil {
-		return err
-	}
-	response := ordered[0]
-	if _, err = w.AcceptResponse(q, response); err != nil {
-		return err
-	}
-	return wallet.Decode(response.Result, result)
-}
-func ConnectWallet(ctx context.Context, owner common.Address, client wallet.Client) (*Wallet, error) {
-	w := &Wallet{identity: owner}
-	var result wallet.PublicResult
-	if err := w.request(ctx, client, wallet.Public, struct{}{}, &result); err != nil {
-		return nil, err
-	}
-	public, err := wallet.Bytes(result.SpendingPublicKey, 65)
-	if err != nil {
-		return nil, err
-	}
-	identity, err := core.ComputeOwnerAddress(public)
-	if err != nil || identity != core.BigIntToElement(owner.Big()) {
-		return nil, errors.New("wallet public identity mismatch")
-	}
-	viewing, err := wallet.Bytes(result.ViewingPublicKey, 33)
-	if err != nil {
-		return nil, err
-	}
-	if _, err = crypto.DecompressPubkey(viewing); err != nil {
-		return nil, err
-	}
-	clue, err := wallet.Bytes(result.ClueKey, 32)
-	if err != nil {
-		return nil, err
-	}
-	if err = core.ValidateClueKey(clue); err != nil {
-		return nil, err
-	}
-	w.keys = core.ReceivingKeys{ViewingPublicKey: viewing, ClueKey: clue}
-	w.address, err = core.EncodeLongAddress(core.ReceivingAddress{OwnerAddress: identity, ViewingPublicKey: viewing, ClueKey: clue})
-	return w, err
-}
-func (w *Wallet) Detect(ctx context.Context, client wallet.Client, clues [][]byte) ([]bool, error) {
-	values := make([]string, len(clues))
-	for i, v := range clues {
-		values[i] = wallet.Hex(v)
-	}
-	var result wallet.DetectResult
-	if err := w.request(ctx, client, wallet.Detect, wallet.DetectParams{Clues: values}, &result); err != nil {
-		return nil, err
-	}
-	if len(result.Matches) != len(clues) {
-		return nil, errors.New("wallet detection response length mismatch")
-	}
-	return result.Matches, nil
-}
-func deliveryParams(envelope []byte, c core.ProtocolContext, token, commitment string, role string) wallet.DecryptParams {
-	return wallet.DecryptParams{Envelope: wallet.Hex(envelope), Context: wallet.DeliveryContext{ProtocolContext: wallet.Context(c), TokenAddress: token, OutputCommitment: commitment, Role: role}}
-}
-func (w *Wallet) DecryptNote(ctx context.Context, client wallet.Client, envelope []byte, c core.NoteDecryptionContext) (core.Note, error) {
 	c.OwnerAddress = core.BigIntToElement(w.identity.Big())
-	var result wallet.DecryptResult
-	commitment := c.OutputCommitment.Bytes()
-	if err := w.request(ctx, client, wallet.DecryptNote, deliveryParams(envelope, c.ProtocolContext, c.TokenAddress.String(), wallet.Hex(commitment[:]), ""), &result); err != nil {
+	plain, err := decryptor.DecryptNote(ctx, append([]byte(nil), envelope...), c)
+	if err := ctx.Err(); err != nil {
 		return core.Note{}, err
 	}
-	plain, err := wallet.Bytes(result.Plaintext, -1)
 	if err != nil {
-		return core.Note{}, err
+		// App errors must not alias the SDK nonrecipient marker generated from nil plaintext.
+		return core.Note{}, fmt.Errorf("App Note decryption failed: %v", err)
 	}
-	return core.DecodeNotePlaintext(plain, c)
+	if plain == nil {
+		return core.Note{}, wallet.ErrNotRecipient
+	}
+	if len(plain)+78 > core.MaxCiphertextBytes {
+		return core.Note{}, errors.New("plaintext exceeds resource bound")
+	}
+	return core.DecodeNotePlaintext(append([]byte(nil), plain...), c)
 }
-func (w *Wallet) DecryptCreditState(ctx context.Context, client wallet.Client, envelope []byte, c credit.DeliveryContext, role credit.Role) (credit.DeliveryState, error) {
+func (w *Wallet) DecryptCreditState(ctx context.Context, decryptor wallet.DeliveryDecryptor, envelope []byte, c credit.DeliveryContext, role credit.Role) (credit.DeliveryState, error) {
+	if w == nil || decryptor == nil {
+		return credit.DeliveryState{}, errors.New("App delivery decryptor required")
+	}
+	if err := ctx.Err(); err != nil {
+		return credit.DeliveryState{}, err
+	}
+	if err := wallet.ValidateDeliveryEnvelope(envelope, 0x82); err != nil {
+		return credit.DeliveryState{}, err
+	}
+	if role != credit.Owner && role != credit.Spender {
+		return credit.DeliveryState{}, errors.New("invalid Credit role")
+	}
 	c.RecipientIdentity = core.BigIntToElement(w.identity.Big())
-	r := "owner"
-	if role == credit.Spender {
-		r = "spender"
-	} else if role != credit.Owner {
-		return credit.DeliveryState{}, errors.New("invalid credit role")
-	}
-	var result wallet.DecryptResult
-	commitment := c.Commitment.Bytes()
-	if err := w.request(ctx, client, wallet.DecryptCredit, deliveryParams(envelope, c.ProtocolContext, c.TokenAddress.String(), wallet.Hex(commitment[:]), r), &result); err != nil {
+	plain, err := decryptor.DecryptCredit(ctx, append([]byte(nil), envelope...), c, role)
+	if err := ctx.Err(); err != nil {
 		return credit.DeliveryState{}, err
 	}
-	plain, err := wallet.Bytes(result.Plaintext, -1)
 	if err != nil {
-		return credit.DeliveryState{}, err
+		// App errors must not alias the SDK nonrecipient marker generated from nil plaintext.
+		return credit.DeliveryState{}, fmt.Errorf("App Credit decryption failed: %v", err)
 	}
-	return credit.DecodeDeliveryPlaintext(plain, c, role, w.ViewingPublicKey())
+	if plain == nil {
+		return credit.DeliveryState{}, wallet.ErrNotRecipient
+	}
+	if len(plain)+78 > core.MaxCiphertextBytes {
+		return credit.DeliveryState{}, errors.New("plaintext exceeds resource bound")
+	}
+	return credit.DecodeDeliveryPlaintext(append([]byte(nil), plain...), c, role, w.ViewingPublicKey())
 }
 
 // PrepareRequest creates a request for external transport, without executing cryptography.

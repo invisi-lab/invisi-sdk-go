@@ -12,8 +12,8 @@ The SDK remains in the v1 series. Source synchronization does not publish a new 
 
 | Package | Responsibility |
 | --- | --- |
-| `sdk` | Stateless Note payments, public-only Wallet identity and portable wallet requests, registration, IPR/IPN and Note disclosure |
-| `wallet` | Portable JSON wallet batches, host transport interfaces and independent response validation |
+| `sdk` | Stateless Note payments, public-only Wallet identity and external signatures, registration, IPR/IPN and Note disclosure |
+| `wallet` | App delivery decryption interface and transport-neutral wallet validation utilities |
 | `core` | Wallet derivation, addresses, ordinary Note cryptography, FMD and application payload codecs |
 | `credit` | Separate postpaid grant State, policy/usage, deliveries, lifecycle preparation, proof requests, paid broadcasting and grant audit disclosure |
 | `session` | Managed Note inventory, canonical refresh, encrypted persistence, journals and notifications |
@@ -30,26 +30,27 @@ All packages share one Go module and release. Import subpackages under `github.c
 
 ## Wallets and infrastructure
 
-`sdk.Wallet` stores public identity and receiving material only. Import a public receiving address with `sdk.WalletFromAddress`, or prepare `wallet.public` and accept its external response with `sdk.WalletFromResponse`. The SDK has no key-holding local wallet or native executor. A Vault, hardware wallet or host-owned native process executes requests separately; raw cryptographic primitives remain in `core`.
+`sdk.Wallet` stores public identity and receiving material only. Initialize it with `sdk.WalletFromAddress(receivingAddress)`. The App owns account selection, key storage, unlocking, signing and decryption. No native transport or key-holding wallet is installed by the SDK.
+
+Inject `sdk.DeliveryDecryptor` with `DecryptNote(ctx, ciphertext, context)` and `DecryptCredit(ctx, ciphertext, context, role)`. Return plaintext bytes; only `nil, nil` means nonrecipient. Locked accounts, cancellation and other operational failures return errors. Wallet decryption methods validate financial contents against the owner, token, deployment, output commitment and Credit receiving keys. The App authenticates ciphertext, including its AEAD tag; financial commitments do not independently authenticate opaque memo bytes.
 
 ```go
-request, err := wallet.Prepare("public-1", owner, wallet.Public, struct{}{})
+pending, err := managed.Refresh(ctx, options)
 if err != nil { return err }
-requests := []wallet.Request{request}
-// Serialize requests to the native host; decode its []wallet.Response reply.
-ordered, err := wallet.ValidateResponses(requests, responses)
+_, err = pending.Decrypt(ctx, appDecryptor)
 if err != nil { return err }
-publicWallet, err := sdk.WalletFromResponse(request, ordered[0])
+request, err := prepared.ExportWalletAuthorization(ctx)
 if err != nil { return err }
+typed, err := request.TypedData()
+if err != nil { return err }
+digest, _, err := apitypes.TypedDataAndHash(typed)
+if err != nil { return err }
+signature, err := crypto.Sign(digest, signerKey) // Application-owned geth key.
+if err != nil { return err }
+prepared, err = prepared.WithWalletSignature(ctx, signature)
 ```
 
-The version-1 contract covers `wallet.public`, `wallet.detect`, `wallet.decryptNote`, `wallet.decryptCredit`, and `wallet.authorize`. Every response echoes version, ID, owner and method, and contains exactly one of `result` or `error: {"code": "..."}`. Integers, including context addresses, are canonical decimal strings; byte strings use lowercase `0x` hex. Public results expose viewing/spending public keys and the clue key, never private material or the detection key.
-
-`wallet.Client` describes an external `Execute(ctx, []wallet.Request) ([]wallet.Response, error)` transport. Batches contain at most 1024 requests, share one owner, have unique IDs and fit within 16 MiB serialized JSON. Empty batches are valid. Validate all requests before native execution. Invalid batch structure rejects the whole batch; item failures have explicit error responses. `wallet.ValidateResponses` rejects missing, duplicate, unknown or mismatched replies and returns request order; `wallet.AcceptBatch` additionally independently checks all successful results before returning them. Response errors remain errors. Only managed refresh treats `WALLET_NOT_RECIPIENT` on a decrypt request as a nonmatch; cancellation, unlock or other errors abort without writes.
-
-For detached operations, call `ExportWalletRequest`, print/send a one-element request array, read the response array, validate it, and pass the response to `WithWalletResponse`. Acceptance checks identity/context, signatures/digests and decrypted commitments. Sessions never retain a transport or executor: `pending := session.Refresh(...)` returns public requests, then `pending.ApplyWalletResponses(ctx, responses)` independently verifies the explicit batch before committing inventory and checkpoints atomically.
-
-Create an `sdk.Invisi` with `Provider`, `ProtocolRPC` and optionally `Prover`. `sdk.ProtocolFromRPC` authenticates the selected deployment against Chain RPC. Protocol RPC uses the `/v1` API; this does not change the independent on-chain `VERSION()` value. Applications choose trusted endpoints and can pin deployment metadata.
+Optional low-level `wallet` wire codecs validate application-defined integrations. Normal examples and Session refresh do not use wallet request/response arrays or retain an executor. See [examples](examples/README.md) for explicit App callbacks and ordinary geth signatures.
 
 Spending authorization, public ERC20 funding, allowance/Permit, detection, viewing and gas submission are separate roles. A full Note viewing capability is not purely read-only: it also permits consumption tracking and a full owner-bound sweep.
 
@@ -65,7 +66,7 @@ Recipients are typed variants:
 
 `sdk.Invisi.PrepareShield` creates transparent-amount deposits without a proof. `PrepareTransfer` combines explicit private inputs, optional public funding, private outputs and an optional `Withdrawal`. Every selected input is consumed. Automatic change uses a fresh Note.
 
-The detached sequence is prepare → inspect → export wallet request array → accept external response array → prove and independently verify → attach separate public funding signature if needed → export calldata → submit with ordinary geth APIs. Full owner-bound sweeps without funding, private outputs or fees need viewing capability; partial or redirected spending requires owner authorization.
+The detached sequence is prepare → inspect → export EIP-712 authorization → attach geth signature → prove and independently verify → attach separate public funding signature if needed → export calldata → submit with ordinary geth APIs. Full owner-bound sweeps without funding, private outputs or fees need viewing capability; partial or redirected spending requires owner authorization.
 
 Managed Note operations use `session.Connect`, reservations and durable journals. No Store is created or consulted by detached preparation.
 
@@ -97,28 +98,27 @@ Every Credit request carries `FeeRecipient` and `FeeAmount`: either a complete z
 
 ## Paid broadcaster flow
 
-Note operations use the same `*broadcaster.Client` for ordinary and required-policy relays. Configure optional `sdk.InvisiOptions.Provenance` with the trusted source client, authenticated manifest and local offline prover. `prepared.WithBroadcaster` finalizes fees, automatically builds local source evidence for private inputs, obtains and independently checks the relay-delegated tracking acknowledgement, and stores public attachments for `SubmitBroadcaster`; applications supply no manual sidecar. Managed sessions persist the same evidence and reservations. See [Provenance](PROVENANCE.md) and [normal Note broadcaster example](examples/03-hidden-amount/README.md).
-
+Note operations use `*broadcaster.Client`. `EstimateQuote(ctx, data)` estimates fees and `GetQuote(ctx, data, trust)` freezes the signed public intent. `prepared.WithBroadcaster` finalizes fees before authorization and main proving; it does not build Source proofs. If the final quote requires evidence, `SubmitBroadcaster` generates and attaches Source proof from the final ready transaction. Broadcaster verifies/preflights it before sending. Configure optional `sdk.InvisiOptions.Provenance` with the trusted Source client, authenticated manifest and local offline prover. Managed sessions persist public attachments and reservations. See [Provenance](PROVENANCE.md) and [Broadcaster examples](examples/README.md).
 All four Credit operations support:
 
 1. Prepare the business request.
 2. Select `prepared.WithBroadcaster(ctx, client, credit.WithBroadcasterOptions{MaxFeeAmount: limit})` before authorization/proving.
 3. Inspect `Preview()`, including fee and ordinary Note net amount; prepare the required owner/payer ERC20 allowance.
 4. Authorize and prove, or attach the revoke owner signature.
-5. Persist a submission ID, then `SubmitBroadcaster` with the original client.
+5. Call `SubmitBroadcaster` with the original client and persist the service-assigned submission ID.
 6. Authenticate canonical receipts independently of the operator's status response.
 
 Fee convergence is bounded and fails without modifying the original request on over-limit/nonconverging quotes. Grant gross debits and successor state commitments remain fixed during draw repricing. Enveloped draws need `PrepareDrawToNote` to reencrypt the final net Note safely.
 
-Quotes bind chain, Protocol, token, registered signer, fee recipient/amount, deadline and canonical public intent. Only proofs and the operation's separate signature slots are stripped from the intent hash. Final calldata must match the quote. After a timeout, query the same operator with the same request ID rather than creating a conflicting spend.
+Quotes bind chain, Protocol, token, registered signer, fee recipient/amount, deadline and canonical public intent. Only proofs and the operation's separate signature slots are stripped from the intent hash. Final calldata must match the quote. Submission IDs are opaque and assigned by the service. If the initial response is lost, retry the exact retained request; if an ID is known, query it first. Do not create a conflicting spend.
 
 ## Managed grant state and recovery
 
 `walletSession.Credit()` composes `credit/session` with the same encrypted WalletStore. Note and grant inventories/journals remain separate. Both roles of one physical grant reserve together. Current allocation, bitmap, consumed nullifiers, registered historical roots, UTC draw window and ERC20 gross/fee allowance are checked through the session's pinned provider.
 
-The managed flow provides `Prepare`, explicit external wallet requests/responses, `Prove`, `Calldata`, paid broadcaster submission, `Cancel`, `Resume` and canonical `Reconcile`. Externalization and exact calldata are committed before submission; transport failures retain reservations. Resume replaces the old worker lease and independently verifies saved proofs. A canonical reverted transaction can release reservations; an unconfirmed operator result cannot.
+The managed flow provides `Prepare`, explicit EIP-712 authorization, `Prove`, `Calldata`, paid broadcaster submission, `Cancel`, `Resume` and canonical `Reconcile`. Externalization and exact calldata are committed before submission; transport failures retain reservations. Resume replaces the old worker lease and independently verifies saved proofs. A canonical reverted transaction can release reservations; an unconfirmed operator result cannot.
 
-Use `walletSession.CreditReconciler(confirmations)` to bind the actual transaction destination, chain and exact calldata to canonical receipts and successor events. `WalletSession.Refresh` stages Note/Credit discovery and returns `PendingWalletRefresh` with public `WalletRequests`. The host runs those requests outside the session, then calls `ApplyWalletResponses` with bound response arrays; only `WALLET_NOT_RECIPIENT` is a decrypt nonmatch. Apply rechecks canonical receipts, membership and consumption, guards the captured store revision, and commits the complete inventory/checkpoint atomically. Failed preparation or response validation never advances the real store. Reconciliation reuses those authenticated stored openings; refresh unseen deliveries before reconciling them. Reorganizations fence old workers without discarding externalized journals.
+Use `walletSession.CreditReconciler(confirmations)` to bind the actual transaction destination, chain and exact calldata to canonical receipts and successor events. `WalletSession.Refresh` stages Note/Credit discovery without writes. Inject App decryption through `pending.Decrypt(ctx, decryptor)`; only nil plaintext is a nonrecipient. Apply rechecks canonical receipts, membership and consumption, guards the captured store revision, and commits the complete inventory/checkpoint atomically. App failures and invalid plaintext never advance the real store. Reconciliation reuses authenticated stored openings; refresh unseen deliveries before reconciling them. Reorganizations fence old workers without discarding externalized journals.
 
 `GetHistory` on each component returns business summaries without proof witnesses or signing secrets. Credit summaries omit grant recovery keys and nonces. Top-level `Subscribe` notifies after successful Store commits, serially outside operation locks. The application owns refresh scheduling and cross-process notifications.
 
@@ -165,4 +165,6 @@ Current configurable examples live under [examples](examples/README.md). Real na
 
 ## Optional Provenance tracking
 
-The independent [Provenance module](PROVENANCE.md) keeps source recognition separate from protocol spendability. Successful private-input preflight returns a durable tracking ID; default recovery persists it before broadcast permission and uses automatic chain matching, with bounded tracking waits and primary reconciliation. Normal confirmation does not require another `submitProof`. Explicit `prepareDirect` / `PrepareDirect` / `prepare_direct` and manual submission remain available for an intentionally selected self-broadcast/reproof fallback; missing tracking never silently switches modes. App integration, raw openings, signing and nonce reservations remain host-owned. See the flat [Provenance examples](examples/03-hidden-amount/README.md).
+The independent [Provenance module](PROVENANCE.md) keeps source recognition separate from protocol spendability. Relay use is optional and limited to operator-supported tokens. Source evidence is generated from the final ready statement; Broadcaster verifies and preflights it before sending. Direct payment submission and `SubmitProvenance` are independent App-controlled steps, in either order. The service automatically matches confirmed payments and publishes recognized outputs.
+
+`ExportProvenanceProof` returns a public recovery packet without private Note openings. Persist it before sending; a fresh client can call `sdk.SubmitProvenanceProof` without the original wallet, prover or transaction hash. If trust or chain generation changes, use `ProveProvenance(ctx, sdk.ProvenanceProveOptions{Reprove:true})` with the retained encrypted operation. Reproof preserves original payment calldata and the main proof. See [examples](examples/README.md).

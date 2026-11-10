@@ -1,13 +1,14 @@
-// Restore encrypted wallet inventory, explicitly refresh native responses and inspect balance.
+// Restore encrypted inventory, refresh through App decryption and inspect the balance.
 package main
 
 import (
 	"context"
 	"database/sql"
-	"encoding/json"
 	"flag"
 	"log"
 	"os"
+
+	"github.com/invisi-lab/invisi-sdk-go/examples/shared"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
@@ -19,7 +20,7 @@ import (
 )
 
 func main() {
-	// Configure public actors and deployment; the native host retains account access.
+	// Configure public actors and deployment.
 	ctx := context.Background()
 	chainRPC := flag.String("chain-rpc", "http://127.0.0.1:18565", "Chain RPC URL")
 	protocolRPC := flag.String("protocol-rpc", "https://rpc.invisipay.fi/v1/chains/97", "Protocol RPC URL")
@@ -56,8 +57,6 @@ func main() {
 	}
 	invisi := sdk.NewInvisi(sdk.InvisiOptions{Provider: provider, ProtocolRPC: client, Prover: backend})
 	token := common.HexToAddress(*tokenText)
-	encoder := json.NewEncoder(os.Stdout)
-	decoder := json.NewDecoder(os.Stdin)
 
 	// The storage encryption key protects inventory and journals; it is independent of wallet keys.
 	database, err := sql.Open("sqlite", "examples/wallet.sqlite")
@@ -96,27 +95,15 @@ func main() {
 		log.Fatal(err)
 	}
 
-	// Send the complete request array to the native host, then read its explicit response array.
-	if err = encoder.Encode(pending.WalletRequests); err != nil {
+	if _, err = pending.Decrypt(ctx, shared.AppDeliveryDecryptor{}); err != nil {
 		log.Fatal(err)
 	}
 
-	var refreshResponses []wallet.Response
-	if err = decoder.Decode(&refreshResponses); err != nil {
-		log.Fatal(err)
-	}
-
-	// Apply only after every reply passes binding and financial validation; failures leave the store unchanged.
-	if _, err = pending.ApplyWalletResponses(ctx, refreshResponses); err != nil {
-		log.Fatal(err)
-	}
 	_ = recipient
 	_ = operationID
 	balance, err := managed.Balance(ctx, token)
 	if err != nil {
 		log.Fatal(err)
 	}
-	if err = encoder.Encode(balance); err != nil {
-		log.Fatal(err)
-	}
+	log.Printf("%+v", balance)
 }

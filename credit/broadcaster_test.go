@@ -34,7 +34,7 @@ func creditBroadcaster(t *testing.T, c Context, signer *ecdsa.PrivateKey, collec
 		}
 		var result any
 		switch request.Method {
-		case "broadcaster_getFee":
+		case "broadcaster_estimateQuote":
 			result = broadcaster.Fee{FeeRecipient: collector, FeeAmount: "1", MaxGas: "2000000"}
 		case "broadcaster_getQuote":
 			data := common.FromHex(request.Params[0]["data"].(string))
@@ -47,14 +47,11 @@ func creditBroadcaster(t *testing.T, c Context, signer *ecdsa.PrivateKey, collec
 				t.Fatal(err)
 			}
 			if len(policies) > 0 {
-				bound, e := provenance.ProvenanceIntentHash(hash.Hex(), policies[0].Hex())
+				bound, e := provenance.ProvenanceIntentHash(hash.Hex())
 				if e != nil {
 					t.Fatal(e)
 				}
 				hash = common.HexToHash(bound)
-				if sidecars, ok := request.Params[0]["proofSidecars"].([]any); !ok || len(sidecars) != 0 {
-					t.Fatal("Credit quote must carry empty source sidecars")
-				}
 			}
 			q := broadcaster.Quote{Token: intent.Token, FeeRecipient: intent.FeeRecipient, FeeAmount: intent.FeeAmount.String(), Deadline: intent.Deadline.String(), MaxGas: "2000000", RequestHash: hash}
 			typed, err := broadcaster.QuoteTypedData(q, broadcaster.Trust{ChainID: core.ElementToBigInt(c.ChainID), Protocol: common.BigToAddress(core.ElementToBigInt(c.ProtocolAddress)), Signer: crypto.PubkeyToAddress(signer.PublicKey)})
@@ -71,14 +68,16 @@ func creditBroadcaster(t *testing.T, c Context, signer *ecdsa.PrivateKey, collec
 			}
 			signed := broadcaster.SignedQuote{Quote: q, Signature: "0x" + common.Bytes2Hex(signature)}
 			if len(policies) > 0 {
-				signed.ProvenancePolicyID = &policies[0]
+				signed.ProvenanceRequired = true
 				signed.RequestHashFormat = broadcaster.ProvenanceRequestHashFormat
 			}
 			result = signed
+		case "broadcaster_getStatus":
+			result = map[string]any{"apiVersion": "v1", "protocolVersion": "1", "chainId": core.ElementToBigInt(c.ChainID).String(), "protocol": common.BigToAddress(core.ElementToBigInt(c.ProtocolAddress)).Hex(), "sender": crypto.PubkeyToAddress(signer.PublicKey).Hex(), "feeRecipient": collector.Hex(), "submissionHalted": false, "provenance": map[string]any{"enabled": len(policies) > 0, "requestHashFormat": broadcaster.ProvenanceRequestHashFormat, "trackingRequired": true, "trackingSupported": true}}
 		case "broadcaster_getTransactionStatus":
 			result = broadcaster.Status{ID: request.Params[0]["id"].(string), State: "uncertain"}
 		case "broadcaster_submitTransaction":
-			result = broadcaster.Status{ID: request.Params[0]["idempotencyKey"].(string), State: "submitted", TransactionHash: common.HexToHash("0x1234").Hex()}
+			result = broadcaster.Status{ID: "server-request-id", State: "submitted", TransactionHash: common.HexToHash("0x1234").Hex()}
 		default:
 			t.Fatalf("unexpected method %s", request.Method)
 		}
@@ -88,12 +87,6 @@ func creditBroadcaster(t *testing.T, c Context, signer *ecdsa.PrivateKey, collec
 	client, err := broadcaster.NewClient(broadcaster.Configuration{Endpoint: "https://operator.example", QuoteSigner: crypto.PubkeyToAddress(signer.PublicKey), FeeRecipient: collector}, broadcaster.Options{HTTPClient: &http.Client{Transport: transport}})
 	if err != nil {
 		t.Fatal(err)
-	}
-	if len(policies) > 0 {
-		client, err = client.WithProvenancePolicy(policies[0])
-		if err != nil {
-			t.Fatal(err)
-		}
 	}
 	return client
 }
@@ -185,7 +178,7 @@ func TestCreditKnownSubmissionQueriesWithoutFreshProof(t *testing.T) {
 		t.Fatal(err)
 	}
 	prepared.submission = Submission{RequestID: "original", State: "uncertain"}
-	status, err := prepared.SubmitBroadcaster(context.Background(), client, "original")
+	status, err := prepared.SubmitBroadcaster(context.Background(), client)
 	if err != nil || status.State != "uncertain" {
 		t.Fatal("known externalized request needed a new proof/send", status, err)
 	}

@@ -11,7 +11,7 @@ import (
 	"github.com/invisi-lab/invisi-sdk-go/credit"
 )
 
-// Wallet contains only public identity and a private-key-free transport.
+// Wallet contains public identity and receiving material only.
 type Wallet struct {
 	identity common.Address
 	address  string

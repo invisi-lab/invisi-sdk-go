@@ -228,7 +228,7 @@ func (c *RecoveryCoordinator) validate(ctx context.Context, r RecoveryRecord) er
 	if _, e := RecoverySubmissionKey(r.IdempotencyKey, r.Sidecar); e != nil {
 		return e
 	}
-	for _, p := range [][2]string{{r.Intent.ChainID, c.Trust.ChainID}, {r.Intent.ProtocolAddress, c.Trust.ProtocolAddress}, {r.Intent.PolicyID, c.Trust.PolicyID}} {
+	for _, p := range [][2]string{{r.Intent.ChainID, c.Trust.ChainID}, {r.Intent.ProtocolAddress, c.Trust.ProtocolAddress}} {
 		if !equalNumber(p[0], p[1]) {
 			return errors.New("recovery scope mismatch")
 		}
@@ -244,19 +244,19 @@ func (c *RecoveryCoordinator) validate(ctx context.Context, r RecoveryRecord) er
 		return errors.New("recovery operation index mismatch")
 	}
 	p := r.Sidecar.ProofBundle.PublicInputs
-	if len(p) != 13 {
+	if len(p) != 11 {
 		return errors.New("recovery public ABI mismatch")
 	}
-	hi, e := Uint(p[9], 128)
+	hi, e := Uint(p[7], 128)
 	if e != nil {
 		return e
 	}
-	lo, e := Uint(p[10], 128)
+	lo, e := Uint(p[8], 128)
 	if e != nil {
 		return e
 	}
 	digest := new(big.Int).Or(new(big.Int).Lsh(hi, 128), lo)
-	if !equalNumber(digest.String(), r.Intent.OperationDigest) || !equalNumber(p[2], r.Intent.TokenAddress) || !equalNumber(p[8], fmt.Sprint(len(r.Intent.InputNullifiers))) {
+	if !equalNumber(digest.String(), r.Intent.OperationDigest) || !equalNumber(p[2], r.Intent.TokenAddress) || !equalNumber(p[6], fmt.Sprint(len(r.Intent.InputNullifiers))) {
 		return errors.New("recovery statement mismatch")
 	}
 	seen := map[string]bool{}
@@ -268,7 +268,7 @@ func (c *RecoveryCoordinator) validate(ctx context.Context, r RecoveryRecord) er
 		seen[v] = true
 	}
 	inputHash, e := InputDigest(r.Intent.InputNullifiers)
-	if e != nil || !equalNumber(inputHash, p[11]) {
+	if e != nil || !equalNumber(inputHash, p[9]) {
 		return errors.New("recovery nullifiers digest mismatch")
 	}
 	trust := c.Trust

@@ -3,17 +3,15 @@ package main
 
 import (
 	"context"
-	"encoding/json"
 	"flag"
 	"log"
-	"os"
 
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/invisi-lab/invisi-sdk-go/sdk"
 )
 
 func main() {
-	// Configure public actors and deployment; the native host retains account access.
+	// Configure public actors and deployment.
 	ctx := context.Background()
 	chainRPC := flag.String("chain-rpc", "http://127.0.0.1:18565", "Chain RPC URL")
 	protocolRPC := flag.String("protocol-rpc", "https://rpc.invisipay.fi/v1/chains/97", "Protocol RPC URL")
@@ -39,9 +37,7 @@ func main() {
 
 	invisi := sdk.NewInvisi(sdk.InvisiOptions{Provider: provider, ProtocolRPC: client})
 
-	encoder := json.NewEncoder(os.Stdout)
-
-	// Freeze recipients and amounts before authorization so the native response approves this exact intent.
+	// Freeze recipients and amounts before authorization.
 	prepared, err := invisi.PrepareRegistration(ctx, sdk.RegistrationPreparation{Wallet: publicWallet, Update: true})
 	if err != nil {
 		log.Fatal(err)
@@ -56,7 +52,5 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	if err = encoder.Encode(call); err != nil {
-		log.Fatal(err)
-	}
+	log.Printf("%+v", call)
 }

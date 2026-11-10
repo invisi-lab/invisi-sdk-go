@@ -47,6 +47,7 @@ func TestKnownExternalizedBroadcasterStatusBypassesNewSendFreshness(t *testing.T
 	if e = store.Update(ctx, func(s *State) error {
 		r := s.Operations[op.id]
 		r.Externalized = true
+		r.BroadcasterRequestID = "original"
 		r.Status = "uncertain"
 		r.Intent.Broadcaster = &credit.BroadcasterBinding{Configuration: client.Configuration()}
 		s.Operations[op.id] = r

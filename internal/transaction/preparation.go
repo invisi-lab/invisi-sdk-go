@@ -76,6 +76,7 @@ type Plan struct {
 	Deliveries  []protocol.Delivery
 	DrawAmounts []*big.Int
 	Broadcaster *BroadcasterPlan
+	Provenance  *ProvenancePlan
 }
 
 func ValidatePayload(payload []byte) error { return core.ValidatePayload(payload) }

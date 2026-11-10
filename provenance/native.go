@@ -111,7 +111,7 @@ func (p NativeProver) Prove(ctx context.Context, identity ManifestIdentity, capa
 	if e := json.Unmarshal(data, &pub); e != nil {
 		return ProofResult{}, e
 	}
-	if len(pub.Inputs) != 13 || len(expected) != 13 {
+	if len(pub.Inputs) != 11 || len(expected) != 11 {
 		return ProofResult{}, errors.New("prover public statement width")
 	}
 	publicBytes := []byte{}

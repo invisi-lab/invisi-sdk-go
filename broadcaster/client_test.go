@@ -100,7 +100,7 @@ func TestClientPositionalJSONRPCAndSafeSubmission(t *testing.T) {
 		switch req.Method {
 		case "broadcaster_getQuote":
 			result = quote
-		case "broadcaster_getFee":
+		case "broadcaster_estimateQuote":
 			result = Fee{quote.Quote.FeeRecipient, "5", "100000"}
 		default:
 			result = Status{ID: "key", State: "uncertain"}
@@ -112,17 +112,17 @@ func TestClientPositionalJSONRPCAndSafeSubmission(t *testing.T) {
 	if e != nil {
 		t.Fatal(e)
 	}
-	if _, e = c.Fee(context.Background(), quote.Quote.Token, nil); e != nil {
+	if _, e = c.EstimateQuote(context.Background(), data); e != nil {
 		t.Fatal(e)
 	}
-	verified, e := c.Quote(context.Background(), data, trust)
+	verified, e := c.GetQuote(context.Background(), data, trust)
 	if e != nil {
 		t.Fatal(e)
 	}
-	if _, e = c.Submit(context.Background(), data, quote, "key"); e == nil {
+	if _, e = c.Submit(context.Background(), data, quote); e == nil {
 		t.Fatal("unverified context accepted")
 	}
-	if _, e = c.Submit(context.Background(), data, verified, "key"); e != nil {
+	if _, e = c.Submit(context.Background(), data, verified); e != nil {
 		t.Fatal(e)
 	}
 	if _, e = c.Status(context.Background(), "key"); e != nil {

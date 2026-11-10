@@ -3,11 +3,9 @@ package main
 
 import (
 	"context"
-	"encoding/json"
 	"flag"
 	"log"
 	"math/big"
-	"os"
 	"strings"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -16,7 +14,7 @@ import (
 )
 
 func main() {
-	// Configure public actors and deployment; the native host retains account access.
+	// Configure public actors and deployment.
 	ctx := context.Background()
 	chainRPC := flag.String("chain-rpc", "http://127.0.0.1:18565", "Chain RPC URL")
 	protocolRPC := flag.String("protocol-rpc", "https://rpc.invisipay.fi/v1/chains/97", "Protocol RPC URL")
@@ -46,7 +44,6 @@ func main() {
 	}
 	invisi := sdk.NewInvisi(sdk.InvisiOptions{Provider: provider, ProtocolRPC: client})
 	token := common.HexToAddress(*tokenText)
-	encoder := json.NewEncoder(os.Stdout)
 	recipients := strings.Split(*recipientsText, ",")
 	if len(recipients) != 9 {
 		log.Fatal("exactly nine recipients required")
@@ -66,7 +63,7 @@ func main() {
 		outputs = append(outputs, output)
 	}
 
-	// Freeze recipients and amounts before authorization so the native response approves this exact intent.
+	// Freeze recipients and amounts before authorization.
 	prepared, err := invisi.PrepareShield(ctx, sdk.ExplicitShieldPreparation{
 		TransactionIdentity: sdk.TransactionIdentity{Wallet: publicWallet, Protocol: pool},
 		ShieldPreparation: sdk.ShieldPreparation{
@@ -88,7 +85,5 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	if err = encoder.Encode(call); err != nil {
-		log.Fatal(err)
-	}
+	log.Printf("%+v", call)
 }

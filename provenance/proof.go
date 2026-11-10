@@ -43,7 +43,7 @@ func AuthenticateManifest(data []byte, expected string) (ManifestIdentity, error
 	if e := json.Unmarshal(data, &m); e != nil {
 		return ManifestIdentity{}, e
 	}
-	if m.Family != "provenance" || m.Target != "evm" || m.NoirVersion != "1.0.0" || m.BBVersion != "6.0.0" || m.Depth != 32 || len(m.PublicInputs) != 13 || len(m.Circuits) != 28 {
+	if m.Family != "provenance" || m.Target != "evm" || m.NoirVersion != "1.0.0" || m.BBVersion != "6.0.0" || m.Depth != 32 || len(m.PublicInputs) != 11 || len(m.Circuits) != 7 {
 		return ManifestIdentity{}, errors.New("unsupported provenance manifest")
 	}
 	for i, k := range publicInputNames {
@@ -84,7 +84,7 @@ type TrustContext struct {
 }
 
 func AssertCertificateTrust(c RootCertificate, t TrustContext) error {
-	for _, p := range [][2]string{{c.ChainID, t.ChainID}, {c.ProtocolAddress, t.ProtocolAddress}, {c.PolicyID, t.PolicyID}, {c.ChainGeneration, t.ChainGeneration}, {c.ProviderID, t.ProviderID}} {
+	for _, p := range [][2]string{{c.ChainID, t.ChainID}, {c.ProtocolAddress, t.ProtocolAddress}, {c.ChainGeneration, t.ChainGeneration}, {c.ProviderID, t.ProviderID}} {
 		if !equalNumber(p[0], p[1]) {
 			return errors.New("certificate deployment mismatch")
 		}
@@ -135,7 +135,7 @@ func ExportSidecar(ctx context.Context, r WitnessRequest, certs []RootCertificat
 	if identity.SHA256 != t.ManifestSHA256 || len(certs) != len(r.Sources) {
 		return ProofSidecar{}, errors.New("manifest or certificate count mismatch")
 	}
-	for _, p := range [][2]string{{r.ChainID, t.ChainID}, {r.ProtocolAddress, t.ProtocolAddress}, {r.PolicyID, t.PolicyID}, {r.ChainGeneration, t.ChainGeneration}} {
+	for _, p := range [][2]string{{r.ChainID, t.ChainID}, {r.ProtocolAddress, t.ProtocolAddress}, {r.ChainGeneration, t.ChainGeneration}} {
 		if !equalNumber(p[0], p[1]) {
 			return ProofSidecar{}, errors.New("witness deployment mismatch")
 		}
@@ -153,7 +153,7 @@ func ExportSidecar(ctx context.Context, r WitnessRequest, certs []RootCertificat
 	if e != nil {
 		return ProofSidecar{}, e
 	}
-	expected := make([]string, 13)
+	expected := make([]string, 11)
 	for i, k := range publicInputNames {
 		expected[i], _ = word(w[k].(string))
 	}
@@ -161,7 +161,7 @@ func ExportSidecar(ctx context.Context, r WitnessRequest, certs []RootCertificat
 	if e != nil {
 		return ProofSidecar{}, e
 	}
-	if len(result.PublicInputs) != 13 {
+	if len(result.PublicInputs) != 11 {
 		return ProofSidecar{}, errors.New("prover statement width")
 	}
 	for i, v := range result.PublicInputs {
@@ -205,7 +205,7 @@ func certificateToWire(c RootCertificate) (RootCertificate, error) {
 			return RootCertificate{}, e
 		}
 		switch k {
-		case "providerId", "signingKeyId", "policyId", "root", "confirmedBlockHash", "decisionLogHash", "previousCheckpointHash":
+		case "providerId", "signingKeyId", "root", "confirmedBlockHash", "decisionLogHash", "previousCheckpointHash":
 			values[k] = fmt.Sprintf("0x%064x", n)
 		case "protocolAddress":
 			values[k] = fmt.Sprintf("0x%040x", n)
@@ -234,10 +234,10 @@ func ValidateProofBundle(b ProofBundle, t TrustContext) error {
 		return errors.New("unsupported provenance circuit")
 	}
 	capacity, e := strconv.Atoi(strings.TrimPrefix(b.CircuitID, "provenance_k"))
-	if e != nil || !SupportedCapacity(capacity) || b.CircuitID != fmt.Sprintf("provenance_k%d", capacity) || len(b.PublicInputs) != 13 {
+	if e != nil || !SupportedCapacity(capacity) || b.CircuitID != fmt.Sprintf("provenance_k%d", capacity) || len(b.PublicInputs) != 11 {
 		return errors.New("unsupported provenance circuit or ABI")
 	}
-	p := make([]*big.Int, 13)
+	p := make([]*big.Int, 11)
 	for i, v := range b.PublicInputs {
 		if len(v) != 66 || !strings.HasPrefix(v, "0x") {
 			return errors.New("public inputs must be canonical words")
@@ -247,19 +247,15 @@ func ValidateProofBundle(b ProofBundle, t TrustContext) error {
 			return e
 		}
 	}
-	hi, lo, e := limbs(t.PolicyID)
-	if e != nil {
-		return e
-	}
-	for _, pair := range [][2]string{{p[0].String(), t.ChainID}, {p[1].String(), t.ProtocolAddress}, {p[3].String(), hi}, {p[4].String(), lo}, {p[5].String(), t.ChainGeneration}} {
+	for _, pair := range [][2]string{{p[0].String(), t.ChainID}, {p[1].String(), t.ProtocolAddress}, {p[3].String(), t.ChainGeneration}} {
 		if !equalNumber(pair[0], pair[1]) {
 			return errors.New("proof deployment mismatch")
 		}
 	}
-	if p[6].Cmp(big.NewInt(int64(len(b.RootCertificates)))) != 0 || p[8].Sign() == 0 || p[8].Cmp(big.NewInt(int64(capacity))) > 0 || p[6].Sign() == 0 || p[6].Cmp(p[8]) > 0 {
+	if p[4].Cmp(big.NewInt(int64(len(b.RootCertificates)))) != 0 || p[6].Sign() == 0 || p[6].Cmp(big.NewInt(int64(capacity))) > 0 || p[4].Sign() == 0 || p[4].Cmp(p[6]) > 0 {
 		return errors.New("proof shape mismatch")
 	}
-	if p[9].BitLen() > 128 || p[10].BitLen() > 128 {
+	if p[7].BitLen() > 128 || p[8].BitLen() > 128 {
 		return errors.New("operation digest limbs")
 	}
 	sources := []Source{}
@@ -273,19 +269,19 @@ func ValidateProofBundle(b ProofBundle, t TrustContext) error {
 	if e != nil {
 		return e
 	}
-	if sd != p[7].String() {
+	if sd != p[5].String() {
 		return errors.New("proof sources digest mismatch")
 	}
 	scope, e := ScopeHash(t.Scope)
 	if e != nil {
 		return e
 	}
-	operation := new(big.Int).Or(new(big.Int).Lsh(new(big.Int).Set(p[9]), 128), p[10])
-	binding, e := BindingDigest(scope, p[2].String(), t.ChainGeneration, p[6].String(), sd, p[8].String(), operation.String(), p[11].String())
+	operation := new(big.Int).Or(new(big.Int).Lsh(new(big.Int).Set(p[7]), 128), p[8])
+	binding, e := BindingDigest(scope, p[2].String(), t.ChainGeneration, p[4].String(), sd, p[6].String(), operation.String(), p[9].String())
 	if e != nil {
 		return e
 	}
-	if binding != p[12].String() {
+	if binding != p[10].String() {
 		return errors.New("proof binding mismatch")
 	}
 	return nil

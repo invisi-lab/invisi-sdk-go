@@ -1,8 +1,6 @@
 package sdk
 
 import (
-	"context"
-
 	"github.com/ethereum/go-ethereum/common"
 	transaction "github.com/invisi-lab/invisi-sdk-go/internal/transaction"
 	"github.com/invisi-lab/invisi-sdk-go/wallet"
@@ -20,10 +18,6 @@ type Wallet = transaction.Wallet
 
 type WalletReference = transaction.WalletReference
 
-func ConnectWallet(ctx context.Context, owner common.Address, client wallet.Client) (*Wallet, error) {
-	return transaction.ConnectWallet(ctx, owner, client)
-}
-
 func WalletFromAddress(address string) (*Wallet, error) {
 	return transaction.WalletFromAddress(address)
 }
@@ -31,3 +25,6 @@ func WalletFromAddress(address string) (*Wallet, error) {
 func WalletFromResponse(request wallet.Request, response wallet.Response) (*Wallet, error) {
 	return transaction.WalletFromResponse(request, response)
 }
+
+type DeliveryDecryptor = wallet.DeliveryDecryptor
+type DeliveryDecryptorFuncs = wallet.DeliveryDecryptorFuncs

@@ -3,12 +3,9 @@ package main
 
 import (
 	"context"
-	"encoding/json"
 	"flag"
-	"fmt"
 	"log"
 	"math/big"
-	"os"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
@@ -18,11 +15,10 @@ import (
 	"github.com/invisi-lab/invisi-sdk-go/prover"
 	"github.com/invisi-lab/invisi-sdk-go/prover/native"
 	"github.com/invisi-lab/invisi-sdk-go/sdk"
-	"github.com/invisi-lab/invisi-sdk-go/wallet"
 )
 
 func main() {
-	// Configure public actors and deployment; the native host retains account access.
+	// Configure public actors and deployment.
 	ctx := context.Background()
 	chainRPC := flag.String("chain-rpc", "http://127.0.0.1:18565", "Chain RPC URL")
 	protocolRPC := flag.String("protocol-rpc", "https://rpc.invisipay.fi/v1/chains/97", "Protocol RPC URL")
@@ -59,9 +55,7 @@ func main() {
 	}
 	invisi := sdk.NewInvisi(sdk.InvisiOptions{Provider: provider, ProtocolRPC: client, Prover: backend})
 	token := common.HexToAddress(*tokenText)
-	encoder := json.NewEncoder(os.Stdout)
-	decoder := json.NewDecoder(os.Stdin)
-	nativeWallet := shared.NativeWalletClient{Encoder: encoder, Decoder: decoder}
+	decryptor := shared.AppDeliveryDecryptor{}
 	secondWallet, err := sdk.WalletFromAddress(*secondAddress)
 	if err != nil {
 		log.Fatal(err)
@@ -72,7 +66,7 @@ func main() {
 	members := []prover.AggregateMember{}
 	transacts := []protocol.TransactRequest{}
 
-	// Each native batch belongs to one owner; aggregate proofs may combine different owners.
+	// Each owner signs separately; aggregates may contain proofs from different owners.
 	for ownerIndex, ownerWallet := range []*sdk.Wallet{publicWallet, secondWallet} {
 		ownerAddress, err := ownerWallet.GetAddress()
 		if err != nil {
@@ -80,7 +74,7 @@ func main() {
 		}
 
 		// Discover automatically through canonical receipts and externally decrypted, independently checked openings.
-		candidates, err := shared.DiscoverNotes(ctx, provider, client, pool, ownerWallet, nativeWallet, token)
+		candidates, err := shared.DiscoverNotes(ctx, provider, client, pool, ownerWallet, decryptor, token)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -98,7 +92,6 @@ func main() {
 			log.Fatal("two distinct selected unspent notes required")
 		}
 		preparedMembers := make([]*sdk.PreparedTransaction, 2)
-		requests := make([]wallet.Request, 2)
 		for i, input := range inputs {
 			amount := new(big.Int).Div(core.ElementToBigInt(input.Note.Amount), big.NewInt(2))
 			if amount.Sign() == 0 {
@@ -115,7 +108,7 @@ func main() {
 				log.Fatal(err)
 			}
 
-			// Freeze recipients and amounts before authorization so the native response approves this exact intent.
+			// Freeze recipients and amounts before authorization.
 			prepared, err := invisi.PrepareTransfer(ctx, sdk.ExplicitTransferPreparation{
 				TransactionIdentity: sdk.TransactionIdentity{Wallet: ownerWallet, Protocol: pool},
 				ExplicitFunds:       sdk.ExplicitFunds{Inputs: []sdk.NoteInput{input}, ChangeAddress: ownerAddress},
@@ -124,33 +117,24 @@ func main() {
 			if err != nil {
 				log.Fatal(err)
 			}
-			requests[i], err = prepared.ExportWalletRequest(ctx, fmt.Sprintf("aggregate-%d-%d", ownerIndex, i))
+
+			preparedMembers[i] = prepared
+		}
+
+		for _, prepared := range preparedMembers {
+			authorization, err := prepared.ExportWalletAuthorization(ctx)
 			if err != nil {
 				log.Fatal(err)
 			}
-			preparedMembers[i] = prepared
-		}
-		if err = wallet.ValidateRequests(requests); err != nil {
-			log.Fatal(err)
-		}
-
-		// The host approves both frozen requests for this owner in one explicit exchange.
-		if err = encoder.Encode(requests); err != nil {
-			log.Fatal(err)
-		}
-
-		var responses []wallet.Response
-		if err = decoder.Decode(&responses); err != nil {
-			log.Fatal(err)
-		}
-
-		// Match by ID rather than arrival order; attachment independently verifies the signature and statement.
-		ordered, err := wallet.ValidateResponses(requests, responses)
-		if err != nil {
-			log.Fatal(err)
-		}
-		for i, prepared := range preparedMembers {
-			authorized, err := prepared.WithWalletResponse(ctx, requests[i], ordered[i])
+			environment := "OWNER_PRIVATE_KEY"
+			if ownerIndex == 1 {
+				environment = "SECOND_OWNER_PRIVATE_KEY"
+			}
+			signature, err := shared.Sign(authorization, ownerWallet.OwnerAddress(), environment)
+			if err != nil {
+				log.Fatal(err)
+			}
+			authorized, err := prepared.WithWalletSignature(ctx, signature)
 			if err != nil {
 				log.Fatal(err)
 			}
@@ -182,7 +166,5 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	if err = encoder.Encode(call); err != nil {
-		log.Fatal(err)
-	}
+	log.Printf("%+v", call)
 }

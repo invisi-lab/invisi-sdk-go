@@ -3,8 +3,13 @@ package session
 import (
 	"context"
 	"encoding/binary"
+	"fmt"
 	"math/big"
+	"reflect"
 	"testing"
+
+	protocolrpc "github.com/invisi-lab/invisi-sdk-go/rpc"
+	"github.com/invisi-lab/invisi-sdk-go/wallet"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
@@ -89,6 +94,28 @@ func TestOwnedReceiptRequiresCanonicalInsertionAndMembership(t *testing.T) {
 	provider := receiptProvider{original, receipt}
 	session.options.Provider = provider
 	session.rpc = session.rpc.WithProvider(provider)
+
+	// An App error wrapping the nonrecipient sentinel must not commit inventory or checkpoints.
+	for _, appErr := range []error{wallet.ErrNotRecipient, fmt.Errorf("App failure: %w", wallet.ErrNotRecipient)} {
+		clue := make([]byte, 68)
+		clue[64] = 24
+		pending := &PendingWalletRefresh{session: session, base: state, options: RefreshOptions{FromBlock: 10}, pages: &refreshPages{
+			notePages:   map[string]protocolrpc.ProtocolNoteUpdates{"10:10": {Block: *state.ObservedThrough, Notes: []protocolrpc.ProtocolNoteOutput{{Block: *state.ObservedThrough, TreeID: 1, LeafIndex: 0, Commitment: stored.Commitment, TokenAddress: token, Ciphertext: ciphertext, Clue: clue, TransactionHash: tx}}}},
+			creditPages: map[string]protocolrpc.ProtocolCreditUpdates{"10:10": {Block: *state.ObservedThrough}},
+		}}
+		failed := testDeliveryDecryptor(session)
+		failed.Note = func(context.Context, []byte, core.NoteDecryptionContext) ([]byte, error) { return nil, appErr }
+		if _, e := pending.Decrypt(ctx, failed); e == nil {
+			t.Fatal("App error was skipped as nonrecipient")
+		}
+		after, e := session.options.Store.ReadSnapshot(ctx, session.scope)
+		if e != nil {
+			t.Fatal(e)
+		}
+		if !reflect.DeepEqual(state, after) {
+			t.Fatal("App error advanced inventory or checkpoints")
+		}
+	}
 	notes, credits, _, err := readTransactionForTest(session, ctx, tx, *state.ObservedThrough)
 	if err != nil || len(notes) != 1 || len(credits) != 0 || notes[0].Commitment != stored.Commitment {
 		t.Fatal(notes, err)

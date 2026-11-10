@@ -96,7 +96,7 @@ func TestCurrentCreditNativeLifecycle(t *testing.T) {
 			if e != nil || len(data) < 4 {
 				t.Fatal("current Credit calldata", e)
 			}
-			status, e := p.SubmitBroadcaster(ctx, client, "native-"+name)
+			status, e := p.SubmitBroadcaster(ctx, client)
 			if e != nil || status.State != "submitted" {
 				t.Fatal("current Credit broadcaster submission", e)
 			}
@@ -197,7 +197,7 @@ func TestCurrentRevocationBroadcasterWithoutZK(t *testing.T) {
 	if err = p.WithRevocationSignature(context.Background(), signature, verify); err != nil {
 		t.Fatal(err)
 	}
-	status, err := p.SubmitBroadcaster(context.Background(), client, "revoke-no-zk")
+	status, err := p.SubmitBroadcaster(context.Background(), client)
 	if err != nil || status.State != "submitted" {
 		t.Fatal(status, err)
 	}

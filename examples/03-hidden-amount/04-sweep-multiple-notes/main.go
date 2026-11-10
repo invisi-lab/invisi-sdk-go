@@ -3,11 +3,9 @@ package main
 
 import (
 	"context"
-	"encoding/json"
 	"flag"
 	"log"
 	"math/big"
-	"os"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
@@ -18,7 +16,7 @@ import (
 )
 
 func main() {
-	// Configure public actors and deployment; the native host retains account access.
+	// Configure public actors and deployment.
 	ctx := context.Background()
 	chainRPC := flag.String("chain-rpc", "http://127.0.0.1:18565", "Chain RPC URL")
 	protocolRPC := flag.String("protocol-rpc", "https://rpc.invisipay.fi/v1/chains/97", "Protocol RPC URL")
@@ -54,12 +52,10 @@ func main() {
 	}
 	invisi := sdk.NewInvisi(sdk.InvisiOptions{Provider: provider, ProtocolRPC: client, Prover: backend})
 	token := common.HexToAddress(*tokenText)
-	encoder := json.NewEncoder(os.Stdout)
-	decoder := json.NewDecoder(os.Stdin)
-	nativeWallet := shared.NativeWalletClient{Encoder: encoder, Decoder: decoder}
+	decryptor := shared.AppDeliveryDecryptor{}
 
 	// Discover automatically through canonical receipts and externally decrypted, independently checked openings.
-	candidates, err := shared.DiscoverNotes(ctx, provider, client, pool, publicWallet, nativeWallet, token)
+	candidates, err := shared.DiscoverNotes(ctx, provider, client, pool, publicWallet, decryptor, token)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -101,7 +97,5 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	if err = encoder.Encode(call); err != nil {
-		log.Fatal(err)
-	}
+	log.Printf("%+v", call)
 }

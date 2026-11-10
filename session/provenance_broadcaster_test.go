@@ -2,10 +2,8 @@ package session
 
 import (
 	"context"
-	"github.com/ethereum/go-ethereum/common"
 	sdk "github.com/invisi-lab/invisi-sdk-go/sdk"
 	"math/big"
-	"strings"
 	"testing"
 	"time"
 )
@@ -18,14 +16,7 @@ func TestRequiredProvenanceMissingCapabilityPreservesPrepared(t *testing.T) {
 		t.Fatal(e)
 	}
 	c, _ := testBroadcaster(t, prepared, []int64{5}, false)
-	required, e := c.WithProvenancePolicy(common.HexToHash("0x77"))
-	if e != nil {
-		t.Fatal(e)
-	}
-	if _, e = prepared.WithBroadcaster(context.Background(), required, sdk.WithBroadcasterOptions{MaxFeeAmount: big.NewInt(10)}); e == nil || !strings.Contains(e.Error(), "capability") {
-		t.Fatal("missing capability did not fail closed before quote", e)
-	}
-	if prepared.Status() != "prepared" {
-		t.Fatal("failed source preparation consumed handle")
+	if _, e = prepared.WithBroadcaster(context.Background(), c, sdk.WithBroadcasterOptions{MaxFeeAmount: big.NewInt(10)}); e != nil {
+		t.Fatal("quotation must not require local Source capability", e)
 	}
 }

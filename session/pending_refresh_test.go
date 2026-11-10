@@ -19,10 +19,10 @@ func TestPendingRefreshDoesNotAdvanceUntilApplied(t *testing.T) {
 	if after.Revision != before.Revision || after.DiscoveryThrough != before.DiscoveryThrough {
 		t.Fatal("preparation changed real inventory")
 	}
-	if _, err = pending.ApplyWalletResponses(ctx, nil); err != nil {
+	if _, err = pending.Decrypt(ctx, testDeliveryDecryptor(s)); err != nil {
 		t.Fatal(err)
 	}
-	if _, err = pending.ApplyWalletResponses(ctx, nil); err == nil {
+	if _, err = pending.Decrypt(ctx, testDeliveryDecryptor(s)); err == nil {
 		t.Fatal("pending refresh applied twice")
 	}
 }
@@ -37,7 +37,7 @@ func TestPendingRefreshRejectsChangedInventory(t *testing.T) {
 	if err = s.options.Store.Update(ctx, s.scope, func(state *WalletState) error { return nil }); err != nil {
 		t.Fatal(err)
 	}
-	if _, err = pending.ApplyWalletResponses(ctx, nil); err == nil {
+	if _, err = pending.Decrypt(ctx, testDeliveryDecryptor(s)); err == nil {
 		t.Fatal("pending refresh overwrote newer inventory")
 	}
 }
@@ -61,9 +61,9 @@ func TestPendingRefreshRejectsConcurrentApply(t *testing.T) {
 	s.options.Provider = provider
 	s.rpc = s.rpc.WithProvider(provider)
 	done := make(chan error, 1)
-	go func() { _, e := pending.ApplyWalletResponses(ctx, nil); done <- e }()
+	go func() { _, e := pending.Decrypt(ctx, testDeliveryDecryptor(s)); done <- e }()
 	<-entered
-	if _, err = pending.ApplyWalletResponses(ctx, nil); err == nil {
+	if _, err = pending.Decrypt(ctx, testDeliveryDecryptor(s)); err == nil {
 		close(release)
 		t.Fatal("concurrent pending apply accepted")
 	}

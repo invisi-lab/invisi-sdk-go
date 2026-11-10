@@ -76,7 +76,7 @@ func (c *Client) GetTracking(ctx context.Context, id string) (Result, error) {
 	if !regexp.MustCompile(`^[a-f0-9]{48}$`).MatchString(id) {
 		return nil, errors.New("invalid tracking id")
 	}
-	r, e := c.call(ctx, "provenance_getTracking", c.policyQuery(map[string]any{"trackingId": id}))
+	r, e := c.call(ctx, "provenance_getTracking", c.publicQuery(map[string]any{"trackingId": id}))
 	if e != nil {
 		return nil, e
 	}

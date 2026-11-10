@@ -5,7 +5,7 @@ import hashlib
 import json
 from pathlib import Path
 
-PIN = "f90f2ce43218de158c6392fa19e6517dda703c35823a4aa5bfc20b50788ad282"
+PIN = "6107789c5c0d24c4130bff05da6d389336feb5ccb247c4030eae5198ab05d762"
 parser = argparse.ArgumentParser(description=__doc__)
 parser.add_argument("protocol_root", type=Path)
 parser.add_argument("--output", type=Path, default=Path(__file__).resolve().parents[1] / ".cache" / "provenance")
@@ -15,7 +15,7 @@ manifest_bytes = (source / "circuits/provenance/manifest.json").read_bytes()
 if hashlib.sha256(manifest_bytes).hexdigest() != PIN:
     raise SystemExit("Untrusted provenance manifest; review and explicitly update the release pin")
 manifest = json.loads(manifest_bytes)
-if manifest["family"] != "provenance" or manifest["target"] != "evm" or len(manifest["circuits"]) != 28:
+if manifest["family"] != "provenance" or manifest["target"] != "evm" or len(manifest["circuits"]) != 7:
     raise SystemExit("Unsupported provenance release")
 payloads = [("manifest.json", manifest_bytes)]
 for entry in manifest["circuits"]:

@@ -23,7 +23,11 @@ type Client struct {
 type Result map[string]json.RawMessage
 
 func (c *Client) call(ctx context.Context, method string, query any) (Result, error) {
-	u, e := url.Parse(c.Endpoint)
+	endpoint := c.Endpoint
+	if endpoint == "" {
+		endpoint = "https://provenance.invisipay.fi"
+	}
+	u, e := url.Parse(endpoint)
 	if e != nil || u.Host == "" || u.User != nil || (u.Scheme != "https" && u.Scheme != "http") || u.RawQuery != "" || u.Fragment != "" {
 		return nil, errors.New("invalid service endpoint")
 	}
@@ -46,7 +50,7 @@ func (c *Client) call(ctx context.Context, method string, query any) (Result, er
 	if e != nil {
 		return nil, e
 	}
-	req, e := http.NewRequestWithContext(ctx, "POST", strings.TrimRight(c.Endpoint, "/")+"/v1/chains/"+chain.String(), bytes.NewReader(body))
+	req, e := http.NewRequestWithContext(ctx, "POST", strings.TrimRight(endpoint, "/")+"/v1/chains/"+chain.String(), bytes.NewReader(body))
 	if e != nil {
 		return nil, e
 	}
@@ -86,7 +90,7 @@ func (c *Client) call(ctx context.Context, method string, query any) (Result, er
 	if env.Error != nil {
 		return nil, fmt.Errorf("provenance %s: %s", env.Error.Data.Code, env.Error.Message)
 	}
-	if method == "provenance_evaluateTransaction" || method == "provenance_submitProof" || method == "provenance_getProofJob" || method == "provenance_getTracking" {
+	if method == "provenance_evaluateTransaction" || method == "provenance_submitSourceProof" || method == "provenance_submitProof" || method == "provenance_getProofJob" || method == "provenance_getTracking" {
 		for _, key := range []string{"chainGeneration", "providerId", "signingKeyId", "manifestSha256"} {
 			if len(env.Result[key]) == 0 {
 				return nil, errors.New("missing response trust identity")
@@ -100,7 +104,7 @@ func (c *Client) call(ctx context.Context, method string, query any) (Result, er
 	if e := json.Unmarshal(env.Result["scope"], &scope); e != nil {
 		return nil, e
 	}
-	for _, p := range [][2]string{{scope.ChainID, c.Trust.ChainID}, {scope.ProtocolAddress, c.Trust.ProtocolAddress}, {scope.PolicyID, c.Trust.PolicyID}} {
+	for _, p := range [][2]string{{scope.ChainID, c.Trust.ChainID}, {scope.ProtocolAddress, c.Trust.ProtocolAddress}} {
 		if !equalNumber(p[0], p[1]) {
 			return nil, errors.New("deployment mismatch")
 		}
@@ -125,34 +129,30 @@ func (c *Client) call(ctx context.Context, method string, query any) (Result, er
 			return nil, errors.New("invalid signing key")
 		}
 		key, e := word(v)
-		if e != nil || (method != "provenance_getPolicy" && len(c.Trust.SigningKeys[key]) != 32) {
+		if e != nil || (method != "provenance_getRules" && len(c.Trust.SigningKeys[key]) != 32) {
 			return nil, errors.New("untrusted signing key")
 		}
 	}
 	return env.Result, nil
 }
-func (c *Client) policyQuery(q map[string]any) map[string]any {
+func (c *Client) publicQuery(q map[string]any) map[string]any {
 	out := map[string]any{}
 	for k, v := range q {
 		out[k] = v
 	}
-	out["policyId"], _ = word(c.Trust.PolicyID)
 	return out
 }
 func (c *Client) GetVersion(ctx context.Context) (Result, error) {
-	return c.call(ctx, "provenance_getVersion", c.policyQuery(nil))
+	return c.call(ctx, "provenance_getVersion", c.publicQuery(nil))
 }
 func (c *Client) GetStatus(ctx context.Context) (Result, error) {
-	return c.call(ctx, "provenance_getStatus", c.policyQuery(nil))
+	return c.call(ctx, "provenance_getStatus", c.publicQuery(nil))
 }
-func (c *Client) GetPolicies(ctx context.Context, q map[string]any) (Result, error) {
-	return c.call(ctx, "provenance_getPolicies", q)
-}
-func (c *Client) GetPolicy(ctx context.Context) (Result, error) {
-	return c.call(ctx, "provenance_getPolicy", c.policyQuery(nil))
+func (c *Client) GetRules(ctx context.Context) (Result, error) {
+	return c.call(ctx, "provenance_getRules", c.publicQuery(nil))
 }
 func (c *Client) GetRoots(ctx context.Context, q map[string]any) (Result, error) {
-	r, e := c.call(ctx, "provenance_getRoots", c.policyQuery(q))
+	r, e := c.call(ctx, "provenance_getRoots", c.publicQuery(q))
 	if e != nil {
 		return nil, e
 	}
@@ -169,7 +169,7 @@ func (c *Client) GetRoots(ctx context.Context, q map[string]any) (Result, error)
 }
 
 func (c *Client) GetRoot(ctx context.Context, rootID string) (Result, error) {
-	r, e := c.call(ctx, "provenance_getRoot", c.policyQuery(map[string]any{"rootId": rootID}))
+	r, e := c.call(ctx, "provenance_getRoot", c.publicQuery(map[string]any{"rootId": rootID}))
 	if e != nil {
 		return nil, e
 	}
@@ -192,7 +192,7 @@ func (c *Client) GetLeaves(ctx context.Context, rootID, from string, limit int) 
 	if e != nil {
 		return nil, e
 	}
-	return c.call(ctx, "provenance_getLeaves", c.policyQuery(map[string]any{"rootId": rootID, "fromIndex": n.String(), "limit": limit}))
+	return c.call(ctx, "provenance_getLeaves", c.publicQuery(map[string]any{"rootId": rootID, "fromIndex": n.String(), "limit": limit}))
 }
 func (c *Client) GetNoteRecognition(ctx context.Context, commitment string) (Result, error) {
 	n, e := Field(commitment)
@@ -200,17 +200,17 @@ func (c *Client) GetNoteRecognition(ctx context.Context, commitment string) (Res
 		return nil, e
 	}
 	v, _ := word(n.String())
-	return c.call(ctx, "provenance_getNoteRecognition", c.policyQuery(map[string]any{"commitment": v}))
+	return c.call(ctx, "provenance_getNoteRecognition", c.publicQuery(map[string]any{"commitment": v}))
 }
 func (c *Client) GetOperationRecognition(ctx context.Context, locator map[string]any) (Result, error) {
-	return c.call(ctx, "provenance_getOperationRecognition", c.policyQuery(locator))
+	return c.call(ctx, "provenance_getOperationRecognition", c.publicQuery(locator))
 }
 func (c *Client) GetTransactionRecognition(ctx context.Context, tx string) (Result, error) {
 	v, e := word(tx)
 	if e != nil {
 		return nil, e
 	}
-	return c.call(ctx, "provenance_getTransactionRecognition", c.policyQuery(map[string]any{"txHash": v}))
+	return c.call(ctx, "provenance_getTransactionRecognition", c.publicQuery(map[string]any{"txHash": v}))
 }
 func (c *Client) EvaluateTransaction(ctx context.Context, data any, sidecars []ProofSidecar) (Result, error) {
 	if e := assertPublicSubmission(data); e != nil {
@@ -231,7 +231,28 @@ func (c *Client) EvaluateTransaction(ctx context.Context, data any, sidecars []P
 		index, _ := Uint(sidecar.OperationIndex, 32)
 		wireSidecars[i] = ProofSidecar{OperationIndex: index.String(), ProofBundle: normalized}
 	}
-	return c.call(ctx, "provenance_evaluateTransaction", c.policyQuery(map[string]any{"data": data, "proofSidecars": wireSidecars}))
+	return c.call(ctx, "provenance_evaluateTransaction", c.publicQuery(map[string]any{"data": data, "proofSidecars": wireSidecars}))
+}
+func (c *Client) SubmitSourceProof(ctx context.Context, data any, sidecars []ProofSidecar) (Result, error) {
+	if e := assertPublicSubmission(data); e != nil {
+		return nil, e
+	}
+	wireSidecars := make([]ProofSidecar, len(sidecars))
+	for i, sidecar := range sidecars {
+		if _, e := Uint(sidecar.OperationIndex, 32); e != nil {
+			return nil, e
+		}
+		if e := ValidateProofBundle(sidecar.ProofBundle, c.Trust); e != nil {
+			return nil, e
+		}
+		normalized, e := ProofBundleToWire(sidecar.ProofBundle)
+		if e != nil {
+			return nil, e
+		}
+		index, _ := Uint(sidecar.OperationIndex, 32)
+		wireSidecars[i] = ProofSidecar{OperationIndex: index.String(), ProofBundle: normalized}
+	}
+	return c.call(ctx, "provenance_submitSourceProof", c.publicQuery(map[string]any{"data": data, "proofSidecars": wireSidecars}))
 }
 func (c *Client) SubmitProof(ctx context.Context, locator map[string]any, bundle ProofBundle, idempotencyKey string) (Result, error) {
 	if strings.HasPrefix(idempotencyKey, "internal/") {
@@ -247,7 +268,7 @@ func (c *Client) SubmitProof(ctx context.Context, locator map[string]any, bundle
 	if e != nil {
 		return nil, e
 	}
-	q := c.policyQuery(locator)
+	q := c.publicQuery(locator)
 	q["proofBundle"] = normalized
 	q["idempotencyKey"] = idempotencyKey
 	return c.call(ctx, "provenance_submitProof", q)
@@ -338,7 +359,7 @@ func (c *Client) SyncRecognizedTree(ctx context.Context, rootID string, certific
 			return nil, e
 		}
 		for _, item := range page.Items {
-			for _, p := range [][2]string{{item.Scope.ChainID, c.Trust.ChainID}, {item.Scope.ProtocolAddress, c.Trust.ProtocolAddress}, {item.Scope.PolicyID, c.Trust.PolicyID}, {item.Generation, certificate.ChainGeneration}, {item.TreeID, certificate.TreeID}} {
+			for _, p := range [][2]string{{item.Scope.ChainID, c.Trust.ChainID}, {item.Scope.ProtocolAddress, c.Trust.ProtocolAddress}, {item.Generation, certificate.ChainGeneration}, {item.TreeID, certificate.TreeID}} {
 				if !equalNumber(p[0], p[1]) {
 					return nil, errors.New("recognized leaf deployment mismatch")
 				}
@@ -389,7 +410,7 @@ func (c *Client) GetMembership(ctx context.Context, commitment, rootID string, a
 		return nil, e
 	}
 	encoded, _ := word(requested.String())
-	result, e := c.call(ctx, "provenance_getMembership", c.policyQuery(map[string]any{"commitment": encoded, "rootId": rootID}))
+	result, e := c.call(ctx, "provenance_getMembership", c.publicQuery(map[string]any{"commitment": encoded, "rootId": rootID}))
 	if e != nil {
 		return nil, e
 	}

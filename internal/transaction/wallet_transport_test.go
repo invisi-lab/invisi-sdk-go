@@ -2,11 +2,16 @@ package transaction
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"reflect"
 	"strings"
 	"testing"
 
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/crypto"
+	"github.com/invisi-lab/invisi-sdk-go/core"
+	"github.com/invisi-lab/invisi-sdk-go/credit"
 	native "github.com/invisi-lab/invisi-sdk-go/internal/testsupport"
 	"github.com/invisi-lab/invisi-sdk-go/wallet"
 )
@@ -18,13 +23,13 @@ func TestWalletRejectsSubstitutedPublicResponse(t *testing.T) {
 		v[0].ID = "substituted"
 		return v, err
 	})
-	if _, err := ConnectWallet(context.Background(), e.OwnerAddress(), transport); err == nil {
+	if _, err := connectTestWallet(context.Background(), e.OwnerAddress(), transport); err == nil {
 		t.Fatal("accepted replayed response")
 	}
 }
 func TestWalletRetainsOnlyPublicMaterial(t *testing.T) {
 	e, _ := native.NewExecutor("0x" + strings.Repeat("0", 63) + "1")
-	w, err := ConnectWallet(context.Background(), e.OwnerAddress(), e)
+	w, err := connectTestWallet(context.Background(), e.OwnerAddress(), e)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -48,7 +53,7 @@ func TestResolvedWalletRejectsSubstitutedReceivingKeys(t *testing.T) {
 	ctx := context.Background()
 	local, _ := native.NewExecutor("0x" + strings.Repeat("0", 63) + "1")
 	other, _ := native.NewExecutor("0x" + strings.Repeat("0", 63) + "2")
-	resolved, err := ConnectWallet(ctx, local.OwnerAddress(), local)
+	resolved, err := connectTestWallet(ctx, local.OwnerAddress(), local)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -73,14 +78,50 @@ func TestResolvedWalletRejectsSubstitutedReceivingKeys(t *testing.T) {
 	}
 }
 
-func TestWalletClientNeverReceivesMalformedRequest(t *testing.T) {
+func TestAppDecryptorNeverReceivesMalformedEnvelope(t *testing.T) {
 	w := &Wallet{identity: common.HexToAddress("0x1111111111111111111111111111111111111111")}
 	called := false
-	client := wallet.ClientFunc(func(context.Context, []wallet.Request) ([]wallet.Response, error) { called = true; return nil, nil })
-	if _, err := w.Detect(context.Background(), client, [][]byte{{1}}); err == nil {
-		t.Fatal("malformed request accepted")
+	decryptor := wallet.DeliveryDecryptorFuncs{Note: func(context.Context, []byte, core.NoteDecryptionContext) ([]byte, error) {
+		called = true
+		return nil, nil
+	}}
+	if _, err := w.DecryptNote(context.Background(), decryptor, []byte{1}, core.NoteDecryptionContext{}); err == nil {
+		t.Fatal("malformed envelope accepted")
 	}
 	if called {
-		t.Fatal("malformed request crossed native transport boundary")
+		t.Fatal("malformed ciphertext reached App decryptor")
+	}
+}
+
+func TestAppNonrecipientErrorsRemainFailures(t *testing.T) {
+	key, err := crypto.GenerateKey()
+	if err != nil {
+		t.Fatal(err)
+	}
+	envelope := make([]byte, 78)
+	copy(envelope[1:34], crypto.CompressPubkey(&key.PublicKey))
+	w := &Wallet{identity: common.Address{1}}
+	for _, appErr := range []error{wallet.ErrNotRecipient, fmt.Errorf("App failure: %w", wallet.ErrNotRecipient)} {
+		decryptor := wallet.DeliveryDecryptorFuncs{
+			Note:   func(context.Context, []byte, core.NoteDecryptionContext) ([]byte, error) { return nil, appErr },
+			Credit: func(context.Context, []byte, credit.DeliveryContext, credit.Role) ([]byte, error) { return nil, appErr },
+		}
+		envelope[0] = 1
+		if _, err = w.DecryptNote(context.Background(), decryptor, envelope, core.NoteDecryptionContext{}); err == nil || errors.Is(err, wallet.ErrNotRecipient) {
+			t.Fatal("App Note error became nonrecipient", err)
+		}
+		envelope[0] = 0x82
+		if _, err = w.DecryptCreditState(context.Background(), decryptor, envelope, credit.DeliveryContext{}, credit.Owner); err == nil || errors.Is(err, wallet.ErrNotRecipient) {
+			t.Fatal("App Credit error became nonrecipient", err)
+		}
+	}
+	ctx, cancel := context.WithCancel(context.Background())
+	decryptor := wallet.DeliveryDecryptorFuncs{Note: func(context.Context, []byte, core.NoteDecryptionContext) ([]byte, error) {
+		cancel()
+		return nil, wallet.ErrNotRecipient
+	}}
+	envelope[0] = 1
+	if _, err = w.DecryptNote(ctx, decryptor, envelope, core.NoteDecryptionContext{}); !errors.Is(err, context.Canceled) {
+		t.Fatal("cancellation was hidden by App error", err)
 	}
 }

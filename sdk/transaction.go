@@ -33,6 +33,7 @@ type TransactionCall = transaction.TransactionCall
 type TransactionIdentity = transaction.TransactionIdentity
 
 type TransactionProveOptions = transaction.TransactionProveOptions
+type ProvenanceProveOptions = transaction.ProvenanceProveOptions
 
 type TransferPreparation = transaction.TransferPreparation
 

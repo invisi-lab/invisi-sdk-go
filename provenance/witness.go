@@ -6,7 +6,9 @@ import (
 	"strconv"
 )
 
-func SupportedCapacity(k int) bool { return (k >= 1 && k <= 10) || (k >= 20 && k <= 190 && k%10 == 0) }
+func SupportedCapacity(k int) bool {
+	return k == 10 || k == 20 || k == 40 || k == 80 || k == 120 || k == 160 || k == 190
+}
 
 type RecognizedTree struct{ leaves []string }
 
@@ -177,15 +179,11 @@ func BuildWitness(s WitnessRequest) (Witness, error) {
 	if e != nil {
 		return nil, e
 	}
-	phi, plo, e := limbs(s.PolicyID)
-	if e != nil {
-		return nil, e
-	}
 	ohi, olo, e := limbs(s.OperationDigest)
 	if e != nil {
 		return nil, e
 	}
-	values := []string{s.ChainID, s.ProtocolAddress, s.TokenAddress, phi, plo, s.ChainGeneration, strconv.Itoa(len(s.Sources)), sd, strconv.Itoa(len(s.Inputs)), ohi, olo, id, binding}
+	values := []string{s.ChainID, s.ProtocolAddress, s.TokenAddress, s.ChainGeneration, strconv.Itoa(len(s.Sources)), sd, strconv.Itoa(len(s.Inputs)), ohi, olo, id, binding}
 	w := Witness{}
 	for i, k := range publicInputNames {
 		n, e := Field(values[i])

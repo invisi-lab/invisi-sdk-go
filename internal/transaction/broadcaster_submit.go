@@ -73,35 +73,48 @@ func (o *Execution) SubmitBroadcaster(ctx context.Context, c *broadcaster.Client
 	if c.Configuration() != o.Plan.Broadcaster.Configuration {
 		return empty, errors.New("broadcaster differs from quoted registration")
 	}
-	var policy common.Hash
-	source := o.Plan.Broadcaster.Provenance
-	if source != nil {
-		policy = source.PolicyID
+	retry := o.Status == "uncertain" || o.Status == "submitted"
+	if retry && o.Plan.Broadcaster.RequestID != "" {
+		status, err := c.Status(ctx, o.Plan.Broadcaster.RequestID)
+		var rpc *broadcaster.RPCError
+		if !errors.As(err, &rpc) || rpc.Code != -32001 {
+			return status, err
+		}
 	}
-	if policy != c.RequiredProvenancePolicy() {
-		return empty, errors.New("broadcaster provenance policy differs from stored plan")
-	}
-	// A known externalized request is queried by its original ID; it is never sent again.
-	if o.Status == "uncertain" || o.Status == "submitted" {
-		return c.Status(ctx, o.Plan.ID)
-	}
-	if o.Status != "ready" || len(o.Data) == 0 {
-		return empty, errors.New("ready transaction required")
-	}
-	if e := o.ValidateRecovered(); e != nil {
-		return empty, e
-	}
-	if e := o.ValidateExport(ctx); e != nil {
-		return empty, e
+	if !retry {
+		if o.Status != "ready" || len(o.Data) == 0 {
+			return empty, errors.New("ready transaction required")
+		}
+		if e := o.ValidateRecovered(); e != nil {
+			return empty, e
+		}
+		if e := o.ValidateExport(ctx); e != nil {
+			return empty, e
+		}
 	}
 	signed, e := o.ExportBroadcasterQuoteInternal()
 	if e != nil {
 		return empty, e
 	}
-	if e = o.validateProvenance(ctx, source, true); e != nil {
-		return empty, e
+	required := signed.ProvenanceRequired
+	if !retry {
+		if _, e = c.SubmissionRequirements(ctx, signed); e != nil {
+			return empty, e
+		}
+		if required && o.Plan.Kind == "transact" && len(o.Plan.Inputs) > 0 && o.Plan.Provenance == nil {
+			if e = o.ProveProvenance(ctx); e != nil {
+				return empty, e
+			}
+		}
+		if required {
+			if e = o.validateProvenance(ctx, o.Plan.Provenance, true); e != nil {
+				return empty, e
+			}
+		}
 	}
-	if e = broadcaster.VerifyRequiredQuote(signed, *signed.Context, o.Data, 0, policy); e != nil {
+	source := o.Plan.Provenance
+
+	if e = broadcaster.VerifyQuote(signed, *signed.Context, o.Data, 0); e != nil {
 		return empty, e
 	}
 	if o.Runtime.OnExternalize != nil {
@@ -115,10 +128,16 @@ func (o *Execution) SubmitBroadcaster(ctx context.Context, c *broadcaster.Client
 		return empty, e
 	}
 	var sidecars []provenance.ProofSidecar
-	if source != nil {
+	if required && source != nil {
 		sidecars = source.Sidecars
 	}
-	result, sendErr := c.Submit(ctx, o.Data, signed, o.Plan.ID, sidecars)
+	result, sendErr := c.Submit(ctx, o.Data, signed, sidecars)
+	if sendErr == nil {
+		if o.Plan.Broadcaster.RequestID != "" && o.Plan.Broadcaster.RequestID != result.ID {
+			return result, errors.New("broadcaster changed submission ID")
+		}
+		o.Plan.Broadcaster.RequestID = result.ID
+	}
 	if result.TransactionHash != "" {
 		o.TransactionHash = common.HexToHash(result.TransactionHash)
 	}
@@ -162,12 +181,9 @@ func (o *Execution) ValidateBroadcasterPlan() error {
 	if !bytes.Equal(data, saved.Intent) {
 		return errors.New("broadcaster intent differs from Frozen operation")
 	}
-	var policy common.Hash
-	if saved.Provenance != nil {
-		policy = saved.Provenance.PolicyID
-	}
-	if e = o.validateProvenance(context.Background(), saved.Provenance, false); e != nil {
+
+	if e = o.validateProvenance(context.Background(), o.Plan.Provenance, false); e != nil {
 		return e
 	}
-	return broadcaster.VerifyRequiredQuote(saved.Signed, broadcaster.Trust{ChainID: saved.ChainID, Protocol: saved.Protocol, Signer: saved.Configuration.QuoteSigner}, data, 0, policy)
+	return broadcaster.VerifyQuote(saved.Signed, broadcaster.Trust{ChainID: saved.ChainID, Protocol: saved.Protocol, Signer: saved.Configuration.QuoteSigner}, data, 0)
 }

@@ -23,10 +23,9 @@ type Configuration struct {
 }
 type Options struct{ HTTPClient *http.Client }
 type Client struct {
-	configuration  Configuration
-	http           *http.Client
-	sequence       atomic.Uint64
-	requiredPolicy common.Hash
+	configuration Configuration
+	http          *http.Client
+	sequence      atomic.Uint64
 }
 type RPCError struct {
 	Code    int    `json:"code"`
@@ -62,7 +61,11 @@ func NewClient(config Configuration, options ...Options) (*Client, error) {
 func (c *Client) Configuration() Configuration { return c.configuration }
 func (c *Client) call(ctx context.Context, method string, params any, result any) error {
 	id := c.sequence.Add(1)
-	b, e := json.Marshal(map[string]any{"jsonrpc": "2.0", "id": id, "method": method, "params": []any{params}})
+	args := []any{}
+	if params != nil {
+		args = append(args, params)
+	}
+	b, e := json.Marshal(map[string]any{"jsonrpc": "2.0", "id": id, "method": method, "params": args})
 	if e != nil {
 		return e
 	}
@@ -112,13 +115,16 @@ func (c *Client) call(ctx context.Context, method string, params any, result any
 	}
 	return json.Unmarshal(res, result)
 }
-func (c *Client) Fee(ctx context.Context, token common.Address, data []byte) (Fee, error) {
-	p := map[string]any{"token": token.Hex()}
+func (c *Client) EstimateQuote(ctx context.Context, data []byte) (Fee, error) {
+	if _, e := DecodeIntent(data); e != nil {
+		return Fee{}, e
+	}
+	p := map[string]any{}
 	if len(data) > 0 {
 		p["data"] = "0x" + common.Bytes2Hex(data)
 	}
 	var f Fee
-	e := c.call(ctx, "broadcaster_getFee", p, &f)
+	e := c.call(ctx, "broadcaster_estimateQuote", p, &f)
 	if e != nil {
 		return f, e
 	}
@@ -135,9 +141,10 @@ func (c *Client) Fee(ctx context.Context, token common.Address, data []byte) (Fe
 	}
 	return f, nil
 }
-func (c *Client) Quote(ctx context.Context, data []byte, trust Trust, sidecars ...[]provenance.ProofSidecar) (SignedQuote, error) {
+func (c *Client) GetQuote(ctx context.Context, data []byte, trust Trust) (SignedQuote, error) {
 	var s SignedQuote
-	params, e := c.sidecarParams(data, sidecars)
+	params := map[string]any{"data": "0x" + common.Bytes2Hex(data)}
+	_, e := DecodeIntent(data)
 	if e != nil {
 		return s, e
 	}
@@ -145,7 +152,7 @@ func (c *Client) Quote(ctx context.Context, data []byte, trust Trust, sidecars .
 		return s, e
 	}
 	trust.Signer = c.configuration.QuoteSigner
-	if e := VerifyRequiredQuote(s, trust, data, uint64(time.Now().Unix()), c.requiredPolicy); e != nil {
+	if e := VerifyQuote(s, trust, data, uint64(time.Now().Unix())); e != nil {
 		return s, e
 	}
 	if s.Quote.FeeRecipient != c.configuration.FeeRecipient {
@@ -156,7 +163,7 @@ func (c *Client) Quote(ctx context.Context, data []byte, trust Trust, sidecars .
 	return s, nil
 }
 func checkStatus(s Status, id string) error {
-	if s.ID != id {
+	if s.ID == "" || len(s.ID) > 256 || (id != "" && s.ID != id) {
 		return errors.New("invalid broadcaster status")
 	}
 	switch s.State {
@@ -172,34 +179,36 @@ func checkStatus(s Status, id string) error {
 	}
 	return nil
 }
-func (c *Client) Submit(ctx context.Context, data []byte, s SignedQuote, key string, sidecars ...[]provenance.ProofSidecar) (Status, error) {
+func (c *Client) Submit(ctx context.Context, data []byte, s SignedQuote, sidecars ...[]provenance.ProofSidecar) (Status, error) {
 	var out Status
 	if s.Context == nil {
 		return out, errors.New("missing verified quote context")
 	}
 	t := *s.Context
 	t.Signer = c.configuration.QuoteSigner
-	if e := VerifyRequiredQuote(s, t, data, 0, c.requiredPolicy); e != nil {
+	if e := VerifyQuote(s, t, data, 0); e != nil {
 		return out, e
 	}
 	if s.Quote.FeeRecipient != c.configuration.FeeRecipient {
 		return out, errors.New("unregistered fee recipient")
 	}
-	params, e := c.sidecarParams(data, sidecars)
+	params, e := sidecarParams(data, s.ProvenanceRequired, sidecars)
 	if e != nil {
 		return out, e
 	}
 	params["quote"] = s.Quote
 	params["signature"] = s.Signature
-	params["idempotencyKey"] = key
 	e = c.call(ctx, "broadcaster_submitTransaction", params, &out)
 	if e != nil {
 		return out, e
 	}
-	return out, checkStatus(out, key)
+	return out, checkStatus(out, "")
 }
 func (c *Client) Status(ctx context.Context, id string) (Status, error) {
 	var out Status
+	if id == "" || len(id) > 256 {
+		return out, errors.New("invalid broadcaster submission ID")
+	}
 	e := c.call(ctx, "broadcaster_getTransactionStatus", map[string]any{"id": id}, &out)
 	if e != nil {
 		return out, e

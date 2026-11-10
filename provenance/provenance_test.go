@@ -31,7 +31,7 @@ func vectors(t *testing.T) map[string]any {
 func num(v any) string { return fmt.Sprint(v) }
 func requestFromVector(t *testing.T, v map[string]any) WitnessRequest {
 	t.Helper()
-	r := WitnessRequest{Scope: Scope{num(v["chain_id"]), num(v["protocol_address"]), num(v["policy_id_lo"])}, Capacity: len(v["owners"].([]any)), TokenAddress: num(v["token_address"]), ChainGeneration: num(v["chain_generation"]), OperationDigest: num(v["operation_digest_lo"])}
+	r := WitnessRequest{Scope: Scope{num(v["chain_id"]), num(v["protocol_address"])}, Capacity: len(v["owners"].([]any)), TokenAddress: num(v["token_address"]), ChainGeneration: num(v["chain_generation"]), OperationDigest: num(v["operation_digest_lo"])}
 	count, _ := Uint(num(v["input_count"]), 64)
 	for i := 0; i < int(count.Int64()); i++ {
 		input := WitnessInput{Opening: Opening{num(v["owners"].([]any)[i]), num(v["nonces"].([]any)[i]), num(v["amounts"].([]any)[i])}, SourceIndex: int(v["source_indices"].([]any)[i].(float64)), LeafIndex: uint64(v["leaf_indices"].([]any)[i].(float64))}
@@ -50,7 +50,7 @@ func TestSharedVectors(t *testing.T) {
 	v := vectors(t)
 	note := v["note"].(map[string]any)
 	c := note["context"].(map[string]any)
-	s := Scope{num(c["chainId"]), num(c["protocolAddress"]), num(c["policyId"])}
+	s := Scope{num(c["chainId"]), num(c["protocolAddress"])}
 	scope, e := ScopeHash(s)
 	if e != nil || scope != note["scope"] {
 		t.Fatalf("scope %s %v", scope, e)
@@ -68,11 +68,11 @@ func TestSharedVectors(t *testing.T) {
 	for _, p := range op["publicInputs"].([]any) {
 		pub = append(pub, num(p))
 	}
-	digest, e := OperationDigest(Scope{num(op["chainId"]), num(op["protocolAddress"]), "0"}, int(op["mainCircuitCapacity"].(float64)), pub)
+	digest, e := OperationDigest(Scope{num(op["chainId"]), num(op["protocolAddress"])}, int(op["mainCircuitCapacity"].(float64)), pub)
 	if e != nil || digest != op["digest"] {
 		t.Fatalf("operation %s %v", digest, e)
 	}
-	for _, name := range []string{"witnessK1", "witnessK10CrossTree"} {
+	for _, name := range []string{"witnessK10SingleInput", "witnessK10CrossTree"} {
 		raw := v[name].(map[string]any)
 		w, e := BuildWitness(requestFromVector(t, raw))
 		if e != nil {
@@ -107,12 +107,12 @@ func TestCertificateVectorAndMutation(t *testing.T) {
 		t.Fatal(e)
 	}
 	payload, e := RootCertificatePayload(c)
-	if e != nil || len(payload) != 301 || hex.EncodeToString(payload) != v["payloadHex"] {
+	if e != nil || len(payload) != 269 || hex.EncodeToString(payload) != v["payloadHex"] {
 		t.Fatal("payload mismatch", e)
 	}
 	empty := c
 	empty.LeafCount = "0"
-	if payload, e := RootCertificatePayload(empty); e != nil || len(payload) != 301 {
+	if payload, e := RootCertificatePayload(empty); e != nil || len(payload) != 269 {
 		t.Fatal("empty certificate rejected", e)
 	}
 	message, e := RootCertificateMessage(c)
@@ -134,7 +134,7 @@ func TestCertificateVectorAndMutation(t *testing.T) {
 }
 func TestLocalMembershipAndRejects(t *testing.T) {
 	v := vectors(t)
-	r := requestFromVector(t, v["witnessK1"].(map[string]any))
+	r := requestFromVector(t, v["witnessK10SingleInput"].(map[string]any))
 	tree := RecognizedTree{}
 	leaf := num(v["note"].(map[string]any)["recognizedLeaf"])
 	if _, e := tree.Append(leaf); e != nil {
@@ -173,10 +173,10 @@ func TestPublicClientScopeAndGeneration(t *testing.T) {
 		if bytesContainSecrets(string(body)) {
 			t.Error("private query")
 		}
-		json.NewEncoder(w).Encode(map[string]any{"jsonrpc": "2.0", "id": req["id"], "result": map[string]any{"scope": Scope{"1", "2", "3"}, "chainGeneration": generation, "providerId": "5", "signingKeyId": "6", "manifestSha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"}})
+		json.NewEncoder(w).Encode(map[string]any{"jsonrpc": "2.0", "id": req["id"], "result": map[string]any{"scope": Scope{"1", "2"}, "chainGeneration": generation, "providerId": "5", "signingKeyId": "6", "manifestSha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"}})
 	}))
 	defer server.Close()
-	c := Client{Endpoint: server.URL, Trust: TrustContext{Scope: Scope{"1", "2", "3"}, ChainGeneration: "4", ProviderID: "5", ManifestSHA256: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", SigningKeys: map[string]ed25519.PublicKey{"0x0000000000000000000000000000000000000000000000000000000000000006": make([]byte, 32)}}}
+	c := Client{Endpoint: server.URL, Trust: TrustContext{Scope: Scope{"1", "2"}, ChainGeneration: "4", ProviderID: "5", ManifestSHA256: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", SigningKeys: map[string]ed25519.PublicKey{"0x0000000000000000000000000000000000000000000000000000000000000006": make([]byte, 32)}}}
 	if _, e := c.EvaluateTransaction(context.Background(), map[string]string{"calldata": "0x12"}, []ProofSidecar{}); e != nil {
 		t.Fatal(e)
 	}
@@ -204,12 +204,12 @@ func TestNativeOfflineProof(t *testing.T) {
 	if e != nil {
 		t.Fatal(e)
 	}
-	const pin = "f90f2ce43218de158c6392fa19e6517dda703c35823a4aa5bfc20b50788ad282"
+	const pin = "6107789c5c0d24c4130bff05da6d389336feb5ccb247c4030eae5198ab05d762"
 	identity, e := AuthenticateManifest(manifest, pin)
 	if e != nil {
 		t.Fatal(e)
 	}
-	fixture := "witnessK1"
+	fixture := "witnessK10SingleInput"
 	if os.Getenv("INVISI_PROVENANCE_CAPACITY") == "10" {
 		fixture = "witnessK10CrossTree"
 	}
@@ -240,7 +240,7 @@ func TestNativeOfflineProof(t *testing.T) {
 	if e != nil {
 		t.Fatal(e)
 	}
-	if len(result.PublicInputs) != 13 || len(result.Proof) < 1000 {
+	if len(result.PublicInputs) != 11 || len(result.Proof) < 1000 {
 		t.Fatal("real proof absent")
 	}
 }
@@ -256,12 +256,12 @@ func (p localTestProver) Prove(_ context.Context, _ ManifestIdentity, _ int, _ W
 }
 func TestSidecarTrustBindingAndReplay(t *testing.T) {
 	raw := vectors(t)
-	r := requestFromVector(t, raw["witnessK1"].(map[string]any))
+	r := requestFromVector(t, raw["witnessK10SingleInput"].(map[string]any))
 	manifest, e := os.ReadFile("manifest.json")
 	if e != nil {
 		t.Fatal(e)
 	}
-	const pin = "f90f2ce43218de158c6392fa19e6517dda703c35823a4aa5bfc20b50788ad282"
+	const pin = "6107789c5c0d24c4130bff05da6d389336feb5ccb247c4030eae5198ab05d762"
 	identity, e := AuthenticateManifest(manifest, pin)
 	if e != nil {
 		t.Fatal(e)
@@ -275,7 +275,6 @@ func TestSidecarTrustBindingAndReplay(t *testing.T) {
 	json.Unmarshal(data, &cert)
 	cert.ChainID = r.ChainID
 	cert.ProtocolAddress = r.ProtocolAddress
-	cert.PolicyID = r.PolicyID
 	cert.ChainGeneration = r.ChainGeneration
 	cert.RootSequence = "1"
 	cert.TreeID = "1"
@@ -300,12 +299,12 @@ func TestSidecarTrustBindingAndReplay(t *testing.T) {
 	if bytesContainSecrets(string(data)) {
 		t.Fatal("private witness in exported sidecar")
 	}
-	if sidecar.ProofBundle.CircuitID != "provenance_k1" || sidecar.ProofBundle.Format != "invisi-provenance-proof-v1" {
+	if sidecar.ProofBundle.CircuitID != "provenance_k10" || sidecar.ProofBundle.Format != "invisi-provenance-proof-v1" {
 		t.Fatal("wire identity")
 	}
 	bad := sidecar.ProofBundle
 	bad.PublicInputs = append([]string(nil), bad.PublicInputs...)
-	bad.PublicInputs[12], _ = word("0")
+	bad.PublicInputs[10], _ = word("0")
 	if ValidateProofBundle(bad, trust) == nil {
 		t.Fatal("tampered binding accepted")
 	}
@@ -355,45 +354,22 @@ func TestSidecarTrustBindingAndReplay(t *testing.T) {
 	}
 }
 
-func TestMetadataSelectsPinnedPolicy(t *testing.T) {
-	for _, policy := range []string{"3", "7"} {
-		t.Run(policy, func(t *testing.T) {
-			wrong := false
-			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-				var req struct {
-					ID     any                 `json:"id"`
-					Method string              `json:"method"`
-					Params []map[string]string `json:"params"`
-				}
-				if e := json.NewDecoder(r.Body).Decode(&req); e != nil {
-					t.Error(e)
-				}
-				expected, _ := word(policy)
-				if len(req.Params) != 1 || req.Params[0]["policyId"] != expected {
-					t.Error("metadata omitted pinned policy")
-				}
-				responsePolicy := policy
-				if wrong {
-					responsePolicy = "3"
-				}
-				json.NewEncoder(w).Encode(map[string]any{"jsonrpc": "2.0", "id": req.ID, "result": map[string]any{"scope": Scope{"1", "2", responsePolicy}, "chainGeneration": "4"}})
-			}))
-			defer server.Close()
-			c := Client{Endpoint: server.URL, Trust: TrustContext{Scope: Scope{"1", "2", policy}, ChainGeneration: "4"}}
-			for _, call := range []func(context.Context) (Result, error){c.GetVersion, c.GetStatus} {
-				if _, e := call(context.Background()); e != nil {
-					t.Fatal(e)
-				}
-			}
-			if policy == "7" {
-				wrong = true
-				for _, call := range []func(context.Context) (Result, error){c.GetVersion, c.GetStatus} {
-					if _, e := call(context.Background()); e == nil {
-						t.Fatal("another policy metadata accepted")
-					}
-				}
-			}
-		})
+func TestMetadataOmitsPolicy(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var req struct {
+			ID     uint64           `json:"id"`
+			Params []map[string]any `json:"params"`
+		}
+		json.NewDecoder(r.Body).Decode(&req)
+		if len(req.Params) != 1 || req.Params[0]["policyId"] != nil {
+			t.Error("metadata included policy")
+		}
+		json.NewEncoder(w).Encode(map[string]any{"jsonrpc": "2.0", "id": req.ID, "result": map[string]any{"scope": Scope{"1", "2"}, "chainGeneration": "4"}})
+	}))
+	defer server.Close()
+	c := Client{Endpoint: server.URL, Trust: TrustContext{Scope: Scope{"1", "2"}, ChainGeneration: "4"}}
+	if _, err := c.GetVersion(context.Background()); err != nil {
+		t.Fatal(err)
 	}
 }
 
@@ -405,10 +381,10 @@ func TestWaitProofJobCurrentWireTerminalAndUnknown(t *testing.T) {
 				calls++
 				var request map[string]any
 				json.NewDecoder(r.Body).Decode(&request)
-				json.NewEncoder(w).Encode(map[string]any{"jsonrpc": "2.0", "id": request["id"], "result": map[string]any{"scope": Scope{"1", "2", "3"}, "chainGeneration": "2", "providerId": "5", "signingKeyId": "6", "manifestSha256": strings.Repeat("a", 64), "status": status}})
+				json.NewEncoder(w).Encode(map[string]any{"jsonrpc": "2.0", "id": request["id"], "result": map[string]any{"scope": Scope{"1", "2"}, "chainGeneration": "2", "providerId": "5", "signingKeyId": "6", "manifestSha256": strings.Repeat("a", 64), "status": status}})
 			}))
 			defer server.Close()
-			client := &Client{Endpoint: server.URL, Trust: TrustContext{Scope: Scope{"1", "2", "3"}, ChainGeneration: "2", ProviderID: "5", ManifestSHA256: strings.Repeat("a", 64), SigningKeys: map[string]ed25519.PublicKey{"0x" + strings.Repeat("0", 63) + "6": make([]byte, 32)}}}
+			client := &Client{Endpoint: server.URL, Trust: TrustContext{Scope: Scope{"1", "2"}, ChainGeneration: "2", ProviderID: "5", ManifestSHA256: strings.Repeat("a", 64), SigningKeys: map[string]ed25519.PublicKey{"0x" + strings.Repeat("0", 63) + "6": make([]byte, 32)}}}
 			ctx, cancel := context.WithTimeout(context.Background(), 20*time.Millisecond)
 			defer cancel()
 			result, e := client.WaitProofJob(ctx, "job", time.Millisecond)
@@ -425,5 +401,32 @@ func TestWaitProofJobCurrentWireTerminalAndUnknown(t *testing.T) {
 				t.Fatalf("made %d requests instead of one", calls)
 			}
 		})
+	}
+}
+
+func TestSubmitSourceProofWithoutTransactionHash(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var request struct {
+			ID     uint64                       `json:"id"`
+			Method string                       `json:"method"`
+			Params []map[string]json.RawMessage `json:"params"`
+		}
+		if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
+			t.Fatal(err)
+		}
+		if request.Method != "provenance_submitSourceProof" || len(request.Params) != 1 {
+			t.Error("unexpected source request")
+		}
+		q := request.Params[0]
+		if len(q) != 2 || len(q["data"]) == 0 || string(q["proofSidecars"]) != "[]" {
+			t.Error("unexpected source payload")
+		}
+		json.NewEncoder(w).Encode(map[string]any{"jsonrpc": "2.0", "id": request.ID, "result": map[string]any{"scope": Scope{"1", "2"}, "chainGeneration": "3", "providerId": "4", "signingKeyId": "5", "manifestSha256": strings.Repeat("a", 64)}})
+	}))
+	defer server.Close()
+	key, _ := word("5")
+	c := Client{Endpoint: server.URL, Trust: TrustContext{Scope: Scope{"1", "2"}, ChainGeneration: "3", ProviderID: "4", ManifestSHA256: strings.Repeat("a", 64), SigningKeys: map[string]ed25519.PublicKey{key: make([]byte, 32)}}}
+	if _, err := c.SubmitSourceProof(context.Background(), "0x12", nil); err != nil {
+		t.Fatal(err)
 	}
 }

@@ -3,6 +3,7 @@ package protocol
 import (
 	"context"
 	"errors"
+	"math/big"
 
 	"github.com/ethereum/go-ethereum/common"
 
@@ -51,7 +52,8 @@ func (p *Protocol) GetBroadcasters(ctx context.Context, options BroadcasterOptio
 			if e != nil {
 				continue
 			}
-			if _, e = c.Fee(ctx, options.TokenAddress, nil); e != nil {
+			supported, e := c.SupportsToken(ctx, options.TokenAddress, broadcaster.Trust{ChainID: new(big.Int).SetUint64(p.Context().ChainID), Protocol: p.Context().ProtocolAddress})
+			if e != nil || !supported {
 				if ctx.Err() != nil {
 					return nil, ctx.Err()
 				}

@@ -4,7 +4,6 @@ package main
 import (
 	"context"
 	"database/sql"
-	"encoding/json"
 	"flag"
 	"log"
 	"math/big"
@@ -13,7 +12,6 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
-	"github.com/invisi-lab/invisi-sdk-go/broadcaster"
 	"github.com/invisi-lab/invisi-sdk-go/core"
 	"github.com/invisi-lab/invisi-sdk-go/credit"
 	"github.com/invisi-lab/invisi-sdk-go/examples/shared"
@@ -27,7 +25,7 @@ import (
 )
 
 func main() {
-	// Configure public actors and deployment; the native host retains account access.
+	// Configure public actors and deployment.
 	ctx := context.Background()
 	chainRPC := flag.String("chain-rpc", "http://127.0.0.1:18565", "Chain RPC URL")
 	protocolRPC := flag.String("protocol-rpc", "https://rpc.invisipay.fi/v1/chains/97", "Protocol RPC URL")
@@ -37,21 +35,7 @@ func main() {
 
 	tokenText := flag.String("token", "0x2222222222222222222222222222222222222222", "token contract")
 	recipientAddress := flag.String("recipient", "", "ordinary Note recipient public long receiving address")
-	relayURL := flag.String("broadcaster", "", "optional HTTPS registered Broadcaster endpoint")
-	relaySigner := flag.String("quote-signer", "", "registered quote signer")
-	relayRecipient := flag.String("fee-recipient", "", "registered fee recipient")
-	relayPolicy := flag.String("provenance-policy", "", "optional authenticated required policy ID")
-	relayMaxFee := flag.String("max-fee", "1", "maximum fee in token base units")
-	execute := flag.Bool("execute", false, "run the optional relay workflow")
-	submit := flag.Bool("submit", false, "explicitly submit the quoted request")
 	flag.Parse()
-	if *relayURL != "" && !*execute {
-		log.Print("add --execute to prepare/quote/prove; --submit broadcasts")
-		return
-	}
-	if *submit && *relayURL == "" {
-		log.Fatal("--submit requires --broadcaster")
-	}
 
 	publicWallet, err := sdk.WalletFromAddress(*address)
 	if err != nil {
@@ -79,9 +63,6 @@ func main() {
 		log.Fatal(err)
 	}
 	invisi := sdk.NewInvisi(sdk.InvisiOptions{Provider: provider, ProtocolRPC: client, Prover: backend})
-
-	encoder := json.NewEncoder(os.Stdout)
-	decoder := json.NewDecoder(os.Stdin)
 
 	// The storage encryption key protects inventory and journals; it is independent of wallet keys.
 	database, err := sql.Open("sqlite", "examples/wallet.sqlite")
@@ -120,20 +101,10 @@ func main() {
 		log.Fatal(err)
 	}
 
-	// Send the complete request array to the native host, then read its explicit response array.
-	if err = encoder.Encode(pending.WalletRequests); err != nil {
+	if _, err = pending.Decrypt(ctx, shared.AppDeliveryDecryptor{}); err != nil {
 		log.Fatal(err)
 	}
 
-	var refreshResponses []wallet.Response
-	if err = decoder.Decode(&refreshResponses); err != nil {
-		log.Fatal(err)
-	}
-
-	// Apply only after every reply passes binding and financial validation; failures leave the store unchanged.
-	if _, err = pending.ApplyWalletResponses(ctx, refreshResponses); err != nil {
-		log.Fatal(err)
-	}
 	token := common.HexToAddress(*tokenText)
 	head, err := provider.HeaderByNumber(ctx, nil)
 	if err != nil {
@@ -255,72 +226,22 @@ func main() {
 		log.Fatal(err)
 	}
 
-	var relay *broadcaster.Client
-	if *relayURL != "" {
-		relay, err = broadcaster.NewClient(broadcaster.Configuration{Endpoint: *relayURL, QuoteSigner: common.HexToAddress(*relaySigner), FeeRecipient: common.HexToAddress(*relayRecipient)})
-		if err != nil {
-			log.Fatal(err)
-		}
-		if *relayPolicy != "" {
-			relay, err = relay.WithProvenancePolicy(common.HexToHash(*relayPolicy))
-			if err != nil {
-				log.Fatal(err)
-			}
-		}
-		maxFee, ok := new(big.Int).SetString(*relayMaxFee, 10)
-		if !ok {
-			log.Fatal("invalid maximum fee")
-		}
-		if err = operation.WithBroadcaster(ctx, relay, credit.WithBroadcasterOptions{MaxFeeAmount: maxFee}); err != nil {
-			log.Fatal(err)
-		}
-		preview, err := operation.Preview(ctx)
-		if err != nil {
-			log.Fatal(err)
-		}
-		log.Printf("Final quoted Credit preview: %+v", preview)
-	}
-
 	// Export the owner/spender request only after the managed Credit session validates current chain state.
-	request, err := operation.ExportWalletRequest(ctx, "credit-1")
+	authorization, err := operation.ExportSigningRequest(ctx)
 	if err != nil {
 		log.Fatal(err)
 	}
-	requests := []wallet.Request{request}
-	if err = encoder.Encode(requests); err != nil {
-		log.Fatal(err)
-	}
-
-	var responses []wallet.Response
-	if err = decoder.Decode(&responses); err != nil {
-		log.Fatal(err)
-	}
-
-	// Match by ID rather than arrival order; attachment independently verifies the signature and statement.
-	ordered, err := wallet.ValidateResponses(requests, responses)
+	signature, err := shared.Sign(authorization, publicWallet.OwnerAddress(), "OWNER_PRIVATE_KEY")
 	if err != nil {
 		log.Fatal(err)
 	}
-	if err = operation.WithWalletResponse(ctx, request, ordered[0]); err != nil {
+	if err = operation.WithWalletSignature(ctx, signature); err != nil {
 		log.Fatal(err)
 	}
 
 	// Generate and independently verify the Credit proof for the frozen grant transition.
 	if err = operation.Prove(ctx, backend, prover.Options{}); err != nil {
 		log.Fatal(err)
-	}
-
-	if relay != nil {
-		if *submit {
-			status, err := operation.SubmitBroadcaster(ctx, relay)
-			if err != nil {
-				log.Fatal(err)
-			}
-			log.Printf("Broadcaster operation=%s state=%s tx=%s", *operationID, status.State, status.TransactionHash)
-		} else {
-			log.Printf("Quoted/proved operation %s retained; --submit was not supplied", *operationID)
-		}
-		return
 	}
 
 	// Export the unsigned call while retaining the managed grant reservation for reconciliation.
@@ -332,7 +253,5 @@ func main() {
 	if err = operation.Externalize(ctx, common.Hash{}); err != nil {
 		log.Fatal(err)
 	}
-	if err = encoder.Encode(call); err != nil {
-		log.Fatal(err)
-	}
+	log.Printf("%+v", call)
 }

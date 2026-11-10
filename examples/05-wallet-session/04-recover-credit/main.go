@@ -5,11 +5,12 @@ import (
 	"context"
 	"database/sql"
 	"encoding/hex"
-	"encoding/json"
 	"flag"
 	"log"
 	"os"
 	"strings"
+
+	"github.com/invisi-lab/invisi-sdk-go/examples/shared"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
@@ -22,7 +23,7 @@ import (
 )
 
 func main() {
-	// Configure public actors and deployment; the native host retains account access.
+	// Configure public actors and deployment.
 	ctx := context.Background()
 	chainRPC := flag.String("chain-rpc", "http://127.0.0.1:18565", "Chain RPC URL")
 	protocolRPC := flag.String("protocol-rpc", "https://rpc.invisipay.fi/v1/chains/97", "Protocol RPC URL")
@@ -57,8 +58,6 @@ func main() {
 		log.Fatal(err)
 	}
 	invisi := sdk.NewInvisi(sdk.InvisiOptions{Provider: provider, ProtocolRPC: client, Prover: backend})
-	encoder := json.NewEncoder(os.Stdout)
-	decoder := json.NewDecoder(os.Stdin)
 
 	// The storage encryption key protects inventory and journals; it is independent of wallet keys.
 	database, err := sql.Open("sqlite", "examples/wallet.sqlite")
@@ -97,20 +96,10 @@ func main() {
 		log.Fatal(err)
 	}
 
-	// Send the complete request array to the native host, then read its explicit response array.
-	if err = encoder.Encode(pending.WalletRequests); err != nil {
+	if _, err = pending.Decrypt(ctx, shared.AppDeliveryDecryptor{}); err != nil {
 		log.Fatal(err)
 	}
 
-	var refreshResponses []wallet.Response
-	if err = decoder.Decode(&refreshResponses); err != nil {
-		log.Fatal(err)
-	}
-
-	// Apply only after every reply passes binding and financial validation; failures leave the store unchanged.
-	if _, err = pending.ApplyWalletResponses(ctx, refreshResponses); err != nil {
-		log.Fatal(err)
-	}
 	// Credit has its own journal; managed.Resume restores Note operations instead.
 	creditSession, err := managed.Credit()
 	if err != nil {
@@ -158,23 +147,15 @@ func main() {
 		}
 		// Direct-owner revocation has no wallet-spending authorization or proof.
 		if preview.Kind != "revoke-credit" {
-			request, err := operation.ExportWalletRequest(ctx, "recover-credit-1")
+			authorization, err := operation.ExportSigningRequest(ctx)
 			if err != nil {
 				log.Fatal(err)
 			}
-			requests := []wallet.Request{request}
-			if err = encoder.Encode(requests); err != nil {
-				log.Fatal(err)
-			}
-			var responses []wallet.Response
-			if err = decoder.Decode(&responses); err != nil {
-				log.Fatal(err)
-			}
-			ordered, err := wallet.ValidateResponses(requests, responses)
+			signature, err := shared.Sign(authorization, publicWallet.OwnerAddress(), "OWNER_PRIVATE_KEY")
 			if err != nil {
 				log.Fatal(err)
 			}
-			if err = operation.WithWalletResponse(ctx, request, ordered[0]); err != nil {
+			if err = operation.WithWalletSignature(ctx, signature); err != nil {
 				log.Fatal(err)
 			}
 			if err = operation.Prove(ctx, backend, prover.Options{}); err != nil {
@@ -191,7 +172,5 @@ func main() {
 	if err = operation.Externalize(ctx, common.Hash{}); err != nil {
 		log.Fatal(err)
 	}
-	if err = encoder.Encode(call); err != nil {
-		log.Fatal(err)
-	}
+	log.Printf("%+v", call)
 }

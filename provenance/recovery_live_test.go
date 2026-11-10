@@ -132,7 +132,7 @@ func TestProvenanceRecoveryLive(t *testing.T) {
 	if e = json.Unmarshal(f.Recovery, &r); e != nil {
 		t.Fatal(e)
 	}
-	const pin = "f90f2ce43218de158c6392fa19e6517dda703c35823a4aa5bfc20b50788ad282"
+	const pin = "6107789c5c0d24c4130bff05da6d389336feb5ccb247c4030eae5198ab05d762"
 	if f.Manifest != pin || f.Format != "invisi-provenance-sdk-live-v1" {
 		t.Fatal("untrusted manifest")
 	}

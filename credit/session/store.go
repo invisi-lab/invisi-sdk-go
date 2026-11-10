@@ -34,6 +34,7 @@ type Journal struct {
 	Calldata             []byte
 	TransactionHash      common.Hash
 	Externalized         bool
+	BroadcasterRequestID string
 }
 type State struct {
 	Version    int

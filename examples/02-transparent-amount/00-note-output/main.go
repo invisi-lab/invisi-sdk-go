@@ -11,7 +11,7 @@ import (
 )
 
 func main() {
-	// A complete public receiving address is enough to encrypt; no native exchange is needed.
+	// A complete public receiving address contains the public keys needed for encryption.
 	publicWallet, err := sdk.WalletFromAddress(
 		"0i0e0525SFRf53yh2aljmm3sn9JQ5nJk7LqWt0G2ajnRY2pe698y550QXhp9uELXpcCZMf5Y608rRDJ68jJgfEWy5j7U5e5eVNPVz8vW2W2kmyw4p9lVLwW3z3WeFHQs5KdfR980CX",
 	)

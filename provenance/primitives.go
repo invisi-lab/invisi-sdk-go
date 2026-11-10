@@ -18,7 +18,7 @@ import (
 	"github.com/invisi-lab/invisi-sdk-go/core"
 )
 
-var publicInputNames = [...]string{"chain_id", "protocol_address", "token_address", "policy_id_hi", "policy_id_lo", "chain_generation", "source_count", "sources_digest", "input_count", "operation_digest_hi", "operation_digest_lo", "input_digest", "binding"}
+var publicInputNames = [...]string{"chain_id", "protocol_address", "token_address", "chain_generation", "source_count", "sources_digest", "input_count", "operation_digest_hi", "operation_digest_lo", "input_digest", "binding"}
 var canonicalInteger = regexp.MustCompile(`^(0|[1-9][0-9]*|0x[0-9a-fA-F]+)$`)
 var modulus = fr.Modulus()
 var domains = map[string]string{}
@@ -98,7 +98,6 @@ func check(s string, bits int, nonzero bool) error {
 type Scope struct {
 	ChainID         string `json:"chainId"`
 	ProtocolAddress string `json:"protocolAddress"`
-	PolicyID        string `json:"policyId"`
 }
 
 func ScopeHash(s Scope) (string, error) {
@@ -108,11 +107,7 @@ func ScopeHash(s Scope) (string, error) {
 	if e := check(s.ProtocolAddress, 160, true); e != nil {
 		return "", e
 	}
-	hi, lo, e := limbs(s.PolicyID)
-	if e != nil {
-		return "", e
-	}
-	return hash(domains["scope"], s.ChainID, s.ProtocolAddress, hi, lo)
+	return hash(domains["scope"], s.ChainID, s.ProtocolAddress)
 }
 func RecognizedLeaf(scope, commitment string) (string, error) {
 	n, e := Field(commitment)
@@ -248,24 +243,19 @@ func OperationDigest(s Scope, capacity int, inputs []string) (string, error) {
 	}
 	return crypto.Keccak256Hash(encoded).Hex(), nil
 }
-func ProvenanceIntentHash(original, policy string) (string, error) {
+func ProvenanceIntentHash(original string) (string, error) {
 	a, e := Uint(original, 256)
 	if e != nil {
 		return "", e
 	}
-	b, e := Uint(policy, 256)
-	if e != nil {
-		return "", e
-	}
 	var args abi.Arguments
-	for _, t := range []string{"string", "bytes32", "bytes32"} {
+	for _, t := range []string{"string", "bytes32"} {
 		v, _ := abi.NewType(t, "", nil)
 		args = append(args, abi.Argument{Type: v})
 	}
-	var x, y [32]byte
+	var x [32]byte
 	a.FillBytes(x[:])
-	b.FillBytes(y[:])
-	encoded, e := args.Pack("InvisiBroadcasterProvenanceIntentV1", x, y)
+	encoded, e := args.Pack("InvisiBroadcasterProvenanceIntentV1", x)
 	if e != nil {
 		return "", e
 	}
@@ -276,7 +266,6 @@ type RootCertificate struct {
 	CertificateVersion     string `json:"certificateVersion"`
 	ProviderID             string `json:"providerId"`
 	SigningKeyID           string `json:"signingKeyId"`
-	PolicyID               string `json:"policyId"`
 	ChainID                string `json:"chainId"`
 	ProtocolAddress        string `json:"protocolAddress"`
 	ChainGeneration        string `json:"chainGeneration"`
@@ -310,7 +299,7 @@ func RootCertificatePayload(c RootCertificate) ([]byte, error) {
 	for _, v := range []struct {
 		s string
 		w int
-	}{{c.CertificateVersion, 1}, {c.ProviderID, 32}, {c.SigningKeyID, 32}, {c.PolicyID, 32}, {c.ChainID, 8}, {c.ProtocolAddress, 20}, {c.ChainGeneration, 8}, {c.RootSequence, 8}, {c.TreeID, 8}, {c.LeafCount, 8}, {c.Root, 32}, {c.ConfirmedBlockNumber, 8}, {c.ConfirmedBlockHash, 32}, {c.DecisionLogHash, 32}, {c.PreviousCheckpointHash, 32}, {c.IssuedAt, 8}} {
+	}{{c.CertificateVersion, 1}, {c.ProviderID, 32}, {c.SigningKeyID, 32}, {c.ChainID, 8}, {c.ProtocolAddress, 20}, {c.ChainGeneration, 8}, {c.RootSequence, 8}, {c.TreeID, 8}, {c.LeafCount, 8}, {c.Root, 32}, {c.ConfirmedBlockNumber, 8}, {c.ConfirmedBlockHash, 32}, {c.DecisionLogHash, 32}, {c.PreviousCheckpointHash, 32}, {c.IssuedAt, 8}} {
 		n, e := Uint(v.s, v.w*8)
 		if e != nil {
 			return nil, e

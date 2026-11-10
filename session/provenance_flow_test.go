@@ -1,6 +1,7 @@
 package session
 
 import (
+	"bytes"
 	"context"
 	"crypto/ed25519"
 	"crypto/sha256"
@@ -10,13 +11,15 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"os"
+	"reflect"
 	"strings"
 	"sync/atomic"
 	"testing"
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/invisi-lab/invisi-sdk-go/broadcaster"
+
+	"github.com/invisi-lab/invisi-sdk-go/protocol"
 	"github.com/invisi-lab/invisi-sdk-go/provenance"
 	sdk "github.com/invisi-lab/invisi-sdk-go/sdk"
 )
@@ -39,14 +42,18 @@ func (p *sourceFlowProver) Prove(ctx context.Context, _ provenance.ManifestIdent
 	}
 	p.expected = append([]string(nil), expected...)
 	p.statement.Store(append([]string(nil), expected...))
-	if k != 1 {
+	if k != 10 {
 		panic("unexpected source capacity")
 	}
 	return provenance.ProofResult{Proof: "0x0102", PublicInputs: append([]string(nil), expected...)}, nil
 }
 func configureSourceFlow(t *testing.T, s *WalletSession, original *Operation, deny, badAnchor bool, historical ...bool) (*sourceFlowProver, *atomic.Int64) {
 	t.Helper()
-	const pin = "f90f2ce43218de158c6392fa19e6517dda703c35823a4aa5bfc20b50788ad282"
+	return configureSourceFlowGeneration(t, s, original, deny, badAnchor, "1", historical...)
+}
+func configureSourceFlowGeneration(t *testing.T, s *WalletSession, original *Operation, deny, badAnchor bool, generation string, historical ...bool) (*sourceFlowProver, *atomic.Int64) {
+	t.Helper()
+	const pin = "6107789c5c0d24c4130bff05da6d389336feb5ccb247c4030eae5198ab05d762"
 	bytes, err := os.ReadFile("../provenance/manifest.json")
 	if err != nil {
 		t.Fatal(err)
@@ -55,7 +62,7 @@ func configureSourceFlow(t *testing.T, s *WalletSession, original *Operation, de
 	if err != nil {
 		t.Fatal(err)
 	}
-	scope := provenance.Scope{ChainID: original.plan.Context.ChainID.String(), ProtocolAddress: original.plan.Context.ProtocolAddress.Hex(), PolicyID: common.HexToHash("0x77").Hex()}
+	scope := provenance.Scope{ChainID: original.plan.Context.ChainID.String(), ProtocolAddress: original.plan.Context.ProtocolAddress.Hex()}
 	tree := &provenance.RecognizedTree{}
 	commitment := original.plan.Inputs[0].Commitment.Hex()
 	leaf, err := provenance.RecognizedLeaf(mustScopeHash(t, scope), commitment)
@@ -69,14 +76,15 @@ func configureSourceFlow(t *testing.T, s *WalletSession, original *Operation, de
 	if err != nil {
 		t.Fatal(err)
 	}
-	key := ed25519.NewKeyFromSeed(make([]byte, 32))
+	seed := sha256.Sum256([]byte("source-flow-signing-key-" + generation))
+	key := ed25519.NewKeyFromSeed(seed[:])
 	keyHash := sha256.Sum256(key.Public().(ed25519.PublicKey))
 	keyID := "0x" + hex.EncodeToString(keyHash[:])
 	head, err := s.options.Provider.HeaderByNumber(context.Background(), big.NewInt(10))
 	if err != nil {
 		t.Fatal(err)
 	}
-	cert := provenance.RootCertificate{CertificateVersion: "1", ProviderID: common.HexToHash("0x99").Hex(), SigningKeyID: keyID, PolicyID: scope.PolicyID, ChainID: scope.ChainID, ProtocolAddress: scope.ProtocolAddress, ChainGeneration: "1", RootSequence: "1", TreeID: "1", LeafCount: "1", Root: root, ConfirmedBlockNumber: "10", ConfirmedBlockHash: head.Hash().Hex(), DecisionLogHash: common.Hash{}.Hex(), PreviousCheckpointHash: common.Hash{}.Hex(), IssuedAt: "1"}
+	cert := provenance.RootCertificate{CertificateVersion: "1", ProviderID: common.HexToHash("0x99").Hex(), SigningKeyID: keyID, ChainID: scope.ChainID, ProtocolAddress: scope.ProtocolAddress, ChainGeneration: generation, RootSequence: "1", TreeID: "1", LeafCount: "1", Root: root, ConfirmedBlockNumber: "10", ConfirmedBlockHash: head.Hash().Hex(), DecisionLogHash: common.Hash{}.Hex(), PreviousCheckpointHash: common.Hash{}.Hex(), IssuedAt: "1"}
 	if badAnchor {
 		cert.ConfirmedBlockHash = common.HexToHash("0x1234").Hex()
 	}
@@ -85,7 +93,7 @@ func configureSourceFlow(t *testing.T, s *WalletSession, original *Operation, de
 		t.Fatal(err)
 	}
 	cert.Signature = "0x" + hex.EncodeToString(ed25519.Sign(key, msg))
-	trust := provenance.TrustContext{Scope: scope, ChainGeneration: "1", ProviderID: cert.ProviderID, ManifestSHA256: pin, SigningKeys: map[string]ed25519.PublicKey{keyID: key.Public().(ed25519.PublicKey)}}
+	trust := provenance.TrustContext{Scope: scope, ChainGeneration: generation, ProviderID: cert.ProviderID, ManifestSHA256: pin, SigningKeys: map[string]ed25519.PublicKey{keyID: key.Public().(ed25519.PublicKey)}}
 	evaluates := new(atomic.Int64)
 	latest := cert
 	if len(historical) > 0 && historical[0] {
@@ -112,7 +120,7 @@ func configureSourceFlow(t *testing.T, s *WalletSession, original *Operation, de
 			t.Error(err)
 			return
 		}
-		result := map[string]any{"scope": scope, "chainGeneration": "1", "providerId": cert.ProviderID, "signingKeyId": keyID, "manifestSha256": pin}
+		result := map[string]any{"scope": scope, "chainGeneration": generation, "providerId": cert.ProviderID, "signingKeyId": keyID, "manifestSha256": pin}
 		switch req.Method {
 		case "provenance_getStatus":
 			result["checkpointSequence"] = latest.RootSequence
@@ -123,11 +131,11 @@ func configureSourceFlow(t *testing.T, s *WalletSession, original *Operation, de
 			result["items"] = []provenance.RootCertificate{cert, latest}
 			result["nextCursor"] = ""
 		case "provenance_getLeaves":
-			result["rootId"] = "1:1"
+			result["rootId"] = generation + ":1"
 			result["certificate"] = cert
 			result["nextIndex"] = "1"
-			result["items"] = []any{map[string]any{"scope": scope, "chainGeneration": "1", "treeId": "1", "leafIndex": "0", "noteCommitment": commitment, "leaf": leaf, "checkpointSequence": "1"}}
-		case "provenance_evaluateTransaction":
+			result["items"] = []any{map[string]any{"scope": scope, "chainGeneration": generation, "treeId": "1", "leafIndex": "0", "noteCommitment": commitment, "leaf": leaf, "checkpointSequence": "1"}}
+		case "provenance_evaluateTransaction", "provenance_submitSourceProof":
 			evaluates.Add(1)
 			var params struct {
 				ProofSidecars []provenance.ProofSidecar `json:"proofSidecars"`
@@ -138,8 +146,8 @@ func configureSourceFlow(t *testing.T, s *WalletSession, original *Operation, de
 				return
 			}
 			pi := params.ProofSidecars[0].ProofBundle.PublicInputs
-			hi, _ := provenance.Uint(pi[9], 128)
-			lo, _ := provenance.Uint(pi[10], 128)
+			hi, _ := provenance.Uint(pi[7], 128)
+			lo, _ := provenance.Uint(pi[8], 128)
 			tracking.OperationDigest = common.BigToHash(new(big.Int).Or(new(big.Int).Lsh(hi, 128), lo)).Hex()
 			decision := "allow"
 			if deny {
@@ -150,8 +158,8 @@ func configureSourceFlow(t *testing.T, s *WalletSession, original *Operation, de
 		case "provenance_getTracking":
 			if raw := prover.statement.Load(); raw != nil {
 				pi := raw.([]string)
-				hi, _ := provenance.Uint(pi[9], 128)
-				lo, _ := provenance.Uint(pi[10], 128)
+				hi, _ := provenance.Uint(pi[7], 128)
+				lo, _ := provenance.Uint(pi[8], 128)
 				tracking.OperationDigest = common.BigToHash(new(big.Int).Or(new(big.Int).Lsh(hi, 128), lo)).Hex()
 			}
 			if deny {
@@ -179,238 +187,16 @@ func mustScopeHash(t *testing.T, s provenance.Scope) string {
 	return v
 }
 
-func TestProvenanceFinalFeeAndAutomaticAttachments(t *testing.T) {
-	ctx := context.Background()
-	s, token, _ := testSession(t, uint64(time.Now().Unix()))
-	address, _ := s.wallet.GetAddress()
-	original, e := s.PrepareTransfer(ctx, sdk.TransferPreparation{TokenAddress: token, Outputs: testOutputs(s, []testPaymentOutput{{To: address, Amount: big.NewInt(30)}})})
-	if e != nil {
-		t.Fatal(e)
-	}
-	prover, evaluates := configureSourceFlow(t, s, original, false, false)
-	c, fees := testBroadcaster(t, original, []int64{5, 8, 8}, false, common.HexToHash("0x77"))
-	next, e := original.WithBroadcaster(ctx, c, sdk.WithBroadcasterOptions{MaxFeeAmount: big.NewInt(10)})
-	if e != nil {
-		t.Fatal(e)
-	}
-	if fees.Load() != 3 || prover.calls.Load() != 1 || evaluates.Load() != 0 {
-		t.Fatal("source proof ran before final fee", fees.Load(), prover.calls.Load(), evaluates.Load())
-	}
-	words, e := next.execution().Words()
-	if e != nil {
-		t.Fatal(e)
-	}
-	values := make([]string, len(words))
-	for i, w := range words {
-		values[i] = common.Hash(w).Hex()
-	}
-	digest, e := provenance.OperationDigest(s.options.Provenance.Client.Trust.Scope, next.plan.Capacity, values)
-	if e != nil {
-		t.Fatal(e)
-	}
-	hi, _ := provenance.Uint(prover.expected[9], 128)
-	lo, _ := provenance.Uint(prover.expected[10], 128)
-	if common.BigToHash(new(big.Int).Or(new(big.Int).Lsh(hi, 128), lo)).Hex() != digest {
-		t.Fatal("source proof bound an intermediate fee plan")
-	}
-	if next.plan.Broadcaster.Provenance == nil || len(next.plan.Broadcaster.Provenance.Sidecars) != 1 {
-		t.Fatal("source evidence not persisted")
-	}
-	next, e = authorizeForTest(next, ctx)
-	if e != nil {
-		t.Fatal(e)
-	}
-	next, e = next.Prove(ctx)
-	if e != nil {
-		t.Fatal(e)
-	}
-	if _, e = next.SubmitBroadcaster(ctx, c); e != nil {
-		t.Fatal(e)
-	}
-	if prover.calls.Load() != 1 || evaluates.Load() != 0 {
-		t.Fatal("submission regenerated source evidence")
-	}
-	s.options.Provenance = nil
-	s.options.Provider.(sessionProvider).head.Time += 86400
-	again, e := next.SubmitBroadcaster(ctx, c)
-	if e != nil || again.State != "uncertain" {
-		t.Fatal("known externalized status was gated by new-send freshness", e)
-	}
-
-}
-func TestProvenanceDeniedAndNoncanonicalAnchorPreservePrepared(t *testing.T) {
-	for _, badAnchor := range []bool{false, true} {
-		t.Run(map[bool]string{false: "denied", true: "primary-anchor"}[badAnchor], func(t *testing.T) {
-			ctx := context.Background()
-			s, token, _ := testSession(t, uint64(time.Now().Unix()))
-			address, _ := s.wallet.GetAddress()
-			original, e := s.PrepareTransfer(ctx, sdk.TransferPreparation{TokenAddress: token, Outputs: testOutputs(s, []testPaymentOutput{{To: address, Amount: big.NewInt(30)}})})
-			if e != nil {
-				t.Fatal(e)
-			}
-			prover, _ := configureSourceFlow(t, s, original, true, badAnchor)
-			c, _ := testBroadcaster(t, original, []int64{5}, false, common.HexToHash("0x77"))
-			if _, e = original.WithBroadcaster(ctx, c, sdk.WithBroadcasterOptions{MaxFeeAmount: big.NewInt(10)}); e == nil {
-				t.Fatal("source rejection accepted")
-			}
-			if original.Status() != "prepared" || original.plan.Broadcaster != nil {
-				t.Fatal("failed source preparation mutated handle")
-			}
-			if badAnchor && prover.calls.Load() != 0 {
-				t.Fatal("proved before primary anchor authentication")
-			}
-			if e = original.checkLease(ctx); e != nil {
-				t.Fatal("reservation lost", e)
-			}
-		})
-	}
-}
-
-func TestProvenanceStoredAttachmentBindingAndRecovery(t *testing.T) {
-	ctx := context.Background()
-	s, token, _ := testSession(t, uint64(time.Now().Unix()))
-	address, _ := s.wallet.GetAddress()
-	original, e := s.PrepareTransfer(ctx, sdk.TransferPreparation{TokenAddress: token, Outputs: testOutputs(s, []testPaymentOutput{{To: address, Amount: big.NewInt(30)}})})
-	if e != nil {
-		t.Fatal(e)
-	}
-	configureSourceFlow(t, s, original, false, false)
-	c, _ := testBroadcaster(t, original, []int64{5}, false, common.HexToHash("0x77"))
-	next, e := original.WithBroadcaster(ctx, c, sdk.WithBroadcasterOptions{MaxFeeAmount: big.NewInt(10)})
-	if e != nil {
-		t.Fatal(e)
-	}
-	if _, e = s.Resume(ctx, next.ID()); e != nil {
-		t.Fatal("public evidence could not survive managed recovery", e)
-	}
-	source := next.plan.Broadcaster.Provenance
-	for _, which := range []string{"index", "token", "nullifiers", "tracking"} {
-		t.Run(which, func(t *testing.T) {
-			oldIndex := source.Sidecars[0].OperationIndex
-			oldPI := append([]string(nil), source.Sidecars[0].ProofBundle.PublicInputs...)
-			oldTracking := source.Tracking[0]
-			defer func() {
-				source.Sidecars[0].OperationIndex = oldIndex
-				source.Sidecars[0].ProofBundle.PublicInputs = oldPI
-				source.Tracking[0] = oldTracking
-			}()
-			bundle := &source.Sidecars[0].ProofBundle
-			switch which {
-			case "index":
-				source.Sidecars[0].OperationIndex = "1"
-			case "token":
-				bundle.PublicInputs[2] = common.HexToHash("0x42").Hex()
-			case "nullifiers":
-				bundle.PublicInputs[11] = common.HexToHash("0x42").Hex()
-			case "tracking":
-				source.Tracking[0].OperationDigest = common.HexToHash("0x42").Hex()
-			}
-			if which == "token" || which == "nullifiers" {
-				pi := bundle.PublicInputs
-				scope, e := provenance.ScopeHash(s.options.Provenance.Client.Trust.Scope)
-				if e != nil {
-					t.Fatal(e)
-				}
-				hi, _ := provenance.Uint(pi[9], 128)
-				lo, _ := provenance.Uint(pi[10], 128)
-				digest := new(big.Int).Or(new(big.Int).Lsh(hi, 128), lo)
-				binding, e := provenance.BindingDigest(scope, pi[2], pi[5], pi[6], pi[7], pi[8], digest.String(), pi[11])
-				if e != nil {
-					t.Fatal(e)
-				}
-				n, _ := provenance.Field(binding)
-				pi[12] = common.BigToHash(n).Hex()
-			}
-			if e := next.execution().ValidateBroadcasterPlan(); e == nil {
-				t.Fatal("mutated retained source attachment accepted")
-			}
-		})
-	}
-}
-
-func TestProvenanceTrackingExportIsDetached(t *testing.T) {
-	ctx := context.Background()
-	s, token, _ := testSession(t, uint64(time.Now().Unix()))
-	address, _ := s.wallet.GetAddress()
-	original, e := s.PrepareTransfer(ctx, sdk.TransferPreparation{TokenAddress: token, Outputs: testOutputs(s, []testPaymentOutput{{To: address, Amount: big.NewInt(30)}})})
-	if e != nil {
-		t.Fatal(e)
-	}
-	configureSourceFlow(t, s, original, false, false)
-	c, _ := testBroadcaster(t, original, []int64{5}, false, common.HexToHash("0x77"))
-	next, e := original.WithBroadcaster(ctx, c, sdk.WithBroadcasterOptions{MaxFeeAmount: big.NewInt(10)})
-	if e != nil {
-		t.Fatal(e)
-	}
-	tracking, e := next.ExportProvenanceTracking(ctx)
-	if e != nil || len(tracking) != 1 {
-		t.Fatal(tracking, e)
-	}
-	tracking[0].OperationDigest = "changed"
-	again, e := next.ExportProvenanceTracking(ctx)
-	if e != nil || again[0].OperationDigest == "changed" {
-		t.Fatal("tracking export aliases retained evidence", e)
-	}
-}
-
-func TestProvenancePolicyShieldNeedsNoSourceCapability(t *testing.T) {
-	ctx := context.Background()
-	s, token, _ := testSession(t, uint64(time.Now().Unix()))
-	address, _ := s.wallet.GetAddress()
-	original, e := s.PrepareShield(ctx, sdk.ShieldPreparation{TokenAddress: token, Outputs: testOutputs(s, []testPaymentOutput{{To: address, Amount: big.NewInt(30)}}), Funding: sdk.FundingSource{Payer: s.wallet.OwnerAddress(), Amount: big.NewInt(30), Authorization: "caller"}})
-	if e != nil {
-		t.Fatal(e)
-	}
-	c, _ := testBroadcaster(t, original, []int64{5}, false, common.HexToHash("0x77"))
-	next, e := original.WithBroadcaster(ctx, c, sdk.WithBroadcasterOptions{MaxFeeAmount: big.NewInt(10)})
-	if e != nil {
-		t.Fatal(e)
-	}
-	if next.plan.Broadcaster.Provenance == nil || len(next.plan.Broadcaster.Provenance.Sidecars) != 0 {
-		t.Fatal("no-proof operation unexpectedly required source proof")
-	}
-}
-
 func mustTreeRoot(t *testing.T, tree *provenance.RecognizedTree) string {
 	t.Helper()
-	root, e := tree.Root()
+	r, e := tree.Root()
 	if e != nil {
 		t.Fatal(e)
 	}
-	return root
+	return r
 }
-func TestProvenanceHistoricalTreeAndCanceledLocalProver(t *testing.T) {
-	for _, cancelProof := range []bool{false, true} {
-		t.Run(map[bool]string{false: "historical-tree", true: "cancel"}[cancelProof], func(t *testing.T) {
-			ctx, cancel := context.WithCancel(context.Background())
-			defer cancel()
-			s, token, _ := testSession(t, uint64(time.Now().Unix()))
-			address, _ := s.wallet.GetAddress()
-			original, e := s.PrepareTransfer(ctx, sdk.TransferPreparation{TokenAddress: token, Outputs: testOutputs(s, []testPaymentOutput{{To: address, Amount: big.NewInt(30)}})})
-			if e != nil {
-				t.Fatal(e)
-			}
-			prover, _ := configureSourceFlow(t, s, original, false, false, true)
-			if cancelProof {
-				prover.onProve = cancel
-			}
-			c, _ := testBroadcaster(t, original, []int64{5}, false, common.HexToHash("0x77"))
-			next, e := original.WithBroadcaster(ctx, c, sdk.WithBroadcasterOptions{MaxFeeAmount: big.NewInt(10)})
-			if cancelProof {
-				if e == nil || original.Status() != "prepared" {
-					t.Fatal("canceled source preparation advanced handle", e)
-				}
-				if e := original.checkLease(context.Background()); e != nil {
-					t.Fatal(e)
-				}
-			} else if e != nil || next.plan.Broadcaster.Provenance.Sidecars[0].ProofBundle.RootCertificates[0].TreeID != "1" {
-				t.Fatal("historical recognized tree unavailable", e)
-			}
-		})
-	}
-}
-
-func TestProvenanceSubmitRechecksPrimaryCheckpoint(t *testing.T) {
+func readySourceOperation(t *testing.T, badAnchor bool) (*Operation, *sourceFlowProver) {
+	t.Helper()
 	ctx := context.Background()
 	s, token, _ := testSession(t, uint64(time.Now().Unix()))
 	address, _ := s.wallet.GetAddress()
@@ -418,13 +204,8 @@ func TestProvenanceSubmitRechecksPrimaryCheckpoint(t *testing.T) {
 	if e != nil {
 		t.Fatal(e)
 	}
-	configureSourceFlow(t, s, original, false, false)
-	c, _ := testBroadcaster(t, original, []int64{5}, false, common.HexToHash("0x77"))
-	next, e := original.WithBroadcaster(ctx, c, sdk.WithBroadcasterOptions{MaxFeeAmount: big.NewInt(10)})
-	if e != nil {
-		t.Fatal(e)
-	}
-	next, e = authorizeForTest(next, ctx)
+	prover, _ := configureSourceFlow(t, s, original, false, badAnchor)
+	next, e := authorizeForTest(original, ctx)
 	if e != nil {
 		t.Fatal(e)
 	}
@@ -432,46 +213,157 @@ func TestProvenanceSubmitRechecksPrimaryCheckpoint(t *testing.T) {
 	if e != nil {
 		t.Fatal(e)
 	}
-	s.options.Provider.(sessionProvider).head.Extra = []byte("different canonical block")
-	if _, e = next.SubmitBroadcaster(ctx, c); e == nil || !strings.Contains(e.Error(), "root anchor") {
-		t.Fatal("submission trusted stale source anchor", e)
+	return next, prover
+}
+func TestProvenanceProofRequiresReadyTransaction(t *testing.T) {
+	ctx := context.Background()
+	s, token, _ := testSession(t, uint64(time.Now().Unix()))
+	address, _ := s.wallet.GetAddress()
+	original, e := s.PrepareTransfer(ctx, sdk.TransferPreparation{TokenAddress: token, Outputs: testOutputs(s, []testPaymentOutput{{To: address, Amount: big.NewInt(30)}})})
+	if e != nil {
+		t.Fatal(e)
 	}
-	if next.Status() != "ready" {
-		t.Fatal("rejected submission advanced journal")
+	prover, _ := configureSourceFlow(t, s, original, false, false)
+	if _, e = original.ProveProvenance(ctx); e == nil {
+		t.Fatal("unready Source proof accepted")
+	}
+	c, _ := testBroadcaster(t, original, []int64{5}, false, common.Hash{})
+	if _, e = original.WithBroadcaster(ctx, c, sdk.WithBroadcasterOptions{MaxFeeAmount: big.NewInt(10)}); e != nil {
+		t.Fatal(e)
+	}
+	if prover.calls.Load() != 0 {
+		t.Fatal("quotation generated Source proof")
+	}
+}
+func TestProvenanceIndependentProofAndDetachedExport(t *testing.T) {
+	ctx := context.Background()
+	ready, prover := readySourceOperation(t, false)
+	next, e := ready.ProveProvenance(ctx)
+	if e != nil {
+		t.Fatal(e)
+	}
+	if next.plan.Broadcaster != nil || prover.calls.Load() != 1 {
+		t.Fatal("Source proof depended on broadcaster")
+	}
+	proof, e := next.ExportProvenanceProof(ctx)
+	if e != nil || len(proof.Sidecars) != 1 {
+		t.Fatal(e)
+	}
+	if e = protocol.ValidateProvenanceProof(proof, next.session.options.Provenance.Client.Trust); e != nil {
+		t.Fatal("public packet failed native validation", e)
+	}
+	mutated := proof
+	mutated.PublicInputs = append([]string(nil), proof.PublicInputs...)
+	mutated.PublicInputs[0] = common.Hash{}.Hex()
+	if protocol.ValidateProvenanceProof(mutated, next.session.options.Provenance.Client.Trust) == nil {
+		t.Fatal("mutated native public inputs accepted")
+	}
+	if _, e = next.SubmitProvenance(ctx); e != nil {
+		t.Fatal("public Source proof requires transaction hash", e)
+	}
+	proof.Sidecars[0].OperationIndex = "99"
+	again, e := next.ExportProvenanceProof(ctx)
+	if e != nil || again.Sidecars[0].OperationIndex != "0" {
+		t.Fatal("export aliases retained proof", e)
+	}
+	if _, e = next.session.Resume(ctx, next.ID()); e != nil {
+		t.Fatal("independent proof recovery", e)
+	}
+}
+func TestProvenanceAuthenticatesPrimaryAnchorBeforeProving(t *testing.T) {
+	ready, prover := readySourceOperation(t, true)
+	if _, e := ready.ProveProvenance(context.Background()); e == nil {
+		t.Fatal("noncanonical Source anchor accepted")
+	}
+	if prover.calls.Load() != 0 || ready.Status() != "ready" {
+		t.Fatal("failed Source proof mutated ready transaction")
 	}
 }
 
-func TestProvenanceQuoteAcknowledgementFailsClosed(t *testing.T) {
-	for _, which := range []string{"missing", "expired", "digest", "unknown", "untrusted-id"} {
-		t.Run(which, func(t *testing.T) {
-			ctx := context.Background()
-			s, token, _ := testSession(t, uint64(time.Now().Unix()))
-			address, _ := s.wallet.GetAddress()
-			original, e := s.PrepareTransfer(ctx, sdk.TransferPreparation{TokenAddress: token, Outputs: testOutputs(s, []testPaymentOutput{{To: address, Amount: big.NewInt(30)}})})
-			if e != nil {
-				t.Fatal(e)
-			}
-			_, evaluates := configureSourceFlow(t, s, original, false, false)
-			c, _ := testBroadcasterQuote(t, original, []int64{5}, false, func(q *broadcaster.SignedQuote) {
-				switch which {
-				case "missing":
-					q.ProvenanceTracking = nil
-				case "expired":
-					q.ProvenanceTracking.Status = "expired"
-				case "digest":
-					q.ProvenanceTracking.OperationDigest = common.HexToHash("0x42").Hex()
-				case "unknown":
-					q.ProvenanceTracking.Status = "unexpected"
-				case "untrusted-id":
-					q.ProvenanceTracking.ID = strings.Repeat("b", 48)
-				}
-			}, common.HexToHash("0x77"))
-			if _, e = original.WithBroadcaster(ctx, c, sdk.WithBroadcasterOptions{MaxFeeAmount: big.NewInt(10)}); e == nil {
-				t.Fatal("untrusted relay tracking permitted preparation")
-			}
-			if original.Status() != "prepared" || original.plan.Broadcaster != nil || evaluates.Load() != 0 {
-				t.Fatal("quote failure mutated handle or directly evaluated source")
-			}
-		})
+func TestBroadcasterAutomaticallyProvesOnlyFinalReadySource(t *testing.T) {
+	ctx := context.Background()
+	s, token, _ := testSession(t, uint64(time.Now().Unix()))
+	address, _ := s.wallet.GetAddress()
+	original, e := s.PrepareTransfer(ctx, sdk.TransferPreparation{TokenAddress: token, Outputs: testOutputs(s, []testPaymentOutput{{To: address, Amount: big.NewInt(30)}})})
+	if e != nil {
+		t.Fatal(e)
+	}
+	prover, _ := configureSourceFlow(t, s, original, false, false)
+	c, fees := testBroadcaster(t, original, []int64{5, 8, 8}, false, common.Hash{})
+	quoted, e := original.WithBroadcaster(ctx, c, sdk.WithBroadcasterOptions{MaxFeeAmount: big.NewInt(10)})
+	if e != nil {
+		t.Fatal(e)
+	}
+	if fees.Load() != 3 || prover.calls.Load() != 0 {
+		t.Fatal("quotation crossed Source proof boundary")
+	}
+	ready, e := authorizeForTest(quoted, ctx)
+	if e != nil {
+		t.Fatal(e)
+	}
+	ready, e = ready.Prove(ctx)
+	if e != nil {
+		t.Fatal(e)
+	}
+	status, e := ready.SubmitBroadcaster(ctx, c)
+	if e != nil {
+		t.Fatal(e)
+	}
+	if status.ID != "server-request-id" || prover.calls.Load() != 1 || ready.plan.Provenance == nil {
+		t.Fatal("ready Source evidence or server ID missing")
+	}
+	if _, e = ready.SubmitBroadcaster(ctx, c); e != nil || prover.calls.Load() != 1 {
+		t.Fatal("known submission regenerated Source evidence", e)
+	}
+}
+
+func TestProvenanceReproofRefreshesTrustWithoutChangingPayment(t *testing.T) {
+	ctx := context.Background()
+	ready, initialProver := readySourceOperation(t, false)
+	ready, err := ready.ProveProvenance(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	original, err := ready.ExportProvenanceProof(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	mainProof := append([]byte(nil), ready.bundle.Proof...)
+	refreshed, _ := configureSourceFlowGeneration(t, ready.session, ready, false, false, "2")
+	if _, err = ready.ProveProvenance(ctx); err == nil {
+		t.Fatal("stale cached Source evidence accepted")
+	}
+	// Failed explicit reproof must retain prior evidence and the original payment for retry.
+	cancelCtx, cancel := context.WithCancel(ctx)
+	refreshed.onProve = cancel
+	if _, err = ready.ProveProvenance(cancelCtx, sdk.ProvenanceProveOptions{Reprove: true}); err == nil {
+		t.Fatal("cancelled Source reproof succeeded")
+	}
+	unchanged, err := ready.ExportProvenanceProof(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !reflect.DeepEqual(original, unchanged) {
+		t.Fatal("failed Source reproof replaced prior evidence")
+	}
+	refreshed.onProve = nil
+	ready, err = ready.ProveProvenance(ctx, sdk.ProvenanceProveOptions{Reprove: true})
+	if err != nil {
+		t.Fatal(err)
+	}
+	current, err := ready.ExportProvenanceProof(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if original.Data != current.Data || original.OperationDigest != current.OperationDigest || !reflect.DeepEqual(original.PublicInputs, current.PublicInputs) || !bytes.Equal(mainProof, ready.bundle.Proof) {
+		t.Fatal("Source reproof changed the original payment")
+	}
+	cert := current.Sidecars[0].ProofBundle.RootCertificates[0]
+	oldCert := original.Sidecars[0].ProofBundle.RootCertificates[0]
+	if cert.ChainGeneration != "2" || cert.SigningKeyID == oldCert.SigningKeyID || initialProver.calls.Load() != 1 || refreshed.calls.Load() != 2 {
+		t.Fatal("Source reproof did not refresh generation/signing identity")
+	}
+	if err = protocol.ValidateProvenanceProof(current, ready.session.options.Provenance.Client.Trust); err != nil {
+		t.Fatal(err)
 	}
 }

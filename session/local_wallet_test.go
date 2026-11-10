@@ -6,6 +6,7 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/invisi-lab/invisi-sdk-go/core"
+	"github.com/invisi-lab/invisi-sdk-go/credit"
 	creditsession "github.com/invisi-lab/invisi-sdk-go/credit/session"
 	native "github.com/invisi-lab/invisi-sdk-go/internal/testsupport"
 	protocolrpc "github.com/invisi-lab/invisi-sdk-go/rpc"
@@ -21,7 +22,15 @@ func localTestWallet(key string) (*sdk.Wallet, error) {
 	if err != nil {
 		return nil, err
 	}
-	w, err := sdk.ConnectWallet(context.Background(), e.OwnerAddress(), e)
+	q, err := wallet.Prepare("public-profile", e.OwnerAddress(), wallet.Public, struct{}{})
+	if err != nil {
+		return nil, err
+	}
+	r, err := e.ExecuteOne(context.Background(), q)
+	if err != nil {
+		return nil, err
+	}
+	w, err := sdk.WalletFromResponse(q, r)
 	if err != nil {
 		return nil, err
 	}
@@ -62,11 +71,7 @@ func refreshForTest(s *WalletSession, ctx context.Context, options RefreshOption
 	if err != nil {
 		return RefreshResult{}, err
 	}
-	replies, err := testExecutor(s.wallet).Execute(ctx, pending.WalletRequests)
-	if err != nil {
-		return RefreshResult{}, err
-	}
-	return pending.ApplyWalletResponses(ctx, replies)
+	return pending.Decrypt(ctx, testDeliveryDecryptor(s))
 }
 func authorizeForTest(o *Operation, ctx context.Context) (*Operation, error) {
 	if !o.plan.NeedsAuthorization {
@@ -86,14 +91,34 @@ func readTransactionForTest(s *WalletSession, ctx context.Context, hash common.H
 	resolve := func(method wallet.Method, p wallet.DecryptParams) (any, error) {
 		q, e := s.wallet.PrepareRequest("test-read", method, p)
 		if e != nil {
-			return nil, e
+			return nil, wallet.ErrNotRecipient
 		}
 		r, e := testExecutor(s.wallet).ExecuteOne(ctx, q)
 		if e != nil {
-			return nil, e
+			return nil, wallet.ErrNotRecipient
 		}
 		v, e := s.wallet.AcceptResponse(q, r)
 		return v, e
 	}
 	return s.readTransaction(ctx, hash, anchor, resolve)
+}
+
+func testDeliveryDecryptor(s *WalletSession) wallet.DeliveryDecryptorFuncs {
+	m := localTestMaterial(s.wallet)
+	return wallet.DeliveryDecryptorFuncs{
+		Note: func(ctx context.Context, b []byte, c core.NoteDecryptionContext) ([]byte, error) {
+			n, err := core.DecryptPrivateTransferNote(m.ViewingPrivateKey, b, c)
+			if err != nil {
+				return nil, nil
+			}
+			return core.EncodeNotePlaintext(n), nil
+		},
+		Credit: func(ctx context.Context, b []byte, c credit.DeliveryContext, r credit.Role) ([]byte, error) {
+			n, err := credit.Decrypt(m.ViewingPrivateKey, b, c, r)
+			if err != nil {
+				return nil, nil
+			}
+			return credit.EncodeDeliveryPlaintext(n), nil
+		},
+	}
 }

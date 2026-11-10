@@ -3,11 +3,9 @@ package main
 
 import (
 	"context"
-	"encoding/json"
 	"flag"
 	"log"
 	"math/big"
-	"os"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
@@ -15,11 +13,10 @@ import (
 	"github.com/invisi-lab/invisi-sdk-go/examples/shared"
 	"github.com/invisi-lab/invisi-sdk-go/prover/native"
 	"github.com/invisi-lab/invisi-sdk-go/sdk"
-	"github.com/invisi-lab/invisi-sdk-go/wallet"
 )
 
 func main() {
-	// Configure public actors and deployment; the native host retains account access.
+	// Configure public actors and deployment.
 	ctx := context.Background()
 	chainRPC := flag.String("chain-rpc", "http://127.0.0.1:18565", "Chain RPC URL")
 	protocolRPC := flag.String("protocol-rpc", "https://rpc.invisipay.fi/v1/chains/97", "Protocol RPC URL")
@@ -54,12 +51,10 @@ func main() {
 	}
 	invisi := sdk.NewInvisi(sdk.InvisiOptions{Provider: provider, ProtocolRPC: client, Prover: backend})
 	token := common.HexToAddress(*tokenText)
-	encoder := json.NewEncoder(os.Stdout)
-	decoder := json.NewDecoder(os.Stdin)
-	nativeWallet := shared.NativeWalletClient{Encoder: encoder, Decoder: decoder}
+	decryptor := shared.AppDeliveryDecryptor{}
 
 	// Discover automatically through canonical receipts and externally decrypted, independently checked openings.
-	candidates, err := shared.DiscoverNotes(ctx, provider, client, pool, publicWallet, nativeWallet, token)
+	candidates, err := shared.DiscoverNotes(ctx, provider, client, pool, publicWallet, decryptor, token)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -80,7 +75,7 @@ func main() {
 		log.Fatal("no authenticated unspent notes; run a funding example first")
 	}
 
-	// Freeze recipients and amounts before authorization so the native response approves this exact intent.
+	// Freeze recipients and amounts before authorization.
 	prepared, err := invisi.PrepareTransfer(ctx, sdk.ExplicitTransferPreparation{
 		TransactionIdentity: sdk.TransactionIdentity{Wallet: publicWallet, Protocol: pool},
 		ExplicitFunds:       sdk.ExplicitFunds{Inputs: inputs, ChangeAddress: *address},
@@ -93,27 +88,16 @@ func main() {
 		log.Fatal(err)
 	}
 
-	// The host approves only this frozen spending statement; no wallet key is passed to the SDK.
-	request, err := prepared.ExportWalletRequest(ctx, "authorize-1")
+	// Authorize the frozen statement with an ordinary geth EIP-712 signature.
+	authorization, err := prepared.ExportWalletAuthorization(ctx)
 	if err != nil {
 		log.Fatal(err)
 	}
-	requests := []wallet.Request{request}
-	if err = encoder.Encode(requests); err != nil {
-		log.Fatal(err)
-	}
-
-	var responses []wallet.Response
-	if err = decoder.Decode(&responses); err != nil {
-		log.Fatal(err)
-	}
-
-	// Match by ID rather than arrival order; attachment independently verifies the signature and statement.
-	ordered, err := wallet.ValidateResponses(requests, responses)
+	signature, err := shared.Sign(authorization, publicWallet.OwnerAddress(), "OWNER_PRIVATE_KEY")
 	if err != nil {
 		log.Fatal(err)
 	}
-	prepared, err = prepared.WithWalletResponse(ctx, request, ordered[0])
+	prepared, err = prepared.WithWalletSignature(ctx, signature)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -129,7 +113,5 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	if err = encoder.Encode(call); err != nil {
-		log.Fatal(err)
-	}
+	log.Printf("%+v", call)
 }

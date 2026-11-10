@@ -7,10 +7,10 @@ import (
 	"fmt"
 	"math/big"
 	"sort"
-	"time"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/invisi-lab/invisi-sdk-go/core"
+	"github.com/invisi-lab/invisi-sdk-go/protocol"
 	"github.com/invisi-lab/invisi-sdk-go/provenance"
 )
 
@@ -23,20 +23,20 @@ type ProvenanceCapability struct {
 	MaxLeaves    uint64
 }
 type ProvenancePlan struct {
-	PolicyID                                                          common.Hash
 	Endpoint, Generation, ProviderID, ManifestSHA256, OperationDigest string
+	Data                                                              string
 	Sidecars                                                          []provenance.ProofSidecar
 	Tracking                                                          []provenance.Tracking
 }
 
-func (o *Execution) sourceCapability(policy common.Hash) (*ProvenanceCapability, error) {
+func (o *Execution) sourceCapability() (*ProvenanceCapability, error) {
 	c := o.Runtime.Options.Provenance
-	if c == nil || c.Client == nil || c.Prover == nil {
+	if c == nil || c.Client == nil {
 		return nil, &MissingCapabilityError{Capability: "local Provenance client, manifest and offline prover"}
 	}
 	t := c.Client.Trust
-	if !sourceNumber(t.PolicyID, policy.Hex()) || !sourceNumber(t.ChainID, o.Plan.Context.ChainID.String()) || !sourceNumber(t.ProtocolAddress, o.Plan.Context.ProtocolAddress.Hex()) || c.Manifest.SHA256 != t.ManifestSHA256 {
-		return nil, errors.New("provenance capability deployment/policy/manifest mismatch")
+	if !sourceNumber(t.ChainID, o.Plan.Context.ChainID.String()) || !sourceNumber(t.ProtocolAddress, o.Plan.Context.ProtocolAddress.Hex()) || c.Manifest.SHA256 != t.ManifestSHA256 {
+		return nil, errors.New("provenance capability deployment/manifest mismatch")
 	}
 	return c, nil
 }
@@ -62,17 +62,17 @@ type sourceTree struct {
 	tree        *provenance.RecognizedTree
 }
 
-func (o *Execution) prepareProvenance(ctx context.Context, policy common.Hash) (*ProvenancePlan, error) {
-	if policy == (common.Hash{}) {
-		return nil, nil
-	}
-	out := &ProvenancePlan{PolicyID: policy}
+func (o *Execution) prepareProvenance(ctx context.Context) (*ProvenancePlan, error) {
+	out := &ProvenancePlan{}
 	if o.Plan.Kind != "transact" || len(o.Plan.Inputs) == 0 {
 		return out, nil
 	}
-	c, e := o.sourceCapability(policy)
+	c, e := o.sourceCapability()
 	if e != nil {
 		return nil, e
+	}
+	if c.Prover == nil {
+		return nil, &MissingCapabilityError{Capability: "local Provenance offline prover"}
 	}
 	trust := c.Client.Trust
 	digest, e := o.sourceDigest()
@@ -84,6 +84,7 @@ func (o *Execution) prepareProvenance(ctx context.Context, policy common.Hash) (
 	out.ProviderID = trust.ProviderID
 	out.ManifestSHA256 = trust.ManifestSHA256
 	out.OperationDigest = digest
+	out.Data = "0x" + common.Bytes2Hex(o.Data)
 	openings := make([]provenance.Opening, len(o.Plan.Inputs))
 	commitments := make([]string, len(openings))
 	if len(o.Plan.Params.Nullifiers) != len(openings) {
@@ -297,7 +298,7 @@ func (o *Execution) prepareProvenance(ctx context.Context, policy common.Hash) (
 		}
 	}
 	if len(found) != len(openings) {
-		return nil, errors.New("private input Note is not recognized under required policy")
+		return nil, errors.New("private input Note is not recognized by Source")
 	}
 	used := map[string]bool{}
 	for _, item := range found {
@@ -343,62 +344,6 @@ func (o *Execution) prepareProvenance(ctx context.Context, policy common.Hash) (
 	out.Sidecars = []provenance.ProofSidecar{sidecar}
 	return out, nil
 }
-func (o *Execution) acceptProvenanceTracking(ctx context.Context, saved *ProvenancePlan, ack *provenance.Tracking) error {
-	if saved == nil || len(saved.Sidecars) == 0 {
-		if ack != nil {
-			return errors.New("unexpected source tracking on operation without private inputs")
-		}
-		return nil
-	}
-	if ack == nil {
-		return errors.New("broadcaster quote omitted provenance tracking")
-	}
-	raw, e := json.Marshal(ack)
-	if e != nil {
-		return e
-	}
-	quoted, e := provenance.TrackingFromResult(provenance.Result{"tracking": raw}, ack.ID)
-	if e != nil {
-		return e
-	}
-	if e = allowedSourceTracking(quoted, saved.OperationDigest); e != nil {
-		return e
-	}
-	c, e := o.sourceCapability(saved.PolicyID)
-	if e != nil {
-		return e
-	}
-	result, e := c.Client.GetTracking(ctx, quoted.ID)
-	if e != nil {
-		return e
-	}
-	current, e := provenance.TrackingFromResult(result, quoted.ID)
-	if e != nil {
-		return e
-	}
-	if e = allowedSourceTracking(current, saved.OperationDigest); e != nil {
-		return e
-	}
-	saved.Tracking = []provenance.Tracking{current}
-	return nil
-}
-func allowedSourceTracking(t provenance.Tracking, digest string) error {
-	if t.OperationDigest != digest {
-		return errors.New("source tracking statement mismatch")
-	}
-	switch t.Status {
-	case "pending_confirmation":
-		expires, e := provenance.Uint(t.ExpiresAt, 64)
-		if e != nil || expires.Cmp(big.NewInt(time.Now().Unix())) <= 0 {
-			return errors.New("source tracking acknowledgement expired")
-		}
-	case "pending_source", "recognized":
-	default:
-		return errors.New("source tracking no longer permits broadcast")
-	}
-	return nil
-}
-
 func (o *Execution) validateProvenance(ctx context.Context, saved *ProvenancePlan, remote bool) error {
 	if saved == nil {
 		return nil
@@ -409,7 +354,7 @@ func (o *Execution) validateProvenance(ctx context.Context, saved *ProvenancePla
 		}
 		return nil
 	}
-	c, e := o.sourceCapability(saved.PolicyID)
+	c, e := o.sourceCapability()
 	if e != nil {
 		return e
 	}
@@ -418,17 +363,17 @@ func (o *Execution) validateProvenance(ctx context.Context, saved *ProvenancePla
 		return errors.New("stored provenance trust changed; explicit preparation required")
 	}
 	digest, e := o.sourceDigest()
-	if e != nil || digest != saved.OperationDigest {
+	if e != nil || digest != saved.OperationDigest || saved.Data != "0x"+common.Bytes2Hex(o.Data) {
 		return errors.New("stored provenance statement changed")
 	}
-	if len(saved.Sidecars) != 1 || len(saved.Tracking) != 1 {
+	if len(saved.Sidecars) != 1 {
 		return errors.New("stored provenance attachments missing")
 	}
 	if e = provenance.ValidateProofBundle(saved.Sidecars[0].ProofBundle, trust); e != nil {
 		return e
 	}
 	bundle := saved.Sidecars[0].ProofBundle
-	if saved.Sidecars[0].OperationIndex != "0" || !sourceNumber(bundle.PublicInputs[2], o.Plan.Context.TokenAddress.Hex()) || !sourceNumber(bundle.PublicInputs[8], fmt.Sprint(len(o.Plan.Inputs))) {
+	if saved.Sidecars[0].OperationIndex != "0" || !sourceNumber(bundle.PublicInputs[2], o.Plan.Context.TokenAddress.Hex()) || !sourceNumber(bundle.PublicInputs[6], fmt.Sprint(len(o.Plan.Inputs))) {
 		return errors.New("stored provenance operation/token/input count mismatch")
 	}
 	nullifiers := make([]string, len(o.Plan.Params.Nullifiers))
@@ -439,19 +384,10 @@ func (o *Execution) validateProvenance(ctx context.Context, saved *ProvenancePla
 	if err != nil {
 		return err
 	}
-	if !sourceNumber(bundle.PublicInputs[11], inputDigest) {
+	if !sourceNumber(bundle.PublicInputs[9], inputDigest) {
 		return errors.New("stored provenance ordered nullifiers mismatch")
 	}
-	trackingData, err := json.Marshal(saved.Tracking[0])
-	if err != nil {
-		return err
-	}
-	tracking, err := provenance.TrackingFromResult(provenance.Result{"tracking": trackingData}, saved.Tracking[0].ID)
-	if err != nil || tracking.OperationDigest != digest || (tracking.Status != "pending_confirmation" && tracking.Status != "pending_source" && tracking.Status != "recognized") {
-		return errors.New("stored provenance tracking mismatch")
-	}
-
-	if !sourceNumber(bundle.PublicInputs[9], new(big.Int).Rsh(common.HexToHash(digest).Big(), 128).String()) || !sourceNumber(bundle.PublicInputs[10], new(big.Int).And(common.HexToHash(digest).Big(), new(big.Int).Sub(new(big.Int).Lsh(big.NewInt(1), 128), big.NewInt(1))).String()) {
+	if !sourceNumber(bundle.PublicInputs[7], new(big.Int).Rsh(common.HexToHash(digest).Big(), 128).String()) || !sourceNumber(bundle.PublicInputs[8], new(big.Int).And(common.HexToHash(digest).Big(), new(big.Int).Sub(new(big.Int).Lsh(big.NewInt(1), 128), big.NewInt(1))).String()) {
 		return errors.New("stored provenance digest mismatch")
 	}
 	if remote {
@@ -471,28 +407,15 @@ func (o *Execution) validateProvenance(ctx context.Context, saved *ProvenancePla
 		if _, e = c.Client.GetStatus(ctx); e != nil {
 			return e
 		}
-		for _, tracking := range saved.Tracking {
-			result, err := c.Client.GetTracking(ctx, tracking.ID)
-			if err != nil {
-				return err
-			}
-			current, err := provenance.TrackingFromResult(result, tracking.ID)
-			if err != nil {
-				return err
-			}
-			if current.OperationDigest != digest || current.Status == "expired" || current.Status == "superseded" {
-				return fmt.Errorf("stored provenance tracking cannot be submitted: %s", current.Status)
-			}
-		}
 	}
 	return ctx.Err()
 }
 
 func (o *Execution) exportProvenanceTracking() ([]provenance.Tracking, error) {
-	if o.Plan.Broadcaster == nil || o.Plan.Broadcaster.Provenance == nil {
+	if o.Plan.Provenance == nil {
 		return nil, errors.New("provenance tracking unavailable")
 	}
-	return Frozen(o.Plan.Broadcaster.Provenance.Tracking)
+	return Frozen(o.Plan.Provenance.Tracking)
 }
 
 // ExportProvenanceTracking returns detached public acknowledgements; local proving capabilities are never exported.
@@ -511,4 +434,104 @@ func (p *PreparedTransaction) ExportProvenanceTracking(ctx context.Context) ([]p
 		return nil, e
 	}
 	return p.operation.exportProvenanceTracking()
+}
+
+type ProvenanceProveOptions struct{ Reprove bool }
+
+// ProveProvenance creates Source evidence for the final native statement without changing the payment.
+func (o *Execution) ProveProvenance(ctx context.Context, options ...ProvenanceProveOptions) error {
+	if len(options) > 1 {
+		return errors.New("expected at most one provenance prove options value")
+	}
+	reprove := len(options) == 1 && options[0].Reprove
+	if len(o.Data) == 0 || o.Bundle == nil {
+		return errors.New("ready transaction required for provenance proving")
+	}
+	if o.Plan.Kind != "transact" || len(o.Plan.Inputs) == 0 {
+		return errors.New("provenance proof requires private Note inputs")
+	}
+	if o.Plan.Provenance != nil && !reprove {
+		return o.validateProvenance(ctx, o.Plan.Provenance, true)
+	}
+	previous := o.Plan.Provenance
+	// Old Source trust may be stale; independently authenticate the native plan and main proof.
+	if reprove {
+		o.Plan.Provenance = nil
+	}
+	err := o.ValidateRecovered()
+	o.Plan.Provenance = previous
+	if err != nil {
+		return err
+	}
+	proof, err := o.prepareProvenance(ctx)
+	if err != nil {
+		return err
+	}
+	if err = ctx.Err(); err != nil {
+		return err
+	}
+	o.Plan.Provenance = proof
+	if err = o.Persist(ctx, o.Status); err != nil {
+		o.Plan.Provenance = previous
+		return err
+	}
+	return nil
+}
+func (p *PreparedTransaction) ProveProvenance(ctx context.Context, options ...ProvenanceProveOptions) (*PreparedTransaction, error) {
+	return p.stage(ctx, func(o *Execution) error { return o.ProveProvenance(ctx, options...) })
+}
+
+// ExportProvenanceProof returns detached public packets without Note openings.
+func (o *Execution) ExportProvenanceProof(ctx context.Context) (provenance.ProvenanceProof, error) {
+	empty := provenance.ProvenanceProof{}
+	if e := ctx.Err(); e != nil {
+		return empty, e
+	}
+	if o.Plan.Provenance == nil {
+		return empty, errors.New("provenance proof unavailable")
+	}
+	words, e := o.Words()
+	if e != nil {
+		return empty, e
+	}
+	values := make([]string, len(words))
+	for i, w := range words {
+		values[i] = common.Hash(w).Hex()
+	}
+	packet := provenance.ProvenanceProof{Format: "invisi-provenance-submission-v1", Data: "0x" + common.Bytes2Hex(o.Data), Context: provenance.ProofContext{ChainID: o.Plan.Context.ChainID.String(), ProtocolAddress: o.Plan.Context.ProtocolAddress.Hex(), TokenAddress: o.Plan.Context.TokenAddress.Hex()}, MainCircuitCapacity: o.Plan.Capacity, PublicInputs: values, OperationDigest: o.Plan.Provenance.OperationDigest, Sidecars: o.Plan.Provenance.Sidecars}
+	return Frozen(packet)
+}
+func (p *PreparedTransaction) ExportProvenanceProof(ctx context.Context) (provenance.ProvenanceProof, error) {
+	p.lifecycle.mu.Lock()
+	defer p.lifecycle.mu.Unlock()
+	if e := p.current(ctx); e != nil {
+		return provenance.ProvenanceProof{}, e
+	}
+	return p.operation.ExportProvenanceProof(ctx)
+}
+
+func (o *Execution) SubmitProvenance(ctx context.Context) (provenance.Result, error) {
+	if o.Plan.Provenance == nil {
+		return nil, errors.New("provenance proof unavailable")
+	}
+	if e := o.validateProvenance(ctx, o.Plan.Provenance, true); e != nil {
+		return nil, e
+	}
+	c, e := o.sourceCapability()
+	if e != nil {
+		return nil, e
+	}
+	packet, e := o.ExportProvenanceProof(ctx)
+	if e != nil {
+		return nil, e
+	}
+	return protocol.SubmitProvenanceProof(ctx, c.Client, packet)
+}
+func (p *PreparedTransaction) SubmitProvenance(ctx context.Context) (provenance.Result, error) {
+	p.lifecycle.mu.Lock()
+	defer p.lifecycle.mu.Unlock()
+	if e := p.current(ctx); e != nil {
+		return nil, e
+	}
+	return p.operation.SubmitProvenance(ctx)
 }

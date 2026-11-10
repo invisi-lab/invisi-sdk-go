@@ -9,11 +9,10 @@ import (
 	"testing"
 )
 
-func TestProvenanceQuotePolicyBinding(t *testing.T) {
+func TestProvenanceQuoteRequirementBinding(t *testing.T) {
 	data, trust, key := intent(t)
 	legacy := signed(t, data, trust, key)
-	policy := common.HexToHash("0x77")
-	bound, e := provenance.ProvenanceIntentHash(legacy.Quote.RequestHash.Hex(), policy.Hex())
+	bound, e := provenance.ProvenanceIntentHash(legacy.Quote.RequestHash.Hex())
 	if e != nil {
 		t.Fatal(e)
 	}
@@ -31,27 +30,33 @@ func TestProvenanceQuotePolicyBinding(t *testing.T) {
 	if e != nil {
 		t.Fatal(e)
 	}
-	s := SignedQuote{Quote: q, Signature: "0x" + common.Bytes2Hex(signature), ProvenancePolicyID: &policy, RequestHashFormat: ProvenanceRequestHashFormat}
-	if e := VerifyProvenanceQuote(s, trust, data, 0, policy); e != nil {
+	s := SignedQuote{Quote: q, Signature: "0x" + common.Bytes2Hex(signature), ProvenanceRequired: true, RequestHashFormat: ProvenanceRequestHashFormat}
+	if e := VerifyQuote(s, trust, data, 0); e != nil {
 		t.Fatal(e)
 	}
-	if VerifyProvenanceQuote(s, trust, data, 0, common.HexToHash("0x78")) == nil {
-		t.Fatal("different policy accepted")
+	s.ProvenanceRequired = false
+	if VerifyQuote(s, trust, data, 0) == nil {
+		t.Fatal("missing requirement accepted")
 	}
-	s.ProvenancePolicyID = nil
-	if VerifyProvenanceQuote(s, trust, data, 0, policy) == nil {
-		t.Fatal("missing policy accepted")
-	}
-	s.ProvenancePolicyID = &policy
+	s.ProvenanceRequired = true
 	if VerifyQuote(SignedQuote{Quote: s.Quote, Signature: s.Signature}, trust, data, 0) == nil {
 		t.Fatal("bound quote downgraded to legacy")
 	}
 	wire, _ := json.Marshal(s)
 	var decoded SignedQuote
-	if json.Unmarshal(wire, &decoded) != nil || decoded.ProvenancePolicyID == nil || *decoded.ProvenancePolicyID != policy {
+	if json.Unmarshal(wire, &decoded) != nil || !decoded.ProvenanceRequired {
 		t.Fatal("quote policy metadata lost")
 	}
-	if VerifyQuote(decoded, trust, data, 0) == nil {
-		t.Fatal("unconfigured verification accepted a policy quote")
+	if VerifyQuote(decoded, trust, data, 0) != nil {
+		t.Fatal("required provenance quote failed verification")
+	}
+}
+
+func TestQuoteRejectsRemovedPolicyAndFalseRequirement(t *testing.T) {
+	for _, raw := range []string{`{"quote":{},"signature":"0x","policyId":"1"}`, `{"quote":{},"signature":"0x","provenancePolicyId":"1"}`, `{"quote":{},"signature":"0x","provenanceRequired":false}`} {
+		var quote SignedQuote
+		if json.Unmarshal([]byte(raw), &quote) == nil {
+			t.Fatalf("removed or malformed quote metadata accepted: %s", raw)
+		}
 	}
 }

@@ -56,16 +56,37 @@ func (o *Operation) SubmitBroadcaster(ctx context.Context, client *broadcaster.C
 	}
 	if record.Externalized {
 		binding := record.Intent.Broadcaster
-		if client == nil || binding == nil || binding.Configuration != client.Configuration() || binding.PolicyID != client.RequiredProvenancePolicy() {
+		if client == nil || binding == nil || binding.Configuration != client.Configuration() {
 			return broadcaster.Status{}, fmt.Errorf("use the originally selected broadcaster")
 		}
-		return client.Status(ctx, o.id)
+		if record.BroadcasterRequestID != "" {
+			return client.Status(ctx, record.BroadcasterRequestID)
+		}
+		quote, e := o.prepared.ExportBroadcasterQuote()
+		if e != nil {
+			return broadcaster.Status{}, e
+		}
+		status, e := client.Submit(ctx, record.Calldata, quote)
+		if e != nil {
+			return status, e
+		}
+		e = o.update(ctx, func(r *Journal) error {
+			r.BroadcasterRequestID = status.ID
+			if status.TransactionHash != "" {
+				r.TransactionHash = common.HexToHash(status.TransactionHash)
+			}
+			return nil
+		})
+		return status, e
 	}
 	if err := o.checkFresh(ctx); err != nil {
 		return broadcaster.Status{}, err
 	}
-	data, _, err := o.prepared.ExportBroadcasterSubmission(client)
+	data, quote, err := o.prepared.ExportBroadcasterSubmission(client)
 	if err != nil {
+		return broadcaster.Status{}, err
+	}
+	if _, err = client.SubmissionRequirements(ctx, quote); err != nil {
 		return broadcaster.Status{}, err
 	}
 	if err = o.update(ctx, func(record *Journal) error {
@@ -79,14 +100,17 @@ func (o *Operation) SubmitBroadcaster(ctx context.Context, client *broadcaster.C
 	}); err != nil {
 		return broadcaster.Status{}, err
 	}
-	status, err := o.prepared.SubmitBroadcaster(ctx, client, o.id)
-	if err == nil && status.TransactionHash != "" {
+	status, err := client.Submit(ctx, data, quote)
+	if err == nil {
 		hash := common.HexToHash(status.TransactionHash)
 		persistErr := o.update(ctx, func(record *Journal) error {
-			if record.TransactionHash != (common.Hash{}) && record.TransactionHash != hash {
+			if status.TransactionHash != "" && record.TransactionHash != (common.Hash{}) && record.TransactionHash != hash {
 				return fmt.Errorf("conflicting Credit submission hash")
 			}
-			record.TransactionHash = hash
+			record.BroadcasterRequestID = status.ID
+			if status.TransactionHash != "" {
+				record.TransactionHash = hash
+			}
 			return nil
 		})
 		if persistErr != nil {

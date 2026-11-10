@@ -10,7 +10,6 @@ import (
 
 	"github.com/invisi-lab/invisi-sdk-go/broadcaster"
 	"github.com/invisi-lab/invisi-sdk-go/protocol"
-	"github.com/invisi-lab/invisi-sdk-go/provenance"
 )
 
 type FundingPermitRequest struct {
@@ -39,7 +38,7 @@ type BroadcasterPlan struct {
 	ChainID       *big.Int
 	Protocol      common.Address
 	Intent        []byte
-	Provenance    *ProvenancePlan
+	RequestID     string
 }
 
 func (o *Execution) BroadcasterIntent() ([]byte, error) {
@@ -105,11 +104,7 @@ func (o *Execution) WithBroadcaster(ctx context.Context, c *broadcaster.Client, 
 	if opt.MaxAttempts < 1 || opt.MaxAttempts > 16 {
 		return errors.New("max attempts must be 1..16")
 	}
-	if c.RequiredProvenancePolicy() != (common.Hash{}) && o.Plan.Kind == "transact" && len(o.Plan.Inputs) > 0 {
-		if _, e := o.sourceCapability(c.RequiredProvenancePolicy()); e != nil {
-			return e
-		}
-	}
+
 	base, e := ClonePlan(o.Plan)
 	if e != nil {
 		return e
@@ -118,7 +113,7 @@ func (o *Execution) WithBroadcaster(ctx context.Context, c *broadcaster.Client, 
 	if e != nil {
 		return e
 	}
-	fee, e := c.Fee(ctx, o.Plan.Context.TokenAddress, initial)
+	fee, e := c.EstimateQuote(ctx, initial)
 	if e != nil {
 		return e
 	}
@@ -134,7 +129,7 @@ func (o *Execution) WithBroadcaster(ctx context.Context, c *broadcaster.Client, 
 		if e != nil {
 			return e
 		}
-		required, e := c.Fee(ctx, o.Plan.Context.TokenAddress, data)
+		required, e := c.EstimateQuote(ctx, data)
 		if e != nil {
 			return e
 		}
@@ -163,7 +158,7 @@ func (o *Execution) WithBroadcaster(ctx context.Context, c *broadcaster.Client, 
 			if e != nil {
 				return e
 			}
-			finalFee, err := c.Fee(ctx, o.Plan.Context.TokenAddress, data)
+			finalFee, err := c.EstimateQuote(ctx, data)
 			if err != nil {
 				return err
 			}
@@ -173,25 +168,12 @@ func (o *Execution) WithBroadcaster(ctx context.Context, c *broadcaster.Client, 
 			}
 		}
 		trust := broadcaster.Trust{ChainID: o.Plan.Context.ChainID, Protocol: o.Plan.Context.ProtocolAddress}
-		source, e := o.prepareProvenance(ctx, c.RequiredProvenancePolicy())
+		signed, e := c.GetQuote(ctx, data, trust)
 		if e != nil {
 			return e
 		}
-		var sidecars []provenance.ProofSidecar
-		if source != nil {
-			sidecars = source.Sidecars
-		}
-		signed, e := c.Quote(ctx, data, trust, sidecars)
-		if e != nil {
-			return e
-		}
-		if e = broadcaster.VerifyRequiredQuote(signed, broadcaster.Trust{ChainID: trust.ChainID, Protocol: trust.Protocol, Signer: c.Configuration().QuoteSigner}, data, o.Plan.Block.Timestamp, c.RequiredProvenancePolicy()); e != nil {
-			return e
-		}
-		if e = o.acceptProvenanceTracking(ctx, source, signed.ProvenanceTracking); e != nil {
-			return e
-		}
-		o.Plan.Broadcaster = &BroadcasterPlan{Configuration: c.Configuration(), Signed: signed, ChainID: new(big.Int).Set(trust.ChainID), Protocol: trust.Protocol, Intent: append([]byte{}, data...), Provenance: source}
+
+		o.Plan.Broadcaster = &BroadcasterPlan{Configuration: c.Configuration(), Signed: signed, ChainID: new(big.Int).Set(trust.ChainID), Protocol: trust.Protocol, Intent: append([]byte{}, data...)}
 		return o.CommitBroadcasterPlan(ctx)
 	}
 	return errors.New("broadcaster fee did not converge")

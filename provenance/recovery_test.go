@@ -395,7 +395,7 @@ func (s *trackedRecoveryService) EvaluateTransaction(_ context.Context, data any
 	if data != s.intent.Calldata || len(sidecars) != 1 {
 		return nil, errors.New("wrong frozen preflight")
 	}
-	if len(sidecars[0].ProofBundle.PublicInputs) == 13 {
+	if len(sidecars[0].ProofBundle.PublicInputs) == 11 {
 		sidecars[0].ProofBundle.PublicInputs[2], _ = word("3")
 	}
 	digest, _ := json.Marshal(s.intent.OperationDigest)

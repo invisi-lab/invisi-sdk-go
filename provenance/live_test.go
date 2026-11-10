@@ -53,7 +53,7 @@ func TestProvenanceLiveService(t *testing.T) {
 	if e := decoder.Decode(&f); e != nil {
 		t.Fatal(e)
 	}
-	const pin = "f90f2ce43218de158c6392fa19e6517dda703c35823a4aa5bfc20b50788ad282"
+	const pin = "6107789c5c0d24c4130bff05da6d389336feb5ccb247c4030eae5198ab05d762"
 	if f.Format != "invisi-provenance-sdk-live-v1" || f.Manifest != pin {
 		t.Fatal("unreviewed live trust profile")
 	}
@@ -106,7 +106,7 @@ func TestProvenanceLiveService(t *testing.T) {
 		if e := json.Unmarshal(r["scope"], &scope); e != nil {
 			t.Fatal(e)
 		}
-		if !equalNumber(scope.ChainID, f.Scope.ChainID) || !equalNumber(scope.ProtocolAddress, f.Scope.ProtocolAddress) || !equalNumber(scope.PolicyID, f.Scope.PolicyID) || text(r, "chainGeneration") != f.Generation || text(r, "providerId") != f.ProviderID || text(r, "signingKeyId") != f.CurrentKeyID || text(r, "manifestSha256") != pin {
+		if !equalNumber(scope.ChainID, f.Scope.ChainID) || !equalNumber(scope.ProtocolAddress, f.Scope.ProtocolAddress) || text(r, "chainGeneration") != f.Generation || text(r, "providerId") != f.ProviderID || text(r, "signingKeyId") != f.CurrentKeyID || text(r, "manifestSha256") != pin {
 			t.Fatal("live response identity does not match local operator pins")
 		}
 	}
@@ -119,14 +119,14 @@ func TestProvenanceLiveService(t *testing.T) {
 		return r
 	}
 	version := must(client.GetVersion(ctx))
-	if text(version, "apiVersion") != "v1" || text(version, "protocolVersion") != "1" || text(version, "publicInputCount") != "13" || text(version, "proofFormat") != "invisi-provenance-proof-v1" {
+	if text(version, "apiVersion") != "v1" || text(version, "protocolVersion") != "1" || text(version, "publicInputCount") != "11" || text(version, "proofFormat") != "invisi-provenance-proof-v1" {
 		t.Fatal("version wire mismatch")
 	}
 	status := must(client.GetStatus(ctx))
 	if string(status["workerAvailable"]) != "true" {
 		t.Fatal("real native worker unavailable")
 	}
-	policy := must(client.GetPolicy(ctx))
+	policy := must(client.GetRules(ctx))
 	if text(policy, "initialSigningPublicKey") != f.InitialPublicKey {
 		t.Fatal("policy genesis differs from external pin")
 	}
@@ -241,7 +241,7 @@ func TestProvenanceLiveService(t *testing.T) {
 		}
 	}
 	bad := trust
-	bad.PolicyID = "0"
+	bad.ProtocolAddress = "0"
 	untrusted := Client{Endpoint: f.Endpoint, Trust: bad}
 	if _, e := untrusted.GetVersion(ctx); e == nil || !strings.Contains(e.Error(), "POLICY_UNKNOWN") {
 		t.Fatal("actual response accepted wrong scope")

@@ -33,16 +33,16 @@ func TestDiscoveryReturnsTokenCompatibleRegisteredClient(t *testing.T) {
 		if req.Method == "invisi_getBroadcasters" {
 			result = protocolrpc.BroadcasterPage{Block: block, Broadcasters: []protocolrpc.RegisteredBroadcaster{{Operator: common.HexToAddress("0x01"), Endpoint: endpoint + "/bad", QuoteSigner: signer, FeeRecipient: recipient, Enabled: true, Block: block}, {Operator: common.HexToAddress("0x02"), Endpoint: endpoint + "/good", QuoteSigner: signer, FeeRecipient: recipient, Enabled: true, Block: block}}}
 		} else {
-			var p struct{ Token common.Address }
+			var p struct{ TokenAddress common.Address }
 			json.Unmarshal(req.Params[0], &p)
-			if p.Token != token {
+			if p.TokenAddress != token {
 				t.Error("incorrect token probe")
 			}
 			feeRecipient := recipient
 			if r.URL.Path == "/bad" {
 				feeRecipient = common.HexToAddress("0xff")
 			}
-			result = broadcaster.Fee{FeeRecipient: feeRecipient, FeeAmount: "99999", MaxGas: "10000"}
+			result = map[string]any{"apiVersion": "v1", "protocolVersion": "1", "chainId": "97", "protocol": registry.Address.Hex(), "sender": signer.Hex(), "feeRecipient": feeRecipient.Hex(), "submissionHalted": false, "provenance": map[string]any{"enabled": false}, "tokenAddress": token.Hex(), "supported": true}
 		}
 		json.NewEncoder(w).Encode(map[string]any{"jsonrpc": "2.0", "id": req.ID, "result": result})
 	}))
