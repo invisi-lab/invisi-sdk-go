@@ -10,7 +10,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	ethmath "github.com/ethereum/go-ethereum/common/math"
 	"github.com/ethereum/go-ethereum/signer/core/apitypes"
-	"github.com/invisi-lab/invisi-sdk-go/core"
+	"github.com/invisi-lab/invisi-sdk-go/primitives"
 	"github.com/invisi-lab/invisi-sdk-go/protocol"
 )
 
@@ -85,8 +85,8 @@ func (p RevokeParams) TypedData(c Context) (apitypes.TypedData, error) {
 		return apitypes.TypedData{}, err
 	}
 	fee, _ := normalizeFee(p.FeeRecipient, p.FeeAmount)
-	chain := ethmath.HexOrDecimal256(*core.ElementToBigInt(c.ChainID))
-	return apitypes.TypedData{Types: apitypes.Types{"EIP712Domain": {{Name: "name", Type: "string"}, {Name: "version", Type: "string"}, {Name: "chainId", Type: "uint256"}, {Name: "verifyingContract", Type: "address"}}, "RevokeCredit": {{Name: "token", Type: "address"}, {Name: "owner", Type: "address"}, {Name: "shard", Type: "uint64"}, {Name: "slot", Type: "uint16"}, {Name: "deadline", Type: "uint256"}, {Name: "feeRecipient", Type: "address"}, {Name: "feeAmount", Type: "uint256"}}}, PrimaryType: "RevokeCredit", Domain: apitypes.TypedDataDomain{Name: "InvisibleProtocol", Version: "1", ChainId: &chain, VerifyingContract: common.BigToAddress(core.ElementToBigInt(c.ProtocolAddress)).Hex()}, Message: apitypes.TypedDataMessage{"token": p.Token.Hex(), "owner": p.Owner.Hex(), "shard": new(big.Int).SetUint64(p.Shard).String(), "slot": new(big.Int).SetUint64(uint64(p.Slot)).String(), "deadline": p.Deadline.String(), "feeRecipient": p.FeeRecipient.Hex(), "feeAmount": fee.String()}}, nil
+	chain := ethmath.HexOrDecimal256(*primitives.ElementToBigInt(c.ChainID))
+	return apitypes.TypedData{Types: apitypes.Types{"EIP712Domain": {{Name: "name", Type: "string"}, {Name: "version", Type: "string"}, {Name: "chainId", Type: "uint256"}, {Name: "verifyingContract", Type: "address"}}, "RevokeCredit": {{Name: "token", Type: "address"}, {Name: "owner", Type: "address"}, {Name: "shard", Type: "uint64"}, {Name: "slot", Type: "uint16"}, {Name: "deadline", Type: "uint256"}, {Name: "feeRecipient", Type: "address"}, {Name: "feeAmount", Type: "uint256"}}}, PrimaryType: "RevokeCredit", Domain: apitypes.TypedDataDomain{Name: "InvisibleProtocol", Version: "1", ChainId: &chain, VerifyingContract: common.BigToAddress(primitives.ElementToBigInt(c.ProtocolAddress)).Hex()}, Message: apitypes.TypedDataMessage{"token": p.Token.Hex(), "owner": p.Owner.Hex(), "shard": new(big.Int).SetUint64(p.Shard).String(), "slot": new(big.Int).SetUint64(uint64(p.Slot)).String(), "deadline": p.Deadline.String(), "feeRecipient": p.FeeRecipient.Hex(), "feeAmount": fee.String()}}, nil
 }
 
 // Calldata permits a direct owner call or an externally supplied EOA/ERC-1271 authorization.

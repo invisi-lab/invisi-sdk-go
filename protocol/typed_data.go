@@ -8,7 +8,7 @@ import (
 	ethmath "github.com/ethereum/go-ethereum/common/math"
 	"github.com/ethereum/go-ethereum/signer/core/apitypes"
 
-	"github.com/invisi-lab/invisi-sdk-go/core"
+	"github.com/invisi-lab/invisi-sdk-go/primitives"
 )
 
 var domainFields = []apitypes.Type{{Name: "name", Type: "string"}, {Name: "version", Type: "string"}, {Name: "chainId", Type: "uint256"}, {Name: "verifyingContract", Type: "address"}}
@@ -37,35 +37,35 @@ func EncodeFundingTypedData(c TransactionContext, primary string, hash common.Ha
 }
 
 // WalletAuthorizationRequest uses only canonical public words; private wallet keys remain local.
-func WalletAuthorizationRequest(c TransactionContext, operation core.WalletOperation, capacity int, baseWords [][32]byte) (core.WalletAuthorizationRequest, error) {
+func WalletAuthorizationRequest(c TransactionContext, operation primitives.WalletOperation, capacity int, baseWords [][32]byte) (primitives.WalletAuthorizationRequest, error) {
 	if err := ValidateContext(c); err != nil {
-		return core.WalletAuthorizationRequest{}, err
+		return primitives.WalletAuthorizationRequest{}, err
 	}
-	request := core.WalletAuthorizationRequest{Context: core.ProtocolContext{ChainID: core.BigIntToElement(c.ChainID), ProtocolAddress: core.BigIntToElement(c.ProtocolAddress.Big())}, Operation: operation, Capacity: capacity}
+	request := primitives.WalletAuthorizationRequest{Context: primitives.ProtocolContext{ChainID: primitives.BigIntToElement(c.ChainID), ProtocolAddress: primitives.BigIntToElement(c.ProtocolAddress.Big())}, Operation: operation, Capacity: capacity}
 	for _, value := range baseWords {
 		if err := Field(value); err != nil {
 			return request, err
 		}
-		request.Words = append(request.Words, core.BigIntToElement(number(value)))
+		request.Words = append(request.Words, primitives.BigIntToElement(number(value)))
 	}
-	if _, err := core.WalletAuthorizationTypedData(request); err != nil {
+	if _, err := primitives.WalletAuthorizationTypedData(request); err != nil {
 		return request, err
 	}
 	return request, nil
 }
-func EncodeWalletAuthorizationTypedData(c TransactionContext, operation core.WalletOperation, capacity int, baseWords [][32]byte) (apitypes.TypedData, error) {
+func EncodeWalletAuthorizationTypedData(c TransactionContext, operation primitives.WalletOperation, capacity int, baseWords [][32]byte) (apitypes.TypedData, error) {
 	request, err := WalletAuthorizationRequest(c, operation, capacity, baseWords)
 	if err != nil {
 		return apitypes.TypedData{}, err
 	}
-	return core.WalletAuthorizationTypedData(request)
+	return primitives.WalletAuthorizationTypedData(request)
 }
-func AppendWalletAuthorization(c TransactionContext, operation core.WalletOperation, capacity int, baseWords [][32]byte) ([][32]byte, error) {
+func AppendWalletAuthorization(c TransactionContext, operation primitives.WalletOperation, capacity int, baseWords [][32]byte) ([][32]byte, error) {
 	request, err := WalletAuthorizationRequest(c, operation, capacity, baseWords)
 	if err != nil {
 		return nil, err
 	}
-	digest, err := core.ComputeWalletAuthorizationDigest(request)
+	digest, err := primitives.ComputeWalletAuthorizationDigest(request)
 	if err != nil {
 		return nil, err
 	}

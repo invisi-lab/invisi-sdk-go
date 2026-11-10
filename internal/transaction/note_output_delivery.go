@@ -7,16 +7,16 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 
-	"github.com/invisi-lab/invisi-sdk-go/core"
+	"github.com/invisi-lab/invisi-sdk-go/primitives"
 	"github.com/invisi-lab/invisi-sdk-go/protocol"
 )
 
-func EncryptOutput(recipient core.ReceivingAddress, note core.Note, commitment common.Hash) (protocol.Delivery, error) {
-	cipher, e := core.EncryptPrivateTransferNote(recipient.ViewingPublicKey, note, core.NoteEncryptionContext{ProtocolContext: note.ProtocolContext, OutputCommitment: core.BigIntToElement(commitment.Big())})
+func EncryptOutput(recipient primitives.ReceivingAddress, note primitives.Note, commitment common.Hash) (protocol.Delivery, error) {
+	cipher, e := primitives.EncryptPrivateTransferNote(recipient.ViewingPublicKey, note, primitives.NoteEncryptionContext{ProtocolContext: note.ProtocolContext, OutputCommitment: primitives.BigIntToElement(commitment.Big())})
 	if e != nil {
 		return protocol.Delivery{}, e
 	}
-	clue, e := core.CreateClue(recipient.ClueKey)
+	clue, e := primitives.CreateClue(recipient.ClueKey)
 	return protocol.Delivery{Ciphertext: cipher, Clue: clue}, e
 }
 
@@ -31,7 +31,7 @@ func (s *Runtime) Output(ctx context.Context, token common.Address, n NoteOutput
 	if p.Context != s.CoreContext() || p.Token != token {
 		return PreparedOutput{}, errors.New("note output chain, protocol or token mismatch")
 	}
-	commitment, e := core.ComputeNoteCommitment(p.Context.ChainID, p.Context.ProtocolAddress, core.BigIntToElement(p.Identity.Big()), core.BigIntToElement(token.Big()), core.BigIntToElement(p.Amount))
+	commitment, e := primitives.ComputeNoteCommitment(p.Context.ChainID, p.Context.ProtocolAddress, primitives.BigIntToElement(p.Identity.Big()), primitives.BigIntToElement(token.Big()), primitives.BigIntToElement(p.Amount))
 	if e != nil || FieldHash(commitment) != p.Commitment {
 		return PreparedOutput{}, errors.New("note output commitment mismatch")
 	}
@@ -54,7 +54,7 @@ func (s *Runtime) ChangeOutput(ctx context.Context, token common.Address, addres
 	if common.IsHexAddress(address) {
 		r = EVMRecipient{Address: common.HexToAddress(address)}
 	}
-	n, e := NewNoteOutput(PaymentRequest{ChainID: core.ElementToBigInt(s.CoreContext().ChainID), ProtocolAddress: s.Scope.ProtocolAddress, TokenAddress: token, Amount: amount, Recipient: r})
+	n, e := NewNoteOutput(PaymentRequest{ChainID: primitives.ElementToBigInt(s.CoreContext().ChainID), ProtocolAddress: s.Scope.ProtocolAddress, TokenAddress: token, Amount: amount, Recipient: r})
 	if e != nil {
 		return PreparedOutput{}, e
 	}

@@ -3,8 +3,9 @@ package transaction
 import (
 	"bytes"
 	"errors"
+
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/invisi-lab/invisi-sdk-go/core"
+	"github.com/invisi-lab/invisi-sdk-go/primitives"
 )
 
 func matchPaymentRequest(p *OutputIntent) error {
@@ -19,7 +20,7 @@ func matchPaymentRequest(p *OutputIntent) error {
 	if e != nil {
 		return e
 	}
-	if o.ChainID.Cmp(core.ElementToBigInt(p.Context.ChainID)) != 0 || o.ProtocolAddress != common.BigToAddress(core.ElementToBigInt(p.Context.ProtocolAddress)) || o.TokenAddress != p.Token || o.Amount.Cmp(p.Amount) != 0 {
+	if o.ChainID.Cmp(primitives.ElementToBigInt(p.Context.ChainID)) != 0 || o.ProtocolAddress != common.BigToAddress(primitives.ElementToBigInt(p.Context.ProtocolAddress)) || o.TokenAddress != p.Token || o.Amount.Cmp(p.Amount) != 0 {
 		return errors.New("IPR output context or amount mismatch")
 	}
 	if kind == 3 {
@@ -29,13 +30,13 @@ func matchPaymentRequest(p *OutputIntent) error {
 		return nil
 	}
 	n := p.Note
-	if n == nil || n.ProtocolContext != p.Context || common.BigToAddress(core.ElementToBigInt(n.TokenAddress)) != p.Token || core.ElementToBigInt(n.Amount).Cmp(p.Amount) != 0 || common.BigToAddress(core.ElementToBigInt(n.OwnerAddress)) != owner || !bytes.Equal(n.Payload, o.Payload) {
+	if n == nil || n.ProtocolContext != p.Context || common.BigToAddress(primitives.ElementToBigInt(n.TokenAddress)) != p.Token || primitives.ElementToBigInt(n.Amount).Cmp(p.Amount) != 0 || common.BigToAddress(primitives.ElementToBigInt(n.OwnerAddress)) != owner || !bytes.Equal(n.Payload, o.Payload) {
 		return errors.New("IPR note opening mismatch")
 	}
-	if nonce != nil && nonce.Cmp(core.ElementToBigInt(n.Nonce)) != 0 {
+	if nonce != nil && nonce.Cmp(primitives.ElementToBigInt(n.Nonce)) != 0 {
 		return errors.New("IPR fixed nonce mismatch")
 	}
-	identity, e := core.ComputeNoteIdentity(n.OwnerAddress, n.Nonce)
+	identity, e := primitives.ComputeNoteIdentity(n.OwnerAddress, n.Nonce)
 	if e != nil {
 		return e
 	}

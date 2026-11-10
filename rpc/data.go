@@ -12,7 +12,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 
-	"github.com/invisi-lab/invisi-sdk-go/core"
+	"github.com/invisi-lab/invisi-sdk-go/primitives"
 )
 
 const MaxUpdateBlocks uint64 = 10000
@@ -108,10 +108,10 @@ func (c *ProtocolRpcClient) GetMembership(ctx context.Context, context Deploymen
 	if e != nil {
 		return result, e
 	}
-	if input.TreeID == 0 || input.TreeID > 1<<53-1 || input.LeafIndex >= 1<<core.TreeDepth {
+	if input.TreeID == 0 || input.TreeID > 1<<53-1 || input.LeafIndex >= 1<<primitives.TreeDepth {
 		return result, errors.New("invalid membership position")
 	}
-	leaf, e := core.HexToElement(input.Commitment.Hex())
+	leaf, e := primitives.HexToElement(input.Commitment.Hex())
 	if e != nil {
 		return result, e
 	}
@@ -134,13 +134,13 @@ func (c *ProtocolRpcClient) GetMembership(ctx context.Context, context Deploymen
 	var selected *rootAnchor
 	for i := range roots {
 		r := &roots[i]
-		if r.TreeID != input.TreeID || r.LeafCount > 1<<core.TreeDepth {
+		if r.TreeID != input.TreeID || r.LeafCount > 1<<primitives.TreeDepth {
 			return result, errors.New("invalid root metadata")
 		}
 		if r.Block.Number > block.Number || r.Block.Number < d.Protocol.FromBlock || r.LeafCount <= input.LeafIndex || (input.Root != nil && r.Root != *input.Root) {
 			continue
 		}
-		if _, e = core.HexToElement(r.Root.Hex()); e != nil {
+		if _, e = primitives.HexToElement(r.Root.Hex()); e != nil {
 			return result, e
 		}
 		if _, e = c.canonical(ctx, r.Block); e != nil {
@@ -167,19 +167,19 @@ func (c *ProtocolRpcClient) GetMembership(ctx context.Context, context Deploymen
 	if e = c.call(ctx, context.ChainID, "invisi_getMembership", []any{input.TreeID, input.LeafIndex, selected.Root}, &response); e != nil {
 		return result, e
 	}
-	if response.Anchor != *selected || response.LeafIndex != input.LeafIndex || response.Commitment != input.Commitment || len(response.Path) != core.TreeDepth {
+	if response.Anchor != *selected || response.LeafIndex != input.LeafIndex || response.Commitment != input.Commitment || len(response.Path) != primitives.TreeDepth {
 		return result, errors.New("RPC membership binding mismatch")
 	}
 	current := leaf
 	for level, sibling := range response.Path {
-		s, e := core.HexToElement(sibling.Hex())
+		s, e := primitives.HexToElement(sibling.Hex())
 		if e != nil {
 			return result, e
 		}
 		if input.LeafIndex>>level&1 == 0 {
-			current, e = core.Poseidon2Hash(current, s)
+			current, e = primitives.Poseidon2Hash(current, s)
 		} else {
-			current, e = core.Poseidon2Hash(s, current)
+			current, e = primitives.Poseidon2Hash(s, current)
 		}
 		if e != nil {
 			return result, e

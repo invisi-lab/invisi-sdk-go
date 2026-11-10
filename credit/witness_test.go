@@ -2,14 +2,15 @@ package credit
 
 import (
 	"encoding/json"
-	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/crypto"
-	"github.com/ethereum/go-ethereum/signer/core/apitypes"
-	"github.com/invisi-lab/invisi-sdk-go/core"
-	"github.com/invisi-lab/invisi-sdk-go/protocol"
 	"math/big"
 	"strings"
 	"testing"
+
+	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/crypto"
+	"github.com/ethereum/go-ethereum/signer/core/apitypes"
+	"github.com/invisi-lab/invisi-sdk-go/primitives"
+	"github.com/invisi-lab/invisi-sdk-go/protocol"
 )
 
 func TestCreateWitnessAuthenticatesOwnerAndZeroUsage(t *testing.T) {
@@ -19,7 +20,7 @@ func TestCreateWitnessAuthenticatesOwnerAndZeroUsage(t *testing.T) {
 		t.Fatal(err)
 	}
 	owner := crypto.PubkeyToAddress(private.PublicKey)
-	s.OwnerWalletIdentity = core.BigIntToElement(owner.Big())
+	s.OwnerWalletIdentity = primitives.BigIntToElement(owner.Big())
 	c, _ := s.Commitment()
 	p := CreateParams{Token: common.BigToAddress(big.NewInt(34)), Owner: owner, RevocationShard: 1, CreditCommitment: common.HexToHash(hex(c)), Deadline: big.NewInt(2000000300)}
 	ctx := Context{ProtocolContext: s.ProtocolContext, TokenAddress: p.Token, Timestamp: 2000000000}
@@ -63,7 +64,7 @@ func TestCreateWitnessAuthenticatesOwnerAndZeroUsage(t *testing.T) {
 	if _, err = p.Witness(ctx, deliveries, s, auth); err == nil {
 		t.Fatal("accepted wrong owner signature")
 	}
-	s.TotalSpent = core.ElementFromUint64(1)
+	s.TotalSpent = primitives.ElementFromUint64(1)
 	if _, err = p.Witness(ctx, deliveries, s, auth); err == nil {
 		t.Fatal("accepted new grant usage")
 	}
@@ -74,10 +75,10 @@ func TestDrawAndUpdateWitnessBindMembershipAndOrdinaryNote(t *testing.T) {
 	key1, _ := crypto.ToECDSA(common.LeftPadBytes([]byte{1}, 32))
 	key2, _ := crypto.ToECDSA(common.LeftPadBytes([]byte{2}, 32))
 	owner, spender := crypto.PubkeyToAddress(key1.PublicKey), crypto.PubkeyToAddress(key2.PublicKey)
-	s.OwnerWalletIdentity = core.BigIntToElement(owner.Big())
-	s.SpenderWalletIdentity = core.BigIntToElement(spender.Big())
+	s.OwnerWalletIdentity = primitives.BigIntToElement(owner.Big())
+	s.SpenderWalletIdentity = primitives.BigIntToElement(spender.Big())
 	c := Context{ProtocolContext: s.ProtocolContext, TokenAddress: common.BigToAddress(big.NewInt(34)), Timestamp: 2000000000}
-	located := LocatedState{State: s, TreeID: 1, Debit: core.ElementFromUint64(7)}
+	located := LocatedState{State: s, TreeID: 1, Debit: primitives.ElementFromUint64(7)}
 	root, err := located.root()
 	if err != nil {
 		t.Fatal(err)
@@ -92,8 +93,8 @@ func TestDrawAndUpdateWitnessBindMembershipAndOrdinaryNote(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	outputIdentity := core.ElementFromUint64(999)
-	out, err := core.ComputeNoteCommitment(c.ChainID, c.ProtocolAddress, outputIdentity, s.TokenAddress, located.Debit)
+	outputIdentity := primitives.ElementFromUint64(999)
+	out, err := primitives.ComputeNoteCommitment(c.ChainID, c.ProtocolAddress, outputIdentity, s.TokenAddress, located.Debit)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -126,10 +127,10 @@ func TestDrawAndUpdateWitnessBindMembershipAndOrdinaryNote(t *testing.T) {
 	if _, err = draw.Witness(c, dds, []LocatedState{bad}, outputIdentity, auth); err == nil {
 		t.Fatal("accepted altered membership")
 	}
-	if _, err = draw.Witness(c, dds, []LocatedState{located}, core.ElementFromUint64(998), auth); err == nil {
+	if _, err = draw.Witness(c, dds, []LocatedState{located}, primitives.ElementFromUint64(998), auth); err == nil {
 		t.Fatal("accepted wrong ordinary Note")
 	}
-	policy := Policy{SingleLimit: core.ElementFromUint64(100)}
+	policy := Policy{SingleLimit: primitives.ElementFromUint64(100)}
 	updated, err := s.Update(Change{Policy: policy, Expiry: s.Expiry}, deadline.Uint64())
 	if err != nil {
 		t.Fatal(err)

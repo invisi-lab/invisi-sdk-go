@@ -3,23 +3,24 @@ package credit
 import (
 	"context"
 	"encoding/json"
-	"github.com/ethereum/go-ethereum/common"
-	"github.com/invisi-lab/invisi-sdk-go/core"
-	"github.com/invisi-lab/invisi-sdk-go/protocol"
 	"math/big"
 	"os"
 	"testing"
+
+	"github.com/ethereum/go-ethereum/common"
+	"github.com/invisi-lab/invisi-sdk-go/primitives"
+	"github.com/invisi-lab/invisi-sdk-go/protocol"
 )
 
 func TestQuotaDrawAndModeTransitions(t *testing.T) {
 	s, _ := fixture(t)
-	s.AvailableCredit = core.ElementFromUint64(7)
+	s.AvailableCredit = primitives.ElementFromUint64(7)
 	s.Unlimited = false
-	draw, err := s.Draw(core.ElementFromUint64(7), 2000000000)
-	if err != nil || !draw.State.AvailableCredit.IsZero() || draw.State.TotalSpent != core.ElementFromUint64(7) {
+	draw, err := s.Draw(primitives.ElementFromUint64(7), 2000000000)
+	if err != nil || !draw.State.AvailableCredit.IsZero() || draw.State.TotalSpent != primitives.ElementFromUint64(7) {
 		t.Fatal("gross draw must exhaust finite quota and preserve usage", err)
 	}
-	if _, err = draw.State.Draw(core.ElementFromUint64(1), 2000000001); err == nil {
+	if _, err = draw.State.Draw(primitives.ElementFromUint64(1), 2000000001); err == nil {
 		t.Fatal("finite zero authorized a draw")
 	}
 	on, off := true, false
@@ -27,31 +28,31 @@ func TestQuotaDrawAndModeTransitions(t *testing.T) {
 	if err != nil || !changed.State.Unlimited || !changed.State.AvailableCredit.IsZero() {
 		t.Fatal("unlimited must clear quota", err)
 	}
-	again, err := changed.State.Draw(core.ElementFromUint64(7), 2000000020)
-	if err != nil || !again.State.AvailableCredit.IsZero() || again.State.TotalSpent != core.ElementFromUint64(14) {
+	again, err := changed.State.Draw(primitives.ElementFromUint64(7), 2000000020)
+	if err != nil || !again.State.AvailableCredit.IsZero() || again.State.TotalSpent != primitives.ElementFromUint64(14) {
 		t.Fatal("unlimited draw must retain zero balance and add history", err)
 	}
 	exhausted, err := again.State.Update(Change{Policy: s.Policy, Expiry: s.Expiry, Unlimited: &off}, 2000000030)
 	if err != nil || exhausted.State.Unlimited || !exhausted.State.AvailableCredit.IsZero() {
 		t.Fatal("switch to finite must start exhausted without increase", err)
 	}
-	finite, err := again.State.Update(Change{Policy: s.Policy, Expiry: s.Expiry, Unlimited: &off, IncreaseAvailableCredit: core.ElementFromUint64(5)}, 2000000030)
-	if err != nil || finite.State.Unlimited || finite.State.AvailableCredit != core.ElementFromUint64(5) || finite.State.TotalSpent != core.ElementFromUint64(14) {
+	finite, err := again.State.Update(Change{Policy: s.Policy, Expiry: s.Expiry, Unlimited: &off, IncreaseAvailableCredit: primitives.ElementFromUint64(5)}, 2000000030)
+	if err != nil || finite.State.Unlimited || finite.State.AvailableCredit != primitives.ElementFromUint64(5) || finite.State.TotalSpent != primitives.ElementFromUint64(14) {
 		t.Fatal("finite mode must start at zero plus delta", err)
 	}
 }
 
 func TestQuotaUpdateRejectsInvalidDeltasAndRetainsOriginalChange(t *testing.T) {
 	s, _ := fixture(t)
-	s.AvailableCredit = core.ElementFromUint64(10)
+	s.AvailableCredit = primitives.ElementFromUint64(10)
 	on := true
 	max := new(big.Int).Sub(new(big.Int).Lsh(big.NewInt(1), 128), big.NewInt(1))
 	for _, change := range []Change{
-		{Policy: s.Policy, Expiry: s.Expiry, IncreaseAvailableCredit: core.ElementFromUint64(1), DecreaseAvailableCredit: core.ElementFromUint64(1)},
-		{Policy: s.Policy, Expiry: s.Expiry, DecreaseAvailableCredit: core.ElementFromUint64(11)},
-		{Policy: s.Policy, Expiry: s.Expiry, Unlimited: &on, IncreaseAvailableCredit: core.ElementFromUint64(1)},
-		{Policy: s.Policy, Expiry: s.Expiry, IncreaseAvailableCredit: core.BigIntToElement(max)},
-		{Policy: s.Policy, Expiry: s.Expiry, IncreaseAvailableCredit: core.BigIntToElement(new(big.Int).Lsh(big.NewInt(1), 128))},
+		{Policy: s.Policy, Expiry: s.Expiry, IncreaseAvailableCredit: primitives.ElementFromUint64(1), DecreaseAvailableCredit: primitives.ElementFromUint64(1)},
+		{Policy: s.Policy, Expiry: s.Expiry, DecreaseAvailableCredit: primitives.ElementFromUint64(11)},
+		{Policy: s.Policy, Expiry: s.Expiry, Unlimited: &on, IncreaseAvailableCredit: primitives.ElementFromUint64(1)},
+		{Policy: s.Policy, Expiry: s.Expiry, IncreaseAvailableCredit: primitives.BigIntToElement(max)},
+		{Policy: s.Policy, Expiry: s.Expiry, IncreaseAvailableCredit: primitives.BigIntToElement(new(big.Int).Lsh(big.NewInt(1), 128))},
 	} {
 		if _, err := s.Update(change, 2000000010); err == nil {
 			t.Fatal("accepted invalid quota delta")
@@ -61,17 +62,17 @@ func TestQuotaUpdateRejectsInvalidDeltasAndRetainsOriginalChange(t *testing.T) {
 	if err != nil || !cleared.State.Unlimited || !cleared.State.AvailableCredit.IsZero() {
 		t.Fatal("switch to unlimited failed to clear available balance", err)
 	}
-	change := Change{Policy: s.Policy, Expiry: s.Expiry, IncreaseAvailableCredit: core.ElementFromUint64(5)}
+	change := Change{Policy: s.Policy, Expiry: s.Expiry, IncreaseAvailableCredit: primitives.ElementFromUint64(5)}
 	a, err := s.Update(change, 2000000010)
 	if err != nil {
 		t.Fatal(err)
 	}
-	s.AvailableCredit = core.ElementFromUint64(3)
+	s.AvailableCredit = primitives.ElementFromUint64(3)
 	b, err := s.Update(change, 2000000010)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if a.State.AvailableCredit != core.ElementFromUint64(15) || b.State.AvailableCredit != core.ElementFromUint64(8) {
+	if a.State.AvailableCredit != primitives.ElementFromUint64(15) || b.State.AvailableCredit != primitives.ElementFromUint64(8) {
 		t.Fatal("change restored stale quota instead of applying delta")
 	}
 	s.Unlimited = true
@@ -82,8 +83,8 @@ func TestQuotaUpdateRejectsInvalidDeltasAndRetainsOriginalChange(t *testing.T) {
 
 func TestUpdateChangeSurvivesPersistenceAndRepricing(t *testing.T) {
 	s, _ := fixture(t)
-	c := Context{ProtocolContext: s.ProtocolContext, TokenAddress: common.BigToAddress(core.ElementToBigInt(s.TokenAddress)), Timestamp: 2000000000}
-	change := Change{Policy: s.Policy, Expiry: s.Expiry, IncreaseAvailableCredit: core.ElementFromUint64(5)}
+	c := Context{ProtocolContext: s.ProtocolContext, TokenAddress: common.BigToAddress(primitives.ElementToBigInt(s.TokenAddress)), Timestamp: 2000000000}
+	change := Change{Policy: s.Policy, Expiry: s.Expiry, IncreaseAvailableCredit: primitives.ElementFromUint64(5)}
 	transition, err := s.Update(change, 2000000300)
 	if err != nil {
 		t.Fatal(err)
@@ -91,7 +92,7 @@ func TestUpdateChangeSurvivesPersistenceAndRepricing(t *testing.T) {
 	clue := make([]byte, 68)
 	clue[64] = 24
 	deliveries := []protocol.Delivery{{Ciphertext: make([]byte, 485), Clue: clue}, {Ciphertext: make([]byte, 485), Clue: clue}}
-	params := UpdateParams{Token: c.TokenAddress, Owner: common.BigToAddress(core.ElementToBigInt(s.OwnerWalletIdentity)), Source: protocol.InputSource{TreeId: big.NewInt(1), MerkleRoot: common.HexToHash("1")}, Nullifier: common.Hash(transition.Nullifier.Bytes()), CreditCommitment: common.Hash(transition.StateCommitment.Bytes()), RevocationShard: 1, Deadline: big.NewInt(2000000300)}
+	params := UpdateParams{Token: c.TokenAddress, Owner: common.BigToAddress(primitives.ElementToBigInt(s.OwnerWalletIdentity)), Source: protocol.InputSource{TreeId: big.NewInt(1), MerkleRoot: common.HexToHash("1")}, Nullifier: common.Hash(transition.Nullifier.Bytes()), CreditCommitment: common.Hash(transition.StateCommitment.Bytes()), RevocationShard: 1, Deadline: big.NewInt(2000000300)}
 	prepared, err := PrepareUpdate(c, params, deliveries, LocatedState{State: s, TreeID: 1}, change)
 	if err != nil {
 		t.Fatal(err)
@@ -122,7 +123,7 @@ func TestUpdateChangeSurvivesPersistenceAndRepricing(t *testing.T) {
 			t.Fatal("reprice applied delta repeatedly")
 		}
 	}
-	restored.Inputs[0].State.AvailableCredit = core.ElementFromUint64(1)
+	restored.Inputs[0].State.AvailableCredit = primitives.ElementFromUint64(1)
 	if _, err = Restore(context.Background(), restored, nil, nil); err == nil {
 		t.Fatal("restored stale successor with substituted input balance")
 	}

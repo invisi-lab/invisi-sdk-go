@@ -12,8 +12,8 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 
-	"github.com/invisi-lab/invisi-sdk-go/core"
 	transaction "github.com/invisi-lab/invisi-sdk-go/internal/transaction"
+	"github.com/invisi-lab/invisi-sdk-go/primitives"
 	"github.com/invisi-lab/invisi-sdk-go/protocol"
 	protocolrpc "github.com/invisi-lab/invisi-sdk-go/rpc"
 	sdk "github.com/invisi-lab/invisi-sdk-go/sdk"
@@ -27,7 +27,7 @@ func TestHistoryDetachedBusinessRecordsAndIndependentDiscovery(t *testing.T) {
 	commitment := common.HexToHash("0x1234")
 	block := protocolrpc.CanonicalBlock{Number: 12, Hash: common.HexToHash("0x12")}
 	plan := transaction.Plan{ID: "operation-1", Kind: "shield", Context: protocol.TransactionContext{TokenAddress: token}, Block: block, FundingMode: "caller",
-		Funding: protocol.FundingParams{Amount: big.NewInt(7)}, Outputs: []transaction.PreparedOutput{{Address: "recipient", Amount: big.NewInt(7), Note: &core.Note{Amount: core.ElementFromUint64(7), Payload: []byte{1, 2, 3}}}}}
+		Funding: protocol.FundingParams{Amount: big.NewInt(7)}, Outputs: []transaction.PreparedOutput{{Address: "recipient", Amount: big.NewInt(7), Note: &primitives.Note{Amount: primitives.ElementFromUint64(7), Payload: []byte{1, 2, 3}}}}}
 	raw, err := json.Marshal(plan)
 	if err != nil {
 		t.Fatal(err)
@@ -36,7 +36,7 @@ func TestHistoryDetachedBusinessRecordsAndIndependentDiscovery(t *testing.T) {
 		state.DiscoveryThrough = &block
 		state.ObservedThrough = &protocolrpc.CanonicalBlock{Number: 999}
 		state.Operations[plan.ID] = OperationRecord{ID: plan.ID, Kind: "shield", Status: "uncertain", Plan: raw, Proof: json.RawMessage(`{"privateWitness":"do-not-expose"}`)}
-		state.Notes[commitment] = StoredNote{Note: core.Note{TokenAddress: core.BigIntToElement(token.Big()), Amount: core.ElementFromUint64(7), Payload: []byte{4, 5}}, Commitment: commitment, Spent: true, Block: &block}
+		state.Notes[commitment] = StoredNote{Note: primitives.Note{TokenAddress: primitives.BigIntToElement(token.Big()), Amount: primitives.ElementFromUint64(7), Payload: []byte{4, 5}}, Commitment: commitment, Spent: true, Block: &block}
 		return nil
 	}); err != nil {
 		t.Fatal(err)
@@ -157,7 +157,7 @@ func TestHistorySnapshotsAssetFilterBeforeReadingStore(t *testing.T) {
 	token := common.HexToAddress("0x1111111111111111111111111111111111111111")
 	original := token
 	if err := base.Update(ctx, scope, func(state *WalletState) error {
-		state.Notes[common.HexToHash("0x01")] = StoredNote{Note: core.Note{TokenAddress: core.BigIntToElement(token.Big()), Amount: core.ElementFromUint64(1)}}
+		state.Notes[common.HexToHash("0x01")] = StoredNote{Note: primitives.Note{TokenAddress: primitives.BigIntToElement(token.Big()), Amount: primitives.ElementFromUint64(1)}}
 		return nil
 	}); err != nil {
 		t.Fatal(err)

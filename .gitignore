@@ -35,3 +35,7 @@ go.work.sum
 
 # Authenticated local provenance artifacts (independent of main circuit assets)
 .cache/provenance/
+
+# Python maintenance script caches
+__pycache__/
+*.pyc

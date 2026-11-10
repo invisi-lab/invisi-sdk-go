@@ -8,7 +8,7 @@ import (
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/common"
 
-	"github.com/invisi-lab/invisi-sdk-go/core"
+	"github.com/invisi-lab/invisi-sdk-go/primitives"
 	"github.com/invisi-lab/invisi-sdk-go/protocol"
 	protocolrpc "github.com/invisi-lab/invisi-sdk-go/rpc"
 )
@@ -177,7 +177,7 @@ func (n *PaymentNote) verify(ctx context.Context, pool *Protocol, wallet *Wallet
 		return fail(errors.New("payment note is not indexed at the confirmed block"))
 	}
 	output, m := lookup.Output, lookup.Membership
-	if output.TokenAddress != n.data.TokenAddress || output.Commitment != n.data.Commitment || m.Leaf != n.data.Commitment || m.TreeID != output.TreeID || m.LeafIndex != output.LeafIndex || len(m.Path) != core.TreeDepth {
+	if output.TokenAddress != n.data.TokenAddress || output.Commitment != n.data.Commitment || m.Leaf != n.data.Commitment || m.TreeID != output.TreeID || m.LeafIndex != output.LeafIndex || len(m.Path) != primitives.TreeDepth {
 		return fail(errors.New("payment note membership metadata mismatch"))
 	}
 	// RPC has independently verified the Merkle path. Recheck chain state for this operation.
@@ -198,7 +198,7 @@ func (n *PaymentNote) verify(ctx context.Context, pool *Protocol, wallet *Wallet
 			return fail(e)
 		}
 		note := paymentNoteOpening(n.data)
-		nf, e := core.ComputeNoteNullifier(note.ChainID, note.ProtocolAddress, note.Nonce, core.BigIntToElement(n.data.Commitment.Big()))
+		nf, e := primitives.ComputeNoteNullifier(note.ChainID, note.ProtocolAddress, note.Nonce, primitives.BigIntToElement(n.data.Commitment.Big()))
 		if e != nil {
 			return fail(e)
 		}

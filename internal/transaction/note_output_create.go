@@ -7,7 +7,7 @@ import (
 	"github.com/consensys/gnark-crypto/ecc/bn254/fr"
 	"github.com/ethereum/go-ethereum/common"
 
-	"github.com/invisi-lab/invisi-sdk-go/core"
+	"github.com/invisi-lab/invisi-sdk-go/primitives"
 )
 
 func CanonicalField(v *big.Int) bool { return v != nil && v.Sign() >= 0 && v.Cmp(fr.Modulus()) < 0 }
@@ -23,8 +23,8 @@ func createNoteOutput(o PaymentRequest) (NoteOutput, error) {
 	if e := ValidatePayload(o.Payload); e != nil {
 		return fail(e)
 	}
-	p := &OutputIntent{Context: core.ProtocolContext{ChainID: core.BigIntToElement(o.ChainID), ProtocolAddress: core.BigIntToElement(o.ProtocolAddress.Big())}, Token: o.TokenAddress, Amount: new(big.Int).Set(o.Amount)}
-	var recipient core.ReceivingAddress
+	p := &OutputIntent{Context: primitives.ProtocolContext{ChainID: primitives.BigIntToElement(o.ChainID), ProtocolAddress: primitives.BigIntToElement(o.ProtocolAddress.Big())}, Token: o.TokenAddress, Amount: new(big.Int).Set(o.Amount)}
+	var recipient primitives.ReceivingAddress
 	var nonce *big.Int
 	encrypted := false
 	switch r := o.Recipient.(type) {
@@ -48,10 +48,10 @@ func createNoteOutput(o PaymentRequest) (NoteOutput, error) {
 		if p.Lookup != "protocol-rpc" && p.Lookup != "chain" {
 			return fail(errors.New("invalid recipient addressLookup"))
 		}
-		recipient.OwnerAddress = core.BigIntToElement(r.Address.Big())
+		recipient.OwnerAddress = primitives.BigIntToElement(r.Address.Big())
 		p.Pending = encrypted
 	case InvisiRecipient:
-		d, e := core.DecodeAddress(r.Address)
+		d, e := primitives.DecodeAddress(r.Address)
 		if e != nil {
 			return fail(e)
 		}
@@ -72,7 +72,7 @@ func createNoteOutput(o PaymentRequest) (NoteOutput, error) {
 		var nf fr.Element
 		if nonce == nil {
 			var e error
-			nf, e = core.GenerateNonce()
+			nf, e = primitives.GenerateNonce()
 			if e != nil {
 				return fail(e)
 			}
@@ -80,17 +80,17 @@ func createNoteOutput(o PaymentRequest) (NoteOutput, error) {
 			if !CanonicalField(nonce) {
 				return fail(errors.New("nonce must be a canonical BN254 field element"))
 			}
-			nf = core.BigIntToElement(nonce)
+			nf = primitives.BigIntToElement(nonce)
 		}
-		note := core.Note{ProtocolContext: p.Context, OwnerAddress: recipient.OwnerAddress, TokenAddress: core.BigIntToElement(o.TokenAddress.Big()), Amount: core.BigIntToElement(o.Amount), Nonce: nf, Payload: append([]byte(nil), o.Payload...)}
+		note := primitives.Note{ProtocolContext: p.Context, OwnerAddress: recipient.OwnerAddress, TokenAddress: primitives.BigIntToElement(o.TokenAddress.Big()), Amount: primitives.BigIntToElement(o.Amount), Nonce: nf, Payload: append([]byte(nil), o.Payload...)}
 		p.Note = &note
-		id, e := core.ComputeNoteIdentity(note.OwnerAddress, note.Nonce)
+		id, e := primitives.ComputeNoteIdentity(note.OwnerAddress, note.Nonce)
 		if e != nil {
 			return fail(e)
 		}
 		p.Identity = FieldHash(id)
 	}
-	commitment, e := core.ComputeNoteCommitment(p.Context.ChainID, p.Context.ProtocolAddress, core.BigIntToElement(p.Identity.Big()), core.BigIntToElement(o.TokenAddress.Big()), core.BigIntToElement(o.Amount))
+	commitment, e := primitives.ComputeNoteCommitment(p.Context.ChainID, p.Context.ProtocolAddress, primitives.BigIntToElement(p.Identity.Big()), primitives.BigIntToElement(o.TokenAddress.Big()), primitives.BigIntToElement(o.Amount))
 	if e != nil {
 		return fail(e)
 	}

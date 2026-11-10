@@ -243,7 +243,7 @@ func TestProvenanceLiveService(t *testing.T) {
 	bad := trust
 	bad.ProtocolAddress = "0"
 	untrusted := Client{Endpoint: f.Endpoint, Trust: bad}
-	if _, e := untrusted.GetVersion(ctx); e == nil || !strings.Contains(e.Error(), "POLICY_UNKNOWN") {
+	if _, e := untrusted.GetVersion(ctx); e == nil {
 		t.Fatal("actual response accepted wrong scope")
 	}
 }

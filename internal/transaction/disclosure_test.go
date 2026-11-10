@@ -8,7 +8,7 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 
-	"github.com/invisi-lab/invisi-sdk-go/core"
+	"github.com/invisi-lab/invisi-sdk-go/primitives"
 )
 
 func TestDisclosuresInteroperateWithCurrentTSExports(t *testing.T) {
@@ -24,8 +24,8 @@ func TestDisclosuresInteroperateWithCurrentTSExports(t *testing.T) {
 	if e != nil {
 		t.Fatal(e)
 	}
-	rawKey, _ := core.DecodePrivateKey("0x" + strings.Repeat("0", 63) + "1")
-	material, _ := core.DeriveWallet(rawKey)
+	rawKey, _ := primitives.DecodePrivateKey("0x" + strings.Repeat("0", 63) + "1")
+	material, _ := primitives.DeriveWallet(rawKey)
 	viewer, e := NewViewingCapability(wallet.OwnerAddress(), material.ViewingPrivateKey, material.ViewingPublicKey)
 	if e != nil {
 		t.Fatal(e)
@@ -62,7 +62,7 @@ func TestDisclosuresInteroperateWithCurrentTSExports(t *testing.T) {
 				t.Fatal("implicit disclosure serialization leaked sensitive material")
 			}
 			if name == "notePayload" {
-				fresh, e := viewer.DiscloseNote(output.Ciphertext, core.NoteDecryptionContext{NoteEncryptionContext: core.NoteEncryptionContext{ProtocolContext: output.ProtocolContext, OutputCommitment: core.BigIntToElement(output.OutputCommitment.Big())}, TokenAddress: output.TokenAddress})
+				fresh, e := viewer.DiscloseNote(output.Ciphertext, primitives.NoteDecryptionContext{NoteEncryptionContext: primitives.NoteEncryptionContext{ProtocolContext: output.ProtocolContext, OutputCommitment: primitives.BigIntToElement(output.OutputCommitment.Big())}, TokenAddress: output.TokenAddress})
 				if e != nil {
 					t.Fatal(e)
 				}

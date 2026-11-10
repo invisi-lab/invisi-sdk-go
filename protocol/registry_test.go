@@ -13,13 +13,13 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/signer/core/apitypes"
 
-	"github.com/invisi-lab/invisi-sdk-go/core"
+	"github.com/invisi-lab/invisi-sdk-go/primitives"
 	"github.com/invisi-lab/invisi-sdk-go/protocol/contracts"
 )
 
 func registrationCase(t *testing.T) (RegistryContext, AddressRegistration) {
 	t.Helper()
-	wallet, err := core.DeriveWallet(bytes.Repeat([]byte{1}, 32))
+	wallet, err := primitives.DeriveWallet(bytes.Repeat([]byte{1}, 32))
 	if err != nil {
 		t.Fatal(err)
 	}

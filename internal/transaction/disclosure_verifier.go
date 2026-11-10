@@ -8,8 +8,8 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 
-	"github.com/invisi-lab/invisi-sdk-go/core"
-	"github.com/invisi-lab/invisi-sdk-go/internal/receipts"
+	"github.com/invisi-lab/invisi-sdk-go/primitives"
+	"github.com/invisi-lab/invisi-sdk-go/protocol/receipts"
 	protocolrpc "github.com/invisi-lab/invisi-sdk-go/rpc"
 )
 
@@ -77,7 +77,7 @@ func (v *DisclosureVerifier) barrier(ctx context.Context, block protocolrpc.Cano
 
 func (v *DisclosureVerifier) ReadOutput(ctx context.Context, reference DisclosureReference) (DisclosureEvidence, error) {
 	var result DisclosureEvidence
-	if reference.TreeID == 0 || reference.LeafIndex >= 1<<core.TreeDepth || (reference.Role != "funds" && reference.Role != "owner" && reference.Role != "spender") {
+	if reference.TreeID == 0 || reference.LeafIndex >= 1<<primitives.TreeDepth || (reference.Role != "funds" && reference.Role != "owner" && reference.Role != "spender") {
 		return result, errors.New("invalid disclosure reference")
 	}
 	if e := v.options.Protocol.ValidateDeployment(ctx, v.options.Provider); e != nil {
@@ -133,7 +133,7 @@ func (v *DisclosureVerifier) ReadOutput(ctx context.Context, reference Disclosur
 	if e != nil {
 		return result, e
 	}
-	return DisclosureEvidence{reference, block, confirmations, DisclosureOutput{core.ProtocolContext{ChainID: core.ElementFromUint64(context.ChainID), ProtocolAddress: core.BigIntToElement(context.ProtocolAddress.Big())}, core.BigIntToElement(v.options.TokenAddress.Big()), selected.Commitment, reference.Role, append([]byte(nil), selected.Ciphertext...)}}, nil
+	return DisclosureEvidence{reference, block, confirmations, DisclosureOutput{primitives.ProtocolContext{ChainID: primitives.ElementFromUint64(context.ChainID), ProtocolAddress: primitives.BigIntToElement(context.ProtocolAddress.Big())}, primitives.BigIntToElement(v.options.TokenAddress.Big()), selected.Commitment, reference.Role, append([]byte(nil), selected.Ciphertext...)}}, nil
 }
 
 func (v *DisclosureVerifier) Verify(ctx context.Context, disclosure *Disclosure, reference DisclosureReference) (VerifiedDisclosure, error) {

@@ -12,7 +12,6 @@ import (
 	"math/big"
 	"net/http"
 	"net/http/httptest"
-	"os"
 	"reflect"
 	"strings"
 	"sync/atomic"
@@ -21,7 +20,6 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 
-	"github.com/invisi-lab/invisi-sdk-go/protocol"
 	"github.com/invisi-lab/invisi-sdk-go/provenance"
 	sdk "github.com/invisi-lab/invisi-sdk-go/sdk"
 )
@@ -56,10 +54,7 @@ func configureSourceFlow(t *testing.T, s *WalletSession, original *Operation, de
 func configureSourceFlowGeneration(t *testing.T, s *WalletSession, original *Operation, deny, badAnchor bool, generation string, historical ...bool) (*sourceFlowProver, *atomic.Int64) {
 	t.Helper()
 	const pin = "6107789c5c0d24c4130bff05da6d389336feb5ccb247c4030eae5198ab05d762"
-	bytes, err := os.ReadFile("../provenance/manifest.json")
-	if err != nil {
-		t.Fatal(err)
-	}
+	bytes := provenance.ManifestBytes()
 	manifest, err := provenance.AuthenticateManifest(bytes, pin)
 	if err != nil {
 		t.Fatal(err)
@@ -259,13 +254,13 @@ func TestProvenanceIndependentProofAndDetachedExport(t *testing.T) {
 	if e != nil || len(proof.Sidecars) != 1 {
 		t.Fatal(e)
 	}
-	if e = protocol.ValidateProvenanceProof(proof, next.session.options.Provenance.Client.Trust); e != nil {
+	if e = provenance.ValidateProvenanceProof(proof, next.session.options.Provenance.Client.Trust); e != nil {
 		t.Fatal("public packet failed native validation", e)
 	}
 	mutated := proof
 	mutated.PublicInputs = append([]string(nil), proof.PublicInputs...)
 	mutated.PublicInputs[0] = common.Hash{}.Hex()
-	if protocol.ValidateProvenanceProof(mutated, next.session.options.Provenance.Client.Trust) == nil {
+	if provenance.ValidateProvenanceProof(mutated, next.session.options.Provenance.Client.Trust) == nil {
 		t.Fatal("mutated native public inputs accepted")
 	}
 	if _, e = next.SubmitProvenance(ctx); e != nil {
@@ -393,7 +388,7 @@ func TestProvenanceReproofRefreshesTrustWithoutChangingPayment(t *testing.T) {
 	if cert.ChainGeneration != "2" || cert.SigningKeyID == oldCert.SigningKeyID || initialProver.calls.Load() != 1 || refreshed.calls.Load() != 2 {
 		t.Fatal("Source reproof did not refresh generation/signing identity")
 	}
-	if err = protocol.ValidateProvenanceProof(current, ready.session.options.Provenance.Client.Trust); err != nil {
+	if err = provenance.ValidateProvenanceProof(current, ready.session.options.Provenance.Client.Trust); err != nil {
 		t.Fatal(err)
 	}
 }

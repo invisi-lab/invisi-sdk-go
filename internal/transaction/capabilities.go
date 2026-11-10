@@ -13,7 +13,7 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/signer/core/apitypes"
 
-	"github.com/invisi-lab/invisi-sdk-go/core"
+	"github.com/invisi-lab/invisi-sdk-go/primitives"
 )
 
 // FundingSigner grants public ERC20 funding independently of private note spending.
@@ -120,10 +120,10 @@ func RecoverTypedDataSigner(digest, signature []byte) (common.Address, bool) {
 	return crypto.PubkeyToAddress(*public), true
 }
 
-func VerifyAuthorizationWitness(identity common.Address, request core.WalletAuthorizationRequest, witness core.WalletAuthorizationWitness) error {
+func VerifyAuthorizationWitness(identity common.Address, request primitives.WalletAuthorizationRequest, witness primitives.WalletAuthorizationWitness) error {
 	public := append([]byte{4}, witness.PublicKeyX[:]...)
 	public = append(public, witness.PublicKeyY[:]...)
-	valid, err := core.VerifyWalletAuthorization(core.BigIntToElement(identity.Big()), public, witness.Signature[:], request)
+	valid, err := primitives.VerifyWalletAuthorization(primitives.BigIntToElement(identity.Big()), public, witness.Signature[:], request)
 	if err != nil {
 		return err
 	}

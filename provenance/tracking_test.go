@@ -24,7 +24,7 @@ func TestTrackingScopedWireAndTerminalStates(t *testing.T) {
 				}
 				json.NewDecoder(r.Body).Decode(&q)
 
-				if q.Method != "provenance_getTracking" || len(q.Params) != 1 || q.Params[0]["policyId"] != "" || q.Params[0]["trackingId"] != "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" {
+				if q.Method != "provenance_getTracking" || len(q.Params) != 1 || len(q.Params[0]) != 1 || q.Params[0]["trackingId"] != "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" {
 					t.Error("wrong tracking query")
 				}
 				digest, _ := word("9")
@@ -34,11 +34,11 @@ func TestTrackingScopedWireAndTerminalStates(t *testing.T) {
 					block, _ := word("2")
 					tracking["matched"] = map[string]string{"txHash": tx, "blockHash": block, "operationIndex": "0"}
 				}
-				json.NewEncoder(w).Encode(map[string]any{"jsonrpc": "2.0", "id": q.ID, "result": map[string]any{"scope": Scope{"1", "2"}, "chainGeneration": "3", "providerId": "4", "signingKeyId": "5", "manifestSha256": strings.Repeat("a", 64), "tracking": tracking}})
+				json.NewEncoder(w).Encode(map[string]any{"jsonrpc": "2.0", "id": q.ID, "result": map[string]any{"scope": Scope{ChainID: "1", ProtocolAddress: "2"}, "chainGeneration": "3", "providerId": "4", "signingKeyId": "5", "manifestSha256": strings.Repeat("a", 64), "tracking": tracking}})
 			}))
 			defer server.Close()
 			id, _ := word("5")
-			c := Client{Endpoint: server.URL, Trust: TrustContext{Scope: Scope{"1", "2"}, ChainGeneration: "3", ProviderID: "4", ManifestSHA256: strings.Repeat("a", 64), SigningKeys: map[string]ed25519.PublicKey{id: make([]byte, 32)}}}
+			c := Client{Endpoint: server.URL, Trust: TrustContext{Scope: Scope{ChainID: "1", ProtocolAddress: "2"}, ChainGeneration: "3", ProviderID: "4", ManifestSHA256: strings.Repeat("a", 64), SigningKeys: map[string]ed25519.PublicKey{id: make([]byte, 32)}}}
 			r, e := c.WaitTracking(context.Background(), "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", time.Millisecond, 20*time.Millisecond)
 			if status == "unknown" || status == "stale_generation" {
 				if e == nil {

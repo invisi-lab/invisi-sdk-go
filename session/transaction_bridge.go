@@ -9,10 +9,10 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/signer/core/apitypes"
 
-	"github.com/invisi-lab/invisi-sdk-go/broadcaster"
-	"github.com/invisi-lab/invisi-sdk-go/core"
 	transaction "github.com/invisi-lab/invisi-sdk-go/internal/transaction"
+	"github.com/invisi-lab/invisi-sdk-go/primitives"
 	"github.com/invisi-lab/invisi-sdk-go/protocol"
+	"github.com/invisi-lab/invisi-sdk-go/rpc/broadcaster"
 	sdk "github.com/invisi-lab/invisi-sdk-go/sdk"
 )
 
@@ -81,12 +81,12 @@ func (o *Operation) validateBroadcasterPlan() error {
 	return result0
 }
 
-func (o *Operation) walletRequest(ctx context.Context) (core.WalletAuthorizationRequest, error) {
+func (o *Operation) walletRequest(ctx context.Context) (primitives.WalletAuthorizationRequest, error) {
 	execution := o.execution()
 	result0, result1 := execution.WalletRequest(ctx)
 	return result0, result1
 }
-func (o *Operation) ExportWalletAuthorization(ctx context.Context) (core.SigningRequest, error) {
+func (o *Operation) ExportWalletAuthorization(ctx context.Context) (primitives.SigningRequest, error) {
 	o.mu.Lock()
 	defer o.mu.Unlock()
 	execution := o.execution()
@@ -104,7 +104,7 @@ func (o *Operation) fundingRequest(ctx context.Context) (apitypes.TypedData, err
 	result0, result1 := execution.FundingRequest(ctx)
 	return result0, result1
 }
-func (o *Operation) ExportFundingAuthorization(ctx context.Context) (core.SigningRequest, error) {
+func (o *Operation) ExportFundingAuthorization(ctx context.Context) (primitives.SigningRequest, error) {
 	o.mu.Lock()
 	defer o.mu.Unlock()
 	execution := o.execution()

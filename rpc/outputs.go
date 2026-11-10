@@ -8,7 +8,7 @@ import (
 	"fmt"
 
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/invisi-lab/invisi-sdk-go/core"
+	"github.com/invisi-lab/invisi-sdk-go/primitives"
 )
 
 func (c *ProtocolRpcClient) updatePage(ctx context.Context, d DeploymentContext, r ProtocolUpdateRange, method string, detected bool) (CanonicalBlock, json.RawMessage, error) {
@@ -26,7 +26,7 @@ func (c *ProtocolRpcClient) updatePage(ctx context.Context, d DeploymentContext,
 		return CanonicalBlock{}, nil, errors.New("use explicit detection method")
 	}
 	if detected {
-		if _, e = core.DeriveClueKey(r.DetectionKey); e != nil {
+		if _, e = primitives.DeriveClueKey(r.DetectionKey); e != nil {
 			return CanonicalBlock{}, nil, e
 		}
 	}

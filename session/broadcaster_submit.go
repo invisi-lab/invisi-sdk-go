@@ -3,7 +3,7 @@ package session
 import (
 	"context"
 
-	"github.com/invisi-lab/invisi-sdk-go/broadcaster"
+	"github.com/invisi-lab/invisi-sdk-go/rpc/broadcaster"
 )
 
 // SubmitBroadcaster preserves reservations after any potentially externalized request.

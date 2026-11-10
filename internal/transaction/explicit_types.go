@@ -2,15 +2,15 @@ package transaction
 
 import (
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/invisi-lab/invisi-sdk-go/rpc/chain"
 
-	"github.com/invisi-lab/invisi-sdk-go/core"
-	"github.com/invisi-lab/invisi-sdk-go/protocol"
+	"github.com/invisi-lab/invisi-sdk-go/primitives"
 )
 
 // NoteInput is an application-selected private note and its authenticated tree position.
 // The application owns reservations and persistence; the SDK checks its preimage and membership.
 type NoteInput struct {
-	Note       core.Note
+	Note       primitives.Note
 	Commitment common.Hash
 	TreeID     uint64
 	LeafIndex  uint32
@@ -18,7 +18,7 @@ type NoteInput struct {
 
 type TransactionIdentity struct {
 	Wallet   *Wallet
-	Protocol *protocol.Protocol
+	Protocol *chain.Protocol
 }
 
 type ExplicitFunds struct {

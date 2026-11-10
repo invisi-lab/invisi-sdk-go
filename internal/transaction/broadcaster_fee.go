@@ -7,7 +7,7 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 
-	"github.com/invisi-lab/invisi-sdk-go/core"
+	"github.com/invisi-lab/invisi-sdk-go/primitives"
 	"github.com/invisi-lab/invisi-sdk-go/protocol"
 )
 
@@ -75,8 +75,8 @@ func (o *Execution) ApplyBroadcasterFee(ctx context.Context, base Plan, recipien
 				return errors.New("missing private change note")
 			}
 			note := *out.Note
-			note.Amount = core.BigIntToElement(amount)
-			commit, e := core.ComputeNoteCommitment(note.ChainID, note.ProtocolAddress, core.BigIntToElement(out.Identity.Big()), note.TokenAddress, note.Amount)
+			note.Amount = primitives.BigIntToElement(amount)
+			commit, e := primitives.ComputeNoteCommitment(note.ChainID, note.ProtocolAddress, primitives.BigIntToElement(out.Identity.Big()), note.TokenAddress, note.Amount)
 			if e != nil {
 				return e
 			}

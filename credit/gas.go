@@ -3,10 +3,12 @@ package credit
 import (
 	"context"
 	"errors"
-	"github.com/ethereum/go-ethereum/common"
-	"github.com/invisi-lab/invisi-sdk-go/core"
-	"github.com/invisi-lab/invisi-sdk-go/protocol"
 	"math/big"
+
+	"github.com/ethereum/go-ethereum/common"
+	"github.com/invisi-lab/invisi-sdk-go/primitives"
+	"github.com/invisi-lab/invisi-sdk-go/protocol"
+	gasrpc "github.com/invisi-lab/invisi-sdk-go/rpc"
 )
 
 func (p *Prepared) EstimateGas(ctx context.Context, provider protocol.GasEstimator, from common.Address) (protocol.GasEstimate, error) {
@@ -21,7 +23,7 @@ func (p *Prepared) EstimateGas(ctx context.Context, provider protocol.GasEstimat
 		return protocol.GasEstimate{}, err
 	}
 	p.mu.Lock()
-	to := common.BigToAddress(core.ElementToBigInt(p.intent.Context.ProtocolAddress))
+	to := common.BigToAddress(primitives.ElementToBigInt(p.intent.Context.ProtocolAddress))
 	p.mu.Unlock()
-	return protocol.EstimateTransactionGas(ctx, provider, protocol.TransactionCall{To: to, Data: data, Value: new(big.Int)}, from)
+	return gasrpc.EstimateTransactionGas(ctx, provider, protocol.TransactionCall{To: to, Data: data, Value: new(big.Int)}, from)
 }

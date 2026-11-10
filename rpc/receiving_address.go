@@ -7,7 +7,7 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 
-	"github.com/invisi-lab/invisi-sdk-go/core"
+	"github.com/invisi-lab/invisi-sdk-go/primitives"
 )
 
 func (c *ProtocolRpcClient) GetReceivingAddress(ctx context.Context, owner common.Address) (*RegisteredReceivingAddress, error) {
@@ -50,7 +50,7 @@ func (c *ProtocolRpcClient) GetReceivingAddress(ctx context.Context, owner commo
 	if e != nil {
 		return nil, e
 	}
-	address, e := core.EncodeLongAddress(core.ReceivingAddress{OwnerAddress: core.BigIntToElement(owner.Big()), ViewingPublicKey: view, ClueKey: clue})
+	address, e := primitives.EncodeLongAddress(primitives.ReceivingAddress{OwnerAddress: primitives.BigIntToElement(owner.Big()), ViewingPublicKey: view, ClueKey: clue})
 	if e != nil {
 		return nil, e
 	}

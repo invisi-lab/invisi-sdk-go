@@ -9,7 +9,7 @@ import (
 	"strconv"
 
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/invisi-lab/invisi-sdk-go/core"
+	"github.com/invisi-lab/invisi-sdk-go/primitives"
 )
 
 func (c *ProtocolRpcClient) parseTransitions(ctx context.Context, rows []json.RawMessage, r ProtocolUpdateRange) ([]ProtocolCreditTransition, error) {
@@ -179,7 +179,7 @@ func (c *ProtocolRpcClient) consumed(ctx context.Context, scope DeploymentContex
 	if nf == (common.Hash{}) {
 		return false, errors.New("nonzero nullifier required")
 	}
-	if _, e := core.HexToElement(nf.Hex()); e != nil {
+	if _, e := primitives.HexToElement(nf.Hex()); e != nil {
 		return false, e
 	}
 	if e := c.queryBlock(ctx, scope, block); e != nil {

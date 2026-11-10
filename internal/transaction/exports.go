@@ -3,12 +3,13 @@ package transaction
 import (
 	"context"
 
-	"github.com/invisi-lab/invisi-sdk-go/protocol"
+	"github.com/invisi-lab/invisi-sdk-go/rpc/chain"
+
 	"github.com/invisi-lab/invisi-sdk-go/prover"
 	protocolrpc "github.com/invisi-lab/invisi-sdk-go/rpc"
 )
 
-type Protocol = protocol.Protocol
+type Protocol = chain.Protocol
 
 type ProtocolRpcClient = protocolrpc.ProtocolRpcClient
 
@@ -36,9 +37,9 @@ func NewProtocolRpcClient(endpoint string, options ...protocolrpc.ClientOptions)
 }
 
 func ProtocolFromRPC(ctx context.Context, rpc *ProtocolRpcClient, provider protocolrpc.ChainProvider) (*Protocol, error) {
-	return protocol.ProtocolFromRPC(ctx, rpc, provider)
+	return chain.ProtocolFromRPC(ctx, rpc, provider)
 }
 
 func NewProtocol(deployment ProtocolDeployment) (*Protocol, error) {
-	return protocol.NewProtocol(deployment)
+	return chain.NewProtocol(deployment)
 }

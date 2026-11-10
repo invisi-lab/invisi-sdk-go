@@ -1,6 +1,10 @@
 # Changelog
 
-## 1.1.8
+## 1.2.0
+
+- Split the SDK into independently versioned primitives, protocol, prover, rpc, session and root SDK modules; rename core to primitives without an old-name module.
+- Share strict settlement decoding, public statements, quote/submission hashes and gas references with RPC, Broadcaster and Provenance.
+- Separate pure ABI tuples from network contract bindings and place Provenance contracts, local proving, clients and encrypted recovery in their owning modules.
 
 - Check historical Source root eligibility before replaying a tree for a new proof.
 - Reuse locally validated cached provenance evidence without network calls, local manifest assets or a prover; explicit reproof refreshes trust and preserves the original payment on failure or cancellation.

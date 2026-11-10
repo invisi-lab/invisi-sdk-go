@@ -3,15 +3,16 @@ package credit
 
 import (
 	"fmt"
-	"github.com/consensys/gnark-crypto/ecc/bn254/fr"
-	"github.com/invisi-lab/invisi-sdk-go/core"
 	"math/big"
+
+	"github.com/consensys/gnark-crypto/ecc/bn254/fr"
+	"github.com/invisi-lab/invisi-sdk-go/primitives"
 )
 
 type Policy struct{ SingleLimit, DailyLimit, MonthlyLimit fr.Element }
 type Usage struct{ LastDay, DailySpent, LastMonth, MonthlySpent, TotalSpent fr.Element }
 type State struct {
-	core.ProtocolContext
+	primitives.ProtocolContext
 	Policy
 	Usage
 	TokenAddress, SpenderWalletIdentity, OwnerWalletIdentity  fr.Element
@@ -29,7 +30,7 @@ type Change struct {
 
 func boolField(v bool) fr.Element {
 	if v {
-		return core.ElementFromUint64(1)
+		return primitives.ElementFromUint64(1)
 	}
 	return fr.Element{}
 }
@@ -52,17 +53,17 @@ func (c Change) quota(s State) (fr.Element, bool, error) {
 		}
 		return fr.Element{}, true, nil
 	}
-	balance := core.ElementToBigInt(s.AvailableCredit)
-	decrease := core.ElementToBigInt(c.DecreaseAvailableCredit)
+	balance := primitives.ElementToBigInt(s.AvailableCredit)
+	decrease := primitives.ElementToBigInt(c.DecreaseAvailableCredit)
 	if decrease.Cmp(balance) > 0 {
 		return fr.Element{}, false, fmt.Errorf("quota decrease exceeds available credit")
 	}
-	balance.Add(balance, core.ElementToBigInt(c.IncreaseAvailableCredit))
+	balance.Add(balance, primitives.ElementToBigInt(c.IncreaseAvailableCredit))
 	balance.Sub(balance, decrease)
 	if balance.BitLen() > 128 {
 		return fr.Element{}, false, fmt.Errorf("available credit exceeds uint128")
 	}
-	return core.BigIntToElement(balance), false, nil
+	return primitives.BigIntToElement(balance), false, nil
 }
 
 type Transition struct {
@@ -78,7 +79,7 @@ func (u Usage) Fields() []fr.Element {
 }
 func (s State) Clone() State { s.Payload = append([]byte(nil), s.Payload...); return s }
 func uintField(v fr.Element, bits int, name string) error {
-	if core.ElementToBigInt(v).BitLen() > bits {
+	if primitives.ElementToBigInt(v).BitLen() > bits {
 		return fmt.Errorf("%s exceeds uint%d", name, bits)
 	}
 	return nil
@@ -127,36 +128,36 @@ func (s State) Validate() error {
 	if s.LastDay.IsZero() && !s.DailySpent.IsZero() || s.LastMonth.IsZero() && !s.MonthlySpent.IsZero() {
 		return fmt.Errorf("unused period requires zero usage")
 	}
-	return core.ValidatePayload(s.Payload)
+	return primitives.ValidatePayload(s.Payload)
 }
 func (s State) Commitment() (fr.Element, error) {
 	if err := s.Validate(); err != nil {
 		return fr.Element{}, err
 	}
-	key, err := core.Poseidon2Hash(core.ElementFromUint64(7), s.SharedKey)
+	key, err := primitives.Poseidon2Hash(primitives.ElementFromUint64(7), s.SharedKey)
 	if err != nil {
 		return fr.Element{}, err
 	}
-	fields := []fr.Element{core.ElementFromUint64(5), s.ChainID, s.ProtocolAddress, s.SpenderWalletIdentity, s.OwnerWalletIdentity, s.TokenAddress, s.RevocationShard, s.RevocationSlot, s.Nonce, s.Expiry, key}
+	fields := []fr.Element{primitives.ElementFromUint64(5), s.ChainID, s.ProtocolAddress, s.SpenderWalletIdentity, s.OwnerWalletIdentity, s.TokenAddress, s.RevocationShard, s.RevocationSlot, s.Nonce, s.Expiry, key}
 	fields = append(fields, s.Policy.Fields()...)
 	fields = append(fields, s.AvailableCredit, boolField(s.Unlimited))
 	fields = append(fields, s.Usage.Fields()...)
-	return core.Poseidon2Hash(fields...)
+	return primitives.Poseidon2Hash(fields...)
 }
 func (s State) Nullifier() (fr.Element, error) {
 	c, err := s.Commitment()
 	if err != nil {
 		return fr.Element{}, err
 	}
-	return core.Poseidon2Hash(core.ElementFromUint64(6), s.ChainID, s.SharedKey, c)
+	return primitives.Poseidon2Hash(primitives.ElementFromUint64(6), s.ChainID, s.SharedKey, c)
 }
 func (s State) secrets(nf fr.Element) (nonce, mask fr.Element, err error) {
 	args := []fr.Element{s.ChainID, s.ProtocolAddress, s.TokenAddress, nf, s.SharedKey}
-	nonce, err = core.Poseidon2Hash(append([]fr.Element{core.ElementFromUint64(10)}, args...)...)
+	nonce, err = primitives.Poseidon2Hash(append([]fr.Element{primitives.ElementFromUint64(10)}, args...)...)
 	if err != nil {
 		return
 	}
-	mask, err = core.Poseidon2Hash(append([]fr.Element{core.ElementFromUint64(9)}, args...)...)
+	mask, err = primitives.Poseidon2Hash(append([]fr.Element{primitives.ElementFromUint64(9)}, args...)...)
 	if err == nil && nonce == s.Nonce {
 		err = fmt.Errorf("successor nonce must change")
 	}
@@ -178,17 +179,17 @@ func (s State) drawUsage(debit fr.Element, timestamp uint64) (Usage, error) {
 	p := Periods(timestamp)
 	u := s.Usage
 	update := func(limit, last, spent fr.Element, current uint64) (fr.Element, fr.Element, error) {
-		if current == 0 || current < core.ElementToBigInt(last).Uint64() {
+		if current == 0 || current < primitives.ElementToBigInt(last).Uint64() {
 			return fr.Element{}, fr.Element{}, fmt.Errorf("period rollback")
 		}
-		total := new(big.Int).Set(core.ElementToBigInt(debit))
-		if current == core.ElementToBigInt(last).Uint64() {
-			total.Add(total, core.ElementToBigInt(spent))
+		total := new(big.Int).Set(primitives.ElementToBigInt(debit))
+		if current == primitives.ElementToBigInt(last).Uint64() {
+			total.Add(total, primitives.ElementToBigInt(spent))
 		}
-		if total.BitLen() > 128 || !limit.IsZero() && total.Cmp(core.ElementToBigInt(limit)) > 0 {
+		if total.BitLen() > 128 || !limit.IsZero() && total.Cmp(primitives.ElementToBigInt(limit)) > 0 {
 			return fr.Element{}, fr.Element{}, fmt.Errorf("period usage exceeds limit or uint128")
 		}
-		return core.ElementFromUint64(current), core.BigIntToElement(total), nil
+		return primitives.ElementFromUint64(current), primitives.BigIntToElement(total), nil
 	}
 	var err error
 	u.LastDay, u.DailySpent, err = update(s.DailyLimit, s.LastDay, s.DailySpent, p.CurrentDay)
@@ -199,11 +200,11 @@ func (s State) drawUsage(debit fr.Element, timestamp uint64) (Usage, error) {
 	if err != nil {
 		return Usage{}, err
 	}
-	total := new(big.Int).Add(core.ElementToBigInt(s.TotalSpent), core.ElementToBigInt(debit))
+	total := new(big.Int).Add(primitives.ElementToBigInt(s.TotalSpent), primitives.ElementToBigInt(debit))
 	if total.BitLen() > 128 {
 		return Usage{}, fmt.Errorf("total usage exceeds uint128")
 	}
-	u.TotalSpent = core.BigIntToElement(total)
+	u.TotalSpent = primitives.BigIntToElement(total)
 	return u, nil
 }
 func (s State) Draw(debit fr.Element, timestamp uint64) (Transition, error) {
@@ -268,7 +269,7 @@ func (s State) Update(change Change, deadline uint64) (Transition, error) {
 	if err := s.Validate(); err != nil {
 		return Transition{}, err
 	}
-	d := core.ElementFromUint64(deadline)
+	d := primitives.ElementFromUint64(deadline)
 	if d.Cmp(&s.Expiry) > 0 || d.Cmp(&change.Expiry) > 0 {
 		return Transition{}, fmt.Errorf("expiry before request deadline")
 	}

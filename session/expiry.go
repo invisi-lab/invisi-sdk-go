@@ -9,7 +9,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 
 	transaction "github.com/invisi-lab/invisi-sdk-go/internal/transaction"
-	"github.com/invisi-lab/invisi-sdk-go/protocol/contracts"
+	"github.com/invisi-lab/invisi-sdk-go/rpc/contracts"
 	protocolrpc "github.com/invisi-lab/invisi-sdk-go/rpc"
 )
 

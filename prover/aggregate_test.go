@@ -5,9 +5,10 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
-	"github.com/invisi-lab/invisi-sdk-go/core"
 	"math/big"
 	"testing"
+
+	"github.com/invisi-lab/invisi-sdk-go/primitives"
 
 	"github.com/ethereum/go-ethereum/common"
 )
@@ -54,11 +55,11 @@ func aggregateMember(t *testing.T, capacity, id, token int) AggregateMember {
 		put(8+3*capacity, 17)
 		put(9+3*capacity, 1)
 	}
-	request := core.WalletAuthorizationRequest{Context: core.ProtocolContext{ChainID: core.ElementFromUint64(56), ProtocolAddress: core.ElementFromUint64(17)}, Operation: core.WalletTransact, Capacity: capacity}
+	request := primitives.WalletAuthorizationRequest{Context: primitives.ProtocolContext{ChainID: primitives.ElementFromUint64(56), ProtocolAddress: primitives.ElementFromUint64(17)}, Operation: primitives.WalletTransact, Capacity: capacity}
 	for _, word := range row[:len(row)-2] {
-		request.Words = append(request.Words, core.BigIntToElement(word.Big()))
+		request.Words = append(request.Words, primitives.BigIntToElement(word.Big()))
 	}
-	digest, err := core.ComputeWalletAuthorizationDigest(request)
+	digest, err := primitives.ComputeWalletAuthorizationDigest(request)
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -11,18 +11,18 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/signer/core/apitypes"
 
-	"github.com/invisi-lab/invisi-sdk-go/core"
 	transaction "github.com/invisi-lab/invisi-sdk-go/internal/transaction"
+	"github.com/invisi-lab/invisi-sdk-go/primitives"
 	"github.com/invisi-lab/invisi-sdk-go/protocol"
 	sdk "github.com/invisi-lab/invisi-sdk-go/sdk"
 )
 
-func signFixtureRequest(request core.SigningRequest) ([]byte, error) {
+func signFixtureRequest(request primitives.SigningRequest) ([]byte, error) {
 	raw, err := json.Marshal(request)
 	if err != nil {
 		return nil, err
 	}
-	var copied core.SigningRequest
+	var copied primitives.SigningRequest
 	if err = json.Unmarshal(raw, &copied); err != nil {
 		return nil, err
 	}
@@ -130,9 +130,9 @@ func TestManagedExplicitCommitmentsConsumeEntireSelectedSubset(t *testing.T) {
 	}
 	second := first
 	second.TreeID = 2
-	second.Note.Nonce = core.ElementFromUint64(124)
-	identity, _ := core.ComputeNoteIdentity(second.Note.OwnerAddress, second.Note.Nonce)
-	leaf, err := core.ComputeNoteCommitment(second.Note.ChainID, second.Note.ProtocolAddress, identity, second.Note.TokenAddress, second.Note.Amount)
+	second.Note.Nonce = primitives.ElementFromUint64(124)
+	identity, _ := primitives.ComputeNoteIdentity(second.Note.OwnerAddress, second.Note.Nonce)
+	leaf, err := primitives.ComputeNoteCommitment(second.Note.ChainID, second.Note.ProtocolAddress, identity, second.Note.TokenAddress, second.Note.Amount)
 	if err != nil {
 		t.Fatal(err)
 	}

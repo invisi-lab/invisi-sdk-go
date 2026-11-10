@@ -4,14 +4,15 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"math/big"
+	"sync"
+
 	"github.com/consensys/gnark-crypto/ecc/bn254/fr"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/signer/core/apitypes"
-	"github.com/invisi-lab/invisi-sdk-go/core"
+	"github.com/invisi-lab/invisi-sdk-go/primitives"
 	"github.com/invisi-lab/invisi-sdk-go/protocol"
 	"github.com/invisi-lab/invisi-sdk-go/prover"
-	"math/big"
-	"sync"
 )
 
 type Intent struct {
@@ -26,8 +27,8 @@ type Intent struct {
 	Inputs            []LocatedState
 	UpdateChange      *Change
 	OutputIdentity    fr.Element
-	OutputNote        *core.Note
-	NoteRecipientKeys *core.ReceivingKeys
+	OutputNote        *primitives.Note
+	NoteRecipientKeys *primitives.ReceivingKeys
 	Broadcaster       *BroadcasterBinding
 }
 
@@ -316,36 +317,36 @@ func Restore(ctx context.Context, intent Intent, bundle *prover.ProofBundle, bac
 	return prepared, nil
 }
 
-func (p *Prepared) AuthorizationRequest() (core.WalletAuthorizationRequest, error) {
+func (p *Prepared) AuthorizationRequest() (primitives.WalletAuthorizationRequest, error) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 	inputs, _, err := p.intent.statement()
 	if err != nil {
-		return core.WalletAuthorizationRequest{}, err
+		return primitives.WalletAuthorizationRequest{}, err
 	}
-	operation := core.WalletOperation("")
+	operation := primitives.WalletOperation("")
 	capacity := 1
 	switch {
 	case p.intent.Create != nil:
-		operation = core.WalletCreateCredit
+		operation = primitives.WalletCreateCredit
 	case p.intent.Update != nil:
-		operation = core.WalletUpdateCredit
+		operation = primitives.WalletUpdateCredit
 	case p.intent.Draw != nil:
-		operation = core.WalletCreditDraw
+		operation = primitives.WalletCreditDraw
 		capacity, _ = DrawCapacity(len(p.intent.Draw.Nullifiers))
 	default:
-		return core.WalletAuthorizationRequest{}, fmt.Errorf("revocation uses owner EIP712 authorization")
+		return primitives.WalletAuthorizationRequest{}, fmt.Errorf("revocation uses owner EIP712 authorization")
 	}
 	words := make([]fr.Element, len(inputs)-2)
 	for i := range words {
-		words[i] = core.BigIntToElement(inputs[i].Big())
+		words[i] = primitives.BigIntToElement(inputs[i].Big())
 	}
-	return core.WalletAuthorizationRequest{Context: p.intent.Context.ProtocolContext, Operation: operation, Capacity: capacity, Words: words}, nil
+	return primitives.WalletAuthorizationRequest{Context: p.intent.Context.ProtocolContext, Operation: operation, Capacity: capacity, Words: words}, nil
 }
 
 // PrepareDrawToNote freezes the ordinary Note opening and its public delivery keys for fee quotation.
-func PrepareDrawToNote(c Context, p DrawParams, stateDeliveries []protocol.Delivery, inputs []LocatedState, note core.Note, keys *core.ReceivingKeys) (*Prepared, error) {
-	if note.ProtocolContext != c.ProtocolContext || core.ElementToBigInt(note.TokenAddress).Cmp(p.Token.Big()) != 0 {
+func PrepareDrawToNote(c Context, p DrawParams, stateDeliveries []protocol.Delivery, inputs []LocatedState, note primitives.Note, keys *primitives.ReceivingKeys) (*Prepared, error) {
+	if note.ProtocolContext != c.ProtocolContext || primitives.ElementToBigInt(note.TokenAddress).Cmp(p.Token.Big()) != 0 {
 		return nil, fmt.Errorf("ordinary Note context mismatch")
 	}
 	fee, err := normalizeFee(p.FeeRecipient, p.FeeAmount)
@@ -356,14 +357,14 @@ func PrepareDrawToNote(c Context, p DrawParams, stateDeliveries []protocol.Deliv
 		return nil, fmt.Errorf("Credit fee must leave a positive Note")
 	}
 	net := new(big.Int).Sub(p.TotalAmount, fee)
-	if core.ElementToBigInt(note.Amount).Cmp(net) != 0 {
+	if primitives.ElementToBigInt(note.Amount).Cmp(net) != 0 {
 		return nil, fmt.Errorf("ordinary Note amount must equal gross debit minus fee")
 	}
-	identity, err := core.ComputeNoteIdentity(note.OwnerAddress, note.Nonce)
+	identity, err := primitives.ComputeNoteIdentity(note.OwnerAddress, note.Nonce)
 	if err != nil {
 		return nil, err
 	}
-	commitment, err := core.ComputeNoteCommitment(note.ChainID, note.ProtocolAddress, identity, note.TokenAddress, note.Amount)
+	commitment, err := primitives.ComputeNoteCommitment(note.ChainID, note.ProtocolAddress, identity, note.TokenAddress, note.Amount)
 	if err != nil {
 		return nil, err
 	}
@@ -382,35 +383,35 @@ func PrepareDrawToNote(c Context, p DrawParams, stateDeliveries []protocol.Deliv
 	deliveries = append(deliveries, delivery)
 	return prepare(Intent{Version: 2, Context: c, Draw: &p, Deliveries: deliveries, Inputs: inputs, OutputIdentity: identity, OutputNote: &note, NoteRecipientKeys: keys})
 }
-func noteDelivery(note core.Note, keys *core.ReceivingKeys) (protocol.Delivery, error) {
+func noteDelivery(note primitives.Note, keys *primitives.ReceivingKeys) (protocol.Delivery, error) {
 	if keys == nil {
 		return protocol.Delivery{}, nil
 	}
-	identity, err := core.ComputeNoteIdentity(note.OwnerAddress, note.Nonce)
+	identity, err := primitives.ComputeNoteIdentity(note.OwnerAddress, note.Nonce)
 	if err != nil {
 		return protocol.Delivery{}, err
 	}
-	commitment, err := core.ComputeNoteCommitment(note.ChainID, note.ProtocolAddress, identity, note.TokenAddress, note.Amount)
+	commitment, err := primitives.ComputeNoteCommitment(note.ChainID, note.ProtocolAddress, identity, note.TokenAddress, note.Amount)
 	if err != nil {
 		return protocol.Delivery{}, err
 	}
-	cipher, err := core.EncryptPrivateTransferNote(keys.ViewingPublicKey, note, core.NoteEncryptionContext{ProtocolContext: note.ProtocolContext, OutputCommitment: commitment})
+	cipher, err := primitives.EncryptPrivateTransferNote(keys.ViewingPublicKey, note, primitives.NoteEncryptionContext{ProtocolContext: note.ProtocolContext, OutputCommitment: commitment})
 	if err != nil {
 		return protocol.Delivery{}, err
 	}
-	clue, err := core.CreateClue(keys.ClueKey)
+	clue, err := primitives.CreateClue(keys.ClueKey)
 	if err != nil {
 		return protocol.Delivery{}, err
 	}
 	return protocol.Delivery{Ciphertext: cipher, Clue: clue}, nil
 }
 
-func (p *Prepared) ExportSigningRequest() (core.SigningRequest, error) {
+func (p *Prepared) ExportSigningRequest() (primitives.SigningRequest, error) {
 	typed, err := p.SigningRequest()
 	if err != nil {
-		return core.SigningRequest{}, err
+		return primitives.SigningRequest{}, err
 	}
-	return core.NewSigningRequest(typed)
+	return primitives.NewSigningRequest(typed)
 }
 func (p *Prepared) WithWalletSignature(signature []byte) error {
 	request, err := p.AuthorizationRequest()
@@ -421,9 +422,9 @@ func (p *Prepared) WithWalletSignature(signature []byte) error {
 	var identity fr.Element
 	switch {
 	case p.intent.Create != nil:
-		identity = core.BigIntToElement(p.intent.Create.Owner.Big())
+		identity = primitives.BigIntToElement(p.intent.Create.Owner.Big())
 	case p.intent.Update != nil:
-		identity = core.BigIntToElement(p.intent.Update.Owner.Big())
+		identity = primitives.BigIntToElement(p.intent.Update.Owner.Big())
 	case p.intent.Draw != nil && len(p.intent.Inputs) > 0:
 		identity = p.intent.Inputs[0].State.SpenderWalletIdentity
 	default:
@@ -431,7 +432,7 @@ func (p *Prepared) WithWalletSignature(signature []byte) error {
 		return fmt.Errorf("Credit wallet identity unavailable")
 	}
 	p.mu.Unlock()
-	witness, err := core.BuildWalletAuthorizationWitnessFromSignature(identity, request, signature)
+	witness, err := primitives.BuildWalletAuthorizationWitnessFromSignature(identity, request, signature)
 	if err != nil {
 		return err
 	}

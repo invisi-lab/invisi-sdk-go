@@ -1,0 +1,32 @@
+// Authenticate the compiler source closure before extracting ABI and independent vectors.
+import "./testdata/generate.mjs";
+import {readFileSync,writeFileSync} from 'node:fs';
+import {createHash} from 'node:crypto';
+import {createRequire} from 'node:module';
+import assert from 'node:assert/strict';
+const require=createRequire(new URL('../../../invisi-protocol/package.json',import.meta.url));
+const {AbiCoder,Interface,TypedDataEncoder,keccak256,toUtf8Bytes}=require('ethers');
+const root=new URL('../../../invisi-protocol/',import.meta.url);
+const artifactBytes=readFileSync(new URL('contracts/out/InvisiProtocol.sol/InvisiProtocol.json',root));
+const artifact=JSON.parse(artifactBytes);
+assert(Object.keys(artifact.metadata?.sources??{}).length>0);
+for(const [path,record] of Object.entries(artifact.metadata.sources))assert.equal(keccak256(readFileSync(new URL(path,root))),record.keccak256);
+const names=['transact','shield','createCredit','creditDraw','updateCredit','revokeCredit'];
+const abi=artifact.abi.filter(x=>x.type==='function'&&names.includes(x.name));
+writeFileSync(new URL('protocol.abi.json',import.meta.url),JSON.stringify(abi,null,2)+'\n');
+const coder=AbiCoder.defaultAbiCoder(),iface=new Interface(abi),word=n=>'0x'+BigInt(n).toString(16).padStart(64,'0'),zero='0x'+'00'.repeat(20);
+const chainId=56n,protocol='0x1111111111111111111111111111111111111111',token='0x2222222222222222222222222222222222222222';
+const funding={payer:'0x5555555555555555555555555555555555555555',amount:67n,sigNonce:8n,deadline:1999999999n,signature:'0x123456',permit:{deadline:0n,v:0,r:word(0),s:word(0)}};
+const delivery={ciphertext:'0x02'+'ab'.repeat(159),clue:'0x'+'cd'.repeat(64)+'18'+'ef'.repeat(3)};
+function statement(r){const p=r.params,n=p.nullifiers.length,m=p.noteCommitments.length,c=n+m<=10?n+m:Math.ceil((n+m)/10)*10,dh=keccak256(coder.encode(['tuple(bytes ciphertext,bytes clue)[]'],[r.deliveries]));
+ const padded=x=>[...x,...Array(c-x.length).fill(word(0))];
+ const w=[chainId,BigInt(protocol),BigInt(token),n,m,p.sources.length,...padded(p.sources.map(s=>s.treeId)),...padded(p.sources.map(s=>s.merkleRoot)),...padded([...p.nullifiers,...p.noteCommitments]),BigInt('0x'+dh.slice(2,34)),BigInt('0x'+dh.slice(34)),BigInt(p.withdrawalAddress),p.withdrawalAmount,p.deadline,r.funding.amount,BigInt(r.funding.payer),BigInt(p.feeRecipient),p.feeAmount].map(word);
+ const auth=TypedDataEncoder.hash({name:'InvisibleProtocol',version:'1',chainId,verifyingContract:protocol},{WalletAuthorization:[{name:'operation',type:'bytes32'},{name:'statementHash',type:'bytes32'}]},{operation:keccak256(toUtf8Bytes('Invisi.Transact.v1')),statementHash:keccak256(coder.encode(['uint256','bytes32[]'],[c,w]))});
+ w.push(word(BigInt('0x'+auth.slice(2,34))),word(BigInt('0x'+auth.slice(34))));
+ return {mainCircuitCapacity:c,publicInputs:w,operationDigest:keccak256(coder.encode(['string','uint64','address','uint8','uint32','bytes32[]'],['Invisi.Provenance.Operation.v1',chainId,protocol,2,c,w]))};}
+const r={params:{token,sources:[{treeId:1n,merkleRoot:word(101)},{treeId:9n,merkleRoot:word(109)}],nullifiers:[word(11),word(12)],noteCommitments:[word(21)],withdrawalAddress:'0x3333333333333333333333333333333333333333',withdrawalAmount:123n,deadline:2000000000n,feeRecipient:'0x4444444444444444444444444444444444444444',feeAmount:45n},deliveries:[delivery],funding};
+const publicR=structuredClone(r);Object.assign(publicR.params,{sources:[],nullifiers:[],noteCommitments:[word(31),word(32)],withdrawalAddress:zero,withdrawalAmount:0n});publicR.deliveries=[delivery,delivery];
+const variants=[r,publicR];
+const methods=Object.values(iface.fragments).filter(x=>x.type==='function'&&x.name==='transact');const direct=methods.find(x=>x.inputs[1].baseType==='tuple').format('sighash'),aggregate=methods.find(x=>x.inputs[1].baseType==='array').format('sighash');
+const vectors=[...variants.map(r=>({data:iface.encodeFunctionData(direct,['0xdeadbeef',r]),operations:[statement(r)]})),{data:iface.encodeFunctionData(aggregate,['0xdeadbeef',variants]),operations:variants.map(statement)}];
+writeFileSync(new URL('testdata/statements.json',import.meta.url),JSON.stringify({generatedBy:'independent ethers ABI + EIP712 encoder',artifactSha256:createHash('sha256').update(artifactBytes).digest('hex'),chainId:String(chainId),protocol,vectors},(_,v)=>typeof v==='bigint'?v.toString():v,2)+'\n');

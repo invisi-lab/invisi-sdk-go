@@ -11,7 +11,7 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 
-	"github.com/invisi-lab/invisi-sdk-go/core"
+	"github.com/invisi-lab/invisi-sdk-go/primitives"
 	sdk "github.com/invisi-lab/invisi-sdk-go/sdk"
 )
 
@@ -88,7 +88,7 @@ func TestInvisiDiscoversRegistryAndExportsPortableRequest(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	var restored core.SigningRequest
+	var restored primitives.SigningRequest
 	if err = json.Unmarshal(encoded, &restored); err != nil {
 		t.Fatal(err)
 	}

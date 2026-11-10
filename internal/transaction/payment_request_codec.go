@@ -11,7 +11,7 @@ import (
 	"strings"
 
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/invisi-lab/invisi-sdk-go/core"
+	"github.com/invisi-lab/invisi-sdk-go/primitives"
 )
 
 const maxRequestPayload = 3936
@@ -46,8 +46,8 @@ func requestParts(o PaymentRequest) (kind byte, owner common.Address, keys []byt
 		kind = 2
 		nonce = r.Nonce
 		envelope = true
-		var d core.DecodedAddress
-		d, err = core.DecodeAddress(r.Address)
+		var d primitives.DecodedAddress
+		d, err = primitives.DecodeAddress(r.Address)
 		if err != nil {
 			return
 		}
@@ -55,7 +55,7 @@ func requestParts(o PaymentRequest) (kind byte, owner common.Address, keys []byt
 			err = errors.New("recipient address type mismatch")
 			return
 		}
-		owner = common.BigToAddress(core.ElementToBigInt(d.OwnerAddress))
+		owner = common.BigToAddress(primitives.ElementToBigInt(d.OwnerAddress))
 		keys = append(append([]byte{}, d.ViewingPublicKey...), d.ClueKey...)
 	case IdentityRecipient:
 		kind = 3
@@ -186,7 +186,7 @@ func DecodePaymentRequest(encoded string) (PaymentRequest, error) {
 		if kind == 1 {
 			o.Recipient = EVMRecipient{Address: owner, Nonce: nonce, Envelope: &envelope}
 		} else {
-			address, e := core.EncodeLongAddress(core.ReceivingAddress{OwnerAddress: core.BigIntToElement(owner.Big()), ViewingPublicKey: keys[:33], ClueKey: keys[33:]})
+			address, e := primitives.EncodeLongAddress(primitives.ReceivingAddress{OwnerAddress: primitives.BigIntToElement(owner.Big()), ViewingPublicKey: keys[:33], ClueKey: keys[33:]})
 			if e != nil {
 				return o, e
 			}

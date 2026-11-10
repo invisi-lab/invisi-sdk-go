@@ -6,7 +6,7 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 
-	"github.com/invisi-lab/invisi-sdk-go/core"
+	"github.com/invisi-lab/invisi-sdk-go/primitives"
 	"github.com/invisi-lab/invisi-sdk-go/protocol"
 )
 
@@ -46,11 +46,11 @@ type NoteOutput struct{ saved *OutputIntent }
 
 type OutputIntent struct {
 	IPP                  string
-	Context              core.ProtocolContext
+	Context              primitives.ProtocolContext
 	Token                common.Address
 	Amount               *big.Int
 	Address, Lookup      string
-	Note                 *core.Note
+	Note                 *primitives.Note
 	Identity, Commitment common.Hash
 	Delivery             protocol.Delivery
 	Pending              bool
@@ -94,7 +94,7 @@ func (n NoteOutput) Commitment() common.Hash {
 
 func (n NoteOutput) DeliveryPending() bool { return n.saved != nil && n.saved.Pending }
 
-func (n NoteOutput) Note() *core.Note {
+func (n NoteOutput) Note() *primitives.Note {
 	if n.saved == nil || n.saved.Note == nil {
 		return nil
 	}
@@ -130,14 +130,14 @@ func (n NoteOutput) Context() NoteOutputContext {
 	if n.saved == nil {
 		return NoteOutputContext{}
 	}
-	return NoteOutputContext{ChainID: core.ElementToBigInt(n.saved.Context.ChainID), ProtocolAddress: common.BigToAddress(core.ElementToBigInt(n.saved.Context.ProtocolAddress)), TokenAddress: n.saved.Token}
+	return NoteOutputContext{ChainID: primitives.ElementToBigInt(n.saved.Context.ChainID), ProtocolAddress: common.BigToAddress(primitives.ElementToBigInt(n.saved.Context.ProtocolAddress)), TokenAddress: n.saved.Token}
 }
 
 func (n NoteOutput) Nonce() *big.Int {
 	if n.saved == nil || n.saved.Note == nil {
 		return nil
 	}
-	return core.ElementToBigInt(n.saved.Note.Nonce)
+	return primitives.ElementToBigInt(n.saved.Note.Nonce)
 }
 
 func (n NoteOutput) Payload() []byte {

@@ -5,11 +5,12 @@ import (
 	"encoding/json"
 	"errors"
 
+	"github.com/invisi-lab/invisi-sdk-go/rpc/chain"
+
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 
-	"github.com/invisi-lab/invisi-sdk-go/core"
-	"github.com/invisi-lab/invisi-sdk-go/protocol"
+	"github.com/invisi-lab/invisi-sdk-go/primitives"
 	protocolrpc "github.com/invisi-lab/invisi-sdk-go/rpc"
 )
 
@@ -32,7 +33,7 @@ type RuntimeOptions struct {
 type Runtime struct {
 	Options           RuntimeOptions
 	Wallet            *Wallet
-	Protocol          *protocol.Protocol
+	Protocol          *chain.Protocol
 	Scope             WalletScope
 	RPC               *protocolrpc.ProtocolRpcClient
 	ExplicitInventory *Inventory
@@ -61,10 +62,10 @@ func SnapshotWallet(ref WalletReference) (*Wallet, error) {
 	if p == nil {
 		return nil, &MissingCapabilityError{Capability: "public wallet"}
 	}
-	w := &Wallet{identity: p.identity, address: p.address, keys: core.ReceivingKeys{ViewingPublicKey: append([]byte(nil), p.keys.ViewingPublicKey...), ClueKey: append([]byte(nil), p.keys.ClueKey...)}}
+	w := &Wallet{identity: p.identity, address: p.address, keys: primitives.ReceivingKeys{ViewingPublicKey: append([]byte(nil), p.keys.ViewingPublicKey...), ClueKey: append([]byte(nil), p.keys.ClueKey...)}}
 	return w, nil
 }
-func ResolveRuntime(ctx context.Context, infrastructure InvisiOptions, wallet WalletReference, pool *protocol.Protocol, namespace string) (*Runtime, error) {
+func ResolveRuntime(ctx context.Context, infrastructure InvisiOptions, wallet WalletReference, pool *chain.Protocol, namespace string) (*Runtime, error) {
 	if e := ctx.Err(); e != nil {
 		return nil, e
 	}

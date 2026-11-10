@@ -5,7 +5,7 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 
-	"github.com/invisi-lab/invisi-sdk-go/core"
+	"github.com/invisi-lab/invisi-sdk-go/primitives"
 )
 
 type VerifyNoteCommitmentParams struct {
@@ -29,11 +29,11 @@ func VerifyNoteCommitment(p VerifyNoteCommitmentParams) (bool, error) {
 			return false, err
 		}
 	}
-	identity, err := core.ComputeNoteIdentity(core.BigIntToElement(p.OwnerAddress.Big()), core.BigIntToElement(p.Nonce.Big()))
+	identity, err := primitives.ComputeNoteIdentity(primitives.BigIntToElement(p.OwnerAddress.Big()), primitives.BigIntToElement(p.Nonce.Big()))
 	if err != nil {
 		return false, err
 	}
-	expected, err := core.ComputeNoteCommitment(core.BigIntToElement(p.ChainID), core.BigIntToElement(p.ProtocolAddress.Big()), identity, core.BigIntToElement(p.TokenAddress.Big()), core.BigIntToElement(p.Amount))
+	expected, err := primitives.ComputeNoteCommitment(primitives.BigIntToElement(p.ChainID), primitives.BigIntToElement(p.ProtocolAddress.Big()), identity, primitives.BigIntToElement(p.TokenAddress.Big()), primitives.BigIntToElement(p.Amount))
 	if err != nil {
 		return false, err
 	}

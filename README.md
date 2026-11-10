@@ -3,30 +3,29 @@
 Go client for the current Invisi Protocol. Requires Go 1.26.1 or newer.
 
 ```sh
-go get github.com/invisi-lab/invisi-sdk-go@v1.1.8
+go get github.com/invisi-lab/invisi-sdk-go@v1.2.0
 ```
 
-Release target: **1.1.8**. Module versions are repository tags; preparing this source does not create `v1.1.8` or publish a release. The `go 1.26.1` directive remains the toolchain requirement. The SDK remains in the v1 series. Source synchronization does not publish a new module version or upgrade deployed contracts.
+Release target: **1.2.0**. Module versions are repository tags; preparing this source does not create `v1.2.0` or publish a release. The `go 1.26.1` directive remains the toolchain requirement. The SDK remains in the v1 series. Source synchronization does not publish a new module version or upgrade deployed contracts.
 
-## Packages
+## Six independently versioned modules
 
-| Package | Responsibility |
-| --- | --- |
-| `sdk` | Stateless Note payments, public-only Wallet identity and external signatures, registration, IPR/IPN and Note disclosure |
-| `wallet` | App delivery decryption interface and transport-neutral wallet validation utilities |
-| `core` | Wallet derivation, addresses, ordinary Note cryptography, FMD and application payload codecs |
-| `credit` | Separate postpaid grant State, policy/usage, deliveries, lifecycle preparation, proof requests, paid broadcasting and grant audit disclosure |
-| `session` | Managed Note inventory, canonical refresh, encrypted persistence, journals and notifications |
-| `credit/session` | Independent managed grant projection, cross-role reservations and recoverable Credit journals; composed through `WalletSession.Credit()` |
-| `session/sqlite` | Authenticated encrypted wallet snapshots in an application-owned database |
-| `protocol` | Note statements/calldata, deployment validation and registry contracts |
-| `protocol/contracts` | Generated bindings for the six current contract ABIs |
-| `rpc` | Separate typed Note and Credit data APIs, with independent Chain RPC checks |
-| `prover`, `prover/native` | Authenticated statements, native recursion, local witness execution and independent verification |
-| `broadcaster` | Registered operator clients, authenticated fee quotes, canonical intent hashes and idempotent submission |
-| `gas` | Exact documented benchmark references with provenance and release identity |
+All six modules target **1.2.0**. Applications normally import the SDK's `sdk` package; backend services can depend only on the pure Protocol module and its Primitives dependency.
 
-All packages share one Go module and release. Import subpackages under `github.com/invisi-lab/invisi-sdk-go`.
+| Module | Responsibility | Internal dependencies |
+| --- | --- | --- |
+| root SDK | Stateless Note/Credit and transaction orchestration; `sdk`, `credit`, `wallet` and public Provenance facade | primitives, protocol, prover, rpc |
+| `primitives` | Fields, hashes, key derivation, commitments, encryption and delivery codecs | none |
+| `protocol` | Public ABI tuples, strict settlement codec, statements/digests, circuit identities, gas references and public Source contracts | primitives |
+| `prover` | Private witnesses, authenticated proving assets, native proof generation and verification | primitives, protocol |
+| `rpc` | Protocol RPC, Broadcaster and Provenance clients, deployment checks and generated network contract bindings | primitives, protocol |
+| `session` | Note/Credit inventory, reservations, journals, encrypted storage and operation recovery | SDK and its public protocol/prover/client types |
+
+Module paths use `github.com/invisi-lab/invisi-sdk-go/<name>`; the SDK uses the repository-root module path. Nested module release tags are `<name>/v1.2.0`; the root SDK tag is `v1.2.0`. The examples are a separate development module, not a public release package. No `core`, `runtime` or `protocolkit` compatibility module is retained.
+
+Pure ABI/types are in `protocol/contracts`; network-bound geth clients are in `rpc/contracts`. Maintainers regenerate both from the same compiler ABIs with `go generate ./contracts` in the Protocol module. `session/credit` owns managed Credit state. `protocol/gas` owns measured references, while final `eth_estimateGas` calls belong to RPC and deployment/operator pricing remains outside the pure module.
+
+For local multi-module development, use an untracked Go workspace. `GOWORK=off` builds use tagged module dependencies; production `go.mod` files contain no local replacement paths. Verify module boundaries with `python3 scripts/check-module-boundaries.py` in the configured workspace.
 
 ## Wallets and infrastructure
 
@@ -114,7 +113,7 @@ Quotes bind chain, Protocol, token, registered signer, fee recipient/amount, dea
 
 ## Managed grant state and recovery
 
-`walletSession.Credit()` composes `credit/session` with the same encrypted WalletStore. Note and grant inventories/journals remain separate. Both roles of one physical grant reserve together. Current allocation, bitmap, consumed nullifiers, registered historical roots, UTC draw window and ERC20 gross/fee allowance are checked through the session's pinned provider.
+`walletSession.Credit()` composes `session/credit` with the same encrypted WalletStore. Note and grant inventories/journals remain separate. Both roles of one physical grant reserve together. Current allocation, bitmap, consumed nullifiers, registered historical roots, UTC draw window and ERC20 gross/fee allowance are checked through the session's pinned provider.
 
 The managed flow provides `Prepare`, explicit EIP-712 authorization, `Prove`, `Calldata`, paid broadcaster submission, `Cancel`, `Resume` and canonical `Reconcile`. Externalization and exact calldata are committed before submission; transport failures retain reservations. Resume replaces the old worker lease and independently verifies saved proofs. A canonical reverted transaction can release reservations; an unconfirmed operator result cannot.
 
@@ -171,7 +170,7 @@ python3 scripts/test-sync-reference.py
 
 Native integration tests additionally use `BB_BINARY_PATH` and `NOIR_EXECUTE_PATH`. The backend checks exact Noir/BB versions and authenticated artifact/VK identity, does not automatically download tools and never uploads witnesses.
 
-Maintainers regenerate bindings with `INVISI_PROTOCOL_ROOT=/path/to/invisi-protocol go generate ./protocol/contracts`. `python3 scripts/sync-reference.py --proving-only` authenticates the current 28 daily Note circuits, 34 aggregate outers and 15 direct Credit routes, with recursive certificates for C1..C10. User manifest4/format7, aggregate receipts10 and Credit manifest7/format8 have separate identities.
+Maintainers regenerate bindings with `cd protocol && INVISI_PROTOCOL_ROOT=/path/to/invisi-protocol go generate ./contracts`. `python3 scripts/sync-reference.py --proving-only` authenticates the current 28 daily Note circuits, 34 aggregate outers and 15 direct Credit routes, with recursive certificates for C1..C10. User manifest4/format7, aggregate receipts10 and Credit manifest7/format8 have separate identities.
 
 `State.Update(Change, deadline)` applies mutually exclusive uint128 increase/decrease deltas to the authenticated input balance. `Change.Unlimited == nil` preserves the mode; entering unlimited clears the balance and requires zero deltas, and leaving unlimited starts at zero plus this increase. Update preserves historical usage. Owner-pulled create/update/revoke fees do not consume available credit. `PrepareUpdate` freezes the original change; quotes never apply the delta again. An explicit new preparation applies that change to the latest accepted state; an externalized journal always resumes its original calldata.
 
@@ -182,3 +181,9 @@ Current configurable examples live under [examples](examples/README.md). Real na
 The independent [Provenance module](PROVENANCE.md) keeps source recognition separate from protocol spendability. Relay use is optional and limited to operator-supported tokens. Source evidence is generated from the final ready statement; Broadcaster verifies and preflights it before sending. Direct payment submission and `SubmitProvenance` are independent App-controlled steps, in either order. The service automatically matches confirmed payments and publishes recognized outputs.
 
 `ExportProvenanceProof` returns a public recovery packet without private Note openings. Persist it before sending; a fresh client can call `sdk.SubmitProvenanceProof` without the original wallet, prover or transaction hash. Repeated `ProveProvenance(ctx)` validates and reuses cached public evidence locally using the trusted Source client; it needs no Chain RPC, Source RPC, prover or manifest assets. If trust or chain generation changes, use `ProveProvenance(ctx, sdk.ProvenanceProveOptions{Reprove:true})` with the retained encrypted operation. Reproof preserves original payment calldata and the main proof. See [examples](examples/README.md).
+
+## Module checks
+
+`python3 scripts/test-modules.py` creates a temporary workspace and runs boundary checks, race tests, vet and builds for all six modules plus the private examples. `python3 scripts/check-packages.py` constructs isolated local-proxy archives and tests them without the workspace or sibling checkouts; unpublished versions never enter the global module cache. GitHub CI runs both commands. Native Noir/BB integration tests are opt-in and require explicit local tool paths.
+
+The modules are prepared at 1.2.0; no remote tags are created by these checks. Before standalone consumer builds can resolve the new version from GitHub, publish the required module tags in dependency order and refresh dependency checksums.

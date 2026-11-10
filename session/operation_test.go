@@ -16,8 +16,8 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 
-	"github.com/invisi-lab/invisi-sdk-go/core"
 	transaction "github.com/invisi-lab/invisi-sdk-go/internal/transaction"
+	"github.com/invisi-lab/invisi-sdk-go/primitives"
 	"github.com/invisi-lab/invisi-sdk-go/protocol"
 	"github.com/invisi-lab/invisi-sdk-go/protocol/contracts"
 	"github.com/invisi-lab/invisi-sdk-go/prover"
@@ -117,13 +117,13 @@ func testSession(t *testing.T, timestamps ...uint64) (*WalletSession, common.Add
 	token := common.HexToAddress("0x2222222222222222222222222222222222222222")
 	deployment := protocolrpc.ProtocolDeployment{ChainID: "31337", Protocol: protocolrpc.ContractDeployment{Address: address, RuntimeCodeHash: transaction.HashCode([]byte{0x60, 0}), FromBlock: 1}}
 	block := protocolrpc.CanonicalBlock{Number: 10, Hash: provider.head.Hash(), ParentHash: provider.head.ParentHash, Timestamp: timestamp}
-	note := core.Note{ProtocolContext: core.ProtocolContext{ChainID: core.ElementFromUint64(31337), ProtocolAddress: core.BigIntToElement(address.Big())}, OwnerAddress: core.BigIntToElement(wallet.OwnerAddress().Big()), TokenAddress: core.BigIntToElement(token.Big()), Amount: core.ElementFromUint64(100), Nonce: core.ElementFromUint64(123)}
-	identity, _ := core.ComputeNoteIdentity(note.OwnerAddress, note.Nonce)
-	leaf, _ := core.ComputeNoteCommitment(note.ChainID, note.ProtocolAddress, identity, note.TokenAddress, note.Amount)
-	nf, _ := core.ComputeNoteNullifier(note.ChainID, note.ProtocolAddress, note.Nonce, leaf)
+	note := primitives.Note{ProtocolContext: primitives.ProtocolContext{ChainID: primitives.ElementFromUint64(31337), ProtocolAddress: primitives.BigIntToElement(address.Big())}, OwnerAddress: primitives.BigIntToElement(wallet.OwnerAddress().Big()), TokenAddress: primitives.BigIntToElement(token.Big()), Amount: primitives.ElementFromUint64(100), Nonce: primitives.ElementFromUint64(123)}
+	identity, _ := primitives.ComputeNoteIdentity(note.OwnerAddress, note.Nonce)
+	leaf, _ := primitives.ComputeNoteCommitment(note.ChainID, note.ProtocolAddress, identity, note.TokenAddress, note.Amount)
+	nf, _ := primitives.ComputeNoteNullifier(note.ChainID, note.ProtocolAddress, note.Nonce, leaf)
 	root := leaf
 	for range 16 {
-		root, _ = core.Poseidon2Hash(root, core.ElementFromUint64(0))
+		root, _ = primitives.Poseidon2Hash(root, primitives.ElementFromUint64(0))
 	}
 	provider.leaves.Store(uint64(1), transaction.FieldHash(leaf))
 
@@ -147,9 +147,9 @@ func testSession(t *testing.T, timestamps ...uint64) (*WalletSession, common.Add
 			}
 			stored, _ := provider.leaves.Load(tree)
 			commitment := stored.(common.Hash)
-			value, _ := core.HexToElement(commitment.Hex())
+			value, _ := primitives.HexToElement(commitment.Hex())
 			for range 16 {
-				value, _ = core.Poseidon2Hash(value, core.ElementFromUint64(0))
+				value, _ = primitives.Poseidon2Hash(value, primitives.ElementFromUint64(0))
 			}
 			currentAnchor := map[string]any{"treeId": tree, "root": transaction.FieldHash(value), "leafCount": 1, "block": block}
 			if request.Method == "invisi_getRoots" {

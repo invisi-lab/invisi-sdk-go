@@ -6,7 +6,7 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 
-	"github.com/invisi-lab/invisi-sdk-go/core"
+	"github.com/invisi-lab/invisi-sdk-go/primitives"
 )
 
 // PaymentNote is immutable validated offline delivery data; it does not assert on-chain receipt.
@@ -21,11 +21,11 @@ func PaymentNoteFromIPN(ipn string) (*PaymentNote, error) {
 		return nil, e
 	}
 	n := paymentNoteOpening(d)
-	identity, e := core.ComputeNoteIdentity(n.OwnerAddress, n.Nonce)
+	identity, e := primitives.ComputeNoteIdentity(n.OwnerAddress, n.Nonce)
 	if e != nil {
 		return nil, e
 	}
-	commitment, e := core.ComputeNoteCommitment(n.ChainID, n.ProtocolAddress, identity, n.TokenAddress, n.Amount)
+	commitment, e := primitives.ComputeNoteCommitment(n.ChainID, n.ProtocolAddress, identity, n.TokenAddress, n.Amount)
 	if e != nil {
 		return nil, e
 	}
@@ -34,8 +34,8 @@ func PaymentNoteFromIPN(ipn string) (*PaymentNote, error) {
 	}
 	return &PaymentNote{clonePaymentNote(d), ipn}, nil
 }
-func paymentNoteOpening(d PaymentNoteData) core.Note {
-	return core.Note{ProtocolContext: core.ProtocolContext{ChainID: core.BigIntToElement(d.ChainID), ProtocolAddress: core.BigIntToElement(d.ProtocolAddress.Big())}, OwnerAddress: core.BigIntToElement(d.OwnerAddress.Big()), TokenAddress: core.BigIntToElement(d.TokenAddress.Big()), Amount: core.BigIntToElement(d.Amount), Nonce: core.BigIntToElement(d.Nonce)}
+func paymentNoteOpening(d PaymentNoteData) primitives.Note {
+	return primitives.Note{ProtocolContext: primitives.ProtocolContext{ChainID: primitives.BigIntToElement(d.ChainID), ProtocolAddress: primitives.BigIntToElement(d.ProtocolAddress.Big())}, OwnerAddress: primitives.BigIntToElement(d.OwnerAddress.Big()), TokenAddress: primitives.BigIntToElement(d.TokenAddress.Big()), Amount: primitives.BigIntToElement(d.Amount), Nonce: primitives.BigIntToElement(d.Nonce)}
 }
 func (n *PaymentNote) Data() PaymentNoteData           { return clonePaymentNote(n.data) }
 func (n *PaymentNote) IPN() string                     { return n.ipn }
@@ -49,11 +49,11 @@ func (n *PaymentNote) Commitment() common.Hash         { return n.data.Commitmen
 func (n *PaymentNote) String() string                  { return "PaymentNote([private opening redacted])" }
 func (n *PaymentNote) GoString() string                { return n.String() }
 
-func exportPaymentNote(note *core.Note, commitment common.Hash) (string, error) {
+func exportPaymentNote(note *primitives.Note, commitment common.Hash) (string, error) {
 	if note == nil {
 		return "", errors.New("identity outputs cannot export an IPN")
 	}
-	return EncodePaymentNote(PaymentNoteData{ChainID: core.ElementToBigInt(note.ChainID), ProtocolAddress: common.BigToAddress(core.ElementToBigInt(note.ProtocolAddress)), TokenAddress: common.BigToAddress(core.ElementToBigInt(note.TokenAddress)), OwnerAddress: common.BigToAddress(core.ElementToBigInt(note.OwnerAddress)), Amount: core.ElementToBigInt(note.Amount), Nonce: core.ElementToBigInt(note.Nonce), Commitment: commitment})
+	return EncodePaymentNote(PaymentNoteData{ChainID: primitives.ElementToBigInt(note.ChainID), ProtocolAddress: common.BigToAddress(primitives.ElementToBigInt(note.ProtocolAddress)), TokenAddress: common.BigToAddress(primitives.ElementToBigInt(note.TokenAddress)), OwnerAddress: common.BigToAddress(primitives.ElementToBigInt(note.OwnerAddress)), Amount: primitives.ElementToBigInt(note.Amount), Nonce: primitives.ElementToBigInt(note.Nonce), Commitment: commitment})
 }
 func (n NoteOutput) ExportPaymentNote() (string, error) {
 	if n.saved == nil {

@@ -10,7 +10,7 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 
-	"github.com/invisi-lab/invisi-sdk-go/core"
+	"github.com/invisi-lab/invisi-sdk-go/primitives"
 	"github.com/invisi-lab/invisi-sdk-go/protocol"
 	protocolrpc "github.com/invisi-lab/invisi-sdk-go/rpc"
 )
@@ -47,7 +47,7 @@ type Withdrawal struct {
 
 type PreparedOutput struct {
 	Address    string
-	Note       *core.Note
+	Note       *primitives.Note
 	Amount     *big.Int
 	Identity   common.Hash
 	Commitment common.Hash
@@ -79,7 +79,7 @@ type Plan struct {
 	Provenance  *ProvenancePlan
 }
 
-func ValidatePayload(payload []byte) error { return core.ValidatePayload(payload) }
+func ValidatePayload(payload []byte) error { return primitives.ValidatePayload(payload) }
 
 func Positive(amount *big.Int, bits int) error {
 	if amount == nil || amount.Sign() <= 0 || amount.BitLen() > bits {
@@ -177,7 +177,7 @@ func (s *Runtime) PrepareFunds(ctx context.Context, p TransferPreparation, withd
 	}
 	sum := new(big.Int).Set(funding.Amount)
 	for _, n := range inputs {
-		sum.Add(sum, core.ElementToBigInt(n.Note.Amount))
+		sum.Add(sum, primitives.ElementToBigInt(n.Note.Amount))
 	}
 	outputs := []PreparedOutput{}
 	for index, out := range p.Outputs {

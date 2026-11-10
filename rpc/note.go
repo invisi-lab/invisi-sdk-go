@@ -7,7 +7,7 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 
-	"github.com/invisi-lab/invisi-sdk-go/core"
+	"github.com/invisi-lab/invisi-sdk-go/primitives"
 )
 
 // NoteLookup contains public indexed metadata and independently authenticated membership.
@@ -24,7 +24,7 @@ func (c *ProtocolRpcClient) GetNote(ctx context.Context, scope DeploymentContext
 	if commitment == (common.Hash{}) {
 		return nil, errors.New("nonzero commitment required")
 	}
-	if _, e = core.HexToElement(commitment.Hex()); e != nil {
+	if _, e = primitives.HexToElement(commitment.Hex()); e != nil {
 		return nil, e
 	}
 	if block.Number > 1<<53-1 {
@@ -83,11 +83,11 @@ func (c *ProtocolRpcClient) GetNote(ctx context.Context, scope DeploymentContext
 		return nil, errors.New("RPC note commitment mismatch")
 	}
 	count, e := wireUint(anchor["leafCount"], 32)
-	if e != nil || count <= uint64(output.LeafIndex) || count > 1<<core.TreeDepth {
+	if e != nil || count <= uint64(output.LeafIndex) || count > 1<<primitives.TreeDepth {
 		return nil, errors.New("invalid note leaf count")
 	}
 	var siblings []json.RawMessage
-	if e = json.Unmarshal(proof["siblings"], &siblings); e != nil || len(siblings) != core.TreeDepth {
+	if e = json.Unmarshal(proof["siblings"], &siblings); e != nil || len(siblings) != primitives.TreeDepth {
 		return nil, errors.New("invalid note path")
 	}
 	for i, sibling := range siblings {
@@ -123,7 +123,7 @@ func (c *ProtocolRpcClient) GetCreditState(ctx context.Context, scope Deployment
 	if commitment == (common.Hash{}) {
 		return nil, errors.New("nonzero commitment required")
 	}
-	if _, e = core.HexToElement(commitment.Hex()); e != nil {
+	if _, e = primitives.HexToElement(commitment.Hex()); e != nil {
 		return nil, e
 	}
 	if block.Number > 1<<53-1 {
@@ -182,11 +182,11 @@ func (c *ProtocolRpcClient) GetCreditState(ctx context.Context, scope Deployment
 		return nil, errors.New("RPC Credit state commitment mismatch")
 	}
 	count, e := wireUint(anchor["leafCount"], 32)
-	if e != nil || count <= uint64(output.LeafIndex) || count > 1<<core.TreeDepth {
+	if e != nil || count <= uint64(output.LeafIndex) || count > 1<<primitives.TreeDepth {
 		return nil, errors.New("invalid Credit state leaf count")
 	}
 	var siblings []json.RawMessage
-	if e = json.Unmarshal(proof["siblings"], &siblings); e != nil || len(siblings) != core.TreeDepth {
+	if e = json.Unmarshal(proof["siblings"], &siblings); e != nil || len(siblings) != primitives.TreeDepth {
 		return nil, errors.New("invalid Credit state path")
 	}
 	for i, sibling := range siblings {

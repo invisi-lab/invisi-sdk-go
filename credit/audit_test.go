@@ -2,17 +2,18 @@ package credit
 
 import (
 	"encoding/json"
-	"github.com/ethereum/go-ethereum/common"
-	"github.com/invisi-lab/invisi-sdk-go/core"
 	"math/big"
 	"testing"
+
+	"github.com/ethereum/go-ethereum/common"
+	"github.com/invisi-lab/invisi-sdk-go/primitives"
 )
 
 func TestGrantAuditIsScopedAndPreservesUint128Usage(t *testing.T) {
 	s, _ := fixture(t)
-	wide := core.BigIntToElement(new(big.Int).Add(new(big.Int).Lsh(big.NewInt(1), 127), big.NewInt(3)))
-	s.LastDay = core.ElementFromUint64(1)
-	s.LastMonth = core.ElementFromUint64(1)
+	wide := primitives.BigIntToElement(new(big.Int).Add(new(big.Int).Lsh(big.NewInt(1), 127), big.NewInt(3)))
+	s.LastDay = primitives.ElementFromUint64(1)
+	s.LastMonth = primitives.ElementFromUint64(1)
 	s.DailySpent = wide
 	s.MonthlySpent = wide
 	s.TotalSpent = wide

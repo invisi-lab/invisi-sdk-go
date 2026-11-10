@@ -3,24 +3,25 @@ package wallet
 import (
 	"context"
 	"errors"
+
 	"github.com/ethereum/go-ethereum/crypto"
-	"github.com/invisi-lab/invisi-sdk-go/core"
 	"github.com/invisi-lab/invisi-sdk-go/credit"
+	"github.com/invisi-lab/invisi-sdk-go/primitives"
 )
 
 // DeliveryDecryptor is implemented by the App. Only nil plaintext with no error is a nonrecipient.
 // The App authenticates ciphertext and owns key storage, unlocking and consent.
 type DeliveryDecryptor interface {
-	DecryptNote(context.Context, []byte, core.NoteDecryptionContext) ([]byte, error)
+	DecryptNote(context.Context, []byte, primitives.NoteDecryptionContext) ([]byte, error)
 	DecryptCredit(context.Context, []byte, credit.DeliveryContext, credit.Role) ([]byte, error)
 }
 
 type DeliveryDecryptorFuncs struct {
-	Note   func(context.Context, []byte, core.NoteDecryptionContext) ([]byte, error)
+	Note   func(context.Context, []byte, primitives.NoteDecryptionContext) ([]byte, error)
 	Credit func(context.Context, []byte, credit.DeliveryContext, credit.Role) ([]byte, error)
 }
 
-func (f DeliveryDecryptorFuncs) DecryptNote(ctx context.Context, envelope []byte, c core.NoteDecryptionContext) ([]byte, error) {
+func (f DeliveryDecryptorFuncs) DecryptNote(ctx context.Context, envelope []byte, c primitives.NoteDecryptionContext) ([]byte, error) {
 	if f.Note == nil {
 		return nil, errors.New("App Note decryptor required")
 	}

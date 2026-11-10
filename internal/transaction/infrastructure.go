@@ -9,7 +9,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 
-	"github.com/invisi-lab/invisi-sdk-go/core"
+	"github.com/invisi-lab/invisi-sdk-go/primitives"
 	protocolrpc "github.com/invisi-lab/invisi-sdk-go/rpc"
 )
 
@@ -32,8 +32,8 @@ func NewInvisi(options InvisiOptions) *Invisi {
 	return &Invisi{options}
 }
 
-func (s *Runtime) CoreContext() core.ProtocolContext {
-	return core.ProtocolContext{ChainID: core.ElementFromUint64(s.Scope.ChainID), ProtocolAddress: core.BigIntToElement(s.Scope.ProtocolAddress.Big())}
+func (s *Runtime) CoreContext() primitives.ProtocolContext {
+	return primitives.ProtocolContext{ChainID: primitives.ElementFromUint64(s.Scope.ChainID), ProtocolAddress: primitives.BigIntToElement(s.Scope.ProtocolAddress.Big())}
 }
 
 func (s *Runtime) Canonical(ctx context.Context, block protocolrpc.CanonicalBlock) error {
@@ -50,12 +50,12 @@ func (s *Runtime) Canonical(ctx context.Context, block protocolrpc.CanonicalBloc
 func OrderedNotes(state Inventory, token common.Address) []NoteRecord {
 	result := []NoteRecord{}
 	for _, n := range state.Notes {
-		if !n.Spent && n.ReservedBy == "" && core.ElementToBigInt(n.Note.TokenAddress).Cmp(token.Big()) == 0 {
+		if !n.Spent && n.ReservedBy == "" && primitives.ElementToBigInt(n.Note.TokenAddress).Cmp(token.Big()) == 0 {
 			result = append(result, n)
 		}
 	}
 	sort.Slice(result, func(i, j int) bool {
-		a, b := core.ElementToBigInt(result[i].Note.Amount), core.ElementToBigInt(result[j].Note.Amount)
+		a, b := primitives.ElementToBigInt(result[i].Note.Amount), primitives.ElementToBigInt(result[j].Note.Amount)
 		if a.Cmp(b) == 0 {
 			return result[i].Commitment.Hex() < result[j].Commitment.Hex()
 		}

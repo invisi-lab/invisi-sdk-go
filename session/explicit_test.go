@@ -12,8 +12,8 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/signer/core/apitypes"
 
-	"github.com/invisi-lab/invisi-sdk-go/core"
 	transaction "github.com/invisi-lab/invisi-sdk-go/internal/transaction"
+	"github.com/invisi-lab/invisi-sdk-go/primitives"
 	"github.com/invisi-lab/invisi-sdk-go/prover"
 	"github.com/invisi-lab/invisi-sdk-go/prover/native"
 	sdk "github.com/invisi-lab/invisi-sdk-go/sdk"
@@ -197,7 +197,7 @@ func TestExplicitRejectsWrongTokenOwnerAndPosition(t *testing.T) {
 			case "token":
 				input.TokenAddress = common.HexToAddress("0x3333333333333333333333333333333333333333")
 			case "owner":
-				input.Inputs[0].Note.OwnerAddress = core.ElementFromUint64(7)
+				input.Inputs[0].Note.OwnerAddress = primitives.ElementFromUint64(7)
 			case "position":
 				input.Inputs[0].LeafIndex = 1
 			}

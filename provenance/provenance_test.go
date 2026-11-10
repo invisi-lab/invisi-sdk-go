@@ -31,10 +31,10 @@ func vectors(t *testing.T) map[string]any {
 func num(v any) string { return fmt.Sprint(v) }
 func requestFromVector(t *testing.T, v map[string]any) WitnessRequest {
 	t.Helper()
-	r := WitnessRequest{Scope: Scope{num(v["chain_id"]), num(v["protocol_address"])}, Capacity: len(v["owners"].([]any)), TokenAddress: num(v["token_address"]), ChainGeneration: num(v["chain_generation"]), OperationDigest: num(v["operation_digest_lo"])}
+	r := WitnessRequest{Scope: Scope{ChainID: num(v["chain_id"]), ProtocolAddress: num(v["protocol_address"])}, Capacity: len(v["owners"].([]any)), TokenAddress: num(v["token_address"]), ChainGeneration: num(v["chain_generation"]), OperationDigest: num(v["operation_digest_lo"])}
 	count, _ := Uint(num(v["input_count"]), 64)
 	for i := 0; i < int(count.Int64()); i++ {
-		input := WitnessInput{Opening: Opening{num(v["owners"].([]any)[i]), num(v["nonces"].([]any)[i]), num(v["amounts"].([]any)[i])}, SourceIndex: int(v["source_indices"].([]any)[i].(float64)), LeafIndex: uint64(v["leaf_indices"].([]any)[i].(float64))}
+		input := WitnessInput{Opening: Opening{Owner: num(v["owners"].([]any)[i]), Nonce: num(v["nonces"].([]any)[i]), Amount: num(v["amounts"].([]any)[i])}, SourceIndex: int(v["source_indices"].([]any)[i].(float64)), LeafIndex: uint64(v["leaf_indices"].([]any)[i].(float64))}
 		for _, p := range v["paths"].([]any)[i].([]any) {
 			input.Path = append(input.Path, num(p))
 		}
@@ -42,7 +42,7 @@ func requestFromVector(t *testing.T, v map[string]any) WitnessRequest {
 	}
 	sc, _ := Uint(num(v["source_count"]), 64)
 	for i := 0; i < int(sc.Int64()); i++ {
-		r.Sources = append(r.Sources, Source{num(v["tree_ids"].([]any)[i]), num(v["roots"].([]any)[i]), num(v["leaf_counts"].([]any)[i])})
+		r.Sources = append(r.Sources, Source{TreeID: num(v["tree_ids"].([]any)[i]), Root: num(v["roots"].([]any)[i]), LeafCount: num(v["leaf_counts"].([]any)[i])})
 	}
 	return r
 }
@@ -50,12 +50,12 @@ func TestSharedVectors(t *testing.T) {
 	v := vectors(t)
 	note := v["note"].(map[string]any)
 	c := note["context"].(map[string]any)
-	s := Scope{num(c["chainId"]), num(c["protocolAddress"])}
+	s := Scope{ChainID: num(c["chainId"]), ProtocolAddress: num(c["protocolAddress"])}
 	scope, e := ScopeHash(s)
 	if e != nil || scope != note["scope"] {
 		t.Fatalf("scope %s %v", scope, e)
 	}
-	commit, n, e := NoteOpening(s, num(c["tokenAddress"]), Opening{num(c["owner"]), num(c["nonce"]), num(c["amount"])})
+	commit, n, e := NoteOpening(s, num(c["tokenAddress"]), Opening{Owner: num(c["owner"]), Nonce: num(c["nonce"]), Amount: num(c["amount"])})
 	if e != nil || commit != note["commitment"] || n != note["nullifier"] {
 		t.Fatalf("note %v", e)
 	}
@@ -68,7 +68,7 @@ func TestSharedVectors(t *testing.T) {
 	for _, p := range op["publicInputs"].([]any) {
 		pub = append(pub, num(p))
 	}
-	digest, e := OperationDigest(Scope{num(op["chainId"]), num(op["protocolAddress"])}, int(op["mainCircuitCapacity"].(float64)), pub)
+	digest, e := OperationDigest(Scope{ChainID: num(op["chainId"]), ProtocolAddress: num(op["protocolAddress"])}, int(op["mainCircuitCapacity"].(float64)), pub)
 	if e != nil || digest != op["digest"] {
 		t.Fatalf("operation %s %v", digest, e)
 	}
@@ -173,10 +173,10 @@ func TestPublicClientScopeAndGeneration(t *testing.T) {
 		if bytesContainSecrets(string(body)) {
 			t.Error("private query")
 		}
-		json.NewEncoder(w).Encode(map[string]any{"jsonrpc": "2.0", "id": req["id"], "result": map[string]any{"scope": Scope{"1", "2"}, "chainGeneration": generation, "providerId": "5", "signingKeyId": "6", "manifestSha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"}})
+		json.NewEncoder(w).Encode(map[string]any{"jsonrpc": "2.0", "id": req["id"], "result": map[string]any{"scope": Scope{ChainID: "1", ProtocolAddress: "2"}, "chainGeneration": generation, "providerId": "5", "signingKeyId": "6", "manifestSha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"}})
 	}))
 	defer server.Close()
-	c := Client{Endpoint: server.URL, Trust: TrustContext{Scope: Scope{"1", "2"}, ChainGeneration: "4", ProviderID: "5", ManifestSHA256: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", SigningKeys: map[string]ed25519.PublicKey{"0x0000000000000000000000000000000000000000000000000000000000000006": make([]byte, 32)}}}
+	c := Client{Endpoint: server.URL, Trust: TrustContext{Scope: Scope{ChainID: "1", ProtocolAddress: "2"}, ChainGeneration: "4", ProviderID: "5", ManifestSHA256: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", SigningKeys: map[string]ed25519.PublicKey{"0x0000000000000000000000000000000000000000000000000000000000000006": make([]byte, 32)}}}
 	if _, e := c.EvaluateTransaction(context.Background(), map[string]string{"calldata": "0x12"}, []ProofSidecar{}); e != nil {
 		t.Fatal(e)
 	}
@@ -231,7 +231,7 @@ func TestNativeOfflineProof(t *testing.T) {
 					return LocalAssets{}, e
 				}
 				vk, e := os.ReadFile(filepath.Join(root, entry.VK))
-				return LocalAssets{manifest, a, vk}, e
+				return LocalAssets{Manifest: manifest, Artifact: a, VerificationKey: vk}, e
 			}
 		}
 		return LocalAssets{}, fmt.Errorf("capacity")
@@ -252,15 +252,12 @@ func (p localTestProver) Prove(_ context.Context, _ ManifestIdentity, _ int, _ W
 	if p.tamper {
 		pub[0], _ = word("1")
 	}
-	return ProofResult{"0x01", pub}, nil
+	return ProofResult{Proof: "0x01", PublicInputs: pub}, nil
 }
 func TestSidecarTrustBindingAndReplay(t *testing.T) {
 	raw := vectors(t)
 	r := requestFromVector(t, raw["witnessK10SingleInput"].(map[string]any))
-	manifest, e := os.ReadFile("manifest.json")
-	if e != nil {
-		t.Fatal(e)
-	}
+	manifest := ManifestBytes()
 	const pin = "6107789c5c0d24c4130bff05da6d389336feb5ccb247c4030eae5198ab05d762"
 	identity, e := AuthenticateManifest(manifest, pin)
 	if e != nil {
@@ -354,20 +351,20 @@ func TestSidecarTrustBindingAndReplay(t *testing.T) {
 	}
 }
 
-func TestMetadataOmitsPolicy(t *testing.T) {
+func TestVersionMetadataQueryHasNoFilters(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		var req struct {
 			ID     uint64           `json:"id"`
 			Params []map[string]any `json:"params"`
 		}
 		json.NewDecoder(r.Body).Decode(&req)
-		if len(req.Params) != 1 || req.Params[0]["policyId"] != nil {
-			t.Error("metadata included policy")
+		if len(req.Params) != 1 || len(req.Params[0]) != 0 {
+			t.Error("metadata query included filters")
 		}
-		json.NewEncoder(w).Encode(map[string]any{"jsonrpc": "2.0", "id": req.ID, "result": map[string]any{"scope": Scope{"1", "2"}, "chainGeneration": "4"}})
+		json.NewEncoder(w).Encode(map[string]any{"jsonrpc": "2.0", "id": req.ID, "result": map[string]any{"scope": Scope{ChainID: "1", ProtocolAddress: "2"}, "chainGeneration": "4"}})
 	}))
 	defer server.Close()
-	c := Client{Endpoint: server.URL, Trust: TrustContext{Scope: Scope{"1", "2"}, ChainGeneration: "4"}}
+	c := Client{Endpoint: server.URL, Trust: TrustContext{Scope: Scope{ChainID: "1", ProtocolAddress: "2"}, ChainGeneration: "4"}}
 	if _, err := c.GetVersion(context.Background()); err != nil {
 		t.Fatal(err)
 	}
@@ -381,10 +378,10 @@ func TestWaitProofJobCurrentWireTerminalAndUnknown(t *testing.T) {
 				calls++
 				var request map[string]any
 				json.NewDecoder(r.Body).Decode(&request)
-				json.NewEncoder(w).Encode(map[string]any{"jsonrpc": "2.0", "id": request["id"], "result": map[string]any{"scope": Scope{"1", "2"}, "chainGeneration": "2", "providerId": "5", "signingKeyId": "6", "manifestSha256": strings.Repeat("a", 64), "status": status}})
+				json.NewEncoder(w).Encode(map[string]any{"jsonrpc": "2.0", "id": request["id"], "result": map[string]any{"scope": Scope{ChainID: "1", ProtocolAddress: "2"}, "chainGeneration": "2", "providerId": "5", "signingKeyId": "6", "manifestSha256": strings.Repeat("a", 64), "status": status}})
 			}))
 			defer server.Close()
-			client := &Client{Endpoint: server.URL, Trust: TrustContext{Scope: Scope{"1", "2"}, ChainGeneration: "2", ProviderID: "5", ManifestSHA256: strings.Repeat("a", 64), SigningKeys: map[string]ed25519.PublicKey{"0x" + strings.Repeat("0", 63) + "6": make([]byte, 32)}}}
+			client := &Client{Endpoint: server.URL, Trust: TrustContext{Scope: Scope{ChainID: "1", ProtocolAddress: "2"}, ChainGeneration: "2", ProviderID: "5", ManifestSHA256: strings.Repeat("a", 64), SigningKeys: map[string]ed25519.PublicKey{"0x" + strings.Repeat("0", 63) + "6": make([]byte, 32)}}}
 			ctx, cancel := context.WithTimeout(context.Background(), 20*time.Millisecond)
 			defer cancel()
 			result, e := client.WaitProofJob(ctx, "job", time.Millisecond)
@@ -421,11 +418,11 @@ func TestSubmitSourceProofWithoutTransactionHash(t *testing.T) {
 		if len(q) != 2 || len(q["data"]) == 0 || string(q["proofSidecars"]) != "[]" {
 			t.Error("unexpected source payload")
 		}
-		json.NewEncoder(w).Encode(map[string]any{"jsonrpc": "2.0", "id": request.ID, "result": map[string]any{"scope": Scope{"1", "2"}, "chainGeneration": "3", "providerId": "4", "signingKeyId": "5", "manifestSha256": strings.Repeat("a", 64)}})
+		json.NewEncoder(w).Encode(map[string]any{"jsonrpc": "2.0", "id": request.ID, "result": map[string]any{"scope": Scope{ChainID: "1", ProtocolAddress: "2"}, "chainGeneration": "3", "providerId": "4", "signingKeyId": "5", "manifestSha256": strings.Repeat("a", 64)}})
 	}))
 	defer server.Close()
 	key, _ := word("5")
-	c := Client{Endpoint: server.URL, Trust: TrustContext{Scope: Scope{"1", "2"}, ChainGeneration: "3", ProviderID: "4", ManifestSHA256: strings.Repeat("a", 64), SigningKeys: map[string]ed25519.PublicKey{key: make([]byte, 32)}}}
+	c := Client{Endpoint: server.URL, Trust: TrustContext{Scope: Scope{ChainID: "1", ProtocolAddress: "2"}, ChainGeneration: "3", ProviderID: "4", ManifestSHA256: strings.Repeat("a", 64), SigningKeys: map[string]ed25519.PublicKey{key: make([]byte, 32)}}}
 	if _, err := c.SubmitSourceProof(context.Background(), "0x12", nil); err != nil {
 		t.Fatal(err)
 	}

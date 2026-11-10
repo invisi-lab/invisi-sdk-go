@@ -17,15 +17,15 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
-	"github.com/invisi-lab/invisi-sdk-go/core"
 	"github.com/invisi-lab/invisi-sdk-go/credit"
-	creditsession "github.com/invisi-lab/invisi-sdk-go/credit/session"
+	"github.com/invisi-lab/invisi-sdk-go/primitives"
 	"github.com/invisi-lab/invisi-sdk-go/protocol/contracts"
 	protocolrpc "github.com/invisi-lab/invisi-sdk-go/rpc"
+	creditsession "github.com/invisi-lab/invisi-sdk-go/session/credit"
 )
 
 func syncGrantState() credit.State {
-	return credit.State{AvailableCredit: core.ElementFromUint64(400), ProtocolContext: core.ProtocolContext{ChainID: core.ElementFromUint64(31337), ProtocolAddress: core.ElementFromUint64(17)}, TokenAddress: core.ElementFromUint64(34), OwnerWalletIdentity: core.ElementFromUint64(1), SpenderWalletIdentity: core.ElementFromUint64(2), RevocationShard: core.ElementFromUint64(1), Nonce: core.ElementFromUint64(3), Expiry: core.ElementFromUint64(2000000000), SharedKey: core.ElementFromUint64(4)}
+	return credit.State{AvailableCredit: primitives.ElementFromUint64(400), ProtocolContext: primitives.ProtocolContext{ChainID: primitives.ElementFromUint64(31337), ProtocolAddress: primitives.ElementFromUint64(17)}, TokenAddress: primitives.ElementFromUint64(34), OwnerWalletIdentity: primitives.ElementFromUint64(1), SpenderWalletIdentity: primitives.ElementFromUint64(2), RevocationShard: primitives.ElementFromUint64(1), Nonce: primitives.ElementFromUint64(3), Expiry: primitives.ElementFromUint64(2000000000), SharedKey: primitives.ElementFromUint64(4)}
 }
 func TestRefreshRestoresUnresolvedCreditReservationsForBothRoles(t *testing.T) {
 	grant := syncGrantState()
@@ -62,18 +62,18 @@ func TestCanonicalCreditCreationReceiptProducesStatesAndNoCashNotes(t *testing.T
 	}
 	state := syncGrantState()
 	state.ProtocolContext = session.coreContext()
-	state.TokenAddress = core.BigIntToElement(token.Big())
-	identity := core.BigIntToElement(session.wallet.OwnerAddress().Big())
+	state.TokenAddress = primitives.BigIntToElement(token.Big())
+	identity := primitives.BigIntToElement(session.wallet.OwnerAddress().Big())
 	state.OwnerWalletIdentity = identity
 	state.SpenderWalletIdentity = identity
-	state.Expiry = core.ElementFromUint64(original.head.Time + 1000)
+	state.Expiry = primitives.ElementFromUint64(original.head.Time + 1000)
 	commitment, e := state.Commitment()
 	if e != nil {
 		t.Fatal(e)
 	}
 	leaf := common.Hash(commitment.Bytes())
 	original.leaves.Store(uint64(2), leaf)
-	keys := core.ReceivingKeys{ViewingPublicKey: session.wallet.ViewingPublicKey(), ClueKey: session.wallet.ClueKey()}
+	keys := primitives.ReceivingKeys{ViewingPublicKey: session.wallet.ViewingPublicKey(), ClueKey: session.wallet.ClueKey()}
 	delivery := credit.DeliveryState{State: state, OwnerReceivingKeys: keys, SpenderReceivingKeys: keys}
 	deliveryContext := credit.DeliveryContext{ProtocolContext: session.coreContext(), TokenAddress: state.TokenAddress, Commitment: commitment, RecipientIdentity: identity}
 	envelopes := []contracts.IInvisiProtocolDelivery{}
@@ -158,13 +158,13 @@ func TestRefreshKeepsAuthenticatedChildPayloadAndDropsUnknownRecoveredPayload(t 
 			block := protocolrpc.CanonicalBlock{Number: 10, Hash: base.head.Hash(), ParentHash: base.head.ParentHash, Timestamp: base.head.Time}
 			state := syncGrantState()
 			state.ProtocolContext = session.coreContext()
-			state.TokenAddress = core.BigIntToElement(token.Big())
-			identity := core.BigIntToElement(session.wallet.OwnerAddress().Big())
+			state.TokenAddress = primitives.BigIntToElement(token.Big())
+			identity := primitives.BigIntToElement(session.wallet.OwnerAddress().Big())
 			state.OwnerWalletIdentity = identity
 			state.SpenderWalletIdentity = identity
-			state.Expiry = core.ElementFromUint64(base.head.Time + 10000)
+			state.Expiry = primitives.ElementFromUint64(base.head.Time + 10000)
 			state.Payload = []byte{1, 2, 3}
-			keys := core.ReceivingKeys{ViewingPublicKey: session.wallet.ViewingPublicKey(), ClueKey: session.wallet.ClueKey()}
+			keys := primitives.ReceivingKeys{ViewingPublicKey: session.wallet.ViewingPublicKey(), ClueKey: session.wallet.ClueKey()}
 			parent := credit.DeliveryState{State: state, OwnerReceivingKeys: keys, SpenderReceivingKeys: keys}
 			oldLeaf, e := state.Commitment()
 			if e != nil {
@@ -182,7 +182,7 @@ func TestRefreshKeepsAuthenticatedChildPayloadAndDropsUnknownRecoveredPayload(t 
 			}); e != nil {
 				t.Fatal(e)
 			}
-			draw, e := state.Draw(core.ElementFromUint64(7), base.head.Time)
+			draw, e := state.Draw(primitives.ElementFromUint64(7), base.head.Time)
 			if e != nil {
 				t.Fatal(e)
 			}
@@ -236,7 +236,7 @@ func TestRefreshKeepsAuthenticatedChildPayloadAndDropsUnknownRecoveredPayload(t 
 			siblings[0] = note
 			root := draw.StateCommitment
 			for _, sibling := range siblings {
-				root, e = core.Poseidon2Hash(root, core.BigIntToElement(sibling.Big()))
+				root, e = primitives.Poseidon2Hash(root, primitives.BigIntToElement(sibling.Big()))
 				if e != nil {
 					t.Fatal(e)
 				}
@@ -308,7 +308,7 @@ func TestRefreshKeepsAuthenticatedChildPayloadAndDropsUnknownRecoveredPayload(t 
 			}
 			for _, role := range []credit.Role{credit.Owner, credit.Spender} {
 				got := wallet.PostpaidCredit.Grants[creditsession.GrantKey(leaf, role)]
-				if core.ElementToBigInt(got.Delivery.State.TotalSpent).Uint64() != 7 || got.Delivery.State.AvailableCredit != core.ElementFromUint64(393) {
+				if primitives.ElementToBigInt(got.Delivery.State.TotalSpent).Uint64() != 7 || got.Delivery.State.AvailableCredit != primitives.ElementFromUint64(393) {
 					t.Fatal("recovered usage lost")
 				}
 				if corrupt && len(got.Delivery.State.Payload) != 0 {

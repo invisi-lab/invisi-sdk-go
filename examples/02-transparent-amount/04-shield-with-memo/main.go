@@ -9,7 +9,7 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
-	"github.com/invisi-lab/invisi-sdk-go/core"
+	"github.com/invisi-lab/invisi-sdk-go/primitives"
 	"github.com/invisi-lab/invisi-sdk-go/sdk"
 )
 
@@ -44,7 +44,7 @@ func main() {
 	}
 	invisi := sdk.NewInvisi(sdk.InvisiOptions{Provider: provider, ProtocolRPC: client})
 	token := common.HexToAddress(*tokenText)
-	memo, err := core.FundsV1.Encode(core.PayloadDataV1{Memo: []byte("Invoice 42")})
+	memo, err := primitives.FundsV1.Encode(primitives.PayloadDataV1{Memo: []byte("Invoice 42")})
 	if err != nil {
 		log.Fatal(err)
 	}

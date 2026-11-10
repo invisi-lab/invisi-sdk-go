@@ -5,7 +5,7 @@ package transaction
 import (
 	"context"
 
-	"github.com/invisi-lab/invisi-sdk-go/core"
+	"github.com/invisi-lab/invisi-sdk-go/primitives"
 )
 
 func PreparedExecution(p *PreparedTransaction) *Execution { return p.operation }
@@ -17,4 +17,4 @@ func PreparedIsCurrent(p *PreparedTransaction) bool {
 }
 func NewDetachedExecution(e *Execution) (*PreparedTransaction, error) { return Detached(e, nil) }
 
-func ReceivingKeySnapshot(w *Wallet) *core.ReceivingKeys { return &w.keys }
+func ReceivingKeySnapshot(w *Wallet) *primitives.ReceivingKeys { return &w.keys }

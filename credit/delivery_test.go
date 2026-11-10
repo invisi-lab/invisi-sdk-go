@@ -2,10 +2,11 @@ package credit
 
 import (
 	hexcodec "encoding/hex"
-	"github.com/ethereum/go-ethereum/crypto"
-	"github.com/invisi-lab/invisi-sdk-go/core"
 	"strings"
 	"testing"
+
+	"github.com/ethereum/go-ethereum/crypto"
+	"github.com/invisi-lab/invisi-sdk-go/primitives"
 )
 
 func bytesHex(t *testing.T, s string) []byte {
@@ -56,7 +57,7 @@ func TestCanonicalDeferredDelivery(t *testing.T) {
 		if _, e := Decrypt(private, cipher, context, role); e == nil {
 			t.Fatal("accepted unknown envelope format")
 		}
-		context.RecipientIdentity = core.ElementFromUint64(999)
+		context.RecipientIdentity = primitives.ElementFromUint64(999)
 		if _, e := Decrypt(private, roundtrip, context, role); e == nil {
 			t.Fatal("accepted wrong identity")
 		}
@@ -66,9 +67,9 @@ func TestCanonicalDeferredDelivery(t *testing.T) {
 func TestQuotaEnvelopeBoundsAndStrictBoolean(t *testing.T) {
 	s, f := fixture(t)
 	material := f["delivery"].(map[string]any)
-	keys := func(name string) core.ReceivingKeys {
+	keys := func(name string) primitives.ReceivingKeys {
 		values := material[name+"ReceivingKeys"].(map[string]any)
-		return core.ReceivingKeys{ViewingPublicKey: bytesHex(t, values["viewingPublicKey"].(string)), ClueKey: bytesHex(t, values["clueKey"].(string))}
+		return primitives.ReceivingKeys{ViewingPublicKey: bytesHex(t, values["viewingPublicKey"].(string)), ClueKey: bytesHex(t, values["clueKey"].(string))}
 	}
 	d := DeliveryState{State: s, OwnerReceivingKeys: keys("owner"), SpenderReceivingKeys: keys("spender")}
 	commitment, err := s.Commitment()
@@ -116,7 +117,7 @@ func TestQuotaEnvelopeBoundsAndStrictBoolean(t *testing.T) {
 	if _, err = Decrypt(private, envelope, c, Owner); err == nil {
 		t.Fatal("accepted nonboolean quota flag in authenticated envelope")
 	}
-	d.State.AvailableCredit = core.ElementFromUint64(0)
+	d.State.AvailableCredit = primitives.ElementFromUint64(0)
 	d.State.Unlimited = true
 	commitment, err = d.State.Commitment()
 	if err != nil {

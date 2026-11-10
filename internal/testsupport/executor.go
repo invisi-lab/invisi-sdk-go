@@ -8,27 +8,27 @@ import (
 	"strings"
 
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/invisi-lab/invisi-sdk-go/core"
 	"github.com/invisi-lab/invisi-sdk-go/credit"
+	"github.com/invisi-lab/invisi-sdk-go/primitives"
 	"github.com/invisi-lab/invisi-sdk-go/wallet"
 )
 
-type Executor struct{ material *core.InvisiWallet }
+type Executor struct{ material *primitives.InvisiWallet }
 
 func NewExecutor(privateKey string) (*Executor, error) {
-	raw, err := core.DecodePrivateKey(privateKey)
+	raw, err := primitives.DecodePrivateKey(privateKey)
 	if err != nil {
 		return nil, err
 	}
 	defer clear(raw)
-	material, err := core.DeriveWallet(raw)
+	material, err := primitives.DeriveWallet(raw)
 	if err != nil {
 		return nil, err
 	}
 	return &Executor{material}, nil
 }
 func (e *Executor) OwnerAddress() common.Address {
-	return common.BigToAddress(core.ElementToBigInt(e.material.OwnerAddress))
+	return common.BigToAddress(primitives.ElementToBigInt(e.material.OwnerAddress))
 }
 func (e *Executor) String() string               { return "NativeWalletExecutor([redacted])" }
 func (e *Executor) GoString() string             { return e.String() }
@@ -65,7 +65,7 @@ func (e *Executor) ExecuteOne(ctx context.Context, r wallet.Request) (wallet.Res
 			if err != nil {
 				return wallet.Response{}, err
 			}
-			matches[i], err = core.DetectClue(e.material.DetectionKey, clue, 24)
+			matches[i], err = primitives.DetectClue(e.material.DetectionKey, clue, 24)
 			if err != nil {
 				matches[i] = false
 			}
@@ -80,11 +80,11 @@ func (e *Executor) ExecuteOne(ctx context.Context, r wallet.Request) (wallet.Res
 		if err != nil {
 			return wallet.Response{}, err
 		}
-		signature, err := core.SignWalletAuthorization(e.material.SpendingPrivateKey, request)
+		signature, err := primitives.SignWalletAuthorization(e.material.SpendingPrivateKey, request)
 		if err != nil {
 			return wallet.Response{}, err
 		}
-		digest, err := core.ComputeWalletAuthorizationDigest(request)
+		digest, err := primitives.ComputeWalletAuthorizationDigest(request)
 		if err != nil {
 			return wallet.Response{}, err
 		}
@@ -119,11 +119,11 @@ func (e *Executor) ExecuteOne(ctx context.Context, r wallet.Request) (wallet.Res
 			if p.Context.Role != "" {
 				return wallet.Response{}, errors.New("note context cannot contain role")
 			}
-			note, err := core.DecryptPrivateTransferNote(e.material.ViewingPrivateKey, envelope, core.NoteDecryptionContext{NoteEncryptionContext: core.NoteEncryptionContext{ProtocolContext: c, OutputCommitment: field}, TokenAddress: token, OwnerAddress: e.material.OwnerAddress})
+			note, err := primitives.DecryptPrivateTransferNote(e.material.ViewingPrivateKey, envelope, primitives.NoteDecryptionContext{NoteEncryptionContext: primitives.NoteEncryptionContext{ProtocolContext: c, OutputCommitment: field}, TokenAddress: token, OwnerAddress: e.material.OwnerAddress})
 			if err != nil {
 				return wallet.Response{}, err
 			}
-			plain = core.EncodeNotePlaintext(note)
+			plain = primitives.EncodeNotePlaintext(note)
 		} else {
 			role := credit.Owner
 			if p.Context.Role == "spender" {

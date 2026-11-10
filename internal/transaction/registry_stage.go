@@ -6,7 +6,7 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 
-	"github.com/invisi-lab/invisi-sdk-go/core"
+	"github.com/invisi-lab/invisi-sdk-go/primitives"
 	"github.com/invisi-lab/invisi-sdk-go/protocol"
 )
 
@@ -80,32 +80,32 @@ func (o *RegistrationOperation) AuthorizeDirect(ctx context.Context) (*Registrat
 }
 
 // ExportRegistrationAuthorization exports a fresh, JSON-safe request without accessing private capabilities.
-func (o *RegistrationOperation) ExportRegistrationAuthorization(ctx context.Context) (core.SigningRequest, error) {
+func (o *RegistrationOperation) ExportRegistrationAuthorization(ctx context.Context) (primitives.SigningRequest, error) {
 	if err := ctx.Err(); err != nil {
-		return core.SigningRequest{}, err
+		return primitives.SigningRequest{}, err
 	}
 	o.lifecycle.mu.Lock()
 	defer o.lifecycle.mu.Unlock()
 	if o.lifecycle.busy || o.lifecycle.generation != o.generation {
-		return core.SigningRequest{}, errors.New("registration handle is busy or stale")
+		return primitives.SigningRequest{}, errors.New("registration handle is busy or stale")
 	}
 	o.mu.Lock()
 	defer o.mu.Unlock()
 	if o.status != "prepared" {
-		return core.SigningRequest{}, errors.New("registration must be prepared")
+		return primitives.SigningRequest{}, errors.New("registration must be prepared")
 	}
 	current, err := o.currentContext(ctx)
 	if err != nil {
-		return core.SigningRequest{}, err
+		return primitives.SigningRequest{}, err
 	}
 	typed, err := protocol.RegistrationTypedData(current, o.registration, protocol.RegistrationOptions{Update: o.options.Update})
 	if err != nil {
-		return core.SigningRequest{}, err
+		return primitives.SigningRequest{}, err
 	}
 	if err = ctx.Err(); err != nil {
-		return core.SigningRequest{}, err
+		return primitives.SigningRequest{}, err
 	}
-	return core.NewSigningRequest(typed)
+	return primitives.NewSigningRequest(typed)
 }
 
 func (o *RegistrationOperation) TrackTransaction(ctx context.Context, hash common.Hash) (*RegistrationOperation, error) {

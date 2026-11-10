@@ -83,3 +83,11 @@ Go: `NewSQLiteRecoveryRecords(ctx, callerOwnedDB)` creates only the independent 
 ## Flat examples
 
 See [07-broadcaster](examples/07-broadcaster/README.md) for standard relay delivery, independent Source submission before payment, and Source recovery after canonical confirmation. Its final example also submits a serialized public proof packet without account keys, inventory or prover assets. [Note](examples/03-hidden-amount/README.md) and [Credit](examples/04-credit/README.md) examples demonstrate ordinary direct calldata export.
+
+## Module ownership (1.2.0)
+
+- `protocol/provenance`: public Source contracts, recognized trees, certificates, rotation, trust, manifest and the 11-field layout.
+- `prover/provenance`: private Note openings/witnesses, native proving and sidecar creation.
+- `rpc/provenance`: HTTP clients, tracking queries and authenticated public tree synchronization.
+- `session/provenance`: encrypted recovery storage, coordination and explicit recovery flows.
+- Root `provenance`: normal SDK facade and native packet/submission validation; no managed recovery reexports.

@@ -4,11 +4,12 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/ethereum/go-ethereum/common"
-	"github.com/invisi-lab/invisi-sdk-go/broadcaster"
-	"github.com/invisi-lab/invisi-sdk-go/core"
 	"math/big"
 	"time"
+
+	"github.com/ethereum/go-ethereum/common"
+	"github.com/invisi-lab/invisi-sdk-go/primitives"
+	"github.com/invisi-lab/invisi-sdk-go/rpc/broadcaster"
 )
 
 type WithBroadcasterOptions struct {
@@ -95,7 +96,7 @@ func reprice(i Intent, recipient common.Address, amount *big.Int) (Intent, error
 		next.Draw.FeeRecipient = recipient
 		next.Draw.FeeAmount = fee
 		net := new(big.Int).Sub(next.Draw.TotalAmount, fee)
-		commitment, err := core.ComputeNoteCommitment(next.Context.ChainID, next.Context.ProtocolAddress, next.OutputIdentity, core.BigIntToElement(next.Draw.Token.Big()), core.BigIntToElement(net))
+		commitment, err := primitives.ComputeNoteCommitment(next.Context.ChainID, next.Context.ProtocolAddress, next.OutputIdentity, primitives.BigIntToElement(next.Draw.Token.Big()), primitives.BigIntToElement(net))
 		if err != nil {
 			return Intent{}, err
 		}
@@ -105,11 +106,11 @@ func reprice(i Intent, recipient common.Address, amount *big.Int) (Intent, error
 			return Intent{}, fmt.Errorf("ordinary Note delivery slot missing")
 		}
 		if next.OutputNote != nil {
-			identity, err := core.ComputeNoteIdentity(next.OutputNote.OwnerAddress, next.OutputNote.Nonce)
+			identity, err := primitives.ComputeNoteIdentity(next.OutputNote.OwnerAddress, next.OutputNote.Nonce)
 			if err != nil || identity != next.OutputIdentity {
 				return Intent{}, fmt.Errorf("frozen ordinary Note identity mismatch")
 			}
-			next.OutputNote.Amount = core.BigIntToElement(net)
+			next.OutputNote.Amount = primitives.BigIntToElement(net)
 			if len(next.Deliveries[last].Ciphertext) > 0 && next.NoteRecipientKeys == nil {
 				return Intent{}, fmt.Errorf("fee quotation requires frozen Note recipient keys")
 			}
@@ -182,7 +183,7 @@ func (p *Prepared) WithBroadcaster(ctx context.Context, client *broadcaster.Clie
 			}
 			continue
 		}
-		trust := broadcaster.Trust{ChainID: core.ElementToBigInt(proposal.Context.ChainID), Protocol: common.BigToAddress(core.ElementToBigInt(proposal.Context.ProtocolAddress)), Signer: client.Configuration().QuoteSigner}
+		trust := broadcaster.Trust{ChainID: primitives.ElementToBigInt(proposal.Context.ChainID), Protocol: common.BigToAddress(primitives.ElementToBigInt(proposal.Context.ProtocolAddress)), Signer: client.Configuration().QuoteSigner}
 		signed, err := client.GetQuote(ctx, data, trust)
 		if err != nil {
 			return err
@@ -215,7 +216,7 @@ func (p *Prepared) ExportBroadcasterQuote() (broadcaster.SignedQuote, error) {
 	if err != nil {
 		return broadcaster.SignedQuote{}, err
 	}
-	binding.Quote.Context = &broadcaster.Trust{ChainID: core.ElementToBigInt(p.intent.Context.ChainID), Protocol: common.BigToAddress(core.ElementToBigInt(p.intent.Context.ProtocolAddress)), Signer: binding.Configuration.QuoteSigner}
+	binding.Quote.Context = &broadcaster.Trust{ChainID: primitives.ElementToBigInt(p.intent.Context.ChainID), Protocol: common.BigToAddress(primitives.ElementToBigInt(p.intent.Context.ProtocolAddress)), Signer: binding.Configuration.QuoteSigner}
 	return binding.Quote, nil
 }
 

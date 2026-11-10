@@ -6,7 +6,7 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
-	"github.com/invisi-lab/invisi-sdk-go/core"
+	"github.com/invisi-lab/invisi-sdk-go/primitives"
 )
 
 const MaxBatchItems = 1024
@@ -135,7 +135,7 @@ func validateParams(q Request) error {
 			return err
 		}
 		token, err := Element(p.Context.TokenAddress)
-		if err != nil || core.ElementToBigInt(token).BitLen() > 160 {
+		if err != nil || primitives.ElementToBigInt(token).BitLen() > 160 {
 			return errors.New("invalid token address")
 		}
 		commitment, err := Bytes(p.Context.OutputCommitment, 32)

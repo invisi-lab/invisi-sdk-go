@@ -9,7 +9,7 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/signer/core/apitypes"
 
-	"github.com/invisi-lab/invisi-sdk-go/core"
+	"github.com/invisi-lab/invisi-sdk-go/primitives"
 )
 
 func ValidateShieldRequest(p BuildShieldCalldataParams) (FundingParams, error) {
@@ -47,7 +47,7 @@ func ValidateShieldRequest(p BuildShieldCalldataParams) (FundingParams, error) {
 		if err := ValidateDelivery(p.Deliveries[i], false, false); err != nil {
 			return f, err
 		}
-		commitment, err := core.ComputeNoteCommitment(core.BigIntToElement(p.Context.ChainID), core.BigIntToElement(p.Context.ProtocolAddress.Big()), core.BigIntToElement(number(o.Identity)), core.BigIntToElement(p.Context.TokenAddress.Big()), core.BigIntToElement(o.Amount))
+		commitment, err := primitives.ComputeNoteCommitment(primitives.BigIntToElement(p.Context.ChainID), primitives.BigIntToElement(p.Context.ProtocolAddress.Big()), primitives.BigIntToElement(number(o.Identity)), primitives.BigIntToElement(p.Context.TokenAddress.Big()), primitives.BigIntToElement(o.Amount))
 		if err != nil {
 			return f, err
 		}

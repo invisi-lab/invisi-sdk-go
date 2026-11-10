@@ -15,7 +15,7 @@ import (
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
 
-	"github.com/invisi-lab/invisi-sdk-go/core"
+	"github.com/invisi-lab/invisi-sdk-go/primitives"
 )
 
 type testProvider struct{ header *types.Header }
@@ -35,12 +35,12 @@ func TestProtocolRPCAuthenticatesIndexedPaths(t *testing.T) {
 	block := CanonicalBlock{10, provider.header.Hash(), provider.header.ParentHash, 123}
 	address := common.HexToAddress("0x1111111111111111111111111111111111111111")
 	deployment := ProtocolDeployment{ChainID: "31337", Protocol: ContractDeployment{address, crypto.Keccak256Hash([]byte{0x60, 0}), 1}}
-	leaf := core.ElementFromUint64(7)
+	leaf := primitives.ElementFromUint64(7)
 	root := leaf
 	path := make([]common.Hash, 16)
 	for range 16 {
 		var e error
-		root, e = core.Poseidon2Hash(root, core.ElementFromUint64(0))
+		root, e = primitives.Poseidon2Hash(root, primitives.ElementFromUint64(0))
 		if e != nil {
 			t.Fatal(e)
 		}

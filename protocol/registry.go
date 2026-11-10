@@ -5,12 +5,11 @@ import (
 	"math/big"
 
 	"github.com/consensys/gnark-crypto/ecc/bn254/fr"
-	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	ethmath "github.com/ethereum/go-ethereum/common/math"
 	"github.com/ethereum/go-ethereum/signer/core/apitypes"
 
-	"github.com/invisi-lab/invisi-sdk-go/core"
+	"github.com/invisi-lab/invisi-sdk-go/primitives"
 	"github.com/invisi-lab/invisi-sdk-go/protocol/contracts"
 )
 
@@ -46,7 +45,7 @@ func normalizeRegistration(c RegistryContext, r AddressRegistration, options Reg
 	if err := identity.SetBytesCanonical(r.OwnerAddress[:]); err != nil || identity.IsZero() || new(big.Int).SetBytes(r.OwnerAddress[:]).BitLen() > 160 {
 		return r, fmt.Errorf("ownerAddress must be a nonzero zero-padded EVM owner")
 	}
-	if _, err := core.EncodeLongAddress(core.ReceivingAddress{OwnerAddress: identity, ViewingPublicKey: r.Keys.ViewingPublicKey, ClueKey: r.Keys.ClueKey[:]}); err != nil {
+	if _, err := primitives.EncodeLongAddress(primitives.ReceivingAddress{OwnerAddress: identity, ViewingPublicKey: r.Keys.ViewingPublicKey, ClueKey: r.Keys.ClueKey[:]}); err != nil {
 		return r, err
 	}
 	if r.Nonce == ^uint64(0) {
@@ -131,42 +130,3 @@ func BuildRegistrationCalldata(c RegistryContext, r AddressRegistration, signatu
 }
 
 // RegistryReadClient matches a generated caller bound to an explicitly selected registry.
-type RegistryReadClient interface {
-	ReceivingKeysOf(*bind.CallOpts, [32]byte) (struct {
-		Keys  contracts.IAddressRegistryReceivingKeys
-		Nonce uint64
-	}, error)
-}
-
-// CreateRegistryReceivingKeyLookup makes exactly one query and never falls back on RPC failure.
-func CreateRegistryReceivingKeyLookup(client RegistryReadClient, options *bind.CallOpts) core.ReceivingKeyLookup {
-	var copied bind.CallOpts
-	if options != nil {
-		copied = *options
-		if options.BlockNumber != nil {
-			copied.BlockNumber = new(big.Int).Set(options.BlockNumber)
-		}
-	}
-	return func(identity fr.Element) (*core.ReceivingKeys, error) {
-		if client == nil {
-			return nil, fmt.Errorf("registry read client is required")
-		}
-		if _, err := core.EncodeShortAddress(identity); err != nil {
-			return nil, err
-		}
-		callOptions := copied
-		if copied.BlockNumber != nil {
-			callOptions.BlockNumber = new(big.Int).Set(copied.BlockNumber)
-		}
-		result, err := client.ReceivingKeysOf(&callOptions, identity.Bytes())
-		if err != nil {
-			return nil, err
-		}
-		viewing := append([]byte(nil), result.Keys.ViewingPublicKey...)
-		clue := append([]byte(nil), result.Keys.ClueKey[:]...)
-		if _, err = core.EncodeLongAddress(core.ReceivingAddress{OwnerAddress: identity, ViewingPublicKey: viewing, ClueKey: clue}); err != nil {
-			return nil, err
-		}
-		return &core.ReceivingKeys{ViewingPublicKey: viewing, ClueKey: clue}, nil
-	}
-}

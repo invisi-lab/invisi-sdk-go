@@ -4,9 +4,10 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"github.com/ethereum/go-ethereum/common"
-	"github.com/invisi-lab/invisi-sdk-go/core"
 	"io"
+
+	"github.com/ethereum/go-ethereum/common"
+	"github.com/invisi-lab/invisi-sdk-go/primitives"
 )
 
 type AuditContext struct {
@@ -49,14 +50,14 @@ func Disclose(state State) (*AuditDisclosure, error) {
 	delete(encoded.Fields, "protocolAddress")
 	delete(encoded.Fields, "tokenAddress")
 	delete(encoded.Fields, "creditSharedKey")
-	keyHash, err := core.Poseidon2Hash(core.ElementFromUint64(7), state.SharedKey)
+	keyHash, err := primitives.Poseidon2Hash(primitives.ElementFromUint64(7), state.SharedKey)
 	if err != nil {
 		return nil, err
 	}
 	encoded.Fields["keyHash"] = keyHash.String()
 	flag := boolField(state.Unlimited)
 	encoded.Fields["unlimited"] = flag.String()
-	return &AuditDisclosure{AuditExport{AuditContext{state.ChainID.String(), common.BigToAddress(core.ElementToBigInt(state.ProtocolAddress)), common.BigToAddress(core.ElementToBigInt(state.TokenAddress))}, encoded.Fields, state.SharedKey.String(), common.Hash(commitment.Bytes())}}, nil
+	return &AuditDisclosure{AuditExport{AuditContext{state.ChainID.String(), common.BigToAddress(primitives.ElementToBigInt(state.ProtocolAddress)), common.BigToAddress(primitives.ElementToBigInt(state.TokenAddress))}, encoded.Fields, state.SharedKey.String(), common.Hash(commitment.Bytes())}}, nil
 }
 func (d *AuditDisclosure) Export() AuditExport {
 	copy := d.material
@@ -77,7 +78,7 @@ func (d *AuditDisclosure) Verify(expected common.Hash) (State, error) {
 	if err != nil || key.IsZero() {
 		return State{}, fmt.Errorf("invalid grant view key")
 	}
-	keyHash, err := core.Poseidon2Hash(core.ElementFromUint64(7), key)
+	keyHash, err := primitives.Poseidon2Hash(primitives.ElementFromUint64(7), key)
 	if err != nil {
 		return State{}, err
 	}

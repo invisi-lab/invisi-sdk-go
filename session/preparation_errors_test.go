@@ -5,8 +5,8 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/invisi-lab/invisi-sdk-go/core"
 	transaction "github.com/invisi-lab/invisi-sdk-go/internal/transaction"
+	"github.com/invisi-lab/invisi-sdk-go/primitives"
 	sdk "github.com/invisi-lab/invisi-sdk-go/sdk"
 )
 
@@ -39,7 +39,7 @@ func TestRawPayloadExceedsMemoLimitWithoutInterpretation(t *testing.T) {
 	original := input.Outputs[0]
 	payload := make([]byte, 300)
 	payload[0] = 255
-	input.Outputs[0], _ = sdk.NewNoteOutput(sdk.PaymentRequest{ChainID: core.ElementToBigInt(transaction.OutputSnapshot(original).Context.ChainID), ProtocolAddress: input.Protocol.Context().ProtocolAddress, TokenAddress: input.TokenAddress, Amount: original.Amount(), Recipient: sdk.InvisiRecipient{Address: original.To()}, Payload: payload})
+	input.Outputs[0], _ = sdk.NewNoteOutput(sdk.PaymentRequest{ChainID: primitives.ElementToBigInt(transaction.OutputSnapshot(original).Context.ChainID), ProtocolAddress: input.Protocol.Context().ProtocolAddress, TokenAddress: input.TokenAddress, Amount: original.Amount(), Recipient: sdk.InvisiRecipient{Address: original.To()}, Payload: payload})
 	prepared, err := invisi.PrepareTransfer(context.Background(), input)
 	if err != nil {
 		t.Fatal(err)

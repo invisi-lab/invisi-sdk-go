@@ -11,7 +11,7 @@ import (
 
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/invisi-lab/invisi-sdk-go/core"
+	"github.com/invisi-lab/invisi-sdk-go/primitives"
 	"github.com/invisi-lab/invisi-sdk-go/protocol"
 	"github.com/invisi-lab/invisi-sdk-go/prover"
 )
@@ -34,7 +34,7 @@ func TestFinalGasEstimatesAllCreditKinds(t *testing.T) {
 	owner := common.HexToAddress("0x2c")
 	deadline := big.NewInt(2000000300)
 	commitment, _ := s.Commitment()
-	drawn, _ := s.Draw(core.ElementFromUint64(7), c.Timestamp)
+	drawn, _ := s.Draw(primitives.ElementFromUint64(7), c.Timestamp)
 	source := protocol.InputSource{TreeId: big.NewInt(1), MerkleRoot: common.HexToHash("0x01")}
 	clue := make([]byte, 68)
 	clue[64] = 24
@@ -67,7 +67,7 @@ func TestFinalGasEstimatesAllCreditKinds(t *testing.T) {
 				t.Fatal(err)
 			}
 			got, err := p.EstimateGas(context.Background(), estimator, owner)
-			if err != nil || got.Source != "rpc" || got.GasUnits != 456789 || estimator.call.From != owner || estimator.call.To == nil || *estimator.call.To != common.BigToAddress(core.ElementToBigInt(c.ProtocolAddress)) || !bytes.Equal(estimator.call.Data, expected) || estimator.call.Value.Sign() != 0 {
+			if err != nil || got.Source != "rpc" || got.GasUnits != 456789 || estimator.call.From != owner || estimator.call.To == nil || *estimator.call.To != common.BigToAddress(primitives.ElementToBigInt(c.ProtocolAddress)) || !bytes.Equal(estimator.call.Data, expected) || estimator.call.Value.Sign() != 0 {
 				t.Fatal("incorrect final Credit call", got, err)
 			}
 			estimator.err = errors.New("chain failure")

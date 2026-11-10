@@ -10,9 +10,9 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
-	"github.com/invisi-lab/invisi-sdk-go/core"
 	"github.com/invisi-lab/invisi-sdk-go/credit"
 	native "github.com/invisi-lab/invisi-sdk-go/internal/testsupport"
+	"github.com/invisi-lab/invisi-sdk-go/primitives"
 	"github.com/invisi-lab/invisi-sdk-go/wallet"
 )
 
@@ -81,11 +81,11 @@ func TestResolvedWalletRejectsSubstitutedReceivingKeys(t *testing.T) {
 func TestAppDecryptorNeverReceivesMalformedEnvelope(t *testing.T) {
 	w := &Wallet{identity: common.HexToAddress("0x1111111111111111111111111111111111111111")}
 	called := false
-	decryptor := wallet.DeliveryDecryptorFuncs{Note: func(context.Context, []byte, core.NoteDecryptionContext) ([]byte, error) {
+	decryptor := wallet.DeliveryDecryptorFuncs{Note: func(context.Context, []byte, primitives.NoteDecryptionContext) ([]byte, error) {
 		called = true
 		return nil, nil
 	}}
-	if _, err := w.DecryptNote(context.Background(), decryptor, []byte{1}, core.NoteDecryptionContext{}); err == nil {
+	if _, err := w.DecryptNote(context.Background(), decryptor, []byte{1}, primitives.NoteDecryptionContext{}); err == nil {
 		t.Fatal("malformed envelope accepted")
 	}
 	if called {
@@ -103,11 +103,11 @@ func TestAppNonrecipientErrorsRemainFailures(t *testing.T) {
 	w := &Wallet{identity: common.Address{1}}
 	for _, appErr := range []error{wallet.ErrNotRecipient, fmt.Errorf("App failure: %w", wallet.ErrNotRecipient)} {
 		decryptor := wallet.DeliveryDecryptorFuncs{
-			Note:   func(context.Context, []byte, core.NoteDecryptionContext) ([]byte, error) { return nil, appErr },
+			Note:   func(context.Context, []byte, primitives.NoteDecryptionContext) ([]byte, error) { return nil, appErr },
 			Credit: func(context.Context, []byte, credit.DeliveryContext, credit.Role) ([]byte, error) { return nil, appErr },
 		}
 		envelope[0] = 1
-		if _, err = w.DecryptNote(context.Background(), decryptor, envelope, core.NoteDecryptionContext{}); err == nil || errors.Is(err, wallet.ErrNotRecipient) {
+		if _, err = w.DecryptNote(context.Background(), decryptor, envelope, primitives.NoteDecryptionContext{}); err == nil || errors.Is(err, wallet.ErrNotRecipient) {
 			t.Fatal("App Note error became nonrecipient", err)
 		}
 		envelope[0] = 0x82
@@ -116,12 +116,12 @@ func TestAppNonrecipientErrorsRemainFailures(t *testing.T) {
 		}
 	}
 	ctx, cancel := context.WithCancel(context.Background())
-	decryptor := wallet.DeliveryDecryptorFuncs{Note: func(context.Context, []byte, core.NoteDecryptionContext) ([]byte, error) {
+	decryptor := wallet.DeliveryDecryptorFuncs{Note: func(context.Context, []byte, primitives.NoteDecryptionContext) ([]byte, error) {
 		cancel()
 		return nil, wallet.ErrNotRecipient
 	}}
 	envelope[0] = 1
-	if _, err = w.DecryptNote(ctx, decryptor, envelope, core.NoteDecryptionContext{}); !errors.Is(err, context.Canceled) {
+	if _, err = w.DecryptNote(ctx, decryptor, envelope, primitives.NoteDecryptionContext{}); !errors.Is(err, context.Canceled) {
 		t.Fatal("cancellation was hidden by App error", err)
 	}
 }

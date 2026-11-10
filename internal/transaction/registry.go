@@ -6,14 +6,16 @@ import (
 	"math/big"
 	"sync"
 
+	registryrpc "github.com/invisi-lab/invisi-sdk-go/rpc"
+
 	"github.com/consensys/gnark-crypto/ecc/bn254/fr"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/signer/core/apitypes"
 
-	"github.com/invisi-lab/invisi-sdk-go/core"
+	"github.com/invisi-lab/invisi-sdk-go/primitives"
 	"github.com/invisi-lab/invisi-sdk-go/protocol"
-	"github.com/invisi-lab/invisi-sdk-go/protocol/contracts"
+	"github.com/invisi-lab/invisi-sdk-go/rpc/contracts"
 	protocolrpc "github.com/invisi-lab/invisi-sdk-go/rpc"
 )
 
@@ -63,7 +65,7 @@ func (r *AddressRegistry) ValidateDeployment(ctx context.Context) error {
 }
 
 func (r *AddressRegistry) Resolve(ctx context.Context, address string) (string, error) {
-	recipient, e := core.ResolveAddress(address, func(identity fr.Element) (*core.ReceivingKeys, error) {
+	recipient, e := primitives.ResolveAddress(address, func(identity fr.Element) (*primitives.ReceivingKeys, error) {
 		if e := r.ValidateDeployment(ctx); e != nil {
 			return nil, e
 		}
@@ -71,12 +73,12 @@ func (r *AddressRegistry) Resolve(ctx context.Context, address string) (string, 
 		if e != nil {
 			return nil, e
 		}
-		return protocol.CreateRegistryReceivingKeyLookup(caller, &bind.CallOpts{Context: ctx})(identity)
+		return registryrpc.CreateRegistryReceivingKeyLookup(caller, &bind.CallOpts{Context: ctx})(identity)
 	})
 	if e != nil {
 		return "", e
 	}
-	return core.EncodeLongAddress(recipient)
+	return primitives.EncodeLongAddress(recipient)
 }
 
 type RegistrationPreparation struct {
@@ -90,7 +92,7 @@ type RegistrationPreview struct {
 	Update                        bool
 	Nonce, Deadline               uint64
 	Status                        string
-	ReceivingKeys                 core.ReceivingKeys
+	ReceivingKeys                 primitives.ReceivingKeys
 	ReceiptBlock                  *protocolrpc.CanonicalBlock
 }
 
@@ -142,7 +144,7 @@ func (r *AddressRegistry) PrepareRegistration(ctx context.Context, options Regis
 	if e != nil {
 		return nil, e
 	}
-	identityField := core.BigIntToElement(options.Wallet.identity.Big())
+	identityField := primitives.BigIntToElement(options.Wallet.identity.Big())
 	identity := identityField.Bytes()
 	opts := &bind.CallOpts{Context: ctx, BlockNumber: head.Number}
 	registered, e := caller.IsRegistered(opts, identity)

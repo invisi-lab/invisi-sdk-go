@@ -1,9 +1,10 @@
 package credit
 
 import (
-	"github.com/ethereum/go-ethereum/common"
-	"github.com/invisi-lab/invisi-sdk-go/core"
 	"math/big"
+
+	"github.com/ethereum/go-ethereum/common"
+	"github.com/invisi-lab/invisi-sdk-go/primitives"
 )
 
 type Preview struct {
@@ -30,7 +31,7 @@ func (p *Prepared) Preview() Preview {
 	case i.Create != nil:
 		result.Kind = "create-credit"
 		if i.CreatedState != nil {
-			result.AvailableCredit.Set(core.ElementToBigInt(i.CreatedState.AvailableCredit))
+			result.AvailableCredit.Set(primitives.ElementToBigInt(i.CreatedState.AvailableCredit))
 			result.Unlimited = i.CreatedState.Unlimited
 		}
 		result.Owner = i.Create.Owner
@@ -39,11 +40,11 @@ func (p *Prepared) Preview() Preview {
 	case i.Update != nil:
 		result.Kind = "update-credit"
 		if i.UpdateChange != nil && len(i.Inputs) == 1 {
-			result.IncreaseAvailableCredit.Set(core.ElementToBigInt(i.UpdateChange.IncreaseAvailableCredit))
-			result.DecreaseAvailableCredit.Set(core.ElementToBigInt(i.UpdateChange.DecreaseAvailableCredit))
+			result.IncreaseAvailableCredit.Set(primitives.ElementToBigInt(i.UpdateChange.IncreaseAvailableCredit))
+			result.DecreaseAvailableCredit.Set(primitives.ElementToBigInt(i.UpdateChange.DecreaseAvailableCredit))
 			next, err := i.Inputs[0].State.Update(*i.UpdateChange, i.Update.Deadline.Uint64())
 			if err == nil {
-				result.AvailableCredit.Set(core.ElementToBigInt(next.State.AvailableCredit))
+				result.AvailableCredit.Set(primitives.ElementToBigInt(next.State.AvailableCredit))
 				result.Unlimited = next.State.Unlimited
 			}
 		}

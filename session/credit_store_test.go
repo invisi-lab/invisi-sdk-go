@@ -3,8 +3,9 @@ package session
 import (
 	"context"
 	"errors"
-	creditsession "github.com/invisi-lab/invisi-sdk-go/credit/session"
 	"testing"
+
+	creditsession "github.com/invisi-lab/invisi-sdk-go/session/credit"
 )
 
 func TestCreditAdapterUsesAtomicEncryptedWalletStore(t *testing.T) {

@@ -14,7 +14,7 @@ import (
 
 	"github.com/consensys/gnark-crypto/ecc/bn254/fr"
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/invisi-lab/invisi-sdk-go/core"
+	"github.com/invisi-lab/invisi-sdk-go/primitives"
 )
 
 type Method string
@@ -88,10 +88,10 @@ type DecryptResult struct {
 	Plaintext string `json:"plaintext"`
 }
 type AuthorizeParams struct {
-	Operation core.WalletOperation `json:"operation"`
-	Capacity  int                  `json:"capacity"`
-	Context   ProtocolContext      `json:"context"`
-	Words     []string             `json:"words"`
+	Operation primitives.WalletOperation `json:"operation"`
+	Capacity  int                        `json:"capacity"`
+	Context   ProtocolContext            `json:"context"`
+	Words     []string                   `json:"words"`
 }
 type AuthorizeResult struct {
 	SpendingPublicKey string `json:"spendingPublicKey"`
@@ -140,42 +140,42 @@ func Element(s string) (fr.Element, error) {
 	if !ok || v.Cmp(fr.Modulus()) >= 0 {
 		return zero, errors.New("field out of range")
 	}
-	return core.BigIntToElement(v), nil
+	return primitives.BigIntToElement(v), nil
 }
-func (c ProtocolContext) Core() (core.ProtocolContext, error) {
+func (c ProtocolContext) Core() (primitives.ProtocolContext, error) {
 	chain, e := Element(c.ChainID)
 	if e != nil {
-		return core.ProtocolContext{}, e
+		return primitives.ProtocolContext{}, e
 	}
 	address, e := Element(c.ProtocolAddress)
 	if e != nil {
-		return core.ProtocolContext{}, e
+		return primitives.ProtocolContext{}, e
 	}
-	if core.ElementToBigInt(chain).BitLen() > 64 || core.ElementToBigInt(address).BitLen() > 160 || address.IsZero() {
-		return core.ProtocolContext{}, errors.New("invalid protocol context")
+	if primitives.ElementToBigInt(chain).BitLen() > 64 || primitives.ElementToBigInt(address).BitLen() > 160 || address.IsZero() {
+		return primitives.ProtocolContext{}, errors.New("invalid protocol context")
 	}
-	return core.ProtocolContext{ChainID: chain, ProtocolAddress: address}, nil
+	return primitives.ProtocolContext{ChainID: chain, ProtocolAddress: address}, nil
 }
-func Context(c core.ProtocolContext) ProtocolContext {
+func Context(c primitives.ProtocolContext) ProtocolContext {
 	return ProtocolContext{c.ChainID.String(), c.ProtocolAddress.String()}
 }
-func (p AuthorizeParams) Core() (core.WalletAuthorizationRequest, error) {
+func (p AuthorizeParams) Core() (primitives.WalletAuthorizationRequest, error) {
 	c, e := p.Context.Core()
 	if e != nil {
-		return core.WalletAuthorizationRequest{}, e
+		return primitives.WalletAuthorizationRequest{}, e
 	}
 	words := make([]fr.Element, len(p.Words))
 	for i, s := range p.Words {
 		words[i], e = Element(s)
 		if e != nil {
-			return core.WalletAuthorizationRequest{}, e
+			return primitives.WalletAuthorizationRequest{}, e
 		}
 	}
-	r := core.WalletAuthorizationRequest{Context: c, Operation: p.Operation, Capacity: p.Capacity, Words: words}
-	_, e = core.ComputeWalletAuthorizationDigest(r)
+	r := primitives.WalletAuthorizationRequest{Context: c, Operation: p.Operation, Capacity: p.Capacity, Words: words}
+	_, e = primitives.ComputeWalletAuthorizationDigest(r)
 	return r, e
 }
-func Authorization(r core.WalletAuthorizationRequest) AuthorizeParams {
+func Authorization(r primitives.WalletAuthorizationRequest) AuthorizeParams {
 	w := make([]string, len(r.Words))
 	for i, v := range r.Words {
 		w[i] = v.String()
@@ -241,8 +241,8 @@ func Prepare(id string, owner common.Address, method Method, params any) (Reques
 }
 
 // AcceptAuthorization verifies the owner, request transcript, digest and canonical signature.
-func AcceptAuthorization(q Request, r Response) (core.WalletAuthorizationWitness, error) {
-	var witness core.WalletAuthorizationWitness
+func AcceptAuthorization(q Request, r Response) (primitives.WalletAuthorizationWitness, error) {
+	var witness primitives.WalletAuthorizationWitness
 	if q.Method != Authorize {
 		return witness, errors.New("wallet authorization response required")
 	}
@@ -276,15 +276,15 @@ func AcceptAuthorization(q Request, r Response) (core.WalletAuthorizationWitness
 	if err != nil {
 		return witness, err
 	}
-	digest, err := core.ComputeWalletAuthorizationDigest(request)
+	digest, err := primitives.ComputeWalletAuthorizationDigest(request)
 	if err != nil {
 		return witness, err
 	}
 	if !bytes.Equal(digest[:], returned) {
 		return witness, errors.New("wallet digest mismatch")
 	}
-	owner := core.BigIntToElement(common.HexToAddress(q.OwnerAddress).Big())
-	valid, err := core.VerifyWalletAuthorization(owner, public, signature, request)
+	owner := primitives.BigIntToElement(common.HexToAddress(q.OwnerAddress).Big())
+	valid, err := primitives.VerifyWalletAuthorization(owner, public, signature, request)
 	if err != nil {
 		return witness, err
 	}

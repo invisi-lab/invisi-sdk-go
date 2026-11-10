@@ -9,8 +9,8 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
-	"github.com/invisi-lab/invisi-sdk-go/core"
 	"github.com/invisi-lab/invisi-sdk-go/examples/shared"
+	"github.com/invisi-lab/invisi-sdk-go/primitives"
 	"github.com/invisi-lab/invisi-sdk-go/protocol"
 	"github.com/invisi-lab/invisi-sdk-go/prover"
 	"github.com/invisi-lab/invisi-sdk-go/prover/native"
@@ -80,7 +80,7 @@ func main() {
 		}
 		var inputs []sdk.NoteInput
 		for _, candidate := range candidates {
-			if core.ElementToBigInt(candidate.Input.Note.Amount).Cmp(big.NewInt(2)) < 0 {
+			if primitives.ElementToBigInt(candidate.Input.Note.Amount).Cmp(big.NewInt(2)) < 0 {
 				continue
 			}
 			inputs = append(inputs, candidate.Input)
@@ -93,7 +93,7 @@ func main() {
 		}
 		preparedMembers := make([]*sdk.PreparedTransaction, 2)
 		for i, input := range inputs {
-			amount := new(big.Int).Div(core.ElementToBigInt(input.Note.Amount), big.NewInt(2))
+			amount := new(big.Int).Div(primitives.ElementToBigInt(input.Note.Amount), big.NewInt(2))
 			if amount.Sign() == 0 {
 				log.Fatal("each note must contain at least two units")
 			}

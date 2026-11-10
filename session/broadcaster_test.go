@@ -18,11 +18,11 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/signer/core/apitypes"
 
-	"github.com/invisi-lab/invisi-sdk-go/broadcaster"
-	"github.com/invisi-lab/invisi-sdk-go/core"
 	transaction "github.com/invisi-lab/invisi-sdk-go/internal/transaction"
+	"github.com/invisi-lab/invisi-sdk-go/primitives"
 	"github.com/invisi-lab/invisi-sdk-go/protocol"
 	"github.com/invisi-lab/invisi-sdk-go/provenance"
+	"github.com/invisi-lab/invisi-sdk-go/rpc/broadcaster"
 	sdk "github.com/invisi-lab/invisi-sdk-go/sdk"
 )
 
@@ -270,11 +270,11 @@ func TestBroadcasterPrivateShortfallSelectsAndAtomicallyReservesAnotherNote(t *t
 		t.Fatal(e)
 	}
 	note := original.plan.Inputs[0].Note
-	note.Amount = core.ElementFromUint64(50)
-	note.Nonce = core.ElementFromUint64(456)
-	identity, _ := core.ComputeNoteIdentity(note.OwnerAddress, note.Nonce)
-	commit, _ := core.ComputeNoteCommitment(note.ChainID, note.ProtocolAddress, identity, note.TokenAddress, note.Amount)
-	nf, _ := core.ComputeNoteNullifier(note.ChainID, note.ProtocolAddress, note.Nonce, commit)
+	note.Amount = primitives.ElementFromUint64(50)
+	note.Nonce = primitives.ElementFromUint64(456)
+	identity, _ := primitives.ComputeNoteIdentity(note.OwnerAddress, note.Nonce)
+	commit, _ := primitives.ComputeNoteCommitment(note.ChainID, note.ProtocolAddress, identity, note.TokenAddress, note.Amount)
+	nf, _ := primitives.ComputeNoteNullifier(note.ChainID, note.ProtocolAddress, note.Nonce, commit)
 	leaf := transaction.FieldHash(commit)
 	s.options.Provider.(sessionProvider).leaves.Store(uint64(2), leaf)
 	if e = s.options.Store.Update(ctx, s.scope, func(state *WalletState) error {

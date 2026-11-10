@@ -5,12 +5,13 @@ import (
 	"errors"
 	"sync"
 
+	"github.com/invisi-lab/invisi-sdk-go/rpc/chain"
+
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 
-	"github.com/invisi-lab/invisi-sdk-go/core"
 	transaction "github.com/invisi-lab/invisi-sdk-go/internal/transaction"
-	"github.com/invisi-lab/invisi-sdk-go/protocol"
+	"github.com/invisi-lab/invisi-sdk-go/primitives"
 	"github.com/invisi-lab/invisi-sdk-go/prover"
 	protocolrpc "github.com/invisi-lab/invisi-sdk-go/rpc"
 	"github.com/invisi-lab/invisi-sdk-go/sdk"
@@ -19,7 +20,7 @@ import (
 type Options struct {
 	Invisi        *sdk.Invisi
 	Wallet        *sdk.Wallet
-	Protocol      *protocol.Protocol
+	Protocol      *chain.Protocol
 	Store         WalletStore
 	Namespace     string
 	Signer        *bind.TransactOpts
@@ -37,7 +38,7 @@ type WalletSession struct {
 	sends       *sessionSendState
 	options     sessionOptions
 	wallet      *sdk.Wallet
-	protocol    *protocol.Protocol
+	protocol    *chain.Protocol
 	scope       WalletScope
 	rpc         *protocolrpc.ProtocolRpcClient
 	runtime     *transaction.Runtime
@@ -83,7 +84,7 @@ type Operation struct {
 	session         *WalletSession
 	plan            transaction.Plan
 	status          string
-	authorization   *core.WalletAuthorizationWitness
+	authorization   *primitives.WalletAuthorizationWitness
 	bundle          *prover.ProofBundle
 	data            []byte
 	transactionHash common.Hash
@@ -111,7 +112,7 @@ func (o *Operation) apply(e *transaction.Execution) {
 	o.transactionHash = e.TransactionHash
 	o.workerID = e.WorkerID
 }
-func (s *WalletSession) coreContext() core.ProtocolContext { return s.runtime.CoreContext() }
+func (s *WalletSession) coreContext() primitives.ProtocolContext { return s.runtime.CoreContext() }
 func (s *WalletSession) canonical(ctx context.Context, b protocolrpc.CanonicalBlock) error {
 	return s.runtimeSnapshot().Canonical(ctx, b)
 }

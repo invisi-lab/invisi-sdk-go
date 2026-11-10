@@ -2,13 +2,14 @@ package credit
 
 import (
 	"encoding/json"
-	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/signer/core/apitypes"
-	"github.com/invisi-lab/invisi-sdk-go/core"
-	"github.com/invisi-lab/invisi-sdk-go/protocol"
 	"math/big"
 	"os"
 	"testing"
+
+	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/signer/core/apitypes"
+	"github.com/invisi-lab/invisi-sdk-go/primitives"
+	"github.com/invisi-lab/invisi-sdk-go/protocol"
 )
 
 func TestCanonicalRequestStatements(t *testing.T) {
@@ -35,7 +36,7 @@ func TestCanonicalRequestStatements(t *testing.T) {
 	next, _ := s.Draw(s.SingleLimit, 2000000000)
 	_ = next
 	created := CreateParams{Token: ctx.TokenAddress, Owner: common.BigToAddress(big.NewInt(44)), RevocationShard: 1, CreditCommitment: common.HexToHash(hex(c)), Deadline: big.NewInt(2000000300)}
-	drawn, _ := s.Draw(core.ElementFromUint64(7), 2000000000)
+	drawn, _ := s.Draw(primitives.ElementFromUint64(7), 2000000000)
 	updated := UpdateParams{Token: ctx.TokenAddress, Owner: created.Owner, Source: protocol.InputSource{TreeId: big.NewInt(1), MerkleRoot: common.HexToHash("0x01")}, Nullifier: common.HexToHash(hex(nf)), CreditCommitment: common.HexToHash(hex(drawn.StateCommitment)), RevocationShard: 1, Deadline: created.Deadline}
 	draw := DrawParams{Token: ctx.TokenAddress, Sources: []protocol.InputSource{updated.Source}, Payers: []Payer{{Payer: created.Owner, Amount: big.NewInt(7)}}, GrantRefs: []GrantRef{{PayerIndex: big.NewInt(0), Shard: 1}}, Nullifiers: []common.Hash{updated.Nullifier}, CreditCommitments: []common.Hash{updated.CreditCommitment}, RecoveryAmounts: []common.Hash{common.HexToHash(hex(drawn.RecoveryAmount))}, NoteCommitment: common.HexToHash("0x02"), TotalAmount: big.NewInt(7), Deadline: created.Deadline}
 	cases := []struct {

@@ -6,7 +6,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/signer/core/apitypes"
-	"github.com/invisi-lab/invisi-sdk-go/core"
+	"github.com/invisi-lab/invisi-sdk-go/primitives"
 )
 
 func TestExampleSignatureRequiresExpectedOwner(t *testing.T) {
@@ -19,7 +19,7 @@ func TestExampleSignatureRequiresExpectedOwner(t *testing.T) {
 	}
 	owner := crypto.PubkeyToAddress(key.PublicKey)
 	data := apitypes.TypedData{Types: apitypes.Types{"EIP712Domain": {{Name: "name", Type: "string"}}, "Example": {{Name: "amount", Type: "uint256"}}}, PrimaryType: "Example", Domain: apitypes.TypedDataDomain{Name: "Example"}, Message: apitypes.TypedDataMessage{"amount": "10"}}
-	request, err := core.NewSigningRequest(data)
+	request, err := primitives.NewSigningRequest(data)
 	if err != nil {
 		t.Fatal(err)
 	}

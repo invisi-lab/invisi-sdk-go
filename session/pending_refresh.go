@@ -7,8 +7,8 @@ import (
 	"sync"
 
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/invisi-lab/invisi-sdk-go/core"
 	"github.com/invisi-lab/invisi-sdk-go/credit"
+	"github.com/invisi-lab/invisi-sdk-go/primitives"
 	protocolrpc "github.com/invisi-lab/invisi-sdk-go/rpc"
 	"github.com/invisi-lab/invisi-sdk-go/wallet"
 )
@@ -79,20 +79,20 @@ func (s *WalletSession) cloneForRefresh(base WalletState) (*WalletSession, error
 func walletFingerprint(m wallet.Method, p wallet.DecryptParams) string {
 	return string(m) + ":" + string(wallet.Encode(p))
 }
-func deliveryRequest(envelope []byte, c core.ProtocolContext, token string, commitment common.Hash, role string) wallet.DecryptParams {
+func deliveryRequest(envelope []byte, c primitives.ProtocolContext, token string, commitment common.Hash, role string) wallet.DecryptParams {
 	return wallet.DecryptParams{Envelope: wallet.Hex(envelope), Context: wallet.DeliveryContext{ProtocolContext: wallet.Context(c), TokenAddress: token, OutputCommitment: commitment.Hex(), Role: role}}
 }
-func resolveNote(resolvers []walletResolver, envelope []byte, c core.NoteDecryptionContext) (core.Note, error) {
+func resolveNote(resolvers []walletResolver, envelope []byte, c primitives.NoteDecryptionContext) (primitives.Note, error) {
 	if len(resolvers) == 0 || resolvers[0] == nil {
-		return core.Note{}, errors.New("wallet response required")
+		return primitives.Note{}, errors.New("wallet response required")
 	}
 	v, err := resolvers[0](wallet.DecryptNote, deliveryRequest(envelope, c.ProtocolContext, c.TokenAddress.String(), common.Hash(c.OutputCommitment.Bytes()), ""))
 	if err != nil {
-		return core.Note{}, err
+		return primitives.Note{}, err
 	}
-	note, ok := v.(core.Note)
+	note, ok := v.(primitives.Note)
 	if !ok {
-		return core.Note{}, errors.New("invalid note response")
+		return primitives.Note{}, errors.New("invalid note response")
 	}
 	return note, nil
 }
@@ -193,7 +193,7 @@ func (p *PendingWalletRefresh) Decrypt(ctx context.Context, decryptor wallet.Del
 			return nil, err
 		}
 		if method == wallet.DecryptNote {
-			return s.wallet.DecryptNote(ctx, decryptor, envelope, core.NoteDecryptionContext{NoteEncryptionContext: core.NoteEncryptionContext{ProtocolContext: c, OutputCommitment: commitment}, TokenAddress: token})
+			return s.wallet.DecryptNote(ctx, decryptor, envelope, primitives.NoteDecryptionContext{NoteEncryptionContext: primitives.NoteEncryptionContext{ProtocolContext: c, OutputCommitment: commitment}, TokenAddress: token})
 		}
 		role := credit.Owner
 		if params.Context.Role == "spender" {
@@ -241,7 +241,7 @@ func (s *WalletSession) storedWalletResolver(ctx context.Context) walletResolver
 		var plaintext []byte
 		if method == wallet.DecryptNote {
 			if n, ok := state.Notes[commitment]; ok {
-				plaintext = core.EncodeNotePlaintext(n.Note)
+				plaintext = primitives.EncodeNotePlaintext(n.Note)
 			}
 		} else {
 			for _, c := range state.PostpaidCredit.Grants {
@@ -271,13 +271,13 @@ func (s *WalletSession) storedWalletResolver(ctx context.Context) walletResolver
 			return nil, err
 		}
 		if method == wallet.DecryptNote {
-			return core.DecodeNotePlaintext(plaintext, core.NoteDecryptionContext{NoteEncryptionContext: core.NoteEncryptionContext{ProtocolContext: c, OutputCommitment: leaf}, TokenAddress: token, OwnerAddress: core.BigIntToElement(s.wallet.OwnerAddress().Big())})
+			return primitives.DecodeNotePlaintext(plaintext, primitives.NoteDecryptionContext{NoteEncryptionContext: primitives.NoteEncryptionContext{ProtocolContext: c, OutputCommitment: leaf}, TokenAddress: token, OwnerAddress: primitives.BigIntToElement(s.wallet.OwnerAddress().Big())})
 		}
 		role := credit.Owner
 		if params.Context.Role == "spender" {
 			role = credit.Spender
 		}
-		return credit.DecodeDeliveryPlaintext(plaintext, credit.DeliveryContext{ProtocolContext: c, TokenAddress: token, Commitment: leaf, RecipientIdentity: core.BigIntToElement(s.wallet.OwnerAddress().Big())}, role, s.wallet.ViewingPublicKey())
+		return credit.DecodeDeliveryPlaintext(plaintext, credit.DeliveryContext{ProtocolContext: c, TokenAddress: token, Commitment: leaf, RecipientIdentity: primitives.BigIntToElement(s.wallet.OwnerAddress().Big())}, role, s.wallet.ViewingPublicKey())
 	}
 }
 

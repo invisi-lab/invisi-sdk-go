@@ -2,14 +2,15 @@ package credit
 
 import (
 	"fmt"
+	"math/big"
+
 	"github.com/consensys/gnark-crypto/ecc/bn254/fr"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/signer/core/apitypes"
-	"github.com/invisi-lab/invisi-sdk-go/core"
+	"github.com/invisi-lab/invisi-sdk-go/primitives"
 	"github.com/invisi-lab/invisi-sdk-go/protocol"
 	"github.com/invisi-lab/invisi-sdk-go/prover"
-	"math/big"
 )
 
 type Authority struct{ PublicKey, Signature []byte }
@@ -25,7 +26,7 @@ func authWitness(identity fr.Element, typed apitypes.TypedData, auth Authority) 
 	if err != nil {
 		return nil, err
 	}
-	if crypto.PubkeyToAddress(*public).Big().Cmp(core.ElementToBigInt(identity)) != 0 {
+	if crypto.PubkeyToAddress(*public).Big().Cmp(primitives.ElementToBigInt(identity)) != 0 {
 		return nil, fmt.Errorf("Credit authority identity mismatch")
 	}
 	digest, _, err := apitypes.TypedDataAndHash(typed)
@@ -73,7 +74,7 @@ func (p CreateParams) Witness(c Context, deliveries []protocol.Delivery, state S
 	if err != nil {
 		return nil, err
 	}
-	if state.ProtocolContext != c.ProtocolContext || core.ElementToBigInt(state.TokenAddress).Cmp(c.TokenAddress.Big()) != 0 || core.ElementToBigInt(state.OwnerWalletIdentity).Cmp(p.Owner.Big()) != 0 || core.ElementToBigInt(state.RevocationShard).Uint64() != p.RevocationShard || core.ElementToBigInt(state.RevocationSlot).Uint64() != uint64(p.RevocationSlot) || common.Hash(commitment.Bytes()) != p.CreditCommitment {
+	if state.ProtocolContext != c.ProtocolContext || primitives.ElementToBigInt(state.TokenAddress).Cmp(c.TokenAddress.Big()) != 0 || primitives.ElementToBigInt(state.OwnerWalletIdentity).Cmp(p.Owner.Big()) != 0 || primitives.ElementToBigInt(state.RevocationShard).Uint64() != p.RevocationShard || primitives.ElementToBigInt(state.RevocationSlot).Uint64() != uint64(p.RevocationSlot) || common.Hash(commitment.Bytes()) != p.CreditCommitment {
 		return nil, fmt.Errorf("created Credit opening mismatch")
 	}
 	for _, v := range state.Usage.Fields() {
@@ -81,7 +82,7 @@ func (p CreateParams) Witness(c Context, deliveries []protocol.Delivery, state S
 			return nil, fmt.Errorf("created grant must have zero usage")
 		}
 	}
-	if core.ElementToBigInt(state.Expiry).Cmp(p.Deadline) < 0 {
+	if primitives.ElementToBigInt(state.Expiry).Cmp(p.Deadline) < 0 {
 		return nil, fmt.Errorf("grant expires before deadline")
 	}
 	private, err := authWitness(state.OwnerWalletIdentity, typed, auth)
@@ -115,14 +116,14 @@ func (s LocatedState) root() (common.Hash, error) {
 		return common.Hash{}, err
 	}
 	for i, h := range s.Path {
-		v, err := core.HexToElement(h.Hex())
+		v, err := primitives.HexToElement(h.Hex())
 		if err != nil {
 			return common.Hash{}, err
 		}
 		if (s.LeafIndex>>i)&1 == 0 {
-			leaf, err = core.Poseidon2Hash(leaf, v)
+			leaf, err = primitives.Poseidon2Hash(leaf, v)
 		} else {
-			leaf, err = core.Poseidon2Hash(v, leaf)
+			leaf, err = primitives.Poseidon2Hash(v, leaf)
 		}
 		if err != nil {
 			return common.Hash{}, err
@@ -143,7 +144,7 @@ func (p UpdateParams) Witness(c Context, deliveries []protocol.Delivery, input L
 		return nil, err
 	}
 	s := input.State
-	if s.ProtocolContext != c.ProtocolContext || core.ElementToBigInt(s.TokenAddress).Cmp(p.Token.Big()) != 0 || core.ElementToBigInt(s.OwnerWalletIdentity).Cmp(p.Owner.Big()) != 0 || core.ElementToBigInt(s.RevocationShard).Uint64() != p.RevocationShard || core.ElementToBigInt(s.RevocationSlot).Uint64() != uint64(p.RevocationSlot) {
+	if s.ProtocolContext != c.ProtocolContext || primitives.ElementToBigInt(s.TokenAddress).Cmp(p.Token.Big()) != 0 || primitives.ElementToBigInt(s.OwnerWalletIdentity).Cmp(p.Owner.Big()) != 0 || primitives.ElementToBigInt(s.RevocationShard).Uint64() != p.RevocationShard || primitives.ElementToBigInt(s.RevocationSlot).Uint64() != uint64(p.RevocationSlot) {
 		return nil, fmt.Errorf("updated grant namespace mismatch")
 	}
 	next, err := s.Update(change, p.Deadline.Uint64())
@@ -221,7 +222,7 @@ func (p DrawParams) Witness(c Context, deliveries []protocol.Delivery, credits [
 	}
 	for i, input := range credits {
 		s := input.State
-		if s.ProtocolContext != c.ProtocolContext || core.ElementToBigInt(s.TokenAddress).Cmp(p.Token.Big()) != 0 || s.SpenderWalletIdentity != identity || core.ElementToBigInt(s.Expiry).Cmp(p.Deadline) < 0 {
+		if s.ProtocolContext != c.ProtocolContext || primitives.ElementToBigInt(s.TokenAddress).Cmp(p.Token.Big()) != 0 || s.SpenderWalletIdentity != identity || primitives.ElementToBigInt(s.Expiry).Cmp(p.Deadline) < 0 {
 			return nil, fmt.Errorf("Credit context, spender or expiry mismatch")
 		}
 		si := -1
@@ -235,7 +236,7 @@ func (p DrawParams) Witness(c Context, deliveries []protocol.Delivery, credits [
 			return nil, fmt.Errorf("Credit source missing")
 		}
 		pi := int(p.GrantRefs[i].PayerIndex.Uint64())
-		if core.ElementToBigInt(s.OwnerWalletIdentity).Cmp(p.Payers[pi].Payer.Big()) != 0 || core.ElementToBigInt(s.RevocationShard).Uint64() != p.GrantRefs[i].Shard || core.ElementToBigInt(s.RevocationSlot).Uint64() != uint64(p.GrantRefs[i].Slot) {
+		if primitives.ElementToBigInt(s.OwnerWalletIdentity).Cmp(p.Payers[pi].Payer.Big()) != 0 || primitives.ElementToBigInt(s.RevocationShard).Uint64() != p.GrantRefs[i].Shard || primitives.ElementToBigInt(s.RevocationSlot).Uint64() != uint64(p.GrantRefs[i].Slot) {
 			return nil, fmt.Errorf("Credit payer or namespace mismatch")
 		}
 		root, err := input.root()
@@ -265,7 +266,7 @@ func (p DrawParams) Witness(c Context, deliveries []protocol.Delivery, credits [
 		paths[i] = input.pathFields()
 		sources[si] = true
 		payers[pi] = true
-		totals[pi].Add(totals[pi], core.ElementToBigInt(input.Debit))
+		totals[pi].Add(totals[pi], primitives.ElementToBigInt(input.Debit))
 	}
 	if len(sources) != len(p.Sources) || len(payers) != len(p.Payers) {
 		return nil, fmt.Errorf("unused Credit public group")
@@ -280,7 +281,7 @@ func (p DrawParams) Witness(c Context, deliveries []protocol.Delivery, credits [
 	}
 	fee, _ := normalizeFee(p.FeeRecipient, p.FeeAmount)
 	net := new(big.Int).Sub(p.TotalAmount, fee)
-	out, err := core.Poseidon2Hash(core.ElementFromUint64(3), c.ChainID, c.ProtocolAddress, outputIdentity, core.BigIntToElement(p.Token.Big()), core.BigIntToElement(net))
+	out, err := primitives.Poseidon2Hash(primitives.ElementFromUint64(3), c.ChainID, c.ProtocolAddress, outputIdentity, primitives.BigIntToElement(p.Token.Big()), primitives.BigIntToElement(net))
 	if err != nil {
 		return nil, err
 	}

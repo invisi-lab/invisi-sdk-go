@@ -4,18 +4,19 @@ import (
 	"context"
 	"crypto/ecdsa"
 	"encoding/json"
-	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/crypto"
-	"github.com/ethereum/go-ethereum/signer/core/apitypes"
-	"github.com/invisi-lab/invisi-sdk-go/broadcaster"
-	"github.com/invisi-lab/invisi-sdk-go/core"
-	"github.com/invisi-lab/invisi-sdk-go/protocol"
-	"github.com/invisi-lab/invisi-sdk-go/provenance"
 	"io"
 	"math/big"
 	"net/http"
 	"strings"
 	"testing"
+
+	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/crypto"
+	"github.com/ethereum/go-ethereum/signer/core/apitypes"
+	"github.com/invisi-lab/invisi-sdk-go/primitives"
+	"github.com/invisi-lab/invisi-sdk-go/protocol"
+	"github.com/invisi-lab/invisi-sdk-go/provenance"
+	"github.com/invisi-lab/invisi-sdk-go/rpc/broadcaster"
 )
 
 type creditRoundTrip func(*http.Request) (*http.Response, error)
@@ -54,7 +55,7 @@ func creditBroadcaster(t *testing.T, c Context, signer *ecdsa.PrivateKey, collec
 				hash = common.HexToHash(bound)
 			}
 			q := broadcaster.Quote{Token: intent.Token, FeeRecipient: intent.FeeRecipient, FeeAmount: intent.FeeAmount.String(), Deadline: intent.Deadline.String(), MaxGas: "2000000", RequestHash: hash}
-			typed, err := broadcaster.QuoteTypedData(q, broadcaster.Trust{ChainID: core.ElementToBigInt(c.ChainID), Protocol: common.BigToAddress(core.ElementToBigInt(c.ProtocolAddress)), Signer: crypto.PubkeyToAddress(signer.PublicKey)})
+			typed, err := broadcaster.QuoteTypedData(q, broadcaster.Trust{ChainID: primitives.ElementToBigInt(c.ChainID), Protocol: common.BigToAddress(primitives.ElementToBigInt(c.ProtocolAddress)), Signer: crypto.PubkeyToAddress(signer.PublicKey)})
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -73,7 +74,7 @@ func creditBroadcaster(t *testing.T, c Context, signer *ecdsa.PrivateKey, collec
 			}
 			result = signed
 		case "broadcaster_getStatus":
-			result = map[string]any{"apiVersion": "v1", "protocolVersion": "1", "chainId": core.ElementToBigInt(c.ChainID).String(), "protocol": common.BigToAddress(core.ElementToBigInt(c.ProtocolAddress)).Hex(), "sender": crypto.PubkeyToAddress(signer.PublicKey).Hex(), "feeRecipient": collector.Hex(), "submissionHalted": false, "provenance": map[string]any{"enabled": len(policies) > 0, "requestHashFormat": broadcaster.ProvenanceRequestHashFormat, "trackingRequired": true, "trackingSupported": true}}
+			result = map[string]any{"apiVersion": "v1", "protocolVersion": "1", "chainId": primitives.ElementToBigInt(c.ChainID).String(), "protocol": common.BigToAddress(primitives.ElementToBigInt(c.ProtocolAddress)).Hex(), "sender": crypto.PubkeyToAddress(signer.PublicKey).Hex(), "feeRecipient": collector.Hex(), "submissionHalted": false, "provenance": map[string]any{"enabled": len(policies) > 0, "requestHashFormat": broadcaster.ProvenanceRequestHashFormat, "trackingRequired": true, "trackingSupported": true}}
 		case "broadcaster_getTransactionStatus":
 			result = broadcaster.Status{ID: request.Params[0]["id"].(string), State: "uncertain"}
 		case "broadcaster_submitTransaction":

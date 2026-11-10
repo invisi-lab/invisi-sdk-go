@@ -7,7 +7,7 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 
-	"github.com/invisi-lab/invisi-sdk-go/core"
+	"github.com/invisi-lab/invisi-sdk-go/primitives"
 )
 
 //go:embed witness-layouts.json
@@ -35,7 +35,7 @@ func layouts() map[string]layout {
 
 func Statement(name, target string, inputs []common.Hash) (ProofStatement, error) {
 	for _, input := range inputs {
-		if _, e := core.HexToElement(input.Hex()); e != nil {
+		if _, e := primitives.HexToElement(input.Hex()); e != nil {
 			return ProofStatement{}, errors.New("noncanonical public field")
 		}
 	}

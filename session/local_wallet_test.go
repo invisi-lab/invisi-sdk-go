@@ -5,12 +5,12 @@ import (
 	"sync"
 
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/invisi-lab/invisi-sdk-go/core"
 	"github.com/invisi-lab/invisi-sdk-go/credit"
-	creditsession "github.com/invisi-lab/invisi-sdk-go/credit/session"
 	native "github.com/invisi-lab/invisi-sdk-go/internal/testsupport"
+	"github.com/invisi-lab/invisi-sdk-go/primitives"
 	protocolrpc "github.com/invisi-lab/invisi-sdk-go/rpc"
 	"github.com/invisi-lab/invisi-sdk-go/sdk"
+	creditsession "github.com/invisi-lab/invisi-sdk-go/session/credit"
 	"github.com/invisi-lab/invisi-sdk-go/wallet"
 )
 
@@ -34,19 +34,19 @@ func localTestWallet(key string) (*sdk.Wallet, error) {
 	if err != nil {
 		return nil, err
 	}
-	raw, err := core.DecodePrivateKey(key)
+	raw, err := primitives.DecodePrivateKey(key)
 	if err != nil {
 		return nil, err
 	}
 	defer clear(raw)
-	m, err := core.DeriveWallet(raw)
+	m, err := primitives.DeriveWallet(raw)
 	testMaterials.Store(w.OwnerAddress(), m)
 	testExecutors.Store(w.OwnerAddress(), e)
 	return w, err
 }
-func localTestMaterial(w *sdk.Wallet) *core.InvisiWallet {
+func localTestMaterial(w *sdk.Wallet) *primitives.InvisiWallet {
 	v, _ := testMaterials.Load(w.OwnerAddress())
-	return v.(*core.InvisiWallet)
+	return v.(*primitives.InvisiWallet)
 }
 
 func testDisclosureViewer(s *WalletSession) *sdk.ViewingCapability {
@@ -106,12 +106,12 @@ func readTransactionForTest(s *WalletSession, ctx context.Context, hash common.H
 func testDeliveryDecryptor(s *WalletSession) wallet.DeliveryDecryptorFuncs {
 	m := localTestMaterial(s.wallet)
 	return wallet.DeliveryDecryptorFuncs{
-		Note: func(ctx context.Context, b []byte, c core.NoteDecryptionContext) ([]byte, error) {
-			n, err := core.DecryptPrivateTransferNote(m.ViewingPrivateKey, b, c)
+		Note: func(ctx context.Context, b []byte, c primitives.NoteDecryptionContext) ([]byte, error) {
+			n, err := primitives.DecryptPrivateTransferNote(m.ViewingPrivateKey, b, c)
 			if err != nil {
 				return nil, nil
 			}
-			return core.EncodeNotePlaintext(n), nil
+			return primitives.EncodeNotePlaintext(n), nil
 		},
 		Credit: func(ctx context.Context, b []byte, c credit.DeliveryContext, r credit.Role) ([]byte, error) {
 			n, err := credit.Decrypt(m.ViewingPrivateKey, b, c, r)

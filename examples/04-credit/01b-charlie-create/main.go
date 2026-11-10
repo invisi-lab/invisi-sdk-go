@@ -12,10 +12,10 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
-	"github.com/invisi-lab/invisi-sdk-go/core"
 	"github.com/invisi-lab/invisi-sdk-go/credit"
 	"github.com/invisi-lab/invisi-sdk-go/examples/shared"
-	"github.com/invisi-lab/invisi-sdk-go/protocol/contracts"
+	"github.com/invisi-lab/invisi-sdk-go/primitives"
+	"github.com/invisi-lab/invisi-sdk-go/rpc/contracts"
 	"github.com/invisi-lab/invisi-sdk-go/prover"
 	"github.com/invisi-lab/invisi-sdk-go/prover/native"
 	"github.com/invisi-lab/invisi-sdk-go/sdk"
@@ -112,9 +112,9 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	coreContext := core.ProtocolContext{
-		ChainID:         core.ElementFromUint64(pool.Context().ChainID),
-		ProtocolAddress: core.BigIntToElement(pool.Context().ProtocolAddress.Big()),
+	coreContext := primitives.ProtocolContext{
+		ChainID:         primitives.ElementFromUint64(pool.Context().ChainID),
+		ProtocolAddress: primitives.BigIntToElement(pool.Context().ProtocolAddress.Big()),
 	}
 	c := credit.Context{ProtocolContext: coreContext, TokenAddress: token, Timestamp: head.Time}
 	deadline := new(big.Int).SetUint64(head.Time + 300)
@@ -136,7 +136,7 @@ func main() {
 	if e != nil {
 		log.Fatal(e)
 	}
-	nonce, e := core.GenerateNonce()
+	nonce, e := primitives.GenerateNonce()
 	if e != nil {
 		log.Fatal(e)
 	}
@@ -147,27 +147,27 @@ func main() {
 
 	// A grant is postpaid authority: finite available credit is quota, not deposited token principal.
 	state := credit.State{
-		AvailableCredit:       core.BigIntToElement(initial),
+		AvailableCredit:       primitives.BigIntToElement(initial),
 		Unlimited:             *unlimited,
 		ProtocolContext:       coreContext,
-		TokenAddress:          core.BigIntToElement(token.Big()),
-		OwnerWalletIdentity:   core.BigIntToElement(publicWallet.OwnerAddress().Big()),
-		SpenderWalletIdentity: core.BigIntToElement(spenderWallet.OwnerAddress().Big()),
-		RevocationShard:       core.ElementFromUint64(allocation.Shard),
-		RevocationSlot:        core.ElementFromUint64(uint64(allocation.Slot)),
+		TokenAddress:          primitives.BigIntToElement(token.Big()),
+		OwnerWalletIdentity:   primitives.BigIntToElement(publicWallet.OwnerAddress().Big()),
+		SpenderWalletIdentity: primitives.BigIntToElement(spenderWallet.OwnerAddress().Big()),
+		RevocationShard:       primitives.ElementFromUint64(allocation.Shard),
+		RevocationSlot:        primitives.ElementFromUint64(uint64(allocation.Slot)),
 		Nonce:                 nonce,
-		Expiry:                core.ElementFromUint64(head.Time + 7*86400),
+		Expiry:                primitives.ElementFromUint64(head.Time + 7*86400),
 		SharedKey:             key,
 		Policy: credit.Policy{
-			SingleLimit:  core.ElementFromUint64(100),
-			DailyLimit:   core.ElementFromUint64(1000),
-			MonthlyLimit: core.ElementFromUint64(10000),
+			SingleLimit:  primitives.ElementFromUint64(100),
+			DailyLimit:   primitives.ElementFromUint64(1000),
+			MonthlyLimit: primitives.ElementFromUint64(10000),
 		},
 	}
 	snapshot := credit.DeliveryState{
 		State:                state,
-		OwnerReceivingKeys:   core.ReceivingKeys{ViewingPublicKey: publicWallet.ViewingPublicKey(), ClueKey: publicWallet.ClueKey()},
-		SpenderReceivingKeys: core.ReceivingKeys{ViewingPublicKey: spenderWallet.ViewingPublicKey(), ClueKey: spenderWallet.ClueKey()},
+		OwnerReceivingKeys:   primitives.ReceivingKeys{ViewingPublicKey: publicWallet.ViewingPublicKey(), ClueKey: publicWallet.ClueKey()},
+		SpenderReceivingKeys: primitives.ReceivingKeys{ViewingPublicKey: spenderWallet.ViewingPublicKey(), ClueKey: spenderWallet.ClueKey()},
 	}
 	ds, e := shared.CreditDeliveries(snapshot)
 	if e != nil {

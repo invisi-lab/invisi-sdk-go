@@ -1,14 +1,14 @@
 package transaction
 
 import (
-	"github.com/invisi-lab/invisi-sdk-go/broadcaster"
-	"github.com/invisi-lab/invisi-sdk-go/protocol"
 	protocolrpc "github.com/invisi-lab/invisi-sdk-go/rpc"
+	"github.com/invisi-lab/invisi-sdk-go/rpc/broadcaster"
+	"github.com/invisi-lab/invisi-sdk-go/rpc/chain"
 )
 
 type BroadcasterClient = broadcaster.Client
 
-type BroadcasterOptions = protocol.BroadcasterOptions
+type BroadcasterOptions = chain.BroadcasterOptions
 
 type BroadcasterConfiguration = broadcaster.Configuration
 

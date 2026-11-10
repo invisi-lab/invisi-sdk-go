@@ -10,7 +10,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 
 	"github.com/invisi-lab/invisi-sdk-go/protocol"
-	"github.com/invisi-lab/invisi-sdk-go/protocol/contracts"
+	"github.com/invisi-lab/invisi-sdk-go/rpc/contracts"
 )
 
 func (o *Execution) Sources() []protocol.InputSource {

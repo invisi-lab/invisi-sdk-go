@@ -2,8 +2,9 @@ package credit
 
 import (
 	"encoding/json"
-	"github.com/invisi-lab/invisi-sdk-go/core"
 	"testing"
+
+	"github.com/invisi-lab/invisi-sdk-go/primitives"
 )
 
 func TestStatePersistenceIsCanonicalAndBindsGrantKey(t *testing.T) {
@@ -26,7 +27,7 @@ func TestStatePersistenceIsCanonicalAndBindsGrantKey(t *testing.T) {
 	if err = json.Unmarshal(raw, &encoded); err != nil {
 		t.Fatal(err)
 	}
-	encoded["fields"].(map[string]any)["creditSharedKey"] = core.ElementToBigInt(core.ElementFromUint64(66)).String() + "0"
+	encoded["fields"].(map[string]any)["creditSharedKey"] = primitives.ElementToBigInt(primitives.ElementFromUint64(66)).String() + "0"
 	bad, _ := json.Marshal(encoded)
 	if err = json.Unmarshal(bad, &restored); err != nil {
 		t.Fatal(err)

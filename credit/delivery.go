@@ -9,9 +9,10 @@ import (
 	"crypto/sha256"
 	"encoding/binary"
 	"fmt"
+
 	"github.com/consensys/gnark-crypto/ecc/bn254/fr"
 	ethcrypto "github.com/ethereum/go-ethereum/crypto"
-	"github.com/invisi-lab/invisi-sdk-go/core"
+	"github.com/invisi-lab/invisi-sdk-go/primitives"
 )
 
 const deliveryDomain = "Invisi.CreditDelivery.v2"
@@ -25,10 +26,10 @@ const (
 
 type DeliveryState struct {
 	State                                    State
-	OwnerReceivingKeys, SpenderReceivingKeys core.ReceivingKeys
+	OwnerReceivingKeys, SpenderReceivingKeys primitives.ReceivingKeys
 }
 type DeliveryContext struct {
-	core.ProtocolContext
+	primitives.ProtocolContext
 	TokenAddress, Commitment, RecipientIdentity fr.Element
 }
 
@@ -42,14 +43,14 @@ func read(raw []byte) (fr.Element, error) {
 	copy(b[32-len(raw):], raw)
 	return out, out.SetBytesCanonical(b[:])
 }
-func roleKey(d DeliveryState, role Role) (core.ReceivingKeys, error) {
+func roleKey(d DeliveryState, role Role) (primitives.ReceivingKeys, error) {
 	switch role {
 	case Owner:
 		return d.OwnerReceivingKeys, nil
 	case Spender:
 		return d.SpenderReceivingKeys, nil
 	default:
-		return core.ReceivingKeys{}, fmt.Errorf("invalid Credit delivery role")
+		return primitives.ReceivingKeys{}, fmt.Errorf("invalid Credit delivery role")
 	}
 }
 func aad(c DeliveryContext, header []byte, role Role) []byte {
@@ -106,11 +107,11 @@ func validateDelivery(d DeliveryState, c DeliveryContext, role Role) error {
 	if err != nil {
 		return err
 	}
-	for _, keys := range []core.ReceivingKeys{d.OwnerReceivingKeys, d.SpenderReceivingKeys} {
+	for _, keys := range []primitives.ReceivingKeys{d.OwnerReceivingKeys, d.SpenderReceivingKeys} {
 		if _, err := ethcrypto.DecompressPubkey(keys.ViewingPublicKey); err != nil {
 			return fmt.Errorf("invalid receiving public key")
 		}
-		if core.ValidateClueKey(keys.ClueKey) != nil {
+		if primitives.ValidateClueKey(keys.ClueKey) != nil {
 			return fmt.Errorf("invalid clue key length")
 		}
 	}
@@ -148,7 +149,7 @@ func encodeDelivery(d DeliveryState) []byte {
 		}
 		out = put(out, v, n)
 	}
-	for _, keys := range []core.ReceivingKeys{d.OwnerReceivingKeys, d.SpenderReceivingKeys} {
+	for _, keys := range []primitives.ReceivingKeys{d.OwnerReceivingKeys, d.SpenderReceivingKeys} {
 		out = append(out, keys.ViewingPublicKey...)
 		out = append(out, keys.ClueKey...)
 	}
@@ -190,7 +191,7 @@ func Decrypt(private, envelope []byte, c DeliveryContext, role Role) (DeliverySt
 	if len(envelope) < 485 || len(envelope) > 4096 || envelope[0] != 0x82 {
 		return DeliveryState{}, fmt.Errorf("unsupported Credit envelope")
 	}
-	recipient, err := core.ViewingPublicKey(private)
+	recipient, err := primitives.ViewingPublicKey(private)
 	if err != nil {
 		return DeliveryState{}, err
 	}
@@ -230,8 +231,8 @@ func DecodeDeliveryPlaintext(plain []byte, c DeliveryContext, role Role, recipie
 		}
 		at += sizes[i]
 	}
-	keys := func() core.ReceivingKeys {
-		v := core.ReceivingKeys{ViewingPublicKey: append([]byte(nil), plain[at:at+33]...), ClueKey: append([]byte(nil), plain[at+33:at+65]...)}
+	keys := func() primitives.ReceivingKeys {
+		v := primitives.ReceivingKeys{ViewingPublicKey: append([]byte(nil), plain[at:at+33]...), ClueKey: append([]byte(nil), plain[at+33:at+65]...)}
 		at += 65
 		return v
 	}

@@ -6,8 +6,9 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/invisi-lab/invisi-sdk-go/core"
 	"math/big"
+
+	"github.com/invisi-lab/invisi-sdk-go/primitives"
 
 	"github.com/ethereum/go-ethereum/common"
 )
@@ -216,11 +217,11 @@ func validateAggregateUser(inputs []common.Hash, capacity int) error {
 	if !n.IsUint64() || !m.IsUint64() || n.Uint64() > uint64(capacity) || m.Uint64() > uint64(capacity) || n.Uint64()+m.Uint64() != uint64(capacity) {
 		return errors.New("noncanonical aggregate member capacity")
 	}
-	request := core.WalletAuthorizationRequest{Context: core.ProtocolContext{ChainID: core.BigIntToElement(inputs[0].Big()), ProtocolAddress: core.BigIntToElement(inputs[1].Big())}, Operation: core.WalletTransact, Capacity: capacity}
+	request := primitives.WalletAuthorizationRequest{Context: primitives.ProtocolContext{ChainID: primitives.BigIntToElement(inputs[0].Big()), ProtocolAddress: primitives.BigIntToElement(inputs[1].Big())}, Operation: primitives.WalletTransact, Capacity: capacity}
 	for _, word := range inputs[:len(inputs)-2] {
-		request.Words = append(request.Words, core.BigIntToElement(word.Big()))
+		request.Words = append(request.Words, primitives.BigIntToElement(word.Big()))
 	}
-	digest, err := core.ComputeWalletAuthorizationDigest(request)
+	digest, err := primitives.ComputeWalletAuthorizationDigest(request)
 	if err != nil {
 		return err
 	}

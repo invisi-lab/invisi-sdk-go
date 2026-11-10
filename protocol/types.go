@@ -60,3 +60,14 @@ type ApproveCalldata struct {
 	To       common.Address
 	CallData []byte
 }
+
+type AggregateRequest struct {
+	Proof    []byte
+	Requests []TransactRequest
+	Caller   *common.Address
+}
+type TransactionCall struct {
+	To    common.Address
+	Data  []byte
+	Value *big.Int
+}

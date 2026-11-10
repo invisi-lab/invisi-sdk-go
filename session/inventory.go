@@ -6,7 +6,7 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 
-	"github.com/invisi-lab/invisi-sdk-go/core"
+	"github.com/invisi-lab/invisi-sdk-go/primitives"
 	protocolrpc "github.com/invisi-lab/invisi-sdk-go/rpc"
 )
 
@@ -30,15 +30,15 @@ func (s *WalletSession) Balance(ctx context.Context, token common.Address) (Bala
 	}
 	result := BalanceSnapshot{AvailableKnown: new(big.Int), ConfirmedKnown: new(big.Int), Reserved: new(big.Int), CheckedThrough: checked, TokenAddress: token, Scope: s.scope, Invalidated: state.Invalidated}
 	for _, n := range state.Notes {
-		if n.Spent || core.ElementToBigInt(n.Note.TokenAddress).Cmp(token.Big()) != 0 {
+		if n.Spent || primitives.ElementToBigInt(n.Note.TokenAddress).Cmp(token.Big()) != 0 {
 			continue
 		}
-		result.ConfirmedKnown.Add(result.ConfirmedKnown, core.ElementToBigInt(n.Note.Amount))
+		result.ConfirmedKnown.Add(result.ConfirmedKnown, primitives.ElementToBigInt(n.Note.Amount))
 		if n.ReservedBy == "" {
-			result.AvailableKnown.Add(result.AvailableKnown, core.ElementToBigInt(n.Note.Amount))
+			result.AvailableKnown.Add(result.AvailableKnown, primitives.ElementToBigInt(n.Note.Amount))
 			result.NoteCount++
 		} else {
-			result.Reserved.Add(result.Reserved, core.ElementToBigInt(n.Note.Amount))
+			result.Reserved.Add(result.Reserved, primitives.ElementToBigInt(n.Note.Amount))
 		}
 	}
 	if state.Invalidated || checked == nil {

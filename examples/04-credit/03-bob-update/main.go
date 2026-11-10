@@ -11,9 +11,9 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
-	"github.com/invisi-lab/invisi-sdk-go/core"
 	"github.com/invisi-lab/invisi-sdk-go/credit"
 	"github.com/invisi-lab/invisi-sdk-go/examples/shared"
+	"github.com/invisi-lab/invisi-sdk-go/primitives"
 	"github.com/invisi-lab/invisi-sdk-go/protocol"
 	"github.com/invisi-lab/invisi-sdk-go/prover"
 	"github.com/invisi-lab/invisi-sdk-go/prover/native"
@@ -108,9 +108,9 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	coreContext := core.ProtocolContext{
-		ChainID:         core.ElementFromUint64(pool.Context().ChainID),
-		ProtocolAddress: core.BigIntToElement(pool.Context().ProtocolAddress.Big()),
+	coreContext := primitives.ProtocolContext{
+		ChainID:         primitives.ElementFromUint64(pool.Context().ChainID),
+		ProtocolAddress: primitives.BigIntToElement(pool.Context().ProtocolAddress.Big()),
 	}
 	c := credit.Context{ProtocolContext: coreContext, TokenAddress: token, Timestamp: head.Time}
 	deadline := new(big.Int).SetUint64(head.Time + 300)
@@ -133,15 +133,15 @@ func main() {
 	selected := candidates[0]
 	old := selected.Input.State
 	policy := old.Policy
-	expiry := core.ElementFromUint64(head.Time + 14*86400)
+	expiry := primitives.ElementFromUint64(head.Time + 14*86400)
 
 	// Only policy/expiry/quota change; accumulated usage and the original grant identity survive the update.
 	change := credit.Change{
 		Policy:                  policy,
 		Expiry:                  expiry,
 		Unlimited:               changedMode,
-		IncreaseAvailableCredit: core.BigIntToElement(increaseAmount),
-		DecreaseAvailableCredit: core.BigIntToElement(decreaseAmount),
+		IncreaseAvailableCredit: primitives.BigIntToElement(increaseAmount),
+		DecreaseAvailableCredit: primitives.BigIntToElement(decreaseAmount),
 	}
 	next, e := old.Update(change, deadline.Uint64())
 	if e != nil {
@@ -159,8 +159,8 @@ func main() {
 		Source:           protocol.InputSource{TreeId: new(big.Int).SetUint64(selected.Input.TreeID), MerkleRoot: selected.Membership.Root},
 		Nullifier:        common.Hash(next.Nullifier.Bytes()),
 		CreditCommitment: common.Hash(next.StateCommitment.Bytes()),
-		RevocationShard:  core.ElementToBigInt(old.RevocationShard).Uint64(),
-		RevocationSlot:   uint16(core.ElementToBigInt(old.RevocationSlot).Uint64()),
+		RevocationShard:  primitives.ElementToBigInt(old.RevocationShard).Uint64(),
+		RevocationSlot:   uint16(primitives.ElementToBigInt(old.RevocationSlot).Uint64()),
 		Deadline:         deadline,
 	}, ds, selected.Input, change)
 

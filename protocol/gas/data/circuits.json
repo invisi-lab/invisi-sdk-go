@@ -1,0 +1,260 @@
+{
+  "transact_user_slots1": {
+    "circuitName": "transact_user_slots1",
+    "target": "evm",
+    "artifactSha256": "98125d7d1a2f91f777dcdd9f5ba41f63eb71842ce7c6825af0dc4252d74cf12c",
+    "vkSha256": "9d4e089c3d6e9d56ac1819e90495d3463a3c81cfcb98758abc399a3e8a0c3264"
+  },
+  "transact_user_slots2": {
+    "circuitName": "transact_user_slots2",
+    "target": "evm",
+    "artifactSha256": "003bfabd074411981225d9a8ac360fcab1103087992a2daadc0149d17e82e0a3",
+    "vkSha256": "d5c5314a361f6fd14c0be42c457bc60ef4aa76d7e8907c530c926f69dd4468bf"
+  },
+  "transact_user_slots3": {
+    "circuitName": "transact_user_slots3",
+    "target": "evm",
+    "artifactSha256": "94f274a54407532371ec18eb677005057cb3573965d6176eb1aea1377af50189",
+    "vkSha256": "25b0031b43b406999225defd4c86311302bb88dccff4ca9754d4c404bdfb4e4c"
+  },
+  "transact_user_slots4": {
+    "circuitName": "transact_user_slots4",
+    "target": "evm",
+    "artifactSha256": "8d872e95a0dc13e243013109ad10a8253f7477c22b3d64a421d202e445868825",
+    "vkSha256": "63cd2ca2dd05fffbd5118099e9a1985c14e992fedf66c98dbea4e0888dbef1fe"
+  },
+  "transact_user_slots5": {
+    "circuitName": "transact_user_slots5",
+    "target": "evm",
+    "artifactSha256": "f671dcc2e24bbc1cd4a471ad08e02d195d2974fa3341f6f9efe39787d3ab0d14",
+    "vkSha256": "7821e36f8a00c90512ad0b15372d7689b3c3c8e103913d4f1039f265a16266f5"
+  },
+  "transact_user_slots6": {
+    "circuitName": "transact_user_slots6",
+    "target": "evm",
+    "artifactSha256": "36b84d7ac57dbac5b68365038ee5aa2d3c1b1eb8158afb5ce45b0f003f7a4856",
+    "vkSha256": "4b8cdd71e67433f778c9ca94f44dbcf9c3963ea6af5830846de02434229abb83"
+  },
+  "transact_user_slots7": {
+    "circuitName": "transact_user_slots7",
+    "target": "evm",
+    "artifactSha256": "48a6290c738baf54f530df01a72de5e32b85cd0b7ce7eecf2a5ac70350166d4a",
+    "vkSha256": "94378a2acff6ca9f6de20c2be181f638f82c643c530e560b4bc4f058814568dd"
+  },
+  "transact_user_slots8": {
+    "circuitName": "transact_user_slots8",
+    "target": "evm",
+    "artifactSha256": "6f5eaede173c6dac18bb972b5f8254ded20c31a18983d5f0a0d7c3809a221a48",
+    "vkSha256": "829691975be106d9c77093811b93af52d40bedb4749aa2219c97a5e2a3fc8ca3"
+  },
+  "transact_user_slots9": {
+    "circuitName": "transact_user_slots9",
+    "target": "evm",
+    "artifactSha256": "cf327a39295d7ecafbe030af9bbca9654093838f0ef012f8f6878009488b1748",
+    "vkSha256": "a98cc35b5769165a2d87ed4d43ba5e9bb82b39c375d37d221f0f9f08a5100c9b"
+  },
+  "transact_user_slots10": {
+    "circuitName": "transact_user_slots10",
+    "target": "evm",
+    "artifactSha256": "66e29f362e8785e0fda8f300d596f8793a5f088e5560f83c97eb6b46bc8197bc",
+    "vkSha256": "dc99887057b754edc9b7d5abb5fa12e33eb36d21abaf3fa719b76d7f986c7eb2"
+  },
+  "transact_user_slots20": {
+    "circuitName": "transact_user_slots20",
+    "target": "evm",
+    "artifactSha256": "12665b1adf00dddb84681e33e2fd309477d8825f69ff8e25af62e0bd352fa962",
+    "vkSha256": "02c8f2ad6ab711ddd1fec36077b285b250a8da9987cacc5fc4b2b4ae5aadc33d"
+  },
+  "transact_user_slots30": {
+    "circuitName": "transact_user_slots30",
+    "target": "evm",
+    "artifactSha256": "4e981587ff9911234b38606b24d7880a152d43eb2253336bd430839ae0145b6c",
+    "vkSha256": "865650c00836b73e06109606ecd182bc862086c7c785fa9a1464b0295430e865"
+  },
+  "transact_user_slots40": {
+    "circuitName": "transact_user_slots40",
+    "target": "evm",
+    "artifactSha256": "68fe2eae207ab8ecb4cbb29e9f4f9271e2bc0dc44ef4e3347c0a088d8dda6607",
+    "vkSha256": "b03885a22bb62f3688f450893ad3a34c82a70b1d855f6eba50468338518617d9"
+  },
+  "transact_user_slots50": {
+    "circuitName": "transact_user_slots50",
+    "target": "evm",
+    "artifactSha256": "d604683632241102eb721ca54fdc32cd7f7783719fc84d6de13cad7dc351a508",
+    "vkSha256": "252d988b7adf6c849774c54181226cff731f1323beaf5d11abcd54d924932372"
+  },
+  "transact_user_slots60": {
+    "circuitName": "transact_user_slots60",
+    "target": "evm",
+    "artifactSha256": "095bee5e870d8469a176fc446e2a2f39dd42c52cd49b3fa62712c7b030087f99",
+    "vkSha256": "fd095c05ab1b2bea4e24d31a036603b2a2dc21742ea224a0968c6ceb70e93223"
+  },
+  "transact_user_slots70": {
+    "circuitName": "transact_user_slots70",
+    "target": "evm",
+    "artifactSha256": "bc1bcc226924d7b89767cb649bf9ed88a57d9d3fa0fe7b1d2a3ec1b6e4700963",
+    "vkSha256": "0a0828ba6fcd1a4a4d2f8aacb816893b91a95adefb07ac31d1825192240ae8ab"
+  },
+  "transact_user_slots80": {
+    "circuitName": "transact_user_slots80",
+    "target": "evm",
+    "artifactSha256": "bb63abd1d170be72fa09d083cdd7f0a3ccc3a87f561ab1305110fdbf5827385c",
+    "vkSha256": "fcb451eb5bda3ed4cfd5c9f3f5f4b51b3780a4d100a024a170eb39dc3b0cb2ab"
+  },
+  "transact_user_slots90": {
+    "circuitName": "transact_user_slots90",
+    "target": "evm",
+    "artifactSha256": "b4b19cf14aadf83233d643266089af6b8c7d84eb8457a6149f6805adf75fd455",
+    "vkSha256": "8f7d93da4f983ee366f9c67fbdfa03a352c37ecb09b4ae4b5e56e82ea89e589e"
+  },
+  "transact_user_slots100": {
+    "circuitName": "transact_user_slots100",
+    "target": "evm",
+    "artifactSha256": "df253e9503124eeba8e0c82a982cfabe063ceac92dbfa45ea870c1a5c432d3b3",
+    "vkSha256": "7752c49994fa2e6d699b1d8739800e1a5a83cf9a6d27d9dde7bafb952fb0940f"
+  },
+  "transact_user_slots110": {
+    "circuitName": "transact_user_slots110",
+    "target": "evm",
+    "artifactSha256": "5016add404c3cac2c179e85476ac9f965e884b9ebeee41a79d8475c46c111fb1",
+    "vkSha256": "babc3357f778f96c533fba2c0183b54a5c1f6004ccc7729414e8a8a941a6c8a5"
+  },
+  "transact_user_slots120": {
+    "circuitName": "transact_user_slots120",
+    "target": "evm",
+    "artifactSha256": "c1787c1c26cbf67ea46189f66d2051396e98c7da4050741aae40169d491938ee",
+    "vkSha256": "7285d99e766cd7610974247502d8fbf4d2b09775be01e2fb17b58ce5588e0858"
+  },
+  "transact_user_slots130": {
+    "circuitName": "transact_user_slots130",
+    "target": "evm",
+    "artifactSha256": "eacf744825be874c1d6454367ab7526ad6e2d3585348515ed362dcf620732cd2",
+    "vkSha256": "0cba569aff9a3ee129e1a3c8bef5eb0784c8791404a8feae457b392f4d4cf7c4"
+  },
+  "transact_user_slots140": {
+    "circuitName": "transact_user_slots140",
+    "target": "evm",
+    "artifactSha256": "680e784099ae8354b14ba4556aa9f7085e4f05fed414716b393ae8f0eec32491",
+    "vkSha256": "f51aca98180a03f3a67d35947bf28ad51bc598acb97e0ced0081bd586c956771"
+  },
+  "transact_user_slots150": {
+    "circuitName": "transact_user_slots150",
+    "target": "evm",
+    "artifactSha256": "520d9b27e3eb10ee5f7ac7065102e025bcfa80c4498b6aa913a8b3dab526ec81",
+    "vkSha256": "6d6f189e728d836136e6510ff7d66425f2833cf6423c160895d635727c156092"
+  },
+  "transact_user_slots160": {
+    "circuitName": "transact_user_slots160",
+    "target": "evm",
+    "artifactSha256": "e8437ab725d8713fb1f33f338796da12a003b471e37509289625cb964d5bfae2",
+    "vkSha256": "62db47dd1d053bf02ed171662398d95103bd7abf7bc53bb2a0eeca6650fb3546"
+  },
+  "transact_user_slots170": {
+    "circuitName": "transact_user_slots170",
+    "target": "evm",
+    "artifactSha256": "f3ee50ad80360aa71faf95723d434ad3a97f953003e1db64949c44144eaa045e",
+    "vkSha256": "7e19e4f71d9ccadac51cdd0ee700d4af607675ea709795fa07bdc162f88c7483"
+  },
+  "transact_user_slots180": {
+    "circuitName": "transact_user_slots180",
+    "target": "evm",
+    "artifactSha256": "2d7a2f49883620c0b486ae30c1c01c7ab4083d5347a8d84050b78f54a039f8c1",
+    "vkSha256": "0a38b949a6b8efd4d832cf344448bd544f2f5d5e50da36fe5a2c67207631a875"
+  },
+  "transact_user_slots190": {
+    "circuitName": "transact_user_slots190",
+    "target": "evm",
+    "artifactSha256": "7fcdd2af5676b36d02c14d2b945b3a0ba7210e862b085926536de042c461d116",
+    "vkSha256": "6be0578318cdbcfd56c9d2a560c9989667bfb0a6b5c735559da0d2e07b39972c"
+  },
+  "create_credit": {
+    "circuitName": "create_credit",
+    "target": "evm",
+    "artifactSha256": "c388b176eb23dc6bc2539da1ae0b3464afa73398eddd5ad3714c0ff94663bf2e",
+    "vkSha256": "61d83881c2d481cb449e1c77e2e8ba8b4d04079aa618532ce1cb24398f39bd13"
+  },
+  "credit_draw_slots1": {
+    "circuitName": "credit_draw_slots1",
+    "target": "evm",
+    "artifactSha256": "b700bbb1472310a46c78410aebb91642512266da27892eaba2c7fce97f9955c0",
+    "vkSha256": "15fcfee759347510fd9d99a80920474efa0aa1c950b97c1f083097533b87fe15"
+  },
+  "credit_draw_slots2": {
+    "circuitName": "credit_draw_slots2",
+    "target": "evm",
+    "artifactSha256": "b5488cc95a1315f453381d04d4657edac4fa817a64b426ba6470fc60acc59196",
+    "vkSha256": "cdf66fffb47d80635ecd64926129ce03fbecd722f6505fa805ed134ce79ce021"
+  },
+  "credit_draw_slots3": {
+    "circuitName": "credit_draw_slots3",
+    "target": "evm",
+    "artifactSha256": "8de790ee3aad1d680f2fe27208769f1edd4e1744b4e3058375a14c4d980a8287",
+    "vkSha256": "48f7d68591dca71ab40759ab2966054ed8e52652f9aad1363c7c5d8bbdf0a4e9"
+  },
+  "credit_draw_slots4": {
+    "circuitName": "credit_draw_slots4",
+    "target": "evm",
+    "artifactSha256": "8b19f7b174d56bef8b2d2fa1bda0be4f7d63531c44190aa5cd77c4951bed1a42",
+    "vkSha256": "e0c867da35cb5b5efb82e97ce0681c469cd7f49981a56e0bb6a772079ee6fb8b"
+  },
+  "credit_draw_slots5": {
+    "circuitName": "credit_draw_slots5",
+    "target": "evm",
+    "artifactSha256": "dd37ce70319eed4c292a76774d68f1040d03df95697842a1def78b7fdd4b75af",
+    "vkSha256": "a91742641014e910ce6ac5872c183c3f13896674f506b5b83ee864a4107da9dc"
+  },
+  "credit_draw_slots10": {
+    "circuitName": "credit_draw_slots10",
+    "target": "evm",
+    "artifactSha256": "24ad5a62fc6d7b608f52934a6cc463f63baea1a7c564587bd1acfd077b187524",
+    "vkSha256": "9f214e607a437025b66898b77572c0e6ca0ac1e6270519ccb9be54ee203044a5"
+  },
+  "credit_draw_slots20": {
+    "circuitName": "credit_draw_slots20",
+    "target": "evm",
+    "artifactSha256": "3491412abfa06cb62673299fd466c94014dd8c4b2778e1f4d513a2da63879e28",
+    "vkSha256": "55d68a6d497d61415a396a8095812b0d69032c1c413f4f6beda59b6bb286e9de"
+  },
+  "credit_draw_slots30": {
+    "circuitName": "credit_draw_slots30",
+    "target": "evm",
+    "artifactSha256": "5fdeac9350afc1b34904bdb6dc85063d0dd6f728c85d2c25ccef1f2d06e99e0e",
+    "vkSha256": "51d8c65b69cb9ec0246b6e6d22e049759b62b542da49c1940a876a5793815e6e"
+  },
+  "credit_draw_slots40": {
+    "circuitName": "credit_draw_slots40",
+    "target": "evm",
+    "artifactSha256": "1abac6d221e7803f26fa5d8508217373609ac54c48d6b36cc288cae5617924cb",
+    "vkSha256": "7800e1618ea7e32d2b7f4b10209ca51731fea7bbfd039e3eb7ee68dfd680c739"
+  },
+  "credit_draw_slots50": {
+    "circuitName": "credit_draw_slots50",
+    "target": "evm",
+    "artifactSha256": "9d1d4ae9af3cb04c32ea9837a27b713ae65fd13afc2ac7dad4031ee4395cb9a1",
+    "vkSha256": "d098fa18d9310801aa03f7612ddcfa5494647c3b3d4a8410c4c28d121157a2d8"
+  },
+  "credit_draw_slots60": {
+    "circuitName": "credit_draw_slots60",
+    "target": "evm",
+    "artifactSha256": "4e19054b8e5768062635c157ed102c5821c85ed8021fee0741ee0017f0797c6c",
+    "vkSha256": "4bf2b115d65a96211e7498e56dd3e8a08c43edeaec33f6821bd4de8fc915afc7"
+  },
+  "credit_draw_slots70": {
+    "circuitName": "credit_draw_slots70",
+    "target": "evm",
+    "artifactSha256": "9a43c21f801744d31145651101a6fa4287dc3e0778c8cb1dbd5d3d5f1cbb8b71",
+    "vkSha256": "fa61d5982830b1120fcc260124b2725c7f348a06c24404bde06cf5954f2d0381"
+  },
+  "credit_draw_slots80": {
+    "circuitName": "credit_draw_slots80",
+    "target": "evm",
+    "artifactSha256": "123ea52a3b459fd1b8d5075a3ea634a7e90a1efd561f4cba0ede4aa50f137a70",
+    "vkSha256": "2796833f0e04658fee386eb603791fd9b15f5462a1f43a942948a80cb7bcec86"
+  },
+  "credit_update": {
+    "circuitName": "credit_update",
+    "target": "evm",
+    "artifactSha256": "7180fc8d51b87163a2cb71ed99a5e86965bf02e8391088b7e3e2aa159c9ece93",
+    "vkSha256": "d5acb3d6db615d9728180efeb87254aa443545770ae1541c2dec684a762c1847"
+  }
+}

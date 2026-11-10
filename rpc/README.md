@@ -1,3 +1,9 @@
+# Invisi Rpc
+
+Public chain, Broadcaster and Provenance clients.
+
+Module version: `1.2.0`. See the [SDK repository](https://github.com/invisi-lab/invisi-sdk-go) for the six-module dependency boundary.
+
 # Protocol RPC client
 
 `ProtocolRpcClient` reads public indexed data and checks canonical block/tree facts through an independently configured `ChainProvider`. Discovery, deployment runtime pins, chain/version validation, depth-16 membership verification, transport limits and cancellation remain shared infrastructure. Business methods and response models separate ordinary Notes from postpaid Credit authority.

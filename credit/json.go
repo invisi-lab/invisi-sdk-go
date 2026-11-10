@@ -3,10 +3,11 @@ package credit
 import (
 	"encoding/json"
 	"fmt"
+	"math/big"
+
 	"github.com/consensys/gnark-crypto/ecc/bn254/fr"
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/invisi-lab/invisi-sdk-go/core"
-	"math/big"
+	"github.com/invisi-lab/invisi-sdk-go/primitives"
 )
 
 func canonicalField(value string) (fr.Element, error) {
@@ -14,7 +15,7 @@ func canonicalField(value string) (fr.Element, error) {
 	if !ok || n.Sign() < 0 || n.Cmp(fr.Modulus()) >= 0 || n.String() != value {
 		return fr.Element{}, fmt.Errorf("noncanonical Credit field")
 	}
-	return core.BigIntToElement(n), nil
+	return primitives.BigIntToElement(n), nil
 }
 func fieldsJSON(values map[string]fr.Element) ([]byte, error) {
 	out := map[string]string{}
@@ -88,7 +89,7 @@ func (s *State) UnmarshalJSON(raw []byte) error {
 	if err != nil {
 		return err
 	}
-	next := State{ProtocolContext: core.ProtocolContext{ChainID: v["chainId"], ProtocolAddress: v["protocolAddress"]}, TokenAddress: v["tokenAddress"], SpenderWalletIdentity: v["spenderWalletIdentity"], OwnerWalletIdentity: v["ownerWalletIdentity"], RevocationShard: v["revocationShard"], RevocationSlot: v["revocationSlot"], Nonce: v["nonce"], Expiry: v["expiry"], SharedKey: v["creditSharedKey"], Policy: Policy{v["singleLimit"], v["dailyLimit"], v["monthlyLimit"]}, AvailableCredit: v["availableCredit"], Unlimited: *envelope.Unlimited, Usage: Usage{v["lastDay"], v["dailySpent"], v["lastMonth"], v["monthlySpent"], v["totalSpent"]}, Payload: append([]byte(nil), envelope.Payload...)}
+	next := State{ProtocolContext: primitives.ProtocolContext{ChainID: v["chainId"], ProtocolAddress: v["protocolAddress"]}, TokenAddress: v["tokenAddress"], SpenderWalletIdentity: v["spenderWalletIdentity"], OwnerWalletIdentity: v["ownerWalletIdentity"], RevocationShard: v["revocationShard"], RevocationSlot: v["revocationSlot"], Nonce: v["nonce"], Expiry: v["expiry"], SharedKey: v["creditSharedKey"], Policy: Policy{v["singleLimit"], v["dailyLimit"], v["monthlyLimit"]}, AvailableCredit: v["availableCredit"], Unlimited: *envelope.Unlimited, Usage: Usage{v["lastDay"], v["dailySpent"], v["lastMonth"], v["monthlySpent"], v["totalSpent"]}, Payload: append([]byte(nil), envelope.Payload...)}
 	if err = next.Validate(); err != nil {
 		return err
 	}
@@ -119,7 +120,7 @@ func (c *Context) UnmarshalJSON(raw []byte) error {
 	if err != nil {
 		return err
 	}
-	*c = Context{ProtocolContext: core.ProtocolContext{ChainID: chain, ProtocolAddress: address}, TokenAddress: value.TokenAddress, Timestamp: value.Timestamp}
+	*c = Context{ProtocolContext: primitives.ProtocolContext{ChainID: chain, ProtocolAddress: address}, TokenAddress: value.TokenAddress, Timestamp: value.Timestamp}
 	return nil
 }
 

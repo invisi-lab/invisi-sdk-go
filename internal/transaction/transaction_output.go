@@ -5,7 +5,7 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 
-	"github.com/invisi-lab/invisi-sdk-go/core"
+	"github.com/invisi-lab/invisi-sdk-go/primitives"
 	"github.com/invisi-lab/invisi-sdk-go/protocol"
 )
 
@@ -65,7 +65,7 @@ func (n TransactionOutput) Nonce() *big.Int {
 	if n.output.Note == nil {
 		return nil
 	}
-	return core.ElementToBigInt(n.output.Note.Nonce)
+	return primitives.ElementToBigInt(n.output.Note.Nonce)
 }
 func (n TransactionOutput) Recipient() NoteRecipient {
 	if n.output.Note == nil {

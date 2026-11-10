@@ -8,11 +8,11 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/signer/core/apitypes"
-	"github.com/invisi-lab/invisi-sdk-go/core"
+	"github.com/invisi-lab/invisi-sdk-go/primitives"
 )
 
 // Sign uses ordinary geth EIP-712 signing and requires the environment key to match the owner/payer.
-func Sign(request core.SigningRequest, expected common.Address, environment string) ([]byte, error) {
+func Sign(request primitives.SigningRequest, expected common.Address, environment string) ([]byte, error) {
 	key, err := crypto.HexToECDSA(strings.TrimPrefix(os.Getenv(environment), "0x"))
 	if err != nil {
 		return nil, fmt.Errorf("%s: %w", environment, err)

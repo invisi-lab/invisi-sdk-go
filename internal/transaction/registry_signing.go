@@ -7,15 +7,15 @@ import (
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 
-	"github.com/invisi-lab/invisi-sdk-go/core"
+	"github.com/invisi-lab/invisi-sdk-go/primitives"
 	"github.com/invisi-lab/invisi-sdk-go/protocol"
-	"github.com/invisi-lab/invisi-sdk-go/protocol/contracts"
+	"github.com/invisi-lab/invisi-sdk-go/rpc/contracts"
 )
 
 func (o *RegistrationOperation) Preview() RegistrationPreview {
 	o.mu.Lock()
 	defer o.mu.Unlock()
-	preview := RegistrationPreview{RegistryAddress: o.registry.deployment.Address, OwnerAddress: o.wallet.identity, Update: o.options.Update, Nonce: o.registration.Nonce, Deadline: o.registration.Deadline, Status: o.status, ReceivingKeys: core.ReceivingKeys{ViewingPublicKey: append([]byte(nil), o.registration.Keys.ViewingPublicKey...), ClueKey: append([]byte(nil), o.registration.Keys.ClueKey[:]...)}}
+	preview := RegistrationPreview{RegistryAddress: o.registry.deployment.Address, OwnerAddress: o.wallet.identity, Update: o.options.Update, Nonce: o.registration.Nonce, Deadline: o.registration.Deadline, Status: o.status, ReceivingKeys: primitives.ReceivingKeys{ViewingPublicKey: append([]byte(nil), o.registration.Keys.ViewingPublicKey...), ClueKey: append([]byte(nil), o.registration.Keys.ClueKey[:]...)}}
 	if o.receiptBlock != nil {
 		block := *o.receiptBlock
 		preview.ReceiptBlock = &block

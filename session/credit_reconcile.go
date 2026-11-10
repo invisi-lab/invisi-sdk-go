@@ -8,11 +8,11 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
-	"github.com/invisi-lab/invisi-sdk-go/core"
 	"github.com/invisi-lab/invisi-sdk-go/credit"
-	creditsession "github.com/invisi-lab/invisi-sdk-go/credit/session"
-	"github.com/invisi-lab/invisi-sdk-go/protocol/contracts"
+	"github.com/invisi-lab/invisi-sdk-go/primitives"
+	"github.com/invisi-lab/invisi-sdk-go/rpc/contracts"
 	protocolrpc "github.com/invisi-lab/invisi-sdk-go/rpc"
+	creditsession "github.com/invisi-lab/invisi-sdk-go/session/credit"
 )
 
 type creditReconciler struct {
@@ -35,7 +35,7 @@ func (r creditReconciler) Reconcile(ctx context.Context, intent credit.Intent, d
 	if s == nil {
 		return nil, errors.New("Credit reconciliation requires the wallet viewing capability")
 	}
-	if core.ElementToBigInt(intent.Context.ChainID).Uint64() != s.scope.ChainID || common.BigToAddress(core.ElementToBigInt(intent.Context.ProtocolAddress)) != s.scope.ProtocolAddress {
+	if primitives.ElementToBigInt(intent.Context.ChainID).Uint64() != s.scope.ChainID || common.BigToAddress(primitives.ElementToBigInt(intent.Context.ProtocolAddress)) != s.scope.ProtocolAddress {
 		return nil, errors.New("Credit intent deployment mismatch")
 	}
 	if err := s.protocol.ValidateDeployment(ctx, s.options.Provider); err != nil {
@@ -111,7 +111,7 @@ func (r creditReconciler) Reconcile(ctx context.Context, intent credit.Intent, d
 						if i >= len(draw.Params.CreditCommitments) || i >= len(draw.Params.RecoveryAmounts) || i >= len(draw.LeafIndices) {
 							return nil, errors.New("Credit draw event vector mismatch")
 						}
-						next, err := input.State.Recover(core.BigIntToElement(common.Hash(nf).Big()), core.BigIntToElement(common.Hash(draw.Params.CreditCommitments[i]).Big()), core.BigIntToElement(common.Hash(draw.Params.RecoveryAmounts[i]).Big()), draw.Timestamp)
+						next, err := input.State.Recover(primitives.BigIntToElement(common.Hash(nf).Big()), primitives.BigIntToElement(common.Hash(draw.Params.CreditCommitments[i]).Big()), primitives.BigIntToElement(common.Hash(draw.Params.RecoveryAmounts[i]).Big()), draw.Timestamp)
 						if err != nil {
 							return nil, err
 						}

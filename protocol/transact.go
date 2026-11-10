@@ -9,7 +9,7 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/signer/core/apitypes"
 
-	"github.com/invisi-lab/invisi-sdk-go/core"
+	"github.com/invisi-lab/invisi-sdk-go/primitives"
 )
 
 func SelectTransactCapacity(inputs, outputs int) (int, error) {
@@ -127,7 +127,7 @@ func EncodeTransactTypedData(c TransactionContext, p CrossTreeTransactParams, cs
 	if err != nil {
 		return apitypes.TypedData{}, err
 	}
-	return EncodeWalletAuthorizationTypedData(c, core.WalletTransact, r.Capacity, words(transactWords(c, r)))
+	return EncodeWalletAuthorizationTypedData(c, primitives.WalletTransact, r.Capacity, words(transactWords(c, r)))
 }
 func TransactUserPublicInputs(c TransactionContext, p CrossTreeTransactParams, cs []Delivery, f FundingParams) ([][32]byte, error) {
 	inputs, err := TransactPublicInputs(c, p, cs, f)

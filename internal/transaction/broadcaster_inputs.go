@@ -5,7 +5,7 @@ import (
 	"errors"
 	"math/big"
 
-	"github.com/invisi-lab/invisi-sdk-go/core"
+	"github.com/invisi-lab/invisi-sdk-go/primitives"
 )
 
 func (o *Execution) ExtendBroadcasterInputs(ctx context.Context, base Plan, fee *big.Int) (Plan, error) {
@@ -36,7 +36,7 @@ func (o *Execution) ExtendBroadcasterInputs(ctx context.Context, base Plan, fee 
 	p.Inputs = append(p.Inputs, inputs...)
 	p.Memberships = append(p.Memberships, memberships...)
 	for _, n := range inputs {
-		change.Add(change, core.ElementToBigInt(n.Note.Amount))
+		change.Add(change, primitives.ElementToBigInt(n.Note.Amount))
 	}
 	if index < 0 {
 		address, e := o.Runtime.Wallet.GetAddress()
@@ -59,7 +59,7 @@ func (o *Execution) ExtendBroadcasterInputs(ctx context.Context, base Plan, fee 
 			return base, errors.New("missing change note")
 		}
 		note := *out.Note
-		note.Amount = core.BigIntToElement(change)
+		note.Amount = primitives.BigIntToElement(change)
 		out.Note = &note
 		p.Outputs[index] = out
 	}

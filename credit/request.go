@@ -2,16 +2,17 @@ package credit
 
 import (
 	"fmt"
+	"math/big"
+
 	"github.com/consensys/gnark-crypto/ecc/bn254/fr"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/signer/core/apitypes"
-	"github.com/invisi-lab/invisi-sdk-go/core"
+	"github.com/invisi-lab/invisi-sdk-go/primitives"
 	"github.com/invisi-lab/invisi-sdk-go/protocol"
-	"math/big"
 )
 
 type Context struct {
-	core.ProtocolContext
+	primitives.ProtocolContext
 	TokenAddress common.Address
 	Timestamp    uint64
 }
@@ -83,7 +84,7 @@ func (c Context) validate(token common.Address, deadline *big.Int) error {
 	return nil
 }
 func fieldHash(h common.Hash, nonzero bool) error {
-	if _, err := core.HexToElement(h.Hex()); err != nil {
+	if _, err := primitives.HexToElement(h.Hex()); err != nil {
 		return err
 	}
 	if nonzero && h == (common.Hash{}) {
@@ -104,20 +105,20 @@ func deliveryHash(ds []protocol.Delivery, required int, note bool) (*big.Int, er
 	return h.Big(), err
 }
 func contextWords(c Context) []*big.Int {
-	return []*big.Int{core.ElementToBigInt(c.ChainID), core.ElementToBigInt(c.ProtocolAddress), c.TokenAddress.Big()}
+	return []*big.Int{primitives.ElementToBigInt(c.ChainID), primitives.ElementToBigInt(c.ProtocolAddress), c.TokenAddress.Big()}
 }
 func split(h *big.Int) (*big.Int, *big.Int) {
 	return new(big.Int).Rsh(new(big.Int).Set(h), 128), new(big.Int).And(new(big.Int).Set(h), new(big.Int).Sub(new(big.Int).Lsh(big.NewInt(1), 128), big.NewInt(1)))
 }
 func authorize(c Context, name string, capacity int, words []*big.Int) ([]common.Hash, apitypes.TypedData, error) {
-	operation := core.WalletOperation("")
+	operation := primitives.WalletOperation("")
 	switch name {
 	case "CreateCredit":
-		operation = core.WalletCreateCredit
+		operation = primitives.WalletCreateCredit
 	case "CreditDraw":
-		operation = core.WalletCreditDraw
+		operation = primitives.WalletCreditDraw
 	case "UpdateCredit":
-		operation = core.WalletUpdateCredit
+		operation = primitives.WalletUpdateCredit
 	default:
 		return nil, apitypes.TypedData{}, fmt.Errorf("unsupported Credit operation")
 	}
@@ -131,9 +132,9 @@ func authorize(c Context, name string, capacity int, words []*big.Int) ([]common
 		if err := fieldHash(hashes[i], false); err != nil {
 			return nil, apitypes.TypedData{}, err
 		}
-		fields[i] = core.BigIntToElement(w)
+		fields[i] = primitives.BigIntToElement(w)
 	}
-	typed, err := core.WalletAuthorizationTypedData(core.WalletAuthorizationRequest{Context: c.ProtocolContext, Operation: operation, Capacity: capacity, Words: fields})
+	typed, err := primitives.WalletAuthorizationTypedData(primitives.WalletAuthorizationRequest{Context: c.ProtocolContext, Operation: operation, Capacity: capacity, Words: fields})
 	if err != nil {
 		return nil, typed, err
 	}

@@ -8,9 +8,9 @@ class SynchronizationTests(unittest.TestCase):
  def command(self,source=TS):
   return subprocess.run([sys.executable,'-O',str(ROOT/'scripts/sync-reference.py'),'--proving-only',str(source),str(PROTOCOL)],capture_output=True)
  def snapshot(self):
-  return [hashlib.sha256((ROOT/p).read_bytes()).hexdigest() for p in ['prover/native/circuits/manifest.json','prover/witness-layouts.json','prover/recursive-key.json','internal/release/current.go']]
+  return [hashlib.sha256((ROOT/p).read_bytes()).hexdigest() for p in ['prover/native/circuits/manifest.json','prover/witness-layouts.json','prover/recursive-key.json','protocol/release/current.go']]
  def test_current_proving_only_preserves_gas_and_imports_all_native_routes(self):
-  before=(ROOT/'gas/data/documented-references.json').read_bytes();result=self.command();self.assertEqual(result.returncode,0,result.stderr.decode());self.assertEqual(before,(ROOT/'gas/data/documented-references.json').read_bytes())
+  before=(ROOT/'protocol/gas/data/documented-references.json').read_bytes();result=self.command();self.assertEqual(result.returncode,0,result.stderr.decode());self.assertEqual(before,(ROOT/'protocol/gas/data/documented-references.json').read_bytes())
   layouts=json.loads((ROOT/'prover/witness-layouts.json').read_text());self.assertEqual(len(layouts),77);self.assertEqual(sum(x.startswith('transact_aggregate_') for x in layouts),34)
   self.assertIn('input_owner_address',layouts['transact_user_slots1']['private']);self.assertNotIn('transact_user_slots14',layouts)
   keys=json.loads((ROOT/'prover/recursive-key.json').read_text());self.assertEqual(set(keys),set(map(str,range(1,11))))

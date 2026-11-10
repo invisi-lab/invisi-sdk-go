@@ -1,8 +1,8 @@
 package sdk
 
 import (
-	"github.com/invisi-lab/invisi-sdk-go/core"
 	transaction "github.com/invisi-lab/invisi-sdk-go/internal/transaction"
+	"github.com/invisi-lab/invisi-sdk-go/primitives"
 )
 
 type Disclosure = transaction.Disclosure
@@ -17,7 +17,7 @@ func DisclosureFromExport(data []byte) (*Disclosure, error) {
 	return transaction.DisclosureFromExport(data)
 }
 
-func DisclosureFromNote(note core.Note) (*Disclosure, error) {
+func DisclosureFromNote(note primitives.Note) (*Disclosure, error) {
 	return transaction.DisclosureFromNote(note)
 }
 

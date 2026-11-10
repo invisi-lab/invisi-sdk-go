@@ -6,7 +6,7 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 
-	"github.com/invisi-lab/invisi-sdk-go/core"
+	"github.com/invisi-lab/invisi-sdk-go/primitives"
 	"github.com/invisi-lab/invisi-sdk-go/prover"
 )
 
@@ -22,17 +22,17 @@ func (o *Execution) ValidateRecovered() error {
 		if err := Positive(output.Amount, 128); err != nil {
 			return err
 		}
-		identity := core.BigIntToElement(output.Identity.Big())
-		leaf, err := core.ComputeNoteCommitment(o.Runtime.CoreContext().ChainID, o.Runtime.CoreContext().ProtocolAddress, identity, core.BigIntToElement(p.Context.TokenAddress.Big()), core.BigIntToElement(output.Amount))
+		identity := primitives.BigIntToElement(output.Identity.Big())
+		leaf, err := primitives.ComputeNoteCommitment(o.Runtime.CoreContext().ChainID, o.Runtime.CoreContext().ProtocolAddress, identity, primitives.BigIntToElement(p.Context.TokenAddress.Big()), primitives.BigIntToElement(output.Amount))
 		if err != nil || FieldHash(leaf) != output.Commitment {
 			return errors.New("recovered output commitment mismatch")
 		}
 		if output.Note != nil {
 			note := output.Note
-			if note.ProtocolContext != o.Runtime.CoreContext() || note.TokenAddress != core.BigIntToElement(p.Context.TokenAddress.Big()) || core.ElementToBigInt(note.Amount).Cmp(output.Amount) != 0 {
+			if note.ProtocolContext != o.Runtime.CoreContext() || note.TokenAddress != primitives.BigIntToElement(p.Context.TokenAddress.Big()) || primitives.ElementToBigInt(note.Amount).Cmp(output.Amount) != 0 {
 				return errors.New("recovered output scope mismatch")
 			}
-			expected, err := core.ComputeNoteIdentity(note.OwnerAddress, note.Nonce)
+			expected, err := primitives.ComputeNoteIdentity(note.OwnerAddress, note.Nonce)
 			if err != nil || FieldHash(expected) != output.Identity {
 				return errors.New("recovered output opening mismatch")
 			}
@@ -43,14 +43,14 @@ func (o *Execution) ValidateRecovered() error {
 	}
 	for _, input := range p.Inputs {
 		note := input.Note
-		if note.ProtocolContext != o.Runtime.CoreContext() || note.OwnerAddress != core.BigIntToElement(p.OwnerAddress.Big()) || note.TokenAddress != core.BigIntToElement(p.Context.TokenAddress.Big()) {
+		if note.ProtocolContext != o.Runtime.CoreContext() || note.OwnerAddress != primitives.BigIntToElement(p.OwnerAddress.Big()) || note.TokenAddress != primitives.BigIntToElement(p.Context.TokenAddress.Big()) {
 			return errors.New("recovered note scope mismatch")
 		}
-		identity, err := core.ComputeNoteIdentity(note.OwnerAddress, note.Nonce)
+		identity, err := primitives.ComputeNoteIdentity(note.OwnerAddress, note.Nonce)
 		if err != nil {
 			return err
 		}
-		leaf, err := core.ComputeNoteCommitment(note.ChainID, note.ProtocolAddress, identity, note.TokenAddress, note.Amount)
+		leaf, err := primitives.ComputeNoteCommitment(note.ChainID, note.ProtocolAddress, identity, note.TokenAddress, note.Amount)
 		if err != nil || FieldHash(leaf) != input.Commitment {
 			return errors.New("recovered note commitment mismatch")
 		}

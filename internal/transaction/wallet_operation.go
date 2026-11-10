@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 
-	"github.com/invisi-lab/invisi-sdk-go/core"
+	"github.com/invisi-lab/invisi-sdk-go/primitives"
 	"github.com/invisi-lab/invisi-sdk-go/wallet"
 )
 
@@ -27,7 +27,7 @@ func (o *Execution) AttachWalletResponse(ctx context.Context, q wallet.Request, 
 	if err != nil {
 		return err
 	}
-	witness := value.(core.WalletAuthorizationWitness)
+	witness := value.(primitives.WalletAuthorizationWitness)
 	if err = VerifyAuthorizationWitness(o.Runtime.Wallet.OwnerAddress(), current, witness); err != nil {
 		return err
 	}

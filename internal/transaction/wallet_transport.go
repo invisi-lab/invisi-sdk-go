@@ -8,38 +8,38 @@ import (
 	"strings"
 
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/invisi-lab/invisi-sdk-go/core"
 	"github.com/invisi-lab/invisi-sdk-go/credit"
+	"github.com/invisi-lab/invisi-sdk-go/primitives"
 	"github.com/invisi-lab/invisi-sdk-go/wallet"
 )
 
 // DecryptNote validates App plaintext against this public wallet and the output commitment.
-func (w *Wallet) DecryptNote(ctx context.Context, decryptor wallet.DeliveryDecryptor, envelope []byte, c core.NoteDecryptionContext) (core.Note, error) {
+func (w *Wallet) DecryptNote(ctx context.Context, decryptor wallet.DeliveryDecryptor, envelope []byte, c primitives.NoteDecryptionContext) (primitives.Note, error) {
 	if w == nil || decryptor == nil {
-		return core.Note{}, errors.New("App delivery decryptor required")
+		return primitives.Note{}, errors.New("App delivery decryptor required")
 	}
 	if err := ctx.Err(); err != nil {
-		return core.Note{}, err
+		return primitives.Note{}, err
 	}
 	if err := wallet.ValidateDeliveryEnvelope(envelope, 0x01); err != nil {
-		return core.Note{}, err
+		return primitives.Note{}, err
 	}
-	c.OwnerAddress = core.BigIntToElement(w.identity.Big())
+	c.OwnerAddress = primitives.BigIntToElement(w.identity.Big())
 	plain, err := decryptor.DecryptNote(ctx, append([]byte(nil), envelope...), c)
 	if err := ctx.Err(); err != nil {
-		return core.Note{}, err
+		return primitives.Note{}, err
 	}
 	if err != nil {
 		// App errors must not alias the SDK nonrecipient marker generated from nil plaintext.
-		return core.Note{}, fmt.Errorf("App Note decryption failed: %v", err)
+		return primitives.Note{}, fmt.Errorf("App Note decryption failed: %v", err)
 	}
 	if plain == nil {
-		return core.Note{}, wallet.ErrNotRecipient
+		return primitives.Note{}, wallet.ErrNotRecipient
 	}
-	if len(plain)+78 > core.MaxCiphertextBytes {
-		return core.Note{}, errors.New("plaintext exceeds resource bound")
+	if len(plain)+78 > primitives.MaxCiphertextBytes {
+		return primitives.Note{}, errors.New("plaintext exceeds resource bound")
 	}
-	return core.DecodeNotePlaintext(append([]byte(nil), plain...), c)
+	return primitives.DecodeNotePlaintext(append([]byte(nil), plain...), c)
 }
 func (w *Wallet) DecryptCreditState(ctx context.Context, decryptor wallet.DeliveryDecryptor, envelope []byte, c credit.DeliveryContext, role credit.Role) (credit.DeliveryState, error) {
 	if w == nil || decryptor == nil {
@@ -54,7 +54,7 @@ func (w *Wallet) DecryptCreditState(ctx context.Context, decryptor wallet.Delive
 	if role != credit.Owner && role != credit.Spender {
 		return credit.DeliveryState{}, errors.New("invalid Credit role")
 	}
-	c.RecipientIdentity = core.BigIntToElement(w.identity.Big())
+	c.RecipientIdentity = primitives.BigIntToElement(w.identity.Big())
 	plain, err := decryptor.DecryptCredit(ctx, append([]byte(nil), envelope...), c, role)
 	if err := ctx.Err(); err != nil {
 		return credit.DeliveryState{}, err
@@ -66,7 +66,7 @@ func (w *Wallet) DecryptCreditState(ctx context.Context, decryptor wallet.Delive
 	if plain == nil {
 		return credit.DeliveryState{}, wallet.ErrNotRecipient
 	}
-	if len(plain)+78 > core.MaxCiphertextBytes {
+	if len(plain)+78 > primitives.MaxCiphertextBytes {
 		return credit.DeliveryState{}, errors.New("plaintext exceeds resource bound")
 	}
 	return credit.DecodeDeliveryPlaintext(append([]byte(nil), plain...), c, role, w.ViewingPublicKey())
@@ -113,9 +113,9 @@ func WalletFromResponse(q wallet.Request, r wallet.Response) (*Wallet, error) {
 	viewing, _ := wallet.Bytes(p.ViewingPublicKey, 33)
 	clue, _ := wallet.Bytes(p.ClueKey, 32)
 	owner := common.HexToAddress(q.OwnerAddress)
-	address, err := core.EncodeLongAddress(core.ReceivingAddress{OwnerAddress: core.BigIntToElement(owner.Big()), ViewingPublicKey: viewing, ClueKey: clue})
+	address, err := primitives.EncodeLongAddress(primitives.ReceivingAddress{OwnerAddress: primitives.BigIntToElement(owner.Big()), ViewingPublicKey: viewing, ClueKey: clue})
 	if err != nil {
 		return nil, err
 	}
-	return &Wallet{identity: owner, address: address, keys: core.ReceivingKeys{ViewingPublicKey: viewing, ClueKey: clue}}, nil
+	return &Wallet{identity: owner, address: address, keys: primitives.ReceivingKeys{ViewingPublicKey: viewing, ClueKey: clue}}, nil
 }

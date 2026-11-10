@@ -14,7 +14,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 
-	"github.com/invisi-lab/invisi-sdk-go/core"
+	"github.com/invisi-lab/invisi-sdk-go/primitives"
 	"github.com/invisi-lab/invisi-sdk-go/protocol"
 )
 
@@ -39,7 +39,7 @@ func TestOwnedReceiptRequiresCanonicalInsertionAndMembership(t *testing.T) {
 	for _, note := range state.Notes {
 		stored = note
 	}
-	ciphertext, err := core.EncryptPrivateTransferNote(session.wallet.ViewingPublicKey(), stored.Note, core.NoteEncryptionContext{ProtocolContext: session.coreContext(), OutputCommitment: core.BigIntToElement(stored.Commitment.Big())})
+	ciphertext, err := primitives.EncryptPrivateTransferNote(session.wallet.ViewingPublicKey(), stored.Note, primitives.NoteEncryptionContext{ProtocolContext: session.coreContext(), OutputCommitment: primitives.BigIntToElement(stored.Commitment.Big())})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -104,7 +104,7 @@ func TestOwnedReceiptRequiresCanonicalInsertionAndMembership(t *testing.T) {
 			creditPages: map[string]protocolrpc.ProtocolCreditUpdates{"10:10": {Block: *state.ObservedThrough}},
 		}}
 		failed := testDeliveryDecryptor(session)
-		failed.Note = func(context.Context, []byte, core.NoteDecryptionContext) ([]byte, error) { return nil, appErr }
+		failed.Note = func(context.Context, []byte, primitives.NoteDecryptionContext) ([]byte, error) { return nil, appErr }
 		if _, e := pending.Decrypt(ctx, failed); e == nil {
 			t.Fatal("App error was skipped as nonrecipient")
 		}

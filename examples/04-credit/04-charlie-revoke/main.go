@@ -13,8 +13,8 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
-	"github.com/invisi-lab/invisi-sdk-go/core"
 	"github.com/invisi-lab/invisi-sdk-go/credit"
+	"github.com/invisi-lab/invisi-sdk-go/primitives"
 	"github.com/invisi-lab/invisi-sdk-go/prover/native"
 	"github.com/invisi-lab/invisi-sdk-go/sdk"
 	walletsession "github.com/invisi-lab/invisi-sdk-go/session"
@@ -109,9 +109,9 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	coreContext := core.ProtocolContext{
-		ChainID:         core.ElementFromUint64(pool.Context().ChainID),
-		ProtocolAddress: core.BigIntToElement(pool.Context().ProtocolAddress.Big()),
+	coreContext := primitives.ProtocolContext{
+		ChainID:         primitives.ElementFromUint64(pool.Context().ChainID),
+		ProtocolAddress: primitives.BigIntToElement(pool.Context().ProtocolAddress.Big()),
 	}
 	c := credit.Context{ProtocolContext: coreContext, TokenAddress: token, Timestamp: head.Time}
 	deadline := new(big.Int).SetUint64(head.Time + 300)

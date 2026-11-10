@@ -6,7 +6,7 @@ import (
 	"errors"
 	"math/big"
 
-	"github.com/invisi-lab/invisi-sdk-go/broadcaster"
+	"github.com/invisi-lab/invisi-sdk-go/rpc/broadcaster"
 	sdk "github.com/invisi-lab/invisi-sdk-go/sdk"
 )
 

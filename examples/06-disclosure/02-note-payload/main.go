@@ -8,8 +8,8 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
-	"github.com/invisi-lab/invisi-sdk-go/core"
 	"github.com/invisi-lab/invisi-sdk-go/examples/shared"
+	"github.com/invisi-lab/invisi-sdk-go/primitives"
 	"github.com/invisi-lab/invisi-sdk-go/sdk"
 )
 
@@ -69,7 +69,7 @@ func main() {
 	}); err != nil {
 		log.Fatal(err)
 	}
-	payload, err := core.FundsV1.Decode(selected.Input.Note.Payload)
+	payload, err := primitives.FundsV1.Decode(selected.Input.Note.Payload)
 	if err != nil {
 		log.Fatal(err)
 	}

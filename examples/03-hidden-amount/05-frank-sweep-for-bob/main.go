@@ -9,8 +9,8 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
-	"github.com/invisi-lab/invisi-sdk-go/core"
 	"github.com/invisi-lab/invisi-sdk-go/examples/shared"
+	"github.com/invisi-lab/invisi-sdk-go/primitives"
 	"github.com/invisi-lab/invisi-sdk-go/prover/native"
 	"github.com/invisi-lab/invisi-sdk-go/sdk"
 )
@@ -72,9 +72,9 @@ func main() {
 
 	amount := new(big.Int)
 	for _, input := range inputs {
-		amount.Add(amount, core.ElementToBigInt(input.Note.Amount))
+		amount.Add(amount, primitives.ElementToBigInt(input.Note.Amount))
 	}
-	withdrawal := &sdk.Withdrawal{To: common.BigToAddress(core.ElementToBigInt(inputs[0].Note.OwnerAddress)), Amount: amount}
+	withdrawal := &sdk.Withdrawal{To: common.BigToAddress(primitives.ElementToBigInt(inputs[0].Note.OwnerAddress)), Amount: amount}
 
 	// A full owner-bound sweep needs no spending signature; funds cannot be redirected to the gas payer.
 	prepared, err := invisi.PrepareTransfer(ctx, sdk.ExplicitTransferPreparation{

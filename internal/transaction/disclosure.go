@@ -13,7 +13,7 @@ import (
 	"github.com/consensys/gnark-crypto/ecc/bn254/fr"
 	"github.com/ethereum/go-ethereum/common"
 
-	"github.com/invisi-lab/invisi-sdk-go/core"
+	"github.com/invisi-lab/invisi-sdk-go/primitives"
 )
 
 type DisclosureContext struct {
@@ -34,7 +34,7 @@ type DisclosureExport struct {
 type Disclosure struct{ material DisclosureExport }
 
 type DisclosureOutput struct {
-	ProtocolContext  core.ProtocolContext
+	ProtocolContext  primitives.ProtocolContext
 	TokenAddress     fr.Element
 	OutputCommitment common.Hash
 	Role             string
@@ -43,7 +43,7 @@ type DisclosureOutput struct {
 
 type DisclosureResult struct {
 	Kind string
-	Note *core.Note
+	Note *primitives.Note
 }
 
 type DisclosureScope struct {
@@ -76,20 +76,20 @@ func (d *Disclosure) Export() DisclosureExport {
 	return m
 }
 
-func DisclosedContext(context core.ProtocolContext, token fr.Element, leaf common.Hash) DisclosureContext {
+func DisclosedContext(context primitives.ProtocolContext, token fr.Element, leaf common.Hash) DisclosureContext {
 	return DisclosureContext{context.ChainID.String(), context.ProtocolAddress.String(), token.String(), leaf}
 }
 
 func OwnerText(identity fr.Element) string {
-	return strings.ToLower(common.BigToAddress(core.ElementToBigInt(identity)).Hex())
+	return strings.ToLower(common.BigToAddress(primitives.ElementToBigInt(identity)).Hex())
 }
 
-func DisclosureFromNote(note core.Note) (*Disclosure, error) {
-	identity, e := core.ComputeNoteIdentity(note.OwnerAddress, note.Nonce)
+func DisclosureFromNote(note primitives.Note) (*Disclosure, error) {
+	identity, e := primitives.ComputeNoteIdentity(note.OwnerAddress, note.Nonce)
 	if e != nil {
 		return nil, e
 	}
-	leaf, e := core.ComputeNoteCommitment(note.ChainID, note.ProtocolAddress, identity, note.TokenAddress, note.Amount)
+	leaf, e := primitives.ComputeNoteCommitment(note.ChainID, note.ProtocolAddress, identity, note.TokenAddress, note.Amount)
 	if e != nil {
 		return nil, e
 	}
@@ -102,17 +102,17 @@ func DecimalField(text string, bits int) (fr.Element, error) {
 		return fr.Element{}, errors.New("invalid disclosure decimal")
 	}
 	n, ok := new(big.Int).SetString(text, 10)
-	if !ok || n.Sign() < 0 || n.BitLen() > bits || n.Cmp(core.FieldModulus()) >= 0 {
+	if !ok || n.Sign() < 0 || n.BitLen() > bits || n.Cmp(primitives.FieldModulus()) >= 0 {
 		return fr.Element{}, errors.New("disclosure value out of range")
 	}
-	return core.BigIntToElement(n), nil
+	return primitives.BigIntToElement(n), nil
 }
 
 func DisclosedOwner(text string) (fr.Element, error) {
 	if len(text) != 42 || !strings.HasPrefix(text, "0x") || !common.IsHexAddress(text) || common.HexToAddress(text) == (common.Address{}) {
 		return fr.Element{}, errors.New("invalid disclosed wallet identity")
 	}
-	return core.BigIntToElement(common.HexToAddress(text).Big()), nil
+	return primitives.BigIntToElement(common.HexToAddress(text).Big()), nil
 }
 
 func (d *Disclosure) output() (DisclosureOutput, error) {
@@ -129,12 +129,12 @@ func (d *Disclosure) output() (DisclosureOutput, error) {
 	if e != nil {
 		return DisclosureOutput{}, e
 	}
-	if _, e = core.HexToElement(c.OutputCommitment.Hex()); e != nil {
+	if _, e = primitives.HexToElement(c.OutputCommitment.Hex()); e != nil {
 		return DisclosureOutput{}, e
 	}
 	role := "funds"
 
-	return DisclosureOutput{ProtocolContext: core.ProtocolContext{ChainID: chain, ProtocolAddress: protocol}, TokenAddress: token, OutputCommitment: c.OutputCommitment, Role: role}, nil
+	return DisclosureOutput{ProtocolContext: primitives.ProtocolContext{ChainID: chain, ProtocolAddress: protocol}, TokenAddress: token, OutputCommitment: c.OutputCommitment, Role: role}, nil
 }
 
 func DisclosureFromExport(data []byte) (*Disclosure, error) {
@@ -177,7 +177,7 @@ func DisclosureFromExport(data []byte) (*Disclosure, error) {
 		if len(material.Data["payloadKey"]) != 66 || !common.IsHexAddress(material.Data["ownerAddress"]) {
 			return nil, errors.New("invalid payload disclosure")
 		}
-		if _, e = core.DecodePrivateKey(material.Data["payloadKey"]); e != nil {
+		if _, e = primitives.DecodePrivateKey(material.Data["payloadKey"]); e != nil {
 			return nil, e
 		}
 		role := material.Data["role"]
@@ -204,7 +204,7 @@ func (d *Disclosure) Verify(output DisclosureOutput) (DisclosureResult, error) {
 		if data["role"] != output.Role {
 			return DisclosureResult{}, errors.New("selected envelope role differs")
 		}
-		key, e := core.DecodePrivateKey(data["payloadKey"])
+		key, e := primitives.DecodePrivateKey(data["payloadKey"])
 		if e != nil {
 			return DisclosureResult{}, e
 		}
@@ -213,9 +213,9 @@ func (d *Disclosure) Verify(output DisclosureOutput) (DisclosureResult, error) {
 		if e != nil {
 			return DisclosureResult{}, e
 		}
-		context := core.NoteDecryptionContext{NoteEncryptionContext: core.NoteEncryptionContext{ProtocolContext: output.ProtocolContext, OutputCommitment: core.BigIntToElement(output.OutputCommitment.Big())}, TokenAddress: output.TokenAddress, OwnerAddress: identity}
+		context := primitives.NoteDecryptionContext{NoteEncryptionContext: primitives.NoteEncryptionContext{ProtocolContext: output.ProtocolContext, OutputCommitment: primitives.BigIntToElement(output.OutputCommitment.Big())}, TokenAddress: output.TokenAddress, OwnerAddress: identity}
 		if d.material.Kind == "note" {
-			note, e := core.DecryptNotePayload(key, output.Ciphertext, context)
+			note, e := primitives.DecryptNotePayload(key, output.Ciphertext, context)
 			return DisclosureResult{Kind: "note", Note: &note}, e
 		}
 		return DisclosureResult{}, errors.New("unsupported Note disclosure")
@@ -233,12 +233,12 @@ func (d *Disclosure) Verify(output DisclosureOutput) (DisclosureResult, error) {
 		if e != nil {
 			return DisclosureResult{}, e
 		}
-		note := core.Note{ProtocolContext: output.ProtocolContext, OwnerAddress: owner, TokenAddress: output.TokenAddress, Amount: amount, Nonce: nonce}
-		identity, e := core.ComputeNoteIdentity(owner, nonce)
+		note := primitives.Note{ProtocolContext: output.ProtocolContext, OwnerAddress: owner, TokenAddress: output.TokenAddress, Amount: amount, Nonce: nonce}
+		identity, e := primitives.ComputeNoteIdentity(owner, nonce)
 		if e != nil {
 			return DisclosureResult{}, e
 		}
-		leaf, e := core.ComputeNoteCommitment(note.ChainID, note.ProtocolAddress, identity, note.TokenAddress, note.Amount)
+		leaf, e := primitives.ComputeNoteCommitment(note.ChainID, note.ProtocolAddress, identity, note.TokenAddress, note.Amount)
 		if e != nil || FieldHash(leaf) != output.OutputCommitment {
 			return DisclosureResult{}, errors.New("disclosed note commitment mismatch")
 		}
@@ -247,11 +247,11 @@ func (d *Disclosure) Verify(output DisclosureOutput) (DisclosureResult, error) {
 	return DisclosureResult{}, errors.New("unsupported Note disclosure")
 }
 
-func (v *ViewingCapability) DiscloseNote(envelope []byte, context core.NoteDecryptionContext) (*Disclosure, error) {
+func (v *ViewingCapability) DiscloseNote(envelope []byte, context primitives.NoteDecryptionContext) (*Disclosure, error) {
 	if _, e := v.decryptNote(envelope, context); e != nil {
 		return nil, e
 	}
-	key, e := core.ExportPayloadKey(v.key, envelope)
+	key, e := primitives.ExportPayloadKey(v.key, envelope)
 	if e != nil {
 		return nil, e
 	}

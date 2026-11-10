@@ -7,14 +7,14 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
-	"github.com/invisi-lab/invisi-sdk-go/core"
 	"github.com/invisi-lab/invisi-sdk-go/credit"
+	"github.com/invisi-lab/invisi-sdk-go/primitives"
 	wire "github.com/invisi-lab/invisi-sdk-go/wallet/protocol"
 )
 
 // Accept independently verifies the response against the original request.
-// It returns PublicResult, []bool, core.Note, credit.DeliveryState or
-// core.WalletAuthorizationWitness according to the requested method.
+// It returns PublicResult, []bool, primitives.Note, credit.DeliveryState or
+// primitives.WalletAuthorizationWitness according to the requested method.
 // viewingPublicKey binds Credit receiving snapshots to previously resolved public material.
 func Accept(q Request, r Response, viewingPublicKey string) (any, error) {
 	if err := ValidateResponse(q, r); err != nil {
@@ -23,7 +23,7 @@ func Accept(q Request, r Response, viewingPublicKey string) (any, error) {
 	if r.Error != nil {
 		return nil, r.Error
 	}
-	owner := core.BigIntToElement(common.HexToAddress(q.OwnerAddress).Big())
+	owner := primitives.BigIntToElement(common.HexToAddress(q.OwnerAddress).Big())
 	switch q.Method {
 	case Public:
 		var params struct{}
@@ -38,7 +38,7 @@ func Accept(q Request, r Response, viewingPublicKey string) (any, error) {
 		if err != nil {
 			return nil, err
 		}
-		identity, err := core.ComputeOwnerAddress(public)
+		identity, err := primitives.ComputeOwnerAddress(public)
 		if err != nil || identity != owner {
 			return nil, errors.New("wallet public identity mismatch")
 		}
@@ -53,7 +53,7 @@ func Accept(q Request, r Response, viewingPublicKey string) (any, error) {
 		if err != nil {
 			return nil, err
 		}
-		if err = core.ValidateClueKey(clue); err != nil {
+		if err = primitives.ValidateClueKey(clue); err != nil {
 			return nil, err
 		}
 		return p, nil
@@ -102,7 +102,7 @@ func Accept(q Request, r Response, viewingPublicKey string) (any, error) {
 			return nil, err
 		}
 		token, err := Element(p.Context.TokenAddress)
-		if err != nil || core.ElementToBigInt(token).BitLen() > 160 {
+		if err != nil || primitives.ElementToBigInt(token).BitLen() > 160 {
 			return nil, errors.New("invalid token address")
 		}
 		raw, err := Bytes(p.Context.OutputCommitment, 32)
@@ -142,7 +142,7 @@ func Accept(q Request, r Response, viewingPublicKey string) (any, error) {
 			if p.Context.Role != "" {
 				return nil, errors.New("note context cannot contain role")
 			}
-			return core.DecodeNotePlaintext(plain, core.NoteDecryptionContext{NoteEncryptionContext: core.NoteEncryptionContext{ProtocolContext: c, OutputCommitment: commitment}, TokenAddress: token, OwnerAddress: owner})
+			return primitives.DecodeNotePlaintext(plain, primitives.NoteDecryptionContext{NoteEncryptionContext: primitives.NoteEncryptionContext{ProtocolContext: c, OutputCommitment: commitment}, TokenAddress: token, OwnerAddress: owner})
 		}
 		role := credit.Owner
 		if p.Context.Role == "spender" {

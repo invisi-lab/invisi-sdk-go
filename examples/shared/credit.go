@@ -1,8 +1,8 @@
 package shared
 
 import (
-	"github.com/invisi-lab/invisi-sdk-go/core"
 	"github.com/invisi-lab/invisi-sdk-go/credit"
+	"github.com/invisi-lab/invisi-sdk-go/primitives"
 	"github.com/invisi-lab/invisi-sdk-go/protocol"
 )
 
@@ -23,7 +23,7 @@ func CreditDeliveries(snapshot credit.DeliveryState) ([]protocol.Delivery, error
 		if err != nil {
 			return nil, err
 		}
-		clue, err := core.CreateClue(keys.ClueKey)
+		clue, err := primitives.CreateClue(keys.ClueKey)
 		if err != nil {
 			return nil, err
 		}

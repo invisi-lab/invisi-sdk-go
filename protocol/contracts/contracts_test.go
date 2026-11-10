@@ -4,11 +4,8 @@ import (
 	"bytes"
 	"encoding/json"
 	"os"
-	"strings"
 	"testing"
 
-	"github.com/ethereum/go-ethereum/accounts/abi/bind"
-	"github.com/ethereum/go-ethereum/common"
 	"github.com/invisi-lab/invisi-sdk-go/protocol/contracts"
 )
 
@@ -105,32 +102,8 @@ func TestIERC20KeyMethods(t *testing.T) {
 	}
 }
 
-// TestNewBinderConstructors verifies that the generated binder constructors
-// compile and can be called with a zero address and nil caller.
-// Actual RPC calls require a live backend; this test just checks the type system.
-func TestNewBinderConstructors(t *testing.T) {
-	zero := common.Address{}
-
-	// Each constructor should succeed (nil caller is stored, not validated until call time).
-	if _, err := contracts.NewInvisiProtocolCaller(zero, nil); err != nil {
-		t.Errorf("NewInvisiProtocolCaller: %v", err)
-	}
-	if _, err := contracts.NewInvisiFactoryCaller(zero, nil); err != nil {
-		t.Errorf("NewInvisiFactoryCaller: %v", err)
-	}
-	if _, err := contracts.NewVerifierRouterCaller(zero, nil); err != nil {
-		t.Errorf("NewVerifierRouterCaller: %v", err)
-	}
-	if _, err := contracts.NewIERC20Caller(zero, nil); err != nil {
-		t.Errorf("NewIERC20Caller: %v", err)
-	}
-}
-
-// Ensure bind package is used (suppress unused import errors).
-var _ = bind.Bind
-
 func TestCurrentABIArtifacts(t *testing.T) {
-	for name, metadata := range map[string]*bind.MetaData{"InvisiProtocol": contracts.InvisiProtocolMetaData, "InvisiFactory": contracts.InvisiFactoryMetaData, "VerifierRouter": contracts.VerifierRouterMetaData, "CreditVerifierRouter": contracts.CreditVerifierRouterMetaData, "IERC20": contracts.IERC20MetaData, "InvisiAddressRegistry": contracts.InvisiAddressRegistryMetaData} {
+	for name, metadata := range map[string]*contracts.MetaData{"InvisiProtocol": contracts.InvisiProtocolMetaData, "InvisiFactory": contracts.InvisiFactoryMetaData, "VerifierRouter": contracts.VerifierRouterMetaData, "CreditVerifierRouter": contracts.CreditVerifierRouterMetaData, "IERC20": contracts.IERC20MetaData, "InvisiAddressRegistry": contracts.InvisiAddressRegistryMetaData} {
 		t.Run(name, func(t *testing.T) {
 			source, err := os.ReadFile("abi/" + name + ".abi.json")
 			if err != nil {
@@ -140,7 +113,7 @@ func TestCurrentABIArtifacts(t *testing.T) {
 			if err = json.Compact(&compact, source); err != nil {
 				t.Fatal(err)
 			}
-			if strings.ReplaceAll(compact.String(), " ", "") != metadata.ABI {
+			if compact.String() != metadata.ABI {
 				t.Fatal("generated binding differs from source ABI; run go generate ./contracts")
 			}
 			if _, err = metadata.GetAbi(); err != nil {

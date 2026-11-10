@@ -12,9 +12,9 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
-	"github.com/invisi-lab/invisi-sdk-go/core"
 	"github.com/invisi-lab/invisi-sdk-go/credit"
 	"github.com/invisi-lab/invisi-sdk-go/examples/shared"
+	"github.com/invisi-lab/invisi-sdk-go/primitives"
 	"github.com/invisi-lab/invisi-sdk-go/protocol"
 	"github.com/invisi-lab/invisi-sdk-go/prover"
 	"github.com/invisi-lab/invisi-sdk-go/prover/native"
@@ -110,9 +110,9 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	coreContext := core.ProtocolContext{
-		ChainID:         core.ElementFromUint64(pool.Context().ChainID),
-		ProtocolAddress: core.BigIntToElement(pool.Context().ProtocolAddress.Big()),
+	coreContext := primitives.ProtocolContext{
+		ChainID:         primitives.ElementFromUint64(pool.Context().ChainID),
+		ProtocolAddress: primitives.BigIntToElement(pool.Context().ProtocolAddress.Big()),
 	}
 	c := credit.Context{ProtocolContext: coreContext, TokenAddress: token, Timestamp: head.Time}
 	deadline := new(big.Int).SetUint64(head.Time + 300)
@@ -153,13 +153,13 @@ func main() {
 	sources := map[uint64]common.Hash{}
 
 	// Gross debits drive grant quota and usage; the ordinary output Note receives the combined net amount.
-	debit := core.ElementFromUint64(7)
+	debit := primitives.ElementFromUint64(7)
 	for _, candidate := range candidates {
 		s := candidate.Input.State
-		if core.ElementToBigInt(s.Expiry).Cmp(deadline) < 0 {
+		if primitives.ElementToBigInt(s.Expiry).Cmp(deadline) < 0 {
 			log.Fatal("selected grant expires before request deadline")
 		}
-		owner := common.BigToAddress(core.ElementToBigInt(s.OwnerWalletIdentity))
+		owner := common.BigToAddress(primitives.ElementToBigInt(s.OwnerWalletIdentity))
 		pi := len(p.Payers) - 1
 		if pi < 0 || p.Payers[pi].Payer != owner {
 			p.Payers = append(p.Payers, credit.Payer{Payer: owner, Amount: new(big.Int)})
@@ -172,8 +172,8 @@ func main() {
 		}
 		p.GrantRefs = append(p.GrantRefs, credit.GrantRef{
 			PayerIndex: big.NewInt(int64(pi)),
-			Shard:      core.ElementToBigInt(s.RevocationShard).Uint64(),
-			Slot:       uint16(core.ElementToBigInt(s.RevocationSlot).Uint64()),
+			Shard:      primitives.ElementToBigInt(s.RevocationShard).Uint64(),
+			Slot:       uint16(primitives.ElementToBigInt(s.RevocationSlot).Uint64()),
 		})
 		p.Nullifiers = append(p.Nullifiers, common.Hash(next.Nullifier.Bytes()))
 		p.CreditCommitments = append(p.CreditCommitments, common.Hash(next.StateCommitment.Bytes()))
@@ -198,18 +198,18 @@ func main() {
 	for _, id := range ids {
 		p.Sources = append(p.Sources, protocol.InputSource{TreeId: new(big.Int).SetUint64(id), MerkleRoot: sources[id]})
 	}
-	nonce, e := core.GenerateNonce()
+	nonce, e := primitives.GenerateNonce()
 	if e != nil {
 		log.Fatal(e)
 	}
-	note := core.Note{
+	note := primitives.Note{
 		ProtocolContext: coreContext,
-		OwnerAddress:    core.BigIntToElement(recipientWallet.OwnerAddress().Big()),
-		TokenAddress:    core.BigIntToElement(token.Big()),
-		Amount:          core.BigIntToElement(p.TotalAmount),
+		OwnerAddress:    primitives.BigIntToElement(recipientWallet.OwnerAddress().Big()),
+		TokenAddress:    primitives.BigIntToElement(token.Big()),
+		Amount:          primitives.BigIntToElement(p.TotalAmount),
 		Nonce:           nonce,
 	}
-	prepared, err = credit.PrepareDrawToNote(c, p, ds, inputs, note, &core.ReceivingKeys{ViewingPublicKey: recipientWallet.ViewingPublicKey(), ClueKey: recipientWallet.ClueKey()})
+	prepared, err = credit.PrepareDrawToNote(c, p, ds, inputs, note, &primitives.ReceivingKeys{ViewingPublicKey: recipientWallet.ViewingPublicKey(), ClueKey: recipientWallet.ClueKey()})
 	log.Printf("Gross payer debit=%s; ordinary Note recipient=%s", p.TotalAmount, recipientWallet.OwnerAddress())
 
 	if err != nil {

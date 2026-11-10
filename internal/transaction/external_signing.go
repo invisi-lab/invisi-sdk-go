@@ -9,9 +9,9 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/signer/core/apitypes"
 
-	"github.com/invisi-lab/invisi-sdk-go/core"
+	"github.com/invisi-lab/invisi-sdk-go/primitives"
 	"github.com/invisi-lab/invisi-sdk-go/protocol"
-	"github.com/invisi-lab/invisi-sdk-go/protocol/contracts"
+	"github.com/invisi-lab/invisi-sdk-go/rpc/contracts"
 	"github.com/invisi-lab/invisi-sdk-go/prover"
 )
 
@@ -28,33 +28,33 @@ func ClonePayload(data []byte) []byte {
 	return append([]byte{}, data...)
 }
 
-func (o *Execution) WalletRequest(ctx context.Context) (core.WalletAuthorizationRequest, error) {
+func (o *Execution) WalletRequest(ctx context.Context) (primitives.WalletAuthorizationRequest, error) {
 	if err := o.CheckLease(ctx); err != nil {
-		return core.WalletAuthorizationRequest{}, err
+		return primitives.WalletAuthorizationRequest{}, err
 	}
 	if !o.Plan.NeedsAuthorization || (o.Status != "prepared" && o.Status != "authorized") {
-		return core.WalletAuthorizationRequest{}, errors.New("operation is not awaiting wallet authorization")
+		return primitives.WalletAuthorizationRequest{}, errors.New("operation is not awaiting wallet authorization")
 	}
 
 	words, err := o.Words()
 	if err != nil {
-		return core.WalletAuthorizationRequest{}, err
+		return primitives.WalletAuthorizationRequest{}, err
 	}
-	return protocol.WalletAuthorizationRequest(o.Plan.Context, core.WalletOperation(o.Plan.Kind), o.Plan.Capacity, words[:len(words)-2])
+	return protocol.WalletAuthorizationRequest(o.Plan.Context, primitives.WalletOperation(o.Plan.Kind), o.Plan.Capacity, words[:len(words)-2])
 }
 
-func (o *Execution) ExportWalletAuthorization(ctx context.Context) (core.SigningRequest, error) {
+func (o *Execution) ExportWalletAuthorization(ctx context.Context) (primitives.SigningRequest, error) {
 	o.mu.Lock()
 	defer o.mu.Unlock()
 	request, err := o.WalletRequest(ctx)
 	if err != nil {
-		return core.SigningRequest{}, err
+		return primitives.SigningRequest{}, err
 	}
-	typed, err := core.WalletAuthorizationTypedData(request)
+	typed, err := primitives.WalletAuthorizationTypedData(request)
 	if err != nil {
-		return core.SigningRequest{}, err
+		return primitives.SigningRequest{}, err
 	}
-	return core.NewSigningRequest(typed)
+	return primitives.NewSigningRequest(typed)
 }
 
 func (o *Execution) AttachWallet(ctx context.Context, signature []byte) error {
@@ -62,7 +62,7 @@ func (o *Execution) AttachWallet(ctx context.Context, signature []byte) error {
 	if err != nil {
 		return err
 	}
-	witness, err := core.BuildWalletAuthorizationWitnessFromSignature(core.BigIntToElement(o.Runtime.Wallet.identity.Big()), request, append([]byte(nil), signature...))
+	witness, err := primitives.BuildWalletAuthorizationWitnessFromSignature(primitives.BigIntToElement(o.Runtime.Wallet.identity.Big()), request, append([]byte(nil), signature...))
 	if err != nil {
 		return err
 	}
@@ -71,11 +71,11 @@ func (o *Execution) AttachWallet(ctx context.Context, signature []byte) error {
 	return o.Persist(ctx, o.Status)
 }
 
-func (p *PreparedTransaction) ExportWalletAuthorization(ctx context.Context) (core.SigningRequest, error) {
+func (p *PreparedTransaction) ExportWalletAuthorization(ctx context.Context) (primitives.SigningRequest, error) {
 	p.lifecycle.mu.Lock()
 	defer p.lifecycle.mu.Unlock()
 	if err := p.current(ctx); err != nil {
-		return core.SigningRequest{}, err
+		return primitives.SigningRequest{}, err
 	}
 	return p.operation.ExportWalletAuthorization(ctx)
 }
@@ -117,24 +117,24 @@ func (o *Execution) FundingRequest(ctx context.Context) (apitypes.TypedData, err
 	return o.FundingTypedData()
 }
 
-func (o *Execution) ExportFundingAuthorization(ctx context.Context) (core.SigningRequest, error) {
+func (o *Execution) ExportFundingAuthorization(ctx context.Context) (primitives.SigningRequest, error) {
 	o.mu.Lock()
 	defer o.mu.Unlock()
 	plan, err := Frozen(o.Plan)
 	if err != nil {
-		return core.SigningRequest{}, err
+		return primitives.SigningRequest{}, err
 	}
 	copy := &Execution{Runtime: o.Runtime, Plan: plan, Status: o.Status, Bundle: o.Bundle, WorkerID: o.WorkerID}
 	typed, err := copy.FundingRequest(ctx)
 	if err != nil {
-		return core.SigningRequest{}, err
+		return primitives.SigningRequest{}, err
 	}
-	request, err := core.NewSigningRequest(typed)
+	request, err := primitives.NewSigningRequest(typed)
 	if err != nil {
 		return request, err
 	}
 	if err = o.CheckLease(ctx); err != nil {
-		return core.SigningRequest{}, err
+		return primitives.SigningRequest{}, err
 	}
 	return request, nil
 }
@@ -204,11 +204,11 @@ func (o *Execution) AttachFunding(ctx context.Context, signature []byte) error {
 	return o.Persist(ctx, o.Status)
 }
 
-func (p *PreparedTransaction) ExportFundingAuthorization(ctx context.Context) (core.SigningRequest, error) {
+func (p *PreparedTransaction) ExportFundingAuthorization(ctx context.Context) (primitives.SigningRequest, error) {
 	p.lifecycle.mu.Lock()
 	defer p.lifecycle.mu.Unlock()
 	if err := p.current(ctx); err != nil {
-		return core.SigningRequest{}, err
+		return primitives.SigningRequest{}, err
 	}
 	return p.operation.ExportFundingAuthorization(ctx)
 }

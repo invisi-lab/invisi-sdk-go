@@ -10,11 +10,13 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/invisi-lab/invisi-sdk-go/rpc/chain"
+
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	ethcrypto "github.com/ethereum/go-ethereum/crypto"
-	"github.com/invisi-lab/invisi-sdk-go/core"
+	"github.com/invisi-lab/invisi-sdk-go/primitives"
 	"github.com/invisi-lab/invisi-sdk-go/protocol"
 	protocolrpc "github.com/invisi-lab/invisi-sdk-go/rpc"
 )
@@ -104,10 +106,10 @@ func newNoteFixture(t *testing.T) *noteFixture {
 	h := f.provider.headers[10]
 	block := protocolrpc.CanonicalBlock{Number: 10, Hash: h.Hash(), Timestamp: h.Time}
 	dep := protocolrpc.ProtocolDeployment{ChainID: "97", Protocol: protocolrpc.ContractDeployment{Address: f.note.ProtocolAddress(), RuntimeCodeHash: ethcrypto.Keccak256Hash([]byte{0x60, 0}), FromBlock: 1}}
-	root := core.BigIntToElement(output.Commitment().Big())
-	path := make([]common.Hash, core.TreeDepth)
+	root := primitives.BigIntToElement(output.Commitment().Big())
+	path := make([]common.Hash, primitives.TreeDepth)
 	for range path {
-		root, e = core.Poseidon2Hash(root, core.ElementFromUint64(0))
+		root, e = primitives.Poseidon2Hash(root, primitives.ElementFromUint64(0))
 		if e != nil {
 			t.Fatal(e)
 		}
@@ -149,7 +151,7 @@ func newNoteFixture(t *testing.T) *noteFixture {
 	if e != nil {
 		t.Fatal(e)
 	}
-	f.pool, e = protocol.ProtocolFromRPC(context.Background(), rpc, f.provider)
+	f.pool, e = chain.ProtocolFromRPC(context.Background(), rpc, f.provider)
 	if e != nil {
 		t.Fatal(e)
 	}
@@ -179,9 +181,9 @@ func TestPaymentNoteVerificationLevels(t *testing.T) {
 	if e != nil || input.Commitment != f.note.Commitment() {
 		t.Fatal(input, e)
 	}
-	input.Note.Amount = core.ElementFromUint64(1)
+	input.Note.Amount = primitives.ElementFromUint64(1)
 	copy, _ := spendable.ToInput()
-	if core.ElementToBigInt(copy.Note.Amount).Cmp(big.NewInt(70)) != 0 {
+	if primitives.ElementToBigInt(copy.Note.Amount).Cmp(big.NewInt(70)) != 0 {
 		t.Fatal("input was mutable")
 	}
 	data := f.note.Data()
@@ -236,7 +238,7 @@ func TestPaymentNoteVerificationFailureAndCurrentState(t *testing.T) {
 	if _, e = f.note.Verify(ctx, f.pool, PaymentNoteVerificationOptions{Confirmations: 100}); e == nil {
 		t.Fatal("insufficient confirmations accepted")
 	}
-	manual, e := protocol.NewProtocol(f.pool.Deployment())
+	manual, e := chain.NewProtocol(f.pool.Deployment())
 	if e != nil {
 		t.Fatal(e)
 	}

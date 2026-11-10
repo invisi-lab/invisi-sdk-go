@@ -9,7 +9,7 @@ import (
 	"github.com/consensys/gnark-crypto/ecc/bn254/fr"
 	"github.com/ethereum/go-ethereum/common"
 
-	"github.com/invisi-lab/invisi-sdk-go/core"
+	"github.com/invisi-lab/invisi-sdk-go/primitives"
 	sdk "github.com/invisi-lab/invisi-sdk-go/sdk"
 )
 
@@ -52,7 +52,7 @@ func testOutputs(s *WalletSession, outputs []testPaymentOutput) []sdk.NoteOutput
 		if common.IsHexAddress(o.To) {
 			r = sdk.EVMRecipient{Address: common.HexToAddress(o.To)}
 		}
-		n, e := sdk.NewNoteOutput(sdk.PaymentRequest{ChainID: core.ElementToBigInt(s.coreContext().ChainID), ProtocolAddress: s.scope.ProtocolAddress, TokenAddress: common.HexToAddress("0x2222222222222222222222222222222222222222"), Amount: o.Amount, Recipient: r, Payload: o.Payload})
+		n, e := sdk.NewNoteOutput(sdk.PaymentRequest{ChainID: primitives.ElementToBigInt(s.coreContext().ChainID), ProtocolAddress: s.scope.ProtocolAddress, TokenAddress: common.HexToAddress("0x2222222222222222222222222222222222222222"), Amount: o.Amount, Recipient: r, Payload: o.Payload})
 		if e != nil {
 			panic(e)
 		}
@@ -96,7 +96,7 @@ func TestNoteOutputCanonicalNonceAndOpaqueModes(t *testing.T) {
 }
 func TestNoteOutputPreparationUsesDirectIdentityAndChecksContext(t *testing.T) {
 	session, token, _ := testSession(t)
-	base := sdk.PaymentRequest{ChainID: core.ElementToBigInt(session.coreContext().ChainID), ProtocolAddress: session.scope.ProtocolAddress, TokenAddress: token, Amount: big.NewInt(30), Recipient: sdk.IdentityRecipient{Identity: common.HexToHash("0x03")}}
+	base := sdk.PaymentRequest{ChainID: primitives.ElementToBigInt(session.coreContext().ChainID), ProtocolAddress: session.scope.ProtocolAddress, TokenAddress: token, Amount: big.NewInt(30), Recipient: sdk.IdentityRecipient{Identity: common.HexToHash("0x03")}}
 	out, err := sdk.NewNoteOutput(base)
 	if err != nil {
 		t.Fatal(err)

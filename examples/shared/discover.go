@@ -6,8 +6,8 @@ import (
 	"sort"
 
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/invisi-lab/invisi-sdk-go/core"
 	"github.com/invisi-lab/invisi-sdk-go/credit"
+	"github.com/invisi-lab/invisi-sdk-go/primitives"
 	"github.com/invisi-lab/invisi-sdk-go/rpc"
 	"github.com/invisi-lab/invisi-sdk-go/sdk"
 	walletsession "github.com/invisi-lab/invisi-sdk-go/session"
@@ -48,7 +48,7 @@ func DiscoverNotes(ctx context.Context, provider sdk.Provider, client *sdk.Proto
 	}
 	result := []NoteCandidate{}
 	for _, record := range state.Notes {
-		if record.Spent || record.Note.TokenAddress != core.BigIntToElement(token.Big()) {
+		if record.Spent || record.Note.TokenAddress != primitives.BigIntToElement(token.Big()) {
 			continue
 		}
 		result = append(result, NoteCandidate{Input: sdk.NoteInput{Note: record.Note, Commitment: record.Commitment, TreeID: record.TreeID, LeafIndex: record.LeafIndex}, Output: rpc.ProtocolNoteOutput{Commitment: record.Commitment, TokenAddress: token, TreeID: record.TreeID, LeafIndex: record.LeafIndex, TransactionHash: record.TransactionHash}})
@@ -82,7 +82,7 @@ func CreditCandidates(ctx context.Context, provider sdk.Provider, client *sdk.Pr
 	}
 	result := []CreditCandidate{}
 	for _, record := range state.PostpaidCredit.Grants {
-		if record.Role != selected || record.ReservedBy != "" || record.Consumed || record.Revoked || core.ElementToBigInt(record.Delivery.State.Expiry).Uint64() <= state.DiscoveryThrough.Timestamp || record.Delivery.State.TokenAddress != core.BigIntToElement(token.Big()) {
+		if record.Role != selected || record.ReservedBy != "" || record.Consumed || record.Revoked || primitives.ElementToBigInt(record.Delivery.State.Expiry).Uint64() <= state.DiscoveryThrough.Timestamp || record.Delivery.State.TokenAddress != primitives.BigIntToElement(token.Big()) {
 			continue
 		}
 		membership, err := client.WithProvider(provider).GetMembership(ctx, pool.Context(), rpc.MembershipInput{TreeID: record.TreeID, LeafIndex: uint32(record.LeafIndex), Commitment: record.Commitment}, *state.DiscoveryThrough)

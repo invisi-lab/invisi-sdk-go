@@ -11,8 +11,8 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 
-	"github.com/invisi-lab/invisi-sdk-go/core"
 	transaction "github.com/invisi-lab/invisi-sdk-go/internal/transaction"
+	"github.com/invisi-lab/invisi-sdk-go/primitives"
 	protocolrpc "github.com/invisi-lab/invisi-sdk-go/rpc"
 	sdk "github.com/invisi-lab/invisi-sdk-go/sdk"
 )
@@ -82,16 +82,16 @@ func TestMemoStoreCloneAndFundsDisclosureBoundary(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	output := sdk.DisclosureOutput{ProtocolContext: note.ProtocolContext, TokenAddress: core.BigIntToElement(token.Big()), OutputCommitment: stored.Commitment, Role: "funds"}
+	output := sdk.DisclosureOutput{ProtocolContext: note.ProtocolContext, TokenAddress: primitives.BigIntToElement(token.Big()), OutputCommitment: stored.Commitment, Role: "funds"}
 	result, err := opening.Verify(output)
 	if err != nil || len(result.Note.Payload) != 0 || opening.GetScope().RevealsPayload {
 		t.Fatal("opening claimed memo authenticity", err)
 	}
-	output.Ciphertext, err = core.EncryptPrivateTransferNote(session.wallet.ViewingPublicKey(), note, core.NoteEncryptionContext{ProtocolContext: note.ProtocolContext, OutputCommitment: core.BigIntToElement(stored.Commitment.Big())})
+	output.Ciphertext, err = primitives.EncryptPrivateTransferNote(session.wallet.ViewingPublicKey(), note, primitives.NoteEncryptionContext{ProtocolContext: note.ProtocolContext, OutputCommitment: primitives.BigIntToElement(stored.Commitment.Big())})
 	if err != nil {
 		t.Fatal(err)
 	}
-	payload, err := testDisclosureViewer(session).DiscloseNote(output.Ciphertext, core.NoteDecryptionContext{NoteEncryptionContext: core.NoteEncryptionContext{ProtocolContext: note.ProtocolContext, OutputCommitment: core.BigIntToElement(stored.Commitment.Big())}, TokenAddress: note.TokenAddress})
+	payload, err := testDisclosureViewer(session).DiscloseNote(output.Ciphertext, primitives.NoteDecryptionContext{NoteEncryptionContext: primitives.NoteEncryptionContext{ProtocolContext: note.ProtocolContext, OutputCommitment: primitives.BigIntToElement(stored.Commitment.Big())}, TokenAddress: note.TokenAddress})
 	if err != nil {
 		t.Fatal(err)
 	}

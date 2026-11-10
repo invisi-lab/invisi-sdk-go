@@ -7,12 +7,12 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 
-	"github.com/invisi-lab/invisi-sdk-go/core"
 	"github.com/invisi-lab/invisi-sdk-go/credit"
-	creditsession "github.com/invisi-lab/invisi-sdk-go/credit/session"
-	"github.com/invisi-lab/invisi-sdk-go/internal/receipts"
-	"github.com/invisi-lab/invisi-sdk-go/protocol/contracts"
+	"github.com/invisi-lab/invisi-sdk-go/primitives"
+	"github.com/invisi-lab/invisi-sdk-go/rpc/contracts"
+	"github.com/invisi-lab/invisi-sdk-go/protocol/receipts"
 	protocolrpc "github.com/invisi-lab/invisi-sdk-go/rpc"
+	creditsession "github.com/invisi-lab/invisi-sdk-go/session/credit"
 	"github.com/invisi-lab/invisi-sdk-go/wallet"
 )
 
@@ -74,7 +74,7 @@ func (s *WalletSession) readTransaction(ctx context.Context, hash common.Hash, a
 		if len(output.Ciphertext) == 0 && len(output.Clue) == 0 {
 			continue
 		}
-		context := core.NoteDecryptionContext{NoteEncryptionContext: core.NoteEncryptionContext{ProtocolContext: s.coreContext(), OutputCommitment: core.BigIntToElement(output.Commitment.Big())}, TokenAddress: core.BigIntToElement(output.Token.Big()), OwnerAddress: core.BigIntToElement(s.wallet.OwnerAddress().Big())}
+		context := primitives.NoteDecryptionContext{NoteEncryptionContext: primitives.NoteEncryptionContext{ProtocolContext: s.coreContext(), OutputCommitment: primitives.BigIntToElement(output.Commitment.Big())}, TokenAddress: primitives.BigIntToElement(output.Token.Big()), OwnerAddress: primitives.BigIntToElement(s.wallet.OwnerAddress().Big())}
 		note, e := resolveNote(resolver, output.Ciphertext, context)
 		if e != nil && !errors.Is(e, wallet.ErrNotRecipient) {
 			return nil, nil, nil, e
@@ -92,7 +92,7 @@ func (s *WalletSession) readTransaction(ctx context.Context, hash common.Hash, a
 		}
 	}
 	for _, output := range batch.CreditStates {
-		context := credit.DeliveryContext{ProtocolContext: s.coreContext(), TokenAddress: core.BigIntToElement(output.Token.Big()), Commitment: core.BigIntToElement(output.Commitment.Big()), RecipientIdentity: core.BigIntToElement(s.wallet.OwnerAddress().Big())}
+		context := credit.DeliveryContext{ProtocolContext: s.coreContext(), TokenAddress: primitives.BigIntToElement(output.Token.Big()), Commitment: primitives.BigIntToElement(output.Commitment.Big()), RecipientIdentity: primitives.BigIntToElement(s.wallet.OwnerAddress().Big())}
 		for _, envelope := range output.Deliveries {
 			for _, role := range []credit.Role{credit.Owner, credit.Spender} {
 				state, e := resolveCredit(resolver, envelope.Ciphertext, context, role)

@@ -10,10 +10,10 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 
-	"github.com/invisi-lab/invisi-sdk-go/core"
-	creditsession "github.com/invisi-lab/invisi-sdk-go/credit/session"
-	"github.com/invisi-lab/invisi-sdk-go/protocol/contracts"
+	"github.com/invisi-lab/invisi-sdk-go/primitives"
+	"github.com/invisi-lab/invisi-sdk-go/rpc/contracts"
 	protocolrpc "github.com/invisi-lab/invisi-sdk-go/rpc"
+	creditsession "github.com/invisi-lab/invisi-sdk-go/session/credit"
 )
 
 func (s *WalletSession) invalidate(ctx context.Context) error {
@@ -269,7 +269,7 @@ func (s *WalletSession) refreshInternal(ctx context.Context, options RefreshOpti
 					if previous.Nullifier != common.Hash(nf) {
 						continue
 					}
-					recovered, e := previous.Delivery.State.Recover(core.BigIntToElement(new(big.Int).SetBytes(nf[:])), core.BigIntToElement(new(big.Int).SetBytes(draw.Params.CreditCommitments[j][:])), core.BigIntToElement(new(big.Int).SetBytes(draw.Params.RecoveryAmounts[j][:])), draw.Timestamp)
+					recovered, e := previous.Delivery.State.Recover(primitives.BigIntToElement(new(big.Int).SetBytes(nf[:])), primitives.BigIntToElement(new(big.Int).SetBytes(draw.Params.CreditCommitments[j][:])), primitives.BigIntToElement(new(big.Int).SetBytes(draw.Params.RecoveryAmounts[j][:])), draw.Timestamp)
 					if e != nil {
 						return result, e
 					}
@@ -327,10 +327,10 @@ func (s *WalletSession) refreshInternal(ctx context.Context, options RefreshOpti
 			}
 			spentCredits[key] = spent
 			grant := c.Delivery.State
-			owner := common.BigToAddress(core.ElementToBigInt(grant.OwnerWalletIdentity))
-			token := common.BigToAddress(core.ElementToBigInt(grant.TokenAddress))
-			shard := core.ElementToBigInt(grant.RevocationShard).Uint64()
-			slot := core.ElementToBigInt(grant.RevocationSlot).Uint64()
+			owner := common.BigToAddress(primitives.ElementToBigInt(grant.OwnerWalletIdentity))
+			token := common.BigToAddress(primitives.ElementToBigInt(grant.TokenAddress))
+			shard := primitives.ElementToBigInt(grant.RevocationShard).Uint64()
+			slot := primitives.ElementToBigInt(grant.RevocationSlot).Uint64()
 			word := uint8(slot / 256)
 			bitmapKey := fmt.Sprintf("%s:%s:%d:%d", owner.Hex(), token.Hex(), shard, word)
 			bits, ok := bitmaps[bitmapKey]

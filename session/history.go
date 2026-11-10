@@ -10,8 +10,8 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 
-	"github.com/invisi-lab/invisi-sdk-go/core"
 	transaction "github.com/invisi-lab/invisi-sdk-go/internal/transaction"
+	"github.com/invisi-lab/invisi-sdk-go/primitives"
 	protocolrpc "github.com/invisi-lab/invisi-sdk-go/rpc"
 	sdk "github.com/invisi-lab/invisi-sdk-go/sdk"
 )
@@ -115,11 +115,11 @@ func (s *WalletSession) GetHistory(ctx context.Context, options HistoryOptions) 
 		result.Outgoing = append(result.Outgoing, entry)
 	}
 	for _, record := range state.Notes {
-		token := common.BigToAddress(core.ElementToBigInt(record.Note.TokenAddress))
+		token := common.BigToAddress(primitives.ElementToBigInt(record.Note.TokenAddress))
 		if filterToken && token != tokenFilter {
 			continue
 		}
-		entry := IncomingHistoryEntry{TokenAddress: token, Amount: core.ElementToBigInt(record.Note.Amount),
+		entry := IncomingHistoryEntry{TokenAddress: token, Amount: primitives.ElementToBigInt(record.Note.Amount),
 			Payload: append([]byte(nil), record.Note.Payload...), Commitment: record.Commitment, TreeID: record.TreeID,
 			LeafIndex: record.LeafIndex, TransactionHash: record.TransactionHash, Spent: record.Spent, ReservedBy: record.ReservedBy}
 		if record.Block != nil {

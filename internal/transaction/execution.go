@@ -7,7 +7,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 
-	"github.com/invisi-lab/invisi-sdk-go/core"
+	"github.com/invisi-lab/invisi-sdk-go/primitives"
 	"github.com/invisi-lab/invisi-sdk-go/prover"
 )
 
@@ -16,7 +16,7 @@ type Execution struct {
 	Runtime         *Runtime
 	Plan            Plan
 	Status          string
-	Authorization   *core.WalletAuthorizationWitness
+	Authorization   *primitives.WalletAuthorizationWitness
 	Bundle          *prover.ProofBundle
 	Data            []byte
 	TransactionHash common.Hash

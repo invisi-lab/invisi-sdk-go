@@ -1,13 +1,14 @@
 package credit
 
 import (
-	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/crypto"
-	"github.com/invisi-lab/invisi-sdk-go/core"
-	"github.com/invisi-lab/invisi-sdk-go/protocol"
-	wire "github.com/invisi-lab/invisi-sdk-go/wallet/protocol"
 	"math/big"
 	"testing"
+
+	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/crypto"
+	"github.com/invisi-lab/invisi-sdk-go/primitives"
+	"github.com/invisi-lab/invisi-sdk-go/protocol"
+	wire "github.com/invisi-lab/invisi-sdk-go/wallet/protocol"
 )
 
 func TestCreditPreparedWalletWireAuthorization(t *testing.T) {
@@ -15,7 +16,7 @@ func TestCreditPreparedWalletWireAuthorization(t *testing.T) {
 	raw := common.LeftPadBytes([]byte{1}, 32)
 	key, _ := crypto.ToECDSA(raw)
 	owner := crypto.PubkeyToAddress(key.PublicKey)
-	s.OwnerWalletIdentity = core.BigIntToElement(owner.Big())
+	s.OwnerWalletIdentity = primitives.BigIntToElement(owner.Big())
 	s.SpenderWalletIdentity = s.OwnerWalletIdentity
 	commitment, _ := s.Commitment()
 	c := Context{ProtocolContext: s.ProtocolContext, TokenAddress: common.BigToAddress(big.NewInt(34)), Timestamp: 2000000000}
@@ -27,17 +28,17 @@ func TestCreditPreparedWalletWireAuthorization(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	input := LocatedState{State: s, TreeID: 1, Debit: core.ElementFromUint64(7)}
+	input := LocatedState{State: s, TreeID: 1, Debit: primitives.ElementFromUint64(7)}
 	root, err := input.root()
 	if err != nil {
 		t.Fatal(err)
 	}
-	drawn, err := s.Draw(core.ElementFromUint64(7), c.Timestamp)
+	drawn, err := s.Draw(primitives.ElementFromUint64(7), c.Timestamp)
 	if err != nil {
 		t.Fatal(err)
 	}
-	identity := core.ElementFromUint64(1)
-	noteCommitment, err := core.ComputeNoteCommitment(s.ChainID, s.ProtocolAddress, identity, s.TokenAddress, core.ElementFromUint64(7))
+	identity := primitives.ElementFromUint64(1)
+	noteCommitment, err := primitives.ComputeNoteCommitment(s.ChainID, s.ProtocolAddress, identity, s.TokenAddress, primitives.ElementFromUint64(7))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -45,7 +46,7 @@ func TestCreditPreparedWalletWireAuthorization(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	change := Change{Policy: s.Policy, Expiry: s.Expiry, IncreaseAvailableCredit: core.ElementFromUint64(5)}
+	change := Change{Policy: s.Policy, Expiry: s.Expiry, IncreaseAvailableCredit: primitives.ElementFromUint64(5)}
 	updated, err := s.Update(change, 2000000300)
 	if err != nil {
 		t.Fatal(err)
@@ -68,8 +69,8 @@ func TestCreditPreparedWalletWireAuthorization(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		signature, _ := core.SignWalletAuthorization(raw, request)
-		digest, _ := core.ComputeWalletAuthorizationDigest(request)
+		signature, _ := primitives.SignWalletAuthorization(raw, request)
+		digest, _ := primitives.ComputeWalletAuthorizationDigest(request)
 		response := wire.Response{Version: q.Version, ID: q.ID, OwnerAddress: q.OwnerAddress, Method: q.Method, Result: wire.Encode(wire.AuthorizeResult{SpendingPublicKey: wire.Hex(crypto.FromECDSAPub(&key.PublicKey)), Signature: wire.Hex(signature), Digest: digest.Hex()})}
 		wrong := response
 		wrong.ID = "other"

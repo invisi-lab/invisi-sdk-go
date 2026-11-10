@@ -7,7 +7,7 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 
-	"github.com/invisi-lab/invisi-sdk-go/core"
+	"github.com/invisi-lab/invisi-sdk-go/primitives"
 	protocolrpc "github.com/invisi-lab/invisi-sdk-go/rpc"
 )
 
@@ -26,7 +26,7 @@ func (s WalletScope) Key() string {
 type NoteRecord struct {
 	TransactionHash       common.Hash
 	Block                 *protocolrpc.CanonicalBlock
-	Note                  core.Note
+	Note                  primitives.Note
 	Commitment, Nullifier common.Hash
 	TreeID                uint64
 	LeafIndex             uint32

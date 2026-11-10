@@ -3,26 +3,27 @@ package rpc
 import (
 	"context"
 	"encoding/json"
-	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/core/types"
-	"github.com/ethereum/go-ethereum/crypto"
-	"github.com/invisi-lab/invisi-sdk-go/core"
 	"math/big"
 	"net/http"
 	"net/http/httptest"
 	"testing"
+
+	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/core/types"
+	"github.com/ethereum/go-ethereum/crypto"
+	"github.com/invisi-lab/invisi-sdk-go/primitives"
 )
 
 func TestGetNote(t *testing.T) {
 	provider := testProvider{&types.Header{Number: big.NewInt(10), Time: 123}}
 	block := CanonicalBlock{10, provider.header.Hash(), provider.header.ParentHash, 123}
 	dep := ProtocolDeployment{ChainID: "31337", Protocol: ContractDeployment{common.HexToAddress("11"), crypto.Keccak256Hash([]byte{1}), 1}}
-	leaf := core.ElementFromUint64(1)
+	leaf := primitives.ElementFromUint64(1)
 	root := leaf
-	path := make([]common.Hash, core.TreeDepth)
+	path := make([]common.Hash, primitives.TreeDepth)
 	for i := range path {
 		var e error
-		root, e = core.Poseidon2Hash(root, core.ElementFromUint64(0))
+		root, e = primitives.Poseidon2Hash(root, primitives.ElementFromUint64(0))
 		if e != nil {
 			t.Fatal(e)
 		}
@@ -85,12 +86,12 @@ func TestGetCreditState(t *testing.T) {
 	provider := testProvider{&types.Header{Number: big.NewInt(10), Time: 123}}
 	block := CanonicalBlock{10, provider.header.Hash(), provider.header.ParentHash, 123}
 	dep := ProtocolDeployment{ChainID: "31337", Protocol: ContractDeployment{common.HexToAddress("11"), crypto.Keccak256Hash([]byte{1}), 1}}
-	leaf := core.ElementFromUint64(1)
+	leaf := primitives.ElementFromUint64(1)
 	root := leaf
-	path := make([]common.Hash, core.TreeDepth)
+	path := make([]common.Hash, primitives.TreeDepth)
 	for i := range path {
 		var e error
-		root, e = core.Poseidon2Hash(root, core.ElementFromUint64(0))
+		root, e = primitives.Poseidon2Hash(root, primitives.ElementFromUint64(0))
 		if e != nil {
 			t.Fatal(e)
 		}

@@ -9,8 +9,8 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
-	"github.com/invisi-lab/invisi-sdk-go/core"
 	"github.com/invisi-lab/invisi-sdk-go/examples/shared"
+	"github.com/invisi-lab/invisi-sdk-go/primitives"
 	"github.com/invisi-lab/invisi-sdk-go/prover/native"
 	"github.com/invisi-lab/invisi-sdk-go/sdk"
 )
@@ -66,7 +66,7 @@ func main() {
 			break
 		}
 		inputs = append(inputs, candidate.Input)
-		selectedAmount.Add(selectedAmount, core.ElementToBigInt(candidate.Input.Note.Amount))
+		selectedAmount.Add(selectedAmount, primitives.ElementToBigInt(candidate.Input.Note.Amount))
 		if len(inputs) == 12 {
 			break
 		}

@@ -8,8 +8,8 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 
-	"github.com/invisi-lab/invisi-sdk-go/core"
 	transaction "github.com/invisi-lab/invisi-sdk-go/internal/transaction"
+	"github.com/invisi-lab/invisi-sdk-go/primitives"
 	"github.com/invisi-lab/invisi-sdk-go/prover"
 	"github.com/invisi-lab/invisi-sdk-go/prover/native"
 	sdk "github.com/invisi-lab/invisi-sdk-go/sdk"
@@ -86,16 +86,16 @@ func TestRealNativeAggregation(t *testing.T) {
 		for _, note := range state.Notes {
 			input = note
 		}
-		input.Note.Nonce = core.ElementFromUint64(uint64(123 + i))
-		identity, err := core.ComputeNoteIdentity(input.Note.OwnerAddress, input.Note.Nonce)
+		input.Note.Nonce = primitives.ElementFromUint64(uint64(123 + i))
+		identity, err := primitives.ComputeNoteIdentity(input.Note.OwnerAddress, input.Note.Nonce)
 		if err != nil {
 			t.Fatal(err)
 		}
-		leaf, err := core.ComputeNoteCommitment(input.Note.ChainID, input.Note.ProtocolAddress, identity, input.Note.TokenAddress, input.Note.Amount)
+		leaf, err := primitives.ComputeNoteCommitment(input.Note.ChainID, input.Note.ProtocolAddress, identity, input.Note.TokenAddress, input.Note.Amount)
 		if err != nil {
 			t.Fatal(err)
 		}
-		nullifier, err := core.ComputeNoteNullifier(input.Note.ChainID, input.Note.ProtocolAddress, input.Note.Nonce, leaf)
+		nullifier, err := primitives.ComputeNoteNullifier(input.Note.ChainID, input.Note.ProtocolAddress, input.Note.Nonce, leaf)
 		if err != nil {
 			t.Fatal(err)
 		}

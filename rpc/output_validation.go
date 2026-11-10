@@ -5,7 +5,7 @@ import (
 	"errors"
 
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/invisi-lab/invisi-sdk-go/core"
+	"github.com/invisi-lab/invisi-sdk-go/primitives"
 )
 
 type leafMetadata struct {
@@ -39,7 +39,7 @@ func parseLeaf(raw json.RawMessage) (leafMetadata, map[string]json.RawMessage, e
 	if o.Commitment, e = wireHash(m["commitment"]); e != nil {
 		return o, nil, e
 	}
-	if _, e = core.HexToElement(o.Commitment.Hex()); e != nil {
+	if _, e = primitives.HexToElement(o.Commitment.Hex()); e != nil {
 		return o, nil, e
 	}
 	token, e := wireBytes(m["token"], 20, 20)

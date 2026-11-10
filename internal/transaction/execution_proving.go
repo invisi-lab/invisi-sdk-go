@@ -9,7 +9,7 @@ import (
 	"github.com/consensys/gnark-crypto/ecc/bn254/fr"
 	"github.com/ethereum/go-ethereum/common"
 
-	"github.com/invisi-lab/invisi-sdk-go/core"
+	"github.com/invisi-lab/invisi-sdk-go/primitives"
 	"github.com/invisi-lab/invisi-sdk-go/prover"
 )
 
@@ -20,10 +20,10 @@ func PadStrings(values []string, size int) []string {
 	return values
 }
 
-func ZeroPath() []string { return PadStrings(nil, core.TreeDepth) }
+func ZeroPath() []string { return PadStrings(nil, primitives.TreeDepth) }
 
 func (o *Execution) PrivateInputs() (map[string]any, error) {
-	authority := core.WalletAuthorizationWitness{}
+	authority := primitives.WalletAuthorizationWitness{}
 	if o.Authorization != nil {
 		authority = *o.Authorization
 	}
@@ -177,4 +177,4 @@ func (o *Execution) ProveInternal(ctx context.Context, options ...TransactionPro
 }
 
 // Convert public statement words without reducing malformed values modulo the field.
-func WitnessField(hash common.Hash) (fr.Element, error) { return core.HexToElement(hash.Hex()) }
+func WitnessField(hash common.Hash) (fr.Element, error) { return primitives.HexToElement(hash.Hex()) }

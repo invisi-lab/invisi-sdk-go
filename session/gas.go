@@ -2,8 +2,10 @@ package session
 
 import (
 	"context"
+
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/invisi-lab/invisi-sdk-go/protocol"
+	gasrpc "github.com/invisi-lab/invisi-sdk-go/rpc"
 	"github.com/invisi-lab/invisi-sdk-go/sdk"
 )
 
@@ -16,5 +18,5 @@ func (o *Operation) EstimateGas(ctx context.Context, from common.Address) (proto
 	if err != nil {
 		return protocol.GasEstimate{}, err
 	}
-	return protocol.EstimateTransactionGas(ctx, provider, call, from)
+	return gasrpc.EstimateTransactionGas(ctx, provider, call, from)
 }

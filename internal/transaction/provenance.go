@@ -9,8 +9,7 @@ import (
 	"sort"
 
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/invisi-lab/invisi-sdk-go/core"
-	"github.com/invisi-lab/invisi-sdk-go/protocol"
+	"github.com/invisi-lab/invisi-sdk-go/primitives"
 	"github.com/invisi-lab/invisi-sdk-go/provenance"
 )
 
@@ -95,7 +94,7 @@ func (o *Execution) prepareProvenance(ctx context.Context) (*ProvenancePlan, err
 	}
 	for i, input := range o.Plan.Inputs {
 		note := input.Note
-		openings[i] = provenance.Opening{Owner: core.ElementToBigInt(note.OwnerAddress).String(), Nonce: core.ElementToBigInt(note.Nonce).String(), Amount: core.ElementToBigInt(note.Amount).String()}
+		openings[i] = provenance.Opening{Owner: primitives.ElementToBigInt(note.OwnerAddress).String(), Nonce: primitives.ElementToBigInt(note.Nonce).String(), Amount: primitives.ElementToBigInt(note.Amount).String()}
 		commitment, nf, err := provenance.NoteOpening(trust.Scope, o.Plan.Context.TokenAddress.Hex(), openings[i])
 		if err != nil {
 			return nil, err
@@ -539,7 +538,7 @@ func (o *Execution) SubmitProvenance(ctx context.Context) (provenance.Result, er
 	if e != nil {
 		return nil, e
 	}
-	return protocol.SubmitProvenanceProof(ctx, c.Client, packet)
+	return provenance.SubmitProvenanceProof(ctx, c.Client, packet)
 }
 func (p *PreparedTransaction) SubmitProvenance(ctx context.Context) (provenance.Result, error) {
 	p.lifecycle.mu.Lock()
