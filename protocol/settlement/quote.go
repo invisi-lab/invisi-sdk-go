@@ -1,7 +1,9 @@
 package settlement
 
 import (
+	"bytes"
 	"crypto/ecdsa"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"math/big"
@@ -20,6 +22,7 @@ type Quote struct {
 	Deadline     string `json:"deadline"`
 	MaxGas       string `json:"maxGas"`
 	RequestHash  string `json:"requestHash"`
+	Execution    string `json:"execution"`
 }
 type ProvenanceTrackingMatch struct {
 	TxHash         string `json:"txHash"`
@@ -47,7 +50,7 @@ type QuoteDomain struct {
 }
 
 var ErrQuote = errors.New("invalid broadcaster quote")
-var quoteTypeHash = crypto.Keccak256Hash([]byte("Quote(address token,address feeRecipient,uint256 feeAmount,uint256 deadline,uint256 maxGas,bytes32 requestHash)"))
+var quoteTypeHash = crypto.Keccak256Hash([]byte("Quote(address token,address feeRecipient,uint256 feeAmount,uint256 deadline,uint256 maxGas,bytes32 requestHash,string execution)"))
 var domainTypeHash = crypto.Keccak256Hash([]byte("EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)"))
 
 // Uint256 parses a decimal unsigned integer without truncation.
@@ -69,6 +72,9 @@ func validAddress(s string) bool {
 }
 
 func QuoteDigest(d QuoteDomain, q Quote) (common.Hash, error) {
+	if q.Execution != "direct" && q.Execution != "aggregate" {
+		return common.Hash{}, ErrQuote
+	}
 	if d.ChainID == nil || d.ChainID.Sign() < 0 || d.ChainID.BitLen() > 256 || !validAddress(q.Token) || !validAddress(q.FeeRecipient) {
 		return common.Hash{}, ErrQuote
 	}
@@ -102,8 +108,8 @@ func QuoteDigest(d QuoteDomain, q Quote) (common.Hash, error) {
 		return common.Hash{}, e
 	}
 	domainHash := crypto.Keccak256(encoded)
-	quoteArgs := abi.Arguments{{Type: word}, {Type: address}, {Type: address}, {Type: integer}, {Type: integer}, {Type: integer}, {Type: word}}
-	encoded, e = quoteArgs.Pack(quoteTypeHash, common.HexToAddress(q.Token), common.HexToAddress(q.FeeRecipient), fee, deadline, gas, common.BytesToHash(hashBytes))
+	quoteArgs := abi.Arguments{{Type: word}, {Type: address}, {Type: address}, {Type: integer}, {Type: integer}, {Type: integer}, {Type: word}, {Type: word}}
+	encoded, e = quoteArgs.Pack(quoteTypeHash, common.HexToAddress(q.Token), common.HexToAddress(q.FeeRecipient), fee, deadline, gas, common.BytesToHash(hashBytes), crypto.Keccak256Hash([]byte(q.Execution)))
 	if e != nil {
 		return common.Hash{}, e
 	}
@@ -155,5 +161,24 @@ func VerifyQuote(d QuoteDomain, q Quote, sig []byte, signer common.Address) erro
 	if e != nil || actual != signer {
 		return ErrQuote
 	}
+	return nil
+}
+
+func (q *Quote) UnmarshalJSON(raw []byte) error {
+	type wire Quote
+	var value wire
+	decoder := json.NewDecoder(bytes.NewReader(raw))
+	decoder.DisallowUnknownFields()
+	if err := decoder.Decode(&value); err != nil {
+		return err
+	}
+	var fields map[string]json.RawMessage
+	if err := json.Unmarshal(raw, &fields); err != nil {
+		return err
+	}
+	if len(fields) != 7 || value.Execution != "direct" && value.Execution != "aggregate" {
+		return ErrQuote
+	}
+	*q = Quote(value)
 	return nil
 }

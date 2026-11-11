@@ -286,51 +286,69 @@ func TestProvenanceAuthenticatesPrimaryAnchorBeforeProving(t *testing.T) {
 }
 
 func TestBroadcasterAutomaticallyProvesOnlyFinalReadySource(t *testing.T) {
-	ctx := context.Background()
-	s, token, _ := testSession(t, uint64(time.Now().Unix()))
-	address, _ := s.wallet.GetAddress()
-	original, e := s.PrepareTransfer(ctx, sdk.TransferPreparation{TokenAddress: token, Outputs: testOutputs(s, []testPaymentOutput{{To: address, Amount: big.NewInt(30)}})})
-	if e != nil {
-		t.Fatal(e)
+	for _, execution := range []string{"direct", "aggregate"} {
+		t.Run(execution, func(t *testing.T) {
+			ctx := context.Background()
+			s, token, _ := testSession(t, uint64(time.Now().Unix()))
+			address, _ := s.wallet.GetAddress()
+			original, e := s.PrepareTransfer(ctx, sdk.TransferPreparation{TokenAddress: token, Outputs: testOutputs(s, []testPaymentOutput{{To: address, Amount: big.NewInt(30)}})})
+			if e != nil {
+				t.Fatal(e)
+			}
+			prover, _ := configureSourceFlow(t, s, original, false, false)
+			c, fees := testBroadcasterExecution(t, original, []int64{5, 8, 8}, false, nil, execution, nil, common.Hash{})
+			quoted, e := original.WithBroadcaster(ctx, c, sdk.WithBroadcasterOptions{MaxFeeAmount: big.NewInt(10)})
+			if e != nil {
+				t.Fatal(e)
+			}
+			if fees.Load() != 3 || prover.calls.Load() != 0 {
+				t.Fatal("quotation crossed Source proof boundary")
+			}
+			ready, e := authorizeForTest(quoted, ctx)
+			if e != nil {
+				t.Fatal(e)
+			}
+			ready, e = ready.Prove(ctx)
+			if e != nil {
+				t.Fatal(e)
+			}
+			provider := ready.session.options.Provider
+			ready.session.options.Provider = nil
+			_, missingErr := ready.SubmitBroadcaster(ctx, c)
+			var missing *sdk.MissingCapabilityError
+			if !errors.As(missingErr, &missing) {
+				t.Fatal("first broadcast without primary must fail with capability error", missingErr)
+			}
+			if prover.calls.Load() != 0 {
+				t.Fatal("missing primary invoked prover")
+			}
+			ready.session.options.Provider = provider
+			status, e := ready.SubmitBroadcaster(ctx, c)
+			if e != nil {
+				t.Fatal(e)
+			}
+			if status.ID != "server-request-id" || prover.calls.Load() != 1 || ready.plan.Provenance == nil {
+				t.Fatal("ready Source evidence or server ID missing")
+			}
+			if _, e = ready.SubmitBroadcaster(ctx, c); e != nil || prover.calls.Load() != 1 {
+				t.Fatal("known submission regenerated Source evidence", e)
+			}
+			if ready.plan.Provenance.Data != "0x"+common.Bytes2Hex(ready.data) {
+				t.Fatal("Source proof bound to different public envelope")
+			}
+			ready.session.options.Prover = nil
+			ready.session.options.Provider = nil
+			ready.session.options.Provenance.Prover = nil
+			ready, e = ready.session.Resume(ctx, ready.ID())
+			if e != nil {
+				t.Fatal("cached source restore failed", e)
+			}
+			if _, e = ready.SubmitBroadcaster(ctx, c); e != nil || prover.calls.Load() != 1 {
+				t.Fatal("offline retry regenerated source", e)
+			}
+		})
 	}
-	prover, _ := configureSourceFlow(t, s, original, false, false)
-	c, fees := testBroadcaster(t, original, []int64{5, 8, 8}, false, common.Hash{})
-	quoted, e := original.WithBroadcaster(ctx, c, sdk.WithBroadcasterOptions{MaxFeeAmount: big.NewInt(10)})
-	if e != nil {
-		t.Fatal(e)
-	}
-	if fees.Load() != 3 || prover.calls.Load() != 0 {
-		t.Fatal("quotation crossed Source proof boundary")
-	}
-	ready, e := authorizeForTest(quoted, ctx)
-	if e != nil {
-		t.Fatal(e)
-	}
-	ready, e = ready.Prove(ctx)
-	if e != nil {
-		t.Fatal(e)
-	}
-	provider := ready.session.options.Provider
-	ready.session.options.Provider = nil
-	_, missingErr := ready.SubmitBroadcaster(ctx, c)
-	var missing *sdk.MissingCapabilityError
-	if !errors.As(missingErr, &missing) {
-		t.Fatal("first broadcast without primary must fail with capability error", missingErr)
-	}
-	if prover.calls.Load() != 0 {
-		t.Fatal("missing primary invoked prover")
-	}
-	ready.session.options.Provider = provider
-	status, e := ready.SubmitBroadcaster(ctx, c)
-	if e != nil {
-		t.Fatal(e)
-	}
-	if status.ID != "server-request-id" || prover.calls.Load() != 1 || ready.plan.Provenance == nil {
-		t.Fatal("ready Source evidence or server ID missing")
-	}
-	if _, e = ready.SubmitBroadcaster(ctx, c); e != nil || prover.calls.Load() != 1 {
-		t.Fatal("known submission regenerated Source evidence", e)
-	}
+
 }
 
 func TestProvenanceReproofRefreshesTrustWithoutChangingPayment(t *testing.T) {

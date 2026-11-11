@@ -2,7 +2,6 @@ package credit
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"math/big"
 	"time"
@@ -274,11 +273,7 @@ func (p *Prepared) SubmitBroadcaster(ctx context.Context, client *broadcaster.Cl
 	}
 	retry := known.State != ""
 	if retry && known.RequestID != "" {
-		status, err := client.Status(ctx, known.RequestID)
-		var rpc *broadcaster.RPCError
-		if !errors.As(err, &rpc) || rpc.Code != -32001 {
-			return status, err
-		}
+		return client.Status(ctx, known.RequestID)
 	}
 	var data []byte
 	var quote broadcaster.SignedQuote

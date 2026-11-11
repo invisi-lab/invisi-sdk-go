@@ -32,6 +32,10 @@ func testBroadcaster(t *testing.T, p *Operation, fees []int64, failQuote bool, p
 }
 func testBroadcasterQuote(t *testing.T, p *Operation, fees []int64, failQuote bool, transform func(*broadcaster.SignedQuote), policies ...common.Hash) (*broadcaster.Client, *atomic.Int64) {
 	t.Helper()
+	return testBroadcasterExecution(t, p, fees, failQuote, transform, "direct", nil, policies...)
+}
+func testBroadcasterExecution(t *testing.T, p *Operation, fees []int64, failQuote bool, transform func(*broadcaster.SignedQuote), execution string, observe func(string, json.RawMessage), policies ...common.Hash) (*broadcaster.Client, *atomic.Int64) {
+	t.Helper()
 	key, _ := crypto.GenerateKey()
 	recipient := common.HexToAddress("0x8877")
 	calls := new(atomic.Int64)
@@ -53,6 +57,9 @@ func testBroadcasterQuote(t *testing.T, p *Operation, fees []int64, failQuote bo
 		}
 		if len(req.Params) > 0 {
 			json.Unmarshal(req.Params[0], &param)
+		}
+		if observe != nil && len(req.Params) > 0 {
+			observe(req.Method, req.Params[0])
 		}
 		var result any
 		switch req.Method {
@@ -86,7 +93,7 @@ func testBroadcasterQuote(t *testing.T, p *Operation, fees []int64, failQuote bo
 				}
 				h = common.HexToHash(bound)
 			}
-			q := broadcaster.Quote{Token: i.Token, FeeRecipient: i.FeeRecipient, FeeAmount: i.FeeAmount.String(), Deadline: i.Deadline.String(), MaxGas: "1000000", RequestHash: h}
+			q := broadcaster.Quote{Token: i.Token, FeeRecipient: i.FeeRecipient, FeeAmount: i.FeeAmount.String(), Deadline: i.Deadline.String(), MaxGas: "1000000", RequestHash: h, Execution: execution}
 			trust := broadcaster.Trust{ChainID: p.plan.Context.ChainID, Protocol: p.plan.Context.ProtocolAddress, Signer: crypto.PubkeyToAddress(key.PublicKey)}
 			td, _ := broadcaster.QuoteTypedData(q, trust)
 			digest, _, _ := apitypes.TypedDataAndHash(td)
@@ -102,9 +109,18 @@ func testBroadcasterQuote(t *testing.T, p *Operation, fees []int64, failQuote bo
 			}
 			result = signed
 		case "broadcaster_getStatus":
-			result = map[string]any{"apiVersion": "v1", "protocolVersion": "1", "chainId": p.plan.Context.ChainID.String(), "protocol": p.plan.Context.ProtocolAddress.Hex(), "sender": crypto.PubkeyToAddress(key.PublicKey).Hex(), "feeRecipient": recipient.Hex(), "submissionHalted": false, "provenance": map[string]any{"enabled": len(policies) > 0, "requestHashFormat": broadcaster.ProvenanceRequestHashFormat, "trackingRequired": true, "trackingSupported": true}}
+			result = map[string]any{"apiVersion": "v1", "protocolVersion": "1", "chainId": p.plan.Context.ChainID.String(), "protocol": p.plan.Context.ProtocolAddress.Hex(), "sender": crypto.PubkeyToAddress(key.PublicKey).Hex(), "feeRecipient": recipient.Hex(), "submissionHalted": false, "provenance": map[string]any{"enabled": len(policies) > 0, "requestHashFormat": broadcaster.ProvenanceRequestHashFormat, "trackingRequired": true, "trackingSupported": true, "aggregateSupported": true}}
 		case "broadcaster_getTransactionStatus":
-			result = broadcaster.Status{ID: param.ID, State: "uncertain"}
+			if param.ID == "not-found" {
+				json.NewEncoder(w).Encode(map[string]any{"jsonrpc": "2.0", "id": req.ID, "error": map[string]any{"code": -32001, "message": "not found"}})
+				return
+			}
+			state := "uncertain"
+			switch param.ID {
+			case "queued", "proving", "rejected", "expired":
+				state = param.ID
+			}
+			result = broadcaster.Status{ID: param.ID, State: state}
 		case "broadcaster_submitTransaction":
 			if len(policies) > 0 {
 				if len(param.ProofSidecars) != 1 || param.ProofSidecars[0].OperationIndex != "0" {

@@ -38,6 +38,7 @@ type BroadcasterPlan struct {
 	ChainID       *big.Int
 	Protocol      common.Address
 	Intent        []byte
+	Request       *broadcaster.Submission
 	RequestID     string
 }
 

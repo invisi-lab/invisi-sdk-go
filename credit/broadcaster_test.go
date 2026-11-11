@@ -54,7 +54,7 @@ func creditBroadcaster(t *testing.T, c Context, signer *ecdsa.PrivateKey, collec
 				}
 				hash = common.HexToHash(bound)
 			}
-			q := broadcaster.Quote{Token: intent.Token, FeeRecipient: intent.FeeRecipient, FeeAmount: intent.FeeAmount.String(), Deadline: intent.Deadline.String(), MaxGas: "2000000", RequestHash: hash}
+			q := broadcaster.Quote{Token: intent.Token, FeeRecipient: intent.FeeRecipient, FeeAmount: intent.FeeAmount.String(), Deadline: intent.Deadline.String(), MaxGas: "2000000", RequestHash: hash, Execution: "direct"}
 			typed, err := broadcaster.QuoteTypedData(q, broadcaster.Trust{ChainID: primitives.ElementToBigInt(c.ChainID), Protocol: common.BigToAddress(primitives.ElementToBigInt(c.ProtocolAddress)), Signer: crypto.PubkeyToAddress(signer.PublicKey)})
 			if err != nil {
 				t.Fatal(err)

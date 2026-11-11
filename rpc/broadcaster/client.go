@@ -168,7 +168,7 @@ func checkStatus(s Status, id string) error {
 		return errors.New("invalid broadcaster status")
 	}
 	switch s.State {
-	case "pending", "submitted", "confirmed", "reverted", "uncertain":
+	case "pending", "submitted", "confirmed", "reverted", "uncertain", "queued", "proving", "rejected", "expired":
 	default:
 		return errors.New("invalid broadcaster state")
 	}
@@ -181,30 +181,16 @@ func checkStatus(s Status, id string) error {
 	return nil
 }
 func (c *Client) Submit(ctx context.Context, data []byte, s SignedQuote, sidecars ...[]provenance.ProofSidecar) (Status, error) {
-	var out Status
-	if s.Context == nil {
-		return out, errors.New("missing verified quote context")
+	var selected []provenance.ProofSidecar
+	if len(sidecars) > 1 {
+		return Status{}, errors.New("at most one sidecar list required")
 	}
-	t := *s.Context
-	t.Signer = c.configuration.QuoteSigner
-	if e := VerifyQuote(s, t, data, 0); e != nil {
-		return out, e
+	if len(sidecars) == 1 {
+		selected = sidecars[0]
 	}
-	if s.Quote.FeeRecipient != c.configuration.FeeRecipient {
-		return out, errors.New("unregistered fee recipient")
-	}
-	params, e := sidecarParams(data, s.ProvenanceRequired, sidecars)
-	if e != nil {
-		return out, e
-	}
-	params["quote"] = s.Quote
-	params["signature"] = s.Signature
-	e = c.call(ctx, "broadcaster_submitTransaction", params, &out)
-	if e != nil {
-		return out, e
-	}
-	return out, checkStatus(out, "")
+	return c.SubmitMember(ctx, data, s, selected, nil)
 }
+
 func (c *Client) Status(ctx context.Context, id string) (Status, error) {
 	var out Status
 	if id == "" || len(id) > 256 {

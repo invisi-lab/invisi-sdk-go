@@ -50,7 +50,7 @@ func TestKnownExternalizedBroadcasterStatusBypassesNewSendFreshness(t *testing.T
 		r.Externalized = true
 		r.BroadcasterRequestID = "original"
 		r.Status = "uncertain"
-		r.Intent.Broadcaster = &credit.BroadcasterBinding{Configuration: client.Configuration()}
+		r.Intent.Broadcaster = &credit.BroadcasterBinding{Configuration: client.Configuration(), Quote: broadcaster.SignedQuote{Quote: broadcaster.Quote{Execution: "direct"}}}
 		s.Operations[op.id] = r
 		return nil
 	}); e != nil {

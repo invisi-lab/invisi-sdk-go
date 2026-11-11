@@ -46,7 +46,7 @@ func signed(t *testing.T, data []byte, trust Trust, key *ecdsa.PrivateKey) Signe
 	if e != nil {
 		t.Fatal(e)
 	}
-	q := Quote{i.Token, i.FeeRecipient, "5", i.Deadline.String(), "100000", h}
+	q := Quote{i.Token, i.FeeRecipient, "5", i.Deadline.String(), "100000", h, "direct"}
 	td, _ := QuoteTypedData(q, trust)
 	hsh, _, e := apitypes.TypedDataAndHash(td)
 	if e != nil {

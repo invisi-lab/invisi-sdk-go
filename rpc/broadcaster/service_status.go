@@ -17,10 +17,11 @@ type ServiceStatus struct {
 	FeeRecipient     common.Address `json:"feeRecipient"`
 	SubmissionHalted bool           `json:"submissionHalted"`
 	Provenance       struct {
-		Enabled           bool   `json:"enabled"`
-		RequestHashFormat string `json:"requestHashFormat"`
-		TrackingRequired  bool   `json:"trackingRequired"`
-		TrackingSupported bool   `json:"trackingSupported"`
+		AggregateSupported bool   `json:"aggregateSupported"`
+		Enabled            bool   `json:"enabled"`
+		RequestHashFormat  string `json:"requestHashFormat"`
+		TrackingRequired   bool   `json:"trackingRequired"`
+		TrackingSupported  bool   `json:"trackingSupported"`
 	} `json:"provenance"`
 }
 
@@ -40,6 +41,9 @@ func (c *Client) SubmissionRequirements(ctx context.Context, s SignedQuote) (boo
 		return false, errors.New("broadcaster submission halted")
 	}
 	p := status.Provenance
+	if s.Quote.Execution == "aggregate" && !p.AggregateSupported {
+		return false, errors.New("broadcaster aggregate execution unavailable")
+	}
 	if p.Enabled != s.ProvenanceRequired || (p.Enabled && (p.RequestHashFormat != ProvenanceRequestHashFormat || !p.TrackingRequired || !p.TrackingSupported)) {
 		return false, errors.New("broadcaster provenance requirement changed; obtain a new quote")
 	}

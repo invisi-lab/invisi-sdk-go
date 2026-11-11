@@ -3,6 +3,7 @@ package transaction
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"errors"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -74,13 +75,6 @@ func (o *Execution) SubmitBroadcaster(ctx context.Context, c *broadcaster.Client
 		return empty, errors.New("broadcaster differs from quoted registration")
 	}
 	retry := o.Status == "uncertain" || o.Status == "submitted"
-	if retry && o.Plan.Broadcaster.RequestID != "" {
-		status, err := c.Status(ctx, o.Plan.Broadcaster.RequestID)
-		var rpc *broadcaster.RPCError
-		if !errors.As(err, &rpc) || rpc.Code != -32001 {
-			return status, err
-		}
-	}
 	if !retry {
 		if o.Runtime.Options.Provider == nil {
 			return empty, &MissingCapabilityError{Capability: "Chain RPC provider for first broadcaster submission"}
@@ -117,9 +111,31 @@ func (o *Execution) SubmitBroadcaster(ctx context.Context, c *broadcaster.Client
 	}
 	source := o.Plan.Provenance
 
-	if e = broadcaster.VerifyQuote(signed, *signed.Context, o.Data, 0); e != nil {
+	member, e := o.broadcasterMember()
+	if e != nil {
 		return empty, e
 	}
+	var sidecars []provenance.ProofSidecar
+	if required && source != nil {
+		sidecars = source.Sidecars
+	}
+	request, e := c.PrepareSubmission(o.Data, signed, sidecars, member)
+	if e != nil {
+		return empty, e
+	}
+	if saved := o.Plan.Broadcaster.Request; saved != nil {
+		actual, _ := json.Marshal(request)
+		expected, _ := json.Marshal(saved)
+		if !bytes.Equal(actual, expected) {
+			return empty, errors.New("prepared broadcaster submission changed")
+		}
+	} else if retry {
+		return empty, errors.New("frozen broadcaster request unavailable")
+	}
+	if retry && o.Plan.Broadcaster.RequestID != "" {
+		return c.Status(ctx, o.Plan.Broadcaster.RequestID)
+	}
+	o.Plan.Broadcaster.Request = &request
 	if o.Runtime.OnExternalize != nil {
 		if e = o.Runtime.OnExternalize(ctx, o); e != nil {
 			return empty, e
@@ -130,11 +146,7 @@ func (o *Execution) SubmitBroadcaster(ctx context.Context, c *broadcaster.Client
 	if e = o.Persist(context.WithoutCancel(ctx), o.Status); e != nil {
 		return empty, e
 	}
-	var sidecars []provenance.ProofSidecar
-	if required && source != nil {
-		sidecars = source.Sidecars
-	}
-	result, sendErr := c.Submit(ctx, o.Data, signed, sidecars)
+	result, sendErr := c.SubmitPrepared(ctx, *o.Plan.Broadcaster.Request)
 	if sendErr == nil {
 		if o.Plan.Broadcaster.RequestID != "" && o.Plan.Broadcaster.RequestID != result.ID {
 			return result, errors.New("broadcaster changed submission ID")
@@ -189,4 +201,58 @@ func (o *Execution) ValidateBroadcasterPlan() error {
 		return e
 	}
 	return broadcaster.VerifyQuote(saved.Signed, broadcaster.Trust{ChainID: saved.ChainID, Protocol: saved.Protocol, Signer: saved.Configuration.QuoteSigner}, data, 0)
+}
+
+func (o *Execution) broadcasterMember() (*broadcaster.MemberProof, error) {
+	recursive := o.Plan.Target == "noir-recursive"
+	if (o.Plan.Broadcaster.Signed.Quote.Execution == "aggregate") != recursive {
+		return nil, errors.New("broadcaster execution does not match proof target")
+	}
+	if !recursive {
+		return nil, nil
+	}
+	if o.Bundle == nil || o.Plan.Kind != "transact" || o.Plan.FundingMode != "none" || len(o.Plan.Inputs) == 0 {
+		return nil, errors.New("unfunded private recursive member required")
+	}
+	b := o.Bundle
+	return &broadcaster.MemberProof{FormatVersion: b.FormatVersion, CircuitName: b.CircuitName, Target: b.Target, BBVersion: b.BBVersion, ArtifactSHA256: b.ArtifactSHA256, VKSHA256: b.VKSHA256, ProofHex: "0x" + common.Bytes2Hex(b.Proof), ProofSHA256: b.ProofSHA256, PublicInputs: append([]common.Hash(nil), b.PublicInputs...)}, nil
+}
+
+func (o *Execution) validateFrozenBroadcasterRequest() error {
+	saved := o.Plan.Broadcaster
+	if saved == nil || saved.Request == nil {
+		return nil
+	}
+	client, err := broadcaster.NewClient(saved.Configuration)
+	if err != nil {
+		return err
+	}
+	signed, err := o.ExportBroadcasterQuoteInternal()
+	if err != nil {
+		return err
+	}
+	member, err := o.broadcasterMember()
+	if err != nil {
+		return err
+	}
+	var sidecars []provenance.ProofSidecar
+	if signed.ProvenanceRequired && o.Plan.Provenance != nil {
+		sidecars = o.Plan.Provenance.Sidecars
+	}
+	request, err := client.PrepareSubmission(o.Data, signed, sidecars, member)
+	if err != nil {
+		return err
+	}
+	actual, err := json.Marshal(request)
+	if err != nil {
+		return err
+	}
+	expected, err := json.Marshal(saved.Request)
+	if err != nil {
+		return err
+	}
+	if !bytes.Equal(actual, expected) {
+		return errors.New("prepared broadcaster submission changed")
+	}
+	return nil
 }

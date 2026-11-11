@@ -91,5 +91,5 @@ func (o *Execution) ValidateRecovered() error {
 			return errors.New("recovered transaction differs from Frozen operation")
 		}
 	}
-	return nil
+	return o.validateFrozenBroadcasterRequest()
 }

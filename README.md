@@ -98,6 +98,8 @@ Every Credit request carries `FeeRecipient` and `FeeAmount`: either a complete z
 ## Paid broadcaster flow
 
 Note operations use `*broadcaster.Client`. `EstimateQuote(ctx, data)` estimates fees and `GetQuote(ctx, data, trust)` freezes the signed public intent. `prepared.WithBroadcaster` finalizes fees before authorization and main proving; it does not build Source proofs. If the final quote requires evidence, `SubmitBroadcaster` generates and attaches Source proof from the final ready transaction. Broadcaster verifies/preflights it before sending. Configure optional `sdk.InvisiOptions.Provenance` with the trusted Source client, authenticated manifest and local offline prover. Managed sessions persist public attachments and reservations. See [Provenance](PROVENANCE.md) and [Broadcaster examples](examples/README.md).
+The seventh EIP-712 Quote field, `execution`, is mandatory (`direct` or `aggregate`). After `WithBroadcaster`, `Prove(ctx)` follows that signed choice; an explicit conflicting execution is rejected. Aggregate delivery accepts unfunded private Note transfers with native capacity C1 through C10, sends a single-operation public recursive envelope plus `memberProof`, and cannot be exported as a direct EVM transaction. Shield and Credit remain direct. `broadcaster_getStatus.provenance.aggregateSupported` declares recursive delivery support.
+
 All four Credit operations support:
 
 1. Prepare the business request.
@@ -109,7 +111,7 @@ All four Credit operations support:
 
 Fee convergence is bounded and fails without modifying the original request on over-limit/nonconverging quotes. Grant gross debits and successor state commitments remain fixed during draw repricing. Enveloped draws need `PrepareDrawToNote` to reencrypt the final net Note safely.
 
-Quotes bind chain, Protocol, token, registered signer, fee recipient/amount, deadline and canonical public intent. Only proofs and the operation's separate signature slots are stripped from the intent hash. Final calldata must match the quote. Submission IDs are opaque and assigned by the service. If the initial response is lost, retry the exact retained request; if an ID is known, query it first. Do not create a conflicting spend.
+Quotes bind chain, Protocol, token, registered signer, fee recipient/amount, deadline and canonical public intent. Only proofs and the operation's separate signature slots are stripped from the intent hash. Final calldata must match the quote. Submission IDs are opaque and assigned by the service. If the initial response is lost, retry the exact retained request; if an ID is known, query only that ID, including after a not-found response. Queued, proving, rejected and expired relay states retain reservations until canonical reconciliation. Do not create a conflicting spend.
 
 ## Managed grant state and recovery
 

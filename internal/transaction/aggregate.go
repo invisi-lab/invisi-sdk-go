@@ -1,6 +1,7 @@
 package transaction
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
@@ -76,11 +77,19 @@ func (o *Execution) MatchesTransactionData(data []byte) bool {
 		return false
 	}
 	requests := *abi.ConvertType(values[1], new([]protocol.TransactRequest)).(*[]protocol.TransactRequest)
-	want, _ := json.Marshal(protocol.TransactRequest{Params: o.Plan.Params, Deliveries: o.Deliveries(), Funding: o.Plan.Funding})
+	encoded, err := method.Inputs.Pack(values...)
+	if err != nil || !bytes.Equal(encoded, data[4:]) {
+		return false
+	}
+	argument := abi.Arguments{{Type: *method.Inputs[1].Type.Elem}}
+	want, err := argument.Pack(protocol.TransactRequest{Params: o.Plan.Params, Deliveries: o.Deliveries(), Funding: o.Plan.Funding})
+	if err != nil {
+		return false
+	}
 	matches := 0
 	for _, request := range requests {
-		got, _ := json.Marshal(request)
-		if string(got) == string(want) {
+		got, err := argument.Pack(request)
+		if err == nil && bytes.Equal(got, want) {
 			matches++
 		}
 	}

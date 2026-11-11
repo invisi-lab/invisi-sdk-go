@@ -27,6 +27,7 @@ type Quote struct {
 	Deadline     string         `json:"deadline"`
 	MaxGas       string         `json:"maxGas"`
 	RequestHash  common.Hash    `json:"requestHash"`
+	Execution    string         `json:"execution"`
 }
 type SignedQuote struct {
 	Quote              Quote  `json:"quote"`
@@ -65,14 +66,22 @@ func decimal(s string) (*big.Int, error) {
 	return n, nil
 }
 func QuoteTypedData(q Quote, t Trust) (apitypes.TypedData, error) {
+	if q.Execution != "direct" && q.Execution != "aggregate" {
+		return apitypes.TypedData{}, errors.New("invalid broadcaster quote execution")
+	}
 	if t.ChainID == nil || t.ChainID.Sign() <= 0 || t.Protocol == (common.Address{}) || t.Signer == (common.Address{}) {
 		return apitypes.TypedData{}, errors.New("invalid broadcaster trust")
 	}
-	return apitypes.TypedData{Types: apitypes.Types{"EIP712Domain": {{Name: "name", Type: "string"}, {Name: "version", Type: "string"}, {Name: "chainId", Type: "uint256"}, {Name: "verifyingContract", Type: "address"}}, "Quote": {{Name: "token", Type: "address"}, {Name: "feeRecipient", Type: "address"}, {Name: "feeAmount", Type: "uint256"}, {Name: "deadline", Type: "uint256"}, {Name: "maxGas", Type: "uint256"}, {Name: "requestHash", Type: "bytes32"}}}, PrimaryType: "Quote", Domain: apitypes.TypedDataDomain{Name: "InvisiBroadcaster", Version: "1", ChainId: (*math.HexOrDecimal256)(new(big.Int).Set(t.ChainID)), VerifyingContract: t.Protocol.Hex()}, Message: apitypes.TypedDataMessage{"token": q.Token.Hex(), "feeRecipient": q.FeeRecipient.Hex(), "feeAmount": q.FeeAmount, "deadline": q.Deadline, "maxGas": q.MaxGas, "requestHash": q.RequestHash.Hex()}}, nil
+	return apitypes.TypedData{Types: apitypes.Types{"EIP712Domain": {{Name: "name", Type: "string"}, {Name: "version", Type: "string"}, {Name: "chainId", Type: "uint256"}, {Name: "verifyingContract", Type: "address"}}, "Quote": {{Name: "token", Type: "address"}, {Name: "feeRecipient", Type: "address"}, {Name: "feeAmount", Type: "uint256"}, {Name: "deadline", Type: "uint256"}, {Name: "maxGas", Type: "uint256"}, {Name: "requestHash", Type: "bytes32"}, {Name: "execution", Type: "string"}}}, PrimaryType: "Quote", Domain: apitypes.TypedDataDomain{Name: "InvisiBroadcaster", Version: "1", ChainId: (*math.HexOrDecimal256)(new(big.Int).Set(t.ChainID)), VerifyingContract: t.Protocol.Hex()}, Message: apitypes.TypedDataMessage{"token": q.Token.Hex(), "feeRecipient": q.FeeRecipient.Hex(), "feeAmount": q.FeeAmount, "deadline": q.Deadline, "maxGas": q.MaxGas, "requestHash": q.RequestHash.Hex(), "execution": q.Execution}}, nil
 }
 func VerifyQuote(s SignedQuote, t Trust, data []byte, now uint64) error {
 	if (s.ProvenanceRequired && s.RequestHashFormat != ProvenanceRequestHashFormat) || (!s.ProvenanceRequired && s.RequestHashFormat != "") {
 		return errors.New("broadcaster provenance requirement mismatch")
+	}
+	if s.Quote.Execution == "aggregate" {
+		if _, e := aggregateCapacity(data); e != nil {
+			return e
+		}
 	}
 	h, e := RequestHash(data)
 	if e != nil {

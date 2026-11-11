@@ -110,18 +110,12 @@ func (o *Execution) ProveInternal(ctx context.Context, options ...TransactionPro
 	if o.Runtime.Options.Prover == nil {
 		return nil, errors.New("local prover required")
 	}
-	execution := opt.Execution
-	if execution == "" {
-		execution = "single"
+	execution, e := o.resolveExecution(opt.Execution)
+	if e != nil {
+		return nil, e
 	}
-	if execution != "single" && execution != "aggregate" {
-		return nil, errors.New("execution must be single or aggregate")
-	}
-	if execution == "aggregate" && o.Plan.Broadcaster != nil {
-		return nil, errors.New("broadcaster operations cannot target aggregate proofs")
-	}
-	if execution == "aggregate" && (o.Plan.Kind != "transact" || (o.Plan.Capacity < 1 || o.Plan.Capacity > 10)) {
-		return nil, errors.New("aggregate execution requires a native C1 through C10 transfer")
+	if execution == "aggregate" && (o.Plan.Kind != "transact" || o.Plan.Capacity < 1 || o.Plan.Capacity > 10 || o.Plan.Broadcaster != nil && (len(o.Plan.Inputs) == 0 || o.Plan.FundingMode != "none" || o.Plan.Funding.Amount.Sign() != 0)) {
+		return nil, errors.New("aggregate execution requires an unfunded private C1 through C10 transfer")
 	}
 	o.Plan.Target = "evm"
 	if execution == "aggregate" {
@@ -163,10 +157,8 @@ func (o *Execution) ProveInternal(ctx context.Context, options ...TransactionPro
 	o.Authorization = nil
 	o.Status = "proved"
 	if o.Plan.FundingMode != "signature" {
-		if o.Plan.Target != "noir-recursive" {
-			if e = o.Encode(); e != nil {
-				return nil, e
-			}
+		if e = o.Encode(); e != nil {
+			return nil, e
 		}
 		o.Status = "ready"
 	}
@@ -178,3 +170,30 @@ func (o *Execution) ProveInternal(ctx context.Context, options ...TransactionPro
 
 // Convert public statement words without reducing malformed values modulo the field.
 func WitnessField(hash common.Hash) (fr.Element, error) { return primitives.HexToElement(hash.Hex()) }
+
+func (o *Execution) resolveExecution(supplied string) (string, error) {
+	required := ""
+	if o.Plan.Broadcaster != nil {
+		switch o.Plan.Broadcaster.Signed.Quote.Execution {
+		case "direct":
+			required = "single"
+		case "aggregate":
+			required = "aggregate"
+		default:
+			return "", errors.New("invalid signed broadcaster execution")
+		}
+	}
+	if required != "" {
+		if supplied != "" && supplied != required {
+			return "", errors.New("signed broadcaster quote requires matching execution")
+		}
+		return required, nil
+	}
+	if supplied == "" {
+		supplied = "single"
+	}
+	if supplied != "single" && supplied != "aggregate" {
+		return "", errors.New("execution must be single or aggregate")
+	}
+	return supplied, nil
+}
