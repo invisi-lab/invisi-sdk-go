@@ -5,7 +5,6 @@ import (
 	_ "embed"
 	"encoding/json"
 	"reflect"
-	"strings"
 )
 
 // Shape identifies every published measurement condition. Omitted dimensions do not match.
@@ -51,11 +50,8 @@ type Result struct {
 //go:embed data/documented-references.json
 var catalogJSON []byte
 
-//go:embed data/credit-release.json
-var releaseJSON []byte
-
-// DocumentedCatalog returns a detached copy of the exact documented reference catalog.
-func DocumentedCatalog() Catalog {
+// documentedCatalog returns a detached copy of the exact documented reference catalog.
+func documentedCatalog() Catalog {
 	var c Catalog
 	if err := json.Unmarshal(catalogJSON, &c); err != nil {
 		panic("invalid embedded gas catalog")
@@ -64,8 +60,8 @@ func DocumentedCatalog() Catalog {
 }
 
 // Reference matches a complete benchmark shape. Unsupported shapes have no reference.
-// The result describes the documented environment; use eth_estimateGas for a deployment.
-func Reference(shape Shape) (Result, bool) {
+// The result describes the documented benchmark environment.
+func reference(shape Shape) (Result, bool) {
 	raw, err := json.Marshal(shape)
 	if err != nil {
 		return Result{}, false
@@ -74,17 +70,8 @@ func Reference(shape Shape) (Result, bool) {
 	if json.Unmarshal(raw, &query) != nil {
 		return Result{}, false
 	}
-	var current ReleaseIdentity
-	if json.Unmarshal(releaseJSON, &current) != nil {
-		panic("invalid current Credit release")
-	}
-	c := DocumentedCatalog()
+	c := documentedCatalog()
 	for _, row := range c.References {
-		if kind, ok := row.Shape["kind"].(string); ok && strings.Contains(kind, "credit") {
-			if !currentCreditRelease(row.ReleaseIdentity) {
-				continue
-			}
-		}
 		if !reflect.DeepEqual(row.Shape, query) {
 			continue
 		}
@@ -95,12 +82,4 @@ func Reference(shape Shape) (Result, bool) {
 		}
 	}
 	return Result{}, false
-}
-
-func currentCreditRelease(identity *ReleaseIdentity) bool {
-	var current ReleaseIdentity
-	if json.Unmarshal(releaseJSON, &current) != nil {
-		panic("invalid current Credit release")
-	}
-	return identity != nil && gasDigest.MatchString(current.CreditManifestSHA256) && gasDigest.MatchString(identity.CreditManifestSHA256) && *identity == current
 }

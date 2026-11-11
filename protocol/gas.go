@@ -1,17 +1,5 @@
 package protocol
 
-import (
-	"context"
+import "github.com/invisi-lab/invisi-sdk-go/protocol/gas"
 
-	"github.com/ethereum/go-ethereum"
-)
-
-// GasEstimator uses eth_estimateGas for the final EVM call.
-type GasEstimator interface {
-	EstimateGas(context.Context, ethereum.CallMsg) (uint64, error)
-}
-
-type GasEstimate struct {
-	Source   string `json:"source"`
-	GasUnits uint64 `json:"gasUnits"`
-}
+type GasEstimate = gas.EstimateResult

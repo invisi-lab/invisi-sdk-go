@@ -1,28 +1,5 @@
 package session
 
-import (
-	"context"
-	"errors"
-	"math/big"
+import "github.com/invisi-lab/invisi-sdk-go/protocol"
 
-	"github.com/ethereum/go-ethereum/common"
-	"github.com/invisi-lab/invisi-sdk-go/primitives"
-	"github.com/invisi-lab/invisi-sdk-go/protocol"
-	gasrpc "github.com/invisi-lab/invisi-sdk-go/rpc"
-)
-
-func (o *Operation) EstimateGas(ctx context.Context, provider protocol.GasEstimator, from common.Address) (protocol.GasEstimate, error) {
-	if provider == nil {
-		return protocol.GasEstimate{}, errors.New("provider for final eth_estimateGas required")
-	}
-	data, err := o.Calldata(ctx, from)
-	if err != nil {
-		return protocol.GasEstimate{}, err
-	}
-	intent, err := o.prepared.ExportIntent()
-	if err != nil {
-		return protocol.GasEstimate{}, err
-	}
-	to := common.BigToAddress(primitives.ElementToBigInt(intent.Context.ProtocolAddress))
-	return gasrpc.EstimateTransactionGas(ctx, provider, protocol.TransactionCall{To: to, Data: data, Value: new(big.Int)}, from)
-}
+func (o *Operation) EstimateGas() (protocol.GasEstimate, error) { return o.prepared.EstimateGas() }

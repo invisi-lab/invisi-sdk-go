@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"math/big"
+	"reflect"
 	"strings"
 	"sync"
 	"testing"
@@ -38,8 +39,9 @@ func (p *sendingProvider) SuggestGasPrice(context.Context) (*big.Int, error) {
 func (p *sendingProvider) SuggestGasTipCap(context.Context) (*big.Int, error) {
 	return big.NewInt(1), nil
 }
+
 func (p *sendingProvider) EstimateGas(context.Context, ethereum.CallMsg) (uint64, error) {
-	return 123456, nil
+	panic("SDK must not request transaction gas simulation")
 }
 func (p *sendingProvider) SendTransaction(_ context.Context, tx *types.Transaction) error {
 	if p.entered != nil {
@@ -65,6 +67,7 @@ func readySendingOperation(t *testing.T) (*WalletSession, *Operation, *sendingPr
 	session.options.Provider = provider
 	key, _ := crypto.HexToECDSA(strings.Repeat("0", 63) + "1")
 	session.options.Signer, _ = bind.NewKeyedTransactorWithChainID(key, big.NewInt(31337))
+	session.options.Signer.GasLimit = 123456
 	address, _ := session.wallet.GetAddress()
 	operation, err := session.PrepareTransfer(ctx, sdk.TransferPreparation{TokenAddress: token, Outputs: testOutputs(session, []testPaymentOutput{{To: address, Amount: big.NewInt(30)}})})
 	if err != nil {
@@ -175,5 +178,16 @@ func TestManagedExportRejectsExpiredOperation(t *testing.T) {
 	provider.head.Time = ready.plan.Deadline + 1
 	if _, err := ready.ExportTransaction(context.Background()); err == nil {
 		t.Fatal("expired operation exported")
+	}
+}
+
+func TestSendRejectsMissingGasLimitBeforeExport(t *testing.T) {
+	s, op, provider := readySendingOperation(t)
+	s.options.Signer.GasLimit = 0
+	before, _ := s.options.Store.ReadSnapshot(context.Background(), s.scope)
+	_, err := s.SendTransaction(context.Background(), op)
+	after, _ := s.options.Store.ReadSnapshot(context.Background(), s.scope)
+	if err == nil || err.Error() != "transaction gas limit must be supplied by the caller" || provider.sent != nil || !reflect.DeepEqual(before, after) {
+		t.Fatal(err, "missing budget caused side effects")
 	}
 }

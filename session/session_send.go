@@ -66,6 +66,9 @@ func (s *WalletSession) SendTransaction(ctx context.Context, input any, settings
 			signer.Nonce = copyNumber(options.Nonce)
 		}
 	}
+	if signer.GasLimit == 0 {
+		return nil, errors.New("transaction gas limit must be supplied by the caller")
+	}
 	var operation *Operation
 	var call sdk.TransactionCall
 	switch value := input.(type) {

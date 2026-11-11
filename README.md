@@ -23,7 +23,7 @@ All six modules target **1.2.0**. Applications normally import the SDK's `sdk` p
 
 Module paths use `github.com/invisi-lab/invisi-sdk-go/<name>`; the SDK uses the repository-root module path. Nested module release tags are `<name>/v1.2.0`; the root SDK tag is `v1.2.0`. The examples are a separate development module, not a public release package. No `core`, `runtime` or `protocolkit` compatibility module is retained.
 
-Pure ABI/types are in `protocol/contracts`; network-bound geth clients are in `rpc/contracts`. Maintainers regenerate both from the same compiler ABIs with `go generate ./contracts` in the Protocol module. `session/credit` owns managed Credit state. `protocol/gas` owns measured references, while final `eth_estimateGas` calls belong to RPC and deployment/operator pricing remains outside the pure module.
+Pure ABI/types are in `protocol/contracts`; network-bound geth clients are in `rpc/contracts`. Maintainers regenerate both from the same compiler ABIs with `go generate ./contracts` in the Protocol module. `session/credit` owns managed Credit state. `protocol/gas` owns measured references, while final transaction simulation belongs to the application and deployment/operator pricing remains outside the pure module.
 
 For local multi-module development, use an untracked Go workspace. `GOWORK=off` builds use tagged module dependencies; production `go.mod` files contain no local replacement paths. Verify module boundaries with `python3 scripts/check-module-boundaries.py` in the configured workspace.
 
@@ -143,21 +143,17 @@ IPN contains no viewing/spending key, ciphertext, payload or membership path. Ex
 
 ## Gas estimates and references
 
-`ready.EstimateGas(ctx, from)` on `sdk.PreparedTransaction` or `session.Operation` calls the configured provider's `eth_estimateGas` with the exported final destination, calldata, zero value and actual caller. It returns `GasEstimate{Source:"rpc", GasUnits:...}` and requires a ready EVM transaction. The configured provider must additionally implement `protocol.GasEstimator` (geth `ethclient.Client` does); the base `sdk.Provider` contract is unchanged. Managed estimation uses `ExportTransaction`, including its durable externalization fence.
+`prepared.EstimateGas()` returns `(GasEstimate, error)` before authorization or proof, on Note and managed operations and all four Credit operations. It reads only the prepared structure and embedded benchmarks: no provider, calldata export, store write or submission is involved.
 
-For all four Credit operations (create, draw, update and revoke), use `prepared.EstimateGas(ctx, provider, from)` or `managedCreditOperation.EstimateGas(ctx, provider, from)`. These use `Calldata(from)` so proof requirements and revocation caller authorization remain enforced. Managed Credit estimation journals the final calldata through the existing ready transition. Estimation does not send a transaction; provider errors are returned unchanged.
+The result has `Source: "benchmark"`, `Available`, optional `*uint64 GasUnits`, an explicit `Reason` when unavailable, and reference provenance. Only complete measured shapes match; unmeasured shapes remain unavailable. Credit create/update use the catalog benchmark scenarios with their stated conditions, rather than asserting live state. Revoke lacks caller/bitmap evidence and is unavailable. Release versions and manifest hashes are provenance only; structural matches are available across versions.
 
 ```go
-estimate, err := ready.EstimateGas(ctx, actualSender)
+estimate, err := prepared.EstimateGas()
 if err != nil { return err }
-log.Printf("final RPC gas estimate: %d", estimate.GasUnits)
+if estimate.Available { log.Printf("benchmark gas units: %d", *estimate.GasUnits) }
 ```
 
-RPC estimates reflect current chain execution. Broadcaster quotes price a relay service, quote `maxGas` is a ceiling, and the catalog is a measured reference; these values serve different purposes.
-
-`gas.Reference(shape)` matches a complete documented benchmark shape and returns a detached result with source hash, docs commit, conditions and measured median. Unsupported shapes return unavailable; there is no arbitrary linear fallback or current aggregate gas claim based on historical private-pin experiments.
-
-Credit measurements must match the packaged manifest/format identity, raw Credit manifest SHA256 (`creditManifestSha256`) and fee mechanism. Rows without the exact manifest hash are unavailable. The current catalog contains 58 measured Credit references for the available-quota model and 55 Note references. Historical rows remain identifiable; they cannot impersonate a new release. Use Chain RPC `eth_estimateGas` on the final calldata and real caller for actual submission.
+`gas.EstimateGas(shape)` is the pure protocol entry point. A measured median is an estimate, not a guaranteed transaction gas limit or monetary fee. Applications supply current fee prices and own final transaction simulation. Broadcaster quotes and `maxGas` have separate meanings.
 
 ## Development and validation
 
@@ -189,3 +185,5 @@ The independent [Provenance module](PROVENANCE.md) keeps source recognition sepa
 `python3 scripts/test-modules.py` creates a temporary workspace and runs boundary checks, race tests, vet and builds for all six modules plus the private examples. `python3 scripts/check-packages.py` constructs isolated local-proxy archives and tests them without the workspace or sibling checkouts; unpublished versions never enter the global module cache. GitHub CI runs both commands. Native Noir/BB integration tests are opt-in and require explicit local tool paths.
 
 The modules are prepared at 1.2.0; no remote tags are created by these checks. Before standalone consumer builds can resolve the new version from GitHub, publish the required module tags in dependency order and refresh dependency checksums.
+
+Managed `SendTransaction` requires a positive caller-supplied gas limit in the signer or `TransactionOptions.GasLimit`; it never triggers geth automatic gas simulation. Applications choose the submission budget.

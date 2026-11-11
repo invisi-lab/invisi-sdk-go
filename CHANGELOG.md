@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Estimate prepared Note and Credit gas locally from exact measured benchmark shapes before proof; report unavailable shapes explicitly and remove SDK RPC gas simulation.
+
 - Share bounded canonical public history across managed accounts, with independent head-first private recovery coverage and chronological Credit successor replay.
 - Add native batch detection, retained ambiguous-delivery retries, exact scan/funds status, and current-head known-state reconciliation.
 - Migrate SQLite accounts to authenticated encrypted per-record rows and cold archive paging; add persistent public cache tables in the same host database.

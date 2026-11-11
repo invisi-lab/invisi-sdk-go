@@ -1,77 +1,67 @@
 package session
 
 import (
-	"bytes"
 	"context"
-	"errors"
-	"testing"
-
-	"github.com/ethereum/go-ethereum"
-	"github.com/ethereum/go-ethereum/common"
 	transaction "github.com/invisi-lab/invisi-sdk-go/internal/transaction"
+	"github.com/invisi-lab/invisi-sdk-go/sdk"
+	"math/big"
+
+	"reflect"
+	"testing"
 )
 
-type estimateProvider struct {
-	sessionProvider
-	call  ethereum.CallMsg
-	calls int
-	err   error
-}
+func TestPreparedBenchmarkHasNoRuntimeDependency(t *testing.T) {
+	invisi, input, _ := explicitFixture(t)
 
-func (p *estimateProvider) EstimateGas(_ context.Context, call ethereum.CallMsg) (uint64, error) {
-	p.call = call
-	p.calls++
-	return 654321, p.err
-}
-
-func TestFinalGasEstimateUsesFrozenCallAndCaller(t *testing.T) {
-	ctx := context.Background()
-	s, ready, _ := readySendingOperation(t)
-	provider := &estimateProvider{sessionProvider: s.options.Provider.(*sendingProvider).sessionProvider}
-	s.options.Provider = provider
-	ready.session.options.Provider = provider
-	from := common.HexToAddress("0x1234")
-	result, err := ready.EstimateGas(ctx, from)
+	prepared, err := invisi.PrepareTransfer(context.Background(), input)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if result.Source != "rpc" || result.GasUnits != 654321 || provider.call.From != from || provider.call.To == nil || *provider.call.To != ready.plan.Context.ProtocolAddress || !bytes.Equal(provider.call.Data, ready.data) || provider.call.Value.Sign() != 0 {
-		t.Fatal("estimate did not use final call", result, provider.call)
-	}
-	state, _ := s.options.Store.ReadSnapshot(ctx, s.scope)
-	if !state.Operations[ready.ID()].Externalized {
-		t.Fatal("estimate bypassed managed export fence")
-	}
-	detached, err := transaction.NewDetachedExecution(ready.execution())
-	if err != nil {
-		t.Fatal(err)
-	}
-	result, err = detached.EstimateGas(ctx, from)
-	if err != nil || result.GasUnits != 654321 {
+	execution := transaction.PreparedExecution(prepared)
+	execution.Runtime = nil
+	before := execution.Status
+	result, err := prepared.EstimateGas()
+	if err != nil || result.Source != "benchmark" {
 		t.Fatal(result, err)
 	}
-	provider.err = errors.New("estimate rejected")
-	if _, err = detached.EstimateGas(ctx, from); !errors.Is(err, provider.err) {
-		t.Fatal("provider error lost", err)
+	if execution.Status != before {
+		t.Fatal("estimate changed lifecycle")
+	}
+	op := &Operation{plan: execution.Plan, status: before}
+	managed, err := op.EstimateGas()
+	if err != nil || !reflect.DeepEqual(result, managed) || op.status != before {
+		t.Fatal(managed, err)
 	}
 }
 
-func TestFinalGasEstimateRejectsUnreadyAndMissingCapability(t *testing.T) {
-	ctx := context.Background()
-	s, ready, _ := readySendingOperation(t)
-	s.options.Provider = sessionProvider{}
-	ready.session.options.Provider = sessionProvider{}
-	if _, err := ready.EstimateGas(ctx, common.Address{}); err == nil {
-		t.Fatal("missing estimator accepted")
-	}
-	invisi, input, _ := explicitFixture(t)
-	prepared, err := invisi.PrepareTransfer(ctx, input)
+func TestManagedPreparedExactBenchmarkBeforeProof(t *testing.T) {
+	s, token, _ := testSession(t)
+	address, _ := s.wallet.GetAddress()
+	op, err := s.PrepareTransfer(context.Background(), sdk.TransferPreparation{TokenAddress: token, Outputs: testOutputs(s, []testPaymentOutput{{To: address, Amount: big.NewInt(100)}})})
 	if err != nil {
 		t.Fatal(err)
 	}
-	provider := &estimateProvider{}
-	transaction.PreparedExecution(prepared).Runtime.Options.Provider = provider
-	if _, err = prepared.EstimateGas(ctx, common.Address{}); err == nil || provider.calls != 0 {
-		t.Fatal("unready estimate accepted")
+	s.options.Provider = nil
+	before, _ := s.options.Store.ReadSnapshot(context.Background(), s.scope)
+	result, err := op.EstimateGas()
+	after, _ := s.options.Store.ReadSnapshot(context.Background(), s.scope)
+	if err != nil || !result.Available || result.Reference == nil || *result.GasUnits == 0 || !reflect.DeepEqual(before, after) {
+		t.Fatal(result, err)
+	}
+}
+
+func TestRealPreparedMixedBenchmarkBeforeProof(t *testing.T) {
+	s, token, _ := testSession(t)
+	address, _ := s.wallet.GetAddress()
+	op, err := s.PrepareTransfer(context.Background(), sdk.TransferPreparation{TokenAddress: token, Outputs: testOutputs(s, []testPaymentOutput{{To: address, Amount: big.NewInt(30)}, {To: address, Amount: big.NewInt(30)}, {To: address, Amount: big.NewInt(30)}}), Funding: &sdk.FundingSource{Payer: s.wallet.OwnerAddress(), Amount: big.NewInt(10), Authorization: "caller"}, Withdrawal: &sdk.Withdrawal{To: s.wallet.OwnerAddress(), Amount: big.NewInt(20)}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	s.options.Provider = nil
+	before, _ := s.options.Store.ReadSnapshot(context.Background(), s.scope)
+	got, err := op.EstimateGas()
+	after, _ := s.options.Store.ReadSnapshot(context.Background(), s.scope)
+	if err != nil || !got.Available || *got.GasUnits != 1768554 || got.Reference.ID != "5-62" || !reflect.DeepEqual(before, after) {
+		t.Fatal(got, err)
 	}
 }
