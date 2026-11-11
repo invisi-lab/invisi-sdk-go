@@ -120,6 +120,10 @@ github.com/invisi-lab/invisi-sdk-go/primitives v1.2.2 h1:6xZjl7NyhgzV1/55a2wE80f
 github.com/invisi-lab/invisi-sdk-go/primitives v1.2.2/go.mod h1:ZaBkRXJwSNDfKZxvMYA+e57cJGLqNlgo1auHXlfQfTw=
 github.com/invisi-lab/invisi-sdk-go/protocol v1.2.2 h1:MVvaIYVlf4zTKJa8PuMyBHYiKbkXbt8ZN/U6bEZpce4=
 github.com/invisi-lab/invisi-sdk-go/protocol v1.2.2/go.mod h1:8P34UkiV/ZH0vmcQe2YJiZWB9rACi6BeXAcH6XzjcoI=
+github.com/invisi-lab/invisi-sdk-go/prover v1.2.2 h1:7vXu6BbZacdOYb5+CcJ9zupujH0u2H/u32fjbf+oU0M=
+github.com/invisi-lab/invisi-sdk-go/prover v1.2.2/go.mod h1:b1ZGrWsRohgBhMsujUuWlytI8ffZLnLckmeXw8BN6WY=
+github.com/invisi-lab/invisi-sdk-go/rpc v1.2.2 h1:7GMkO487nSuqq67w7euj1Y2rvFDaf6sBK32rWb9sQ4M=
+github.com/invisi-lab/invisi-sdk-go/rpc v1.2.2/go.mod h1:VTRfuCUaYriwyiUN4p308VW7TR2/yrStk0eFMicLKkY=
 github.com/jackpal/go-nat-pmp v1.0.2 h1:KzKSgb7qkJvOUTqYl9/Hg/me3pWgBmERKrTGD7BdWus=
 github.com/jackpal/go-nat-pmp v1.0.2/go.mod h1:QPH045xvCAeXUZOxsnwmrtiCoxIr9eob+4orBN1SBKc=
 github.com/klauspost/compress v1.18.6 h1:2jupLlAwFm95+YDR+NwD2MEfFO9d4z4Prjl1XXDjuao=
