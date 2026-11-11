@@ -19,9 +19,12 @@ func (s *WalletSession) Credit() (*creditsession.Session, error) {
 type creditStoreAdapter struct{ session *WalletSession }
 
 func (a creditStoreAdapter) ReadSnapshot(ctx context.Context) (creditsession.State, error) {
-	state, err := a.session.options.Store.ReadSnapshot(ctx, a.session.scope)
+	state, err := a.session.fencedSnapshot(ctx)
 	if err != nil {
 		return creditsession.State{}, err
+	}
+	if state.Invalidated {
+		return creditsession.State{}, errors.New("wallet requires reset scan")
 	}
 	if state.PostpaidCredit.Version == 0 {
 		return creditsession.EmptyState(), nil

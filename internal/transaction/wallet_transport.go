@@ -30,6 +30,9 @@ func (w *Wallet) DecryptNote(ctx context.Context, decryptor wallet.DeliveryDecry
 		return primitives.Note{}, err
 	}
 	if err != nil {
+		if errors.Is(err, wallet.ErrAuthenticationFailed) {
+			return primitives.Note{}, wallet.ErrAuthenticationFailed
+		}
 		// App errors must not alias the SDK nonrecipient marker generated from nil plaintext.
 		return primitives.Note{}, fmt.Errorf("App Note decryption failed: %v", err)
 	}
@@ -60,6 +63,9 @@ func (w *Wallet) DecryptCreditState(ctx context.Context, decryptor wallet.Delive
 		return credit.DeliveryState{}, err
 	}
 	if err != nil {
+		if errors.Is(err, wallet.ErrAuthenticationFailed) {
+			return credit.DeliveryState{}, wallet.ErrAuthenticationFailed
+		}
 		// App errors must not alias the SDK nonrecipient marker generated from nil plaintext.
 		return credit.DeliveryState{}, fmt.Errorf("App Credit decryption failed: %v", err)
 	}

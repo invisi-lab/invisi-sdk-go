@@ -9,9 +9,9 @@ import (
 
 	"github.com/invisi-lab/invisi-sdk-go/credit"
 	"github.com/invisi-lab/invisi-sdk-go/primitives"
-	"github.com/invisi-lab/invisi-sdk-go/rpc/contracts"
 	"github.com/invisi-lab/invisi-sdk-go/protocol/receipts"
 	protocolrpc "github.com/invisi-lab/invisi-sdk-go/rpc"
+	"github.com/invisi-lab/invisi-sdk-go/rpc/contracts"
 	creditsession "github.com/invisi-lab/invisi-sdk-go/session/credit"
 	"github.com/invisi-lab/invisi-sdk-go/wallet"
 )
@@ -57,6 +57,19 @@ func (s *WalletSession) readTransaction(ctx context.Context, hash common.Hash, a
 	if e != nil {
 		return nil, nil, nil, e
 	}
+	return s.readPublicTransaction(ctx, PublicTransaction{Receipt: receipt, Header: header, Batch: batch}, anchor, resolver...)
+}
+
+func (s *WalletSession) readPublicTransaction(ctx context.Context, tx PublicTransaction, anchor protocolrpc.CanonicalBlock, resolver ...walletResolver) ([]StoredNote, []creditsession.StoredState, []*authenticatedCreditDraw, error) {
+	receipt, header, batch := tx.Receipt, tx.Header, tx.Batch
+	hash := receipt.TxHash
+	logs := []types.Log{}
+	for _, l := range receipt.Logs {
+		if l != nil && l.Address == s.scope.ProtocolAddress {
+			logs = append(logs, *l)
+		}
+	}
+	var e error
 	notes := []StoredNote{}
 	credits := []creditsession.StoredState{}
 	draws := []*authenticatedCreditDraw{}
@@ -74,14 +87,16 @@ func (s *WalletSession) readTransaction(ctx context.Context, hash common.Hash, a
 		if len(output.Ciphertext) == 0 && len(output.Clue) == 0 {
 			continue
 		}
-		context := primitives.NoteDecryptionContext{NoteEncryptionContext: primitives.NoteEncryptionContext{ProtocolContext: s.coreContext(), OutputCommitment: primitives.BigIntToElement(output.Commitment.Big())}, TokenAddress: primitives.BigIntToElement(output.Token.Big()), OwnerAddress: primitives.BigIntToElement(s.wallet.OwnerAddress().Big())}
+		context := primitives.NoteDecryptionContext{NoteEncryptionContext: primitives.NoteEncryptionContext{ProtocolContext: s.coreContext(), OutputCommitment: primitives.BigIntToElement(output.Commitment.Big())}, TokenAddress: primitives.BigIntToElement(output.Token.Big()), OwnerAddress: primitives.BigIntToElement(s.wallet.OwnerAddress().Big()), Clue: append([]byte(nil), output.Clue...)}
 		note, e := resolveNote(resolver, output.Ciphertext, context)
 		if e != nil && !errors.Is(e, wallet.ErrNotRecipient) {
 			return nil, nil, nil, e
 		}
 		if e == nil {
-			if _, e = s.rpc.GetMembership(ctx, s.protocol.Context(), protocolrpc.MembershipInput{TreeID: output.TreeID, LeafIndex: output.LeafIndex, Commitment: output.Commitment}, anchor); e != nil {
-				return nil, nil, nil, e
+			if !tx.PositionValidated {
+				if _, e = s.rpc.GetMembership(ctx, s.protocol.Context(), protocolrpc.MembershipInput{TreeID: output.TreeID, LeafIndex: output.LeafIndex, Commitment: output.Commitment}, anchor); e != nil {
+					return nil, nil, nil, e
+				}
 			}
 			nf, e := s.wallet.ExportNullifier().ForNote(note)
 			if e != nil {
@@ -95,6 +110,7 @@ func (s *WalletSession) readTransaction(ctx context.Context, hash common.Hash, a
 		context := credit.DeliveryContext{ProtocolContext: s.coreContext(), TokenAddress: primitives.BigIntToElement(output.Token.Big()), Commitment: primitives.BigIntToElement(output.Commitment.Big()), RecipientIdentity: primitives.BigIntToElement(s.wallet.OwnerAddress().Big())}
 		for _, envelope := range output.Deliveries {
 			for _, role := range []credit.Role{credit.Owner, credit.Spender} {
+				context.Clue = append([]byte(nil), envelope.Clue...)
 				state, e := resolveCredit(resolver, envelope.Ciphertext, context, role)
 				if e != nil {
 					if errors.Is(e, wallet.ErrNotRecipient) {
@@ -102,8 +118,10 @@ func (s *WalletSession) readTransaction(ctx context.Context, hash common.Hash, a
 					}
 					return nil, nil, nil, e
 				}
-				if _, e = s.rpc.GetMembership(ctx, s.protocol.Context(), protocolrpc.MembershipInput{TreeID: output.TreeID, LeafIndex: output.LeafIndex, Commitment: output.Commitment}, anchor); e != nil {
-					return nil, nil, nil, e
+				if !tx.PositionValidated {
+					if _, e = s.rpc.GetMembership(ctx, s.protocol.Context(), protocolrpc.MembershipInput{TreeID: output.TreeID, LeafIndex: output.LeafIndex, Commitment: output.Commitment}, anchor); e != nil {
+						return nil, nil, nil, e
+					}
 				}
 				nf, e := state.State.Nullifier()
 				if e != nil {

@@ -34,6 +34,8 @@ func (f DeliveryDecryptorFuncs) DecryptCredit(ctx context.Context, envelope []by
 	return f.Credit(ctx, envelope, c, role)
 }
 
+var ErrAuthenticationFailed = errors.New("delivery authentication is ambiguous")
+
 var ErrNotRecipient = errors.New("delivery is not addressed to this wallet")
 
 // ValidateDeliveryEnvelope rejects malformed payloads before invoking App cryptography.

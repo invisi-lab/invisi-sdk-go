@@ -14,4 +14,5 @@ type NoteEncryptionContext struct {
 type NoteDecryptionContext struct {
 	NoteEncryptionContext
 	TokenAddress, OwnerAddress fr.Element
+	Clue                       []byte
 }

@@ -36,8 +36,7 @@ func refreshFixture(t *testing.T, failSecond bool, entered, release chan struct{
 	t.Helper()
 	s, _, _ := testSession(t)
 	base := s.options.Provider.(sessionProvider)
-	middle := types.CopyHeader(base.head)
-	middle.Number = big.NewInt(5)
+	middle := fixtureHeader(5, base.head.Time)
 	provider := checkpointProvider{base, middle}
 	deployment := s.protocol.Deployment()
 	var calls atomic.Int32
@@ -85,6 +84,10 @@ func refreshFixture(t *testing.T, failSecond bool, entered, release chan struct{
 	}
 	s.options.Provider = provider
 	s.rpc = client.WithProvider(provider)
+	s.publicHistory, err = NewPublicHistory(PublicHistoryOptions{Protocol: s.protocol, Provider: provider, ProtocolRPC: s.rpc})
+	if err != nil {
+		t.Fatal(err)
+	}
 	return s, &calls
 }
 func TestRefreshCheckpointRequiresCompleteContiguousScan(t *testing.T) {
@@ -166,6 +169,11 @@ func TestRefreshCannotCrossAnotherSessionsReset(t *testing.T) {
 				oldScan <- err
 			}()
 			<-entered
+			if failedReset {
+				if e := s.publicHistory.PruneBefore(context.Background(), 11); e != nil {
+					t.Fatal(e)
+				}
+			}
 			_, resetErr := refreshForTest(&other, context.Background(), RefreshOptions{FromBlock: 1, Reset: true})
 			if (resetErr != nil) != failedReset {
 				close(release)
@@ -226,6 +234,9 @@ func TestFailedStagedResetPreservesCommittedDiscoveryCheckpoint(t *testing.T) {
 		result <- err
 	}()
 	<-entered
+	if e := session.publicHistory.PruneBefore(context.Background(), 11); e != nil {
+		t.Fatal(e)
+	}
 	if _, err := refreshForTest(&other, context.Background(), RefreshOptions{FromBlock: 1, Reset: true}); err == nil {
 		close(release)
 		t.Fatal("reset fixture should fail after clearing inventory")

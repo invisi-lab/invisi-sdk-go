@@ -67,6 +67,11 @@ func testExecutor(w *sdk.Wallet) *native.Executor {
 }
 
 func refreshForTest(s *WalletSession, ctx context.Context, options RefreshOptions) (RefreshResult, error) {
+	h, e := NewPublicHistory(PublicHistoryOptions{Protocol: s.protocol, Provider: s.options.Provider, ProtocolRPC: s.rpc, Store: s.publicHistory.Store()})
+	if e != nil {
+		return RefreshResult{}, e
+	}
+	s.publicHistory = h
 	pending, err := s.Refresh(ctx, options)
 	if err != nil {
 		return RefreshResult{}, err

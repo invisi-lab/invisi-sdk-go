@@ -20,7 +20,7 @@ type BalanceSnapshot struct {
 }
 
 func (s *WalletSession) Balance(ctx context.Context, token common.Address) (BalanceSnapshot, error) {
-	state, e := s.options.Store.ReadSnapshot(ctx, s.scope)
+	state, e := s.fencedSnapshot(ctx)
 	if e != nil {
 		return BalanceSnapshot{}, e
 	}
@@ -41,7 +41,7 @@ func (s *WalletSession) Balance(ctx context.Context, token common.Address) (Bala
 			result.Reserved.Add(result.Reserved, primitives.ElementToBigInt(n.Note.Amount))
 		}
 	}
-	if state.Invalidated || checked == nil {
+	if state.Invalidated || checked == nil || len(state.Scan.Unresolved) > 0 {
 		result.AvailableKnown = nil
 	}
 	if state.Invalidated {

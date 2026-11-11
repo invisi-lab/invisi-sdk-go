@@ -8,6 +8,7 @@ import (
 	"reflect"
 	"testing"
 
+	"github.com/invisi-lab/invisi-sdk-go/protocol/receipts"
 	protocolrpc "github.com/invisi-lab/invisi-sdk-go/rpc"
 	"github.com/invisi-lab/invisi-sdk-go/wallet"
 
@@ -97,12 +98,23 @@ func TestOwnedReceiptRequiresCanonicalInsertionAndMembership(t *testing.T) {
 
 	// An App error wrapping the nonrecipient sentinel must not commit inventory or checkpoints.
 	for _, appErr := range []error{wallet.ErrNotRecipient, fmt.Errorf("App failure: %w", wallet.ErrNotRecipient)} {
-		clue := make([]byte, 68)
-		clue[64] = 24
-		pending := &PendingWalletRefresh{session: session, base: state, options: RefreshOptions{FromBlock: 10}, pages: &refreshPages{
-			notePages:   map[string]protocolrpc.ProtocolNoteUpdates{"10:10": {Block: *state.ObservedThrough, Notes: []protocolrpc.ProtocolNoteOutput{{Block: *state.ObservedThrough, TreeID: 1, LeafIndex: 0, Commitment: stored.Commitment, TokenAddress: token, Ciphertext: ciphertext, Clue: clue, TransactionHash: tx}}}},
-			creditPages: map[string]protocolrpc.ProtocolCreditUpdates{"10:10": {Block: *state.ObservedThrough}},
-		}}
+		decoder, _ := receipts.NewDecoder()
+		batch, e := decoder.Decode(receipts.Block{Number: 10, Hash: receipt.BlockHash, ParentHash: original.head.ParentHash, Timestamp: original.head.Time}, []types.Log{*log})
+		if e != nil {
+			t.Fatal(e)
+		}
+		session.publicHistory, e = NewPublicHistory(PublicHistoryOptions{Protocol: session.protocol, Provider: provider, ProtocolRPC: session.rpc})
+		if e != nil {
+			t.Fatal(e)
+		}
+		block := *state.ObservedThrough
+		page := PublicPage{Range: BlockRange{10, 10}, Block: block, Headers: []protocolrpc.CanonicalBlock{block}, Transactions: []PublicTransaction{{PositionValidated: true, Receipt: receipt, Header: original.head, Batch: batch}}}
+		if e = PutPublicPage(ctx, session.publicHistory.Store(), session.publicHistory.Key(), page, 0); e != nil {
+			t.Fatal(e)
+		}
+		height := uint64(10)
+		pending := &PendingWalletRefresh{session: session, base: state, options: RefreshOptions{FromBlock: 10, ToBlock: &height}}
+
 		failed := testDeliveryDecryptor(session)
 		failed.Note = func(context.Context, []byte, primitives.NoteDecryptionContext) ([]byte, error) { return nil, appErr }
 		if _, e := pending.Decrypt(ctx, failed); e == nil {

@@ -78,19 +78,28 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+	publicStore, err := walletsqlite.NewPublicHistoryStore(ctx, database, walletsession.PublicRetention{})
+	if err != nil {
+		log.Fatal(err)
+	}
+	publicHistory, err := walletsession.NewPublicHistory(walletsession.PublicHistoryOptions{Store: publicStore, Protocol: pool, Provider: provider, ProtocolRPC: client.WithProvider(provider)})
+	if err != nil {
+		log.Fatal(err)
+	}
 	managed, err := walletsession.Connect(ctx, walletsession.Options{
-		Invisi:    invisi,
-		Wallet:    publicWallet,
-		Protocol:  pool,
-		Store:     store,
-		Namespace: "examples",
+		Invisi:        invisi,
+		PublicHistory: publicHistory,
+		Wallet:        publicWallet,
+		Protocol:      pool,
+		Store:         store,
+		Namespace:     "examples",
 	})
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	// Stage candidate discovery without changing the persisted inventory or checkpoints.
-	pending, err := managed.Refresh(ctx, walletsession.RefreshOptions{FromBlock: pool.Deployment().Protocol.FromBlock})
+	pending, err := managed.Refresh(ctx, walletsession.RefreshOptions{})
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -106,4 +115,19 @@ func main() {
 		log.Fatal(err)
 	}
 	log.Printf("%+v", balance)
+	status, err := managed.GetScanStatus(ctx)
+	if err != nil {
+		log.Fatal(err)
+	}
+	log.Printf("scan action=%s synced=%t", status.NextAction, status.IsSynced)
+	funds, err := managed.GetFundsStatus(ctx, token)
+	if err != nil {
+		log.Fatal(err)
+	}
+	log.Printf("known spendable=%s eligible=%t", funds.SpendableKnown, funds.AreFundsSpendable)
+	page, err := managed.GetHistoryPage(ctx, walletsession.HistoryPageOptions{Direction: "incoming", Limit: 50})
+	if err != nil {
+		log.Fatal(err)
+	}
+	log.Printf("history items=%d continuation=%t", len(page.Items), page.NextCursor != "")
 }

@@ -3,6 +3,7 @@ package protocol
 import (
 	"encoding/json"
 	"errors"
+	"strings"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
@@ -119,6 +120,12 @@ func validateParams(q Request) error {
 		if q.Method == DecryptCredit {
 			required = append(required, "role")
 		}
+		if _, ok := fields["owner"]; ok {
+			required = append(required, "owner")
+		}
+		if _, ok := fields["clue"]; ok {
+			required = append(required, "clue")
+		}
 		if len(fields) != len(required) {
 			return errors.New("unexpected wallet delivery context field")
 		}
@@ -130,6 +137,14 @@ func validateParams(q Request) error {
 		var p DecryptParams
 		if err := Decode(q.Params, &p); err != nil {
 			return err
+		}
+		if p.Context.Owner != "" && !strings.EqualFold(p.Context.Owner, q.OwnerAddress) {
+			return errors.New("wallet delivery account mismatch")
+		}
+		if p.Context.Clue != "" {
+			if _, e := Bytes(p.Context.Clue, 68); e != nil {
+				return e
+			}
 		}
 		if _, err := p.Context.ProtocolContext.Core(); err != nil {
 			return err

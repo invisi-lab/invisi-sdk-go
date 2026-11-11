@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -104,7 +105,7 @@ func (o *Operation) Reconcile(ctx context.Context, reconciler Reconciler) error 
 		return err
 	}
 	if outcome == nil {
-		return fmt.Errorf("Credit confirmation is still uncertain")
+		return ErrConfirmationPending
 	}
 	if outcome.BlockHash == (common.Hash{}) || outcome.TransactionHash == (common.Hash{}) || record.TransactionHash != (common.Hash{}) && outcome.TransactionHash != record.TransactionHash || !bytes.Equal(outcome.Calldata, record.Calldata) {
 		return fmt.Errorf("Credit receipt does not match journal")
@@ -161,3 +162,23 @@ func (o *Operation) Reconcile(ctx context.Context, reconciler Reconciler) error 
 		return nil
 	})
 }
+
+// ReconcilePending checks externalized journals without replacing their worker leases.
+func (s *Session) ReconcilePending(ctx context.Context, reconciler Reconciler) error {
+	snapshot, e := s.store.ReadSnapshot(ctx)
+	if e != nil {
+		return e
+	}
+	for id, r := range snapshot.Operations {
+		if !r.Externalized || len(r.Calldata) == 0 || r.TransactionHash == (common.Hash{}) || r.Status == "confirmed" || r.Status == "cancelled" || r.Status == "reverted" {
+			continue
+		}
+		o := &Operation{session: s, id: id, worker: r.WorkerID}
+		if e = o.Reconcile(ctx, reconciler); e != nil && !errors.Is(e, ErrConfirmationPending) {
+			return e
+		}
+	}
+	return nil
+}
+
+var ErrConfirmationPending = errors.New("Credit confirmation is still uncertain")

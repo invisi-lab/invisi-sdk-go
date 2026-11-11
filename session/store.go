@@ -7,6 +7,7 @@ import (
 	"crypto/rand"
 	"encoding/json"
 	"errors"
+	"reflect"
 	"sync"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -30,6 +31,8 @@ type OperationRecord struct {
 }
 
 type WalletState struct {
+	Scan             PrivateScanState
+	Records          RecordMetadata
 	FormatVersion    int
 	PostpaidCredit   creditsession.State
 	Revision         uint64
@@ -61,12 +64,23 @@ type WalletStore interface {
 }
 
 type MemoryWalletStore struct {
-	mu     sync.Mutex
-	states map[string]WalletState
+	mu            sync.Mutex
+	states        map[string]WalletState
+	archives      map[string]map[string]WalletRecord
+	recentRecords int
+	recordCodec   *EncryptedWalletCodec
 }
 
-func NewMemoryWalletStore() *MemoryWalletStore {
-	return &MemoryWalletStore{states: map[string]WalletState{}}
+func NewMemoryWalletStore(options ...MemoryWalletStoreOptions) *MemoryWalletStore {
+	key := make([]byte, 32)
+	_, _ = rand.Read(key)
+	codec, _ := NewEncryptedWalletCodec(key)
+	clear(key)
+	recent := 128
+	if len(options) > 0 {
+		recent = options[0].RecentRecords
+	}
+	return &MemoryWalletStore{states: map[string]WalletState{}, archives: map[string]map[string]WalletRecord{}, recentRecords: recent, recordCodec: codec}
 }
 
 func (m *MemoryWalletStore) ReadSnapshot(ctx context.Context, scope WalletScope) (WalletState, error) {
@@ -99,6 +113,9 @@ func (m *MemoryWalletStore) Update(ctx context.Context, scope WalletScope, updat
 	if e = update(&clone); e != nil {
 		return e
 	}
+	if s.Records.Version != 0 && !reflect.DeepEqual(clone.Records, s.Records) {
+		return errors.New("wallet storage metadata must be preserved")
+	}
 	if s.Revision >= 1<<63-1 {
 		return errors.New("wallet revision exhausted")
 	}
@@ -109,6 +126,23 @@ func (m *MemoryWalletStore) Update(ctx context.Context, scope WalletScope, updat
 	saved, e := CloneState(clone)
 	if e != nil {
 		return e
+	}
+	if m.archives != nil {
+		archive, e := m.retainRecords(scope, &saved)
+		if e != nil {
+			return e
+		}
+		existing := m.archives[scope.Key()]
+		if existing == nil {
+			existing = map[string]WalletRecord{}
+		}
+		for locator := range saved.Records.Active {
+			delete(existing, locator)
+		}
+		for _, r := range archive {
+			existing[RecordLocator(saved.Records.IndexSecret, r.Kind, r.Key)] = r
+		}
+		m.archives[scope.Key()] = existing
 	}
 	m.states[scope.Key()] = saved
 	return nil

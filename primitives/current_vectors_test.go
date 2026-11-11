@@ -116,7 +116,7 @@ func TestCurrentNoteDeliveryVectors(t *testing.T) {
 	if e != nil || nf != currentField(t, v.Note["nullifier"]) {
 		t.Fatal("nullifier mismatch", e)
 	}
-	enc := NoteDecryptionContext{NoteEncryptionContext{ctx, leaf}, token, note.OwnerAddress}
+	enc := NoteDecryptionContext{NoteEncryptionContext: NoteEncryptionContext{ctx, leaf}, TokenAddress: token, OwnerAddress: note.OwnerAddress}
 	plain, e := DecryptPrivateTransferNote(currentBytes(t, v.Owner["viewingPrivateKey"]), currentBytes(t, v.Note["ciphertext"]), enc)
 	if e != nil || !reflect.DeepEqual(plain, note) {
 		t.Fatal("TS note decryption failed", e)
@@ -184,7 +184,7 @@ func TestCurrentMemoDeliveryVectors(t *testing.T) {
 			}
 			ciphertext := currentBytes(t, row.Ciphertext)
 			if row.Kind == "funds" {
-				dec := NoteDecryptionContext{NoteEncryptionContext{context, currentField(t, vectors.Note["commitment"])}, token, currentField(t, recipient["ownerAddress"])}
+				dec := NoteDecryptionContext{NoteEncryptionContext: NoteEncryptionContext{context, currentField(t, vectors.Note["commitment"])}, TokenAddress: token, OwnerAddress: currentField(t, recipient["ownerAddress"])}
 				note, err := DecryptPrivateTransferNote(private, ciphertext, dec)
 				if err != nil {
 					t.Fatal(err)

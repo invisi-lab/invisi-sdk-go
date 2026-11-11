@@ -67,6 +67,8 @@ type DeliveryContext struct {
 	ProtocolContext
 	TokenAddress     string `json:"tokenAddress"`
 	OutputCommitment string `json:"outputCommitment"`
+	Owner            string `json:"owner,omitempty"`
+	Clue             string `json:"clue,omitempty"`
 	Role             string `json:"role,omitempty"`
 }
 type PublicResult struct {

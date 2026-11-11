@@ -201,3 +201,25 @@ func TestSubscriptionMayReadTheOperationBeingCommitted(t *testing.T) {
 		t.Fatal("commit notification did not arrive")
 	}
 }
+
+func TestHistoryPageFilteringPreservesContinuation(t *testing.T) {
+	s, token, _ := testSession(t)
+	ctx := context.Background()
+	if e := s.options.Store.Update(ctx, s.scope, func(v *WalletState) error {
+		for i := uint64(100); i < 103; i++ {
+			h := common.BigToHash(new(big.Int).SetUint64(i))
+			v.Notes[h] = StoredNote{Commitment: h, Note: primitives.Note{TokenAddress: primitives.BigIntToElement(token.Big()), Amount: primitives.ElementFromUint64(i)}}
+		}
+		return nil
+	}); e != nil {
+		t.Fatal(e)
+	}
+	other := common.HexToAddress("0x4444")
+	page, e := s.GetHistoryPage(ctx, HistoryPageOptions{Direction: "incoming", Limit: 1, TokenAddress: &other})
+	if e != nil {
+		t.Fatal(e)
+	}
+	if len(page.Items) != 0 || page.NextCursor == "" {
+		t.Fatal("filtered empty page hid continuation")
+	}
+}

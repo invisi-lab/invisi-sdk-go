@@ -31,6 +31,7 @@ type DeliveryState struct {
 type DeliveryContext struct {
 	primitives.ProtocolContext
 	TokenAddress, Commitment, RecipientIdentity fr.Element
+	Clue                                        []byte
 }
 
 func put(out []byte, e fr.Element, n int) []byte { b := e.Bytes(); return append(out, b[32-n:]...) }

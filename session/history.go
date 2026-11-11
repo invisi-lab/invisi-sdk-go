@@ -81,11 +81,15 @@ func (s *WalletSession) GetHistory(ctx context.Context, options HistoryOptions) 
 	if s.options.Store == nil {
 		return WalletHistory{}, errors.New("history requires a managed wallet store")
 	}
-	state, err := s.options.Store.ReadSnapshot(ctx, s.scope)
+	state, err := s.fullHistorySnapshot(ctx)
 	if err != nil {
 		return WalletHistory{}, err
 	}
-	result := WalletHistory{Scope: s.scope, Revision: state.Revision, Invalidated: state.Invalidated,
+	return walletHistoryFromState(state, s.scope, filterToken, tokenFilter)
+}
+
+func walletHistoryFromState(state WalletState, scope WalletScope, filterToken bool, tokenFilter common.Address) (WalletHistory, error) {
+	result := WalletHistory{Scope: scope, Revision: state.Revision, Invalidated: state.Invalidated,
 		Outgoing: []OutgoingHistoryEntry{}, Incoming: []IncomingHistoryEntry{}}
 	if state.DiscoveryThrough != nil {
 		anchor := *state.DiscoveryThrough

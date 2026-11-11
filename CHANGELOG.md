@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+- Share bounded canonical public history across managed accounts, with independent head-first private recovery coverage and chronological Credit successor replay.
+- Add native batch detection, retained ambiguous-delivery retries, exact scan/funds status, and current-head known-state reconciliation.
+- Migrate SQLite accounts to authenticated encrypted per-record rows and cold archive paging; add persistent public cache tables in the same host database.
+
 ## 1.2.0
 
 - Split the SDK into independently versioned primitives, protocol, prover, rpc, session and root SDK modules; rename core to primitives without an old-name module.

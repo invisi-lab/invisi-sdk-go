@@ -26,6 +26,7 @@ func (s WalletScope) Key() string {
 type NoteRecord struct {
 	TransactionHash       common.Hash
 	Block                 *protocolrpc.CanonicalBlock
+	CheckedThrough        *protocolrpc.CanonicalBlock
 	Note                  primitives.Note
 	Commitment, Nullifier common.Hash
 	TreeID                uint64

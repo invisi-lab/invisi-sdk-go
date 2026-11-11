@@ -28,7 +28,7 @@ Replace `shared.AppDeliveryDecryptor` in [shared/decryptor.go](shared/decryptor.
 | `02-transparent-amount` | Offline Note output; Shield one/nine outputs, memo and a separate payer signature. |
 | `03-hidden-amount` | Public/private funding, change, withdrawals, owner-bound sweep and recursive aggregation. |
 | `04-credit` | Managed postpaid create/draw/update/revoke, role-bound discovery and reservations. |
-| `05-wallet-session` | Encrypted inventory restore, transfer and Note/Credit operation recovery. |
+| `05-wallet-session` | Encrypted inventory restore, persistent shared public cache, scan/funds status, paginated history, transfer and Note/Credit operation recovery. |
 | `06-disclosure` | Authenticated Note/Credit opening and memo disclosure; output is sensitive application data. |
 | `07-broadcaster` | Standard relay delivery, independent Source submission and recovery from saved operations/public proof packets. |
 
@@ -37,3 +37,5 @@ Most examples log unsigned calldata. Submit through an ordinary geth transaction
 Session/Credit examples use `examples/wallet.sqlite`. Set `INVISI_EXAMPLE_STORAGE_KEY` to your application-owned 32-byte hex storage encryption key and retain it across runs. It is independent of the EVM signer and App viewing/decryption keys. Keep the encrypted inventory and journals: they contain sensitive openings and preserve reservations after uncertain submissions. Select a new Credit `--operation-id` only for a new intent; resume the original ID to recover an uncertain operation.
 
 Credit business transition construction remains explicit through `credit.Prepare*`; `managed.Credit().Prepare` validates current allocation, roots/nullifiers and cross-role reservations. `05-wallet-session/04-recover-credit` resumes the frozen Credit journal and does not apply a quota change again. Call `Externalize` before handing direct Credit calldata to a signer, then reconcile the actual hash before releasing reservations.
+
+The restore-session example composes public history and encrypted account records in separate tables of the same SQLite database. Reuse its PublicHistory instance for another public wallet and an account-specific private Store/codec. Default Refresh stages a recent page and Decrypt resumes head-first/backward recovery per committed batch. Return wallet.ErrAuthenticationFailed for ambiguous authentication; native detection keys remain in the App. Earlier committed batches survive interruption. See session/README.md for offline scans, retained coverage and bounded paging.

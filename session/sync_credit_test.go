@@ -246,6 +246,7 @@ func TestRefreshKeepsAuthenticatedChildPayloadAndDropsUnknownRecoveredPayload(t 
 				var request struct {
 					ID     uint64
 					Method string
+					Params []json.RawMessage
 				}
 				json.NewDecoder(r.Body).Decode(&request)
 				var result any
@@ -259,7 +260,15 @@ func TestRefreshKeepsAuthenticatedChildPayloadAndDropsUnknownRecoveredPayload(t 
 				case "invisi_getRoots":
 					result = []any{anchor}
 				case "invisi_getMembership":
-					result = map[string]any{"anchor": anchor, "leafIndex": 0, "commitment": leaf, "siblings": siblings}
+					var index uint32
+					_ = json.Unmarshal(request.Params[1], &index)
+					path := append([]common.Hash(nil), siblings...)
+					commitment := leaf
+					if index == 1 {
+						path[0] = leaf
+						commitment = note
+					}
+					result = map[string]any{"anchor": anchor, "leafIndex": index, "commitment": commitment, "siblings": path}
 				default:
 					t.Error("unexpected RPC", request.Method)
 				}
@@ -273,6 +282,10 @@ func TestRefreshKeepsAuthenticatedChildPayloadAndDropsUnknownRecoveredPayload(t 
 			session.rpc = client.WithProvider(provider)
 			session.options.Provider = provider
 			beforePending, _ := session.options.Store.ReadSnapshot(ctx, session.scope)
+			session.publicHistory, e = NewPublicHistory(PublicHistoryOptions{Protocol: session.protocol, Provider: provider, ProtocolRPC: session.rpc})
+			if e != nil {
+				t.Fatal(e)
+			}
 			pending, e := session.Refresh(ctx, RefreshOptions{FromBlock: 10})
 			if e != nil {
 				t.Fatal(e)

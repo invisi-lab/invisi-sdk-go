@@ -17,7 +17,7 @@ func memoNote(t *testing.T) (Note, []byte, []byte, NoteDecryptionContext) {
 	note := Note{ProtocolContext: ProtocolContext{ElementFromUint64(1), ElementFromUint64(2)}, OwnerAddress: ElementFromUint64(3), TokenAddress: ElementFromUint64(4), Amount: ElementFromUint64(5), Nonce: ElementFromUint64(6)}
 	identity, _ := ComputeNoteIdentity(note.OwnerAddress, note.Nonce)
 	leaf, _ := ComputeNoteCommitment(note.ChainID, note.ProtocolAddress, identity, note.TokenAddress, note.Amount)
-	return note, private, public, NoteDecryptionContext{NoteEncryptionContext{note.ProtocolContext, leaf}, note.TokenAddress, note.OwnerAddress}
+	return note, private, public, NoteDecryptionContext{NoteEncryptionContext: NoteEncryptionContext{note.ProtocolContext, leaf}, TokenAddress: note.TokenAddress, OwnerAddress: note.OwnerAddress}
 }
 func TestEmptyMemoUsesCurrentEnvelope(t *testing.T) {
 	note, private, public, context := memoNote(t)

@@ -32,8 +32,20 @@ type sessionProvider struct {
 
 func (p sessionProvider) ChainID(context.Context) (*big.Int, error) { return big.NewInt(31337), nil }
 
-func (p sessionProvider) HeaderByNumber(context.Context, *big.Int) (*types.Header, error) {
-	return p.head, nil
+func fixtureHeader(number, timestamp uint64) *types.Header {
+	var parent common.Hash
+	var h *types.Header
+	for n := uint64(1); n <= number; n++ {
+		h = &types.Header{Number: new(big.Int).SetUint64(n), Difficulty: big.NewInt(0), Time: timestamp, ParentHash: parent}
+		parent = h.Hash()
+	}
+	return h
+}
+func (p sessionProvider) HeaderByNumber(_ context.Context, n *big.Int) (*types.Header, error) {
+	if n == nil || n.Uint64() == p.head.Number.Uint64() {
+		return p.head, nil
+	}
+	return fixtureHeader(n.Uint64(), p.head.Time), nil
 }
 
 func (p sessionProvider) CodeAt(context.Context, common.Address, *big.Int) ([]byte, error) {
@@ -112,7 +124,7 @@ func testSession(t *testing.T, timestamps ...uint64) (*WalletSession, common.Add
 	if e != nil {
 		t.Fatal(e)
 	}
-	provider := sessionProvider{head: &types.Header{Number: big.NewInt(10), Time: timestamp, ParentHash: common.HexToHash("0x09")}, leaves: &sync.Map{}}
+	provider := sessionProvider{head: fixtureHeader(10, timestamp), leaves: &sync.Map{}}
 	address := common.HexToAddress("0x1111111111111111111111111111111111111111")
 	token := common.HexToAddress("0x2222222222222222222222222222222222222222")
 	deployment := protocolrpc.ProtocolDeployment{ChainID: "31337", Protocol: protocolrpc.ContractDeployment{Address: address, RuntimeCodeHash: transaction.HashCode([]byte{0x60, 0}), FromBlock: 1}}

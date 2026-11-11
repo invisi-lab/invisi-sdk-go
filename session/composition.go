@@ -18,6 +18,7 @@ import (
 )
 
 type Options struct {
+	PublicHistory *PublicHistory
 	Invisi        *sdk.Invisi
 	Wallet        *sdk.Wallet
 	Protocol      *chain.Protocol
@@ -33,15 +34,16 @@ type sessionOptions struct {
 	FundingSigner sdk.FundingSigner
 }
 type WalletSession struct {
-	history     *sessionNotifications
-	refreshGate chan struct{}
-	sends       *sessionSendState
-	options     sessionOptions
-	wallet      *sdk.Wallet
-	protocol    *chain.Protocol
-	scope       WalletScope
-	rpc         *protocolrpc.ProtocolRpcClient
-	runtime     *transaction.Runtime
+	publicHistory *PublicHistory
+	history       *sessionNotifications
+	refreshGate   chan struct{}
+	sends         *sessionSendState
+	options       sessionOptions
+	wallet        *sdk.Wallet
+	protocol      *chain.Protocol
+	scope         WalletScope
+	rpc           *protocolrpc.ProtocolRpcClient
+	runtime       *transaction.Runtime
 }
 
 func Connect(ctx context.Context, options Options) (*WalletSession, error) {
@@ -56,11 +58,25 @@ func Connect(ctx context.Context, options Options) (*WalletSession, error) {
 		return nil, e
 	}
 	s := &WalletSession{history: newSessionNotifications(), refreshGate: make(chan struct{}, 1), sends: &sessionSendState{sending: map[string]bool{}}, options: sessionOptions{options.Invisi.GetInfrastructure(), options.Store, options.Signer, options.FundingSigner}, wallet: runtime.Wallet, protocol: options.Protocol, scope: runtime.Scope, rpc: runtime.RPC, runtime: runtime}
+	s.publicHistory = options.PublicHistory
+	if s.publicHistory == nil {
+		s.publicHistory, e = sharedPublicHistory(options.Invisi, options.Protocol)
+		if e != nil {
+			return nil, e
+		}
+	}
+	expectedHistory, e := NewPublicHistory(PublicHistoryOptions{Protocol: options.Protocol, Provider: s.options.Provider, ProtocolRPC: s.rpc})
+	if e != nil {
+		return nil, e
+	}
+	if s.publicHistory.key != expectedHistory.key {
+		return nil, errors.New("public history deployment mismatch")
+	}
 	s.options.Store = &notifyingWalletStore{base: s.options.Store, notifications: s.history}
 	runtime.Options.Signer = options.Signer
 	runtime.Options.FundingSigner = options.FundingSigner
 	runtime.InventoryReader = func(ctx context.Context) (transaction.Inventory, error) {
-		state, e := s.options.Store.ReadSnapshot(ctx, s.scope)
+		state, e := s.fencedSnapshot(ctx)
 		return transaction.Inventory{Notes: state.Notes, Invalidated: state.Invalidated, ObservedThrough: state.ObservedThrough, CheckedThrough: state.CheckedThrough}, e
 	}
 	runtime.OnComplete = s.reserveExecution
