@@ -12,7 +12,7 @@ import (
 
 func (o *Execution) ValidateRecovered() error {
 	p := o.Plan
-	if p.Version != 1 || p.OwnerAddress != o.Runtime.Wallet.identity || p.Namespace != o.Runtime.Scope.Namespace {
+	if p.Version != 1 || p.OwnerAddress != o.Runtime.Wallet.ownerAddress || p.Namespace != o.Runtime.Scope.Namespace {
 		return errors.New("recovered wallet scope mismatch")
 	}
 	if err := o.ValidateBroadcasterPlan(); err != nil {

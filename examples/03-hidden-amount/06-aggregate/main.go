@@ -68,10 +68,7 @@ func main() {
 
 	// Each owner signs separately; aggregates may contain proofs from different owners.
 	for ownerIndex, ownerWallet := range []*sdk.Wallet{publicWallet, secondWallet} {
-		ownerAddress, err := ownerWallet.GetAddress()
-		if err != nil {
-			log.Fatal(err)
-		}
+		ownerAddress := ownerWallet.OwnerAddress().Hex()
 
 		// Discover automatically through canonical receipts and externally decrypted, independently checked openings.
 		candidates, err := shared.DiscoverNotes(ctx, provider, client, pool, ownerWallet, decryptor, token)

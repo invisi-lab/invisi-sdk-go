@@ -79,13 +79,13 @@ func TestResolvedWalletRejectsSubstitutedReceivingKeys(t *testing.T) {
 }
 
 func TestAppDecryptorNeverReceivesMalformedEnvelope(t *testing.T) {
-	w := &Wallet{identity: common.HexToAddress("0x1111111111111111111111111111111111111111")}
+	owner := common.HexToAddress("0x1111111111111111111111111111111111111111")
 	called := false
 	decryptor := wallet.DeliveryDecryptorFuncs{Note: func(context.Context, []byte, primitives.NoteDecryptionContext) ([]byte, error) {
 		called = true
 		return nil, nil
 	}}
-	if _, err := w.DecryptNote(context.Background(), decryptor, []byte{1}, primitives.NoteDecryptionContext{}); err == nil {
+	if _, err := decryptNoteForOwner(context.Background(), owner, decryptor, []byte{1}, primitives.NoteDecryptionContext{}); err == nil {
 		t.Fatal("malformed envelope accepted")
 	}
 	if called {
@@ -100,18 +100,18 @@ func TestAppNonrecipientErrorsRemainFailures(t *testing.T) {
 	}
 	envelope := make([]byte, 78)
 	copy(envelope[1:34], crypto.CompressPubkey(&key.PublicKey))
-	w := &Wallet{identity: common.Address{1}}
+	owner := common.Address{1}
 	for _, appErr := range []error{wallet.ErrNotRecipient, fmt.Errorf("App failure: %w", wallet.ErrNotRecipient)} {
 		decryptor := wallet.DeliveryDecryptorFuncs{
 			Note:   func(context.Context, []byte, primitives.NoteDecryptionContext) ([]byte, error) { return nil, appErr },
 			Credit: func(context.Context, []byte, credit.DeliveryContext, credit.Role) ([]byte, error) { return nil, appErr },
 		}
 		envelope[0] = 1
-		if _, err = w.DecryptNote(context.Background(), decryptor, envelope, primitives.NoteDecryptionContext{}); err == nil || errors.Is(err, wallet.ErrNotRecipient) {
+		if _, err = decryptNoteForOwner(context.Background(), owner, decryptor, envelope, primitives.NoteDecryptionContext{}); err == nil || errors.Is(err, wallet.ErrNotRecipient) {
 			t.Fatal("App Note error became nonrecipient", err)
 		}
 		envelope[0] = 0x82
-		if _, err = w.DecryptCreditState(context.Background(), decryptor, envelope, credit.DeliveryContext{}, credit.Owner); err == nil || errors.Is(err, wallet.ErrNotRecipient) {
+		if _, err = decryptCreditForOwner(context.Background(), owner, nil, decryptor, envelope, credit.DeliveryContext{}, credit.Owner); err == nil || errors.Is(err, wallet.ErrNotRecipient) {
 			t.Fatal("App Credit error became nonrecipient", err)
 		}
 	}
@@ -121,7 +121,7 @@ func TestAppNonrecipientErrorsRemainFailures(t *testing.T) {
 		return nil, wallet.ErrNotRecipient
 	}}
 	envelope[0] = 1
-	if _, err = w.DecryptNote(ctx, decryptor, envelope, primitives.NoteDecryptionContext{}); !errors.Is(err, context.Canceled) {
+	if _, err = decryptNoteForOwner(ctx, owner, decryptor, envelope, primitives.NoteDecryptionContext{}); !errors.Is(err, context.Canceled) {
 		t.Fatal("cancellation was hidden by App error", err)
 	}
 }

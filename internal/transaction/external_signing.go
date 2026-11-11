@@ -11,8 +11,8 @@ import (
 
 	"github.com/invisi-lab/invisi-sdk-go/primitives"
 	"github.com/invisi-lab/invisi-sdk-go/protocol"
-	"github.com/invisi-lab/invisi-sdk-go/rpc/contracts"
 	"github.com/invisi-lab/invisi-sdk-go/prover"
+	"github.com/invisi-lab/invisi-sdk-go/rpc/contracts"
 )
 
 type TransactionProveOptions struct {
@@ -62,7 +62,7 @@ func (o *Execution) AttachWallet(ctx context.Context, signature []byte) error {
 	if err != nil {
 		return err
 	}
-	witness, err := primitives.BuildWalletAuthorizationWitnessFromSignature(primitives.BigIntToElement(o.Runtime.Wallet.identity.Big()), request, append([]byte(nil), signature...))
+	witness, err := primitives.BuildWalletAuthorizationWitnessFromSignature(primitives.BigIntToElement(o.Runtime.Wallet.ownerAddress.Big()), request, append([]byte(nil), signature...))
 	if err != nil {
 		return err
 	}

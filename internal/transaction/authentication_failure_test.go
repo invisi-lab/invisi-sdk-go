@@ -15,11 +15,11 @@ func TestAmbiguousAuthenticationRemainsRetryable(t *testing.T) {
 	envelope := make([]byte, 78)
 	envelope[0] = 1
 	copy(envelope[1:34], crypto.CompressPubkey(&key.PublicKey))
-	w := &Wallet{identity: common.Address{1}}
+	owner := common.Address{1}
 	d := wallet.DeliveryDecryptorFuncs{Note: func(context.Context, []byte, primitives.NoteDecryptionContext) ([]byte, error) {
 		return nil, wallet.ErrAuthenticationFailed
 	}}
-	_, e := w.DecryptNote(context.Background(), d, envelope, primitives.NoteDecryptionContext{})
+	_, e := decryptNoteForOwner(context.Background(), owner, d, envelope, primitives.NoteDecryptionContext{})
 	if !errors.Is(e, wallet.ErrAuthenticationFailed) {
 		t.Fatalf("ambiguity lost: %v", e)
 	}

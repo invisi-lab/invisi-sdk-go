@@ -9,8 +9,8 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 
 	"github.com/invisi-lab/invisi-sdk-go/primitives"
-	"github.com/invisi-lab/invisi-sdk-go/rpc/contracts"
 	protocolrpc "github.com/invisi-lab/invisi-sdk-go/rpc"
+	"github.com/invisi-lab/invisi-sdk-go/rpc/contracts"
 )
 
 func (s *Runtime) SelectInputs(ctx context.Context, token common.Address, amount *big.Int, commitments []common.Hash, block protocolrpc.CanonicalBlock) ([]NoteRecord, []protocolrpc.Membership, error) {
@@ -36,7 +36,7 @@ func (s *Runtime) SelectInputs(ctx context.Context, token common.Address, amount
 		selected[hash] = true
 	}
 	for _, n := range OrderedNotes(state, token) {
-		if n.Note.ProtocolContext != s.CoreContext() || n.Note.OwnerAddress != primitives.BigIntToElement(s.Wallet.identity.Big()) {
+		if n.Note.ProtocolContext != s.CoreContext() || n.Note.OwnerAddress != primitives.BigIntToElement(s.Wallet.ownerAddress.Big()) {
 			return nil, nil, errors.New("stored note deployment or owner mismatch")
 		}
 		expected, e := s.Wallet.ExportNullifier().ForNote(n.Note)

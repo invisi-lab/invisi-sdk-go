@@ -15,7 +15,13 @@ import (
 
 // DecryptNote validates App plaintext against this public wallet and the output commitment.
 func (w *Wallet) DecryptNote(ctx context.Context, decryptor wallet.DeliveryDecryptor, envelope []byte, c primitives.NoteDecryptionContext) (primitives.Note, error) {
-	if w == nil || decryptor == nil {
+	if w == nil {
+		return primitives.Note{}, errors.New("wallet required")
+	}
+	return decryptNoteForOwner(ctx, w.ownerAddress, decryptor, envelope, c)
+}
+func decryptNoteForOwner(ctx context.Context, owner common.Address, decryptor wallet.DeliveryDecryptor, envelope []byte, c primitives.NoteDecryptionContext) (primitives.Note, error) {
+	if owner == (common.Address{}) || decryptor == nil {
 		return primitives.Note{}, errors.New("App delivery decryptor required")
 	}
 	if err := ctx.Err(); err != nil {
@@ -24,7 +30,7 @@ func (w *Wallet) DecryptNote(ctx context.Context, decryptor wallet.DeliveryDecry
 	if err := wallet.ValidateDeliveryEnvelope(envelope, 0x01); err != nil {
 		return primitives.Note{}, err
 	}
-	c.OwnerAddress = primitives.BigIntToElement(w.identity.Big())
+	c.OwnerAddress = primitives.BigIntToElement(owner.Big())
 	plain, err := decryptor.DecryptNote(ctx, append([]byte(nil), envelope...), c)
 	if err := ctx.Err(); err != nil {
 		return primitives.Note{}, err
@@ -45,7 +51,13 @@ func (w *Wallet) DecryptNote(ctx context.Context, decryptor wallet.DeliveryDecry
 	return primitives.DecodeNotePlaintext(append([]byte(nil), plain...), c)
 }
 func (w *Wallet) DecryptCreditState(ctx context.Context, decryptor wallet.DeliveryDecryptor, envelope []byte, c credit.DeliveryContext, role credit.Role) (credit.DeliveryState, error) {
-	if w == nil || decryptor == nil {
+	if w == nil {
+		return credit.DeliveryState{}, errors.New("wallet required")
+	}
+	return decryptCreditForOwner(ctx, w.ownerAddress, w.ViewingPublicKey(), decryptor, envelope, c, role)
+}
+func decryptCreditForOwner(ctx context.Context, owner common.Address, viewingPublicKey []byte, decryptor wallet.DeliveryDecryptor, envelope []byte, c credit.DeliveryContext, role credit.Role) (credit.DeliveryState, error) {
+	if owner == (common.Address{}) || decryptor == nil {
 		return credit.DeliveryState{}, errors.New("App delivery decryptor required")
 	}
 	if err := ctx.Err(); err != nil {
@@ -57,7 +69,7 @@ func (w *Wallet) DecryptCreditState(ctx context.Context, decryptor wallet.Delive
 	if role != credit.Owner && role != credit.Spender {
 		return credit.DeliveryState{}, errors.New("invalid Credit role")
 	}
-	c.RecipientIdentity = primitives.BigIntToElement(w.identity.Big())
+	c.RecipientIdentity = primitives.BigIntToElement(owner.Big())
 	plain, err := decryptor.DecryptCredit(ctx, append([]byte(nil), envelope...), c, role)
 	if err := ctx.Err(); err != nil {
 		return credit.DeliveryState{}, err
@@ -75,7 +87,7 @@ func (w *Wallet) DecryptCreditState(ctx context.Context, decryptor wallet.Delive
 	if len(plain)+78 > primitives.MaxCiphertextBytes {
 		return credit.DeliveryState{}, errors.New("plaintext exceeds resource bound")
 	}
-	return credit.DecodeDeliveryPlaintext(append([]byte(nil), plain...), c, role, w.ViewingPublicKey())
+	return credit.DecodeDeliveryPlaintext(append([]byte(nil), plain...), c, role, viewingPublicKey)
 }
 
 // PrepareRequest creates a request for external transport, without executing cryptography.
@@ -83,23 +95,23 @@ func (w *Wallet) PrepareRequest(id string, method wallet.Method, params any) (wa
 	if w == nil {
 		return wallet.Request{}, errors.New("wallet required")
 	}
-	return wallet.Prepare(id, w.identity, method, params)
+	return wallet.Prepare(id, w.ownerAddress, method, params)
 }
 
 // AcceptResponse validates an externally executed request against this public wallet.
 func (w *Wallet) AcceptResponse(q wallet.Request, r wallet.Response) (any, error) {
-	if w == nil || !strings.EqualFold(q.OwnerAddress, w.identity.Hex()) {
+	if w == nil || !strings.EqualFold(q.OwnerAddress, w.ownerAddress.Hex()) {
 		return nil, errors.New("wallet request identity mismatch")
 	}
 	value, err := wallet.Accept(q, r, wallet.Hex(w.ViewingPublicKey()))
 	if err != nil {
 		return nil, err
 	}
-	if q.Method == wallet.Public && len(w.keys.ViewingPublicKey) > 0 {
+	if q.Method == wallet.Public && w.receivingKeys != nil {
 		p := value.(wallet.PublicResult)
 		viewing, _ := wallet.Bytes(p.ViewingPublicKey, 33)
 		clue, _ := wallet.Bytes(p.ClueKey, 32)
-		if !bytes.Equal(viewing, w.keys.ViewingPublicKey) || !bytes.Equal(clue, w.keys.ClueKey) {
+		if !bytes.Equal(viewing, w.receivingKeys.ViewingPublicKey) || !bytes.Equal(clue, w.receivingKeys.ClueKey) {
 			return nil, errors.New("resolved wallet receiving keys mismatch")
 		}
 	}
@@ -119,9 +131,5 @@ func WalletFromResponse(q wallet.Request, r wallet.Response) (*Wallet, error) {
 	viewing, _ := wallet.Bytes(p.ViewingPublicKey, 33)
 	clue, _ := wallet.Bytes(p.ClueKey, 32)
 	owner := common.HexToAddress(q.OwnerAddress)
-	address, err := primitives.EncodeLongAddress(primitives.ReceivingAddress{OwnerAddress: primitives.BigIntToElement(owner.Big()), ViewingPublicKey: viewing, ClueKey: clue})
-	if err != nil {
-		return nil, err
-	}
-	return &Wallet{identity: owner, address: address, keys: primitives.ReceivingKeys{ViewingPublicKey: viewing, ClueKey: clue}}, nil
+	return newPublicWallet(owner, &primitives.ReceivingKeys{ViewingPublicKey: viewing, ClueKey: clue})
 }

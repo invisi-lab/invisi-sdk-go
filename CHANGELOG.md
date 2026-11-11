@@ -1,6 +1,13 @@
 # Changelog
 
-## Unreleased
+## 1.2.2
+
+This release includes all changes since 1.2.0; Go SDK 1.2.1 was skipped.
+
+- Store Wallet public material as owner address plus required receiving keys; encode complete `0i` addresses on demand, reject owner-only Wallets and missing keys, and copy material across constructors and runtime snapshots.
+
+- Follow the latest Protocol and RPC contracts; remove delegated RPC detection and perform native batch detection in managed account scans.
+- Follow signed broadcaster execution quotes, validate quote-bound submission, and relay aggregate members.
 
 - Estimate prepared Note and Credit gas locally from exact measured benchmark shapes before proof; report unavailable shapes explicitly and remove SDK RPC gas simulation.
 

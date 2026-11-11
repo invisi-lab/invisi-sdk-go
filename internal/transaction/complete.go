@@ -14,7 +14,7 @@ func (s *Runtime) PersistPlan(ctx context.Context, plan Plan) (*Execution, error
 	}
 	plan.ID = id
 	plan.Version = 1
-	plan.OwnerAddress = s.Wallet.identity
+	plan.OwnerAddress = s.Wallet.ownerAddress
 	plan.Namespace = s.Scope.Namespace
 	plan, e = ClonePlan(plan)
 	if e != nil {

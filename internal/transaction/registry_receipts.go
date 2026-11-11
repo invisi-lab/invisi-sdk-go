@@ -9,8 +9,8 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 
-	"github.com/invisi-lab/invisi-sdk-go/rpc/contracts"
 	protocolrpc "github.com/invisi-lab/invisi-sdk-go/rpc"
+	"github.com/invisi-lab/invisi-sdk-go/rpc/contracts"
 )
 
 func (o *RegistrationOperation) trackInternal(ctx context.Context, hash common.Hash) (*RegistrationOperation, error) {
@@ -86,7 +86,7 @@ func (o *RegistrationOperation) reconcileInternal(ctx context.Context) (Confirma
 	}
 	if o.direct {
 		sender, err := types.Sender(types.LatestSignerForChainID(o.context.ChainID), transaction)
-		if err != nil || sender != o.wallet.identity {
+		if err != nil || sender != o.wallet.ownerAddress {
 			return result, errors.New("direct registration sender differs from owner")
 		}
 	}

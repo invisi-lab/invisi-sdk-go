@@ -3,14 +3,14 @@
 Go client for the current Invisi Protocol. Requires Go 1.26.1 or newer.
 
 ```sh
-go get github.com/invisi-lab/invisi-sdk-go@v1.2.0
+go get github.com/invisi-lab/invisi-sdk-go@v1.2.2
 ```
 
-Release target: **1.2.0**. Module versions are repository tags; preparing this source does not create `v1.2.0` or publish a release. The `go 1.26.1` directive remains the toolchain requirement. The SDK remains in the v1 series. Source synchronization does not publish a new module version or upgrade deployed contracts.
+Release target: **1.2.2**. Module versions are repository tags; preparing this source does not create `v1.2.2` or publish a release. The `go 1.26.1` directive remains the toolchain requirement. The SDK remains in the v1 series. Source synchronization does not publish a new module version or upgrade deployed contracts.
 
 ## Six independently versioned modules
 
-All six modules target **1.2.0**. Applications normally import the SDK's `sdk` package; backend services can depend only on the pure Protocol module and its Primitives dependency.
+All six modules target **1.2.2**. Applications normally import the SDK's `sdk` package; backend services can depend only on the pure Protocol module and its Primitives dependency.
 
 | Module | Responsibility | Internal dependencies |
 | --- | --- | --- |
@@ -21,7 +21,7 @@ All six modules target **1.2.0**. Applications normally import the SDK's `sdk` p
 | `rpc` | Protocol RPC, Broadcaster and Provenance clients, deployment checks and generated network contract bindings | primitives, protocol |
 | `session` | Note/Credit inventory, reservations, journals, encrypted storage and operation recovery | SDK and its public protocol/prover/client types |
 
-Module paths use `github.com/invisi-lab/invisi-sdk-go/<name>`; the SDK uses the repository-root module path. Nested module release tags are `<name>/v1.2.0`; the root SDK tag is `v1.2.0`. The examples are a separate development module, not a public release package. No `core`, `runtime` or `protocolkit` compatibility module is retained.
+Module paths use `github.com/invisi-lab/invisi-sdk-go/<name>`; the SDK uses the repository-root module path. Nested module release tags are `<name>/v1.2.2`; the root SDK tag is `v1.2.2`. The examples are a separate development module, not a public release package. No `core`, `runtime` or `protocolkit` compatibility module is retained.
 
 Pure ABI/types are in `protocol/contracts`; network-bound geth clients are in `rpc/contracts`. Maintainers regenerate both from the same compiler ABIs with `go generate ./contracts` in the Protocol module. `session/credit` owns managed Credit state. `protocol/gas` owns measured references, while final transaction simulation belongs to the application and deployment/operator pricing remains outside the pure module.
 
@@ -29,7 +29,7 @@ For local multi-module development, use an untracked Go workspace. `GOWORK=off` 
 
 ## Wallets and infrastructure
 
-`sdk.Wallet` stores public identity and receiving material only. Initialize it with `sdk.WalletFromAddress(receivingAddress)`. The App owns account selection, key storage, unlocking, signing and decryption. No native transport or key-holding wallet is installed by the SDK.
+`sdk.Wallet` stores only an owner address and complete receiving keys. `GetAddress()` encodes a complete `0i` address on each call and errors when receiving keys are absent. `WalletFromAddress` accepts only complete `0i` addresses. Use independent EVM owner addresses with `wallet.Prepare` for identity-only requests, and `OwnerAddress()` to read an existing Wallet owner. Construction performs no RPC or registry lookup. Initialize it with `sdk.WalletFromAddress(receivingAddress)`. The App owns account selection, key storage, unlocking, signing and decryption. No native transport or key-holding wallet is installed by the SDK.
 
 Inject `sdk.DeliveryDecryptor` with `DecryptNote(ctx, ciphertext, context)` and `DecryptCredit(ctx, ciphertext, context, role)`. Return plaintext bytes; only `nil, nil` means nonrecipient. Locked accounts, cancellation and other operational failures return errors. Wallet decryption methods validate financial contents against the owner, token, deployment, output commitment and Credit receiving keys. The App authenticates ciphertext, including its AEAD tag; financial commitments do not independently authenticate opaque memo bytes.
 
@@ -184,6 +184,6 @@ The independent [Provenance module](PROVENANCE.md) keeps source recognition sepa
 
 `python3 scripts/test-modules.py` creates a temporary workspace and runs boundary checks, race tests, vet and builds for all six modules plus the private examples. `python3 scripts/check-packages.py` constructs isolated local-proxy archives and tests them without the workspace or sibling checkouts; unpublished versions never enter the global module cache. GitHub CI runs both commands. Native Noir/BB integration tests are opt-in and require explicit local tool paths.
 
-The modules are prepared at 1.2.0; no remote tags are created by these checks. Before standalone consumer builds can resolve the new version from GitHub, publish the required module tags in dependency order and refresh dependency checksums.
+The modules are prepared at 1.2.2; no remote tags are created by these checks. Before standalone consumer builds can resolve the new version from GitHub, publish the required module tags in dependency order and refresh dependency checksums.
 
 Managed `SendTransaction` requires a positive caller-supplied gas limit in the signer or `TransactionOptions.GasLimit`; it never triggers geth automatic gas simulation. Applications choose the submission budget.

@@ -13,9 +13,8 @@ import (
 
 // Wallet contains public identity and receiving material only.
 type Wallet struct {
-	identity common.Address
-	address  string
-	keys     primitives.ReceivingKeys
+	ownerAddress  common.Address
+	receivingKeys *primitives.ReceivingKeys
 }
 type WalletReference interface{ publicWallet() *Wallet }
 
@@ -26,28 +25,32 @@ func WalletFromAddress(address string) (*Wallet, error) {
 	if e != nil {
 		return nil, e
 	}
-	return &Wallet{identity: common.BigToAddress(primitives.ElementToBigInt(d.OwnerAddress)), address: address, keys: primitives.ReceivingKeys{ViewingPublicKey: d.ViewingPublicKey, ClueKey: d.ClueKey}}, nil
+	owner := common.BigToAddress(primitives.ElementToBigInt(d.OwnerAddress))
+	if d.Kind == "short" {
+		return nil, errors.New("complete receiving address required")
+	}
+	return newPublicWallet(owner, &primitives.ReceivingKeys{ViewingPublicKey: d.ViewingPublicKey, ClueKey: d.ClueKey})
 }
 
-func (w *Wallet) OwnerAddress() common.Address { return w.identity }
+func (w *Wallet) OwnerAddress() common.Address { return w.ownerAddress }
 
 func (w *Wallet) GetAddress() (string, error) {
-	if len(w.keys.ViewingPublicKey) != 33 {
+	if w.receivingKeys == nil {
 		return "", errors.New("resolved receiving keys required")
 	}
-	return w.address, nil
+	return primitives.EncodeLongAddress(primitives.ReceivingAddress{OwnerAddress: primitives.BigIntToElement(w.ownerAddress.Big()), ViewingPublicKey: w.receivingKeys.ViewingPublicKey, ClueKey: w.receivingKeys.ClueKey})
 }
 
-func (w *Wallet) String() string { return fmt.Sprintf("Wallet(%s)", w.identity.Hex()) }
+func (w *Wallet) String() string { return fmt.Sprintf("Wallet(%s)", w.ownerAddress.Hex()) }
 
 func (w *Wallet) GoString() string { return w.String() }
 
 func (w *Wallet) MarshalJSON() ([]byte, error) {
-	return []byte(`{"ownerAddress":"` + w.identity.Hex() + `"}`), nil
+	return []byte(`{"ownerAddress":"` + w.ownerAddress.Hex() + `"}`), nil
 }
 
 func (w *Wallet) ExportNullifier() *NullifierCapability {
-	return &NullifierCapability{w.identity}
+	return &NullifierCapability{w.ownerAddress}
 }
 
 type ViewingCapability struct {
@@ -104,10 +107,18 @@ func (v *ViewingCapability) decryptNote(data []byte, context primitives.NoteDecr
 func FieldHash(e fr.Element) common.Hash { return common.Hash(e.Bytes()) }
 
 func (w *Wallet) ViewingPublicKey() []byte {
-	return append([]byte(nil), w.keys.ViewingPublicKey...)
+	if w.receivingKeys == nil {
+		return nil
+	}
+	return append([]byte(nil), w.receivingKeys.ViewingPublicKey...)
 }
 
-func (w *Wallet) ClueKey() []byte { return append([]byte(nil), w.keys.ClueKey...) }
+func (w *Wallet) ClueKey() []byte {
+	if w.receivingKeys == nil {
+		return nil
+	}
+	return append([]byte(nil), w.receivingKeys.ClueKey...)
+}
 
 func (v *ViewingCapability) DecryptNote(envelope []byte, context primitives.NoteDecryptionContext) (primitives.Note, error) {
 	return v.decryptNote(envelope, context)
@@ -118,4 +129,17 @@ func (v *ViewingCapability) DecryptCreditState(envelope []byte, context credit.D
 		return credit.DeliveryState{}, errors.New("viewing capability required")
 	}
 	return credit.Decrypt(v.key, envelope, context, role)
+}
+
+func newPublicWallet(owner common.Address, keys *primitives.ReceivingKeys) (*Wallet, error) {
+	if _, err := primitives.EncodeShortAddress(primitives.BigIntToElement(owner.Big())); err != nil {
+		return nil, err
+	}
+	if keys == nil {
+		return nil, errors.New("complete receiving keys required")
+	}
+	if _, err := primitives.EncodeLongAddress(primitives.ReceivingAddress{OwnerAddress: primitives.BigIntToElement(owner.Big()), ViewingPublicKey: keys.ViewingPublicKey, ClueKey: keys.ClueKey}); err != nil {
+		return nil, err
+	}
+	return &Wallet{ownerAddress: owner, receivingKeys: &primitives.ReceivingKeys{ViewingPublicKey: append([]byte(nil), keys.ViewingPublicKey...), ClueKey: append([]byte(nil), keys.ClueKey...)}}, nil
 }

@@ -10,7 +10,6 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 
-	"github.com/invisi-lab/invisi-sdk-go/primitives"
 	protocolrpc "github.com/invisi-lab/invisi-sdk-go/rpc"
 )
 
@@ -62,8 +61,7 @@ func SnapshotWallet(ref WalletReference) (*Wallet, error) {
 	if p == nil {
 		return nil, &MissingCapabilityError{Capability: "public wallet"}
 	}
-	w := &Wallet{identity: p.identity, address: p.address, keys: primitives.ReceivingKeys{ViewingPublicKey: append([]byte(nil), p.keys.ViewingPublicKey...), ClueKey: append([]byte(nil), p.keys.ClueKey...)}}
-	return w, nil
+	return newPublicWallet(p.ownerAddress, p.receivingKeys)
 }
 func ResolveRuntime(ctx context.Context, infrastructure InvisiOptions, wallet WalletReference, pool *chain.Protocol, namespace string) (*Runtime, error) {
 	if e := ctx.Err(); e != nil {
@@ -79,7 +77,7 @@ func ResolveRuntime(ctx context.Context, infrastructure InvisiOptions, wallet Wa
 	if e = pool.ValidateDeployment(ctx, infrastructure.Provider); e != nil {
 		return nil, e
 	}
-	scope := WalletScope{ChainID: pool.Context().ChainID, ProtocolAddress: pool.Context().ProtocolAddress, OwnerAddress: w.identity, Namespace: namespace}
+	scope := WalletScope{ChainID: pool.Context().ChainID, ProtocolAddress: pool.Context().ProtocolAddress, OwnerAddress: w.ownerAddress, Namespace: namespace}
 	if scope.Namespace == "" {
 		scope.Namespace = "default"
 	}

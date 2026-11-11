@@ -1,6 +1,6 @@
 # Go examples
 
-Each `main.go` is an ordinary Go walkthrough with flat public settings and console output. Create public wallets with `sdk.WalletFromAddress(receivingAddress)`. Account signing uses geth EIP-712 signatures from environment keys, with an explicit required owner/payer address check. `prover/native` handles local proving.
+Each `main.go` is an ordinary Go walkthrough with flat public settings and console output. Create public wallets with `sdk.WalletFromAddress(receivingAddress)`. Wallets require a complete `0i` address with receiving keys; `0x` input is rejected. Use `OwnerAddress()` for owner identity and `GetAddress()` for complete receiving material. Identity-only requests can use `wallet.Prepare(id, ownerAddress, method, params)` directly. Construction performs no registry lookup; standalone receiving-address parsing still supports `0x`. Account signing uses geth EIP-712 signatures from environment keys, with an explicit required owner/payer address check. `prover/native` handles local proving.
 
 Install Barretenberg 6.0.0 and Noir 1.0.0 compatible `noir-execute`. Live commands accept `--chain-rpc`, `--protocol-rpc`, `--wallet-address`, and where applicable `--token` and `--recipient`. Amounts are integer token base units. Deployment and canonical chain checks run before financial preparation.
 

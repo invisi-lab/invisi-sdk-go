@@ -122,8 +122,8 @@ func TestRegistrationRequiresSignatureAndValidatesPreparedMaterial(t *testing.T)
 		t.Fatal(err)
 	}
 	transaction.ReceivingKeySnapshot(session.wallet).ViewingPublicKey = make([]byte, 33)
-	if _, err = registry.PrepareRegistration(ctx, sdk.RegistrationPreparation{Wallet: session.wallet}); err == nil {
-		t.Fatal("invalid viewing key accepted at preparation")
+	if _, err = registry.PrepareRegistration(ctx, sdk.RegistrationPreparation{Wallet: session.wallet}); err != nil {
+		t.Fatal("mutating receiving-key snapshot corrupted wallet", err)
 	}
 }
 

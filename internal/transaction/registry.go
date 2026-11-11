@@ -15,8 +15,8 @@ import (
 
 	"github.com/invisi-lab/invisi-sdk-go/primitives"
 	"github.com/invisi-lab/invisi-sdk-go/protocol"
-	"github.com/invisi-lab/invisi-sdk-go/rpc/contracts"
 	protocolrpc "github.com/invisi-lab/invisi-sdk-go/rpc"
+	"github.com/invisi-lab/invisi-sdk-go/rpc/contracts"
 )
 
 type AddressRegistry struct {
@@ -120,7 +120,7 @@ func (r *AddressRegistry) PrepareRegistration(ctx context.Context, options Regis
 	if e := r.ValidateDeployment(ctx); e != nil {
 		return nil, e
 	}
-	if len(options.Wallet.keys.ViewingPublicKey) != 33 || len(options.Wallet.keys.ClueKey) != 32 {
+	if options.Wallet.receivingKeys == nil || len(options.Wallet.receivingKeys.ViewingPublicKey) != 33 || len(options.Wallet.receivingKeys.ClueKey) != 32 {
 		return nil, errors.New("complete receiving keys required")
 	}
 	head, e := r.provider.HeaderByNumber(ctx, nil)
@@ -144,7 +144,7 @@ func (r *AddressRegistry) PrepareRegistration(ctx context.Context, options Regis
 	if e != nil {
 		return nil, e
 	}
-	identityField := primitives.BigIntToElement(options.Wallet.identity.Big())
+	identityField := primitives.BigIntToElement(options.Wallet.ownerAddress.Big())
 	identity := identityField.Bytes()
 	opts := &bind.CallOpts{Context: ctx, BlockNumber: head.Number}
 	registered, e := caller.IsRegistered(opts, identity)
@@ -162,8 +162,8 @@ func (r *AddressRegistry) PrepareRegistration(ctx context.Context, options Regis
 		return nil, e
 	}
 	var clue [32]byte
-	copy(clue[:], options.Wallet.keys.ClueKey)
-	registration := protocol.AddressRegistration{OwnerAddress: identity, Keys: contracts.IAddressRegistryReceivingKeys{ViewingPublicKey: append([]byte(nil), options.Wallet.keys.ViewingPublicKey...), ClueKey: clue}, Nonce: nonce, Deadline: deadline}
+	copy(clue[:], options.Wallet.receivingKeys.ClueKey)
+	registration := protocol.AddressRegistration{OwnerAddress: identity, Keys: contracts.IAddressRegistryReceivingKeys{ViewingPublicKey: append([]byte(nil), options.Wallet.receivingKeys.ViewingPublicKey...), ClueKey: clue}, Nonce: nonce, Deadline: deadline}
 	context := r.context
 	context.Now = new(big.Int).SetUint64(head.Time)
 	if _, e = protocol.RegistrationTypedData(context, registration, protocol.RegistrationOptions{Update: options.Update}); e != nil {
@@ -214,11 +214,11 @@ func (o *RegistrationOperation) withSignatureInternal(ctx context.Context, suppl
 		if err != nil {
 			return nil, err
 		}
-		if owner, valid := RecoverTypedDataSigner(digest, signature); valid && owner == o.wallet.identity {
+		if owner, valid := RecoverTypedDataSigner(digest, signature); valid && owner == o.wallet.ownerAddress {
 			signature[64] += 27
 		}
 	}
-	valid, err := VerifyTypedData(ctx, o.registry.provider, o.wallet.identity, data, signature, "registration")
+	valid, err := VerifyTypedData(ctx, o.registry.provider, o.wallet.ownerAddress, data, signature, "registration")
 	if err != nil {
 		return nil, err
 	}
