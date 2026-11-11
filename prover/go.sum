@@ -34,6 +34,8 @@ github.com/holiman/uint256 v1.3.2 h1:a9EgMPSC1AAaj1SZL5zIQD3WbwTuHrMGOerLjGmM/TA
 github.com/holiman/uint256 v1.3.2/go.mod h1:EOMSn4q6Nyt9P6efbI3bueV4e1b3dGlUCXeiRV4ng7E=
 github.com/invisi-lab/invisi-sdk-go/primitives v1.2.0 h1:zaBN/IUE0rINZ3XUZVPRLNHJKzZRfF9/4pFONkZ6NPA=
 github.com/invisi-lab/invisi-sdk-go/primitives v1.2.0/go.mod h1:ZaBkRXJwSNDfKZxvMYA+e57cJGLqNlgo1auHXlfQfTw=
+github.com/invisi-lab/invisi-sdk-go/primitives v1.2.2 h1:6xZjl7NyhgzV1/55a2wE80fNHw6zU/jpXB5pZhbW4LY=
+github.com/invisi-lab/invisi-sdk-go/primitives v1.2.2/go.mod h1:ZaBkRXJwSNDfKZxvMYA+e57cJGLqNlgo1auHXlfQfTw=
 github.com/invisi-lab/invisi-sdk-go/protocol v1.2.0 h1:/2XuZwxqGNtHheSZQvbO2MSBrjRhxZYq58HeA1j3KF0=
 github.com/invisi-lab/invisi-sdk-go/protocol v1.2.0/go.mod h1:X7jej0D64dYfQKdF3ygHB1lBQ+mofaXWbhJy0EU/RiQ=
 github.com/klauspost/cpuid/v2 v2.0.9 h1:lgaqFMSdTdQYdZ04uHyN2d/eKdOMyi2YLSvlQIBFYa4=

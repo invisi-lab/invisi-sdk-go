@@ -112,6 +112,8 @@ github.com/influxdata/line-protocol v0.0.0-20200327222509-2487e7298839 h1:W9WBk7
 github.com/influxdata/line-protocol v0.0.0-20200327222509-2487e7298839/go.mod h1:xaLFMmpvUxqXtVkUJfg9QmT88cDaCJ3ZKgdZ78oO8Qo=
 github.com/invisi-lab/invisi-sdk-go/primitives v1.2.0 h1:zaBN/IUE0rINZ3XUZVPRLNHJKzZRfF9/4pFONkZ6NPA=
 github.com/invisi-lab/invisi-sdk-go/primitives v1.2.0/go.mod h1:ZaBkRXJwSNDfKZxvMYA+e57cJGLqNlgo1auHXlfQfTw=
+github.com/invisi-lab/invisi-sdk-go/primitives v1.2.2 h1:6xZjl7NyhgzV1/55a2wE80fNHw6zU/jpXB5pZhbW4LY=
+github.com/invisi-lab/invisi-sdk-go/primitives v1.2.2/go.mod h1:ZaBkRXJwSNDfKZxvMYA+e57cJGLqNlgo1auHXlfQfTw=
 github.com/invisi-lab/invisi-sdk-go/protocol v1.2.0 h1:/2XuZwxqGNtHheSZQvbO2MSBrjRhxZYq58HeA1j3KF0=
 github.com/invisi-lab/invisi-sdk-go/protocol v1.2.0/go.mod h1:X7jej0D64dYfQKdF3ygHB1lBQ+mofaXWbhJy0EU/RiQ=
 github.com/jackpal/go-nat-pmp v1.0.2 h1:KzKSgb7qkJvOUTqYl9/Hg/me3pWgBmERKrTGD7BdWus=
