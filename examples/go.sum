@@ -116,6 +116,8 @@ github.com/influxdata/influxdb1-client v0.0.0-20220302092344-a9ab5670611c h1:qSH
 github.com/influxdata/influxdb1-client v0.0.0-20220302092344-a9ab5670611c/go.mod h1:qj24IKcXYK6Iy9ceXlo3Tc+vtHo9lIhSX5JddghvEPo=
 github.com/influxdata/line-protocol v0.0.0-20200327222509-2487e7298839 h1:W9WBk7wlPfJLvMCdtV4zPulc4uCPrlywQOmbFOhgQNU=
 github.com/influxdata/line-protocol v0.0.0-20200327222509-2487e7298839/go.mod h1:xaLFMmpvUxqXtVkUJfg9QmT88cDaCJ3ZKgdZ78oO8Qo=
+github.com/invisi-lab/invisi-sdk-go v1.2.2 h1:iN+XahcLG/Kx1in64PL6oXrDNiytsf3GhboMDWbmOFw=
+github.com/invisi-lab/invisi-sdk-go v1.2.2/go.mod h1:HiiG3uxGJmE2Jx5zN7yk68kyM7c1kQRhBUAyQJihGL4=
 github.com/invisi-lab/invisi-sdk-go/primitives v1.2.2 h1:6xZjl7NyhgzV1/55a2wE80fNHw6zU/jpXB5pZhbW4LY=
 github.com/invisi-lab/invisi-sdk-go/primitives v1.2.2/go.mod h1:ZaBkRXJwSNDfKZxvMYA+e57cJGLqNlgo1auHXlfQfTw=
 github.com/invisi-lab/invisi-sdk-go/protocol v1.2.2 h1:MVvaIYVlf4zTKJa8PuMyBHYiKbkXbt8ZN/U6bEZpce4=
