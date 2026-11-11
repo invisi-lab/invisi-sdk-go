@@ -116,6 +116,8 @@ github.com/invisi-lab/invisi-sdk-go/primitives v1.2.2 h1:6xZjl7NyhgzV1/55a2wE80f
 github.com/invisi-lab/invisi-sdk-go/primitives v1.2.2/go.mod h1:ZaBkRXJwSNDfKZxvMYA+e57cJGLqNlgo1auHXlfQfTw=
 github.com/invisi-lab/invisi-sdk-go/protocol v1.2.0 h1:/2XuZwxqGNtHheSZQvbO2MSBrjRhxZYq58HeA1j3KF0=
 github.com/invisi-lab/invisi-sdk-go/protocol v1.2.0/go.mod h1:X7jej0D64dYfQKdF3ygHB1lBQ+mofaXWbhJy0EU/RiQ=
+github.com/invisi-lab/invisi-sdk-go/protocol v1.2.2 h1:MVvaIYVlf4zTKJa8PuMyBHYiKbkXbt8ZN/U6bEZpce4=
+github.com/invisi-lab/invisi-sdk-go/protocol v1.2.2/go.mod h1:8P34UkiV/ZH0vmcQe2YJiZWB9rACi6BeXAcH6XzjcoI=
 github.com/invisi-lab/invisi-sdk-go/prover v1.2.0 h1:oH5cfSxxlIwwHuyVJ3HlGct2ktaJaSTY2zwalxsv3BM=
 github.com/invisi-lab/invisi-sdk-go/prover v1.2.0/go.mod h1:YfwmeJxLAUeTfuVU9/WE+d6z7LxJcdtUmhw7HUQsvkg=
 github.com/invisi-lab/invisi-sdk-go/rpc v1.2.0 h1:Cj8jAQOhp4ZSWo7vaIMIWb+74A5wltZpYdiDgC8fu7Q=
