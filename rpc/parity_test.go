@@ -27,7 +27,7 @@ func TestMaxUpdateBlocksExactBoundaryAndEmptyPage(t *testing.T) {
 		json.NewDecoder(r.Body).Decode(&req)
 		var result any
 		if req.Method == "invisi_getStatus" {
-			result = map[string]any{"apiVersion": "v1", "protocolVersion": "1", "deployment": deployment, "indexedHead": block, "checkedBits": 8, "detectionEnabled": true}
+			result = map[string]any{"apiVersion": "v1", "protocolVersion": "1", "deployment": deployment, "indexedHead": block}
 		} else {
 			result = map[string]any{"blockHash": block.Hash, "notes": []any{}, "creditTransitions": []any{}}
 		}
@@ -103,7 +103,7 @@ func TestUpdateReadersRejectStaleIndexedHead(t *testing.T) {
 					json.NewDecoder(r.Body).Decode(&req)
 					var result any
 					if req.Method == "invisi_getStatus" {
-						result = map[string]any{"apiVersion": "v1", "protocolVersion": "1", "deployment": deployment, "indexedHead": stale, "checkedBits": 8, "detectionEnabled": true}
+						result = map[string]any{"apiVersion": "v1", "protocolVersion": "1", "deployment": deployment, "indexedHead": stale}
 					} else {
 						updateCalls++
 						result = map[string]any{"blockHash": block.Hash, "notes": []any{}, "creditTransitions": []any{}}

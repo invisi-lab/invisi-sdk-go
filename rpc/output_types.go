@@ -32,10 +32,6 @@ type IndexedCreditState struct {
 	LogIndex        uint32
 	Kind            string
 }
-type ProtocolCreditCandidates struct {
-	Block  CanonicalBlock
-	States []IndexedCreditState
-}
 type ProtocolCreditUpdates struct {
 	Block       CanonicalBlock
 	Transitions []ProtocolCreditTransition

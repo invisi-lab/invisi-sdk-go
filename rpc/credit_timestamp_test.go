@@ -30,7 +30,7 @@ func TestUpdatesAuthenticateTransitionBlockTimestamp(t *testing.T) {
 		}
 		var result any
 		if request.Method == "invisi_getStatus" {
-			result = map[string]any{"apiVersion": "v1", "protocolVersion": "1", "deployment": deployment, "indexedHead": block, "checkedBits": 8, "detectionEnabled": true}
+			result = map[string]any{"apiVersion": "v1", "protocolVersion": "1", "deployment": deployment, "indexedHead": block}
 		} else {
 			claimed := block
 			if corrupt.Load() {

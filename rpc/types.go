@@ -60,13 +60,10 @@ type ChainProvider interface {
 	CallContract(context.Context, ethereum.CallMsg, *big.Int) ([]byte, error)
 }
 type ProtocolDataStatus struct {
-	IndexedHead      *CanonicalBlock
-	DetectionEnabled bool
-	CheckedBits      int
+	IndexedHead *CanonicalBlock
 }
 type ProtocolUpdateRange struct {
 	FromBlock, ToBlock uint64
-	DetectionKey       []byte
 }
 type TransactionReference struct {
 	TransactionHash common.Hash    `json:"transactionHash"`

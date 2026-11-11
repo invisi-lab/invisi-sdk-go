@@ -41,7 +41,7 @@ func TestGetNote(t *testing.T) {
 		var result any
 		switch req.Method {
 		case "invisi_getStatus":
-			result = map[string]any{"apiVersion": "v1", "protocolVersion": "1", "deployment": dep, "indexedHead": block, "checkedBits": 8, "detectionEnabled": true}
+			result = map[string]any{"apiVersion": "v1", "protocolVersion": "1", "deployment": dep, "indexedHead": block}
 		case "invisi_getRoots":
 			result = []rootAnchor{anchor}
 		case "invisi_getMembership":
@@ -109,7 +109,7 @@ func TestGetCreditState(t *testing.T) {
 		var result any
 		switch req.Method {
 		case "invisi_getStatus":
-			result = map[string]any{"apiVersion": "v1", "protocolVersion": "1", "deployment": dep, "indexedHead": block, "checkedBits": 8, "detectionEnabled": true}
+			result = map[string]any{"apiVersion": "v1", "protocolVersion": "1", "deployment": dep, "indexedHead": block}
 		case "invisi_getRoots":
 			result = []rootAnchor{anchor}
 		case "invisi_getMembership":

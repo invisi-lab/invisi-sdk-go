@@ -14,7 +14,7 @@ import (
 
 func TestIndependentBusinessMethodSurface(t *testing.T) {
 	typ := reflect.TypeOf((*ProtocolRpcClient)(nil))
-	for _, name := range []string{"GetNoteUpdates", "GetCreditTransitions", "DetectNotes", "DetectCreditStates", "GetTransactionNoteUpdates", "GetTransactionCreditUpdates", "GetNote", "GetCreditState", "IsNoteSpent", "IsCreditConsumed", "GetCreditAllocation", "GetCreditRevocationBitmap"} {
+	for _, name := range []string{"GetNoteUpdates", "GetCreditTransitions", "GetTransactionNoteUpdates", "GetTransactionCreditUpdates", "GetNote", "GetCreditState", "IsNoteSpent", "IsCreditConsumed", "GetCreditAllocation", "GetCreditRevocationBitmap"} {
 		if _, ok := typ.MethodByName(name); !ok {
 			t.Errorf("missing typed method %s", name)
 		}
@@ -40,7 +40,7 @@ func TestGrantQueriesPreserveUint64ShardAndUint256Bitmap(t *testing.T) {
 		var result any
 		switch req.Method {
 		case "invisi_getStatus":
-			result = map[string]any{"apiVersion": "v1", "protocolVersion": "1", "deployment": dep, "indexedHead": block, "checkedBits": 8, "detectionEnabled": true}
+			result = map[string]any{"apiVersion": "v1", "protocolVersion": "1", "deployment": dep, "indexedHead": block}
 		case "invisi_getCreditAllocation":
 			result = map[string]any{"block": block, "shard": "18446744073709551615", "slot": 65535}
 		case "invisi_getCreditRevocationBitmap":
@@ -120,5 +120,14 @@ func TestCreditTransactionAvailabilityAndInvalidTransitions(t *testing.T) {
 				t.Fatal("non-Credit transition accepted")
 			}
 		})
+	}
+}
+
+func TestRemoteDetectionMethodsAreAbsent(t *testing.T) {
+	typ := reflect.TypeOf(&ProtocolRpcClient{})
+	for _, name := range []string{"DetectNotes", "DetectCreditStates"} {
+		if _, ok := typ.MethodByName(name); ok {
+			t.Fatalf("remote method remains: %s", name)
+		}
 	}
 }

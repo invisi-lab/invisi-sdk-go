@@ -35,7 +35,7 @@ func repeatZero(n int) string {
 	return s
 }
 
-func TestCreditCandidatesAuthenticateAndRetainRoleEnvelopes(t *testing.T) {
+func TestPublicCreditStatesAuthenticateAndRetainRoleEnvelopes(t *testing.T) {
 	provider := testProvider{&types.Header{Number: big.NewInt(10), Time: 123}}
 	block := CanonicalBlock{10, provider.header.Hash(), provider.header.ParentHash, 123}
 	dep := ProtocolDeployment{ChainID: "31337", Protocol: ContractDeployment{common.HexToAddress("11"), crypto.Keccak256Hash([]byte{1}), 1}}
@@ -43,7 +43,7 @@ func TestCreditCandidatesAuthenticateAndRetainRoleEnvelopes(t *testing.T) {
 		return map[string]any{"block": block, "treeId": 1, "leafIndex": 0, "commitment": common.HexToHash("3"), "token": common.HexToAddress("22"), "transactionHash": common.HexToHash("4"), "logIndex": 0, "kind": "CreditCreated", "deliveries": []any{map[string]any{"ciphertext": "0x81", "clue": "0x" + repeatZero(68)}, map[string]any{"ciphertext": "0x8101", "clue": "0x" + repeatZero(68)}}}
 	}
 	raw := state()
-	rows := []any{map[string]any{"state": raw, "fallback": false}, map[string]any{"state": raw, "fallback": false}}
+	rows := []any{raw, raw}
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		var req struct {
 			ID     uint64
@@ -52,9 +52,9 @@ func TestCreditCandidatesAuthenticateAndRetainRoleEnvelopes(t *testing.T) {
 		json.NewDecoder(r.Body).Decode(&req)
 		var result any
 		if req.Method == "invisi_getStatus" {
-			result = map[string]any{"apiVersion": "v1", "protocolVersion": "1", "deployment": dep, "indexedHead": block, "checkedBits": 8, "detectionEnabled": true}
-		} else if req.Method == "invisi_detectCreditStates" {
-			result = map[string]any{"blockHash": block.Hash, "checkedBits": 8, "candidates": rows}
+			result = map[string]any{"apiVersion": "v1", "protocolVersion": "1", "deployment": dep, "indexedHead": block}
+		} else if req.Method == "invisi_getTransactionCreditUpdates" {
+			result = map[string]any{"transactionHash": common.HexToHash("4"), "status": "indexed", "indexedHead": block, "blockNumber": block.Number, "blockHash": block.Hash, "receiptStatus": 1, "states": rows, "transitions": []any{}}
 		} else {
 			t.Error("unexpected method", req.Method)
 		}
@@ -64,25 +64,25 @@ func TestCreditCandidatesAuthenticateAndRetainRoleEnvelopes(t *testing.T) {
 	c, _ := NewProtocolRpcClient(server.URL+"/v1", ClientOptions{Deployment: &dep})
 	c = c.WithProvider(provider)
 	scope := DeploymentContext{31337, dep.Protocol.Address}
-	r := ProtocolUpdateRange{FromBlock: 10, ToBlock: 10, DetectionKey: append([]byte{1}, make([]byte, 31)...)}
-	page, e := c.DetectCreditStates(context.Background(), scope, r)
+	tx := common.HexToHash("4")
+	page, e := c.GetTransactionCreditUpdates(context.Background(), scope, tx)
 	if e != nil || len(page.States) != 1 || len(page.States[0].Deliveries) != 2 {
 		t.Fatal(page, e)
 	}
 	page.States[0].Deliveries[0].Ciphertext[0] = 0
-	next, e := c.DetectCreditStates(context.Background(), scope, r)
+	next, e := c.GetTransactionCreditUpdates(context.Background(), scope, tx)
 	if e != nil || next.States[0].Deliveries[0].Ciphertext[0] != 129 {
 		t.Fatal("mutable state boundary", e)
 	}
 	other := state()
 	other["token"] = common.HexToAddress("33")
-	rows = append(rows, map[string]any{"state": other, "fallback": false})
-	if _, e = c.DetectCreditStates(context.Background(), scope, r); e == nil {
+	rows = append(rows, other)
+	if _, e = c.GetTransactionCreditUpdates(context.Background(), scope, tx); e == nil {
 		t.Fatal("conflicting state accepted")
 	}
-	rows = []any{map[string]any{"state": state(), "fallback": false}}
-	rows[0].(map[string]any)["state"].(map[string]any)["deliveries"] = []any{}
-	if _, e = c.DetectCreditStates(context.Background(), scope, r); e == nil {
+	rows = []any{state()}
+	rows[0].(map[string]any)["deliveries"] = []any{}
+	if _, e = c.GetTransactionCreditUpdates(context.Background(), scope, tx); e == nil {
 		t.Fatal("missing role envelopes accepted")
 	}
 }

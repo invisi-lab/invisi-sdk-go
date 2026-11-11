@@ -123,7 +123,7 @@ Use `walletSession.CreditReconciler(confirmations)` to bind the actual transacti
 
 ## Typed Protocol RPC and receiving
 
-Note methods are `GetNote`, `GetNoteUpdates`, `GetTransactionNoteUpdates`, `DetectNotes` and `IsNoteSpent`. Credit methods are `GetCreditState`, `GetCreditTransitions`, `GetTransactionCreditUpdates`, `DetectCreditStates`, `IsCreditConsumed`, `GetCreditAllocation` and `GetCreditRevocationBitmap`.
+Note methods are `GetNote`, `GetNoteUpdates`, `GetTransactionNoteUpdates` and `IsNoteSpent`. Credit methods are `GetCreditState`, `GetCreditTransitions`, `GetTransactionCreditUpdates`, `IsCreditConsumed`, `GetCreditAllocation` and `GetCreditRevocationBitmap`.
 
 One indexed CreditState is one physical leaf with two opaque role deliveries. Credit records never pass through the Note APIs. Public grant references/bitmap are distinct from private spender, terms and usage. Index availability (`not_found`, `pending_index`, `indexed`) is separate from chain receipt success/reversion.
 

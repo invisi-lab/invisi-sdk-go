@@ -89,7 +89,7 @@ func TestTwoAccountsReuseDownloadedCanonicalReceiptAndPositions(t *testing.T) {
 		var result any
 		switch request.Method {
 		case "invisi_getStatus":
-			result = map[string]any{"apiVersion": "v1", "protocolVersion": "1", "deployment": deployment, "indexedHead": p.Block, "checkedBits": 8, "detectionEnabled": true}
+			result = map[string]any{"apiVersion": "v1", "protocolVersion": "1", "deployment": deployment, "indexedHead": p.Block}
 		case "invisi_getNoteUpdates":
 			updateCalls.Add(1)
 			result = map[string]any{"blockHash": p.Block.Hash, "notes": []any{map[string]any{"block": p.Block, "treeId": 1, "leafIndex": 0, "commitment": n.Commitment, "token": o.Token, "ciphertext": wallet.Hex(o.Ciphertext), "clue": wallet.Hex(o.Clue), "transactionHash": tx.Receipt.TxHash, "logIndex": 0, "kind": "BatchOutputs"}}}

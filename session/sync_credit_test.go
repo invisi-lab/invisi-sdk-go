@@ -252,7 +252,7 @@ func TestRefreshKeepsAuthenticatedChildPayloadAndDropsUnknownRecoveredPayload(t 
 				var result any
 				switch request.Method {
 				case "invisi_getStatus":
-					result = map[string]any{"apiVersion": "v1", "protocolVersion": "1", "deployment": dep, "indexedHead": block, "checkedBits": 8, "detectionEnabled": true}
+					result = map[string]any{"apiVersion": "v1", "protocolVersion": "1", "deployment": dep, "indexedHead": block}
 				case "invisi_getNoteUpdates":
 					result = map[string]any{"blockHash": block.Hash, "notes": []any{}}
 				case "invisi_getCreditTransitions":

@@ -57,7 +57,7 @@ func sharedEmptyFixture(t *testing.T) (*WalletSession, *atomic.Int32) {
 		switch request.Method {
 		case "invisi_getStatus":
 			h := headers[10]
-			result = map[string]any{"apiVersion": "v1", "protocolVersion": "1", "deployment": deployment, "indexedHead": protocolrpc.CanonicalBlock{Number: 10, Hash: h.Hash(), ParentHash: h.ParentHash, Timestamp: h.Time}, "checkedBits": 8, "detectionEnabled": true}
+			result = map[string]any{"apiVersion": "v1", "protocolVersion": "1", "deployment": deployment, "indexedHead": protocolrpc.CanonicalBlock{Number: 10, Hash: h.Hash(), ParentHash: h.ParentHash, Timestamp: h.Time}}
 		case "invisi_getNoteUpdates":
 			calls.Add(1)
 			var q struct{ ToBlock uint64 }

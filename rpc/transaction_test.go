@@ -36,7 +36,7 @@ func transactionClient(t *testing.T, mutate func(map[string]any), stale bool) (*
 		var result any
 		switch req.Method {
 		case "invisi_getStatus":
-			result = map[string]any{"apiVersion": "v1", "protocolVersion": "1", "deployment": deployment, "indexedHead": head, "checkedBits": 8, "detectionEnabled": true}
+			result = map[string]any{"apiVersion": "v1", "protocolVersion": "1", "deployment": deployment, "indexedHead": head}
 		case "invisi_getTransactionNoteUpdates", "invisi_getTransactionCreditUpdates":
 			if len(req.Params) != 1 || string(req.Params[0]) != `"`+hash.Hex()+`"` {
 				t.Errorf("wrong transaction parameters: %s", req.Params)

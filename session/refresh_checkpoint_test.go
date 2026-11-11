@@ -51,7 +51,7 @@ func refreshFixture(t *testing.T, failSecond bool, entered, release chan struct{
 		var result any
 		switch request.Method {
 		case "invisi_getStatus":
-			result = map[string]any{"apiVersion": "v1", "protocolVersion": "1", "deployment": deployment, "indexedHead": block, "checkedBits": 8, "detectionEnabled": true}
+			result = map[string]any{"apiVersion": "v1", "protocolVersion": "1", "deployment": deployment, "indexedHead": block}
 		case "invisi_getNoteUpdates":
 			count := calls.Add(1)
 			if entered != nil && count == 1 {

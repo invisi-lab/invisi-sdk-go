@@ -127,7 +127,7 @@ func newNoteFixture(t *testing.T) *noteFixture {
 		case "invisi_getDeployment":
 			result = map[string]any{"apiVersion": "v1", "protocolVersion": "1", "deployment": dep}
 		case "invisi_getStatus":
-			result = map[string]any{"apiVersion": "v1", "protocolVersion": "1", "deployment": dep, "indexedHead": block, "checkedBits": 8, "detectionEnabled": true}
+			result = map[string]any{"apiVersion": "v1", "protocolVersion": "1", "deployment": dep, "indexedHead": block}
 		case "invisi_getRoots":
 			result = []any{anchor}
 		case "invisi_getMembership":

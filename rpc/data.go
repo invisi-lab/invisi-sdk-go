@@ -63,15 +63,13 @@ func (c *ProtocolRpcClient) readStatus(ctx context.Context, context DeploymentCo
 		APIVersion, ProtocolVersion string
 		Deployment                  ProtocolDeployment
 		IndexedHead                 *CanonicalBlock
-		DetectionEnabled            *bool
-		CheckedBits                 int
 	}
 	if e = c.call(ctx, context.ChainID, "invisi_getStatus", []any{}, &response); e != nil {
 		return ProtocolDataStatus{}, e
 	}
 	a, _ := json.Marshal(d)
 	b, _ := json.Marshal(response.Deployment)
-	if response.APIVersion != "v1" || response.ProtocolVersion != "1" || string(a) != string(b) || response.CheckedBits < 1 || response.CheckedBits > 24 || response.DetectionEnabled == nil {
+	if response.APIVersion != "v1" || response.ProtocolVersion != "1" || string(a) != string(b) {
 		return ProtocolDataStatus{}, errors.New("invalid indexed status")
 	}
 	if response.IndexedHead != nil && (response.IndexedHead.Number < d.Protocol.FromBlock || response.IndexedHead.Number > 1<<53-1 || response.IndexedHead.Timestamp > 1<<53-1) {
@@ -87,7 +85,7 @@ func (c *ProtocolRpcClient) readStatus(ctx context.Context, context DeploymentCo
 		}
 		response.IndexedHead = &canonical
 	}
-	return ProtocolDataStatus{response.IndexedHead, *response.DetectionEnabled, response.CheckedBits}, nil
+	return ProtocolDataStatus{IndexedHead: response.IndexedHead}, nil
 }
 func (c *ProtocolRpcClient) knownRoot(ctx context.Context, context DeploymentContext, tree uint64, root common.Hash, block CanonicalBlock) (bool, error) {
 	data := append([]byte{}, crypto.Keccak256([]byte("rootHistory(uint256,bytes32)"))[:4]...)

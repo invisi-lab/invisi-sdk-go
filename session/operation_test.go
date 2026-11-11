@@ -151,7 +151,7 @@ func testSession(t *testing.T, timestamps ...uint64) (*WalletSession, common.Add
 		case "invisi_getDeployment":
 			result = map[string]any{"apiVersion": "v1", "protocolVersion": "1", "deployment": deployment}
 		case "invisi_getStatus":
-			result = map[string]any{"apiVersion": "v1", "protocolVersion": "1", "deployment": deployment, "indexedHead": block, "checkedBits": 8, "detectionEnabled": true}
+			result = map[string]any{"apiVersion": "v1", "protocolVersion": "1", "deployment": deployment, "indexedHead": block}
 		case "invisi_getRoots", "invisi_getMembership":
 			var tree uint64
 			if e := json.Unmarshal(request.Params[0], &tree); e != nil {
