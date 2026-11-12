@@ -36,10 +36,14 @@ github.com/invisi-lab/invisi-sdk-go/primitives v1.2.0 h1:zaBN/IUE0rINZ3XUZVPRLNH
 github.com/invisi-lab/invisi-sdk-go/primitives v1.2.0/go.mod h1:ZaBkRXJwSNDfKZxvMYA+e57cJGLqNlgo1auHXlfQfTw=
 github.com/invisi-lab/invisi-sdk-go/primitives v1.2.2 h1:6xZjl7NyhgzV1/55a2wE80fNHw6zU/jpXB5pZhbW4LY=
 github.com/invisi-lab/invisi-sdk-go/primitives v1.2.2/go.mod h1:ZaBkRXJwSNDfKZxvMYA+e57cJGLqNlgo1auHXlfQfTw=
+github.com/invisi-lab/invisi-sdk-go/primitives v1.2.3 h1:gLReXHkgniriUUKcv66QQHSKaNLl89i2V/xW2ssp7Uw=
+github.com/invisi-lab/invisi-sdk-go/primitives v1.2.3/go.mod h1:ZaBkRXJwSNDfKZxvMYA+e57cJGLqNlgo1auHXlfQfTw=
 github.com/invisi-lab/invisi-sdk-go/protocol v1.2.0 h1:/2XuZwxqGNtHheSZQvbO2MSBrjRhxZYq58HeA1j3KF0=
 github.com/invisi-lab/invisi-sdk-go/protocol v1.2.0/go.mod h1:X7jej0D64dYfQKdF3ygHB1lBQ+mofaXWbhJy0EU/RiQ=
 github.com/invisi-lab/invisi-sdk-go/protocol v1.2.2 h1:MVvaIYVlf4zTKJa8PuMyBHYiKbkXbt8ZN/U6bEZpce4=
 github.com/invisi-lab/invisi-sdk-go/protocol v1.2.2/go.mod h1:8P34UkiV/ZH0vmcQe2YJiZWB9rACi6BeXAcH6XzjcoI=
+github.com/invisi-lab/invisi-sdk-go/protocol v1.2.3 h1:jI3wqeZBTsREVYadJOHzJDeVfeB4bsJDRvlf6m54Shg=
+github.com/invisi-lab/invisi-sdk-go/protocol v1.2.3/go.mod h1:eFh1DUTTaaVvwhuolhCg+owX2GfL76Hz5CRde/Hsxpc=
 github.com/klauspost/cpuid/v2 v2.0.9 h1:lgaqFMSdTdQYdZ04uHyN2d/eKdOMyi2YLSvlQIBFYa4=
 github.com/klauspost/cpuid/v2 v2.0.9/go.mod h1:FInQzS24/EEf25PyTYn52gqo7WaD8xa0213Md/qVLRg=
 github.com/kylelemons/godebug v1.1.0 h1:RPNrshWIDI6G2gRW9EHilWtl7Z6Sb1BR0xunSBf0SNc=
