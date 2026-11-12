@@ -24,7 +24,7 @@ func TestIndependentBusinessMethodSurface(t *testing.T) {
 
 func TestGrantQueriesPreserveUint64ShardAndUint256Bitmap(t *testing.T) {
 	provider := testProvider{&types.Header{Number: big.NewInt(10), Time: 123}}
-	block := CanonicalBlock{10, provider.header.Hash(), provider.header.ParentHash, 123}
+	block := CanonicalBlock{Number: 10, Hash: provider.header.Hash(), ParentHash: provider.header.ParentHash, Timestamp: 123}
 	dep := ProtocolDeployment{ChainID: "31337", Protocol: ContractDeployment{common.HexToAddress("11"), crypto.Keccak256Hash([]byte{1}), 1}}
 	owner, token := common.HexToAddress("22"), common.HexToAddress("33")
 	bad := false

@@ -28,12 +28,24 @@ type noteProvider struct {
 	spentReads                      int
 	spentAt                         uint64
 	badCode                         bool
+	nativeErr                       error
+	nativeReads                     []int64
+	nativeFailAfter                 int
 }
 
 func (p *noteProvider) ChainID(context.Context) (*big.Int, error) { return big.NewInt(97), nil }
 func (p *noteProvider) HeaderByNumber(_ context.Context, n *big.Int) (*types.Header, error) {
+	if n != nil && n.Sign() < 0 {
+		p.nativeReads = append(p.nativeReads, n.Int64())
+		if p.nativeFailAfter > 0 && len(p.nativeReads) > p.nativeFailAfter {
+			return nil, protocolrpc.ErrFinalityUnsupported
+		}
+		if p.nativeErr != nil {
+			return nil, p.nativeErr
+		}
+	}
 	number := p.latest
-	if n != nil {
+	if n != nil && n.Sign() >= 0 {
 		number = n.Uint64()
 	}
 	if h := p.headers[number]; h != nil {
@@ -235,8 +247,8 @@ func TestPaymentNoteVerificationFailureAndCurrentState(t *testing.T) {
 	if _, e = f.note.VerifySpendable(ctx, f.pool, f.wallet); e == nil {
 		t.Fatal("expired current root accepted")
 	}
-	if _, e = f.note.Verify(ctx, f.pool, PaymentNoteVerificationOptions{Confirmations: 100}); e == nil {
-		t.Fatal("insufficient confirmations accepted")
+	if _, e = f.note.Verify(ctx, f.pool, PaymentNoteVerificationOptions{Finality: "invalid"}); e == nil {
+		t.Fatal("invalid finality accepted")
 	}
 	manual, e := chain.NewProtocol(f.pool.Deployment())
 	if e != nil {
@@ -251,5 +263,28 @@ func TestPaymentNoteVerificationFailureAndCurrentState(t *testing.T) {
 	f.provider.headers[10].Extra = []byte{1}
 	if _, e = f.note.Verify(ctx, f.pool); e == nil {
 		t.Fatal("reorganized origin accepted")
+	}
+}
+
+func TestPaymentNoteDefaultRequiresNativeFinalized(t *testing.T) {
+	f := newNoteFixture(t)
+	f.provider.nativeErr = protocolrpc.ErrFinalityUnsupported
+	if _, err := f.note.Verify(context.Background(), f.pool); err == nil {
+		t.Fatal("unsupported native finalized silently fell back")
+	}
+	if len(f.provider.nativeReads) == 0 || f.provider.nativeReads[0] != -3 {
+		t.Fatal("default did not sample finalized first", f.provider.nativeReads)
+	}
+	f.provider.nativeErr = nil
+	if _, err := f.note.Verify(context.Background(), f.pool); err != nil {
+		t.Fatal("transient native failure became permanent", err)
+	}
+}
+
+func TestPaymentNoteRechecksNativeFinalityBeforeReturningEvidence(t *testing.T) {
+	f := newNoteFixture(t)
+	f.provider.nativeFailAfter = 2
+	if _, err := f.note.Verify(context.Background(), f.pool); err == nil {
+		t.Fatal("finality outage during membership returned evidence")
 	}
 }

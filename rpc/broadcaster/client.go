@@ -41,9 +41,10 @@ type Fee struct {
 	MaxGas       string         `json:"maxGas"`
 }
 type Status struct {
-	ID              string `json:"id"`
-	State           string `json:"state"`
-	TransactionHash string `json:"transactionHash,omitempty"`
+	Confirmation    *Confirmation `json:"confirmation,omitempty"`
+	ID              string        `json:"id"`
+	State           string        `json:"state"`
+	TransactionHash string        `json:"transactionHash,omitempty"`
 }
 
 func NewClient(config Configuration, options ...Options) (*Client, error) {
@@ -171,6 +172,15 @@ func checkStatus(s Status, id string) error {
 	case "pending", "submitted", "confirmed", "reverted", "uncertain", "queued", "proving", "rejected", "expired":
 	default:
 		return errors.New("invalid broadcaster state")
+	}
+	if s.Confirmation != nil {
+		switch s.State {
+		case "queued", "proving", "rejected", "expired":
+			return errors.New("unexpected broadcaster confirmation")
+		}
+		if s.Confirmation.Level != "pending" && s.TransactionHash == "" {
+			return errors.New("confirmation transaction hash missing")
+		}
 	}
 	if s.TransactionHash != "" {
 		b := common.FromHex(s.TransactionHash)

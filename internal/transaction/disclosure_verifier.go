@@ -21,58 +21,64 @@ type DisclosureReference struct {
 }
 
 type DisclosureVerifierOptions struct {
-	Protocol      *Protocol
-	TokenAddress  common.Address
-	Provider      Provider
-	Confirmations uint64
+	Protocol     *Protocol
+	TokenAddress common.Address
+	Provider     Provider
+	Finality     protocolrpc.FinalityTag
 }
 
 type DisclosureVerifier struct{ options DisclosureVerifierOptions }
 
 type DisclosureEvidence struct {
-	Reference     DisclosureReference
-	Block         protocolrpc.CanonicalBlock
-	Confirmations uint64
-	Output        DisclosureOutput
+	Reference DisclosureReference
+	Block     protocolrpc.CanonicalBlock
+	Finality  protocolrpc.FinalityTag
+	Output    DisclosureOutput
 }
 
 type VerifiedDisclosure struct {
-	Result        DisclosureResult
-	Block         protocolrpc.CanonicalBlock
-	Confirmations uint64
-	Reference     DisclosureReference
-	Commitment    common.Hash
+	Result     DisclosureResult
+	Block      protocolrpc.CanonicalBlock
+	Finality   protocolrpc.FinalityTag
+	Reference  DisclosureReference
+	Commitment common.Hash
 }
 
 func NewDisclosureVerifier(options DisclosureVerifierOptions) (*DisclosureVerifier, error) {
 	if options.Protocol == nil || options.Provider == nil || options.TokenAddress == (common.Address{}) {
 		return nil, errors.New("protocol, token and Chain RPC provider required")
 	}
-	if options.Confirmations == 0 {
-		options.Confirmations = 1
+	if options.Finality == "" {
+		options.Finality = protocolrpc.FinalityFinalized
+	}
+	if !options.Finality.Valid() {
+		return nil, errors.New("invalid disclosure finality")
 	}
 	return &DisclosureVerifier{options}, nil
 }
 
-func (v *DisclosureVerifier) barrier(ctx context.Context, block protocolrpc.CanonicalBlock) (uint64, error) {
+func (v *DisclosureVerifier) barrier(ctx context.Context, block protocolrpc.CanonicalBlock) (protocolrpc.FinalityTag, error) {
 	if e := v.options.Protocol.ValidateDeployment(ctx, v.options.Provider); e != nil {
-		return 0, e
+		return "", e
 	}
 	header, e := v.options.Provider.HeaderByNumber(ctx, new(big.Int).SetUint64(block.Number))
 	if e != nil {
-		return 0, e
+		return "", e
 	}
 	if header == nil || header.Hash() != block.Hash {
-		return 0, errors.New("disclosure block is no longer canonical")
+		return "", errors.New("disclosure block is no longer canonical")
 	}
-	head, e := v.options.Provider.HeaderByNumber(ctx, nil)
+	head, e := protocolrpc.RequireFinality(ctx, v.options.Provider, v.options.Finality)
 	if e != nil {
-		return 0, e
+		return "", e
 	}
-	if head == nil || head.Number == nil || !head.Number.IsUint64() || head.Number.Uint64() < block.Number || head.Number.Uint64()-block.Number+1 < v.options.Confirmations {
-		return 0, errors.New("insufficient disclosure confirmations")
+	if head.Number < block.Number {
+		return "", errors.New("disclosure native finality pending")
 	}
-	return head.Number.Uint64() - block.Number + 1, nil
+	if e = paymentBarrier(ctx, v.options.Provider, block); e != nil {
+		return "", e
+	}
+	return v.options.Finality, nil
 }
 
 func (v *DisclosureVerifier) ReadOutput(ctx context.Context, reference DisclosureReference) (DisclosureEvidence, error) {
@@ -129,11 +135,11 @@ func (v *DisclosureVerifier) ReadOutput(ctx context.Context, reference Disclosur
 		return result, errors.New("disclosure output not found in receipt")
 	}
 	block := protocolrpc.CanonicalBlock{Number: header.Number.Uint64(), Hash: header.Hash(), ParentHash: header.ParentHash, Timestamp: header.Time}
-	confirmations, e := v.barrier(ctx, block)
+	finality, e := v.barrier(ctx, block)
 	if e != nil {
 		return result, e
 	}
-	return DisclosureEvidence{reference, block, confirmations, DisclosureOutput{primitives.ProtocolContext{ChainID: primitives.ElementFromUint64(context.ChainID), ProtocolAddress: primitives.BigIntToElement(context.ProtocolAddress.Big())}, primitives.BigIntToElement(v.options.TokenAddress.Big()), selected.Commitment, reference.Role, append([]byte(nil), selected.Ciphertext...)}}, nil
+	return DisclosureEvidence{reference, block, finality, DisclosureOutput{primitives.ProtocolContext{ChainID: primitives.ElementFromUint64(context.ChainID), ProtocolAddress: primitives.BigIntToElement(context.ProtocolAddress.Big())}, primitives.BigIntToElement(v.options.TokenAddress.Big()), selected.Commitment, reference.Role, append([]byte(nil), selected.Ciphertext...)}}, nil
 }
 
 func (v *DisclosureVerifier) Verify(ctx context.Context, disclosure *Disclosure, reference DisclosureReference) (VerifiedDisclosure, error) {
@@ -148,9 +154,9 @@ func (v *DisclosureVerifier) Verify(ctx context.Context, disclosure *Disclosure,
 	if e != nil {
 		return VerifiedDisclosure{}, e
 	}
-	confirmations, e := v.barrier(ctx, evidence.Block)
+	finality, e := v.barrier(ctx, evidence.Block)
 	if e != nil {
 		return VerifiedDisclosure{}, e
 	}
-	return VerifiedDisclosure{result, evidence.Block, confirmations, reference, evidence.Output.OutputCommitment}, nil
+	return VerifiedDisclosure{result, evidence.Block, finality, reference, evidence.Output.OutputCommitment}, nil
 }

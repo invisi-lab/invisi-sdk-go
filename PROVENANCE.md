@@ -91,3 +91,5 @@ See [07-broadcaster](examples/07-broadcaster/README.md) for standard relay deliv
 - `rpc/provenance`: HTTP clients, tracking queries and authenticated public tree synchronization.
 - `session/provenance`: encrypted recovery storage, coordination and explicit recovery flows.
 - Root `provenance`: normal SDK facade and native packet/submission validation; no managed recovery reexports.
+
+Formal recognition requires the service primary Chain RPC native `finalized` boundary; precheck can precede inclusion. A confirmed relay receipt does not imply that the output is already recognized. Missing or stalled native finality keeps tracking pending, without a confirmation-count or elapsed-time fallback.

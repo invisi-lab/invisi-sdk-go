@@ -31,7 +31,7 @@ func TestCreditReconciliationRequiresExactCanonicalTransaction(t *testing.T) {
 	receipt := &types.Receipt{TxHash: tx.Hash(), BlockNumber: base.head.Number, BlockHash: base.head.Hash(), Status: types.ReceiptStatusFailed}
 	wallet.options.Provider = creditReceiptProvider{base, tx, receipt}
 	intent := credit.Intent{Version: 2, Context: credit.Context{ProtocolContext: wallet.coreContext(), TokenAddress: token, Timestamp: base.head.Time}, Revoke: &credit.RevokeParams{Token: token, Owner: wallet.wallet.OwnerAddress(), Shard: 1, Deadline: big.NewInt(400)}}
-	reconciler := wallet.CreditReconciler(1)
+	reconciler := wallet.CreditReconciler("latest")
 	outcome, err := reconciler.Reconcile(ctx, intent, data, tx.Hash())
 	if err != nil || outcome == nil || outcome.Success {
 		t.Fatal("canonical reversion not authenticated", err)

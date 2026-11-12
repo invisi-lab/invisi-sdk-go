@@ -2,6 +2,7 @@ package session
 
 import (
 	"context"
+	"encoding/json"
 	"math/big"
 	"testing"
 
@@ -230,3 +231,41 @@ func TestResumedWorkerFencesConfirmationInventoryWrite(t *testing.T) {
 
 // Keep a compile-time assertion that a real geth backend remains the send boundary.
 var _ bind.ContractBackend = (*sendingProvider)(nil)
+
+func TestGetConfirmationObservesStoredHashWithoutInventoryMutation(t *testing.T) {
+	s, op, provider := confirmingFixture(t)
+	before, err := s.options.Store.ReadSnapshot(context.Background(), s.scope)
+	if err != nil {
+		t.Fatal(err)
+	}
+	op.workerID = "stale observational handle"
+	confirmation, err := op.GetConfirmation(context.Background())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if confirmation.Block == nil || confirmation.Block.Hash != provider.receipt.BlockHash || confirmation.Level != "finalized" {
+		t.Fatalf("%+v", confirmation)
+	}
+	after, err := s.options.Store.ReadSnapshot(context.Background(), s.scope)
+	if err != nil {
+		t.Fatal(err)
+	}
+	a, _ := json.Marshal(before)
+	b, _ := json.Marshal(after)
+	if string(a) != string(b) {
+		t.Fatal("observation changed inventory, status or revision")
+	}
+}
+
+type wrongConfirmationChain struct{ *confirmingProvider }
+
+func (p wrongConfirmationChain) ChainID(context.Context) (*big.Int, error) {
+	return big.NewInt(999), nil
+}
+func TestGetConfirmationRejectsDifferentPrimaryChain(t *testing.T) {
+	s, op, p := confirmingFixture(t)
+	s.options.Provider = wrongConfirmationChain{p}
+	if _, err := op.GetConfirmation(context.Background()); err == nil {
+		t.Fatal("confirmation accepted another chain")
+	}
+}

@@ -16,7 +16,7 @@ import (
 
 func TestUpdatesAuthenticateTransitionBlockTimestamp(t *testing.T) {
 	provider := testProvider{&types.Header{Number: big.NewInt(10), Time: 2000000000, ParentHash: common.HexToHash("0x09")}}
-	block := CanonicalBlock{10, provider.header.Hash(), provider.header.ParentHash, provider.header.Time}
+	block := CanonicalBlock{Number: 10, Hash: provider.header.Hash(), ParentHash: provider.header.ParentHash, Timestamp: provider.header.Time}
 	deployment := ProtocolDeployment{ChainID: "31337", Protocol: ContractDeployment{common.HexToAddress("0x1111111111111111111111111111111111111111"), crypto.Keccak256Hash([]byte{0x60, 0}), 1}}
 	var corrupt atomic.Bool
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

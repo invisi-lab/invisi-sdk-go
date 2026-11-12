@@ -15,7 +15,7 @@ import (
 
 func TestMaxUpdateBlocksExactBoundaryAndEmptyPage(t *testing.T) {
 	provider := testProvider{&types.Header{Number: big.NewInt(10000), Time: 123}}
-	block := CanonicalBlock{10000, provider.header.Hash(), provider.header.ParentHash, 123}
+	block := CanonicalBlock{Number: 10000, Hash: provider.header.Hash(), ParentHash: provider.header.ParentHash, Timestamp: 123}
 	deployment := ProtocolDeployment{ChainID: "31337", Protocol: ContractDeployment{common.HexToAddress("0x11"), crypto.Keccak256Hash([]byte{1}), 1}}
 	calls := 0
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -67,7 +67,7 @@ func TestEmptyDeliveryPreservesOriginalLeafPosition(t *testing.T) {
 
 func TestUpdateReadersRejectStaleIndexedHead(t *testing.T) {
 	provider := testProvider{&types.Header{Number: big.NewInt(10), Time: 123}}
-	block := CanonicalBlock{10, provider.header.Hash(), provider.header.ParentHash, 123}
+	block := CanonicalBlock{Number: 10, Hash: provider.header.Hash(), ParentHash: provider.header.ParentHash, Timestamp: 123}
 	deployment := ProtocolDeployment{ChainID: "31337", Protocol: ContractDeployment{common.HexToAddress("0x11"), crypto.Keccak256Hash([]byte{1}), 1}}
 	readers := []struct {
 		name string

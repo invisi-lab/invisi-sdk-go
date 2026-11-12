@@ -10,6 +10,7 @@ import (
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
+	"github.com/invisi-lab/invisi-sdk-go/protocol"
 )
 
 type ContractDeployment struct {
@@ -47,12 +48,7 @@ type DeploymentContext struct {
 	ChainID         uint64
 	ProtocolAddress common.Address
 }
-type CanonicalBlock struct {
-	Number     uint64      `json:"number"`
-	Hash       common.Hash `json:"hash"`
-	ParentHash common.Hash `json:"parentHash"`
-	Timestamp  uint64      `json:"timestamp"`
-}
+type CanonicalBlock = protocol.CanonicalBlock
 type ChainProvider interface {
 	ChainID(context.Context) (*big.Int, error)
 	HeaderByNumber(context.Context, *big.Int) (*types.Header, error)
@@ -61,6 +57,7 @@ type ChainProvider interface {
 }
 type ProtocolDataStatus struct {
 	IndexedHead *CanonicalBlock
+	Finality    *ChainFinality
 }
 type ProtocolUpdateRange struct {
 	FromBlock, ToBlock uint64

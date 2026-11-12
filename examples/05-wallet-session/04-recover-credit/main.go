@@ -130,7 +130,7 @@ func main() {
 		if err = operation.Externalize(ctx, common.HexToHash(*txHash)); err != nil {
 			log.Fatal(err)
 		}
-		if err = operation.Reconcile(ctx, managed.CreditReconciler(1)); err != nil {
+		if err = operation.Reconcile(ctx, managed.CreditReconciler("latest")); err != nil {
 			log.Fatal(err)
 		}
 		return

@@ -28,7 +28,7 @@ func (c *ProtocolRpcClient) block(ctx context.Context, number uint64) (Canonical
 	if h == nil || h.Number == nil || !h.Number.IsUint64() || h.Number.Uint64() != number {
 		return CanonicalBlock{}, errors.New("incorrect canonical block")
 	}
-	return CanonicalBlock{number, h.Hash(), h.ParentHash, h.Time}, nil
+	return CanonicalBlock{Number: number, Hash: h.Hash(), ParentHash: h.ParentHash, Timestamp: h.Time}, nil
 }
 func (c *ProtocolRpcClient) canonical(ctx context.Context, remote CanonicalBlock) (CanonicalBlock, error) {
 	b, e := c.block(ctx, remote.Number)
@@ -63,6 +63,7 @@ func (c *ProtocolRpcClient) readStatus(ctx context.Context, context DeploymentCo
 		APIVersion, ProtocolVersion string
 		Deployment                  ProtocolDeployment
 		IndexedHead                 *CanonicalBlock
+		Finality                    json.RawMessage
 	}
 	if e = c.call(ctx, context.ChainID, "invisi_getStatus", []any{}, &response); e != nil {
 		return ProtocolDataStatus{}, e
@@ -85,7 +86,14 @@ func (c *ProtocolRpcClient) readStatus(ctx context.Context, context DeploymentCo
 		}
 		response.IndexedHead = &canonical
 	}
-	return ProtocolDataStatus{IndexedHead: response.IndexedHead}, nil
+	var finality *ChainFinality
+	if response.Finality != nil {
+		finality, e = checkedFinality(ctx, c.provider, response.Finality)
+		if e != nil {
+			return ProtocolDataStatus{}, e
+		}
+	}
+	return ProtocolDataStatus{IndexedHead: response.IndexedHead, Finality: finality}, nil
 }
 func (c *ProtocolRpcClient) knownRoot(ctx context.Context, context DeploymentContext, tree uint64, root common.Hash, block CanonicalBlock) (bool, error) {
 	data := append([]byte{}, crypto.Keccak256([]byte("rootHistory(uint256,bytes32)"))[:4]...)

@@ -16,7 +16,7 @@ import (
 func transactionClient(t *testing.T, mutate func(map[string]any), stale bool) (*ProtocolRpcClient, DeploymentContext, common.Hash) {
 	t.Helper()
 	provider := testProvider{&types.Header{Number: big.NewInt(10), Time: 123, ParentHash: common.HexToHash("0x09")}}
-	block := CanonicalBlock{10, provider.header.Hash(), provider.header.ParentHash, 123}
+	block := CanonicalBlock{Number: 10, Hash: provider.header.Hash(), ParentHash: provider.header.ParentHash, Timestamp: 123}
 	deployment := ProtocolDeployment{ChainID: "31337", Protocol: ContractDeployment{common.HexToAddress("0x1111111111111111111111111111111111111111"), crypto.Keccak256Hash([]byte{0x60, 0}), 1}}
 	hash := common.HexToHash("0x123")
 	head := block

@@ -15,9 +15,9 @@ import (
 
 // PaymentNoteVerificationOptions can override public connections captured by ProtocolFromRPC.
 type PaymentNoteVerificationOptions struct {
-	ProtocolRPC   *protocolrpc.ProtocolRpcClient
-	Provider      protocolrpc.ChainProvider
-	Confirmations uint64
+	ProtocolRPC *protocolrpc.ProtocolRpcClient
+	Provider    protocolrpc.ChainProvider
+	Finality    protocolrpc.FinalityTag
 }
 type VerifiedPaymentNote struct {
 	membership protocolrpc.Membership
@@ -67,8 +67,11 @@ func paymentVerificationOptions(pool *Protocol, options []PaymentNoteVerificatio
 	if o.ProtocolRPC == nil || o.Provider == nil {
 		return o, errors.New("verification requires ProtocolFromRPC or explicit public connections")
 	}
-	if o.Confirmations == 0 {
-		o.Confirmations = 1
+	if o.Finality == "" {
+		o.Finality = protocolrpc.FinalityFinalized
+	}
+	if !o.Finality.Valid() {
+		return o, errors.New("invalid payment note finality")
 	}
 	return o, nil
 }
@@ -143,16 +146,13 @@ func (n *PaymentNote) verify(ctx context.Context, pool *Protocol, wallet *Wallet
 	if wallet != nil && wallet.OwnerAddress() != n.data.OwnerAddress {
 		return fail(errors.New("payment note owner mismatch"))
 	}
-	latest, e := paymentBlock(ctx, o.Provider, nil)
+	finalityHead, e := protocolrpc.RequireFinality(ctx, o.Provider, o.Finality)
 	if e != nil {
 		return fail(e)
 	}
-	if latest.Number < o.Confirmations-1 {
-		return fail(errors.New("insufficient confirmed blocks"))
-	}
-	number := latest.Number - (o.Confirmations - 1)
+	number := finalityHead.Number
 	if number < pool.Deployment().Protocol.FromBlock {
-		return fail(errors.New("insufficient confirmed blocks"))
+		return fail(errors.New("native finality predates deployment"))
 	}
 	rpc := o.ProtocolRPC.WithProvider(o.Provider)
 	status, e := rpc.GetStatus(ctx, pool.Context())
@@ -219,6 +219,16 @@ func (n *PaymentNote) verify(ctx context.Context, pool *Protocol, wallet *Wallet
 		if e = paymentBarrier(ctx, o.Provider, spendAt); e != nil {
 			return fail(e)
 		}
+	}
+	if e = paymentBarrier(ctx, o.Provider, at); e != nil {
+		return fail(e)
+	}
+	currentFinality, e := protocolrpc.RequireFinality(ctx, o.Provider, o.Finality)
+	if e != nil {
+		return fail(e)
+	}
+	if currentFinality.Number < at.Number {
+		return fail(errors.New("payment note native finality regressed"))
 	}
 	if e = paymentBarrier(ctx, o.Provider, at); e != nil {
 		return fail(e)

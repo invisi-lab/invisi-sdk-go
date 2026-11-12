@@ -32,7 +32,7 @@ func (p testProvider) CallContract(context.Context, ethereum.CallMsg, *big.Int) 
 }
 func TestProtocolRPCAuthenticatesIndexedPaths(t *testing.T) {
 	provider := testProvider{&types.Header{Number: big.NewInt(10), Time: 123, ParentHash: common.HexToHash("0x09")}}
-	block := CanonicalBlock{10, provider.header.Hash(), provider.header.ParentHash, 123}
+	block := CanonicalBlock{Number: 10, Hash: provider.header.Hash(), ParentHash: provider.header.ParentHash, Timestamp: 123}
 	address := common.HexToAddress("0x1111111111111111111111111111111111111111")
 	deployment := ProtocolDeployment{ChainID: "31337", Protocol: ContractDeployment{address, crypto.Keccak256Hash([]byte{0x60, 0}), 1}}
 	leaf := primitives.ElementFromUint64(7)

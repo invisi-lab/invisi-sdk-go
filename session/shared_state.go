@@ -114,7 +114,7 @@ func (s *WalletSession) RefreshState(ctx context.Context) error {
 	if e != nil {
 		return e
 	}
-	return credit.ReconcilePending(ctx, s.CreditReconciler(1))
+	return credit.ReconcilePending(ctx, s.CreditReconciler("latest"))
 }
 
 func (s *WalletSession) replayCredits(ctx context.Context, target protocolrpc.CanonicalBlock, size uint64, o ScanOptions, result *RefreshResult) error {

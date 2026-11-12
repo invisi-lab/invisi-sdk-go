@@ -71,5 +71,10 @@ func main() {
 		log.Print("Ready; no payment sent without --submit")
 		return
 	}
-	log.Printf("Broadcaster result: %+v", must(ready.SubmitBroadcaster(ctx, relay)))
+	submitted := must(ready.SubmitBroadcaster(ctx, relay))
+	log.Printf("Broadcaster result: %+v", submitted)
+	// Inclusion and finality are independent; this reads the configured Chain RPC.
+	if submitted.TransactionHash != "" {
+		log.Printf("Native confirmation: %+v", must(ready.GetConfirmation(ctx)))
+	}
 }

@@ -10,22 +10,22 @@ import (
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/invisi-lab/invisi-sdk-go/credit"
 	"github.com/invisi-lab/invisi-sdk-go/primitives"
-	"github.com/invisi-lab/invisi-sdk-go/rpc/contracts"
 	protocolrpc "github.com/invisi-lab/invisi-sdk-go/rpc"
+	"github.com/invisi-lab/invisi-sdk-go/rpc/contracts"
 	creditsession "github.com/invisi-lab/invisi-sdk-go/session/credit"
 )
 
 type creditReconciler struct {
-	session       *WalletSession
-	confirmations uint64
+	session  *WalletSession
+	finality protocolrpc.FinalityTag
 }
 
 // CreditReconciler authenticates exact transaction calldata and canonical receipts before grant journals settle.
-func (s *WalletSession) CreditReconciler(confirmations uint64) creditsession.Reconciler {
-	if confirmations == 0 {
-		confirmations = 1
+func (s *WalletSession) CreditReconciler(finality protocolrpc.FinalityTag) creditsession.Reconciler {
+	if finality == "" {
+		finality = protocolrpc.FinalityLatest
 	}
-	return creditReconciler{s, confirmations}
+	return creditReconciler{s, finality}
 }
 func (r creditReconciler) Reconcile(ctx context.Context, intent credit.Intent, data []byte, hash common.Hash) (*creditsession.Outcome, error) {
 	s := r.session
@@ -51,16 +51,14 @@ func (r creditReconciler) Reconcile(ctx context.Context, intent credit.Intent, d
 	if receipt.TxHash != hash || receipt.BlockNumber == nil || !receipt.BlockNumber.IsUint64() || receipt.Status > 1 {
 		return nil, errors.New("invalid Credit receipt")
 	}
-	head, err := s.options.Provider.HeaderByNumber(ctx, nil)
+	boundary, err := protocolrpc.RequireFinality(ctx, s.options.Provider, r.finality)
 	if err != nil {
 		return nil, err
 	}
-	if head == nil || head.Number == nil || !head.Number.IsUint64() || head.Number.Cmp(receipt.BlockNumber) < 0 {
-		return nil, errors.New("canonical Credit head unavailable")
-	}
-	if head.Number.Uint64()-receipt.BlockNumber.Uint64()+1 < r.confirmations {
+	if boundary.Number < receipt.BlockNumber.Uint64() {
 		return nil, nil
 	}
+
 	header, err := s.options.Provider.HeaderByNumber(ctx, receipt.BlockNumber)
 	if err != nil {
 		return nil, err
@@ -83,7 +81,7 @@ func (r creditReconciler) Reconcile(ctx context.Context, intent credit.Intent, d
 	}
 	outcome := &creditsession.Outcome{TransactionHash: hash, Calldata: append([]byte(nil), data...), BlockHash: receipt.BlockHash, BlockNumber: receipt.BlockNumber.Uint64(), Success: receipt.Status == types.ReceiptStatusSuccessful}
 	if outcome.Success {
-		anchor := protocolrpc.CanonicalBlock{Number: head.Number.Uint64(), Hash: head.Hash(), ParentHash: head.ParentHash, Timestamp: head.Time}
+		anchor := boundary
 		notes, states, draws, err := s.readTransaction(ctx, hash, anchor, s.storedWalletResolver(ctx))
 		if err != nil {
 			return nil, err

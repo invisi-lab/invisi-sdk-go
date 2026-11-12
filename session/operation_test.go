@@ -42,7 +42,7 @@ func fixtureHeader(number, timestamp uint64) *types.Header {
 	return h
 }
 func (p sessionProvider) HeaderByNumber(_ context.Context, n *big.Int) (*types.Header, error) {
-	if n == nil || n.Uint64() == p.head.Number.Uint64() {
+	if n == nil || n.Sign() < 0 || n.Uint64() == p.head.Number.Uint64() {
 		return p.head, nil
 	}
 	return fixtureHeader(n.Uint64(), p.head.Time), nil

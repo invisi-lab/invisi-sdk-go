@@ -37,7 +37,7 @@ func repeatZero(n int) string {
 
 func TestPublicCreditStatesAuthenticateAndRetainRoleEnvelopes(t *testing.T) {
 	provider := testProvider{&types.Header{Number: big.NewInt(10), Time: 123}}
-	block := CanonicalBlock{10, provider.header.Hash(), provider.header.ParentHash, 123}
+	block := CanonicalBlock{Number: 10, Hash: provider.header.Hash(), ParentHash: provider.header.ParentHash, Timestamp: 123}
 	dep := ProtocolDeployment{ChainID: "31337", Protocol: ContractDeployment{common.HexToAddress("11"), crypto.Keccak256Hash([]byte{1}), 1}}
 	state := func() map[string]any {
 		return map[string]any{"block": block, "treeId": 1, "leafIndex": 0, "commitment": common.HexToHash("3"), "token": common.HexToAddress("22"), "transactionHash": common.HexToHash("4"), "logIndex": 0, "kind": "CreditCreated", "deliveries": []any{map[string]any{"ciphertext": "0x81", "clue": "0x" + repeatZero(68)}, map[string]any{"ciphertext": "0x8101", "clue": "0x" + repeatZero(68)}}}

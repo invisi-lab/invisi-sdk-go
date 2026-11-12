@@ -16,7 +16,7 @@ import (
 
 func TestGetNote(t *testing.T) {
 	provider := testProvider{&types.Header{Number: big.NewInt(10), Time: 123}}
-	block := CanonicalBlock{10, provider.header.Hash(), provider.header.ParentHash, 123}
+	block := CanonicalBlock{Number: 10, Hash: provider.header.Hash(), ParentHash: provider.header.ParentHash, Timestamp: 123}
 	dep := ProtocolDeployment{ChainID: "31337", Protocol: ContractDeployment{common.HexToAddress("11"), crypto.Keccak256Hash([]byte{1}), 1}}
 	leaf := primitives.ElementFromUint64(1)
 	root := leaf
@@ -84,7 +84,7 @@ func TestGetNote(t *testing.T) {
 
 func TestGetCreditState(t *testing.T) {
 	provider := testProvider{&types.Header{Number: big.NewInt(10), Time: 123}}
-	block := CanonicalBlock{10, provider.header.Hash(), provider.header.ParentHash, 123}
+	block := CanonicalBlock{Number: 10, Hash: provider.header.Hash(), ParentHash: provider.header.ParentHash, Timestamp: 123}
 	dep := ProtocolDeployment{ChainID: "31337", Protocol: ContractDeployment{common.HexToAddress("11"), crypto.Keccak256Hash([]byte{1}), 1}}
 	leaf := primitives.ElementFromUint64(1)
 	root := leaf
