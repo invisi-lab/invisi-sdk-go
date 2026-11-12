@@ -3,6 +3,7 @@ package session
 import (
 	"context"
 	"errors"
+	transaction "github.com/invisi-lab/invisi-sdk-go/internal/transaction"
 
 	creditsession "github.com/invisi-lab/invisi-sdk-go/session/credit"
 )
@@ -13,7 +14,7 @@ func (s *WalletSession) Credit() (*creditsession.Session, error) {
 		return nil, errors.New("managed wallet store required")
 	}
 	context := s.coreContext()
-	return creditsession.New(creditsession.Options{Store: creditStoreAdapter{session: s}, OwnerAddress: s.scope.OwnerAddress, Context: &context, Validate: s.validateCreditIntent, Prepare: s.prepareCreditIntent, ValidatePreparation: s.validateCreditPreparation, CheckPreparation: s.checkCreditPreparation, VerifyRevocation: s.verifyCreditRevocation})
+	return creditsession.New(creditsession.Options{WrapPreparation: transaction.WrapPreparation, Build: s.buildCreditRequest, Store: creditStoreAdapter{session: s}, OwnerAddress: s.scope.OwnerAddress, Context: &context, Validate: s.validateCreditIntent, Prepare: s.prepareCreditIntent, ValidatePreparation: s.validateCreditPreparation, CheckPreparation: s.checkCreditPreparation, VerifyRevocation: s.verifyCreditRevocation})
 }
 
 type creditStoreAdapter struct{ session *WalletSession }

@@ -30,7 +30,7 @@ func vectorState(t *testing.T, n map[string]any) State {
 		}
 		return v
 	}
-	return State{AvailableCredit: e("availableCredit"), Unlimited: n["unlimited"].(bool), ProtocolContext: primitives.ProtocolContext{ChainID: primitives.ElementFromUint64(31337), ProtocolAddress: primitives.ElementFromUint64(17)}, TokenAddress: primitives.ElementFromUint64(34), SpenderWalletIdentity: e("spenderWalletIdentity"), OwnerWalletIdentity: e("ownerWalletIdentity"), RevocationShard: e("revocationShard"), RevocationSlot: e("revocationSlot"), Nonce: e("nonce"), Expiry: e("expiry"), SharedKey: e("creditSharedKey"), Policy: Policy{e("singleLimit"), e("dailyLimit"), e("monthlyLimit")}, Usage: Usage{e("lastDay"), e("dailySpent"), e("lastMonth"), e("monthlySpent"), e("totalSpent")}}
+	return State{AvailableCredit: e("availableCredit"), Unlimited: n["unlimited"].(bool), ProtocolContext: primitives.ProtocolContext{ChainID: primitives.ElementFromUint64(31337), ProtocolAddress: primitives.ElementFromUint64(17)}, TokenAddress: primitives.ElementFromUint64(34), SpenderWalletIdentity: e("spenderWalletIdentity"), OwnerWalletIdentity: e("ownerWalletIdentity"), RevocationShard: e("revocationShard"), RevocationSlot: e("revocationSlot"), Nonce: e("nonce"), Expiry: e("expiry"), CreditSharedKey: e("creditSharedKey"), Policy: Policy{e("singleLimit"), e("dailyLimit"), e("monthlyLimit")}, Usage: Usage{e("lastDay"), e("dailySpent"), e("lastMonth"), e("monthlySpent"), e("totalSpent")}}
 }
 
 func hex(v fr.Element) string {
@@ -103,7 +103,7 @@ func TestUpdatePreservesUsageAndNamespace(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if next.State.Usage != current.Usage || next.State.AvailableCredit != current.AvailableCredit || next.State.Unlimited != current.Unlimited || next.State.RevocationShard != current.RevocationShard || next.State.RevocationSlot != current.RevocationSlot || next.State.SharedKey != current.SharedKey || next.State.Nonce == current.Nonce {
+	if next.State.Usage != current.Usage || next.State.AvailableCredit != current.AvailableCredit || next.State.Unlimited != current.Unlimited || next.State.RevocationShard != current.RevocationShard || next.State.RevocationSlot != current.RevocationSlot || next.State.CreditSharedKey != current.CreditSharedKey || next.State.Nonce == current.Nonce {
 		t.Fatal("update changed immutable identity or usage")
 	}
 	if _, err := current.Update(Change{Policy: Policy{}, Expiry: primitives.ElementFromUint64(1999999999)}, 2000000100); err == nil {

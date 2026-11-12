@@ -19,3 +19,18 @@ func TestCreditBenchmarkIgnoresPackagedRelease(t *testing.T) {
 		t.Fatal(got)
 	}
 }
+
+func TestEstimateUsesSinglePublicResultLayout(t *testing.T) {
+	result := EstimateGas(Shape{"kind": "transact", "noteInputs": 1, "noteOutputs": 1})
+	raw, err := json.Marshal(result)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var fields map[string]json.RawMessage
+	if err = json.Unmarshal(raw, &fields); err != nil {
+		t.Fatal(err)
+	}
+	if _, ok := fields["reference"]; ok {
+		t.Fatal("obsolete nested gas reference remains in public result")
+	}
+}

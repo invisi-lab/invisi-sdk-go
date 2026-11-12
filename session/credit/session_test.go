@@ -14,7 +14,7 @@ import (
 
 func testPlan(t *testing.T) (*credit.Prepared, StoredState) {
 	t.Helper()
-	s := credit.State{AvailableCredit: primitives.ElementFromUint64(400), ProtocolContext: primitives.ProtocolContext{ChainID: primitives.ElementFromUint64(1), ProtocolAddress: primitives.ElementFromUint64(17)}, TokenAddress: primitives.ElementFromUint64(34), SpenderWalletIdentity: primitives.ElementFromUint64(33), OwnerWalletIdentity: primitives.ElementFromUint64(44), RevocationShard: primitives.ElementFromUint64(1), Nonce: primitives.ElementFromUint64(1), Expiry: primitives.ElementFromUint64(2100000000), SharedKey: primitives.ElementFromUint64(2)}
+	s := credit.State{AvailableCredit: primitives.ElementFromUint64(400), ProtocolContext: primitives.ProtocolContext{ChainID: primitives.ElementFromUint64(1), ProtocolAddress: primitives.ElementFromUint64(17)}, TokenAddress: primitives.ElementFromUint64(34), SpenderWalletIdentity: primitives.ElementFromUint64(33), OwnerWalletIdentity: primitives.ElementFromUint64(44), RevocationShard: primitives.ElementFromUint64(1), Nonce: primitives.ElementFromUint64(1), Expiry: primitives.ElementFromUint64(2100000000), CreditSharedKey: primitives.ElementFromUint64(2)}
 	transition, err := s.Draw(primitives.ElementFromUint64(7), 2000000000)
 	if err != nil {
 		t.Fatal(err)
@@ -51,7 +51,7 @@ func TestAtomicReservationsAndExternalization(t *testing.T) {
 	if _, err = session.Prepare(ctx, "second", prepared); err == nil {
 		t.Fatal("double reservation")
 	}
-	if err = first.Cancel(ctx); err != nil {
+	if err = first.Abandon(ctx); err != nil {
 		t.Fatal(err)
 	}
 	second, err := session.Prepare(ctx, "second", prepared)
@@ -61,7 +61,7 @@ func TestAtomicReservationsAndExternalization(t *testing.T) {
 	if err = second.Externalize(ctx, common.Hash{}); err == nil {
 		t.Fatal("externalized without frozen calldata")
 	}
-	if err = second.Cancel(ctx); err != nil {
+	if err = second.Abandon(ctx); err != nil {
 		t.Fatal(err)
 	}
 }
@@ -113,14 +113,14 @@ func TestRevocationJournalSurvivesUncertainSubmitAndResume(t *testing.T) {
 	if err = op.Externalize(ctx, hash); err != nil {
 		t.Fatal(err)
 	}
-	if err = op.Cancel(ctx); err == nil {
+	if err = op.Abandon(ctx); err == nil {
 		t.Fatal("released uncertain Credit journal")
 	}
 	resumed, err := managed.Resume(ctx, "revoke", nil)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if err = op.Cancel(ctx); err == nil {
+	if err = op.Abandon(ctx); err == nil {
 		t.Fatal("old worker retained lease after resume")
 	}
 	reconciler := reconcileFunc(func(context.Context, credit.Intent, []byte, common.Hash) (*Outcome, error) {
@@ -218,7 +218,154 @@ func TestUpdateJournalPreservesDeltaAndResumesWithoutReapplying(t *testing.T) {
 	if len(history.Operations) != 1 || history.Operations[0].Preview.AvailableCredit.Cmp(big.NewInt(405)) != 0 {
 		t.Fatal("resume applied quota delta twice")
 	}
-	if err = resumed.Cancel(ctx); err != nil {
+	if err = resumed.Abandon(ctx); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestAbandonRetiresLocalCreditAndRejectsExportedCall(t *testing.T) {
+	ctx := context.Background()
+	store := NewMemoryStore()
+	managed, err := New(Options{Store: store})
+	if err != nil {
+		t.Fatal(err)
+	}
+	prepared, grant := testPlan(t)
+	if err = managed.Track(ctx, grant); err != nil {
+		t.Fatal(err)
+	}
+	op, err := managed.Prepare(ctx, "local", prepared)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err = store.Update(ctx, func(s *State) error {
+		r := s.Operations["local"]
+		r.Status = "proved"
+		s.Operations["local"] = r
+		return nil
+	}); err != nil {
+		t.Fatal(err)
+	}
+	if err = op.Abandon(ctx); err != nil {
+		t.Fatal(err)
+	}
+	state, _ := store.ReadSnapshot(ctx)
+	if state.Operations["local"].Status != "failed" || state.Operations["local"].WorkerID != "" || state.Grants[grant.key()].ReservedBy != "" {
+		t.Fatal("local abandon retained lease or grant reservation")
+	}
+	if _, err = managed.Resume(ctx, "local", nil); err == nil {
+		t.Fatal("resumed failed Credit operation")
+	}
+	op, err = managed.Prepare(ctx, "exported", prepared)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err = store.Update(ctx, func(s *State) error {
+		r := s.Operations["exported"]
+		r.Status = "ready"
+		r.Calldata = []byte{1}
+		s.Operations["exported"] = r
+		return nil
+	}); err != nil {
+		t.Fatal(err)
+	}
+	if err = op.Abandon(ctx); err == nil {
+		t.Fatal("exported call released reservation")
+	}
+}
+
+func TestUpdatePayloadPatchSurvivesJournalAndResume(t *testing.T) {
+	for _, payload := range [][]byte{nil, {}} {
+		t.Run(fmt.Sprintf("explicit_%t", payload != nil), func(t *testing.T) {
+			ctx := context.Background()
+			store := NewMemoryStore()
+			managed, err := New(Options{Store: store})
+			if err != nil {
+				t.Fatal(err)
+			}
+			draw, grant := testPlan(t)
+			grant.Role = credit.Owner
+			grant.Delivery.State.Payload = []byte("retained")
+			if err = managed.Track(ctx, grant); err != nil {
+				t.Fatal(err)
+			}
+			i, err := draw.ExportIntent()
+			if err != nil {
+				t.Fatal(err)
+			}
+			current := grant.Delivery.State
+			change := credit.Change{Policy: current.Policy, Expiry: current.Expiry, Payload: payload}
+			next, err := current.Update(change, 2000000300)
+			if err != nil {
+				t.Fatal(err)
+			}
+			p := credit.UpdateParams{Token: i.Context.TokenAddress, Owner: common.BigToAddress(primitives.ElementToBigInt(current.OwnerWalletIdentity)), Source: i.Draw.Sources[0], Nullifier: common.Hash(next.Nullifier.Bytes()), CreditCommitment: common.Hash(next.StateCommitment.Bytes()), RevocationShard: 1, Deadline: big.NewInt(2000000300)}
+			prepared, err := credit.PrepareUpdate(i.Context, p, i.Deliveries[:2], credit.LocatedState{State: current, TreeID: 1}, change)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if _, err = managed.Prepare(ctx, "payload", prepared); err != nil {
+				t.Fatal(err)
+			}
+			if _, err = managed.Resume(ctx, "payload", nil); err != nil {
+				t.Fatal(err)
+			}
+			state, err := store.ReadSnapshot(ctx)
+			if err != nil {
+				t.Fatal(err)
+			}
+			journal := state.Operations["payload"]
+			if (journal.Intent.UpdateChange.Payload == nil) != (payload == nil) {
+				t.Fatal("journal collapsed nil and empty payload")
+			}
+			restored, err := journal.Intent.Inputs[0].State.Update(*journal.Intent.UpdateChange, 2000000300)
+			if err != nil {
+				t.Fatal(err)
+			}
+			expected := "retained"
+			if payload != nil {
+				expected = ""
+			}
+			if string(restored.State.Payload) != expected {
+				t.Fatal("resume changed payload patch meaning")
+			}
+		})
+	}
+}
+
+func TestManagedRequestSnapshotsBeforeBuildCallback(t *testing.T) {
+	ctx := context.Background()
+	entered, release := make(chan struct{}), make(chan struct{})
+	prepared, grant := testPlan(t)
+	fee := &credit.Fee{Recipient: common.HexToAddress("0x1234"), Amount: big.NewInt(2)}
+	amount := big.NewInt(10)
+	payload := []byte("before")
+	managed, err := New(Options{Store: NewMemoryStore(), Build: func(_ context.Context, request any) (*credit.Prepared, error) {
+		p := request.(credit.CreatePreparation)
+		close(entered)
+		<-release
+		if p.AvailableCredit.Int64() != 10 || p.Fee.Amount.Int64() != 2 || string(p.Payload) != "before" {
+			return nil, fmt.Errorf("managed request retained caller buffers")
+		}
+		return prepared, nil
+	}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err = managed.Track(ctx, grant); err != nil {
+		t.Fatal(err)
+	}
+	done := make(chan error, 1)
+	go func() {
+		_, err := managed.PrepareCreate(ctx, "snapshot", credit.CreatePreparation{AvailableCredit: amount, Payload: payload, Fee: fee})
+		done <- err
+	}()
+	<-entered
+	amount.SetInt64(99)
+	fee.Amount.SetInt64(88)
+	payload[0] = 'X'
+	close(release)
+	if err = <-done; err != nil {
 		t.Fatal(err)
 	}
 }

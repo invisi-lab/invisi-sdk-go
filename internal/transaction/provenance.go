@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	source "github.com/invisi-lab/invisi-sdk-go/prover/provenance"
 	"math/big"
 	"sort"
 
@@ -20,6 +21,7 @@ type ProvenanceCapability struct {
 	Prover       provenance.OfflineProver
 	MaxRootPages int
 	MaxLeaves    uint64
+	official     *provenance.OfficialClients
 }
 type ProvenancePlan struct {
 	Endpoint, Generation, ProviderID, ManifestSHA256, OperationDigest string
@@ -28,16 +30,49 @@ type ProvenancePlan struct {
 	Tracking                                                          []provenance.Tracking
 }
 
-func (o *Execution) sourceCapability() (*ProvenanceCapability, error) {
-	c := o.Runtime.Options.Provenance
-	if c == nil || c.Client == nil {
-		return nil, &MissingCapabilityError{Capability: "local Provenance client, manifest and offline prover"}
+func (c *ProvenanceCapability) withOfficialDefaults() *ProvenanceCapability {
+	out := *c
+	if out.official == nil {
+		out.official = &provenance.OfficialClients{}
+	}
+	return &out
+}
+
+type provenanceProvider interface {
+	GetProvenanceCapability() (source.ManifestIdentity, source.OfflineProver, error)
+}
+
+func (o *Execution) sourceCapability(ctx context.Context) (*ProvenanceCapability, error) {
+	base := o.Runtime.Options.Provenance
+	if base == nil {
+		base = (&ProvenanceCapability{}).withOfficialDefaults()
+		o.Runtime.Options.Provenance = base
+	}
+	c := *base
+	if c.Client == nil {
+		if base.official == nil {
+			base.official = &provenance.OfficialClients{}
+		}
+		var err error
+		c.Client, err = base.official.Get(ctx, provenance.Scope{ChainID: o.Plan.Context.ChainID.String(), ProtocolAddress: o.Plan.Context.ProtocolAddress.Hex()})
+		if err != nil {
+			return nil, err
+		}
+	}
+	if c.Prover == nil {
+		if native, ok := o.Runtime.Options.Prover.(provenanceProvider); ok {
+			var err error
+			c.Manifest, c.Prover, err = native.GetProvenanceCapability()
+			if err != nil {
+				return nil, err
+			}
+		}
 	}
 	t := c.Client.Trust
-	if !sourceNumber(t.ChainID, o.Plan.Context.ChainID.String()) || !sourceNumber(t.ProtocolAddress, o.Plan.Context.ProtocolAddress.Hex()) || c.Manifest.SHA256 != t.ManifestSHA256 {
+	if !sourceNumber(t.ChainID, o.Plan.Context.ChainID.String()) || !sourceNumber(t.ProtocolAddress, o.Plan.Context.ProtocolAddress.Hex()) || (c.Prover != nil && c.Manifest.SHA256 != t.ManifestSHA256) {
 		return nil, errors.New("provenance capability deployment/manifest mismatch")
 	}
-	return c, nil
+	return &c, nil
 }
 func sourceNumber(a, b string) bool {
 	x, e := provenance.Uint(a, 256)
@@ -69,7 +104,7 @@ func (o *Execution) prepareProvenance(ctx context.Context) (*ProvenancePlan, err
 	if o.Runtime.Options.Provider == nil {
 		return nil, &MissingCapabilityError{Capability: "Chain RPC provider for fresh provenance proof"}
 	}
-	c, e := o.sourceCapability()
+	c, e := o.sourceCapability(ctx)
 	if e != nil {
 		return nil, e
 	}
@@ -364,9 +399,9 @@ func (o *Execution) validateProvenance(ctx context.Context, saved *ProvenancePla
 		}
 		return nil
 	}
-	c := o.Runtime.Options.Provenance
-	if c == nil || c.Client == nil {
-		return &MissingCapabilityError{Capability: "trusted Provenance client"}
+	c, capabilityErr := o.sourceCapability(ctx)
+	if capabilityErr != nil {
+		return capabilityErr
 	}
 	trust := c.Client.Trust
 	if !sourceNumber(trust.ChainID, o.Plan.Context.ChainID.String()) || !sourceNumber(trust.ProtocolAddress, o.Plan.Context.ProtocolAddress.Hex()) {
@@ -533,7 +568,10 @@ func (o *Execution) SubmitProvenance(ctx context.Context) (provenance.Result, er
 	if e := o.validateProvenance(ctx, o.Plan.Provenance, false); e != nil {
 		return nil, e
 	}
-	c := o.Runtime.Options.Provenance
+	c, e := o.sourceCapability(ctx)
+	if e != nil {
+		return nil, e
+	}
 	packet, e := o.ExportProvenanceProof(ctx)
 	if e != nil {
 		return nil, e

@@ -292,9 +292,13 @@ func TestTransferStagesReserveInputsAndAssembleCurrentWitness(t *testing.T) {
 	}); e != nil {
 		t.Fatal(e)
 	}
-	if e = proved.Abandon(ctx); e == nil {
-		t.Fatal("externalized proof released reserved notes")
+	if _, e = proved.ExportTransaction(ctx); e != nil {
+		t.Fatal(e)
 	}
+	if e = proved.Abandon(ctx); e == nil {
+		t.Fatal("exported calldata released reserved notes")
+	}
+
 }
 
 func TestProofForAnotherStatementIsRejected(t *testing.T) {

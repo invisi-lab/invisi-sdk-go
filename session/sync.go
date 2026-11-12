@@ -46,7 +46,7 @@ type RefreshResult struct {
 // Replay unresolved Credit reservations after a reset without releasing externalized authority.
 func restoreCreditReservations(state *creditsession.State) error {
 	for id, record := range state.Operations {
-		if record.Status == "confirmed" || record.Status == "reverted" || record.Status == "cancelled" {
+		if record.Status == "confirmed" || record.Status == "reverted" || record.Status == "failed" {
 			continue
 		}
 		for _, input := range record.Intent.Inputs {

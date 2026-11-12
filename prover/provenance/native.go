@@ -24,6 +24,8 @@ type NativeProver struct {
 	BBPath                string
 	TrustedManifestSHA256 string
 	LoadAssets            func(int) (LocalAssets, error)
+	ExecuteWitness        func(context.Context, []byte, []byte) ([]byte, error)
+	Run                   func(context.Context, ...string) error
 }
 
 func (p NativeProver) Prove(ctx context.Context, identity ManifestIdentity, capacity int, w Witness, expected []string) (ProofResult, error) {
@@ -72,6 +74,9 @@ func (p NativeProver) Prove(ctx context.Context, identity ManifestIdentity, capa
 		}
 	}
 	run := func(binary string, args ...string) error {
+		if p.Run != nil {
+			return p.Run(ctx, args...)
+		}
 		if binary == "" {
 			return errors.New("local prover executable required")
 		}
@@ -81,7 +86,16 @@ func (p NativeProver) Prove(ctx context.Context, identity ManifestIdentity, capa
 		}
 		return nil
 	}
-	if e := run(p.NoirExecutePath, "-a", filepath.Join(dir, "artifact.json"), "-p", filepath.Join(dir, "witness.json"), "-o", dir, "-w", "witness"); e != nil {
+	if p.ExecuteWitness != nil {
+		compressed, err := p.ExecuteWitness(ctx, assets.Artifact, witness)
+		if err != nil {
+			return ProofResult{}, err
+		}
+		defer clear(compressed)
+		if err = os.WriteFile(filepath.Join(dir, "witness.gz"), compressed, 0600); err != nil {
+			return ProofResult{}, err
+		}
+	} else if e := run(p.NoirExecutePath, "-a", filepath.Join(dir, "artifact.json"), "-p", filepath.Join(dir, "witness.json"), "-o", dir, "-w", "witness"); e != nil {
 		return ProofResult{}, e
 	}
 	if e := run(p.BBPath, "prove", "-t", "evm", "-b", filepath.Join(dir, "artifact.json"), "-w", filepath.Join(dir, "witness.gz"), "-k", filepath.Join(dir, "vk"), "-o", dir, "--output_format", "json"); e != nil {

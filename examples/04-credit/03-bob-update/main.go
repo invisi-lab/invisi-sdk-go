@@ -6,7 +6,6 @@ import (
 	"database/sql"
 	"flag"
 	"log"
-	"math/big"
 	"os"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -14,7 +13,6 @@ import (
 	"github.com/invisi-lab/invisi-sdk-go/credit"
 	"github.com/invisi-lab/invisi-sdk-go/examples/shared"
 	"github.com/invisi-lab/invisi-sdk-go/primitives"
-	"github.com/invisi-lab/invisi-sdk-go/protocol"
 	"github.com/invisi-lab/invisi-sdk-go/prover"
 	"github.com/invisi-lab/invisi-sdk-go/prover/native"
 	"github.com/invisi-lab/invisi-sdk-go/sdk"
@@ -108,72 +106,26 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	coreContext := primitives.ProtocolContext{
-		ChainID:         primitives.ElementFromUint64(pool.Context().ChainID),
-		ProtocolAddress: primitives.BigIntToElement(pool.Context().ProtocolAddress.Big()),
-	}
-	c := credit.Context{ProtocolContext: coreContext, TokenAddress: token, Timestamp: head.Time}
-	deadline := new(big.Int).SetUint64(head.Time + 300)
-	var prepared *credit.Prepared
-	var changedMode *bool
-	increaseAmount, decreaseAmount := new(big.Int), new(big.Int)
-
-	// Reuse the encrypted inventory populated above; a second ephemeral discovery would repeat host prompts.
-	inventory, e := store.ReadSnapshot(ctx, managed.Scope())
-	if e != nil {
-		log.Fatal(e)
-	}
-	candidates, e := shared.CreditCandidates(ctx, provider, client, pool, inventory, token, credit.Owner)
-	if e != nil {
-		log.Fatal(e)
-	}
-	if len(candidates) == 0 {
-		log.Fatal("no active owner grant")
-	}
-	selected := candidates[0]
-	old := selected.Input.State
-	policy := old.Policy
-	expiry := primitives.ElementFromUint64(head.Time + 14*86400)
-
-	// Only policy/expiry/quota change; accumulated usage and the original grant identity survive the update.
-	change := credit.Change{
-		Policy:                  policy,
-		Expiry:                  expiry,
-		Unlimited:               changedMode,
-		IncreaseAvailableCredit: primitives.BigIntToElement(increaseAmount),
-		DecreaseAvailableCredit: primitives.BigIntToElement(decreaseAmount),
-	}
-	next, e := old.Update(change, deadline.Uint64())
-	if e != nil {
-		log.Fatal(e)
-	}
-	snapshot := selected.Delivery
-	snapshot.State = next.State
-	ds, e := shared.CreditDeliveries(snapshot)
-	if e != nil {
-		log.Fatal(e)
-	}
-	prepared, err = credit.PrepareUpdate(c, credit.UpdateParams{
-		Token:            token,
-		Owner:            publicWallet.OwnerAddress(),
-		Source:           protocol.InputSource{TreeId: new(big.Int).SetUint64(selected.Input.TreeID), MerkleRoot: selected.Membership.Root},
-		Nullifier:        common.Hash(next.Nullifier.Bytes()),
-		CreditCommitment: common.Hash(next.StateCommitment.Bytes()),
-		RevocationShard:  primitives.ElementToBigInt(old.RevocationShard).Uint64(),
-		RevocationSlot:   uint16(primitives.ElementToBigInt(old.RevocationSlot).Uint64()),
-		Deadline:         deadline,
-	}, ds, selected.Input, change)
-
+	inventory, err := store.ReadSnapshot(ctx, managed.Scope())
 	if err != nil {
 		log.Fatal(err)
 	}
-
-	// Keep Credit inventory and cross-role grant reservations separate from spendable Notes.
+	var selected common.Hash
+	for _, g := range inventory.PostpaidCredit.Grants {
+		if g.Role == credit.Owner && !g.Consumed && !g.Revoked && g.ReservedBy == "" && common.BigToAddress(primitives.ElementToBigInt(g.Delivery.State.TokenAddress)) == token {
+			selected = g.Commitment
+			break
+		}
+	}
+	if selected == (common.Hash{}) {
+		log.Fatal("no active owner grant")
+	}
+	expiry := primitives.ElementFromUint64(head.Time + 14*86400)
 	creditSession, err := managed.Credit()
 	if err != nil {
 		log.Fatal(err)
 	}
-	operation, err := creditSession.Prepare(ctx, *operationID, prepared)
+	operation, err := creditSession.PrepareUpdate(ctx, *operationID, credit.UpdatePreparation{TokenAddress: token, Credit: selected, UpdatePatch: credit.UpdatePatch{Expiry: &expiry}})
 	if err != nil {
 		log.Fatal(err)
 	}

@@ -24,7 +24,7 @@ func (s *Session) Resume(ctx context.Context, id string, backend prover.Prover) 
 	if !ok {
 		return nil, fmt.Errorf("Credit operation not found")
 	}
-	if record.Status == "confirmed" || record.Status == "reverted" || record.Status == "cancelled" {
+	if record.Status == "confirmed" || record.Status == "reverted" || record.Status == "failed" {
 		return nil, fmt.Errorf("Credit operation is terminal")
 	}
 	prepared, err := credit.Restore(ctx, record.Intent, record.Proof, backend)
@@ -204,7 +204,7 @@ func (s *Session) ReconcilePending(ctx context.Context, reconciler Reconciler) e
 		return e
 	}
 	for id, r := range snapshot.Operations {
-		if !r.Externalized || len(r.Calldata) == 0 || r.TransactionHash == (common.Hash{}) || r.Status == "confirmed" || r.Status == "cancelled" || r.Status == "reverted" {
+		if !r.Externalized || len(r.Calldata) == 0 || r.TransactionHash == (common.Hash{}) || r.Status == "confirmed" || r.Status == "failed" || r.Status == "reverted" {
 			continue
 		}
 		o := &Operation{session: s, id: id, worker: r.WorkerID}

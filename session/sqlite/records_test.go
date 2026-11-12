@@ -82,7 +82,7 @@ func TestCreditReplayPinsParentsWithZeroRecentRecords(t *testing.T) {
 	scope := session.WalletScope{ChainID: 1}
 	if e = store.Update(ctx, scope, func(v *session.WalletState) error {
 		v.Scan.CreditReplayTarget = 16
-		v.PostpaidCredit.Grants["parent"] = creditsession.StoredState{Consumed: true, Delivery: credit.DeliveryState{State: credit.State{SpenderWalletIdentity: primitives.ElementFromUint64(1), OwnerWalletIdentity: primitives.ElementFromUint64(2), RevocationShard: primitives.ElementFromUint64(1), Expiry: primitives.ElementFromUint64(100), SharedKey: primitives.ElementFromUint64(3)}}}
+		v.PostpaidCredit.Grants["parent"] = creditsession.StoredState{Consumed: true, Delivery: credit.DeliveryState{State: credit.State{SpenderWalletIdentity: primitives.ElementFromUint64(1), OwnerWalletIdentity: primitives.ElementFromUint64(2), RevocationShard: primitives.ElementFromUint64(1), Expiry: primitives.ElementFromUint64(100), CreditSharedKey: primitives.ElementFromUint64(3)}}}
 		return nil
 	}); e != nil {
 		t.Fatal(e)

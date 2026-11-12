@@ -15,13 +15,14 @@ type State struct {
 	primitives.ProtocolContext
 	Policy
 	Usage
-	TokenAddress, SpenderWalletIdentity, OwnerWalletIdentity  fr.Element
-	RevocationShard, RevocationSlot, Nonce, Expiry, SharedKey fr.Element
-	AvailableCredit                                           fr.Element
-	Unlimited                                                 bool
-	Payload                                                   []byte
+	TokenAddress, SpenderWalletIdentity, OwnerWalletIdentity        fr.Element
+	RevocationShard, RevocationSlot, Nonce, Expiry, CreditSharedKey fr.Element
+	AvailableCredit                                                 fr.Element
+	Unlimited                                                       bool
+	Payload                                                         []byte
 }
 type Change struct {
+	Payload                                          []byte
 	Policy                                           Policy
 	Expiry                                           fr.Element
 	Unlimited                                        *bool
@@ -101,7 +102,7 @@ func (s State) Validate() error {
 			return fmt.Errorf("%s must be positive", x.name)
 		}
 	}
-	if s.SharedKey.IsZero() {
+	if s.CreditSharedKey.IsZero() {
 		return fmt.Errorf("grant shared key must be nonzero")
 	}
 	if err := uintField(s.AvailableCredit, 128, "available credit"); err != nil {
@@ -134,7 +135,7 @@ func (s State) Commitment() (fr.Element, error) {
 	if err := s.Validate(); err != nil {
 		return fr.Element{}, err
 	}
-	key, err := primitives.Poseidon2Hash(primitives.ElementFromUint64(7), s.SharedKey)
+	key, err := primitives.Poseidon2Hash(primitives.ElementFromUint64(7), s.CreditSharedKey)
 	if err != nil {
 		return fr.Element{}, err
 	}
@@ -149,10 +150,10 @@ func (s State) Nullifier() (fr.Element, error) {
 	if err != nil {
 		return fr.Element{}, err
 	}
-	return primitives.Poseidon2Hash(primitives.ElementFromUint64(6), s.ChainID, s.SharedKey, c)
+	return primitives.Poseidon2Hash(primitives.ElementFromUint64(6), s.ChainID, s.CreditSharedKey, c)
 }
 func (s State) secrets(nf fr.Element) (nonce, mask fr.Element, err error) {
-	args := []fr.Element{s.ChainID, s.ProtocolAddress, s.TokenAddress, nf, s.SharedKey}
+	args := []fr.Element{s.ChainID, s.ProtocolAddress, s.TokenAddress, nf, s.CreditSharedKey}
 	nonce, err = primitives.Poseidon2Hash(append([]fr.Element{primitives.ElementFromUint64(10)}, args...)...)
 	if err != nil {
 		return
@@ -282,6 +283,9 @@ func (s State) Update(change Change, deadline uint64) (Transition, error) {
 		return Transition{}, err
 	}
 	next := s.Clone()
+	if change.Payload != nil {
+		next.Payload = append([]byte{}, change.Payload...)
+	}
 	next.Policy = change.Policy
 	next.Expiry = change.Expiry
 	next.AvailableCredit, next.Unlimited, err = change.quota(s)

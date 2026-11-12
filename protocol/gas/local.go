@@ -21,7 +21,6 @@ type EstimateResult struct {
 	Document       string   `json:"document,omitempty"`
 	Conditions     string   `json:"conditions,omitempty"`
 	Assumptions    []string `json:"assumptions,omitempty"`
-	Reference      *Result  `json:"reference,omitempty"`
 }
 
 // MarshalJSON 在可用估算中保留零样本数，避免将模型结果误读为收据统计。
@@ -288,8 +287,7 @@ func EstimateGasChecked(query Shape) (EstimateResult, error) {
 	document := "05-benchmarks/5.10-sdk-gas-estimation.md"
 	conditions := "Local Anvil31337 / Prague, Solidity0.8.38 optimizer200, real verifiers, reference ERC20."
 	assumptions := []string{"Pre-signing local fee preview; not an RPC simulation or transaction gas limit.", "Token behavior, storage warmth, tree cursor and rollover can change actual gas.", "Additional source trees, authorization and delivery bytes use explicit benchmark-calibrated allowances."}
-	reference := &Result{Measurement: Measurement{ID: id, Shape: shape, GasUnits: strconv.FormatUint(units, 10), Statistic: statistic, SampleCount: samples}, Source: Source{Path: document, SHA256: measured.SourceSHA256, Conditions: conditions}, Assumptions: append([]string(nil), assumptions...)}
-	return EstimateResult{Source: "benchmark", Available: true, GasUnits: &units, Statistic: statistic, SampleCount: samples, ProtocolCommit: measured.ProtocolCommit, SourceSHA256: measured.SourceSHA256, ReferenceID: id, Document: document, Conditions: conditions, Assumptions: assumptions, Reference: reference}, nil
+	return EstimateResult{Source: "benchmark", Available: true, GasUnits: &units, Statistic: statistic, SampleCount: samples, ProtocolCommit: measured.ProtocolCommit, SourceSHA256: measured.SourceSHA256, ReferenceID: id, Document: document, Conditions: conditions, Assumptions: assumptions}, nil
 }
 
 func boolNumber(v bool) float64 {

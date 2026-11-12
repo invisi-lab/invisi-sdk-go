@@ -9,13 +9,11 @@ import (
 	"math/big"
 	"os"
 
-	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/invisi-lab/invisi-sdk-go/credit"
 	"github.com/invisi-lab/invisi-sdk-go/examples/shared"
 	"github.com/invisi-lab/invisi-sdk-go/primitives"
-	"github.com/invisi-lab/invisi-sdk-go/rpc/contracts"
 	"github.com/invisi-lab/invisi-sdk-go/prover"
 	"github.com/invisi-lab/invisi-sdk-go/prover/native"
 	"github.com/invisi-lab/invisi-sdk-go/sdk"
@@ -112,94 +110,25 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	coreContext := primitives.ProtocolContext{
-		ChainID:         primitives.ElementFromUint64(pool.Context().ChainID),
-		ProtocolAddress: primitives.BigIntToElement(pool.Context().ProtocolAddress.Big()),
-	}
-	c := credit.Context{ProtocolContext: coreContext, TokenAddress: token, Timestamp: head.Time}
-	deadline := new(big.Int).SetUint64(head.Time + 300)
-	var prepared *credit.Prepared
-	spenderWallet, err := sdk.WalletFromAddress(*spenderAddress)
-	if err != nil {
-		log.Fatal(err)
-	}
-	initial := big.NewInt(*available)
-	if initial.Sign() < 0 {
-		log.Fatal("available credit must be nonnegative")
-	}
-
-	contract, e := contracts.NewInvisiProtocolCaller(pool.Context().ProtocolAddress, provider)
-	if e != nil {
-		log.Fatal(e)
-	}
-	allocation, e := contract.CreditAllocation(&bind.CallOpts{Context: ctx, BlockNumber: head.Number}, publicWallet.OwnerAddress(), token)
-	if e != nil {
-		log.Fatal(e)
-	}
-	nonce, e := primitives.GenerateNonce()
-	if e != nil {
-		log.Fatal(e)
-	}
-	key, e := credit.GenerateSharedKey()
-	if e != nil {
-		log.Fatal(e)
-	}
-
-	// A grant is postpaid authority: finite available credit is quota, not deposited token principal.
-	state := credit.State{
-		AvailableCredit:       primitives.BigIntToElement(initial),
-		Unlimited:             *unlimited,
-		ProtocolContext:       coreContext,
-		TokenAddress:          primitives.BigIntToElement(token.Big()),
-		OwnerWalletIdentity:   primitives.BigIntToElement(publicWallet.OwnerAddress().Big()),
-		SpenderWalletIdentity: primitives.BigIntToElement(spenderWallet.OwnerAddress().Big()),
-		RevocationShard:       primitives.ElementFromUint64(allocation.Shard),
-		RevocationSlot:        primitives.ElementFromUint64(uint64(allocation.Slot)),
-		Nonce:                 nonce,
-		Expiry:                primitives.ElementFromUint64(head.Time + 7*86400),
-		SharedKey:             key,
-		Policy: credit.Policy{
-			SingleLimit:  primitives.ElementFromUint64(100),
-			DailyLimit:   primitives.ElementFromUint64(1000),
-			MonthlyLimit: primitives.ElementFromUint64(10000),
-		},
-	}
-	snapshot := credit.DeliveryState{
-		State:                state,
-		OwnerReceivingKeys:   primitives.ReceivingKeys{ViewingPublicKey: publicWallet.ViewingPublicKey(), ClueKey: publicWallet.ClueKey()},
-		SpenderReceivingKeys: primitives.ReceivingKeys{ViewingPublicKey: spenderWallet.ViewingPublicKey(), ClueKey: spenderWallet.ClueKey()},
-	}
-	ds, e := shared.CreditDeliveries(snapshot)
-	if e != nil {
-		log.Fatal(e)
-	}
-	commitment, e := state.Commitment()
-	if e != nil {
-		log.Fatal(e)
-	}
-	prepared, err = credit.PrepareCreate(c, credit.CreateParams{
-		Token:            token,
-		Owner:            publicWallet.OwnerAddress(),
-		RevocationShard:  allocation.Shard,
-		RevocationSlot:   allocation.Slot,
-		CreditCommitment: common.Hash(commitment.Bytes()),
-		Deadline:         deadline,
-	}, ds, state)
-	log.Printf("Retain original revocation reference: owner=%s token=%s shard=%d slot=%d", publicWallet.OwnerAddress(), token, allocation.Shard, allocation.Slot)
-
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	// Keep Credit inventory and cross-role grant reservations separate from spendable Notes.
 	creditSession, err := managed.Credit()
 	if err != nil {
 		log.Fatal(err)
 	}
-	operation, err := creditSession.Prepare(ctx, *operationID, prepared)
+	operation, err := creditSession.PrepareCreate(ctx, *operationID, credit.CreatePreparation{
+		TokenAddress: token, Spender: *spenderAddress, Expiry: head.Time + 7*86400,
+		AvailableCredit: big.NewInt(*available), Unlimited: *unlimited,
+		SingleLimit: primitives.ElementFromUint64(100), DailyLimit: primitives.ElementFromUint64(1000), MonthlyLimit: primitives.ElementFromUint64(10000),
+	})
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	state, err := store.ReadSnapshot(ctx, managed.Scope())
+	if err != nil {
+		log.Fatal(err)
+	}
+	created := state.PostpaidCredit.Operations[*operationID].Intent.Create
+	log.Printf("Retain original revocation reference: owner=%s token=%s shard=%d slot=%d", created.Owner, created.Token, created.RevocationShard, created.RevocationSlot)
 
 	// Export the owner/spender request only after the managed Credit session validates current chain state.
 	authorization, err := operation.ExportSigningRequest(ctx)

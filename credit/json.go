@@ -58,7 +58,7 @@ func (p *Policy) UnmarshalJSON(raw []byte) error {
 	return nil
 }
 func (s State) MarshalJSON() ([]byte, error) {
-	values := map[string]string{"chainId": s.ChainID.String(), "protocolAddress": s.ProtocolAddress.String(), "tokenAddress": s.TokenAddress.String(), "spenderWalletIdentity": s.SpenderWalletIdentity.String(), "ownerWalletIdentity": s.OwnerWalletIdentity.String(), "revocationShard": s.RevocationShard.String(), "revocationSlot": s.RevocationSlot.String(), "nonce": s.Nonce.String(), "expiry": s.Expiry.String(), "creditSharedKey": s.SharedKey.String(), "availableCredit": s.AvailableCredit.String()}
+	values := map[string]string{"chainId": s.ChainID.String(), "protocolAddress": s.ProtocolAddress.String(), "tokenAddress": s.TokenAddress.String(), "spenderWalletIdentity": s.SpenderWalletIdentity.String(), "ownerWalletIdentity": s.OwnerWalletIdentity.String(), "revocationShard": s.RevocationShard.String(), "revocationSlot": s.RevocationSlot.String(), "nonce": s.Nonce.String(), "expiry": s.Expiry.String(), "creditSharedKey": s.CreditSharedKey.String(), "availableCredit": s.AvailableCredit.String()}
 	for i, k := range []string{"singleLimit", "dailyLimit", "monthlyLimit"} {
 		values[k] = s.Policy.Fields()[i].String()
 	}
@@ -89,7 +89,7 @@ func (s *State) UnmarshalJSON(raw []byte) error {
 	if err != nil {
 		return err
 	}
-	next := State{ProtocolContext: primitives.ProtocolContext{ChainID: v["chainId"], ProtocolAddress: v["protocolAddress"]}, TokenAddress: v["tokenAddress"], SpenderWalletIdentity: v["spenderWalletIdentity"], OwnerWalletIdentity: v["ownerWalletIdentity"], RevocationShard: v["revocationShard"], RevocationSlot: v["revocationSlot"], Nonce: v["nonce"], Expiry: v["expiry"], SharedKey: v["creditSharedKey"], Policy: Policy{v["singleLimit"], v["dailyLimit"], v["monthlyLimit"]}, AvailableCredit: v["availableCredit"], Unlimited: *envelope.Unlimited, Usage: Usage{v["lastDay"], v["dailySpent"], v["lastMonth"], v["monthlySpent"], v["totalSpent"]}, Payload: append([]byte(nil), envelope.Payload...)}
+	next := State{ProtocolContext: primitives.ProtocolContext{ChainID: v["chainId"], ProtocolAddress: v["protocolAddress"]}, TokenAddress: v["tokenAddress"], SpenderWalletIdentity: v["spenderWalletIdentity"], OwnerWalletIdentity: v["ownerWalletIdentity"], RevocationShard: v["revocationShard"], RevocationSlot: v["revocationSlot"], Nonce: v["nonce"], Expiry: v["expiry"], CreditSharedKey: v["creditSharedKey"], Policy: Policy{v["singleLimit"], v["dailyLimit"], v["monthlyLimit"]}, AvailableCredit: v["availableCredit"], Unlimited: *envelope.Unlimited, Usage: Usage{v["lastDay"], v["dailySpent"], v["lastMonth"], v["monthlySpent"], v["totalSpent"]}, Payload: append([]byte(nil), envelope.Payload...)}
 	if err = next.Validate(); err != nil {
 		return err
 	}
@@ -173,6 +173,7 @@ func (i *Intent) UnmarshalJSON(raw []byte) error {
 }
 
 type changeJSON struct {
+	Payload                 []byte
 	Policy                  Policy
 	Expiry                  string
 	Unlimited               *bool `json:",omitempty"`
@@ -181,7 +182,7 @@ type changeJSON struct {
 }
 
 func (c Change) MarshalJSON() ([]byte, error) {
-	return json.Marshal(changeJSON{c.Policy, c.Expiry.String(), c.Unlimited, c.IncreaseAvailableCredit.String(), c.DecreaseAvailableCredit.String()})
+	return json.Marshal(changeJSON{c.Payload, c.Policy, c.Expiry.String(), c.Unlimited, c.IncreaseAvailableCredit.String(), c.DecreaseAvailableCredit.String()})
 }
 func (c *Change) UnmarshalJSON(raw []byte) error {
 	var v changeJSON
@@ -200,6 +201,6 @@ func (c *Change) UnmarshalJSON(raw []byte) error {
 	if err != nil {
 		return err
 	}
-	*c = Change{v.Policy, expiry, v.Unlimited, inc, dec}
+	*c = Change{v.Payload, v.Policy, expiry, v.Unlimited, inc, dec}
 	return nil
 }

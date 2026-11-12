@@ -41,6 +41,7 @@ func main() {
 	address := flag.String("wallet-address", "", "public long receiving address")
 	recipient := flag.String("recipient", "", "recipient receiving address")
 	tokenText := flag.String("token", "0x2222222222222222222222222222222222222222", "token contract")
+	finalityTimeout := flag.Duration("finality-timeout", 2*time.Minute, "independent native finality deadline")
 	execute := flag.Bool("execute", false, "run this phase")
 	reprove := flag.Bool("reprove", false, "regenerate Source evidence with updated trusted roots/generation")
 	resume := flag.Bool("resume", false, "resume the original saved operation")
@@ -69,7 +70,7 @@ func main() {
 		accepted := must(sdk.SubmitProvenanceProof(ctx, source, packet))
 		log.Printf("Source submission: %+v", accepted)
 		tracking := must(provenance.TrackingFromResult(accepted, ""))
-		log.Printf("Source recognition: %+v", must(source.WaitTracking(ctx, tracking.ID, 2*time.Second, 2*time.Minute)))
+		log.Printf("Source recognition: %+v", must(source.WaitTracking(context.Background(), tracking.ID, 2*time.Second, 2*time.Minute)))
 		return
 	}
 	publicWallet := must(sdk.WalletFromAddress(*address))
@@ -112,10 +113,7 @@ func main() {
 		}
 		tx := must(managed.SendTransaction(ctx, ready))
 		log.Printf("Main transaction: %s", tx.Hash())
-		receipt := must(bind.WaitMined(ctx, provider, tx))
-		if receipt.Status != 1 {
-			log.Fatal("main transaction reverted; retain the original operation record")
-		}
+		log.Printf("Native finality: %+v", must(shared.WaitNativeFinality(context.Background(), provider, tx.Hash(), *finalityTimeout)))
 		log.Printf("Restart with --resume --operation-id %s", ready.ID())
 		return
 	}
@@ -144,5 +142,5 @@ func main() {
 	if tracking.OperationDigest != packet.OperationDigest {
 		log.Fatal("Source tracking digest mismatch")
 	}
-	log.Printf("Source recognition: %+v", must(source.Client.WaitTracking(ctx, tracking.ID, 2*time.Second, 2*time.Minute)))
+	log.Printf("Source recognition: %+v", must(source.Client.WaitTracking(context.Background(), tracking.ID, 2*time.Second, 2*time.Minute)))
 }

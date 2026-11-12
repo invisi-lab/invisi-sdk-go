@@ -28,6 +28,8 @@ func main() {
 	address := flag.String("wallet-address", "", "public long receiving address")
 	recipient := flag.String("recipient", "", "recipient receiving address")
 	tokenText := flag.String("token", "0x2222222222222222222222222222222222222222", "token contract")
+	feeText := flag.String("max-fee", "1", "maximum Broadcaster fee in token base units")
+	finalityTimeout := flag.Duration("finality-timeout", 2*time.Minute, "independent native finality deadline")
 	execute := flag.Bool("execute", false, "discover, prepare and prove")
 	submit := flag.Bool("submit", false, "explicitly send the payment")
 	flag.Parse()
@@ -50,7 +52,10 @@ func main() {
 	_ = must(pending.Decrypt(ctx, shared.AppDeliveryDecryptor{}))
 	token := common.HexToAddress(*tokenText)
 	balance := must(managed.Balance(ctx, token))
-	maxFee := big.NewInt(1)
+	maxFee, ok := new(big.Int).SetString(*feeText, 10)
+	if !ok || maxFee.Sign() < 0 {
+		log.Fatal("--max-fee must be a nonnegative integer")
+	}
 	if balance.AvailableKnown == nil || balance.AvailableKnown.Cmp(big.NewInt(2)) <= 0 {
 		log.Fatal("fund and recognize Notes first; leave funds for fees")
 	}
@@ -75,6 +80,6 @@ func main() {
 	log.Printf("Broadcaster result: %+v", submitted)
 	// Inclusion and finality are independent; this reads the configured Chain RPC.
 	if submitted.TransactionHash != "" {
-		log.Printf("Native confirmation: %+v", must(ready.GetConfirmation(ctx)))
+		log.Printf("Native confirmation: %+v", must(shared.WaitNativeFinality(context.Background(), provider, common.HexToHash(submitted.TransactionHash), *finalityTimeout)))
 	}
 }

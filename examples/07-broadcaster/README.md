@@ -8,9 +8,11 @@ These flat walkthroughs use the same managed transfer path. Configure public dep
 | `02-pre-submit-provenance` | Prove the main payment, independently prove and submit Source evidence, verify its allowed tracking acknowledgement, then optionally send the unchanged payment with a geth signer. |
 | `03-recover-and-submit-provenance` | Persist an ordinary main payment in the encrypted journal, send it, restart without an account key, reconcile canonical confirmation and generate/submit Source evidence. Optionally export or submit a standalone public proof packet. |
 
-Source uses `https://provenance.invisipay.fi`. Its trust context contains chain/protocol, generation, provider and signing keys; no policy selector exists. Obtain the generation/provider/signing-key pins through an authenticated operator channel, then set `PROVENANCE_GENERATION`, `PROVENANCE_PROVIDER_ID`, `PROVENANCE_SIGNING_KEY_ID` (32-byte hex) and `PROVENANCE_SIGNING_PUBLIC_KEY` (raw Ed25519 hex). Production key rotation uses the verified history APIs in [PROVENANCE.md](../../PROVENANCE.md).
+Source defaults to scoped official HTTPS bootstrap at `https://provenance.invisipay.fi`: chain/protocol, release manifest, generation and signed key-rotation history are checked, then identity is pinned for the client instance. No policy selector exists. Private deployments retain explicit authenticated trust: set `PROVENANCE_ENDPOINT`, `PROVENANCE_GENERATION`, `PROVENANCE_PROVIDER_ID`, `PROVENANCE_SIGNING_KEY_ID` and `PROVENANCE_SIGNING_PUBLIC_KEY` together. An endpoint alone never establishes private trust.
 
-Synchronize authenticated artifacts with `python3 scripts/sync-provenance.py ../invisi-protocol`. Set `PROVENANCE_ASSET_ROOT` if different from `.cache/provenance`, and set `NOIR_EXECUTOR` and `BB_BINARY` to trusted local executables. Main and Source proofs run locally and are independently verified. Source replay is bounded to ten directory pages and 100,000 leaves.
+The native prover automatically composes local Source proving with all seven authenticated packaged circuits. Set `NOIR_EXECUTOR` and `BB_BINARY` to trusted local executables. An explicit `PROVENANCE_ASSET_ROOT` selects an authenticated local asset override. Main and Source proofs run locally and are independently verified. Source replay is bounded to ten directory pages and 100,000 leaves.
+
+Example 01 accepts `--max-fee` in token base units. All three examples accept `--finality-timeout` (default two minutes); native finalized confirmation is awaited with an independent bounded deadline. Source tracking has its own bounded wait and never authorizes resubmission on timeout.
 
 ```sh
 export OWNER_PRIVATE_KEY='<Note owner EVM key>'

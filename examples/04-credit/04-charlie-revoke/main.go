@@ -6,7 +6,6 @@ import (
 	"database/sql"
 	"flag"
 	"log"
-	"math/big"
 	"os"
 
 	"github.com/invisi-lab/invisi-sdk-go/examples/shared"
@@ -14,7 +13,6 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/invisi-lab/invisi-sdk-go/credit"
-	"github.com/invisi-lab/invisi-sdk-go/primitives"
 	"github.com/invisi-lab/invisi-sdk-go/prover/native"
 	"github.com/invisi-lab/invisi-sdk-go/sdk"
 	walletsession "github.com/invisi-lab/invisi-sdk-go/session"
@@ -105,39 +103,14 @@ func main() {
 	}
 
 	token := common.HexToAddress(*tokenText)
-	head, err := provider.HeaderByNumber(ctx, nil)
-	if err != nil {
-		log.Fatal(err)
-	}
-	coreContext := primitives.ProtocolContext{
-		ChainID:         primitives.ElementFromUint64(pool.Context().ChainID),
-		ProtocolAddress: primitives.BigIntToElement(pool.Context().ProtocolAddress.Big()),
-	}
-	c := credit.Context{ProtocolContext: coreContext, TokenAddress: token, Timestamp: head.Time}
-	deadline := new(big.Int).SetUint64(head.Time + 300)
-	var prepared *credit.Prepared
 	if *slot > 65535 {
 		log.Fatal("slot exceeds uint16")
 	}
-
-	prepared, err = credit.PrepareRevoke(c, credit.RevokeParams{
-		Token:    token,
-		Owner:    publicWallet.OwnerAddress(),
-		Shard:    *shard,
-		Slot:     uint16(*slot),
-		Deadline: deadline,
-	})
-
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	// Keep Credit inventory and cross-role grant reservations separate from spendable Notes.
 	creditSession, err := managed.Credit()
 	if err != nil {
 		log.Fatal(err)
 	}
-	operation, err := creditSession.Prepare(ctx, *operationID, prepared)
+	operation, err := creditSession.PrepareRevoke(ctx, *operationID, credit.RevokePreparation{TokenAddress: token, Shard: *shard, Slot: uint16(*slot)})
 	if err != nil {
 		log.Fatal(err)
 	}

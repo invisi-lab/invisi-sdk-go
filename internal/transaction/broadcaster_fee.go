@@ -38,7 +38,10 @@ func SetPlanFee(p *Plan, r common.Address, f *big.Int) {
 }
 
 func (o *Execution) ApplyBroadcasterFee(ctx context.Context, base Plan, recipient common.Address, fee *big.Int, opt WithBroadcasterOptions) error {
-	if base.Kind != "shield" && opt.FeeSource != BroadcasterFeePublicFunding && (base.Funding.Amount == nil || base.Funding.Amount.Sign() == 0 || opt.FeeSource == BroadcasterFeePrivateInputs) {
+	_, previousFee := PlanFee(base)
+	requestedFee := new(big.Int).Set(fee)
+	fee = new(big.Int).Sub(fee, previousFee)
+	if fee.Sign() > 0 && base.Kind != "shield" && opt.FeeSource != BroadcasterFeePublicFunding && (base.Funding.Amount == nil || base.Funding.Amount.Sign() == 0 || opt.FeeSource == BroadcasterFeePrivateInputs) {
 		var err error
 		base, err = o.ExtendBroadcasterInputs(ctx, base, fee)
 		if err != nil {
@@ -50,8 +53,34 @@ func (o *Execution) ApplyBroadcasterFee(ctx context.Context, base Plan, recipien
 		return e
 	}
 	o.Plan = p
-	SetPlanFee(&o.Plan, recipient, fee)
+	SetPlanFee(&o.Plan, recipient, requestedFee)
 
+	if fee.Sign() < 0 && p.Kind == "transact" && opt.FeeSource != BroadcasterFeePublicFunding {
+		hasChange := false
+		for _, out := range p.Outputs {
+			if out.Change {
+				hasChange = true
+				break
+			}
+		}
+		if !hasChange {
+			address, e := o.Runtime.Wallet.GetAddress()
+			if e != nil {
+				return e
+			}
+			if o.Runtime.ChangeAddress != "" {
+				address = o.Runtime.ChangeAddress
+			}
+			out, e := o.Runtime.ChangeOutput(ctx, p.Context.TokenAddress, address, new(big.Int).Neg(fee))
+			if e != nil {
+				return e
+			}
+			out.Change = true
+			p.Outputs = append(p.Outputs, out)
+			o.Plan.Outputs = append(o.Plan.Outputs, out)
+			fee = new(big.Int)
+		}
+	}
 	change := -1
 	for j, out := range p.Outputs {
 		if out.Change && out.Amount.Cmp(fee) >= 0 {
@@ -61,6 +90,19 @@ func (o *Execution) ApplyBroadcasterFee(ctx context.Context, base Plan, recipien
 	}
 	if opt.FeeSource == BroadcasterFeePublicFunding {
 		change = -1
+	}
+	if change < 0 && fee.Sign() == 0 {
+		if p.Funding.Amount.Sign() > 0 && p.FundingMode != "signature" {
+			source := FundingSource{Payer: p.Funding.Payer, Amount: new(big.Int).Set(p.Funding.Amount), Authorization: "signature"}
+			if p.Funding.Permit.Deadline != nil && p.Funding.Permit.Deadline.Sign() > 0 {
+				source.Permit = &p.Funding.Permit
+			}
+			o.Plan.Funding, o.Plan.FundingMode, e = o.Runtime.Funding(ctx, &source, p.Block, p.Deadline)
+			if e != nil {
+				return e
+			}
+		}
+		return nil
 	}
 	if change < 0 && opt.FeeSource == BroadcasterFeePrivateInputs {
 		return errors.New("insufficient existing private change for fee")
@@ -118,6 +160,9 @@ func (o *Execution) ApplyBroadcasterFee(ctx context.Context, base Plan, recipien
 		return nil
 	}
 	gross := new(big.Int).Add(p.Funding.Amount, fee)
+	if gross.Sign() <= 0 {
+		return errors.New("public funding fee replacement must leave positive funding")
+	}
 	payer := p.Funding.Payer
 	if payer == (common.Address{}) {
 		return errors.New("public funding fee requires an explicit payer")

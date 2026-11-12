@@ -105,7 +105,7 @@ func (s *WalletSession) RefreshState(ctx context.Context) error {
 		return e
 	}
 	for _, r := range snapshot.Operations {
-		if !r.Externalized || r.TransactionHash == (common.Hash{}) || r.Status == "confirmed" || r.Status == "cancelled" || r.Status == "reverted" {
+		if !r.Externalized || r.TransactionHash == (common.Hash{}) || r.Status == "confirmed" || r.Status == "reverted" {
 			continue
 		}
 		var plan transaction.Plan

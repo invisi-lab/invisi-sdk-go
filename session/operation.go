@@ -172,13 +172,27 @@ func (o *Operation) Abandon(ctx context.Context) error {
 	if e := o.checkLease(ctx); e != nil {
 		return e
 	}
-	if o.status != "prepared" {
-		return errors.New("only an unexternalized prepared operation can be abandoned")
+	worker, err := transaction.RandomOperationID()
+	if err != nil {
+		return err
 	}
 	e := o.session.options.Store.Update(ctx, o.session.scope, func(state *WalletState) error {
-		if record, ok := state.Operations[o.plan.ID]; !ok || record.WorkerID != o.workerID {
+		record, ok := state.Operations[o.plan.ID]
+		if !ok || record.WorkerID != o.workerID {
 			return errors.New("operation worker replaced")
 		}
+		if state.Invalidated {
+			return errors.New("wallet requires reset refresh")
+		}
+		if record.Externalized || record.TransactionHash != (common.Hash{}) {
+			return errors.New("externalized operation requires chain reconciliation")
+		}
+		switch record.Status {
+		case "prepared", "authorized", "ready":
+		default:
+			return errors.New("operation cannot be abandoned in its current state")
+		}
+
 		for hash, n := range state.Notes {
 			if n.ReservedBy == o.plan.ID {
 				n.ReservedBy = ""
@@ -186,13 +200,18 @@ func (o *Operation) Abandon(ctx context.Context) error {
 			}
 		}
 
-		record := state.Operations[o.plan.ID]
 		record.Status = "failed"
+		record.WorkerID = worker
+		record.Proof = nil
+		record.CallData = nil
 		state.Operations[o.plan.ID] = record
 		return nil
 	})
 	if e == nil {
 		o.status = "failed"
+		o.authorization = nil
+		o.bundle = nil
+		o.data = nil
 	}
 	return e
 }

@@ -38,3 +38,5 @@ type ProvenanceProveOptions = transaction.ProvenanceProveOptions
 type TransferPreparation = transaction.TransferPreparation
 
 type Withdrawal = transaction.Withdrawal
+
+type Fee = transaction.Fee

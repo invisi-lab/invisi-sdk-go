@@ -122,7 +122,7 @@ func TestCreditQuoteFreezesFeeBeforeAuthorization(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if quoted.Create.FeeRecipient != collector || quoted.Create.FeeAmount.Cmp(big.NewInt(1)) != 0 || quoted.Create.CreditCommitment != p.CreditCommitment || quoted.CreatedState.SharedKey != s.SharedKey {
+	if quoted.Create.FeeRecipient != collector || quoted.Create.FeeAmount.Cmp(big.NewInt(1)) != 0 || quoted.Create.CreditCommitment != p.CreditCommitment || quoted.CreatedState.CreditSharedKey != s.CreditSharedKey {
 		t.Fatal("quote changed grant or omitted fee")
 	}
 }
@@ -158,7 +158,7 @@ func TestCreditRequiredPolicyQuoteWithoutSourceProver(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if quoted.Create.FeeRecipient != collector || quoted.Create.FeeAmount.Cmp(big.NewInt(1)) != 0 || quoted.Create.CreditCommitment != p.CreditCommitment || quoted.CreatedState.SharedKey != s.SharedKey {
+	if quoted.Create.FeeRecipient != collector || quoted.Create.FeeAmount.Cmp(big.NewInt(1)) != 0 || quoted.Create.CreditCommitment != p.CreditCommitment || quoted.CreatedState.CreditSharedKey != s.CreditSharedKey {
 		t.Fatal("quote changed grant or omitted fee")
 	}
 }

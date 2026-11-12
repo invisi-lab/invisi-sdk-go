@@ -30,7 +30,7 @@ func TestPreparedCreateFreezesStateAndRequiresProof(t *testing.T) {
 	}
 	p.Deadline.SetUint64(1)
 	ds[0].Ciphertext[0] = 0
-	s.SharedKey = primitives.ElementFromUint64(999)
+	s.CreditSharedKey = primitives.ElementFromUint64(999)
 	typed, err := prepared.SigningRequest()
 	if err != nil {
 		t.Fatal(err)

@@ -1,12 +1,17 @@
 package shared
 
 import (
+	"context"
 	"crypto/ed25519"
 	"encoding/hex"
 	"fmt"
+	"github.com/ethereum/go-ethereum/common"
+	"github.com/invisi-lab/invisi-sdk-go/prover/native"
+	protocolrpc "github.com/invisi-lab/invisi-sdk-go/rpc"
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/invisi-lab/invisi-sdk-go/provenance"
 	"github.com/invisi-lab/invisi-sdk-go/sdk"
@@ -15,8 +20,16 @@ import (
 const ProvenanceEndpoint = "https://provenance.invisipay.fi"
 const ProvenanceManifestSHA256 = "6107789c5c0d24c4130bff05da6d389336feb5ccb247c4030eae5198ab05d762"
 
-// SourceClient trust comes from authenticated operator settings, never the current service response.
+// SourceClient defaults to the official HTTPS bootstrap; explicit operator pins select private trust.
 func SourceClient(pool *sdk.Protocol) (*provenance.Client, error) {
+	if os.Getenv("PROVENANCE_SIGNING_PUBLIC_KEY") == "" && os.Getenv("PROVENANCE_SIGNING_KEY_ID") == "" && os.Getenv("PROVENANCE_GENERATION") == "" && os.Getenv("PROVENANCE_PROVIDER_ID") == "" {
+		if os.Getenv("PROVENANCE_ENDPOINT") != "" {
+			return nil, fmt.Errorf("private endpoint requires authenticated Source trust pins")
+		}
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+		return (&provenance.OfficialClients{}).Get(ctx, provenance.Scope{ChainID: fmt.Sprint(pool.Context().ChainID), ProtocolAddress: pool.Context().ProtocolAddress.Hex()})
+	}
 	key, err := hex.DecodeString(strings.TrimPrefix(os.Getenv("PROVENANCE_SIGNING_PUBLIC_KEY"), "0x"))
 	if err != nil || len(key) != ed25519.PublicKeySize {
 		return nil, fmt.Errorf("set authenticated PROVENANCE_SIGNING_PUBLIC_KEY")
@@ -31,7 +44,11 @@ func SourceClient(pool *sdk.Protocol) (*provenance.Client, error) {
 			return nil, fmt.Errorf("set authenticated Source generation/provider: %w", err)
 		}
 	}
-	return &provenance.Client{Endpoint: ProvenanceEndpoint, Trust: trust}, nil
+	endpoint := os.Getenv("PROVENANCE_ENDPOINT")
+	if endpoint == "" {
+		endpoint = ProvenanceEndpoint
+	}
+	return &provenance.Client{Endpoint: endpoint, Trust: trust}, nil
 }
 
 func SourceCapability(pool *sdk.Protocol) (*sdk.ProvenanceCapability, error) {
@@ -41,7 +58,15 @@ func SourceCapability(pool *sdk.Protocol) (*sdk.ProvenanceCapability, error) {
 	}
 	assetRoot := os.Getenv("PROVENANCE_ASSET_ROOT")
 	if assetRoot == "" {
-		assetRoot = ".cache/provenance"
+		backend, err := native.NewNativeProver(native.NativeOptions{BBBinary: os.Getenv("BB_BINARY"), NoirBinary: os.Getenv("NOIR_EXECUTOR")})
+		if err != nil {
+			return nil, err
+		}
+		identity, local, err := backend.GetProvenanceCapability()
+		if err != nil {
+			return nil, err
+		}
+		return &sdk.ProvenanceCapability{Client: client, Manifest: identity, Prover: local, MaxRootPages: 10, MaxLeaves: 100000}, nil
 	}
 	manifest, err := os.ReadFile(filepath.Join(assetRoot, "manifest.json"))
 	if err != nil {
@@ -51,7 +76,16 @@ func SourceCapability(pool *sdk.Protocol) (*sdk.ProvenanceCapability, error) {
 	if err != nil {
 		return nil, err
 	}
-	local := provenance.NativeProver{NoirExecutePath: os.Getenv("NOIR_EXECUTOR"), BBPath: os.Getenv("BB_BINARY"), TrustedManifestSHA256: ProvenanceManifestSHA256, LoadAssets: func(k int) (provenance.LocalAssets, error) {
+	backend, err := native.NewNativeProver(native.NativeOptions{BBBinary: os.Getenv("BB_BINARY"), NoirBinary: os.Getenv("NOIR_EXECUTOR")})
+	if err != nil {
+		return nil, err
+	}
+	_, offline, err := backend.GetProvenanceCapability()
+	if err != nil {
+		return nil, err
+	}
+	local := offline.(provenance.NativeProver)
+	local.LoadAssets = func(k int) (provenance.LocalAssets, error) {
 		for _, entry := range identity.Manifest.Circuits {
 			if entry.Capacity == k {
 				artifact, err := os.ReadFile(filepath.Join(assetRoot, entry.Artifact))
@@ -66,6 +100,35 @@ func SourceCapability(pool *sdk.Protocol) (*sdk.ProvenanceCapability, error) {
 			}
 		}
 		return provenance.LocalAssets{}, fmt.Errorf("unsupported Source capacity")
-	}}
+	}
 	return &sdk.ProvenanceCapability{Client: client, Manifest: identity, Prover: local, MaxRootPages: 10, MaxLeaves: 100000}, nil
+}
+
+// WaitNativeFinality observes only the original hash with an independent finite deadline.
+func WaitNativeFinality(ctx context.Context, provider protocolrpc.TransactionConfirmationProvider, hash common.Hash, timeout time.Duration) (protocolrpc.TransactionConfirmation, error) {
+	if timeout <= 0 {
+		return protocolrpc.TransactionConfirmation{}, fmt.Errorf("positive finality timeout required")
+	}
+	ctx, cancel := context.WithTimeout(ctx, timeout)
+	defer cancel()
+	for {
+		confirmation := protocolrpc.ReadTransactionConfirmation(ctx, provider, hash)
+		if confirmation.Level == "finalized" && confirmation.Status == protocolrpc.FinalityAvailable {
+			receipt, err := provider.TransactionReceipt(ctx, hash)
+			if err != nil {
+				return confirmation, err
+			}
+			if receipt == nil || receipt.Status != 1 || confirmation.Block == nil || receipt.BlockHash != confirmation.Block.Hash {
+				return confirmation, fmt.Errorf("original payment failed or changed after finality observation")
+			}
+			return confirmation, nil
+		}
+		timer := time.NewTimer(2 * time.Second)
+		select {
+		case <-ctx.Done():
+			timer.Stop()
+			return confirmation, ctx.Err()
+		case <-timer.C:
+		}
+	}
 }

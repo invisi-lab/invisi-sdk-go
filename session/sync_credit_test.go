@@ -25,7 +25,7 @@ import (
 )
 
 func syncGrantState() credit.State {
-	return credit.State{AvailableCredit: primitives.ElementFromUint64(400), ProtocolContext: primitives.ProtocolContext{ChainID: primitives.ElementFromUint64(31337), ProtocolAddress: primitives.ElementFromUint64(17)}, TokenAddress: primitives.ElementFromUint64(34), OwnerWalletIdentity: primitives.ElementFromUint64(1), SpenderWalletIdentity: primitives.ElementFromUint64(2), RevocationShard: primitives.ElementFromUint64(1), Nonce: primitives.ElementFromUint64(3), Expiry: primitives.ElementFromUint64(2000000000), SharedKey: primitives.ElementFromUint64(4)}
+	return credit.State{AvailableCredit: primitives.ElementFromUint64(400), ProtocolContext: primitives.ProtocolContext{ChainID: primitives.ElementFromUint64(31337), ProtocolAddress: primitives.ElementFromUint64(17)}, TokenAddress: primitives.ElementFromUint64(34), OwnerWalletIdentity: primitives.ElementFromUint64(1), SpenderWalletIdentity: primitives.ElementFromUint64(2), RevocationShard: primitives.ElementFromUint64(1), Nonce: primitives.ElementFromUint64(3), Expiry: primitives.ElementFromUint64(2000000000), CreditSharedKey: primitives.ElementFromUint64(4)}
 }
 func TestRefreshRestoresUnresolvedCreditReservationsForBothRoles(t *testing.T) {
 	grant := syncGrantState()

@@ -12,6 +12,7 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 
+	"github.com/invisi-lab/invisi-sdk-go/credit"
 	"github.com/invisi-lab/invisi-sdk-go/primitives"
 	"github.com/invisi-lab/invisi-sdk-go/protocol"
 	protocolrpc "github.com/invisi-lab/invisi-sdk-go/rpc"
@@ -26,7 +27,24 @@ type FundingSource struct {
 	Permit        *protocol.TokenPermit
 }
 
+type Fee = credit.Fee
+
+func normalizePublicFee(input *Fee) (Fee, error) {
+	fee := Fee{Amount: new(big.Int)}
+	if input != nil {
+		fee.Recipient = input.Recipient
+		if input.Amount != nil {
+			fee.Amount.Set(input.Amount)
+		}
+	}
+	if fee.Amount.Sign() < 0 || fee.Amount.BitLen() > 128 || (fee.Recipient == (common.Address{})) != (fee.Amount.Sign() == 0) {
+		return Fee{}, errors.New("fee requires a nonzero recipient and positive uint128 amount, or an empty zero pair")
+	}
+	return fee, nil
+}
+
 type ShieldPreparation struct {
+	Fee          *Fee
 	TokenAddress common.Address
 	Outputs      []NoteOutput
 	Funding      FundingSource
@@ -34,6 +52,7 @@ type ShieldPreparation struct {
 }
 
 type TransferPreparation struct {
+	Fee          *Fee
 	TokenAddress common.Address
 	Outputs      []NoteOutput
 	Funding      *FundingSource
@@ -167,6 +186,10 @@ func (s *Runtime) PrepareFunds(ctx context.Context, p TransferPreparation, withd
 	if e != nil {
 		return nil, e
 	}
+	fee, e := normalizePublicFee(p.Fee)
+	if e != nil {
+		return nil, e
+	}
 	target := "evm"
 	total := new(big.Int)
 	for index, out := range p.Outputs {
@@ -184,6 +207,7 @@ func (s *Runtime) PrepareFunds(ctx context.Context, p TransferPreparation, withd
 		withdrawAmount = new(big.Int).Set(withdrawAmount)
 	}
 	total.Add(total, withdrawAmount)
+	total.Add(total, fee.Amount)
 	need := new(big.Int).Sub(total, funding.Amount)
 	if need.Sign() < 0 {
 		return nil, errors.New("funding exceeds selected outputs")
@@ -227,7 +251,7 @@ func (s *Runtime) PrepareFunds(ctx context.Context, p TransferPreparation, withd
 	if e != nil {
 		return nil, e
 	}
-	params := protocol.CrossTreeTransactParams{Token: p.TokenAddress, WithdrawalAddress: withdrawal, WithdrawalAmount: withdrawAmount, Deadline: new(big.Int).SetUint64(deadline)}
+	params := protocol.CrossTreeTransactParams{FeeRecipient: fee.Recipient, FeeAmount: fee.Amount, Token: p.TokenAddress, WithdrawalAddress: withdrawal, WithdrawalAmount: withdrawAmount, Deadline: new(big.Int).SetUint64(deadline)}
 	roots := map[uint64]common.Hash{}
 	for i, n := range inputs {
 		params.Nullifiers = append(params.Nullifiers, n.Nullifier)
@@ -248,7 +272,7 @@ func (s *Runtime) PrepareFunds(ctx context.Context, p TransferPreparation, withd
 	for _, out := range outputs {
 		params.NoteCommitments = append(params.NoteCommitments, out.Commitment)
 	}
-	plan := Plan{Kind: "transact", Target: target, Context: c, Block: block, Deadline: deadline, Inputs: inputs, Memberships: memberships, Outputs: outputs, Funding: funding, FundingMode: mode, Params: params, Capacity: capacity, NeedsAuthorization: len(inputs) > 0 && !(withdrawal == s.Wallet.ownerAddress && withdrawAmount.Cmp(sum) == 0 && len(outputs) == 0 && funding.Amount.Sign() == 0)}
+	plan := Plan{Kind: "transact", Target: target, Context: c, Block: block, Deadline: deadline, Inputs: inputs, Memberships: memberships, Outputs: outputs, Funding: funding, FundingMode: mode, Params: params, Capacity: capacity, NeedsAuthorization: len(inputs) > 0 && !(withdrawal == s.Wallet.ownerAddress && withdrawAmount.Cmp(sum) == 0 && len(outputs) == 0 && funding.Amount.Sign() == 0 && fee.Amount.Sign() == 0)}
 	return s.PersistPlan(ctx, plan)
 }
 
@@ -259,7 +283,7 @@ func (s *Runtime) PrepareTransfer(ctx context.Context, p TransferPreparation) (r
 	if err != nil {
 		return nil, err
 	}
-	if len(p.Outputs) == 0 && p.Withdrawal == nil {
+	if len(p.Outputs) == 0 && p.Withdrawal == nil && p.Fee == nil {
 		return nil, errors.New("transfer requires an output or withdrawal")
 	}
 	var to common.Address
@@ -289,7 +313,11 @@ func (s *Runtime) PrepareShield(ctx context.Context, p ShieldPreparation) (resul
 	if len(p.Outputs) < 1 || len(p.Outputs) > 10 {
 		return nil, errors.New("shield requires 1..10 outputs")
 	}
-	plan := Plan{Kind: "shield", Context: c, Block: block, Deadline: deadline, Funding: funding, FundingMode: mode, Shield: protocol.ShieldParams{Token: p.TokenAddress, Deadline: new(big.Int).SetUint64(deadline)}}
+	fee, e := normalizePublicFee(p.Fee)
+	if e != nil {
+		return nil, e
+	}
+	plan := Plan{Kind: "shield", Context: c, Block: block, Deadline: deadline, Funding: funding, FundingMode: mode, Shield: protocol.ShieldParams{FeeRecipient: fee.Recipient, FeeAmount: fee.Amount, Token: p.TokenAddress, Deadline: new(big.Int).SetUint64(deadline)}}
 	sum := new(big.Int)
 	plan.Outputs, e = MapPreparation(ctx, len(p.Outputs), func(ctx context.Context, index int) (PreparedOutput, error) {
 		out := p.Outputs[index]
@@ -306,8 +334,9 @@ func (s *Runtime) PrepareShield(ctx context.Context, p ShieldPreparation) (resul
 		plan.Shield.NoteCommitments = append(plan.Shield.NoteCommitments, out.Commitment)
 		sum.Add(sum, out.Amount)
 	}
+	sum.Add(sum, fee.Amount)
 	if sum.Cmp(funding.Amount) != 0 {
-		return nil, errors.New("shield funding must equal output sum")
+		return nil, errors.New("shield funding must equal output sum plus fee")
 	}
 	return s.PersistPlan(ctx, plan)
 }

@@ -19,6 +19,13 @@ func (s *WalletSession) Resume(ctx context.Context, id string) (*Operation, erro
 		if !ok {
 			return errors.New("unknown operation")
 		}
+		if !record.Externalized {
+			switch record.Status {
+			case "failed", "expired", "confirmed", "reverted":
+				return errors.New("local terminal operation cannot be resumed")
+			}
+		}
+
 		var plan transaction.Plan
 		if err := json.Unmarshal(record.Plan, &plan); err != nil {
 			return err

@@ -29,6 +29,10 @@ type InvisiOptions struct {
 type Invisi struct{ options InvisiOptions }
 
 func NewInvisi(options InvisiOptions) *Invisi {
+	if options.Provenance == nil {
+		options.Provenance = &ProvenanceCapability{}
+	}
+	options.Provenance = options.Provenance.withOfficialDefaults()
 	return &Invisi{options}
 }
 

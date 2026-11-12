@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"github.com/ethereum/go-ethereum/common"
+	protocolrpc "github.com/invisi-lab/invisi-sdk-go/rpc"
 )
 
 func (s *WalletSession) recordStore() (RecordWalletStore, bool) {
@@ -21,13 +22,13 @@ func (s *WalletSession) metadataSnapshot(ctx context.Context) (WalletState, erro
 	return s.options.Store.ReadSnapshot(ctx, s.scope)
 }
 func (s *WalletSession) fullHistorySnapshot(ctx context.Context) (WalletState, error) {
-	v, e := s.options.Store.ReadSnapshot(ctx, s.scope)
+	v, e := s.fencedSnapshot(ctx)
 	if e != nil {
 		return v, e
 	}
 	r, ok := s.recordStore()
 	if !ok || v.Records.Version == 0 {
-		return v, nil
+		return s.fenceHistoryState(ctx, v)
 	}
 	for _, kind := range []string{"notes", "credits", "operations", "credit-operations"} {
 		q := RecordQuery{Kind: kind, Limit: 256}
@@ -57,7 +58,7 @@ func (s *WalletSession) fullHistorySnapshot(ctx context.Context) (WalletState, e
 	if end.Revision != v.Revision {
 		return v, errors.New("wallet changed during full history read")
 	}
-	return v, nil
+	return s.fenceHistoryState(ctx, v)
 }
 
 type HistoryPageOptions struct {
@@ -67,14 +68,16 @@ type HistoryPageOptions struct {
 	TokenAddress *common.Address
 }
 type HistoryPageItem struct {
-	Entry     any
-	Archived  bool
-	Canonical string
+	Entry     any    `json:"entry"`
+	Archived  bool   `json:"archived"`
+	Canonical string `json:"canonical"`
 }
 type WalletHistoryPage struct {
-	Items      []HistoryPageItem
-	NextCursor string
-	Revision   uint64
+	Items          []HistoryPageItem           `json:"items"`
+	NextCursor     string                      `json:"nextCursor,omitempty"`
+	Revision       uint64                      `json:"revision"`
+	CheckedThrough *protocolrpc.CanonicalBlock `json:"checkedThrough"`
+	Invalidated    bool                        `json:"invalidated"`
 }
 
 func (s *WalletSession) GetHistoryPage(ctx context.Context, o HistoryPageOptions) (WalletHistoryPage, error) {
@@ -88,18 +91,34 @@ func (s *WalletSession) GetHistoryPage(ctx context.Context, o HistoryPageOptions
 	} else if o.Direction != "incoming" {
 		return WalletHistoryPage{}, errors.New("history direction must be incoming or outgoing")
 	}
+	summary, e := s.metadataSnapshot(ctx)
+	if e != nil {
+		return WalletHistoryPage{}, e
+	}
+	summary, e = s.fenceHistoryState(ctx, summary)
+	if e != nil {
+		return WalletHistoryPage{}, e
+	}
 	p, e := store.ReadRecords(ctx, s.scope, RecordQuery{Kind: kind, Limit: o.Limit, Cursor: o.Cursor})
 	if e != nil {
 		return WalletHistoryPage{}, e
 	}
-	public, e := s.publicHistory.Snapshot(ctx)
+	end, e := s.metadataSnapshot(ctx)
 	if e != nil {
 		return WalletHistoryPage{}, e
 	}
-	out := WalletHistoryPage{Items: []HistoryPageItem{}, NextCursor: p.NextCursor, Revision: p.Revision}
+	if p.Revision != summary.Revision || end.Revision != summary.Revision {
+		return WalletHistoryPage{}, errors.New("wallet history changed; restart pagination")
+	}
+	summary.Invalidated = summary.Invalidated || end.Invalidated
+	summary, e = s.fenceHistoryState(ctx, summary)
+	if e != nil {
+		return WalletHistoryPage{}, e
+	}
+	out := WalletHistoryPage{Items: []HistoryPageItem{}, NextCursor: p.NextCursor, Revision: p.Revision, CheckedThrough: summary.DiscoveryThrough, Invalidated: summary.Invalidated}
 	for _, r := range p.Items {
-		canonical := "canonical"
-		if r.Generation != public.Generation {
+		canonical := "current"
+		if summary.Invalidated || r.Generation != summary.Scan.Generation {
 			canonical = "unknown"
 		}
 		v := emptyState()
@@ -122,4 +141,18 @@ func (s *WalletSession) GetHistoryPage(ctx context.Context, o HistoryPageOptions
 		}
 	}
 	return out, nil
+}
+
+func (s *WalletSession) fenceHistoryState(ctx context.Context, state WalletState) (WalletState, error) {
+	if s.publicHistory == nil {
+		return state, ctx.Err()
+	}
+	public, err := s.publicHistory.Snapshot(ctx)
+	if err != nil {
+		return state, err
+	}
+	if public.Generation != state.Scan.Generation {
+		state.Invalidated = true
+	}
+	return state, nil
 }

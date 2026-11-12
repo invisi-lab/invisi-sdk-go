@@ -32,6 +32,7 @@ func main() {
 	address := flag.String("wallet-address", "", "public long receiving address")
 	recipient := flag.String("recipient", "", "recipient receiving address")
 	tokenText := flag.String("token", "0x2222222222222222222222222222222222222222", "token contract")
+	finalityTimeout := flag.Duration("finality-timeout", 2*time.Minute, "independent native finality deadline")
 	execute := flag.Bool("execute", false, "discover, prepare and prove")
 	submit := flag.Bool("submit", false, "explicitly send the payment")
 	flag.Parse()
@@ -86,9 +87,6 @@ func main() {
 	}
 	tx := must(managed.SendTransaction(ctx, ready))
 	log.Printf("Main transaction: %s", tx.Hash())
-	receipt := must(bind.WaitMined(ctx, provider, tx))
-	if receipt.Status != 1 {
-		log.Fatal("main transaction reverted; retain the original operation record")
-	}
-	log.Printf("Source recognition: %+v", must(source.Client.WaitTracking(ctx, tracking.ID, 2*time.Second, 2*time.Minute)))
+	log.Printf("Native finality: %+v", must(shared.WaitNativeFinality(context.Background(), provider, tx.Hash(), *finalityTimeout)))
+	log.Printf("Source recognition: %+v", must(source.Client.WaitTracking(context.Background(), tracking.ID, 2*time.Second, 2*time.Minute)))
 }

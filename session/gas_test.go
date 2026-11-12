@@ -45,7 +45,7 @@ func TestManagedPreparedExactBenchmarkBeforeProof(t *testing.T) {
 	before, _ := s.options.Store.ReadSnapshot(context.Background(), s.scope)
 	result, err := op.EstimateGas()
 	after, _ := s.options.Store.ReadSnapshot(context.Background(), s.scope)
-	if err != nil || !result.Available || result.Reference == nil || *result.GasUnits == 0 || !reflect.DeepEqual(before, after) {
+	if err != nil || !result.Available || result.ReferenceID == "" || *result.GasUnits == 0 || !reflect.DeepEqual(before, after) {
 		t.Fatal(result, err)
 	}
 }

@@ -15,7 +15,6 @@ import (
 	"github.com/invisi-lab/invisi-sdk-go/credit"
 	"github.com/invisi-lab/invisi-sdk-go/examples/shared"
 	"github.com/invisi-lab/invisi-sdk-go/primitives"
-	"github.com/invisi-lab/invisi-sdk-go/protocol"
 	"github.com/invisi-lab/invisi-sdk-go/prover"
 	"github.com/invisi-lab/invisi-sdk-go/prover/native"
 	"github.com/invisi-lab/invisi-sdk-go/sdk"
@@ -106,122 +105,28 @@ func main() {
 	}
 
 	token := common.HexToAddress(*tokenText)
-	head, err := provider.HeaderByNumber(ctx, nil)
+	inventory, err := store.ReadSnapshot(ctx, managed.Scope())
 	if err != nil {
 		log.Fatal(err)
 	}
-	coreContext := primitives.ProtocolContext{
-		ChainID:         primitives.ElementFromUint64(pool.Context().ChainID),
-		ProtocolAddress: primitives.BigIntToElement(pool.Context().ProtocolAddress.Big()),
-	}
-	c := credit.Context{ProtocolContext: coreContext, TokenAddress: token, Timestamp: head.Time}
-	deadline := new(big.Int).SetUint64(head.Time + 300)
-	var prepared *credit.Prepared
-	recipientWallet, err := sdk.WalletFromAddress(*recipientAddress)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	// Reuse the encrypted inventory populated above; a second ephemeral discovery would repeat host prompts.
-	inventory, e := store.ReadSnapshot(ctx, managed.Scope())
-	if e != nil {
-		log.Fatal(e)
-	}
-	candidates, e := shared.CreditCandidates(ctx, provider, client, pool, inventory, token, credit.Spender)
-	if e != nil {
-		log.Fatal(e)
-	}
-	if len(candidates) == 0 {
-		log.Fatal("no active grants; run owner creation examples and approve the Protocol for each payer first")
-	}
-	sort.Slice(candidates, func(i, j int) bool {
-		a, b := candidates[i].Input.State, candidates[j].Input.State
-		if x := a.OwnerWalletIdentity.Cmp(&b.OwnerWalletIdentity); x != 0 {
-			return x < 0
+	members := []credit.DrawMember{}
+	for _, g := range inventory.PostpaidCredit.Grants {
+		if g.Role == credit.Spender && !g.Consumed && !g.Revoked && g.ReservedBy == "" && common.BigToAddress(primitives.ElementToBigInt(g.Delivery.State.TokenAddress)) == token {
+			members = append(members, credit.DrawMember{Credit: g.Commitment, Amount: big.NewInt(7)})
 		}
-		if x := a.RevocationShard.Cmp(&b.RevocationShard); x != 0 {
-			return x < 0
-		}
-		return a.RevocationSlot.Cmp(&b.RevocationSlot) < 0
-	})
-	if len(candidates) > 2 {
-		candidates = candidates[:2]
 	}
-	p := credit.DrawParams{Token: token, TotalAmount: new(big.Int), Deadline: deadline}
-	inputs := []credit.LocatedState{}
-	ds := []protocol.Delivery{}
-	sources := map[uint64]common.Hash{}
-
-	// Gross debits drive grant quota and usage; the ordinary output Note receives the combined net amount.
-	debit := primitives.ElementFromUint64(7)
-	for _, candidate := range candidates {
-		s := candidate.Input.State
-		if primitives.ElementToBigInt(s.Expiry).Cmp(deadline) < 0 {
-			log.Fatal("selected grant expires before request deadline")
-		}
-		owner := common.BigToAddress(primitives.ElementToBigInt(s.OwnerWalletIdentity))
-		pi := len(p.Payers) - 1
-		if pi < 0 || p.Payers[pi].Payer != owner {
-			p.Payers = append(p.Payers, credit.Payer{Payer: owner, Amount: new(big.Int)})
-			pi++
-		}
-		p.Payers[pi].Amount.Add(p.Payers[pi].Amount, big.NewInt(7))
-		next, e := s.Draw(debit, head.Time)
-		if e != nil {
-			log.Fatal(e)
-		}
-		p.GrantRefs = append(p.GrantRefs, credit.GrantRef{
-			PayerIndex: big.NewInt(int64(pi)),
-			Shard:      primitives.ElementToBigInt(s.RevocationShard).Uint64(),
-			Slot:       uint16(primitives.ElementToBigInt(s.RevocationSlot).Uint64()),
-		})
-		p.Nullifiers = append(p.Nullifiers, common.Hash(next.Nullifier.Bytes()))
-		p.CreditCommitments = append(p.CreditCommitments, common.Hash(next.StateCommitment.Bytes()))
-		p.RecoveryAmounts = append(p.RecoveryAmounts, common.Hash(next.RecoveryAmount.Bytes()))
-		p.TotalAmount.Add(p.TotalAmount, big.NewInt(7))
-		candidate.Input.Debit = debit
-		inputs = append(inputs, candidate.Input)
-		sources[candidate.Input.TreeID] = candidate.Membership.Root
-		snapshot := candidate.Delivery
-		snapshot.State = next.State
-		deliveries, e := shared.CreditDeliveries(snapshot)
-		if e != nil {
-			log.Fatal(e)
-		}
-		ds = append(ds, deliveries...)
+	sort.Slice(members, func(i, j int) bool { return members[i].Credit.Hex() < members[j].Credit.Hex() })
+	if len(members) > 2 {
+		members = members[:2]
 	}
-	ids := []uint64{}
-	for id := range sources {
-		ids = append(ids, id)
+	if len(members) == 0 {
+		log.Fatal("no active grants; create grants and approve each payer first")
 	}
-	sort.Slice(ids, func(i, j int) bool { return ids[i] < ids[j] })
-	for _, id := range ids {
-		p.Sources = append(p.Sources, protocol.InputSource{TreeId: new(big.Int).SetUint64(id), MerkleRoot: sources[id]})
-	}
-	nonce, e := primitives.GenerateNonce()
-	if e != nil {
-		log.Fatal(e)
-	}
-	note := primitives.Note{
-		ProtocolContext: coreContext,
-		OwnerAddress:    primitives.BigIntToElement(recipientWallet.OwnerAddress().Big()),
-		TokenAddress:    primitives.BigIntToElement(token.Big()),
-		Amount:          primitives.BigIntToElement(p.TotalAmount),
-		Nonce:           nonce,
-	}
-	prepared, err = credit.PrepareDrawToNote(c, p, ds, inputs, note, &primitives.ReceivingKeys{ViewingPublicKey: recipientWallet.ViewingPublicKey(), ClueKey: recipientWallet.ClueKey()})
-	log.Printf("Gross payer debit=%s; ordinary Note recipient=%s", p.TotalAmount, recipientWallet.OwnerAddress())
-
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	// Keep Credit inventory and cross-role grant reservations separate from spendable Notes.
 	creditSession, err := managed.Credit()
 	if err != nil {
 		log.Fatal(err)
 	}
-	operation, err := creditSession.Prepare(ctx, *operationID, prepared)
+	operation, err := creditSession.PrepareDraw(ctx, *operationID, credit.DrawPreparation{TokenAddress: token, Credits: members, Recipient: *recipientAddress})
 	if err != nil {
 		log.Fatal(err)
 	}

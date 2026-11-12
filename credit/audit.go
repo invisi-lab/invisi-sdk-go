@@ -50,14 +50,14 @@ func Disclose(state State) (*AuditDisclosure, error) {
 	delete(encoded.Fields, "protocolAddress")
 	delete(encoded.Fields, "tokenAddress")
 	delete(encoded.Fields, "creditSharedKey")
-	keyHash, err := primitives.Poseidon2Hash(primitives.ElementFromUint64(7), state.SharedKey)
+	keyHash, err := primitives.Poseidon2Hash(primitives.ElementFromUint64(7), state.CreditSharedKey)
 	if err != nil {
 		return nil, err
 	}
 	encoded.Fields["keyHash"] = keyHash.String()
 	flag := boolField(state.Unlimited)
 	encoded.Fields["unlimited"] = flag.String()
-	return &AuditDisclosure{AuditExport{AuditContext{state.ChainID.String(), common.BigToAddress(primitives.ElementToBigInt(state.ProtocolAddress)), common.BigToAddress(primitives.ElementToBigInt(state.TokenAddress))}, encoded.Fields, state.SharedKey.String(), common.Hash(commitment.Bytes())}}, nil
+	return &AuditDisclosure{AuditExport{AuditContext{state.ChainID.String(), common.BigToAddress(primitives.ElementToBigInt(state.ProtocolAddress)), common.BigToAddress(primitives.ElementToBigInt(state.TokenAddress))}, encoded.Fields, state.CreditSharedKey.String(), common.Hash(commitment.Bytes())}}, nil
 }
 func (d *AuditDisclosure) Export() AuditExport {
 	copy := d.material

@@ -91,3 +91,7 @@ var ErrTrackingStaleGeneration = client.ErrTrackingStaleGeneration
 var decodeFixed = public.DecodeFixed
 
 var ManifestBytes = public.ManifestBytes
+
+type OfficialClients = client.OfficialClients
+
+const DefaultEndpoint = client.DefaultEndpoint

@@ -16,6 +16,8 @@ import (
 )
 
 type Options struct {
+	WrapPreparation     func(string, error) error
+	Build               func(context.Context, any) (*credit.Prepared, error)
 	CheckPreparation    func(context.Context, PreparationEvidence) error
 	ValidatePreparation func(context.Context, PreparationEvidence) error
 	Prepare             func(context.Context, credit.Intent) (*PreparationEvidence, error)
@@ -26,6 +28,8 @@ type Options struct {
 	Context             *primitives.ProtocolContext
 }
 type Session struct {
+	wrapPreparation     func(string, error) error
+	build               func(context.Context, any) (*credit.Prepared, error)
 	checkPreparation    func(context.Context, PreparationEvidence) error
 	validatePreparation func(context.Context, PreparationEvidence) error
 	prepare             func(context.Context, credit.Intent) (*PreparationEvidence, error)
@@ -45,7 +49,7 @@ func New(options Options) (*Session, error) {
 		copy := *options.Context
 		pinned = &copy
 	}
-	return &Session{checkPreparation: options.CheckPreparation, validatePreparation: options.ValidatePreparation, store: options.Store, owner: options.OwnerAddress, context: pinned, validate: options.Validate, prepare: options.Prepare, verifyRevocation: options.VerifyRevocation}, nil
+	return &Session{wrapPreparation: options.WrapPreparation, build: options.Build, checkPreparation: options.CheckPreparation, validatePreparation: options.ValidatePreparation, store: options.Store, owner: options.OwnerAddress, context: pinned, validate: options.Validate, prepare: options.Prepare, verifyRevocation: options.VerifyRevocation}, nil
 }
 func validateStored(s StoredState) error {
 	if s.Role != credit.Owner && s.Role != credit.Spender || s.TreeID == 0 {
@@ -232,7 +236,7 @@ func (o *Operation) check(ctx context.Context) error {
 	if !ok || record.WorkerID != o.worker {
 		return fmt.Errorf("Credit operation lease changed")
 	}
-	if record.Status == "cancelled" || record.Status == "confirmed" || record.Status == "reverted" {
+	if record.Status == "failed" || record.Status == "confirmed" || record.Status == "reverted" {
 		return fmt.Errorf("Credit operation is terminal")
 	}
 	return nil
@@ -323,7 +327,7 @@ func (o *Operation) Externalize(ctx context.Context, hash common.Hash) error {
 		return nil
 	})
 }
-func (o *Operation) Cancel(ctx context.Context) error {
+func (o *Operation) Abandon(ctx context.Context) error {
 	o.mu.Lock()
 	defer o.mu.Unlock()
 	if err := o.check(ctx); err != nil {
@@ -334,10 +338,14 @@ func (o *Operation) Cancel(ctx context.Context) error {
 		if !ok || record.WorkerID != o.worker {
 			return fmt.Errorf("Credit operation lease changed")
 		}
-		if record.Externalized {
+		if record.Status != "prepared" && record.Status != "proved" && record.Status != "ready" {
+			return fmt.Errorf("Credit operation is not locally abandonable")
+		}
+		if record.Externalized || len(record.Calldata) > 0 || record.TransactionHash != (common.Hash{}) {
 			return fmt.Errorf("externalized Credit operation requires canonical reconciliation")
 		}
-		record.Status = "cancelled"
+		record.Status = "failed"
+		record.WorkerID = ""
 		state.Operations[o.id] = record
 		for k, grant := range state.Grants {
 			if grant.ReservedBy == o.id {

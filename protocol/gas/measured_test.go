@@ -27,7 +27,7 @@ func TestMeasuredReceiptsAndHeldout(t *testing.T) {
 	}
 	for i, row := range model.Rows {
 		got := EstimateGas(row.Shape)
-		if !got.Available || got.GasUnits == nil || *got.GasUnits != row.GasUnits || got.Reference == nil || got.Reference.Statistic != "median" || got.Reference.ID != "receipt-"+strconv.Itoa(i) {
+		if !got.Available || got.GasUnits == nil || *got.GasUnits != row.GasUnits || got.Statistic != "median" || got.ReferenceID != "receipt-"+strconv.Itoa(i) {
 			t.Fatalf("receipt %d: %+v", i, got)
 		}
 	}
@@ -51,7 +51,7 @@ func TestMeasuredReceiptsAndHeldout(t *testing.T) {
 	for i, row := range heldout.Cases {
 		row.Shape["extraDeliveryBytes"] = 1
 		got := EstimateGas(row.Shape)
-		if !got.Available || got.GasUnits == nil || (*got.GasUnits < row.ModeledGas+31 || *got.GasUnits > row.ModeledGas+33) || got.Reference.Statistic != "estimate" {
+		if !got.Available || got.GasUnits == nil || (*got.GasUnits < row.ModeledGas+31 || *got.GasUnits > row.ModeledGas+33) || got.Statistic != "estimate" {
 			t.Fatalf("heldout %d: %+v want %d", i, got, row.ModeledGas)
 		}
 		if delta := math.Abs(float64(*got.GasUnits-32)-float64(row.MeasuredGas)) / float64(row.MeasuredGas); delta > 0.15 {

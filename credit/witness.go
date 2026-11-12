@@ -92,7 +92,7 @@ func (p CreateParams) Witness(c Context, deliveries []protocol.Delivery, state S
 	private["spender_wallet_identity"] = state.SpenderWalletIdentity.String()
 	private["credit_nonce"] = state.Nonce.String()
 	private["expiry"] = state.Expiry.String()
-	private["credit_shared_key"] = state.SharedKey.String()
+	private["credit_shared_key"] = state.CreditSharedKey.String()
 	private["limits"] = stringFields(state.Policy.Fields())
 	private["available_credit"] = state.AvailableCredit.String()
 	private["unlimited"] = boolString(state.Unlimited)
@@ -165,7 +165,7 @@ func (p UpdateParams) Witness(c Context, deliveries []protocol.Delivery, input L
 	if err != nil {
 		return nil, err
 	}
-	for k, v := range map[string]fr.Element{"spender_wallet_identity": s.SpenderWalletIdentity, "input_nonce": s.Nonce, "old_expiry": s.Expiry, "new_expiry": change.Expiry, "credit_shared_key": s.SharedKey} {
+	for k, v := range map[string]fr.Element{"spender_wallet_identity": s.SpenderWalletIdentity, "input_nonce": s.Nonce, "old_expiry": s.Expiry, "new_expiry": change.Expiry, "credit_shared_key": s.CreditSharedKey} {
 		private[k] = v.String()
 	}
 	private["old_available_credit"] = s.AvailableCredit.String()
@@ -255,7 +255,7 @@ func (p DrawParams) Witness(c Context, deliveries []protocol.Delivery, credits [
 		}
 		arrays["input_nonces"][i] = s.Nonce.String()
 		arrays["expiries"][i] = s.Expiry.String()
-		arrays["credit_shared_keys"][i] = s.SharedKey.String()
+		arrays["credit_shared_keys"][i] = s.CreditSharedKey.String()
 		arrays["leaf_indices"][i] = new(big.Int).SetUint64(uint64(input.LeafIndex)).String()
 		arrays["input_source_indices"][i] = big.NewInt(int64(si)).String()
 		arrays["draw_amounts"][i] = input.Debit.String()

@@ -133,7 +133,7 @@ func encodeDelivery(d DeliveryState) []byte {
 	out = put(out, s.RevocationSlot, 2)
 	out = put(out, s.Nonce, 32)
 	out = put(out, s.Expiry, 8)
-	out = put(out, s.SharedKey, 32)
+	out = put(out, s.CreditSharedKey, 32)
 	for _, v := range s.Policy.Fields() {
 		out = put(out, v, 16)
 	}
@@ -215,7 +215,7 @@ func DecodeDeliveryPlaintext(plain []byte, c DeliveryContext, role Role, recipie
 		return DeliveryState{}, fmt.Errorf("invalid Credit plaintext length")
 	}
 	s := State{ProtocolContext: c.ProtocolContext, TokenAddress: c.TokenAddress, Payload: append([]byte(nil), plain[407:]...)}
-	fields := []*fr.Element{&s.SpenderWalletIdentity, &s.OwnerWalletIdentity, &s.RevocationShard, &s.RevocationSlot, &s.Nonce, &s.Expiry, &s.SharedKey, &s.SingleLimit, &s.DailyLimit, &s.MonthlyLimit, &s.AvailableCredit, &s.LastDay, &s.DailySpent, &s.LastMonth, &s.MonthlySpent, &s.TotalSpent}
+	fields := []*fr.Element{&s.SpenderWalletIdentity, &s.OwnerWalletIdentity, &s.RevocationShard, &s.RevocationSlot, &s.Nonce, &s.Expiry, &s.CreditSharedKey, &s.SingleLimit, &s.DailyLimit, &s.MonthlyLimit, &s.AvailableCredit, &s.LastDay, &s.DailySpent, &s.LastMonth, &s.MonthlySpent, &s.TotalSpent}
 	sizes := []int{32, 32, 8, 2, 32, 8, 32, 16, 16, 16, 16, 8, 16, 8, 16, 16}
 	at := 0
 	for i, target := range fields {
