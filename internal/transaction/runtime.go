@@ -30,6 +30,7 @@ type RuntimeOptions struct {
 	Signer        *bind.TransactOpts
 }
 type Runtime struct {
+	Snapshot          *PreparationSnapshot
 	Options           RuntimeOptions
 	Wallet            *Wallet
 	Protocol          *chain.Protocol
@@ -119,3 +120,29 @@ func (e *Execution) CommitBroadcasterPlan(ctx context.Context) error {
 }
 
 func ViewingOwner(v *ViewingCapability) common.Address { return v.identity }
+
+// RestorePreparationRuntime checks cached deployment evidence while retaining the live send provider.
+func RestorePreparationRuntime(ctx context.Context, infrastructure InvisiOptions, wallet WalletReference, pool *chain.Protocol, namespace string, snapshot *PreparationSnapshot) (*Runtime, error) {
+	if pool == nil || infrastructure.Provider == nil || infrastructure.ProtocolRPC == nil {
+		return nil, &MissingCapabilityError{Capability: "wallet, protocol, Chain RPC and Protocol RPC"}
+	}
+	w, e := SnapshotWallet(wallet)
+	if e != nil {
+		return nil, e
+	}
+	if namespace == "" {
+		namespace = "default"
+	}
+	scope := WalletScope{ChainID: pool.Context().ChainID, ProtocolAddress: pool.Context().ProtocolAddress, OwnerAddress: w.ownerAddress, Namespace: namespace}
+	if !snapshot.Match(scope, pool.Deployment()) {
+		return nil, errors.New("preparation snapshot scope or deployment mismatch")
+	}
+	cached, e := snapshot.Clone()
+	if e != nil {
+		return nil, e
+	}
+	if e = pool.ValidateDeployment(ctx, cached.Provider(infrastructure.Provider)); e != nil {
+		return nil, e
+	}
+	return &Runtime{Options: RuntimeOptions{InvisiOptions: infrastructure}, Wallet: w, Protocol: pool, Scope: scope, RPC: infrastructure.ProtocolRPC.WithProvider(infrastructure.Provider), Snapshot: cached}, nil
+}

@@ -97,6 +97,9 @@ func (s *WalletSession) SendTransaction(ctx context.Context, input any, settings
 		if record, ok := snapshot.Operations[operation.ID()]; !ok || record.WorkerID != operation.workerID {
 			return nil, errors.New("operation does not belong to this session")
 		}
+		if err := operation.ValidateSubmission(ctx); err != nil {
+			return nil, err
+		}
 		exported, err := operation.ExportTransaction(ctx)
 		if err != nil {
 			return nil, err

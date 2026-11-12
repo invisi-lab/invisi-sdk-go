@@ -87,7 +87,14 @@ func (s *WalletSession) RefreshState(ctx context.Context) error {
 	if before.Invalidated {
 		return errors.New("wallet requires reset scan")
 	}
-	if e = s.checkKnownState(ctx, &before, b); e != nil {
+	snap := newPreparationSnapshot(s, before, b, head)
+	recorder := transaction.NewSnapshotRecorder(s.options.Provider, snap)
+	captured := *s
+	captured.options.Provider = recorder
+	if e = captured.checkKnownState(ctx, &before, b); e != nil {
+		return e
+	}
+	if e = s.finishPreparationSnapshot(ctx, &before, recorder); e != nil {
 		return e
 	}
 	if e = s.commitPrivateBatch(ctx, before.Scan.Generation, before.Revision, before); e != nil {

@@ -20,7 +20,12 @@ func (o *Operation) ExportTransaction(ctx context.Context) (sdk.TransactionCall,
 	if o.status != "ready" || o.plan.Target == "noir-recursive" || len(o.data) == 0 {
 		return sdk.TransactionCall{}, errors.New("ready EVM transaction required")
 	}
-	if err := o.validateExport(ctx); err != nil {
+	if err := func() error {
+		if o.plan.SubmissionValidation == "required" {
+			return nil
+		}
+		return o.validateExport(ctx)
+	}(); err != nil {
 		return sdk.TransactionCall{}, err
 	}
 	err := o.session.options.Store.Update(ctx, o.session.scope, func(state *WalletState) error {
@@ -51,4 +56,14 @@ func (o *Operation) TrackTransaction(ctx context.Context, hash common.Hash) (*Op
 		next.status = "uncertain"
 		return next.persist(ctx, next.status)
 	})
+}
+
+// ValidateSubmission checks current chain state immediately before a host sends exported calldata.
+func (o *Operation) ValidateSubmission(ctx context.Context) error {
+	o.mu.Lock()
+	defer o.mu.Unlock()
+	if e := o.checkLease(ctx); e != nil {
+		return e
+	}
+	return o.validateExport(ctx)
 }

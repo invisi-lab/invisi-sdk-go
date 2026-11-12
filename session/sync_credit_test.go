@@ -258,8 +258,20 @@ func TestRefreshKeepsAuthenticatedChildPayloadAndDropsUnknownRecoveredPayload(t 
 				case "invisi_getCreditTransitions":
 					result = []any{map[string]any{"block": block, "name": "CreditDraw", "transactionHash": tx, "logIndex": 2, "data": map[string]any{}}}
 				case "invisi_getRoots":
-					result = []any{anchor}
+					var tree uint64
+					_ = json.Unmarshal(request.Params[0], &tree)
+					if tree == 1 {
+						result = retainedNoteFixture(base, block, request.Method, request.Params)
+					} else {
+						result = []any{anchor}
+					}
 				case "invisi_getMembership":
+					var tree uint64
+					_ = json.Unmarshal(request.Params[0], &tree)
+					if tree == 1 {
+						result = retainedNoteFixture(base, block, request.Method, request.Params)
+						break
+					}
 					var index uint32
 					_ = json.Unmarshal(request.Params[1], &index)
 					path := append([]common.Hash(nil), siblings...)

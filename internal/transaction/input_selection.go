@@ -120,6 +120,9 @@ func (s *Runtime) SelectInputs(ctx context.Context, token common.Address, amount
 }
 
 func (s *Runtime) membership(ctx context.Context, input protocolrpc.MembershipInput, block protocolrpc.CanonicalBlock) (protocolrpc.Membership, error) {
+	if s.Snapshot != nil {
+		return s.Snapshot.Membership(input, block)
+	}
 	load := func() ([]byte, error) {
 		m, err := s.RPC.GetMembership(ctx, s.Protocol.Context(), input, block)
 		if err != nil {

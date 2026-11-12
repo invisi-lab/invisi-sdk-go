@@ -5,9 +5,11 @@ import (
 	"errors"
 	"fmt"
 	"math/big"
+	"time"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/signer/core/apitypes"
 	"github.com/invisi-lab/invisi-sdk-go/credit"
 	transaction "github.com/invisi-lab/invisi-sdk-go/internal/transaction"
 	"github.com/invisi-lab/invisi-sdk-go/protocol"
@@ -17,6 +19,25 @@ import (
 )
 
 func (s *WalletSession) validateCreditIntent(ctx context.Context, intent credit.Intent) error {
+	return s.validateCreditIntentWithProvider(ctx, intent, s.options.Provider, false)
+}
+func (s *WalletSession) prepareCreditIntent(ctx context.Context, intent credit.Intent) (*creditsession.PreparationEvidence, error) {
+	snapshot, e := s.cachedPreparation(ctx)
+	if e != nil {
+		return nil, e
+	}
+	if snapshot != nil {
+		e = s.validateCreditIntentWithProvider(ctx, intent, snapshot.Provider(s.options.Provider), true)
+		if e == nil {
+			return &creditsession.PreparationEvidence{Block: snapshot.Block, Generation: snapshot.Generation}, nil
+		}
+		if !errors.Is(e, transaction.ErrPreparationSnapshotMissing) {
+			return nil, e
+		}
+	}
+	return nil, s.validateCreditIntent(ctx, intent)
+}
+func (s *WalletSession) validateCreditIntentWithProvider(ctx context.Context, intent credit.Intent, provider transaction.Provider, historical bool) error {
 	state, err := s.options.Store.ReadSnapshot(ctx, s.scope)
 	if err != nil {
 		return err
@@ -24,10 +45,10 @@ func (s *WalletSession) validateCreditIntent(ctx context.Context, intent credit.
 	if state.Invalidated {
 		return errors.New("wallet checkpoint invalidated; refresh before Credit authorization")
 	}
-	if err := s.protocol.ValidateDeployment(ctx, s.options.Provider); err != nil {
+	if err := s.protocol.ValidateDeployment(ctx, provider); err != nil {
 		return err
 	}
-	head, err := s.options.Provider.HeaderByNumber(ctx, nil)
+	head, err := provider.HeaderByNumber(ctx, nil)
 	if err != nil {
 		return err
 	}
@@ -38,10 +59,14 @@ func (s *WalletSession) validateCreditIntent(ctx context.Context, intent credit.
 	if err != nil {
 		return err
 	}
-	if err = prepared.CheckTimestamp(head.Time); err != nil {
+	now := head.Time
+	if historical && time.Now().Unix() > 0 && uint64(time.Now().Unix()) > now {
+		now = uint64(time.Now().Unix())
+	}
+	if err = prepared.CheckTimestamp(now); err != nil {
 		return err
 	}
-	contract, err := contracts.NewInvisiProtocolCaller(s.scope.ProtocolAddress, s.options.Provider)
+	contract, err := contracts.NewInvisiProtocolCaller(s.scope.ProtocolAddress, provider)
 	if err != nil {
 		return err
 	}
@@ -213,7 +238,10 @@ func (s *WalletSession) validateCreditIntent(ctx context.Context, intent credit.
 			}
 		}
 	}
-	tokenCaller, err := contracts.NewIERC20Caller(token, s.options.Provider)
+	if historical {
+		return nil
+	}
+	tokenCaller, err := contracts.NewIERC20Caller(token, provider)
 	if err != nil {
 		return err
 	}
@@ -245,7 +273,7 @@ func (s *WalletSession) validateCreditIntent(ctx context.Context, intent credit.
 	} else if err = checkPayer(owner, fee); err != nil {
 		return err
 	}
-	canonical, err := s.options.Provider.HeaderByNumber(ctx, head.Number)
+	canonical, err := provider.HeaderByNumber(ctx, head.Number)
 	if err != nil {
 		return err
 	}
@@ -266,5 +294,62 @@ func (s *WalletSession) WithCreditRevocationSignature(ctx context.Context, opera
 		return errors.New("Credit operation required")
 	}
 	verifier := transaction.GethFundingVerifier{Provider: s.options.Provider}
-	return operation.WithRevocationSignature(ctx, signature, verifier.VerifyTypedData)
+	return operation.WithRevocationSignature(ctx, signature, func(ctx context.Context, owner common.Address, typed apitypes.TypedData, sig []byte) (bool, error) {
+		digest, _, e := apitypes.TypedDataAndHash(typed)
+		if e != nil {
+			return false, e
+		}
+		if recovered, ok := transaction.RecoverTypedDataSigner(digest, sig); ok && recovered == owner {
+			return true, nil
+		}
+		return verifier.VerifyTypedData(ctx, owner, typed, sig)
+	})
+}
+
+func (s *WalletSession) verifyCreditRevocation(ctx context.Context, owner common.Address, typed apitypes.TypedData, signature []byte) (bool, error) {
+	provider := s.options.Provider
+	head, err := provider.HeaderByNumber(ctx, nil)
+	if err != nil {
+		return false, err
+	}
+	if head == nil || head.Number == nil {
+		return false, errors.New("current Credit signature block unavailable")
+	}
+	valid, err := (transaction.GethFundingVerifier{Provider: provider}).VerifyTypedData(ctx, owner, typed, signature)
+	if err != nil || !valid {
+		return valid, err
+	}
+	canonical, err := provider.HeaderByNumber(ctx, head.Number)
+	if err != nil {
+		return false, err
+	}
+	if canonical == nil || canonical.Hash() != head.Hash() {
+		return false, errors.New("Credit signature validation block changed")
+	}
+	return true, nil
+}
+
+func (s *WalletSession) checkCreditPreparation(ctx context.Context, evidence creditsession.PreparationEvidence) error {
+	state, err := s.fencedSnapshot(ctx)
+	if err != nil {
+		return err
+	}
+	if state.Invalidated || state.Scan.Generation != evidence.Generation {
+		_ = s.invalidate(ctx)
+		return errors.New("Credit preparation history changed")
+	}
+	return nil
+}
+func (s *WalletSession) validateCreditPreparation(ctx context.Context, evidence creditsession.PreparationEvidence) error {
+	if err := s.checkCreditPreparation(ctx, evidence); err != nil {
+		return err
+	}
+	header, err := s.options.Provider.HeaderByNumber(ctx, new(big.Int).SetUint64(evidence.Block.Number))
+	if err != nil {
+		return err
+	}
+	if header == nil || header.Hash() != evidence.Block.Hash {
+		return errors.New("Credit preparation anchor changed; prepare again")
+	}
+	return nil
 }

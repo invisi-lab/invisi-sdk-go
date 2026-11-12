@@ -70,6 +70,8 @@ func refreshFixture(t *testing.T, failSecond bool, entered, release chan struct{
 				block = protocolrpc.CanonicalBlock{Number: 5, Hash: middle.Hash(), ParentHash: middle.ParentHash, Timestamp: middle.Time}
 			}
 			result = map[string]any{"blockHash": block.Hash, "notes": []any{}}
+		case "invisi_getRoots", "invisi_getMembership":
+			result = retainedNoteFixture(base, block, request.Method, request.Params)
 		case "invisi_getCreditTransitions":
 			result = []any{}
 		default:

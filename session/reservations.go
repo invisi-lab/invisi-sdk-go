@@ -10,6 +10,16 @@ import (
 
 func (s *WalletSession) reserveExecution(ctx context.Context, execution *transaction.Execution) error {
 	plan := execution.Plan
+	cached := execution.Runtime.Snapshot
+	if cached != nil && s.publicHistory != nil {
+		public, err := s.publicHistory.Snapshot(ctx)
+		if err != nil {
+			return err
+		}
+		if public.Generation != cached.Generation {
+			return errors.New("wallet requires reset refresh")
+		}
+	}
 	id := plan.ID
 	encoded, e := json.Marshal(plan)
 	if e != nil {
@@ -40,5 +50,15 @@ func (s *WalletSession) reserveExecution(ctx context.Context, execution *transac
 		state.Operations[id] = record
 		return nil
 	})
+	if e == nil && cached != nil && s.publicHistory != nil {
+		public, err := s.publicHistory.Snapshot(ctx)
+		if err != nil {
+			return err
+		}
+		if public.Generation != cached.Generation {
+			_ = s.invalidate(ctx)
+			return errors.New("wallet requires reset refresh")
+		}
+	}
 	return e
 }

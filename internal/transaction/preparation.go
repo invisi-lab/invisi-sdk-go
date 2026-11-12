@@ -8,6 +8,7 @@ import (
 	"github.com/ethereum/go-ethereum/core/types"
 	"math/big"
 	"sort"
+	"time"
 
 	"github.com/ethereum/go-ethereum/common"
 
@@ -57,22 +58,23 @@ type PreparedOutput struct {
 }
 
 type Plan struct {
-	Version            int
-	OwnerAddress       common.Address
-	Namespace          string
-	Kind, ID, Target   string
-	Context            protocol.TransactionContext
-	Block              protocolrpc.CanonicalBlock
-	Deadline           uint64
-	Inputs             []NoteRecord
-	Memberships        []protocolrpc.Membership
-	Outputs            []PreparedOutput
-	Funding            protocol.FundingParams
-	FundingMode        string
-	Params             protocol.CrossTreeTransactParams
-	Shield             protocol.ShieldParams
-	Capacity           int
-	NeedsAuthorization bool
+	SubmissionValidation string `json:",omitempty"`
+	Version              int
+	OwnerAddress         common.Address
+	Namespace            string
+	Kind, ID, Target     string
+	Context              protocol.TransactionContext
+	Block                protocolrpc.CanonicalBlock
+	Deadline             uint64
+	Inputs               []NoteRecord
+	Memberships          []protocolrpc.Membership
+	Outputs              []PreparedOutput
+	Funding              protocol.FundingParams
+	FundingMode          string
+	Params               protocol.CrossTreeTransactParams
+	Shield               protocol.ShieldParams
+	Capacity             int
+	NeedsAuthorization   bool
 
 	Deliveries  []protocol.Delivery
 	DrawAmounts []*big.Int
@@ -111,13 +113,17 @@ func (s *Runtime) Frame(ctx context.Context, token common.Address, deadline uint
 		return c, block, 0, errors.New("invalid latest block")
 	}
 	block = protocolrpc.CanonicalBlock{Number: head.Number.Uint64(), Hash: head.Hash(), ParentHash: head.ParentHash, Timestamp: head.Time}
-	if deadline == 0 {
-		deadline = head.Time + 300
+	timestamp := head.Time
+	if s.Snapshot != nil && time.Now().Unix() > 0 && uint64(time.Now().Unix()) > timestamp {
+		timestamp = uint64(time.Now().Unix())
 	}
-	if deadline < head.Time || deadline-head.Time > 1<<53 {
+	if deadline == 0 {
+		deadline = timestamp + 300
+	}
+	if deadline < timestamp || deadline-timestamp > 1<<53 {
 		return c, block, 0, errors.New("invalid deadline")
 	}
-	c.Now = new(big.Int).SetUint64(head.Time)
+	c.Now = new(big.Int).SetUint64(timestamp)
 	code, e := s.Options.Provider.CodeAt(ctx, token, new(big.Int).SetUint64(block.Number))
 	if e != nil {
 		return c, block, 0, e

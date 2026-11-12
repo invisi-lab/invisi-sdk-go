@@ -81,6 +81,11 @@ func (o *Execution) ValidateExport(ctx context.Context) error {
 			return errors.New("input already spent")
 		}
 	}
+	if o.Plan.SubmissionValidation == "required" {
+		if err := o.validateCachedSubmission(ctx, head.Number, head.Hash(), head.Time); err != nil {
+			return err
+		}
+	}
 	return ctx.Err()
 }
 
@@ -90,4 +95,67 @@ func OperationExpired(p Plan, now uint64) bool {
 	}
 
 	return false
+}
+
+func (o *Execution) validateCachedSubmission(ctx context.Context, block *big.Int, hash common.Hash, timestamp uint64) error {
+	provider := o.Runtime.Options.Provider
+	anchor, err := provider.HeaderByNumber(ctx, new(big.Int).SetUint64(o.Plan.Block.Number))
+	if err != nil {
+		return err
+	}
+	if anchor == nil || anchor.Hash() != o.Plan.Block.Hash {
+		return errors.New("preparation anchor changed; prepare again")
+	}
+	if o.Plan.FundingMode == "signature" {
+		typed, err := o.FundingTypedData()
+		if err != nil {
+			return err
+		}
+		verifier := o.Runtime.Options.FundingVerifier
+		if verifier == nil {
+			verifier = GethFundingVerifier{Provider: provider}
+		}
+		valid, err := verifier.VerifyTypedData(ctx, o.Plan.Funding.Payer, typed, o.Plan.Funding.Signature)
+		if err != nil {
+			return err
+		}
+		if !valid {
+			return errors.New("invalid current funding authorization")
+		}
+	}
+	amount := o.Plan.Funding.Amount
+	if amount != nil && amount.Sign() > 0 {
+		token, err := contracts.NewIERC20Caller(o.Plan.Context.TokenAddress, provider)
+		if err != nil {
+			return err
+		}
+		opts := &bind.CallOpts{Context: ctx, BlockNumber: block}
+		balance, err := token.BalanceOf(opts, o.Plan.Funding.Payer)
+		if err != nil {
+			return err
+		}
+		if balance == nil || balance.Cmp(amount) < 0 {
+			return errors.New("insufficient current funding balance")
+		}
+		allowance, err := token.Allowance(opts, o.Plan.Funding.Payer, o.Plan.Context.ProtocolAddress)
+		if err != nil {
+			return err
+		}
+		permit := o.Plan.Funding.Permit
+		hasPermit := permit.Deadline != nil && permit.Deadline.Sign() > 0
+		if hasPermit && permit.Deadline.Cmp(new(big.Int).SetUint64(timestamp)) < 0 {
+			return errors.New("token permit expired")
+		}
+		if !hasPermit && (allowance == nil || allowance.Cmp(amount) < 0) {
+			return errors.New("insufficient current Protocol allowance")
+		}
+	}
+	canonical, err := provider.HeaderByNumber(ctx, block)
+	if err != nil {
+		return err
+	}
+	if canonical == nil || canonical.Hash() != hash {
+		return errors.New("submission validation block changed")
+	}
+	return nil
 }

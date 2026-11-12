@@ -73,6 +73,8 @@ func (p sessionProvider) CallContract(_ context.Context, message ethereum.CallMs
 		}
 	}
 	switch m.RawName {
+	case "creditAllocation":
+		return m.Outputs.Pack(uint64(1), uint16(0))
 	case "VERSION":
 		return m.Outputs.Pack(big.NewInt(1))
 	case "rootHistory":

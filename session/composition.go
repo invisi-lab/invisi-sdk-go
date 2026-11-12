@@ -53,7 +53,33 @@ func Connect(ctx context.Context, options Options) (*WalletSession, error) {
 	if options.Store == nil {
 		return nil, errors.New("store required for a managed wallet session")
 	}
-	runtime, e := transaction.ResolveRuntime(ctx, options.Invisi.GetInfrastructure(), options.Wallet, options.Protocol, options.Namespace)
+	var runtime *transaction.Runtime
+	var e error
+	if options.Wallet != nil && options.Protocol != nil {
+		scope := cachedScope(options)
+		var state WalletState
+		var err error
+		if metadata, ok := options.Store.(interface {
+			ReadMetadata(context.Context, WalletScope) (WalletState, error)
+		}); ok {
+			state, err = metadata.ReadMetadata(ctx, scope)
+		} else {
+			state, err = options.Store.ReadSnapshot(ctx, scope)
+		}
+		if err != nil {
+			return nil, err
+		}
+		if snapshot := matchingSnapshot(state); snapshot != nil {
+			runtime, e = transaction.RestorePreparationRuntime(ctx, options.Invisi.GetInfrastructure(), options.Wallet, options.Protocol, options.Namespace, snapshot)
+			if errors.Is(e, transaction.ErrPreparationSnapshotMissing) {
+				runtime = nil
+				e = nil
+			}
+		}
+	}
+	if runtime == nil && e == nil {
+		runtime, e = transaction.ResolveRuntime(ctx, options.Invisi.GetInfrastructure(), options.Wallet, options.Protocol, options.Namespace)
+	}
 	if e != nil {
 		return nil, e
 	}
@@ -168,5 +194,7 @@ func (s *WalletSession) runtimeSnapshot() *transaction.Runtime {
 	runtime.Protocol = s.protocol
 	runtime.Scope = s.scope
 	runtime.RPC = s.rpc
+	// Historical readers belong to one preparation, never to signing or submission.
+	runtime.Snapshot = nil
 	return &runtime
 }

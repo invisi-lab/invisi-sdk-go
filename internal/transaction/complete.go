@@ -12,6 +12,9 @@ func (s *Runtime) PersistPlan(ctx context.Context, plan Plan) (*Execution, error
 	if e != nil {
 		return nil, e
 	}
+	if s.Snapshot != nil {
+		plan.SubmissionValidation = "required"
+	}
 	plan.ID = id
 	plan.Version = 1
 	plan.OwnerAddress = s.Wallet.ownerAddress

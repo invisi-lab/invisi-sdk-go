@@ -11,6 +11,7 @@ import (
 type OperationPermissions struct{ WalletAuthorization, Proof, FundingAuthorization bool }
 
 type OperationPreview struct {
+	SubmissionValidation            string
 	ID, Kind, Status, Target        string
 	Context                         protocol.TransactionContext
 	TokenAddress                    common.Address
@@ -63,7 +64,7 @@ func (o *Execution) Preview() OperationPreview {
 	if p.Funding.Amount != nil {
 		funding.Set(p.Funding.Amount)
 	}
-	result := OperationPreview{ID: p.ID, Kind: PublicOperationKind(p), Status: o.Status, Target: p.Target, Context: context, TokenAddress: p.Context.TokenAddress, Capacity: p.Capacity,
+	result := OperationPreview{SubmissionValidation: p.SubmissionValidation, ID: p.ID, Kind: PublicOperationKind(p), Status: o.Status, Target: p.Target, Context: context, TokenAddress: p.Context.TokenAddress, Capacity: p.Capacity,
 		InputCount: len(p.Inputs), OutputCount: len(p.Outputs), FundingAmount: funding, FundingPayer: p.Funding.Payer,
 		WithdrawalAmount: amount, WithdrawalAddress: address, NeedsWalletAuthorization: p.NeedsAuthorization, Deadline: p.Deadline, FeeRecipient: feeRecipient, FeeAmount: fee,
 		Permissions: OperationPermissions{p.NeedsAuthorization, p.Kind != "shield", p.FundingMode == "signature"}}

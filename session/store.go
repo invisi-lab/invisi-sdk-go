@@ -31,17 +31,18 @@ type OperationRecord struct {
 }
 
 type WalletState struct {
-	Scan             PrivateScanState
-	Records          RecordMetadata
-	FormatVersion    int
-	PostpaidCredit   creditsession.State
-	Revision         uint64
-	DiscoveryThrough *protocolrpc.CanonicalBlock
-	Notes            map[common.Hash]StoredNote
-	Operations       map[string]OperationRecord
-	ObservedThrough  *protocolrpc.CanonicalBlock
-	Invalidated      bool
-	CheckedThrough   *protocolrpc.CanonicalBlock
+	PreparationSnapshot *transaction.PreparationSnapshot `json:",omitempty"`
+	Scan                PrivateScanState
+	Records             RecordMetadata
+	FormatVersion       int
+	PostpaidCredit      creditsession.State
+	Revision            uint64
+	DiscoveryThrough    *protocolrpc.CanonicalBlock
+	Notes               map[common.Hash]StoredNote
+	Operations          map[string]OperationRecord
+	ObservedThrough     *protocolrpc.CanonicalBlock
+	Invalidated         bool
+	CheckedThrough      *protocolrpc.CanonicalBlock
 }
 
 func emptyState() WalletState {

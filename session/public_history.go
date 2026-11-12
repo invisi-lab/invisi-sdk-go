@@ -244,9 +244,10 @@ func publicGate(store PublicHistoryStore) chan struct{} {
 }
 
 type PublicHistory struct {
-	options PublicHistoryOptions
-	key     string
-	gate    chan struct{}
+	preparationCapture *preparationCapture
+	options            PublicHistoryOptions
+	key                string
+	gate               chan struct{}
 }
 
 func NewPublicHistory(o PublicHistoryOptions) (*PublicHistory, error) {
@@ -258,7 +259,7 @@ func NewPublicHistory(o PublicHistoryOptions) (*PublicHistory, error) {
 	}
 	d := o.Protocol.Deployment()
 	key := fmt.Sprintf("%d:%s:%s:%d", o.Protocol.Context().ChainID, d.Protocol.Address.Hex(), d.Protocol.RuntimeCodeHash.Hex(), d.Protocol.FromBlock)
-	return &PublicHistory{o, key, publicGate(o.Store)}, nil
+	return &PublicHistory{options: o, key: key, gate: publicGate(o.Store), preparationCapture: &preparationCapture{paths: map[common.Hash]protocolrpc.Membership{}}}, nil
 }
 func (h *PublicHistory) Store() PublicHistoryStore { return h.options.Store }
 func (h *PublicHistory) Key() string               { return h.key }
@@ -428,14 +429,18 @@ func (h *PublicHistory) page(ctx context.Context, q BlockRange, offline bool) (P
 			return p, e
 		}
 		for _, o := range batch.Outputs {
-			if _, e = h.options.ProtocolRPC.GetMembership(ctx, h.options.Protocol.Context(), protocolrpc.MembershipInput{TreeID: o.TreeID, LeafIndex: o.LeafIndex, Commitment: o.Commitment}, p.Block); e != nil {
-				return p, e
+			m, err := h.options.ProtocolRPC.GetMembership(ctx, h.options.Protocol.Context(), protocolrpc.MembershipInput{TreeID: o.TreeID, LeafIndex: o.LeafIndex, Commitment: o.Commitment}, p.Block)
+			if err != nil {
+				return p, err
 			}
+			h.preparationCapture.record(m)
 		}
 		for _, o := range batch.CreditStates {
-			if _, e = h.options.ProtocolRPC.GetMembership(ctx, h.options.Protocol.Context(), protocolrpc.MembershipInput{TreeID: o.TreeID, LeafIndex: o.LeafIndex, Commitment: o.Commitment}, p.Block); e != nil {
-				return p, e
+			m, err := h.options.ProtocolRPC.GetMembership(ctx, h.options.Protocol.Context(), protocolrpc.MembershipInput{TreeID: o.TreeID, LeafIndex: o.LeafIndex, Commitment: o.Commitment}, p.Block)
+			if err != nil {
+				return p, err
 			}
+			h.preparationCapture.record(m)
 		}
 		tx := PublicTransaction{PositionValidated: true, Receipt: r, Header: head, Batch: batch}
 		encoded, err := json.Marshal(tx)

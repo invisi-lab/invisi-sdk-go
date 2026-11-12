@@ -6,6 +6,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	"sync"
+	"time"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/signer/core/apitypes"
@@ -15,16 +16,24 @@ import (
 )
 
 type Options struct {
-	Validate     func(context.Context, credit.Intent) error
-	Store        Store
-	OwnerAddress common.Address
-	Context      *primitives.ProtocolContext
+	CheckPreparation    func(context.Context, PreparationEvidence) error
+	ValidatePreparation func(context.Context, PreparationEvidence) error
+	Prepare             func(context.Context, credit.Intent) (*PreparationEvidence, error)
+	VerifyRevocation    func(context.Context, common.Address, apitypes.TypedData, []byte) (bool, error)
+	Validate            func(context.Context, credit.Intent) error
+	Store               Store
+	OwnerAddress        common.Address
+	Context             *primitives.ProtocolContext
 }
 type Session struct {
-	validate func(context.Context, credit.Intent) error
-	store    Store
-	owner    common.Address
-	context  *primitives.ProtocolContext
+	checkPreparation    func(context.Context, PreparationEvidence) error
+	validatePreparation func(context.Context, PreparationEvidence) error
+	prepare             func(context.Context, credit.Intent) (*PreparationEvidence, error)
+	verifyRevocation    func(context.Context, common.Address, apitypes.TypedData, []byte) (bool, error)
+	validate            func(context.Context, credit.Intent) error
+	store               Store
+	owner               common.Address
+	context             *primitives.ProtocolContext
 }
 
 func New(options Options) (*Session, error) {
@@ -36,7 +45,7 @@ func New(options Options) (*Session, error) {
 		copy := *options.Context
 		pinned = &copy
 	}
-	return &Session{store: options.Store, owner: options.OwnerAddress, context: pinned, validate: options.Validate}, nil
+	return &Session{checkPreparation: options.CheckPreparation, validatePreparation: options.ValidatePreparation, store: options.Store, owner: options.OwnerAddress, context: pinned, validate: options.Validate, prepare: options.Prepare, verifyRevocation: options.VerifyRevocation}, nil
 }
 func validateStored(s StoredState) error {
 	if s.Role != credit.Owner && s.Role != credit.Spender || s.TreeID == 0 {
@@ -140,14 +149,27 @@ func (s *Session) Prepare(ctx context.Context, id string, prepared *credit.Prepa
 			}
 		}
 	}
-	if s.validate != nil {
-		if err := s.validate(ctx, intent); err != nil {
-			return nil, err
-		}
+	var evidence *PreparationEvidence
+	if s.prepare != nil {
+		evidence, err = s.prepare(ctx, intent)
+	} else if s.validate != nil {
+		err = s.validate(ctx, intent)
+	}
+	if err != nil {
+		return nil, err
+	}
+	validation := ""
+	if evidence != nil {
+		validation = "required"
 	}
 	worker, err := workerID()
 	if err != nil {
 		return nil, err
+	}
+	if evidence != nil && s.checkPreparation != nil {
+		if err = s.checkPreparation(ctx, *evidence); err != nil {
+			return nil, err
+		}
 	}
 	err = s.store.Update(ctx, func(state *State) error {
 		if state.Version != 2 {
@@ -188,11 +210,16 @@ func (s *Session) Prepare(ctx context.Context, id string, prepared *credit.Prepa
 				state.Grants[k] = other
 			}
 		}
-		state.Operations[id] = Journal{ID: id, WorkerID: worker, Status: "prepared", Intent: intent}
+		state.Operations[id] = Journal{ID: id, WorkerID: worker, Status: "prepared", Intent: intent, SubmissionValidation: validation, Preparation: evidence}
 		return nil
 	})
 	if err != nil {
 		return nil, err
+	}
+	if evidence != nil && s.checkPreparation != nil {
+		if err = s.checkPreparation(ctx, *evidence); err != nil {
+			return nil, err
+		}
 	}
 	return &Operation{session: s, id: id, worker: worker, prepared: prepared}, nil
 }
@@ -278,7 +305,7 @@ func (o *Operation) Calldata(ctx context.Context, caller common.Address) ([]byte
 func (o *Operation) Externalize(ctx context.Context, hash common.Hash) error {
 	o.mu.Lock()
 	defer o.mu.Unlock()
-	if err := o.check(ctx); err != nil {
+	if err := o.validateSubmission(ctx); err != nil {
 		return err
 	}
 	return o.update(ctx, func(record *Journal) error {
@@ -328,7 +355,25 @@ func (o *Operation) WithRevocationSignature(ctx context.Context, signature []byt
 	if err := o.checkFresh(ctx); err != nil {
 		return err
 	}
-	return o.prepared.WithRevocationSignature(ctx, signature, verify)
+	state, err := o.session.store.ReadSnapshot(ctx)
+	if err != nil {
+		return err
+	}
+	if state.Operations[o.id].Externalized {
+		return fmt.Errorf("externalized Credit revocation signature is frozen")
+	}
+	if err := o.prepared.WithRevocationSignature(ctx, signature, verify); err != nil {
+		return err
+	}
+	return o.update(ctx, func(r *Journal) error {
+		if r.Externalized {
+			return fmt.Errorf("externalized Credit revocation signature is frozen")
+		}
+		r.RevocationSignature = append([]byte(nil), signature...)
+		r.Calldata = nil
+		r.Status = "prepared"
+		return nil
+	})
 }
 
 func (o *Operation) checkFresh(ctx context.Context) error {
@@ -346,5 +391,67 @@ func (o *Operation) checkFresh(ctx context.Context) error {
 	if !ok || record.WorkerID != o.worker {
 		return fmt.Errorf("Credit operation lease changed")
 	}
+	if record.SubmissionValidation == "required" {
+		if record.Preparation == nil {
+			return fmt.Errorf("cached Credit preparation evidence missing")
+		}
+		if record.Preparation != nil && o.session.checkPreparation != nil {
+			if err = o.session.checkPreparation(ctx, *record.Preparation); err != nil {
+				return err
+			}
+		}
+		now := uint64(time.Now().Unix())
+		if record.Intent.Context.Timestamp > now {
+			now = record.Intent.Context.Timestamp
+		}
+		return o.prepared.CheckTimestamp(now)
+	}
 	return o.session.validate(ctx, record.Intent)
+}
+
+// ValidateSubmission checks current chain state before any transaction is externalized.
+func (o *Operation) ValidateSubmission(ctx context.Context) error {
+	o.mu.Lock()
+	defer o.mu.Unlock()
+	return o.validateSubmission(ctx)
+}
+func (o *Operation) validateSubmission(ctx context.Context) error {
+	if err := o.check(ctx); err != nil {
+		return err
+	}
+	state, err := o.session.store.ReadSnapshot(ctx)
+	if err != nil {
+		return err
+	}
+	record := state.Operations[o.id]
+	if record.SubmissionValidation == "required" && record.Preparation == nil {
+		return fmt.Errorf("cached Credit preparation evidence missing")
+	}
+	if record.Preparation != nil && o.session.validatePreparation != nil {
+		if err = o.session.validatePreparation(ctx, *record.Preparation); err != nil {
+			return err
+		}
+	}
+	if o.session.validate != nil {
+		if err = o.session.validate(ctx, record.Intent); err != nil {
+			return err
+		}
+	}
+	if record.Intent.Revoke != nil && len(record.RevocationSignature) > 0 && o.session.verifyRevocation != nil {
+		typed, e := o.prepared.SigningRequest()
+		if e != nil {
+			return e
+		}
+		valid, e := o.session.verifyRevocation(ctx, record.Intent.Revoke.Owner, typed, record.RevocationSignature)
+		if e != nil {
+			return e
+		}
+		if !valid {
+			return fmt.Errorf("invalid current Credit revocation signature")
+		}
+	}
+	if record.Preparation != nil && o.session.validatePreparation != nil {
+		return o.session.validatePreparation(ctx, *record.Preparation)
+	}
+	return nil
 }

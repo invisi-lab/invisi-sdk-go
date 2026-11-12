@@ -67,6 +67,9 @@ func (o *Operation) SubmitBroadcaster(ctx context.Context, client *broadcaster.C
 		if e != nil {
 			return broadcaster.Status{}, e
 		}
+		if e = o.validateSubmission(ctx); e != nil {
+			return broadcaster.Status{}, e
+		}
 		status, e := client.Submit(ctx, record.Calldata, quote)
 		if e != nil {
 			return status, e
@@ -80,7 +83,7 @@ func (o *Operation) SubmitBroadcaster(ctx context.Context, client *broadcaster.C
 		})
 		return status, e
 	}
-	if err := o.checkFresh(ctx); err != nil {
+	if err := o.validateSubmission(ctx); err != nil {
 		return broadcaster.Status{}, err
 	}
 	data, quote, err := o.prepared.ExportBroadcasterSubmission(client)

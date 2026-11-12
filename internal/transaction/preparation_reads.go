@@ -126,6 +126,10 @@ func (p *preparationProvider) CallContract(ctx context.Context, msg ethereum.Cal
 }
 func (s *Runtime) preparationRuntime() *Runtime {
 	next := *s
+	if next.Snapshot != nil {
+		next.Options.Provider = next.Snapshot.Provider(next.Options.Provider)
+		return &next
+	}
 	if _, ok := next.Options.Provider.(*preparationProvider); !ok {
 		next.Options.Provider = &preparationProvider{Provider: next.Options.Provider, reads: newPreparationReads(), protocol: s.Scope.ProtocolAddress, blocks: make(map[string]common.Hash)}
 		next.RPC = s.RPC.WithProvider(next.Options.Provider)

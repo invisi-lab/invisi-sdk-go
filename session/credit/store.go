@@ -10,6 +10,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/invisi-lab/invisi-sdk-go/credit"
 	"github.com/invisi-lab/invisi-sdk-go/prover"
+	protocolrpc "github.com/invisi-lab/invisi-sdk-go/rpc"
 )
 
 type StoredState struct {
@@ -27,7 +28,16 @@ func GrantKey(commitment common.Hash, role credit.Role) string {
 }
 func (s StoredState) key() string { return GrantKey(s.Commitment, s.Role) }
 
+// PreparationEvidence binds offline work to the exact historical fork and private history generation.
+type PreparationEvidence struct {
+	Block      protocolrpc.CanonicalBlock
+	Generation uint64
+}
+
 type Journal struct {
+	Preparation          *PreparationEvidence `json:",omitempty"`
+	SubmissionValidation string               `json:",omitempty"`
+	RevocationSignature  []byte               `json:",omitempty"`
 	ID, WorkerID, Status string
 	Intent               credit.Intent
 	Proof                *prover.ProofBundle

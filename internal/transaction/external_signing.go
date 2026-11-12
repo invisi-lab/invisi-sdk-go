@@ -97,6 +97,9 @@ func (o *Execution) FundingRequest(ctx context.Context) (apitypes.TypedData, err
 	if (o.Plan.Kind == "shield" && o.Status != "prepared") || (o.Plan.Kind != "shield" && (o.Status != "proved" || o.Bundle == nil)) {
 		return apitypes.TypedData{}, errors.New("proof must precede funding authorization")
 	}
+	if o.Plan.SubmissionValidation == "required" {
+		return o.FundingTypedData()
+	}
 	caller, err := contracts.NewInvisiProtocolCaller(o.Plan.Context.ProtocolAddress, o.Runtime.Options.Provider)
 	if err != nil {
 		return apitypes.TypedData{}, err
@@ -155,7 +158,20 @@ func (o *Execution) AttachFunding(ctx context.Context, signature []byte) error {
 	if verifier == nil {
 		verifier = GethFundingVerifier{Provider: o.Runtime.Options.Provider}
 	}
-	valid, err := verifier.VerifyTypedData(ctx, o.Plan.Funding.Payer, typed, signature)
+	valid := false
+	if o.Plan.SubmissionValidation == "required" {
+		digest, _, e := apitypes.TypedDataAndHash(typed)
+		if e != nil {
+			return e
+		}
+		owner, ok := RecoverTypedDataSigner(digest, signature)
+		valid = ok && owner == o.Plan.Funding.Payer
+	}
+	var errVerify error
+	if !valid {
+		valid, errVerify = verifier.VerifyTypedData(ctx, o.Plan.Funding.Payer, typed, signature)
+	}
+	err = errVerify
 	if err != nil {
 		return err
 	}

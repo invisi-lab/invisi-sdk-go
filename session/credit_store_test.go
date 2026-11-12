@@ -42,3 +42,23 @@ func TestCreditAdapterUsesAtomicEncryptedWalletStore(t *testing.T) {
 		t.Fatal("failed update changed Credit journal")
 	}
 }
+
+func TestCreditReservationRejectsPublicGenerationChangeDuringCommit(t *testing.T) {
+	ctx := context.Background()
+	wallet, _, _ := testSession(t)
+	adapter := creditStoreAdapter{session: wallet}
+	err := adapter.Update(ctx, func(state *creditsession.State) error {
+		state.Operations["stale"] = creditsession.Journal{ID: "stale", Status: "prepared"}
+		return wallet.publicHistory.options.Store.Update(ctx, wallet.publicHistory.key, func(public *PublicHistoryState) error { public.Generation++; return nil })
+	})
+	if err == nil {
+		t.Fatal("reservation succeeded across public history reset")
+	}
+	state, e := wallet.options.Store.ReadSnapshot(ctx, wallet.scope)
+	if e != nil {
+		t.Fatal(e)
+	}
+	if !state.Invalidated {
+		t.Fatal("reservation was usable after history generation changed")
+	}
+}

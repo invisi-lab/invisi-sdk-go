@@ -8,6 +8,8 @@ import (
 	"fmt"
 
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/crypto"
+	"github.com/ethereum/go-ethereum/signer/core/apitypes"
 	"github.com/invisi-lab/invisi-sdk-go/credit"
 	"github.com/invisi-lab/invisi-sdk-go/primitives"
 	"github.com/invisi-lab/invisi-sdk-go/prover"
@@ -28,6 +30,38 @@ func (s *Session) Resume(ctx context.Context, id string, backend prover.Prover) 
 	prepared, err := credit.Restore(ctx, record.Intent, record.Proof, backend)
 	if err != nil {
 		return nil, err
+	}
+	// EOA authorization is rechecked locally; contract-wallet recovery uses its live verifier.
+	if len(record.RevocationSignature) > 0 {
+		if err = prepared.WithRevocationSignature(ctx, record.RevocationSignature, func(ctx context.Context, owner common.Address, typed apitypes.TypedData, signature []byte) (bool, error) {
+			digest, _, e := apitypes.TypedDataAndHash(typed)
+			if e != nil {
+				return false, e
+			}
+			sig := append([]byte(nil), signature...)
+			if len(sig) == 64 {
+				expanded := make([]byte, 65)
+				copy(expanded, sig)
+				expanded[64] = expanded[32] >> 7
+				expanded[32] &= 0x7f
+				sig = expanded
+			}
+			if len(sig) == 65 {
+				if sig[64] >= 27 {
+					sig[64] -= 27
+				}
+				public, e := crypto.SigToPub(digest, sig)
+				if e == nil && crypto.PubkeyToAddress(*public) == owner {
+					return true, nil
+				}
+			}
+			if s.verifyRevocation == nil {
+				return false, fmt.Errorf("retained contract-wallet revocation requires a verifier")
+			}
+			return s.verifyRevocation(ctx, owner, typed, signature)
+		}); err != nil {
+			return nil, err
+		}
 	}
 	worker, err := workerID()
 	if err != nil {

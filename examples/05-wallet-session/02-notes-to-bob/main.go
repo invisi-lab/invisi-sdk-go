@@ -138,7 +138,8 @@ func main() {
 		log.Fatal(err)
 	}
 
-	// Export unsigned calldata for the external signer; submission and canonical reconciliation remain explicit.
+	// Cached calldata can be exported offline. Before a host sends it, call prepared.ValidateSubmission(ctx).
+	// A managed session send performs that live gate automatically.
 	call, err := prepared.ExportTransaction(ctx)
 	if err != nil {
 		log.Fatal(err)
