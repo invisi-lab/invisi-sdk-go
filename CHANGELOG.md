@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.2.3
+
+- Align transaction, Credit, history and Provenance workflows across the three SDKs.
+- Reuse synchronized preparation snapshots and decoded records, including offline preparation.
+- Bundle authenticated native Source proving assets and configure official Provenance automatically.
+- Preserve cancellation and recovery fences, final-fee authorization and request snapshots.
+
 ## 1.2.2
 
 This release includes all changes since 1.2.0; Go SDK 1.2.1 was skipped.
