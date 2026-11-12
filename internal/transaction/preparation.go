@@ -5,6 +5,7 @@ import (
 	"crypto/rand"
 	"encoding/hex"
 	"errors"
+	"github.com/ethereum/go-ethereum/core/types"
 	"math/big"
 	"sort"
 
@@ -94,10 +95,15 @@ func (s *Runtime) Frame(ctx context.Context, token common.Address, deadline uint
 	if e != nil {
 		return c, block, 0, e
 	}
-	if e = s.Protocol.ValidateDeployment(ctx, s.Options.Provider); e != nil {
-		return c, block, 0, e
-	}
-	head, e := s.Options.Provider.HeaderByNumber(ctx, nil)
+	var head *types.Header
+	_, e = MapPreparation(ctx, 2, func(ctx context.Context, i int) (struct{}, error) {
+		if i == 0 {
+			return struct{}{}, s.Protocol.ValidateDeployment(ctx, s.Options.Provider)
+		}
+		var err error
+		head, err = s.Options.Provider.HeaderByNumber(ctx, nil)
+		return struct{}{}, err
+	})
 	if e != nil {
 		return c, block, 0, e
 	}
@@ -119,7 +125,11 @@ func (s *Runtime) Frame(ctx context.Context, token common.Address, deadline uint
 	if len(code) == 0 {
 		return c, block, 0, errors.New("token address must have contract code")
 	}
-	state, e := s.PreparationInventory(ctx)
+	readState := s.PreparationInventory
+	if s.SummaryReader != nil {
+		readState = s.SummaryReader
+	}
+	state, e := readState(ctx)
 	if e != nil {
 		return c, block, 0, e
 	}
@@ -142,6 +152,7 @@ func (s *Runtime) Frame(ctx context.Context, token common.Address, deadline uint
 }
 
 func (s *Runtime) PrepareFunds(ctx context.Context, p TransferPreparation, withdrawal common.Address, withdrawAmount *big.Int, commitments []common.Hash) (*Execution, error) {
+	s = s.preparationRuntime()
 	c, block, deadline, e := s.Frame(ctx, p.TokenAddress, p.Deadline)
 	if e != nil {
 		return nil, e
@@ -179,13 +190,16 @@ func (s *Runtime) PrepareFunds(ctx context.Context, p TransferPreparation, withd
 	for _, n := range inputs {
 		sum.Add(sum, primitives.ElementToBigInt(n.Note.Amount))
 	}
-	outputs := []PreparedOutput{}
-	for index, out := range p.Outputs {
-		o, e := s.Output(ctx, p.TokenAddress, out)
-		if e != nil {
-			return nil, OutputFailure(e, index, out.To(), "")
+	outputs, e := MapPreparation(ctx, len(p.Outputs), func(ctx context.Context, index int) (PreparedOutput, error) {
+		out := p.Outputs[index]
+		o, err := s.Output(ctx, p.TokenAddress, out)
+		if err != nil {
+			return PreparedOutput{}, OutputFailure(err, index, out.To(), "")
 		}
-		outputs = append(outputs, o)
+		return o, nil
+	})
+	if e != nil {
+		return nil, e
 	}
 	change := new(big.Int).Sub(sum, total)
 	if change.Sign() > 0 {
@@ -252,6 +266,7 @@ func (s *Runtime) PrepareTransfer(ctx context.Context, p TransferPreparation) (r
 
 func (s *Runtime) PrepareShield(ctx context.Context, p ShieldPreparation) (result *Execution, failure error) {
 	defer func() { failure = WrapPreparation("prepareShield", failure) }()
+	s = s.preparationRuntime()
 	var err error
 	p, err = Frozen(p)
 	if err != nil {
@@ -270,14 +285,20 @@ func (s *Runtime) PrepareShield(ctx context.Context, p ShieldPreparation) (resul
 	}
 	plan := Plan{Kind: "shield", Context: c, Block: block, Deadline: deadline, Funding: funding, FundingMode: mode, Shield: protocol.ShieldParams{Token: p.TokenAddress, Deadline: new(big.Int).SetUint64(deadline)}}
 	sum := new(big.Int)
-	for index, out := range p.Outputs {
-		o, e := s.Output(ctx, p.TokenAddress, out)
-		if e != nil {
-			return nil, OutputFailure(e, index, out.To(), "")
+	plan.Outputs, e = MapPreparation(ctx, len(p.Outputs), func(ctx context.Context, index int) (PreparedOutput, error) {
+		out := p.Outputs[index]
+		o, err := s.Output(ctx, p.TokenAddress, out)
+		if err != nil {
+			return PreparedOutput{}, OutputFailure(err, index, out.To(), "")
 		}
-		plan.Outputs = append(plan.Outputs, o)
-		plan.Shield.NoteCommitments = append(plan.Shield.NoteCommitments, o.Commitment)
-		sum.Add(sum, out.Amount())
+		return o, nil
+	})
+	if e != nil {
+		return nil, e
+	}
+	for _, out := range plan.Outputs {
+		plan.Shield.NoteCommitments = append(plan.Shield.NoteCommitments, out.Commitment)
+		sum.Add(sum, out.Amount)
 	}
 	if sum.Cmp(funding.Amount) != 0 {
 		return nil, errors.New("shield funding must equal output sum")

@@ -41,7 +41,7 @@ func (s *WalletStore) loadRecords(ctx context.Context, reader rowReader, scope s
 		if !ok || m.Kind != kind || m.Sequence != seq || m.Digest != sha256.Sum256(data) {
 			return errors.New("wallet active record inventory authentication failed")
 		}
-		raw, e := s.codec.OpenRecord(scope, locator, data)
+		raw, e := s.openRecord(scope, locator, data)
 		if e != nil {
 			return e
 		}
@@ -227,7 +227,7 @@ func (s *WalletStore) ReadRecords(ctx context.Context, scope session.WalletScope
 		if e != nil {
 			return session.RecordPage{}, e
 		}
-		raw, e := s.codec.OpenRecord(scope, "cursor", data)
+		raw, e := s.openRecord(scope, "cursor", data)
 		if e != nil {
 			return session.RecordPage{}, e
 		}
@@ -271,7 +271,7 @@ func (s *WalletStore) ReadRecords(ctx context.Context, scope session.WalletScope
 			out.NextCursor = base64.RawURLEncoding.EncodeToString(sealed)
 			break
 		}
-		raw, e := s.codec.OpenRecord(scope, locator, data)
+		raw, e := s.openRecord(scope, locator, data)
 		if e != nil {
 			return out, e
 		}

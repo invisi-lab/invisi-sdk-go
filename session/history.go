@@ -251,3 +251,12 @@ func outputPayload(o transaction.PreparedOutput) []byte {
 	}
 	return append([]byte(nil), o.Note.Payload...)
 }
+
+func (s *notifyingWalletStore) ReadMetadata(ctx context.Context, scope WalletScope) (WalletState, error) {
+	if store, ok := s.base.(interface {
+		ReadMetadata(context.Context, WalletScope) (WalletState, error)
+	}); ok {
+		return store.ReadMetadata(ctx, scope)
+	}
+	return s.base.ReadSnapshot(ctx, scope)
+}

@@ -11,8 +11,8 @@ import (
 	"github.com/invisi-lab/invisi-sdk-go/credit"
 	transaction "github.com/invisi-lab/invisi-sdk-go/internal/transaction"
 	"github.com/invisi-lab/invisi-sdk-go/protocol"
-	"github.com/invisi-lab/invisi-sdk-go/rpc/contracts"
 	"github.com/invisi-lab/invisi-sdk-go/prover"
+	"github.com/invisi-lab/invisi-sdk-go/rpc/contracts"
 	creditsession "github.com/invisi-lab/invisi-sdk-go/session/credit"
 )
 
@@ -82,48 +82,104 @@ func (s *WalletSession) validateCreditIntent(ctx context.Context, intent credit.
 	default:
 		return errors.New("Credit operation required")
 	}
-	for _, source := range sources {
-		known, err := contract.RootHistory(opts, source.TreeId, source.MerkleRoot)
-		if err != nil {
-			return err
+	_, err = transaction.MapPreparation(ctx, len(sources)+len(intent.Inputs), func(ctx context.Context, i int) (struct{}, error) {
+		callOpts := &bind.CallOpts{Context: ctx, BlockNumber: head.Number}
+		if i < len(sources) {
+			source := sources[i]
+			known, e := contract.RootHistory(callOpts, source.TreeId, source.MerkleRoot)
+			if e != nil {
+				return struct{}{}, e
+			}
+			if !known {
+				return struct{}{}, errors.New("Credit source root is not registered")
+			}
+			return struct{}{}, nil
 		}
-		if !known {
-			return errors.New("Credit source root is not registered")
+		nf, e := intent.Inputs[i-len(sources)].State.Nullifier()
+		if e != nil {
+			return struct{}{}, e
 		}
-	}
-	for _, input := range intent.Inputs {
-		nf, err := input.State.Nullifier()
-		if err != nil {
-			return err
-		}
-		spent, err := contract.IsNullifierSpent(opts, nf.Bytes())
-		if err != nil {
-			return err
+		spent, e := contract.IsNullifierSpent(callOpts, nf.Bytes())
+		if e != nil {
+			return struct{}{}, e
 		}
 		if spent {
-			return errors.New("Credit input was consumed; refresh wallet")
+			return struct{}{}, errors.New("Credit input was consumed; refresh wallet")
 		}
+		return struct{}{}, nil
+	})
+	if err != nil {
+		return err
 	}
 	allocations := map[common.Address]*big.Int{}
 	bitmaps := map[string]*big.Int{}
+	type grantReference struct {
+		owner common.Address
+		shard uint64
+		slot  uint16
+	}
+	refs := []grantReference{}
+	if p := intent.Update; p != nil {
+		refs = append(refs, grantReference{p.Owner, p.RevocationShard, p.RevocationSlot})
+	}
+	if p := intent.Revoke; p != nil {
+		refs = append(refs, grantReference{p.Owner, p.Shard, p.Slot})
+	}
+	if p := intent.Draw; p != nil {
+		for _, ref := range p.GrantRefs {
+			refs = append(refs, grantReference{p.Payers[ref.PayerIndex.Uint64()].Payer, ref.Shard, ref.Slot})
+		}
+	}
+	owners := []common.Address{}
+	words := []grantReference{}
+	ownerSeen := map[common.Address]bool{}
+	wordSeen := map[string]bool{}
+	for _, ref := range refs {
+		if ref.shard == 0 {
+			return errors.New("zero grant shard")
+		}
+		if !ownerSeen[ref.owner] {
+			ownerSeen[ref.owner] = true
+			owners = append(owners, ref.owner)
+		}
+		key := fmt.Sprintf("%s:%d:%d", ref.owner.Hex(), ref.shard, uint8(ref.slot/256))
+		if !wordSeen[key] {
+			wordSeen[key] = true
+			words = append(words, ref)
+		}
+	}
+	values, e := transaction.MapPreparation(ctx, len(owners)+len(words), func(ctx context.Context, i int) (*big.Int, error) {
+		callOpts := &bind.CallOpts{Context: ctx, BlockNumber: head.Number}
+		if i < len(owners) {
+			next, e := contract.CreditAllocation(callOpts, owners[i], token)
+			if e != nil {
+				return nil, e
+			}
+			if next.Shard == 0 {
+				return nil, errors.New("invalid current grant allocation")
+			}
+			count := new(big.Int).SetUint64(next.Shard - 1)
+			count.Mul(count, big.NewInt(65536))
+			count.Add(count, new(big.Int).SetUint64(uint64(next.Slot)))
+			return count, nil
+		}
+		ref := words[i-len(owners)]
+		return contract.CreditRevocationBitmap(callOpts, ref.owner, token, ref.shard, uint8(ref.slot/256))
+	})
+	if e != nil {
+		return e
+	}
+	for i, owner := range owners {
+		allocations[owner] = values[i]
+	}
+	for i, ref := range words {
+		bitmaps[fmt.Sprintf("%s:%d:%d", ref.owner.Hex(), ref.shard, uint8(ref.slot/256))] = values[len(owners)+i]
+	}
 	checkGrant := func(owner common.Address, shard uint64, slot uint16) error {
 		if shard == 0 {
 			return errors.New("zero grant shard")
 		}
 		count := allocations[owner]
-		if count == nil {
-			next, err := contract.CreditAllocation(opts, owner, token)
-			if err != nil {
-				return err
-			}
-			if next.Shard == 0 {
-				return errors.New("invalid current grant allocation")
-			}
-			count = new(big.Int).SetUint64(next.Shard - 1)
-			count.Mul(count, big.NewInt(65536))
-			count.Add(count, new(big.Int).SetUint64(uint64(next.Slot)))
-			allocations[owner] = count
-		}
 		index := new(big.Int).SetUint64(shard - 1)
 		index.Mul(index, big.NewInt(65536))
 		index.Add(index, new(big.Int).SetUint64(uint64(slot)))
@@ -133,14 +189,6 @@ func (s *WalletSession) validateCreditIntent(ctx context.Context, intent credit.
 		word := uint8(slot / 256)
 		key := fmt.Sprintf("%s:%d:%d", owner.Hex(), shard, word)
 		bits := bitmaps[key]
-		if bits == nil {
-			value, err := contract.CreditRevocationBitmap(opts, owner, token, shard, word)
-			if err != nil {
-				return err
-			}
-			bits = value
-			bitmaps[key] = bits
-		}
 		if bits.Bit(int(slot%256)) != 0 {
 			return errors.New("Credit authority was revoked")
 		}
@@ -187,10 +235,12 @@ func (s *WalletSession) validateCreditIntent(ctx context.Context, intent credit.
 		return nil
 	}
 	if intent.Draw != nil {
-		for _, payer := range intent.Draw.Payers {
-			if err = checkPayer(payer.Payer, payer.Amount); err != nil {
-				return err
-			}
+		_, err = transaction.MapPreparation(ctx, len(intent.Draw.Payers), func(_ context.Context, i int) (struct{}, error) {
+			payer := intent.Draw.Payers[i]
+			return struct{}{}, checkPayer(payer.Payer, payer.Amount)
+		})
+		if err != nil {
+			return err
 		}
 	} else if err = checkPayer(owner, fee); err != nil {
 		return err

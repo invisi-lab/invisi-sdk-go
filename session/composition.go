@@ -79,6 +79,25 @@ func Connect(ctx context.Context, options Options) (*WalletSession, error) {
 		state, e := s.fencedSnapshot(ctx)
 		return transaction.Inventory{Notes: state.Notes, Invalidated: state.Invalidated, ObservedThrough: state.ObservedThrough, CheckedThrough: state.CheckedThrough}, e
 	}
+	runtime.SummaryReader = func(ctx context.Context) (transaction.Inventory, error) {
+		var state WalletState
+		var err error
+		if metadata, ok := s.options.Store.(interface {
+			ReadMetadata(context.Context, WalletScope) (WalletState, error)
+		}); ok {
+			state, err = metadata.ReadMetadata(ctx, s.scope)
+		} else {
+			state, err = s.options.Store.ReadSnapshot(ctx, s.scope)
+		}
+		if err == nil && s.publicHistory != nil {
+			public, e := s.publicHistory.Snapshot(ctx)
+			err = e
+			if err == nil && public.Generation != state.Scan.Generation {
+				state.Invalidated = true
+			}
+		}
+		return transaction.Inventory{Invalidated: state.Invalidated, ObservedThrough: state.ObservedThrough, CheckedThrough: state.CheckedThrough}, err
+	}
 	runtime.OnComplete = s.reserveExecution
 	runtime.OnPersist = func(ctx context.Context, e *transaction.Execution, status string) error {
 		return operationFromExecution(s, e).persist(ctx, status)

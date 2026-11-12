@@ -38,6 +38,7 @@ type Runtime struct {
 	ExplicitInventory *Inventory
 	ChangeAddress     string
 	InventoryReader   func(context.Context) (Inventory, error)
+	SummaryReader     func(context.Context) (Inventory, error)
 	OnComplete        func(context.Context, *Execution) error
 	OnPersist         func(context.Context, *Execution, string) error
 	OnLease           func(context.Context, *Execution) error

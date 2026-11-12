@@ -2,7 +2,9 @@ package transaction
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
+	"fmt"
 	"math/big"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
@@ -58,27 +60,85 @@ func (s *Runtime) SelectInputs(ctx context.Context, token common.Address, amount
 		if s.ExplicitInventory == nil && len(selected) == 0 && sum.Cmp(amount) >= 0 {
 			break
 		}
-		contract, e := contracts.NewInvisiProtocolCaller(s.Scope.ProtocolAddress, s.Options.Provider)
-		if e != nil {
-			return nil, nil, e
-		}
-		spent, e := contract.IsNullifierSpent(&bind.CallOpts{Context: ctx, BlockNumber: new(big.Int).SetUint64(block.Number)}, n.Nullifier)
-		if e != nil {
-			return nil, nil, e
-		}
-		if spent {
-			return nil, nil, errors.New("stored note was consumed; refresh wallet")
-		}
-		m, e := s.RPC.GetMembership(ctx, s.Protocol.Context(), protocolrpc.MembershipInput{TreeID: n.TreeID, LeafIndex: n.LeafIndex, Commitment: n.Commitment}, block)
-		if e != nil {
-			return nil, nil, e
-		}
 		inputs = append(inputs, n)
-		memberships = append(memberships, m)
 		sum.Add(sum, primitives.ElementToBigInt(n.Note.Amount))
 	}
 	if sum.Cmp(amount) < 0 || (len(selected) > 0 && len(inputs) != len(selected)) {
 		return nil, nil, errors.New("insufficient available known notes")
 	}
+	// Pin one indexed root per tree before concurrent paths are requested.
+	first := map[uint64]int{}
+	leaders := []int{}
+	for i, n := range inputs {
+		if _, ok := first[n.TreeID]; !ok {
+			first[n.TreeID] = i
+			leaders = append(leaders, i)
+		}
+	}
+	memberships = make([]protocolrpc.Membership, len(inputs))
+	read := func(ctx context.Context, i int, root *common.Hash) (protocolrpc.Membership, error) {
+		n := inputs[i]
+		contract, err := contracts.NewInvisiProtocolCaller(s.Scope.ProtocolAddress, s.Options.Provider)
+		if err != nil {
+			return protocolrpc.Membership{}, err
+		}
+		spent, err := contract.IsNullifierSpent(&bind.CallOpts{Context: ctx, BlockNumber: new(big.Int).SetUint64(block.Number)}, n.Nullifier)
+		if err != nil {
+			return protocolrpc.Membership{}, err
+		}
+		if spent {
+			return protocolrpc.Membership{}, errors.New("stored note was consumed; refresh wallet")
+		}
+		return s.membership(ctx, protocolrpc.MembershipInput{TreeID: n.TreeID, LeafIndex: n.LeafIndex, Commitment: n.Commitment, Root: root}, block)
+	}
+	_, e = MapPreparation(ctx, len(leaders), func(ctx context.Context, j int) (struct{}, error) {
+		i := leaders[j]
+		m, err := read(ctx, i, nil)
+		memberships[i] = m
+		return struct{}{}, err
+	})
+	if e != nil {
+		return nil, nil, e
+	}
+	rest := []int{}
+	for i, n := range inputs {
+		if first[n.TreeID] != i {
+			rest = append(rest, i)
+		}
+	}
+	_, e = MapPreparation(ctx, len(rest), func(ctx context.Context, j int) (struct{}, error) {
+		i := rest[j]
+		root := memberships[first[inputs[i].TreeID]].Root
+		m, err := read(ctx, i, &root)
+		memberships[i] = m
+		return struct{}{}, err
+	})
+	if e != nil {
+		return nil, nil, e
+	}
 	return inputs, memberships, nil
+}
+
+func (s *Runtime) membership(ctx context.Context, input protocolrpc.MembershipInput, block protocolrpc.CanonicalBlock) (protocolrpc.Membership, error) {
+	load := func() ([]byte, error) {
+		m, err := s.RPC.GetMembership(ctx, s.Protocol.Context(), input, block)
+		if err != nil {
+			return nil, err
+		}
+		return json.Marshal(m)
+	}
+	var raw []byte
+	var err error
+	if provider, ok := s.Options.Provider.(*preparationProvider); ok {
+		key := fmt.Sprintf("membership:%s:%d:%d:%s:%v", block.Hash, input.TreeID, input.LeafIndex, input.Commitment, input.Root)
+		raw, err = provider.reads.read(ctx, key, load)
+	} else {
+		raw, err = load()
+	}
+	if err != nil {
+		return protocolrpc.Membership{}, err
+	}
+	var membership protocolrpc.Membership
+	err = json.Unmarshal(raw, &membership)
+	return membership, err
 }

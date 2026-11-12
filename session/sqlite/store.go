@@ -17,6 +17,7 @@ type WalletStore struct {
 	codec         *session.EncryptedWalletCodec
 	mu            sync.Mutex
 	recentRecords int
+	decoded       decodedRecordCache
 }
 
 // NewWalletStore accepts a caller-owned database. The caller closes its connection.

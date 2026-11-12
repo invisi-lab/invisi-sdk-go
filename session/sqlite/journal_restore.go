@@ -27,7 +27,7 @@ func (s *WalletStore) RestoreExternalizedOperations(ctx context.Context, scope s
 			}
 			before = seq
 			count++
-			plain, e := s.codec.OpenRecord(scope, locator, raw)
+			plain, e := s.openRecord(scope, locator, raw)
 			if e != nil {
 				rows.Close()
 				return e

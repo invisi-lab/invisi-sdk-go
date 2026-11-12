@@ -3,6 +3,7 @@ package transaction
 import (
 	"context"
 	"errors"
+	"github.com/ethereum/go-ethereum/core/types"
 	"math/big"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
@@ -96,20 +97,26 @@ func (o *Execution) FundingRequest(ctx context.Context) (apitypes.TypedData, err
 	if (o.Plan.Kind == "shield" && o.Status != "prepared") || (o.Plan.Kind != "shield" && (o.Status != "proved" || o.Bundle == nil)) {
 		return apitypes.TypedData{}, errors.New("proof must precede funding authorization")
 	}
-	head, err := o.Runtime.Options.Provider.HeaderByNumber(ctx, nil)
+	caller, err := contracts.NewInvisiProtocolCaller(o.Plan.Context.ProtocolAddress, o.Runtime.Options.Provider)
+	if err != nil {
+		return apitypes.TypedData{}, err
+	}
+	var head *types.Header
+	var nonce *big.Int
+	_, err = MapPreparation(ctx, 2, func(ctx context.Context, i int) (struct{}, error) {
+		var e error
+		if i == 0 {
+			head, e = o.Runtime.Options.Provider.HeaderByNumber(ctx, nil)
+		} else {
+			nonce, e = caller.Nonces(&bind.CallOpts{Context: ctx}, o.Plan.Funding.Payer)
+		}
+		return struct{}{}, e
+	})
 	if err != nil {
 		return apitypes.TypedData{}, err
 	}
 	if head == nil || head.Time > o.Plan.Deadline || (o.Plan.Funding.Deadline != nil && new(big.Int).SetUint64(head.Time).Cmp(o.Plan.Funding.Deadline) > 0) {
 		return apitypes.TypedData{}, errors.New("funding authorization expired")
-	}
-	caller, err := contracts.NewInvisiProtocolCaller(o.Plan.Context.ProtocolAddress, o.Runtime.Options.Provider)
-	if err != nil {
-		return apitypes.TypedData{}, err
-	}
-	nonce, err := caller.Nonces(&bind.CallOpts{Context: ctx}, o.Plan.Funding.Payer)
-	if err != nil {
-		return apitypes.TypedData{}, err
 	}
 	if o.Plan.Funding.SigNonce == nil || nonce.Cmp(o.Plan.Funding.SigNonce) != 0 {
 		return apitypes.TypedData{}, errors.New("prepared funding nonce is stale")
