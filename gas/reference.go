@@ -6,3 +6,5 @@ type Shape = shared.Shape
 type Result = shared.EstimateResult
 
 func EstimateGas(shape Shape) Result { return shared.EstimateGas(shape) }
+
+func EstimateGasChecked(shape Shape) (Result, error) { return shared.EstimateGasChecked(shape) }

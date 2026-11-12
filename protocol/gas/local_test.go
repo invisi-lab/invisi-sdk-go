@@ -15,7 +15,7 @@ func TestUnavailableEstimateOmitsGasUnits(t *testing.T) {
 }
 func TestCreditBenchmarkIgnoresPackagedRelease(t *testing.T) {
 	got := EstimateGas(Shape{"kind": "create-credit", "scenario": "first-allocation-empty-tree", "feeEnabled": false, "feeMechanism": "none"})
-	if !got.Available || got.GasUnits == nil || got.Reference.ReleaseIdentity == nil {
+	if !got.Available || got.GasUnits == nil || got.ProtocolCommit == "" {
 		t.Fatal(got)
 	}
 }

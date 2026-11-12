@@ -23,7 +23,7 @@ All six modules target **1.2.2**. Applications normally import the SDK's `sdk` p
 
 Module paths use `github.com/invisi-lab/invisi-sdk-go/<name>`; the SDK uses the repository-root module path. Nested module release tags are `<name>/v1.2.2`; the root SDK tag is `v1.2.2`. The examples are a separate development module, not a public release package. No `core`, `runtime` or `protocolkit` compatibility module is retained.
 
-Pure ABI/types are in `protocol/contracts`; network-bound geth clients are in `rpc/contracts`. Maintainers regenerate both from the same compiler ABIs with `go generate ./contracts` in the Protocol module. `session/credit` owns managed Credit state. `protocol/gas` owns measured references, while final transaction simulation belongs to the application and deployment/operator pricing remains outside the pure module.
+Pure ABI/types are in `protocol/contracts`; network-bound geth clients are in `rpc/contracts`. Maintainers regenerate both from the same compiler ABIs with `go generate ./contracts` in the Protocol module. `session/credit` owns managed Credit state. `protocol/gas` owns receipt-calibrated local estimates, while final transaction simulation belongs to the application and deployment/operator pricing remains outside the pure module.
 
 For local multi-module development, use an untracked Go workspace. `GOWORK=off` builds use tagged module dependencies; production `go.mod` files contain no local replacement paths. Verify module boundaries with `python3 scripts/check-module-boundaries.py` in the configured workspace.
 
@@ -145,7 +145,7 @@ IPN contains no viewing/spending key, ciphertext, payload or membership path. Ex
 
 `prepared.EstimateGas()` returns `(GasEstimate, error)` before authorization or proof, on Note and managed operations and all four Credit operations. It reads only the prepared structure and embedded benchmarks: no provider, calldata export, store write or submission is involved.
 
-The result has `Source: "benchmark"`, `Available`, optional `*uint64 GasUnits`, an explicit `Reason` when unavailable, and reference provenance. Only complete measured shapes match; unmeasured shapes remain unavailable. Credit create/update use the catalog benchmark scenarios with their stated conditions, rather than asserting live state. Revoke lacks caller/bitmap evidence and is unavailable. Release versions and manifest hashes are provenance only; structural matches are available across versions.
+All valid direct shapes return `Source: "benchmark"`, `Available: true` and positive `*uint64 GasUnits`: Shield1–10 outputs, all canonical transact shapes through190 total slots (funding/withdrawal/fee included), Credit create/update/revoke and draw1–80 with any payer grouping. `Statistic` is `median` for a measured shape or `estimate` for receipt-calibrated estimation. `ProtocolCommit` and `SourceSHA256` identify the same data as TS; payload, extra source trees, Permit and funding signatures use the same allowances. Unknown revocation callers use a conservative contract-wallet allowance; estimating never queries a provider. Recursive aggregate outer previews remain explicitly unavailable.
 
 ```go
 estimate, err := prepared.EstimateGas()
@@ -153,7 +153,7 @@ if err != nil { return err }
 if estimate.Available { log.Printf("benchmark gas units: %d", *estimate.GasUnits) }
 ```
 
-`gas.EstimateGas(shape)` is the pure protocol entry point. A measured median is an estimate, not a guaranteed transaction gas limit or monetary fee. Applications supply current fee prices and own final transaction simulation. Broadcaster quotes and `maxGas` have separate meanings.
+`gas.EstimateGas(shape)` is the pure protocol entry point; `gas.EstimateGasChecked(shape)` additionally returns invalid-shape errors. Prepared/session methods propagate those errors. A benchmark-derived gas count is an estimate, not a guaranteed transaction gas limit or monetary fee. Applications supply current fee prices and own final transaction simulation. Broadcaster quotes and `maxGas` have separate meanings.
 
 ## Development and validation
 

@@ -29,7 +29,7 @@ func TestManagedCreditEstimateLeavesJournalUnchanged(t *testing.T) {
 	before, _ := store.ReadSnapshot(ctx)
 	got, err := op.EstimateGas()
 	after, _ := store.ReadSnapshot(ctx)
-	if err != nil || got.Source != "benchmark" || got.Available || got.Reason == "" || !reflect.DeepEqual(before, after) {
+	if err != nil || got.Source != "benchmark" || !got.Available || got.GasUnits == nil || *got.GasUnits == 0 || !reflect.DeepEqual(before, after) {
 		t.Fatal(got, err, "estimate changed journal")
 	}
 }

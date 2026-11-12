@@ -1,6 +1,8 @@
 package credit
 
 import (
+	"math/big"
+
 	"github.com/invisi-lab/invisi-sdk-go/protocol"
 	"github.com/invisi-lab/invisi-sdk-go/protocol/gas"
 )
@@ -8,50 +10,38 @@ import (
 func (p *Prepared) EstimateGas() (protocol.GasEstimate, error) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
-	if p.intent.Revoke != nil {
-		return gas.EstimateGas(nil), nil
-	}
-	if p.intent.Create != nil || p.intent.Update != nil {
-		if len(p.intent.Deliveries) != 2 {
-			return gas.EstimateGas(nil), nil
+	positive := func(n *big.Int) bool { return n != nil && n.Sign() > 0 }
+	shape := gas.Shape{}
+	creditDeliveries := 0
+	switch {
+	case p.intent.Revoke != nil:
+		// 调用方在导出 calldata 时才确定；本地预估不能假定 owner 直接发送。
+		shape = gas.Shape{"kind": "revoke-credit", "authorization": "unknown", "feeEnabled": positive(p.intent.Revoke.FeeAmount)}
+	case p.intent.Create != nil:
+		creditDeliveries = 2
+		shape = gas.Shape{"kind": "create-credit", "feeEnabled": positive(p.intent.Create.FeeAmount)}
+	case p.intent.Update != nil:
+		creditDeliveries = 2
+		shape = gas.Shape{"kind": "update-credit", "feeEnabled": positive(p.intent.Update.FeeAmount)}
+	case p.intent.Draw != nil:
+		d := p.intent.Draw
+		capacity, err := DrawCapacity(len(d.Nullifiers))
+		if err != nil {
+			return protocol.GasEstimate{}, err
 		}
-		for _, d := range p.intent.Deliveries {
-			if len(d.Ciphertext) != 485 || len(d.Clue) != 68 {
-				return gas.EstimateGas(nil), nil
-			}
+		creditDeliveries = 2 * len(d.Nullifiers)
+		shape = gas.Shape{"kind": "draw-credit", "capacity": capacity, "creditInputs": len(d.Nullifiers), "distinctPayers": len(d.Payers), "sourceTrees": len(d.Sources), "feeEnabled": positive(d.FeeAmount)}
+	default:
+		return gas.EstimateGasChecked(nil)
+	}
+	extra := 0
+	for i, delivery := range p.intent.Deliveries {
+		baseline := 160
+		if i < creditDeliveries {
+			baseline = 485
 		}
-		kind, scenario := "create-credit", "first-allocation-empty-tree"
-		fee := p.intent.Create != nil && p.intent.Create.FeeAmount != nil && p.intent.Create.FeeAmount.Sign() > 0
-		if p.intent.Update != nil {
-			kind, scenario = "update-credit", "after-draw-preserve-usage"
-			fee = p.intent.Update.FeeAmount != nil && p.intent.Update.FeeAmount.Sign() > 0
-		}
-		mechanism := "none"
-		if fee {
-			mechanism = "owner-pull"
-		}
-		return gas.EstimateGas(gas.Shape{"kind": kind, "scenario": scenario, "feeEnabled": fee, "feeMechanism": mechanism}), nil
+		extra += max(0, len(delivery.Ciphertext)-baseline) + max(0, len(delivery.Clue)-68)
 	}
-	d := p.intent.Draw
-	if d == nil {
-		return gas.EstimateGas(nil), nil
-	}
-	capacity, err := DrawCapacity(len(d.Nullifiers))
-	if err != nil {
-		return protocol.GasEstimate{}, err
-	}
-	shape := gas.Shape{"kind": "draw-credit", "capacity": capacity, "creditInputs": len(d.Nullifiers), "distinctPayers": len(d.Payers), "sourceTrees": len(d.Sources), "noteOutputs": 1, "creditOutputs": len(d.CreditCommitments), "creditCiphertextBytes": 485, "noteCiphertextBytes": 160, "clueBytes": 68, "scenario": "distinct-payers", "feeEnabled": false, "feeMechanism": "none"}
-	if d.FeeAmount != nil && d.FeeAmount.Sign() > 0 {
-		shape["feeEnabled"] = true
-		shape["feeMechanism"] = "draw-deduction"
-	}
-	if len(d.Payers) != len(d.Nullifiers) {
-		return gas.EstimateGas(nil), nil
-	}
-	for _, delivery := range p.intent.Deliveries {
-		if len(delivery.Ciphertext) != 485 && len(delivery.Ciphertext) != 160 || len(delivery.Clue) != 68 {
-			return gas.EstimateGas(nil), nil
-		}
-	}
-	return gas.EstimateGas(shape), nil
+	shape["extraDeliveryBytes"] = extra
+	return gas.EstimateGasChecked(shape)
 }

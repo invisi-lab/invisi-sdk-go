@@ -104,12 +104,13 @@ if proving_only:
     print("Synced authenticated current protocol proving assets and layouts; gas and SDK vectors unchanged")
     sys.exit(0)
 
-# Gas data is published as documented medians, never relabeled as raw deployment receipts.
-gas_files={name:(source/'packages/protocol/src/gas/data'/name).read_bytes() for name in ('documented-references.json','documented-reference-vectors.json')}
-catalog=json.loads(gas_files['documented-references.json'])
-require(catalog.get('kind')=='documented-reference' and catalog.get('formatVersion')==1,'unsupported gas reference schema')
-require(json.loads(gas_files['documented-reference-vectors.json']).get('catalogSha256')==digest(compact(catalog)),'stale documented gas vectors')
+# Gas 模型与验证记录按上游原始字节同步。
+gas_files={name:(source/'packages/protocol/src/gas/data'/name).read_bytes() for name in ('measured-model.json','model-validation.json')}
+model=json.loads(gas_files['measured-model.json'])
+validation=json.loads(gas_files['model-validation.json'])
+require(model.get('formatVersion')==1 and len(model.get('rows',[]))==241,'unsupported gas model schema')
+require(model.get('protocolCommit')==validation.get('protocolCommit') and len(validation.get('cases',[]))==12,'stale gas validation')
 publish_proving()
 for name,data in gas_files.items():
-    (root/'protocol/gas'/('testdata' if 'vectors' in name else 'data')/name).write_bytes(data)
-print('Synced authenticated current protocol assets, layouts and documented gas references')
+    (root/'protocol/gas/data'/name).write_bytes(data)
+print('Synced authenticated current protocol assets, layouts and measured gas model')

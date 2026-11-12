@@ -4,6 +4,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/invisi-lab/invisi-sdk-go/primitives"
 	"github.com/invisi-lab/invisi-sdk-go/protocol"
+	"github.com/invisi-lab/invisi-sdk-go/protocol/gas"
 	"math/big"
 	"reflect"
 	"testing"
@@ -31,14 +32,14 @@ func TestBenchmarkAllCreditKindsBeforeProof(t *testing.T) {
 			p := &Prepared{intent: intent}
 			before := p.intent
 			got, err := p.EstimateGas()
-			if err != nil || got.Source != "benchmark" || name == "revoke" && (got.Available || got.GasUnits != nil || got.Reason == "") || name != "revoke" && (!got.Available || got.GasUnits == nil) {
+			if err != nil || got.Source != "benchmark" || (!got.Available || got.GasUnits == nil || *got.GasUnits == 0) {
 				t.Fatal(got, err)
 			}
 			if name == "create" || name == "update" {
 				originalCiphertext := p.intent.Deliveries[0].Ciphertext
-				p.intent.Deliveries[0].Ciphertext = []byte{1}
+				p.intent.Deliveries[0].Ciphertext = make([]byte, 585)
 				unsupported, _ := p.EstimateGas()
-				if unsupported.Available || unsupported.Reason != "shape-not-covered" {
+				if !unsupported.Available || unsupported.Statistic != "estimate" || *unsupported.GasUnits <= *got.GasUnits {
 					t.Fatal(unsupported)
 				}
 				p.intent.Deliveries[0].Ciphertext = originalCiphertext
@@ -48,5 +49,24 @@ func TestBenchmarkAllCreditKindsBeforeProof(t *testing.T) {
 				t.Fatal("estimate mutated prepared operation")
 			}
 		})
+	}
+}
+
+func TestGroupedDrawEstimatesRolePayloadAndSourceCounts(t *testing.T) {
+	const n = 7
+	draw := &DrawParams{Nullifiers: make([]common.Hash, n), CreditCommitments: make([]common.Hash, n), Payers: make([]Payer, 3), Sources: make([]protocol.InputSource, 2), FeeAmount: big.NewInt(1)}
+	ds := make([]protocol.Delivery, 2*n+1)
+	for i := range ds {
+		size := 485
+		if i == 2*n {
+			size = 260
+		}
+		ds[i] = protocol.Delivery{Ciphertext: make([]byte, size), Clue: make([]byte, 68)}
+	}
+	prepared := &Prepared{intent: Intent{Draw: draw, Deliveries: ds}}
+	got, err := prepared.EstimateGas()
+	want := gas.EstimateGas(gas.Shape{"kind": "draw-credit", "capacity": 10, "creditInputs": n, "distinctPayers": 3, "sourceTrees": 2, "feeEnabled": true, "extraDeliveryBytes": 100})
+	if err != nil || !got.Available || got.Statistic != "estimate" || !reflect.DeepEqual(got, want) {
+		t.Fatal(got, want, err)
 	}
 }

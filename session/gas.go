@@ -8,5 +8,5 @@ import (
 func (o *Operation) EstimateGas() (protocol.GasEstimate, error) {
 	o.mu.Lock()
 	defer o.mu.Unlock()
-	return transaction.EstimatePlanGas(o.plan), nil
+	return transaction.EstimatePlanGasChecked(o.plan)
 }

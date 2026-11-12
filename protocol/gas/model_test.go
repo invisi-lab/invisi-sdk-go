@@ -1,56 +1,18 @@
 package gas
 
-import (
-	"encoding/json"
-	"os"
-	"testing"
-)
-
-func TestDocumentedReferenceVectors(t *testing.T) {
-	data, err := os.ReadFile("data/documented-reference-vectors.json")
-	if err != nil {
-		t.Fatal(err)
-	}
-	var fixtures struct {
-		Vectors []struct {
-			Query     Shape
-			Available bool
-			GasUnits  string
-		}
-	}
-	if err := json.Unmarshal(data, &fixtures); err != nil {
-		t.Fatal(err)
-	}
-	if len(fixtures.Vectors) == 0 {
-		t.Fatal("empty vectors")
-	}
-	for _, v := range fixtures.Vectors {
-		got, ok := reference(v.Query)
-		if ok != v.Available {
-			t.Fatalf("query %v: availability %v", v.Query, ok)
-		}
-		if ok && got.GasUnits != v.GasUnits {
-			t.Fatalf("query %v: gas %s != %s", v.Query, got.GasUnits, v.GasUnits)
-		}
-	}
-}
+import "testing"
 
 func TestReferenceCopiesProvenance(t *testing.T) {
-	var query Shape
-	for _, row := range documentedCatalog().References {
-		if row.Shape["kind"] == "transact" {
-			query = row.Shape
-			break
-		}
+	query := Shape{"kind": "transact", "noteInputs": 1, "noteOutputs": 1}
+	result := EstimateGas(query)
+	if !result.Available {
+		t.Fatal(result)
 	}
-	result, ok := reference(query)
-	if !ok {
-		t.Fatal("reference absent")
-	}
-	result.Shape["kind"] = "mutated"
-	result.Source.Conditions = "mutated"
-	again, ok := reference(query)
-	if !ok || again.Shape["kind"] != "transact" || again.Source.Conditions == "mutated" {
+	result.Reference.Shape["kind"] = "mutated"
+	result.Reference.Source.Conditions = "mutated"
+	result.Assumptions[0] = "mutated"
+	again := EstimateGas(query)
+	if !again.Available || again.Reference.Shape["kind"] != "transact" || again.Conditions == "mutated" || again.Assumptions[0] == "mutated" {
 		t.Fatal("reference aliases catalog")
 	}
 }

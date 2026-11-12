@@ -1,0 +1,207 @@
+{
+  "protocolCommit": "a8f449d7b6d0f36b067a20308b629c999b1e22f5",
+  "environment": {
+    "chainId": 31337,
+    "evm": "prague",
+    "solc": "0.8.38",
+    "optimizerRuns": 200,
+    "proof": "real-direct",
+    "samples": 3
+  },
+  "reportSha256": [
+    "06332663a65fa9b43f0b2e95b2724dc1984973eeb84395e6274dcb47f6f8db11",
+    "d7f4b08a2db69867057232723181788a7f7843b86ecdbaf72d48c75923c69a3b",
+    "0eb20af2efaa8bb3d972ce6722e6a63576c852e20a800a5453285a24cd66cfda"
+  ],
+  "measuredScenarioCount": 243,
+  "cases": [
+    {
+      "shape": {
+        "kind": "transact",
+        "capacity": 2,
+        "noteInputs": 1,
+        "noteOutputs": 1,
+        "sourceTrees": 1,
+        "deposit": false,
+        "withdrawal": false,
+        "fee": false,
+        "validation": true
+      },
+      "measuredGas": 1542345,
+      "modeledGas": 1537432,
+      "errorPercent": -0.32
+    },
+    {
+      "shape": {
+        "kind": "transact",
+        "capacity": 3,
+        "noteInputs": 1,
+        "noteOutputs": 2,
+        "sourceTrees": 1,
+        "deposit": false,
+        "withdrawal": false,
+        "fee": false,
+        "validation": true
+      },
+      "measuredGas": 1562738,
+      "modeledGas": 1637666,
+      "errorPercent": 4.79
+    },
+    {
+      "shape": {
+        "kind": "transact",
+        "capacity": 3,
+        "noteInputs": 2,
+        "noteOutputs": 1,
+        "sourceTrees": 1,
+        "deposit": false,
+        "withdrawal": false,
+        "fee": false,
+        "validation": true
+      },
+      "measuredGas": 1567774,
+      "modeledGas": 1598030,
+      "errorPercent": 1.93
+    },
+    {
+      "shape": {
+        "kind": "transact",
+        "capacity": 4,
+        "noteInputs": 2,
+        "noteOutputs": 2,
+        "sourceTrees": 1,
+        "deposit": false,
+        "withdrawal": false,
+        "fee": false,
+        "validation": true
+      },
+      "measuredGas": 1588120,
+      "modeledGas": 1710501,
+      "errorPercent": 7.71
+    },
+    {
+      "shape": {
+        "kind": "transact",
+        "capacity": 5,
+        "noteInputs": 3,
+        "noteOutputs": 2,
+        "sourceTrees": 1,
+        "deposit": false,
+        "withdrawal": false,
+        "fee": false,
+        "validation": true
+      },
+      "measuredGas": 1613768,
+      "modeledGas": 1718056,
+      "errorPercent": 6.46
+    },
+    {
+      "shape": {
+        "kind": "transact",
+        "capacity": 10,
+        "noteInputs": 5,
+        "noteOutputs": 5,
+        "sourceTrees": 1,
+        "deposit": false,
+        "withdrawal": false,
+        "fee": false,
+        "validation": true
+      },
+      "measuredGas": 1990581,
+      "modeledGas": 1949973,
+      "errorPercent": -2.04
+    },
+    {
+      "shape": {
+        "kind": "transact",
+        "capacity": 20,
+        "noteInputs": 7,
+        "noteOutputs": 4,
+        "sourceTrees": 1,
+        "deposit": false,
+        "withdrawal": false,
+        "fee": false,
+        "validation": true
+      },
+      "measuredGas": 1972875,
+      "modeledGas": 1960618,
+      "errorPercent": -0.62
+    },
+    {
+      "shape": {
+        "kind": "transact",
+        "capacity": 20,
+        "noteInputs": 10,
+        "noteOutputs": 10,
+        "sourceTrees": 1,
+        "deposit": false,
+        "withdrawal": false,
+        "fee": false,
+        "validation": true
+      },
+      "measuredGas": 2365722,
+      "modeledGas": 2417010,
+      "errorPercent": 2.17
+    },
+    {
+      "shape": {
+        "kind": "transact",
+        "capacity": 50,
+        "noteInputs": 25,
+        "noteOutputs": 25,
+        "sourceTrees": 1,
+        "deposit": false,
+        "withdrawal": false,
+        "fee": false,
+        "validation": true
+      },
+      "measuredGas": 3770554,
+      "modeledGas": 3739460,
+      "errorPercent": -0.82
+    },
+    {
+      "shape": {
+        "kind": "transact",
+        "capacity": 190,
+        "noteInputs": 95,
+        "noteOutputs": 95,
+        "sourceTrees": 1,
+        "deposit": false,
+        "withdrawal": false,
+        "fee": false,
+        "validation": true
+      },
+      "measuredGas": 10220423,
+      "modeledGas": 10209466,
+      "errorPercent": -0.11
+    },
+    {
+      "shape": {
+        "kind": "draw-credit",
+        "capacity": 5,
+        "creditInputs": 5,
+        "distinctPayers": 1,
+        "sourceTrees": 1,
+        "fee": false,
+        "validation": true
+      },
+      "measuredGas": 2125765,
+      "modeledGas": 2183149,
+      "errorPercent": 2.7
+    },
+    {
+      "shape": {
+        "kind": "draw-credit",
+        "capacity": 5,
+        "creditInputs": 5,
+        "distinctPayers": 1,
+        "sourceTrees": 1,
+        "fee": true,
+        "validation": true
+      },
+      "measuredGas": 2150266,
+      "modeledGas": 2207631,
+      "errorPercent": 2.67
+    }
+  ]
+}
