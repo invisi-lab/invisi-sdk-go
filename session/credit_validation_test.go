@@ -98,3 +98,25 @@ func TestManagedRevocationUsesOriginalReferenceAndCurrentFeeAllowance(t *testing
 		t.Fatal("accepted authorization with invalidated wallet checkpoint")
 	}
 }
+
+func TestCreditCancellationIgnoresExpiredAuthorizationButChecksRevocation(t *testing.T) {
+	s, token, _ := testSession(t)
+	base := s.options.Provider.(sessionProvider)
+	s.options.Provider = creditValidationProvider{sessionProvider: base, allowance: big.NewInt(0)}
+	c := credit.Context{ProtocolContext: s.coreContext(), TokenAddress: token, Timestamp: 1}
+	prepared, err := credit.PrepareRevoke(c, credit.RevokeParams{Token: token, Owner: s.wallet.OwnerAddress(), Shard: 1, Slot: 0, Deadline: big.NewInt(2), FeeRecipient: common.HexToAddress("0x1234"), FeeAmount: big.NewInt(1)})
+	if err != nil {
+		t.Fatal(err)
+	}
+	intent, err := prepared.ExportIntent()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err = s.checkCreditCancellation(context.Background(), intent); err != nil {
+		t.Fatal("expiry or allowance incorrectly gated cancellation", err)
+	}
+	s.options.Provider = creditValidationProvider{sessionProvider: base, revoked: true}
+	if err = s.checkCreditCancellation(context.Background(), intent); err == nil {
+		t.Fatal("revoked authority permitted cancellation release")
+	}
+}

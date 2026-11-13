@@ -36,28 +36,30 @@ type QuoteOptions struct {
 	FundingPermit func(context.Context, FundingPermitRequest) (*protocol.TokenPermit, error)
 }
 
-// QuoteTarget binds a wallet-owned lifecycle to the RPC client without importing a wallet or Store.
+// OperationTarget binds a wallet-owned lifecycle to the RPC client without importing a wallet or Store.
 // It must not be copied after binding; the owner-address check rejects copied capabilities.
-type QuoteTarget struct {
-	self  *QuoteTarget
-	quote func(context.Context, *Client, QuoteOptions) error
+type OperationTarget struct {
+	self   *OperationTarget
+	quote  func(context.Context, *Client, QuoteOptions) error
+	submit func(context.Context, *Client) (Status, error)
+	cancel func(context.Context, *Client) (Status, error)
 }
 
-// BindQuoteTarget is for SDK handle constructors. The callback must atomically install the quote
-// and preserve the original handle and reservations on failure. It must not export private material.
-func BindQuoteTarget(target *QuoteTarget, quote func(context.Context, *Client, QuoteOptions) error) {
+// BindOperationTarget 仅供 SDK 句柄构造器绑定状态机；回调负责原子持久化与保留失败后的预留。
+func BindOperationTarget(target *OperationTarget, quote func(context.Context, *Client, QuoteOptions) error, submit, cancel func(context.Context, *Client) (Status, error)) {
 	target.self = target
 	target.quote = quote
+	target.submit, target.cancel = submit, cancel
 }
 
-func (target *QuoteTarget) quoteCapability() *QuoteTarget { return target }
+func (target *OperationTarget) operationCapability() *OperationTarget { return target }
 
-type quoteTarget interface {
-	quoteCapability() *QuoteTarget
+type operationTarget interface {
+	operationCapability() *OperationTarget
 }
 
 // Quote freezes the fee before authorization or proving. SDK targets own atomic state updates.
-func (c *Client) Quote(ctx context.Context, target quoteTarget, options QuoteOptions) error {
+func (c *Client) Quote(ctx context.Context, target operationTarget, options QuoteOptions) error {
 	if c == nil || target == nil {
 		return errors.New("broadcaster client and prepared operation required")
 	}
@@ -68,7 +70,7 @@ func (c *Client) Quote(ctx context.Context, target quoteTarget, options QuoteOpt
 	if err := ctx.Err(); err != nil {
 		return err
 	}
-	capability := target.quoteCapability()
+	capability := target.operationCapability()
 	if capability == nil || capability.self != capability || capability.quote == nil {
 		return errors.New("operation does not support broadcaster quoting or was copied")
 	}
@@ -80,4 +82,35 @@ func (c *Client) Quote(ctx context.Context, target quoteTarget, options QuoteOpt
 		options.Schedule = &value
 	}
 	return capability.quote(ctx, c, options)
+}
+
+func (c *Client) operation(ctx context.Context, target operationTarget, cancel bool) (Status, error) {
+	if c == nil || target == nil {
+		return Status{}, errors.New("broadcaster client and operation required")
+	}
+	if v := reflect.ValueOf(target); v.Kind() == reflect.Pointer && v.IsNil() {
+		return Status{}, errors.New("operation is nil")
+	}
+	if err := ctx.Err(); err != nil {
+		return Status{}, err
+	}
+	capability := target.operationCapability()
+	if capability == nil || capability.self != capability {
+		return Status{}, errors.New("operation capability is unbound or copied")
+	}
+	action := capability.submit
+	if cancel {
+		action = capability.cancel
+	}
+	if action == nil {
+		return Status{}, errors.New("operation capability unavailable")
+	}
+	return action(ctx, c)
+}
+
+func (c *Client) Submit(ctx context.Context, target operationTarget) (Status, error) {
+	return c.operation(ctx, target, false)
+}
+func (c *Client) Cancel(ctx context.Context, target operationTarget) (Status, error) {
+	return c.operation(ctx, target, true)
 }

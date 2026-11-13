@@ -11,6 +11,7 @@ import (
 	"github.com/invisi-lab/invisi-sdk-go/credit"
 	"github.com/invisi-lab/invisi-sdk-go/prover"
 	protocolrpc "github.com/invisi-lab/invisi-sdk-go/rpc"
+	"github.com/invisi-lab/invisi-sdk-go/rpc/broadcaster"
 )
 
 type StoredState struct {
@@ -35,16 +36,18 @@ type PreparationEvidence struct {
 }
 
 type Journal struct {
-	Preparation          *PreparationEvidence `json:",omitempty"`
-	SubmissionValidation string               `json:",omitempty"`
-	RevocationSignature  []byte               `json:",omitempty"`
-	ID, WorkerID, Status string
-	Intent               credit.Intent
-	Proof                *prover.ProofBundle
-	Calldata             []byte
-	TransactionHash      common.Hash
-	Externalized         bool
-	BroadcasterRequestID string
+	Preparation           *PreparationEvidence `json:",omitempty"`
+	SubmissionValidation  string               `json:",omitempty"`
+	RevocationSignature   []byte               `json:",omitempty"`
+	ID, WorkerID, Status  string
+	Intent                credit.Intent
+	Proof                 *prover.ProofBundle
+	Calldata              []byte
+	TransactionHash       common.Hash
+	Externalized          bool
+	BroadcasterRequestID  string
+	BroadcasterRequest    *broadcaster.Submission
+	CancellationConfirmed bool
 }
 type State struct {
 	Version    int

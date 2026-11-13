@@ -67,7 +67,7 @@ func (p *PreparedTransaction) ExportBroadcasterIntent(ctx context.Context) ([]by
 	return append([]byte{}, p.operation.Plan.Broadcaster.Intent...), nil
 }
 
-func (o *Execution) SubmitBroadcaster(ctx context.Context, c *broadcaster.Client) (broadcaster.Status, error) {
+func (o *Execution) SubmitViaBroadcaster(ctx context.Context, c *broadcaster.Client) (broadcaster.Status, error) {
 	var empty broadcaster.Status
 	if c == nil || o.Plan.Broadcaster == nil {
 		return empty, errors.New("selected broadcaster required")
@@ -173,13 +173,13 @@ func (o *Execution) SubmitBroadcaster(ctx context.Context, c *broadcaster.Client
 	return result, errors.Join(sendErr, persistErr)
 }
 
-func (p *PreparedTransaction) SubmitBroadcaster(ctx context.Context, c *broadcaster.Client) (broadcaster.Status, error) {
+func (p *PreparedTransaction) submitViaBroadcaster(ctx context.Context, c *broadcaster.Client) (broadcaster.Status, error) {
 	p.lifecycle.mu.Lock()
 	defer p.lifecycle.mu.Unlock()
 	if e := p.current(ctx); e != nil {
 		return broadcaster.Status{}, e
 	}
-	result, e := p.operation.SubmitBroadcaster(ctx, c)
+	result, e := p.operation.SubmitViaBroadcaster(ctx, c)
 	return result, e
 }
 
@@ -271,7 +271,7 @@ func (o *Execution) validateFrozenBroadcasterRequest() error {
 	return nil
 }
 
-func (p *PreparedTransaction) CancelBroadcaster(ctx context.Context, c *broadcaster.Client) (broadcaster.Status, error) {
+func (p *PreparedTransaction) cancelViaBroadcaster(ctx context.Context, c *broadcaster.Client) (broadcaster.Status, error) {
 	p.lifecycle.mu.Lock()
 	defer p.lifecycle.mu.Unlock()
 	if e := p.current(ctx); e != nil {
@@ -285,12 +285,15 @@ func (p *PreparedTransaction) CancelBroadcaster(ctx context.Context, c *broadcas
 		if saved.Request == nil {
 			return broadcaster.Status{}, errors.New("broadcaster submission must be attempted before cancellation")
 		}
-		return broadcaster.Status{}, errors.New("broadcaster submission ID unknown; retry the original frozen SubmitBroadcaster call to recover it before cancellation")
+		return broadcaster.Status{}, errors.New("broadcaster submission ID unknown; retry the original frozen client.Submit call to recover it before cancellation")
 	}
 	if saved.CancellationConfirmed {
 		return broadcaster.Status{ID: saved.RequestID, State: "cancelled"}, nil
 	}
-	result, e := c.Cancel(ctx, saved.RequestID, saved.CancelToken)
+	result, e := c.CancelTransaction(ctx, saved.RequestID, saved.CancelToken)
+	if e == nil && result.State != "cancelled" {
+		return result, errors.New("cancellation was not acknowledged")
+	}
 	if e == nil && result.State == "cancelled" {
 		if result.TransactionHash != "" {
 			return result, errors.New("cancelled submission has transaction hash")

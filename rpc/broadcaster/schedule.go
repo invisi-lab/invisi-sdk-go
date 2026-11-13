@@ -27,7 +27,7 @@ func sameSchedule(actual *Schedule, values []*Schedule) bool {
 	}
 	return actual == nil && expected == nil || actual != nil && expected != nil && *actual == *expected
 }
-func (c *Client) Cancel(ctx context.Context, id, token string) (Status, error) {
+func (c *Client) CancelTransaction(ctx context.Context, id, token string) (Status, error) {
 	var out Status
 	b, e := hex.DecodeString(tokenPrefix(token))
 	if e != nil || len(b) != 32 || token != "0x"+hex.EncodeToString(b) || id == "" || len(id) > 256 {

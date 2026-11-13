@@ -231,10 +231,10 @@ func (o *Execution) QuoteBroadcaster(ctx context.Context, c *broadcaster.Client,
 }
 
 func (p *PreparedTransaction) bindBroadcasterQuote() *PreparedTransaction {
-	broadcaster.BindQuoteTarget(&p.QuoteTarget, func(ctx context.Context, c *broadcaster.Client, opt broadcaster.QuoteOptions) error {
+	broadcaster.BindOperationTarget(&p.OperationTarget, func(ctx context.Context, c *broadcaster.Client, opt broadcaster.QuoteOptions) error {
 		_, err := p.stage(ctx, func(next *Execution) error { return next.QuoteBroadcaster(ctx, c, opt) }, true)
 		return err
-	})
+	}, p.submitViaBroadcaster, p.cancelViaBroadcaster)
 	return p
 }
 

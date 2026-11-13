@@ -196,7 +196,7 @@ func main() {
 	log.Printf("Verified scheduled quote: fee=%s publishAfter=%s executeBefore=%s", quote.Quote.FeeAmount, quote.Quote.Schedule.PublishAfter, quote.Quote.Schedule.ExecuteBefore)
 	log.Printf("Encrypted operation=%s", ready.ID())
 	operationID := ready.ID()
-	submitted, err := ready.SubmitBroadcaster(ctx, relay)
+	submitted, err := relay.Submit(ctx, ready)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -213,7 +213,7 @@ func main() {
 	}
 	log.Printf("Recovered relay status: id=%s state=%s", status.ID, status.State)
 	// Managed cancellation also refreshes canonical consumption before releasing input reservations.
-	cancelled, err := recovered.CancelBroadcaster(ctx, relay)
+	cancelled, err := relay.Cancel(ctx, recovered)
 	if err != nil {
 		log.Fatal(err)
 	}

@@ -35,13 +35,14 @@ type Intent struct {
 
 // Prepared keeps authorization and local witnesses outside portable recovery plans.
 type Prepared struct {
-	broadcaster.QuoteTarget `json:"-"`
-	mu                      sync.Mutex
-	intent                  Intent
-	authority               *Authority
-	proof                   *prover.ProofBundle
-	revokeSignature         []byte
-	submission              Submission
+	broadcaster.OperationTarget `json:"-"`
+	mu                          sync.Mutex
+	intent                      Intent
+	authority                   *Authority
+	proof                       *prover.ProofBundle
+	revokeSignature             []byte
+	submission                  Submission
+	request                     *broadcaster.Submission
 }
 
 func (p *Prepared) String() string   { return "PreparedCredit([redacted])" }

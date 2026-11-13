@@ -141,17 +141,17 @@ func Connect(ctx context.Context, options Options) (*WalletSession, error) {
 }
 
 type Operation struct {
-	broadcaster.QuoteTarget `json:"-"`
-	mu                      sync.Mutex
-	metadataMu              sync.RWMutex
-	session                 *WalletSession
-	plan                    transaction.Plan
-	status                  string
-	authorization           *primitives.WalletAuthorizationWitness
-	bundle                  *prover.ProofBundle
-	data                    []byte
-	transactionHash         common.Hash
-	workerID                string
+	broadcaster.OperationTarget `json:"-"`
+	mu                          sync.Mutex
+	metadataMu                  sync.RWMutex
+	session                     *WalletSession
+	plan                        transaction.Plan
+	status                      string
+	authorization               *primitives.WalletAuthorizationWitness
+	bundle                      *prover.ProofBundle
+	data                        []byte
+	transactionHash             common.Hash
+	workerID                    string
 }
 
 func operationFromExecution(s *WalletSession, e *transaction.Execution) *Operation {

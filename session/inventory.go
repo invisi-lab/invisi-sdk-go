@@ -25,17 +25,20 @@ func (s *WalletSession) Balance(ctx context.Context, token common.Address) (Bala
 		return BalanceSnapshot{}, e
 	}
 	checked := state.CheckedThrough
-	if checked == nil {
-		checked = state.ObservedThrough
-	}
+
 	result := BalanceSnapshot{AvailableKnown: new(big.Int), ConfirmedKnown: new(big.Int), Reserved: new(big.Int), CheckedThrough: checked, TokenAddress: token, Scope: s.scope, Invalidated: state.Invalidated}
 	for _, n := range state.Notes {
 		if n.Spent || primitives.ElementToBigInt(n.Note.TokenAddress).Cmp(token.Big()) != 0 {
 			continue
 		}
 		result.ConfirmedKnown.Add(result.ConfirmedKnown, primitives.ElementToBigInt(n.Note.Amount))
+		if n.CheckedThrough == nil || checked == nil || *n.CheckedThrough != *checked {
+			result.AvailableKnown = nil
+		}
 		if n.ReservedBy == "" {
-			result.AvailableKnown.Add(result.AvailableKnown, primitives.ElementToBigInt(n.Note.Amount))
+			if result.AvailableKnown != nil {
+				result.AvailableKnown.Add(result.AvailableKnown, primitives.ElementToBigInt(n.Note.Amount))
+			}
 			result.NoteCount++
 		} else {
 			result.Reserved.Add(result.Reserved, primitives.ElementToBigInt(n.Note.Amount))

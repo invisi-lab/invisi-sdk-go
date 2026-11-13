@@ -269,7 +269,7 @@ func TestTransferStagesReserveInputsAndAssembleCurrentWitness(t *testing.T) {
 		t.Fatal("unsigned private transfer was proved")
 	}
 	balance, e := session.Balance(ctx, token)
-	if e != nil || balance.AvailableKnown.Sign() != 0 || balance.Reserved.Cmp(big.NewInt(100)) != 0 {
+	if e != nil || balance.AvailableKnown != nil && balance.AvailableKnown.Sign() != 0 || balance.Reserved.Cmp(big.NewInt(100)) != 0 {
 		t.Fatal(balance, e)
 	}
 	if _, e = session.PrepareTransfer(ctx, sdk.TransferPreparation{TokenAddress: token, Outputs: testOutputs(session, []testPaymentOutput{{To: address, Amount: big.NewInt(1)}})}); e == nil {

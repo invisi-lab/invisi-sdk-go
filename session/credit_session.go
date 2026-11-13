@@ -14,7 +14,7 @@ func (s *WalletSession) Credit() (*creditsession.Session, error) {
 		return nil, errors.New("managed wallet store required")
 	}
 	context := s.coreContext()
-	return creditsession.New(creditsession.Options{WrapPreparation: transaction.WrapPreparation, Build: s.buildCreditRequest, Store: creditStoreAdapter{session: s}, OwnerAddress: s.scope.OwnerAddress, Context: &context, Validate: s.validateCreditIntent, Prepare: s.prepareCreditIntent, ValidatePreparation: s.validateCreditPreparation, CheckPreparation: s.checkCreditPreparation, VerifyRevocation: s.verifyCreditRevocation})
+	return creditsession.New(creditsession.Options{WrapPreparation: transaction.WrapPreparation, Build: s.buildCreditRequest, Store: creditStoreAdapter{session: s}, OwnerAddress: s.scope.OwnerAddress, Context: &context, Validate: s.validateCreditIntent, CheckCancellation: s.checkCreditCancellation, Prepare: s.prepareCreditIntent, ValidatePreparation: s.validateCreditPreparation, CheckPreparation: s.checkCreditPreparation, VerifyRevocation: s.verifyCreditRevocation})
 }
 
 type creditStoreAdapter struct{ session *WalletSession }

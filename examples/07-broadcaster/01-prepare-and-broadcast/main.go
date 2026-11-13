@@ -141,7 +141,7 @@ func main() {
 		log.Print("Ready; no payment sent without --submit")
 		return
 	}
-	submitted, err := ready.SubmitBroadcaster(ctx, relay)
+	submitted, err := relay.Submit(ctx, ready)
 	if err != nil {
 		log.Fatal(err)
 	}

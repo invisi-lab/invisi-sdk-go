@@ -23,10 +23,10 @@ type TransactionLifecycle struct {
 // Authorization/proving stages replace the handle; Client.Quote atomically updates the unsigned target.
 // A failed or canceled stage leaves the current handle available for retry.
 type PreparedTransaction struct {
-	broadcaster.QuoteTarget `json:"-"`
-	operation               *Execution
-	lifecycle               *TransactionLifecycle
-	generation              uint64
+	broadcaster.OperationTarget `json:"-"`
+	operation                   *Execution
+	lifecycle                   *TransactionLifecycle
+	generation                  uint64
 }
 
 func Detached(op *Execution, err error) (*PreparedTransaction, error) {

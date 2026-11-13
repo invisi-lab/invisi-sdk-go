@@ -266,7 +266,7 @@ func TestBroadcasterReadySubmitKeepsUncertainReservations(t *testing.T) {
 	if e != nil {
 		t.Fatal(e)
 	}
-	if _, e = next.SubmitBroadcaster(ctx, c); e == nil {
+	if _, e = c.Submit(ctx, next); e == nil {
 		t.Fatal("sent unready operation")
 	}
 	next, e = authorizeForTest(next, ctx)
@@ -277,7 +277,7 @@ func TestBroadcasterReadySubmitKeepsUncertainReservations(t *testing.T) {
 	if e != nil {
 		t.Fatal(e)
 	}
-	status, e := next.SubmitBroadcaster(ctx, c)
+	status, e := c.Submit(ctx, next)
 	if e != nil || status.State != "uncertain" || next.Status() != "uncertain" {
 		t.Fatal(status, e)
 	}
@@ -447,7 +447,7 @@ func TestBroadcasterTransportFailureStaysExternalizedAndResumeRetainsQuote(t *te
 	if e != nil {
 		t.Fatal(e)
 	}
-	if _, e = op.SubmitBroadcaster(ctx, failing); e == nil {
+	if _, e = failing.Submit(ctx, op); e == nil {
 		t.Fatal("network error swallowed")
 	}
 	snapshot, _ := s.options.Store.ReadSnapshot(ctx, s.scope)
@@ -512,7 +512,7 @@ func TestBroadcasterDetachedFailedSubmitRetainsInspectableUncertainty(t *testing
 		t.Fatal(e)
 	}
 	failing, _ := broadcaster.NewClient(c.Configuration(), broadcaster.Options{HTTPClient: &http.Client{Transport: broadcasterFailTransport{}}})
-	if _, e = prepared.SubmitBroadcaster(ctx, failing); e == nil {
+	if _, e = failing.Submit(ctx, prepared); e == nil {
 		t.Fatal("transport failure swallowed")
 	}
 	if prepared.Preview().Status != "uncertain" {
@@ -521,7 +521,7 @@ func TestBroadcasterDetachedFailedSubmitRetainsInspectableUncertainty(t *testing
 	if _, e = prepared.ExportBroadcasterQuote(ctx); e != nil {
 		t.Fatal("uncertain handle cannot inspect saved quote", e)
 	}
-	if status, err := prepared.SubmitBroadcaster(ctx, c); err != nil || status.State != "uncertain" {
+	if status, err := c.Submit(ctx, prepared); err != nil || status.State != "uncertain" {
 		t.Fatal("retained request retry failed", status, err)
 	}
 }
@@ -551,7 +551,7 @@ func TestScheduledCancellationRefreshesAndReleasesReservations(t *testing.T) {
 	if saved.RequestID != "" {
 		t.Fatal("SDK invented a broadcaster ID before submission")
 	}
-	if _, err := next.CancelBroadcaster(ctx, c); err == nil {
+	if _, err := c.Cancel(ctx, next); err == nil {
 		t.Fatal("unsubmitted cancellation created a remote job")
 	}
 	next, e = authorizeForTest(next, ctx)
@@ -562,7 +562,7 @@ func TestScheduledCancellationRefreshesAndReleasesReservations(t *testing.T) {
 	if e != nil {
 		t.Fatal(e)
 	}
-	admitted, e := next.SubmitBroadcaster(ctx, c)
+	admitted, e := c.Submit(ctx, next)
 	if e != nil || admitted.ID != "opaque-server-job/17" {
 		t.Fatal("opaque server ID rejected", admitted, e)
 	}
@@ -572,8 +572,8 @@ func TestScheduledCancellationRefreshesAndReleasesReservations(t *testing.T) {
 		t.Fatal("server ID not durable before response", err)
 	}
 
-	status, e := next.CancelBroadcaster(ctx, c)
-	if e != nil || status.State != "scheduled" {
+	status, e := c.Cancel(ctx, next)
+	if e == nil || status.State != "scheduled" {
 		t.Fatal(status, e)
 	}
 	retained, _ := s.options.Store.ReadSnapshot(ctx, s.scope)
@@ -582,7 +582,7 @@ func TestScheduledCancellationRefreshesAndReleasesReservations(t *testing.T) {
 			t.Fatal("nonterminal cancellation released input")
 		}
 	}
-	status, e = next.CancelBroadcaster(ctx, c)
+	status, e = c.Cancel(ctx, next)
 	if e != nil || status.State != "cancelled" {
 		t.Fatal(status, e)
 	}
@@ -711,7 +711,7 @@ func TestScheduledLostSubmitRetainsScopedHandleAndCancellationAcknowledgement(t 
 	if e != nil {
 		t.Fatal(e)
 	}
-	if _, e = op.SubmitBroadcaster(ctx, failing); e == nil {
+	if _, e = failing.Submit(ctx, op); e == nil {
 		t.Fatal("lost submit response swallowed")
 	}
 	if op.plan.Broadcaster.RequestID != requestID || op.status != "uncertain" {
@@ -720,13 +720,13 @@ func TestScheduledLostSubmitRetainsScopedHandleAndCancellationAcknowledgement(t 
 	if op.plan.Broadcaster.Request == nil {
 		t.Fatal("lost response discarded frozen submission")
 	}
-	if _, e = op.CancelBroadcaster(ctx, c); e == nil {
+	if _, e = c.Cancel(ctx, op); e == nil {
 		t.Fatal("unknown ID cancellation did not require explicit recovery")
 	}
 	if cancellationCalls.Load() != 0 || statusCalls.Load() != 0 {
 		t.Fatal("SDK guessed opaque ID or silently admitted during cancellation")
 	}
-	recovered, e := op.SubmitBroadcaster(ctx, c)
+	recovered, e := c.Submit(ctx, op)
 	if e != nil || recovered.ID != "opaque-server-job/17" || op.plan.Broadcaster.RequestID != recovered.ID {
 		t.Fatal("frozen replay did not recover server ID", recovered, e)
 	}
@@ -736,12 +736,12 @@ func TestScheduledLostSubmitRetainsScopedHandleAndCancellationAcknowledgement(t 
 	if !same {
 		t.Fatal("recovery changed frozen submission")
 	}
-	if _, e = op.CancelBroadcaster(ctx, c); e != nil {
-		t.Fatal(e)
+	if status, err := c.Cancel(ctx, op); err == nil || status.State != "scheduled" {
+		t.Fatal(status, err)
 	}
 	provider := op.session.options.Provider
 	op.session.options.Provider = failedCancellationRefresh{provider}
-	result, e := op.CancelBroadcaster(ctx, c)
+	result, e := c.Cancel(ctx, op)
 	if e == nil || result.State != "cancelled" {
 		t.Fatal("refresh outage not surfaced", result, e)
 	}
@@ -770,7 +770,7 @@ func TestScheduledLostSubmitRetainsScopedHandleAndCancellationAcknowledgement(t 
 	if e != nil {
 		t.Fatal(e)
 	}
-	if result, e = op.CancelBroadcaster(ctx, offline); e != nil || result.State != "cancelled" {
+	if result, e = offline.Cancel(ctx, op); e != nil || result.State != "cancelled" {
 		t.Fatal("persisted acknowledgement could not reconcile offline", result, e)
 	}
 	snapshot, _ = s.options.Store.ReadSnapshot(ctx, s.scope)

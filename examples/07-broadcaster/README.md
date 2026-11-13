@@ -1,6 +1,6 @@
 # Broadcaster and independent Source delivery
 
-These flat walkthroughs use managed Note transfers. Configure public deployment, wallet, recipient and token through flags. Replace the App decryptor placeholder before discovery. EIP-712 authorization uses ordinary geth signing; `OWNER_PRIVATE_KEY` must match the Note owner.
+These flat walkthroughs use managed Note transfers. Broadcaster flows use `relay.Quote(ctx, operation, options)`, `relay.Submit(ctx, operation)` and `relay.Cancel(ctx, operation)` on the selected client; the same API accepts detached Note/Credit preparations and managed Session handles. Configure public deployment, wallet, recipient and token through flags. Replace the App decryptor placeholder before discovery. EIP-712 authorization uses ordinary geth signing; `OWNER_PRIVATE_KEY` must match the Note owner.
 
 | Example | Flow |
 | --- | --- |

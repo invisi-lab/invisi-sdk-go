@@ -120,10 +120,10 @@ func TestClientPositionalJSONRPCAndSafeSubmission(t *testing.T) {
 	if e != nil {
 		t.Fatal(e)
 	}
-	if _, e = c.Submit(context.Background(), data, quote); e == nil {
+	if _, e = c.SubmitTransaction(context.Background(), data, quote); e == nil {
 		t.Fatal("unverified context accepted")
 	}
-	if _, e = c.Submit(context.Background(), data, verified); e != nil {
+	if _, e = c.SubmitTransaction(context.Background(), data, verified); e != nil {
 		t.Fatal(e)
 	}
 	if _, e = c.Status(context.Background(), "key"); e != nil {

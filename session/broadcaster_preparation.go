@@ -9,7 +9,7 @@ import (
 )
 
 func (o *Operation) bindBroadcasterQuote() *Operation {
-	broadcaster.BindQuoteTarget(&o.QuoteTarget, func(ctx context.Context, c *broadcaster.Client, opt broadcaster.QuoteOptions) error {
+	broadcaster.BindOperationTarget(&o.OperationTarget, func(ctx context.Context, c *broadcaster.Client, opt broadcaster.QuoteOptions) error {
 		next, err := o.stage(ctx, func(next *Operation) error { return next.quoteBroadcaster(ctx, c, opt) }, true)
 		if err != nil {
 			return err
@@ -19,7 +19,7 @@ func (o *Operation) bindBroadcasterQuote() *Operation {
 		o.session = next.session
 		o.apply(next.execution())
 		return nil
-	})
+	}, o.submitViaBroadcaster, o.cancelViaBroadcaster)
 	return o
 }
 

@@ -71,7 +71,7 @@ func (o *Operation) ExportBroadcasterIntent(ctx context.Context) ([]byte, error)
 }
 func (o *Operation) submitBroadcaster(ctx context.Context, c *broadcaster.Client) (broadcaster.Status, error) {
 	execution := o.execution()
-	result0, result1 := execution.SubmitBroadcaster(ctx, c)
+	result0, result1 := execution.SubmitViaBroadcaster(ctx, c)
 	o.apply(execution)
 	return result0, result1
 }

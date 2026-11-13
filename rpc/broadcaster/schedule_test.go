@@ -70,11 +70,11 @@ func TestCancelRPCUsesSecretAndRequiresConfirmedState(t *testing.T) {
 	if e != nil {
 		t.Fatal(e)
 	}
-	status, e := c.Cancel(context.Background(), "job", token)
+	status, e := c.CancelTransaction(context.Background(), "job", token)
 	if e != nil || status.State != "cancelled" {
 		t.Fatal(status, e)
 	}
-	if _, e = c.Cancel(context.Background(), "job", "bad"); e == nil {
+	if _, e = c.CancelTransaction(context.Background(), "job", "bad"); e == nil {
 		t.Fatal("invalid secret accepted")
 	}
 }

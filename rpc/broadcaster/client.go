@@ -199,7 +199,7 @@ func checkStatus(s Status, id string) error {
 	}
 	return nil
 }
-func (c *Client) Submit(ctx context.Context, data []byte, s SignedQuote, sidecars ...[]provenance.ProofSidecar) (Status, error) {
+func (c *Client) SubmitTransaction(ctx context.Context, data []byte, s SignedQuote, sidecars ...[]provenance.ProofSidecar) (Status, error) {
 	var selected []provenance.ProofSidecar
 	if len(sidecars) > 1 {
 		return Status{}, errors.New("at most one sidecar list required")

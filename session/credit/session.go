@@ -24,6 +24,7 @@ type Options struct {
 	Prepare             func(context.Context, credit.Intent) (*PreparationEvidence, error)
 	VerifyRevocation    func(context.Context, common.Address, apitypes.TypedData, []byte) (bool, error)
 	Validate            func(context.Context, credit.Intent) error
+	CheckCancellation   func(context.Context, credit.Intent) error
 	Store               Store
 	OwnerAddress        common.Address
 	Context             *primitives.ProtocolContext
@@ -36,6 +37,7 @@ type Session struct {
 	prepare             func(context.Context, credit.Intent) (*PreparationEvidence, error)
 	verifyRevocation    func(context.Context, common.Address, apitypes.TypedData, []byte) (bool, error)
 	validate            func(context.Context, credit.Intent) error
+	checkCancellation   func(context.Context, credit.Intent) error
 	store               Store
 	owner               common.Address
 	context             *primitives.ProtocolContext
@@ -50,7 +52,7 @@ func New(options Options) (*Session, error) {
 		copy := *options.Context
 		pinned = &copy
 	}
-	return &Session{wrapPreparation: options.WrapPreparation, build: options.Build, checkPreparation: options.CheckPreparation, validatePreparation: options.ValidatePreparation, store: options.Store, owner: options.OwnerAddress, context: pinned, validate: options.Validate, prepare: options.Prepare, verifyRevocation: options.VerifyRevocation}, nil
+	return &Session{checkCancellation: options.CheckCancellation, wrapPreparation: options.WrapPreparation, build: options.Build, checkPreparation: options.CheckPreparation, validatePreparation: options.ValidatePreparation, store: options.Store, owner: options.OwnerAddress, context: pinned, validate: options.Validate, prepare: options.Prepare, verifyRevocation: options.VerifyRevocation}, nil
 }
 func validateStored(s StoredState) error {
 	if s.Role != credit.Owner && s.Role != credit.Spender || s.TreeID == 0 {
@@ -115,11 +117,11 @@ func workerID() (string, error) {
 }
 
 type Operation struct {
-	broadcaster.QuoteTarget `json:"-"`
-	mu                      sync.Mutex
-	session                 *Session
-	id, worker              string
-	prepared                *credit.Prepared
+	broadcaster.OperationTarget `json:"-"`
+	mu                          sync.Mutex
+	session                     *Session
+	id, worker                  string
+	prepared                    *credit.Prepared
 }
 
 func (s *Session) Prepare(ctx context.Context, id string, prepared *credit.Prepared) (*Operation, error) {
@@ -238,7 +240,7 @@ func (o *Operation) check(ctx context.Context) error {
 	if !ok || record.WorkerID != o.worker {
 		return fmt.Errorf("Credit operation lease changed")
 	}
-	if record.Status == "failed" || record.Status == "confirmed" || record.Status == "reverted" {
+	if record.Status == "failed" || record.Status == "confirmed" || record.Status == "reverted" || record.Status == "cancelled" {
 		return fmt.Errorf("Credit operation is terminal")
 	}
 	return nil

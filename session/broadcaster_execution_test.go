@@ -72,7 +72,7 @@ func TestQuotedAggregateDefaultsToRecursiveAndRetainsFrozenRequest(t *testing.T)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if _, err = op.SubmitBroadcaster(ctx, lostClient); err == nil {
+	if _, err = lostClient.Submit(ctx, op); err == nil {
 		t.Fatal("lost response did not surface")
 	}
 	if op.plan.Broadcaster.Request == nil || op.plan.Broadcaster.RequestID != "" {
@@ -82,7 +82,7 @@ func TestQuotedAggregateDefaultsToRecursiveAndRetainsFrozenRequest(t *testing.T)
 	if e != nil {
 		t.Fatal(e)
 	}
-	if _, e = op.SubmitBroadcaster(ctx, c); e != nil {
+	if _, e = c.Submit(ctx, op); e != nil {
 		t.Fatal(e)
 	}
 	if len(sent) != 2 || !bytes.Equal(sent[0], sent[1]) {
@@ -99,14 +99,14 @@ func TestQuotedAggregateDefaultsToRecursiveAndRetainsFrozenRequest(t *testing.T)
 	if e != nil {
 		t.Fatal(e)
 	}
-	if _, e = op.SubmitBroadcaster(ctx, c); e != nil {
+	if _, e = c.Submit(ctx, op); e != nil {
 		t.Fatal(e)
 	}
 	if len(sent) != 2 || statuses != 1 {
 		t.Fatalf("send=%d status=%d", len(sent), statuses)
 	}
 	op.plan.Broadcaster.RequestID = "not-found"
-	if _, err := op.SubmitBroadcaster(ctx, c); err == nil {
+	if _, err := c.Submit(ctx, op); err == nil {
 		t.Fatal("missing known ID accepted")
 	}
 	if len(sent) != 2 {
@@ -114,7 +114,7 @@ func TestQuotedAggregateDefaultsToRecursiveAndRetainsFrozenRequest(t *testing.T)
 	}
 	for _, state := range []string{"queued", "proving", "rejected", "expired"} {
 		op.plan.Broadcaster.RequestID = state
-		status, err := op.SubmitBroadcaster(ctx, c)
+		status, err := c.Submit(ctx, op)
 		if err != nil || status.State != state {
 			t.Fatal(status, err)
 		}

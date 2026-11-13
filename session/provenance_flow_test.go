@@ -314,7 +314,7 @@ func TestBroadcasterAutomaticallyProvesOnlyFinalReadySource(t *testing.T) {
 			}
 			provider := ready.session.options.Provider
 			ready.session.options.Provider = nil
-			_, missingErr := ready.SubmitBroadcaster(ctx, c)
+			_, missingErr := c.Submit(ctx, ready)
 			var missing *sdk.MissingCapabilityError
 			if !errors.As(missingErr, &missing) {
 				t.Fatal("first broadcast without primary must fail with capability error", missingErr)
@@ -323,14 +323,14 @@ func TestBroadcasterAutomaticallyProvesOnlyFinalReadySource(t *testing.T) {
 				t.Fatal("missing primary invoked prover")
 			}
 			ready.session.options.Provider = provider
-			status, e := ready.SubmitBroadcaster(ctx, c)
+			status, e := c.Submit(ctx, ready)
 			if e != nil {
 				t.Fatal(e)
 			}
 			if status.ID != "server-request-id" || prover.calls.Load() != 1 || ready.plan.Provenance == nil {
 				t.Fatal("ready Source evidence or server ID missing")
 			}
-			if _, e = ready.SubmitBroadcaster(ctx, c); e != nil || prover.calls.Load() != 1 {
+			if _, e = c.Submit(ctx, ready); e != nil || prover.calls.Load() != 1 {
 				t.Fatal("known submission regenerated Source evidence", e)
 			}
 			if ready.plan.Provenance.Data != "0x"+common.Bytes2Hex(ready.data) {
@@ -343,7 +343,7 @@ func TestBroadcasterAutomaticallyProvesOnlyFinalReadySource(t *testing.T) {
 			if e != nil {
 				t.Fatal("cached source restore failed", e)
 			}
-			if _, e = ready.SubmitBroadcaster(ctx, c); e != nil || prover.calls.Load() != 1 {
+			if _, e = c.Submit(ctx, ready); e != nil || prover.calls.Load() != 1 {
 				t.Fatal("offline retry regenerated source", e)
 			}
 		})

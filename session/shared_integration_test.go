@@ -291,3 +291,31 @@ func TestStagingCannotRelabelOldPageAfterGenerationChange(t *testing.T) {
 		t.Fatal("staging relabeled old page with new generation")
 	}
 }
+
+func TestOfflineScanUsesOlderRetainedCanonicalTarget(t *testing.T) {
+	s, _ := sharedEmptyFixture(t)
+	ctx := context.Background()
+	if _, err := s.publicHistory.Page(ctx, BlockRange{FromBlock: 1, ToBlock: 10}, false); err != nil {
+		t.Fatal(err)
+	}
+	older := uint64(5)
+	from := uint64(1)
+	if _, err := s.ScanHistory(ctx, wallet.DeliveryDecryptorFuncs{}, ScanOptions{FromBlock: &from, ToBlock: &older, Offline: true}); err != nil {
+		t.Fatal(err)
+	}
+	state, err := s.options.Store.ReadSnapshot(ctx, s.scope)
+	if err != nil {
+		t.Fatal(err)
+	}
+	expected := s.options.Provider.(historyChain).headers[older]
+	if state.DiscoveryThrough == nil || state.DiscoveryThrough.Number != older || state.DiscoveryThrough.Hash != expected.Hash() {
+		t.Fatal("offline target is not its retained canonical header", state.DiscoveryThrough)
+	}
+	if err = s.publicHistory.PruneBefore(ctx, 11); err != nil {
+		t.Fatal(err)
+	}
+	s.options.Store = NewMemoryWalletStore()
+	if _, err = s.ScanHistory(ctx, wallet.DeliveryDecryptorFuncs{}, ScanOptions{FromBlock: &from, ToBlock: &older, Offline: true}); err == nil {
+		t.Fatal("missing canonical evidence accepted")
+	}
+}

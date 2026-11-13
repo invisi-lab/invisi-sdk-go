@@ -51,7 +51,7 @@ func TestRealNativeBroadcasterFeeProofs(t *testing.T) {
 			if e != nil {
 				t.Fatal(e)
 			}
-			if _, e = op.SubmitBroadcaster(ctx, client); e != nil {
+			if _, e = client.Submit(ctx, op); e != nil {
 				t.Fatal(e)
 			}
 		})

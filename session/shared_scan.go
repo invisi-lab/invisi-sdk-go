@@ -227,7 +227,17 @@ func (s *WalletSession) scanHistory(ctx context.Context, d wallet.DeliveryDecryp
 			}
 		}
 		if o.ToBlock != nil && target.Number != *o.ToBlock {
-			return result, errors.New("offline target unavailable")
+			if *o.ToBlock > target.Number {
+				return result, errors.New("offline target unavailable")
+			}
+			page, err := s.publicHistory.Page(ctx, BlockRange{FromBlock: *o.ToBlock, ToBlock: *o.ToBlock}, true)
+			if err != nil {
+				return result, err
+			}
+			if page.Block.Number != *o.ToBlock {
+				return result, errors.New("offline canonical block unavailable")
+			}
+			target = page.Block
 		}
 	} else {
 		target, head, e = s.historyTarget(ctx, o)

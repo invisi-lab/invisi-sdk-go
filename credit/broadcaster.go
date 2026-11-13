@@ -3,7 +3,9 @@ package credit
 import (
 	"context"
 	"fmt"
+	"github.com/invisi-lab/invisi-sdk-go/protocol/settlement"
 	"math/big"
+	"strconv"
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -13,9 +15,11 @@ import (
 
 type BroadcasterQuoteOptions = broadcaster.QuoteOptions
 type BroadcasterBinding struct {
-	Configuration broadcaster.Configuration
-	Quote         broadcaster.SignedQuote
-	Intent        []byte
+	Configuration         broadcaster.Configuration
+	Quote                 broadcaster.SignedQuote
+	CancelToken           string
+	CancellationConfirmed bool
+	Intent                []byte
 }
 type Submission struct {
 	RequestID, State string
@@ -132,16 +136,16 @@ func (p *Prepared) quoteBroadcaster(ctx context.Context, client *broadcaster.Cli
 	if client == nil || options.MaxFeeAmount == nil || options.MaxFeeAmount.Sign() <= 0 || options.MaxFeeAmount.BitLen() > 128 {
 		return fmt.Errorf("broadcaster client and positive uint128 fee limit required")
 	}
-	if options.Schedule != nil || options.FeeSource != "" || options.FundingPermit != nil {
-		return fmt.Errorf("Credit quotation does not support Note fee sources, funding permits or scheduling")
+	if options.FeeSource != "" || options.FundingPermit != nil {
+		return fmt.Errorf("Credit quotation does not support Note fee sources or funding permits")
 	}
 	limit := new(big.Int).Set(options.MaxFeeAmount)
 	attempts := options.MaxAttempts
 	if attempts == 0 {
-		attempts = 5
+		attempts = 4
 	}
-	if attempts < 1 || attempts > 10 {
-		return fmt.Errorf("fee attempts must be 1..10")
+	if attempts < 1 || attempts > 16 {
+		return fmt.Errorf("fee attempts must be 1..16")
 	}
 	p.mu.Lock()
 	if p.authority != nil || p.proof != nil || len(p.revokeSignature) > 0 || p.intent.Broadcaster != nil {
@@ -153,13 +157,84 @@ func (p *Prepared) quoteBroadcaster(ctx context.Context, client *broadcaster.Cli
 	if err != nil {
 		return err
 	}
+	var schedule *broadcaster.Schedule
+	var cancelToken string
+	if options.Schedule != nil {
+		trust := broadcaster.Trust{ChainID: primitives.ElementToBigInt(base.Context.ChainID), Protocol: common.BigToAddress(primitives.ElementToBigInt(base.Context.ProtocolAddress))}
+		caps, e := client.ServiceStatus(ctx, trust)
+		if e != nil {
+			return e
+		}
+		if !caps.Scheduling.Enabled || caps.SubmissionHalted {
+			return fmt.Errorf("broadcaster scheduling unavailable")
+		}
+		request := *options.Schedule
+		after, e := settlement.ScheduleSeconds(request.PublishAfter)
+		if e != nil {
+			return e
+		}
+		delay, e := settlement.ScheduleSeconds(caps.Scheduling.MaxDelaySeconds)
+		if e != nil {
+			return e
+		}
+		now := uint64(time.Now().Unix())
+		if after <= now || after-now > delay {
+			return fmt.Errorf("schedule outside broadcaster delay bounds")
+		}
+		if request.ExecuteBefore == "" {
+			window, e := settlement.ScheduleSeconds(caps.Scheduling.DefaultExecutionWindowSeconds)
+			if e != nil {
+				return e
+			}
+			request.ExecuteBefore = strconv.FormatUint(after+window, 10)
+		}
+		before, e := settlement.ScheduleSeconds(request.ExecuteBefore)
+		if e != nil {
+			return e
+		}
+		maxWindow, e := settlement.ScheduleSeconds(caps.Scheduling.MaxExecutionWindowSeconds)
+		if e != nil {
+			return e
+		}
+		if before <= after || before-after > maxWindow {
+			return fmt.Errorf("schedule outside broadcaster execution window")
+		}
+		slack, ok := new(big.Int).SetString(caps.Scheduling.MinDeadlineSlackSeconds, 10)
+		if !ok || slack.Sign() < 0 {
+			return fmt.Errorf("invalid deadline slack")
+		}
+		minimum := new(big.Int).Add(new(big.Int).SetUint64(before), slack)
+		var deadline *big.Int
+		switch {
+		case base.Create != nil:
+			deadline = base.Create.Deadline
+		case base.Update != nil:
+			deadline = base.Update.Deadline
+		case base.Draw != nil:
+			deadline = base.Draw.Deadline
+		case base.Revoke != nil:
+			deadline = base.Revoke.Deadline
+		}
+		if deadline == nil || deadline.Cmp(minimum) < 0 {
+			return fmt.Errorf("intent deadline does not cover scheduled window and slack")
+		}
+		token, hash, e := broadcaster.NewCancelToken()
+		if e != nil {
+			return e
+		}
+		cancelToken = token
+		schedule = &broadcaster.Schedule{PublishAfter: request.PublishAfter, ExecuteBefore: request.ExecuteBefore, CancelTokenHash: hash}
+		if e = schedule.Validate(); e != nil {
+			return e
+		}
+	}
 	proposal := base
 	for attempt := 0; attempt < attempts; attempt++ {
 		data, err := unsignedIntent(proposal)
 		if err != nil {
 			return err
 		}
-		estimated, err := client.EstimateQuote(ctx, data)
+		estimated, err := client.EstimateQuote(ctx, data, schedule)
 		if err != nil {
 			return err
 		}
@@ -183,14 +258,14 @@ func (p *Prepared) quoteBroadcaster(ctx context.Context, client *broadcaster.Cli
 			continue
 		}
 		trust := broadcaster.Trust{ChainID: primitives.ElementToBigInt(proposal.Context.ChainID), Protocol: common.BigToAddress(primitives.ElementToBigInt(proposal.Context.ProtocolAddress)), Signer: client.Configuration().QuoteSigner}
-		signed, err := client.GetQuote(ctx, data, trust)
+		signed, err := client.GetQuote(ctx, data, trust, schedule)
 		if err != nil {
 			return err
 		}
 		if err = broadcaster.VerifyQuote(signed, trust, data, uint64(time.Now().Unix())); err != nil {
 			return err
 		}
-		proposal.Broadcaster = &BroadcasterBinding{Configuration: client.Configuration(), Quote: signed, Intent: append([]byte(nil), data...)}
+		proposal.Broadcaster = &BroadcasterBinding{CancelToken: cancelToken, Configuration: client.Configuration(), Quote: signed, Intent: append([]byte(nil), data...)}
 		frozen, err := freeze(proposal)
 		if err != nil {
 			return err
@@ -263,9 +338,10 @@ func (p *Prepared) ExportBroadcasterSubmission(client *broadcaster.Client) ([]by
 	}
 	return data, quote, nil
 }
-func (p *Prepared) SubmitBroadcaster(ctx context.Context, client *broadcaster.Client) (broadcaster.Status, error) {
+func (p *Prepared) submitViaBroadcaster(ctx context.Context, client *broadcaster.Client) (broadcaster.Status, error) {
 	p.mu.Lock()
 	known := p.submission
+	request := p.request
 	binding := p.intent.Broadcaster
 	p.mu.Unlock()
 	if client == nil || binding == nil || binding.Configuration != client.Configuration() {
@@ -278,12 +354,12 @@ func (p *Prepared) SubmitBroadcaster(ctx context.Context, client *broadcaster.Cl
 	var data []byte
 	var quote broadcaster.SignedQuote
 	var err error
-	if retry {
+	if retry && request == nil {
 		data, err = p.Calldata(common.Address{})
 		if err == nil {
 			quote, err = p.ExportBroadcasterQuote()
 		}
-	} else {
+	} else if !retry {
 		data, quote, err = p.ExportBroadcasterSubmission(client)
 	}
 	if err != nil {
@@ -294,10 +370,18 @@ func (p *Prepared) SubmitBroadcaster(ctx context.Context, client *broadcaster.Cl
 			return broadcaster.Status{}, err
 		}
 	}
+	if request == nil {
+		value, e := client.PrepareSubmission(data, quote, nil, nil)
+		if e != nil {
+			return broadcaster.Status{}, e
+		}
+		request = &value
+	}
 	p.mu.Lock()
+	p.request = request
 	p.submission = Submission{RequestID: known.RequestID, State: "uncertain"}
 	p.mu.Unlock()
-	status, err := client.Submit(ctx, append([]byte(nil), data...), quote)
+	status, err := client.SubmitPrepared(ctx, *request)
 	if err != nil {
 		return status, err
 	}
@@ -312,8 +396,39 @@ func (p *Prepared) SubmitBroadcaster(ctx context.Context, client *broadcaster.Cl
 func (p *Prepared) Submission() Submission { p.mu.Lock(); defer p.mu.Unlock(); return p.submission }
 
 func (p *Prepared) bindBroadcasterQuote() *Prepared {
-	broadcaster.BindQuoteTarget(&p.QuoteTarget, func(ctx context.Context, c *broadcaster.Client, opt broadcaster.QuoteOptions) error {
+	broadcaster.BindOperationTarget(&p.OperationTarget, func(ctx context.Context, c *broadcaster.Client, opt broadcaster.QuoteOptions) error {
 		return p.quoteBroadcaster(ctx, c, opt)
-	})
+	}, p.submitViaBroadcaster, p.cancelViaBroadcaster)
 	return p
 }
+
+func (p *Prepared) cancelViaBroadcaster(ctx context.Context, client *broadcaster.Client) (broadcaster.Status, error) {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	b := p.intent.Broadcaster
+	if client == nil || b == nil || b.Configuration != client.Configuration() || b.Quote.Quote.Schedule == nil || b.CancelToken == "" {
+		return broadcaster.Status{}, fmt.Errorf("scoped scheduled cancellation handle required")
+	}
+	if p.submission.RequestID == "" {
+		return broadcaster.Status{}, fmt.Errorf("submission ID unknown; retry the original submission")
+	}
+	if b.CancellationConfirmed {
+		return broadcaster.Status{ID: p.submission.RequestID, State: "cancelled"}, nil
+	}
+	result, err := client.CancelTransaction(ctx, p.submission.RequestID, b.CancelToken)
+	if err != nil {
+		return result, err
+	}
+	if result.State != "cancelled" {
+		return result, fmt.Errorf("cancellation was not acknowledged")
+	}
+	if result.TransactionHash != "" || p.submission.TransactionHash != "" {
+		return result, fmt.Errorf("cancelled submission has transaction hash")
+	}
+	b.CancellationConfirmed = true
+	p.submission.State = "cancelled"
+	return result, nil
+}
+
+func (BroadcasterBinding) String() string     { return "CreditBroadcasterBinding([redacted])" }
+func (b BroadcasterBinding) GoString() string { return b.String() }

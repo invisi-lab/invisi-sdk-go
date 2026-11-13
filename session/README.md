@@ -66,7 +66,7 @@ SQLite uses separate `invisi_public_history` metadata and `invisi_public_history
 | `ScanHistory(ctx, decryptor, options)` | Scan account gaps and atomically commit each page's inventory, unresolved candidates and private coverage. Online mode downloads missing payloads as needed. |
 | `Refresh(ctx, options)` / `pending.Decrypt(ctx, decryptor)` | Stage one recent bounded public page, then interleave downloads and per-page private commits through the same scan pipeline. |
 | `RefreshState(ctx)` | Check known nullifiers, Credit revocation and externalized in-flight operations at the current primary-chain head. |
-| `RetryUnresolved(ctx, decryptor)` | Retry ambiguous deliveries without advancing discovery coverage. A recovered Credit parent schedules its chronological successor pass. |
+| `RetryUnresolved(ctx, decryptor, options...)` | Retry ambiguous deliveries without advancing discovery coverage; default online verifies canonical anchors and consumption, while `RetryUnresolvedOptions{Offline: true}` leaves recovered funds unchecked. A recovered Credit parent schedules its chronological successor pass. |
 | `GetScanStatus(ctx)` | Read checkpoint metadata: public/private coverage, gaps, recovery boundary, suggested work and exact block progress. |
 | `GetFundsStatus(ctx, token)` | Report known fresh unspent, unreserved funds, independently of missing historical ranges. Preparation revalidates eligibility. |
 
@@ -120,13 +120,13 @@ The SDK generates a random 32-byte cancellation secret and persists it locally
 with the signed quote and frozen broadcaster request before the first submit
 attempt. Submission IDs are opaque and allocated by the server; the SDK stores
 the actual response ID before returning it. If a response is lost, explicitly
-retry `SubmitBroadcaster` to replay the original frozen request idempotently and
-recover that ID before calling `CancelBroadcaster`. Cancellation never creates
+retry `client.Submit(ctx, operation)` to replay the original frozen request idempotently and
+recover that ID before calling `client.Cancel(ctx, operation)`. Cancellation never creates
 a remote job for an operation that has not been submitted. Quotes and submission RPCs
 carry only its Keccak-256 hash. Use encrypted storage for raw operation snapshots and backups; JSON deliberately
 retains the secret for recovery, while normal Go formatting redacts it.
-`Operation.CancelBroadcaster(ctx, client)` sends the secret to the same endpoint;
-inputs remain reserved on errors or any response other than `cancelled`. An
+`client.Cancel(ctx, operation)` sends the secret to the same endpoint;
+inputs remain reserved on errors or any response other than `cancelled`; an unacknowledged cancellation returns an error. An
 explicit cancellation acknowledgement is persisted before canonical state refresh;
 if refresh fails, a resumed operation can retry reconciliation while the
 broadcaster is offline. Canonical state refresh must finish before reservations
@@ -136,5 +136,7 @@ scheduling fields are never sent to Provenance.
 
 Low-level callers can use `broadcaster.NewCancelToken()`,
 `EstimateQuote(ctx, data, schedule)`, `GetQuote(ctx, data, trust, schedule)` and
-`Cancel(ctx, id, token)`. Store the secret before sending the transaction, and
+`CancelTransaction(ctx, id, token)`. Store the secret before sending the transaction, and
 retain it when a transport error leaves admission uncertain.
+
+Credit scheduling supports create, update, draw and revoke. Low-level `credit/session.Options.CheckCancellation` must check anchored canonical consumption, revocation and allocation independently of expired authorization or payer allowance; `WalletSession.Credit()` supplies that checker. An acknowledged cancellation retains reservations until this check succeeds.
