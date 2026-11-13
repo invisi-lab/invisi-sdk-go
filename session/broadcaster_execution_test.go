@@ -46,7 +46,7 @@ func TestQuotedAggregateDefaultsToRecursiveAndRetainsFrozenRequest(t *testing.T)
 			statuses++
 		}
 	})
-	op, e = op.WithBroadcaster(ctx, c, sdk.WithBroadcasterOptions{MaxFeeAmount: big.NewInt(10)})
+	e = c.Quote(ctx, op, sdk.BroadcasterQuoteOptions{MaxFeeAmount: big.NewInt(10)})
 	if e != nil {
 		t.Fatal(e)
 	}

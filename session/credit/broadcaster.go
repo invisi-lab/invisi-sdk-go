@@ -10,7 +10,7 @@ import (
 	"github.com/invisi-lab/invisi-sdk-go/rpc/broadcaster"
 )
 
-func (o *Operation) WithBroadcaster(ctx context.Context, client *broadcaster.Client, options credit.WithBroadcasterOptions) error {
+func (o *Operation) quoteBroadcaster(ctx context.Context, client *broadcaster.Client, options credit.BroadcasterQuoteOptions) error {
 	o.mu.Lock()
 	defer o.mu.Unlock()
 	if err := o.checkFresh(ctx); err != nil {
@@ -20,7 +20,7 @@ func (o *Operation) WithBroadcaster(ctx context.Context, client *broadcaster.Cli
 	if err != nil {
 		return err
 	}
-	if err = o.prepared.WithBroadcaster(ctx, client, options); err != nil {
+	if err = client.Quote(ctx, o.prepared, options); err != nil {
 		return err
 	}
 	quoted, err := o.prepared.ExportIntent()
@@ -159,4 +159,11 @@ func (o *Operation) ExportBroadcasterQuote(ctx context.Context) (broadcaster.Sig
 		return broadcaster.SignedQuote{}, err
 	}
 	return o.prepared.ExportBroadcasterQuote()
+}
+
+func (o *Operation) bindBroadcasterQuote() *Operation {
+	broadcaster.BindQuoteTarget(&o.QuoteTarget, func(ctx context.Context, c *broadcaster.Client, opt broadcaster.QuoteOptions) error {
+		return o.quoteBroadcaster(ctx, c, opt)
+	})
+	return o
 }

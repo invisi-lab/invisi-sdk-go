@@ -72,7 +72,7 @@ func TestCurrentCreditNativeLifecycle(t *testing.T) {
 	prove := func(name string, p *Prepared, key *ecdsa.PrivateKey) {
 		t.Helper()
 		t.Run(name, func(t *testing.T) {
-			if e := p.WithBroadcaster(ctx, client, WithBroadcasterOptions{MaxFeeAmount: big.NewInt(2)}); e != nil {
+			if e := client.Quote(ctx, p, BroadcasterQuoteOptions{MaxFeeAmount: big.NewInt(2)}); e != nil {
 				t.Fatal(e)
 			}
 			typed, e := p.SigningRequest()
@@ -169,7 +169,7 @@ func TestCurrentRevocationBroadcasterWithoutZK(t *testing.T) {
 	}
 	quoteKey, _ := crypto.ToECDSA(common.LeftPadBytes([]byte{9}, 32))
 	client := creditBroadcaster(t, c, quoteKey, collector)
-	if err = p.WithBroadcaster(context.Background(), client, WithBroadcasterOptions{MaxFeeAmount: big.NewInt(2)}); err != nil {
+	if err = client.Quote(context.Background(), p, BroadcasterQuoteOptions{MaxFeeAmount: big.NewInt(2)}); err != nil {
 		t.Fatal(err)
 	}
 	typed, err := p.SigningRequest()

@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
+	transaction "github.com/invisi-lab/invisi-sdk-go/internal/transaction"
 	"github.com/invisi-lab/invisi-sdk-go/primitives"
 	"github.com/invisi-lab/invisi-sdk-go/protocol"
 	"github.com/invisi-lab/invisi-sdk-go/sdk"
@@ -49,13 +50,18 @@ func TestBroadcasterReplacesExistingPublicFee(t *testing.T) {
 				if err != nil {
 					t.Fatal(err)
 				}
-				client, _ := testBroadcaster(t, original, []int64{replacement}, false)
-				next, err := original.WithBroadcaster(ctx, client, sdk.WithBroadcasterOptions{MaxFeeAmount: big.NewInt(20), FeeSource: tc.source})
+				before, err := frozen(original.plan)
 				if err != nil {
 					t.Fatal(err)
 				}
-				if next.Preview().FeeAmount.Int64() != replacement || original.Preview().FeeAmount.Int64() != 7 {
-					t.Fatal("fee was added or original mutated")
+				client, _ := testBroadcaster(t, original, []int64{replacement}, false)
+				next, err := original, client.Quote(ctx, original, sdk.BroadcasterQuoteOptions{MaxFeeAmount: big.NewInt(20), FeeSource: tc.source})
+				if err != nil {
+					t.Fatal(err)
+				}
+				_, previousFee := transaction.PlanFee(before)
+				if next.Preview().FeeAmount.Int64() != replacement || previousFee.Int64() != 7 {
+					t.Fatal("fee was added instead of replaced")
 				}
 				in := new(big.Int).Set(next.plan.Funding.Amount)
 				for _, n := range next.plan.Inputs {
@@ -75,7 +81,7 @@ func TestBroadcasterReplacesExistingPublicFee(t *testing.T) {
 				if next.plan.Funding.Amount.Int64() != expectedFunding {
 					t.Fatalf("gross funding %s; wanted %d", next.plan.Funding.Amount, expectedFunding)
 				}
-				if original.plan.Outputs[0].Commitment != next.plan.Outputs[0].Commitment {
+				if before.Outputs[0].Commitment != next.plan.Outputs[0].Commitment {
 					t.Fatal("business output changed")
 				}
 			})
@@ -93,7 +99,7 @@ func TestExistingFeePermitCallbackUsesFinalReplacementGross(t *testing.T) {
 	}
 	client, _ := testBroadcaster(t, original, []int64{5, 8, 8, 8}, false)
 	calls := 0
-	next, err := original.WithBroadcaster(ctx, client, sdk.WithBroadcasterOptions{MaxFeeAmount: big.NewInt(10), FundingPermit: func(_ context.Context, r sdk.FundingPermitRequest) (*protocol.TokenPermit, error) {
+	next, err := original, client.Quote(ctx, original, sdk.BroadcasterQuoteOptions{MaxFeeAmount: big.NewInt(10), FundingPermit: func(_ context.Context, r sdk.FundingPermitRequest) (*protocol.TokenPermit, error) {
 		calls++
 		if r.Amount.Int64() != 38 {
 			t.Fatalf("permit gross=%s; wanted output30+replacement8", r.Amount)

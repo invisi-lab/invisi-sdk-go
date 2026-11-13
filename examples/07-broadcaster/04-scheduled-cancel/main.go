@@ -163,7 +163,7 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	prepared, err = prepared.WithBroadcaster(ctx, relay, sdk.WithBroadcasterOptions{
+	err = relay.Quote(ctx, prepared, sdk.BroadcasterQuoteOptions{
 		MaxFeeAmount: maxFee,
 		Schedule: &sdk.ScheduleOptions{
 			PublishAfter:  strconv.FormatUint(after, 10),

@@ -24,17 +24,6 @@ import (
 	walletsqlite "github.com/invisi-lab/invisi-sdk-go/session/sqlite"
 )
 
-func must[T any](value T, err error) T {
-	if err != nil {
-		log.Fatal(err)
-	}
-	return value
-}
-func check(err error) {
-	if err != nil {
-		log.Fatal(err)
-	}
-}
 func main() {
 	chainRPC := flag.String("chain-rpc", "http://127.0.0.1:18565", "Chain RPC")
 	protocolRPC := flag.String("protocol-rpc", "https://rpc.invisipay.fi/v1/chains/97", "Protocol RPC")
@@ -57,90 +46,229 @@ func main() {
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Minute)
 	defer cancel()
-	provider := must(ethclient.DialContext(ctx, *chainRPC))
+	provider, err := ethclient.DialContext(ctx, *chainRPC)
+	if err != nil {
+		log.Fatal(err)
+	}
 	defer provider.Close()
-	rpc := must(sdk.NewProtocolRpcClient(*protocolRPC))
-	pool := must(sdk.ProtocolFromRPC(ctx, rpc, provider))
+	rpc, err := sdk.NewProtocolRpcClient(*protocolRPC)
+	if err != nil {
+		log.Fatal(err)
+	}
+	pool, err := sdk.ProtocolFromRPC(ctx, rpc, provider)
+	if err != nil {
+		log.Fatal(err)
+	}
 	if *publicProofPath != "" {
-		source := must(shared.SourceClient(pool))
+		source, err := shared.SourceClient(pool)
+		if err != nil {
+			log.Fatal(err)
+		}
 		var packet provenance.ProvenanceProof
-		decoder := json.NewDecoder(strings.NewReader(string(must(os.ReadFile(*publicProofPath)))))
+		proofBytes, err := os.ReadFile(*publicProofPath)
+		if err != nil {
+			log.Fatal(err)
+		}
+		decoder := json.NewDecoder(strings.NewReader(string(proofBytes)))
 		decoder.DisallowUnknownFields()
-		check(decoder.Decode(&packet))
-		accepted := must(sdk.SubmitProvenanceProof(ctx, source, packet))
+		if err := decoder.Decode(&packet); err != nil {
+			log.Fatal(err)
+		}
+		accepted, err := sdk.SubmitProvenanceProof(ctx, source, packet)
+		if err != nil {
+			log.Fatal(err)
+		}
 		log.Printf("Source submission: %+v", accepted)
-		tracking := must(provenance.TrackingFromResult(accepted, ""))
-		log.Printf("Source recognition: %+v", must(source.WaitTracking(context.Background(), tracking.ID, 2*time.Second, 2*time.Minute)))
+		tracking, err := provenance.TrackingFromResult(accepted, "")
+		if err != nil {
+			log.Fatal(err)
+		}
+		recognition, err := source.WaitTracking(context.Background(), tracking.ID, 2*time.Second, 2*time.Minute)
+		if err != nil {
+			log.Fatal(err)
+		}
+		log.Printf("Source recognition: %+v", recognition)
 		return
 	}
-	publicWallet := must(sdk.WalletFromAddress(*address))
-	backend := must(native.NewNativeProver(native.NativeOptions{BBBinary: os.Getenv("BB_BINARY"), NoirBinary: os.Getenv("NOIR_EXECUTOR")}))
-	source := must(shared.SourceCapability(pool))
-	invisi := sdk.NewInvisi(sdk.InvisiOptions{Provider: provider, ProtocolRPC: rpc, Prover: backend, Provenance: source})
-	database := must(sql.Open("sqlite", "examples/wallet.sqlite"))
+	publicWallet, err := sdk.WalletFromAddress(*address)
+	if err != nil {
+		log.Fatal(err)
+	}
+	backend, err := native.NewNativeProver(native.NativeOptions{
+		BBBinary:   os.Getenv("BB_BINARY"),
+		NoirBinary: os.Getenv("NOIR_EXECUTOR"),
+	})
+	if err != nil {
+		log.Fatal(err)
+	}
+	source, err := shared.SourceCapability(pool)
+	if err != nil {
+		log.Fatal(err)
+	}
+	invisi := sdk.NewInvisi(sdk.InvisiOptions{
+		Provider: provider, ProtocolRPC: rpc, Prover: backend, Provenance: source,
+	})
+	database, err := sql.Open("sqlite", "examples/wallet.sqlite")
+	if err != nil {
+		log.Fatal(err)
+	}
 	defer database.Close()
-	storageKey := must(hex.DecodeString(strings.TrimPrefix(os.Getenv("INVISI_EXAMPLE_STORAGE_KEY"), "0x")))
+	storageKey, err := hex.DecodeString(strings.TrimPrefix(os.Getenv("INVISI_EXAMPLE_STORAGE_KEY"), "0x"))
+	if err != nil {
+		log.Fatal(err)
+	}
 	defer clear(storageKey)
-	codec := must(walletsession.NewEncryptedWalletCodec(storageKey))
-	store := must(walletsqlite.NewWalletStore(ctx, database, codec))
+	codec, err := walletsession.NewEncryptedWalletCodec(storageKey)
+	if err != nil {
+		log.Fatal(err)
+	}
+	store, err := walletsqlite.NewWalletStore(ctx, database, codec)
+	if err != nil {
+		log.Fatal(err)
+	}
 	var signer *bind.TransactOpts
 	if !*resume {
-		key := must(crypto.HexToECDSA(strings.TrimPrefix(os.Getenv("OWNER_PRIVATE_KEY"), "0x")))
+		key, err := crypto.HexToECDSA(strings.TrimPrefix(os.Getenv("OWNER_PRIVATE_KEY"), "0x"))
+		if err != nil {
+			log.Fatal(err)
+		}
 		if crypto.PubkeyToAddress(key.PublicKey) != publicWallet.OwnerAddress() {
 			log.Fatal("OWNER_PRIVATE_KEY must match the Note owner")
 		}
-		signer = must(bind.NewKeyedTransactorWithChainID(key, new(big.Int).SetUint64(pool.Context().ChainID)))
+		signer, err = bind.NewKeyedTransactorWithChainID(key, new(big.Int).SetUint64(pool.Context().ChainID))
+		if err != nil {
+			log.Fatal(err)
+		}
 	}
-	managed := must(walletsession.Connect(ctx, walletsession.Options{Invisi: invisi, Wallet: publicWallet, Protocol: pool, Store: store, Namespace: "source-recovery-example", Signer: signer}))
+	managed, err := walletsession.Connect(ctx, walletsession.Options{
+		Invisi: invisi, Wallet: publicWallet, Protocol: pool, Store: store,
+		Namespace: "source-recovery-example", Signer: signer,
+	})
+	if err != nil {
+		log.Fatal(err)
+	}
 	if !*resume {
-		pending := must(managed.Refresh(ctx, walletsession.RefreshOptions{FromBlock: pool.Deployment().Protocol.FromBlock}))
-		_ = must(pending.Decrypt(ctx, shared.AppDeliveryDecryptor{}))
+		pending, err := managed.Refresh(ctx, walletsession.RefreshOptions{FromBlock: pool.Deployment().Protocol.FromBlock})
+		if err != nil {
+			log.Fatal(err)
+		}
+		_, err = pending.Decrypt(ctx, shared.AppDeliveryDecryptor{})
+		if err != nil {
+			log.Fatal(err)
+		}
 		token := common.HexToAddress(*tokenText)
-		balance := must(managed.Balance(ctx, token))
+		balance, err := managed.Balance(ctx, token)
+		if err != nil {
+			log.Fatal(err)
+		}
 		if balance.AvailableKnown == nil || balance.AvailableKnown.Cmp(big.NewInt(2)) < 0 {
 			log.Fatal("fund Notes first")
 		}
-		output := must(sdk.NewNoteOutput(sdk.PaymentRequest{ChainID: new(big.Int).SetUint64(pool.Context().ChainID), ProtocolAddress: pool.Context().ProtocolAddress, TokenAddress: token, Amount: new(big.Int).Div(balance.AvailableKnown, big.NewInt(2)), Recipient: sdk.InvisiRecipient{Address: *recipient}}))
-		prepared := must(managed.PrepareTransfer(ctx, sdk.TransferPreparation{TokenAddress: token, Outputs: []sdk.NoteOutput{output}}))
-		authorization := must(prepared.ExportWalletAuthorization(ctx))
-		signature := must(shared.Sign(authorization, publicWallet.OwnerAddress(), "OWNER_PRIVATE_KEY"))
-		prepared = must(prepared.WithWalletSignature(ctx, signature))
-		ready := must(prepared.Prove(ctx))
+		output, err := sdk.NewNoteOutput(sdk.PaymentRequest{
+			ChainID:         new(big.Int).SetUint64(pool.Context().ChainID),
+			ProtocolAddress: pool.Context().ProtocolAddress, TokenAddress: token,
+			Amount:    new(big.Int).Div(balance.AvailableKnown, big.NewInt(2)),
+			Recipient: sdk.InvisiRecipient{Address: *recipient},
+		})
+		if err != nil {
+			log.Fatal(err)
+		}
+		prepared, err := managed.PrepareTransfer(ctx, sdk.TransferPreparation{TokenAddress: token, Outputs: []sdk.NoteOutput{output}})
+		if err != nil {
+			log.Fatal(err)
+		}
+		authorization, err := prepared.ExportWalletAuthorization(ctx)
+		if err != nil {
+			log.Fatal(err)
+		}
+		signature, err := shared.Sign(authorization, publicWallet.OwnerAddress(), "OWNER_PRIVATE_KEY")
+		if err != nil {
+			log.Fatal(err)
+		}
+		prepared, err = prepared.WithWalletSignature(ctx, signature)
+		if err != nil {
+			log.Fatal(err)
+		}
+		ready, err := prepared.Prove(ctx)
+		if err != nil {
+			log.Fatal(err)
+		}
 		log.Printf("Saved operation ID: %s", ready.ID())
 		if !*send {
 			log.Print("Ready; no payment sent without --send. Retain this encrypted journal.")
 			return
 		}
-		tx := must(managed.SendTransaction(ctx, ready))
+		tx, err := managed.SendTransaction(ctx, ready)
+		if err != nil {
+			log.Fatal(err)
+		}
 		log.Printf("Main transaction: %s", tx.Hash())
-		log.Printf("Native finality: %+v", must(shared.WaitNativeFinality(context.Background(), provider, tx.Hash(), *finalityTimeout)))
+		finality, err := shared.WaitNativeFinality(context.Background(), provider, tx.Hash(), *finalityTimeout)
+		if err != nil {
+			log.Fatal(err)
+		}
+		log.Printf("Native finality: %+v", finality)
 		log.Printf("Restart with --resume --operation-id %s", ready.ID())
 		return
 	}
 	if *operationID == "" {
 		log.Fatal("set the original --operation-id")
 	}
-	restored := must(managed.Resume(ctx, *operationID))
-	if *transactionHash != "" {
-		restored = must(restored.TrackTransaction(ctx, common.HexToHash(*transactionHash)))
+	restored, err := managed.Resume(ctx, *operationID)
+	if err != nil {
+		log.Fatal(err)
 	}
-	confirmed := must(restored.Reconcile(ctx))
+	if *transactionHash != "" {
+		restored, err = restored.TrackTransaction(ctx, common.HexToHash(*transactionHash))
+		if err != nil {
+			log.Fatal(err)
+		}
+	}
+	confirmed, err := restored.Reconcile(ctx)
+	if err != nil {
+		log.Fatal(err)
+	}
 	if confirmed.Status() != "confirmed" {
 		log.Fatal("original payment is not canonically confirmed; resume it later")
 	}
-	ready := must(confirmed.ProveProvenance(ctx, sdk.ProvenanceProveOptions{Reprove: *reprove}))
-	packet := must(ready.ExportProvenanceProof(ctx))
+	ready, err := confirmed.ProveProvenance(ctx, sdk.ProvenanceProveOptions{Reprove: *reprove})
+	if err != nil {
+		log.Fatal(err)
+	}
+	packet, err := ready.ExportProvenanceProof(ctx)
+	if err != nil {
+		log.Fatal(err)
+	}
 	if *exportPath != "" {
-		file := must(os.OpenFile(*exportPath, os.O_WRONLY|os.O_CREATE|os.O_EXCL, 0600))
-		check(json.NewEncoder(file).Encode(packet))
-		check(file.Sync())
-		check(file.Close())
+		file, err := os.OpenFile(*exportPath, os.O_WRONLY|os.O_CREATE|os.O_EXCL, 0600)
+		if err != nil {
+			log.Fatal(err)
+		}
+		if err := json.NewEncoder(file).Encode(packet); err != nil {
+			log.Fatal(err)
+		}
+		if err := file.Sync(); err != nil {
+			log.Fatal(err)
+		}
+		if err := file.Close(); err != nil {
+			log.Fatal(err)
+		}
 		log.Printf("Saved public proof: %s", *exportPath)
 	}
-	accepted := must(ready.SubmitProvenance(ctx))
-	tracking := must(provenance.TrackingFromResult(accepted, ""))
+	accepted, err := ready.SubmitProvenance(ctx)
+	if err != nil {
+		log.Fatal(err)
+	}
+	tracking, err := provenance.TrackingFromResult(accepted, "")
+	if err != nil {
+		log.Fatal(err)
+	}
 	if tracking.OperationDigest != packet.OperationDigest {
 		log.Fatal("Source tracking digest mismatch")
 	}
-	log.Printf("Source recognition: %+v", must(source.Client.WaitTracking(context.Background(), tracking.ID, 2*time.Second, 2*time.Minute)))
+	recognition, err := source.Client.WaitTracking(context.Background(), tracking.ID, 2*time.Second, 2*time.Minute)
+	if err != nil {
+		log.Fatal(err)
+	}
+	log.Printf("Source recognition: %+v", recognition)
 }

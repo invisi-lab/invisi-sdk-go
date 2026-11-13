@@ -11,10 +11,7 @@ import (
 	"github.com/invisi-lab/invisi-sdk-go/rpc/broadcaster"
 )
 
-type WithBroadcasterOptions struct {
-	MaxFeeAmount *big.Int
-	MaxAttempts  int
-}
+type BroadcasterQuoteOptions = broadcaster.QuoteOptions
 type BroadcasterBinding struct {
 	Configuration broadcaster.Configuration
 	Quote         broadcaster.SignedQuote
@@ -130,10 +127,13 @@ func reprice(i Intent, recipient common.Address, amount *big.Int) (Intent, error
 	return next, nil
 }
 
-// WithBroadcaster freezes the quoted fee before authorization or proving; grant debits remain gross.
-func (p *Prepared) WithBroadcaster(ctx context.Context, client *broadcaster.Client, options WithBroadcasterOptions) error {
+// quoteBroadcaster freezes the quoted fee before authorization or proving; grant debits remain gross.
+func (p *Prepared) quoteBroadcaster(ctx context.Context, client *broadcaster.Client, options BroadcasterQuoteOptions) error {
 	if client == nil || options.MaxFeeAmount == nil || options.MaxFeeAmount.Sign() <= 0 || options.MaxFeeAmount.BitLen() > 128 {
 		return fmt.Errorf("broadcaster client and positive uint128 fee limit required")
+	}
+	if options.Schedule != nil || options.FeeSource != "" || options.FundingPermit != nil {
+		return fmt.Errorf("Credit quotation does not support Note fee sources, funding permits or scheduling")
 	}
 	limit := new(big.Int).Set(options.MaxFeeAmount)
 	attempts := options.MaxAttempts
@@ -310,3 +310,10 @@ func (p *Prepared) SubmitBroadcaster(ctx context.Context, client *broadcaster.Cl
 	return status, nil
 }
 func (p *Prepared) Submission() Submission { p.mu.Lock(); defer p.mu.Unlock(); return p.submission }
+
+func (p *Prepared) bindBroadcasterQuote() *Prepared {
+	broadcaster.BindQuoteTarget(&p.QuoteTarget, func(ctx context.Context, c *broadcaster.Client, opt broadcaster.QuoteOptions) error {
+		return p.quoteBroadcaster(ctx, c, opt)
+	})
+	return p
+}

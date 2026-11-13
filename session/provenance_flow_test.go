@@ -233,7 +233,7 @@ func TestProvenanceProofRequiresReadyTransaction(t *testing.T) {
 		t.Fatal("unready Source proof accepted")
 	}
 	c, _ := testBroadcaster(t, original, []int64{5}, false, common.Hash{})
-	if _, e = original.WithBroadcaster(ctx, c, sdk.WithBroadcasterOptions{MaxFeeAmount: big.NewInt(10)}); e != nil {
+	if e = c.Quote(ctx, original, sdk.BroadcasterQuoteOptions{MaxFeeAmount: big.NewInt(10)}); e != nil {
 		t.Fatal(e)
 	}
 	if prover.calls.Load() != 0 {
@@ -297,7 +297,7 @@ func TestBroadcasterAutomaticallyProvesOnlyFinalReadySource(t *testing.T) {
 			}
 			prover, _ := configureSourceFlow(t, s, original, false, false)
 			c, fees := testBroadcasterExecution(t, original, []int64{5, 8, 8}, false, nil, execution, nil, common.Hash{})
-			quoted, e := original.WithBroadcaster(ctx, c, sdk.WithBroadcasterOptions{MaxFeeAmount: big.NewInt(10)})
+			quoted, e := original, c.Quote(ctx, original, sdk.BroadcasterQuoteOptions{MaxFeeAmount: big.NewInt(10)})
 			if e != nil {
 				t.Fatal(e)
 			}

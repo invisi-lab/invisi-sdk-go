@@ -3,6 +3,7 @@ package session
 import (
 	"context"
 	"errors"
+	"github.com/invisi-lab/invisi-sdk-go/rpc/broadcaster"
 	"sync"
 
 	"github.com/invisi-lab/invisi-sdk-go/rpc/chain"
@@ -140,20 +141,21 @@ func Connect(ctx context.Context, options Options) (*WalletSession, error) {
 }
 
 type Operation struct {
-	mu              sync.Mutex
-	metadataMu      sync.RWMutex
-	session         *WalletSession
-	plan            transaction.Plan
-	status          string
-	authorization   *primitives.WalletAuthorizationWitness
-	bundle          *prover.ProofBundle
-	data            []byte
-	transactionHash common.Hash
-	workerID        string
+	broadcaster.QuoteTarget `json:"-"`
+	mu                      sync.Mutex
+	metadataMu              sync.RWMutex
+	session                 *WalletSession
+	plan                    transaction.Plan
+	status                  string
+	authorization           *primitives.WalletAuthorizationWitness
+	bundle                  *prover.ProofBundle
+	data                    []byte
+	transactionHash         common.Hash
+	workerID                string
 }
 
 func operationFromExecution(s *WalletSession, e *transaction.Execution) *Operation {
-	return &Operation{session: s, plan: e.Plan, status: e.Status, authorization: e.Authorization, bundle: e.Bundle, data: e.Data, transactionHash: e.TransactionHash, workerID: e.WorkerID}
+	return (&Operation{session: s, plan: e.Plan, status: e.Status, authorization: e.Authorization, bundle: e.Bundle, data: e.Data, transactionHash: e.TransactionHash, workerID: e.WorkerID}).bindBroadcasterQuote()
 }
 func (o *Operation) execution() *transaction.Execution {
 	r := &transaction.Runtime{}

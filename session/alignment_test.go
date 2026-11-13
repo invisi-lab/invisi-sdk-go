@@ -103,7 +103,7 @@ func TestAbandonedReadyOperationsCannotResumeRetainedSubmission(t *testing.T) {
 			}
 			if relay {
 				client, _ := testBroadcaster(t, op, []int64{5}, false)
-				op, err = op.WithBroadcaster(ctx, client, sdk.WithBroadcasterOptions{MaxFeeAmount: big.NewInt(10)})
+				err = client.Quote(ctx, op, sdk.BroadcasterQuoteOptions{MaxFeeAmount: big.NewInt(10)})
 				if err != nil {
 					t.Fatal(err)
 				}

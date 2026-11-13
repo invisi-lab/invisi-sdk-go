@@ -15,31 +15,18 @@ import (
 	"github.com/invisi-lab/invisi-sdk-go/rpc/broadcaster"
 )
 
-type FundingPermitRequest struct {
-	Payer, TokenAddress, ProtocolAddress common.Address
-	Amount                               *big.Int
-}
+type FundingPermitRequest = broadcaster.FundingPermitRequest
 
-type BroadcasterFeeSource string
+type BroadcasterFeeSource = broadcaster.FeeSource
 
 const (
-	BroadcasterFeePublicFunding BroadcasterFeeSource = "public-funding"
-	BroadcasterFeePrivateInputs BroadcasterFeeSource = "private-inputs"
-	BroadcasterFeePayout        BroadcasterFeeSource = "payout"
+	BroadcasterFeePublicFunding = broadcaster.FeePublicFunding
+	BroadcasterFeePrivateInputs = broadcaster.FeePrivateInputs
+	BroadcasterFeePayout        = broadcaster.FeePayout
 )
 
-type ScheduleOptions struct {
-	PublishAfter  string
-	ExecuteBefore string
-}
-
-type WithBroadcasterOptions struct {
-	Schedule      *ScheduleOptions
-	MaxFeeAmount  *big.Int
-	MaxAttempts   int
-	FeeSource     BroadcasterFeeSource
-	FundingPermit func(context.Context, FundingPermitRequest) (*protocol.TokenPermit, error)
-}
+type ScheduleOptions = broadcaster.ScheduleOptions
+type BroadcasterQuoteOptions = broadcaster.QuoteOptions
 
 type BroadcasterPlan struct {
 	CancelToken           string `json:"cancelToken,omitempty"`
@@ -85,7 +72,7 @@ func (o *Execution) BroadcasterIntent() ([]byte, error) {
 	return nil, errors.New("unsupported broadcaster operation")
 }
 
-func (o *Execution) WithBroadcaster(ctx context.Context, c *broadcaster.Client, opt WithBroadcasterOptions) error {
+func (o *Execution) QuoteBroadcaster(ctx context.Context, c *broadcaster.Client, opt BroadcasterQuoteOptions) error {
 	if c == nil {
 		return errors.New("broadcaster client required")
 	}
@@ -243,11 +230,12 @@ func (o *Execution) WithBroadcaster(ctx context.Context, c *broadcaster.Client, 
 	return errors.New("broadcaster fee did not converge")
 }
 
-func (p *PreparedTransaction) WithBroadcaster(ctx context.Context, c *broadcaster.Client, opt WithBroadcasterOptions) (*PreparedTransaction, error) {
-	if opt.MaxFeeAmount != nil {
-		opt.MaxFeeAmount = new(big.Int).Set(opt.MaxFeeAmount)
-	}
-	return p.stage(ctx, func(next *Execution) error { return next.WithBroadcaster(ctx, c, opt) })
+func (p *PreparedTransaction) bindBroadcasterQuote() *PreparedTransaction {
+	broadcaster.BindQuoteTarget(&p.QuoteTarget, func(ctx context.Context, c *broadcaster.Client, opt broadcaster.QuoteOptions) error {
+		_, err := p.stage(ctx, func(next *Execution) error { return next.QuoteBroadcaster(ctx, c, opt) }, true)
+		return err
+	})
+	return p
 }
 
 func validateScheduledDeadlines(data []byte, minimum *big.Int) error {

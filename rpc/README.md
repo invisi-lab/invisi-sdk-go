@@ -36,3 +36,19 @@ Block binding authenticates the block reference, not the truth/completeness of a
 The server migration uses fresh index format 3 and snapshot format 2 with explicit backup/reindex/rollback. This client changes neither server databases nor wallet stores.
 
 Verification: from the repository root, run `python3 scripts/test-modules.py` to check every module and the examples.
+
+### High-level broadcaster quoting
+
+`client.Quote(ctx, preparedOrSession, broadcaster.QuoteOptions{MaxFeeAmount: limit})`
+asks the operation's bound SDK lifecycle to converge and authenticate the fee,
+then atomically installs the quote on that unsigned handle. It returns an error;
+subsequent authorization and proving continue on the same typed handle. Managed
+Note and Credit targets retain their own Store transactions and worker checks.
+`EstimateQuote` and `GetQuote` remain the low-level calldata RPC methods.
+
+The RPC module does not import SDK or Session packages. SDK constructors bind a
+private quote capability to the exact handle address; copied, unbound and nil
+handles are rejected before networking. The capability is excluded from JSON,
+never serialized into a journal, and is rebound when restoring an operation.
+Custom capabilities can run only their own callback; they do not expose another
+operation's private state or bypass its authorization/persistence checks.

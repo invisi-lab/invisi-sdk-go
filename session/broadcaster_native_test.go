@@ -39,7 +39,7 @@ func TestRealNativeBroadcasterFeeProofs(t *testing.T) {
 				t.Fatal(e)
 			}
 			client, _ := testBroadcaster(t, op, []int64{5}, false)
-			op, e = op.WithBroadcaster(ctx, client, sdk.WithBroadcasterOptions{MaxFeeAmount: big.NewInt(10)})
+			e = client.Quote(ctx, op, sdk.BroadcasterQuoteOptions{MaxFeeAmount: big.NewInt(10)})
 			if e != nil {
 				t.Fatal(e)
 			}

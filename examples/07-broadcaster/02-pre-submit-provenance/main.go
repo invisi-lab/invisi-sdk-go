@@ -20,12 +20,6 @@ import (
 	walletsession "github.com/invisi-lab/invisi-sdk-go/session"
 )
 
-func must[T any](value T, err error) T {
-	if err != nil {
-		log.Fatal(err)
-	}
-	return value
-}
 func main() {
 	chainRPC := flag.String("chain-rpc", "http://127.0.0.1:18565", "Chain RPC")
 	protocolRPC := flag.String("protocol-rpc", "https://rpc.invisipay.fi/v1/chains/97", "Protocol RPC")
@@ -42,41 +36,123 @@ func main() {
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Minute)
 	defer cancel()
-	provider := must(ethclient.DialContext(ctx, *chainRPC))
+	provider, err := ethclient.DialContext(ctx, *chainRPC)
+	if err != nil {
+		log.Fatal(err)
+	}
 	defer provider.Close()
-	rpc := must(sdk.NewProtocolRpcClient(*protocolRPC))
-	pool := must(sdk.ProtocolFromRPC(ctx, rpc, provider))
-	publicWallet := must(sdk.WalletFromAddress(*address))
-	backend := must(native.NewNativeProver(native.NativeOptions{BBBinary: os.Getenv("BB_BINARY"), NoirBinary: os.Getenv("NOIR_EXECUTOR")}))
-	source := must(shared.SourceCapability(pool))
-	invisi := sdk.NewInvisi(sdk.InvisiOptions{Provider: provider, ProtocolRPC: rpc, Prover: backend, Provenance: source})
-	key := must(crypto.HexToECDSA(strings.TrimPrefix(os.Getenv("OWNER_PRIVATE_KEY"), "0x")))
+	rpc, err := sdk.NewProtocolRpcClient(*protocolRPC)
+	if err != nil {
+		log.Fatal(err)
+	}
+	pool, err := sdk.ProtocolFromRPC(ctx, rpc, provider)
+	if err != nil {
+		log.Fatal(err)
+	}
+	publicWallet, err := sdk.WalletFromAddress(*address)
+	if err != nil {
+		log.Fatal(err)
+	}
+	backend, err := native.NewNativeProver(native.NativeOptions{
+		BBBinary:   os.Getenv("BB_BINARY"),
+		NoirBinary: os.Getenv("NOIR_EXECUTOR"),
+	})
+	if err != nil {
+		log.Fatal(err)
+	}
+	source, err := shared.SourceCapability(pool)
+	if err != nil {
+		log.Fatal(err)
+	}
+	invisi := sdk.NewInvisi(sdk.InvisiOptions{
+		Provider: provider, ProtocolRPC: rpc, Prover: backend, Provenance: source,
+	})
+	key, err := crypto.HexToECDSA(strings.TrimPrefix(os.Getenv("OWNER_PRIVATE_KEY"), "0x"))
+	if err != nil {
+		log.Fatal(err)
+	}
 	if crypto.PubkeyToAddress(key.PublicKey) != publicWallet.OwnerAddress() {
 		log.Fatal("OWNER_PRIVATE_KEY must match the Note owner")
 	}
-	signer := must(bind.NewKeyedTransactorWithChainID(key, new(big.Int).SetUint64(pool.Context().ChainID)))
-	managed := must(walletsession.Connect(ctx, walletsession.Options{Invisi: invisi, Wallet: publicWallet, Protocol: pool, Store: walletsession.NewMemoryWalletStore(), Signer: signer}))
-	pending := must(managed.Refresh(ctx, walletsession.RefreshOptions{FromBlock: pool.Deployment().Protocol.FromBlock}))
-	_ = must(pending.Decrypt(ctx, shared.AppDeliveryDecryptor{}))
+	signer, err := bind.NewKeyedTransactorWithChainID(key, new(big.Int).SetUint64(pool.Context().ChainID))
+	if err != nil {
+		log.Fatal(err)
+	}
+	managed, err := walletsession.Connect(ctx, walletsession.Options{
+		Invisi: invisi, Wallet: publicWallet, Protocol: pool,
+		Store: walletsession.NewMemoryWalletStore(), Signer: signer,
+	})
+	if err != nil {
+		log.Fatal(err)
+	}
+	pending, err := managed.Refresh(ctx, walletsession.RefreshOptions{FromBlock: pool.Deployment().Protocol.FromBlock})
+	if err != nil {
+		log.Fatal(err)
+	}
+	_, err = pending.Decrypt(ctx, shared.AppDeliveryDecryptor{})
+	if err != nil {
+		log.Fatal(err)
+	}
 	token := common.HexToAddress(*tokenText)
-	balance := must(managed.Balance(ctx, token))
+	balance, err := managed.Balance(ctx, token)
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	if balance.AvailableKnown == nil || balance.AvailableKnown.Cmp(big.NewInt(2)) <= 0 {
 		log.Fatal("fund and recognize Notes first; leave funds for fees")
 	}
-	output := must(sdk.NewNoteOutput(sdk.PaymentRequest{ChainID: new(big.Int).SetUint64(pool.Context().ChainID), ProtocolAddress: pool.Context().ProtocolAddress, TokenAddress: token, Amount: new(big.Int).Div(balance.AvailableKnown, big.NewInt(2)), Recipient: sdk.InvisiRecipient{Address: *recipient}}))
-	prepared := must(managed.PrepareTransfer(ctx, sdk.TransferPreparation{TokenAddress: token, Outputs: []sdk.NoteOutput{output}}))
-	estimate := must(prepared.EstimateGas())
+	output, err := sdk.NewNoteOutput(sdk.PaymentRequest{
+		ChainID:         new(big.Int).SetUint64(pool.Context().ChainID),
+		ProtocolAddress: pool.Context().ProtocolAddress, TokenAddress: token,
+		Amount:    new(big.Int).Div(balance.AvailableKnown, big.NewInt(2)),
+		Recipient: sdk.InvisiRecipient{Address: *recipient},
+	})
+	if err != nil {
+		log.Fatal(err)
+	}
+	prepared, err := managed.PrepareTransfer(ctx, sdk.TransferPreparation{TokenAddress: token, Outputs: []sdk.NoteOutput{output}})
+	if err != nil {
+		log.Fatal(err)
+	}
+	estimate, err := prepared.EstimateGas()
+	if err != nil {
+		log.Fatal(err)
+	}
 	log.Printf("Benchmark gas estimate: %+v", estimate)
-	authorization := must(prepared.ExportWalletAuthorization(ctx))
-	signature := must(shared.Sign(authorization, publicWallet.OwnerAddress(), "OWNER_PRIVATE_KEY"))
-	prepared = must(prepared.WithWalletSignature(ctx, signature))
-	ready := must(prepared.Prove(ctx))
-	ready = must(ready.ProveProvenance(ctx))
-	packet := must(ready.ExportProvenanceProof(ctx))
+	authorization, err := prepared.ExportWalletAuthorization(ctx)
+	if err != nil {
+		log.Fatal(err)
+	}
+	signature, err := shared.Sign(authorization, publicWallet.OwnerAddress(), "OWNER_PRIVATE_KEY")
+	if err != nil {
+		log.Fatal(err)
+	}
+	prepared, err = prepared.WithWalletSignature(ctx, signature)
+	if err != nil {
+		log.Fatal(err)
+	}
+	ready, err := prepared.Prove(ctx)
+	if err != nil {
+		log.Fatal(err)
+	}
+	ready, err = ready.ProveProvenance(ctx)
+	if err != nil {
+		log.Fatal(err)
+	}
+	packet, err := ready.ExportProvenanceProof(ctx)
+	if err != nil {
+		log.Fatal(err)
+	}
 	log.Printf("Public Source proof: operation=%s sidecars=%d", packet.OperationDigest, len(packet.Sidecars))
-	accepted := must(ready.SubmitProvenance(ctx))
-	tracking := must(provenance.TrackingFromResult(accepted, ""))
+	accepted, err := ready.SubmitProvenance(ctx)
+	if err != nil {
+		log.Fatal(err)
+	}
+	tracking, err := provenance.TrackingFromResult(accepted, "")
+	if err != nil {
+		log.Fatal(err)
+	}
 	if string(accepted["broadcastDecision"]) != `"allow"` || tracking.OperationDigest != packet.OperationDigest {
 		log.Fatal("Source did not accept the exact frozen operation")
 	}
@@ -85,8 +161,19 @@ func main() {
 		log.Print("Source accepted; no payment sent without --submit")
 		return
 	}
-	tx := must(managed.SendTransaction(ctx, ready))
+	tx, err := managed.SendTransaction(ctx, ready)
+	if err != nil {
+		log.Fatal(err)
+	}
 	log.Printf("Main transaction: %s", tx.Hash())
-	log.Printf("Native finality: %+v", must(shared.WaitNativeFinality(context.Background(), provider, tx.Hash(), *finalityTimeout)))
-	log.Printf("Source recognition: %+v", must(source.Client.WaitTracking(context.Background(), tracking.ID, 2*time.Second, 2*time.Minute)))
+	finality, err := shared.WaitNativeFinality(context.Background(), provider, tx.Hash(), *finalityTimeout)
+	if err != nil {
+		log.Fatal(err)
+	}
+	log.Printf("Native finality: %+v", finality)
+	recognition, err := source.Client.WaitTracking(context.Background(), tracking.ID, 2*time.Second, 2*time.Minute)
+	if err != nil {
+		log.Fatal(err)
+	}
+	log.Printf("Source recognition: %+v", recognition)
 }

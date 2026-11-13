@@ -162,17 +162,21 @@ func TestBroadcasterPrivateChangeConvergesAndFreezesBusinessOutput(t *testing.T)
 	if e != nil {
 		t.Fatal(e)
 	}
-	business := original.plan.Outputs[0]
+	before, e := frozen(original.plan)
+	if e != nil {
+		t.Fatal(e)
+	}
+	business := before.Outputs[0]
 	c, calls := testBroadcaster(t, original, []int64{5, 8, 8}, false)
-	next, e := original.WithBroadcaster(ctx, c, sdk.WithBroadcasterOptions{MaxFeeAmount: big.NewInt(10)})
+	next, e := original, c.Quote(ctx, original, sdk.BroadcasterQuoteOptions{MaxFeeAmount: big.NewInt(10)})
 	if e != nil {
 		t.Fatal(e)
 	}
 	if calls.Load() != 3 || next.Preview().FeeAmount.Int64() != 8 || next.Preview().FundingAmount.Sign() != 0 || next.plan.Outputs[1].Amount.Int64() != 62 {
 		t.Fatal(next.Preview(), calls.Load())
 	}
-	if business.Commitment != next.plan.Outputs[0].Commitment || string(business.Delivery.Ciphertext) != string(next.plan.Outputs[0].Delivery.Ciphertext) || original.plan.Outputs[1].Amount.Int64() != 70 {
-		t.Fatal("business output or original mutated")
+	if business.Commitment != next.plan.Outputs[0].Commitment || string(business.Delivery.Ciphertext) != string(next.plan.Outputs[0].Delivery.Ciphertext) || before.Outputs[1].Amount.Int64() != 70 {
+		t.Fatal("business output changed during quotation")
 	}
 	quote, e := next.ExportBroadcasterQuote(ctx)
 	if e != nil || quote.Context == nil {
@@ -186,7 +190,7 @@ func TestBroadcasterPrivateChangeConvergesAndFreezesBusinessOutput(t *testing.T)
 	if e != nil || decoded.FeeAmount.Int64() != 8 {
 		t.Fatal(decoded, e)
 	}
-	if _, e = next.WithBroadcaster(ctx, c, sdk.WithBroadcasterOptions{MaxFeeAmount: big.NewInt(10)}); e == nil {
+	if e = c.Quote(ctx, next, sdk.BroadcasterQuoteOptions{MaxFeeAmount: big.NewInt(10)}); e == nil {
 		t.Fatal("quote replacement accepted")
 	}
 }
@@ -199,7 +203,7 @@ func TestBroadcasterQuoteFailurePreservesManagedReservations(t *testing.T) {
 		t.Fatal(e)
 	}
 	c, _ := testBroadcaster(t, original, []int64{5}, true)
-	if _, e = original.WithBroadcaster(ctx, c, sdk.WithBroadcasterOptions{MaxFeeAmount: big.NewInt(10)}); e == nil {
+	if e = c.Quote(ctx, original, sdk.BroadcasterQuoteOptions{MaxFeeAmount: big.NewInt(10)}); e == nil {
 		t.Fatal("failed quote accepted")
 	}
 	if e = original.checkLease(ctx); e != nil {
@@ -227,7 +231,7 @@ func TestBroadcasterShieldGrossFundingAndDecodedCurrentCalldata(t *testing.T) {
 		t.Fatal(e)
 	}
 	c, _ := testBroadcaster(t, original, []int64{5}, false)
-	next, e := original.WithBroadcaster(ctx, c, sdk.WithBroadcasterOptions{MaxFeeAmount: big.NewInt(10)})
+	next, e := original, c.Quote(ctx, original, sdk.BroadcasterQuoteOptions{MaxFeeAmount: big.NewInt(10)})
 	if e != nil {
 		t.Fatal(e)
 	}
@@ -258,7 +262,7 @@ func TestBroadcasterReadySubmitKeepsUncertainReservations(t *testing.T) {
 		t.Fatal(e)
 	}
 	c, _ := testBroadcaster(t, original, []int64{5}, false)
-	next, e := original.WithBroadcaster(ctx, c, sdk.WithBroadcasterOptions{MaxFeeAmount: big.NewInt(10)})
+	next, e := original, c.Quote(ctx, original, sdk.BroadcasterQuoteOptions{MaxFeeAmount: big.NewInt(10)})
 	if e != nil {
 		t.Fatal(e)
 	}
@@ -315,7 +319,7 @@ func TestBroadcasterPrivateShortfallSelectsAndAtomicallyReservesAnotherNote(t *t
 		t.Fatal(e)
 	}
 	bad, _ := testBroadcaster(t, original, []int64{5}, true)
-	if _, e = original.WithBroadcaster(ctx, bad, sdk.WithBroadcasterOptions{MaxFeeAmount: big.NewInt(10)}); e == nil {
+	if e = bad.Quote(ctx, original, sdk.BroadcasterQuoteOptions{MaxFeeAmount: big.NewInt(10)}); e == nil {
 		t.Fatal("failed quote accepted")
 	}
 	snapshot, _ := s.options.Store.ReadSnapshot(ctx, s.scope)
@@ -323,7 +327,7 @@ func TestBroadcasterPrivateShortfallSelectsAndAtomicallyReservesAnotherNote(t *t
 		t.Fatal("failed quote reserved additional input")
 	}
 	good, _ := testBroadcaster(t, original, []int64{5}, false)
-	next, e := original.WithBroadcaster(ctx, good, sdk.WithBroadcasterOptions{MaxFeeAmount: big.NewInt(10)})
+	next, e := original, good.Quote(ctx, original, sdk.BroadcasterQuoteOptions{MaxFeeAmount: big.NewInt(10)})
 	if e != nil {
 		t.Fatal(e)
 	}
@@ -357,7 +361,7 @@ func TestBroadcasterDetachedHandleAndPermitCallbackFinalGross(t *testing.T) {
 	}
 	prepared := detachedForTest(t, op, state)
 	failing, _ := testBroadcaster(t, op, []int64{5}, true)
-	if _, err := prepared.WithBroadcaster(ctx, failing, sdk.WithBroadcasterOptions{MaxFeeAmount: big.NewInt(10), FundingPermit: func(context.Context, sdk.FundingPermitRequest) (*protocol.TokenPermit, error) {
+	if err := failing.Quote(ctx, prepared, sdk.BroadcasterQuoteOptions{MaxFeeAmount: big.NewInt(10), FundingPermit: func(context.Context, sdk.FundingPermitRequest) (*protocol.TokenPermit, error) {
 		return &protocol.TokenPermit{Deadline: big.NewInt(time.Now().Unix() + 1000)}, nil
 	}}); err == nil {
 		t.Fatal("detached failed quote accepted")
@@ -367,7 +371,8 @@ func TestBroadcasterDetachedHandleAndPermitCallbackFinalGross(t *testing.T) {
 	}
 	c, _ := testBroadcaster(t, op, []int64{5, 8, 8, 8}, false)
 	called := 0
-	quoted, e := prepared.WithBroadcaster(ctx, c, sdk.WithBroadcasterOptions{MaxFeeAmount: big.NewInt(10), FundingPermit: func(ctx context.Context, r sdk.FundingPermitRequest) (*protocol.TokenPermit, error) {
+	stale := *prepared
+	quoted, e := prepared, c.Quote(ctx, prepared, sdk.BroadcasterQuoteOptions{MaxFeeAmount: big.NewInt(10), FundingPermit: func(ctx context.Context, r sdk.FundingPermitRequest) (*protocol.TokenPermit, error) {
 		called++
 		if r.Amount.Int64() != 38 || r.Payer != s.wallet.OwnerAddress() || r.TokenAddress != token || r.ProtocolAddress != s.scope.ProtocolAddress {
 			t.Fatal(r)
@@ -380,7 +385,7 @@ func TestBroadcasterDetachedHandleAndPermitCallbackFinalGross(t *testing.T) {
 	if called != 1 || quoted.Preview().FundingAmount.Int64() != 38 {
 		t.Fatal(called, quoted.Preview())
 	}
-	if _, e = prepared.ExportBroadcasterQuote(ctx); e == nil {
+	if _, e = stale.ExportBroadcasterQuote(ctx); e == nil {
 		t.Fatal("stale prepared handle accepted")
 	}
 	q, e := quoted.ExportBroadcasterQuote(ctx)
@@ -418,7 +423,7 @@ func TestBroadcasterTransportFailureStaysExternalizedAndResumeRetainsQuote(t *te
 		t.Fatal(e)
 	}
 	c, _ := testBroadcaster(t, op, []int64{5}, false)
-	op, e = op.WithBroadcaster(ctx, c, sdk.WithBroadcasterOptions{MaxFeeAmount: big.NewInt(10)})
+	e = c.Quote(ctx, op, sdk.BroadcasterQuoteOptions{MaxFeeAmount: big.NewInt(10)})
 	if e != nil {
 		t.Fatal(e)
 	}
@@ -460,7 +465,7 @@ func TestBroadcasterRejectsAggregateBeforeBackendAndPreservesHandle(t *testing.T
 		t.Fatal(e)
 	}
 	c, _ := testBroadcaster(t, op, []int64{5}, false)
-	op, e = op.WithBroadcaster(ctx, c, sdk.WithBroadcasterOptions{MaxFeeAmount: big.NewInt(10)})
+	e = c.Quote(ctx, op, sdk.BroadcasterQuoteOptions{MaxFeeAmount: big.NewInt(10)})
 	if e != nil {
 		t.Fatal(e)
 	}
@@ -491,7 +496,7 @@ func TestBroadcasterDetachedFailedSubmitRetainsInspectableUncertainty(t *testing
 	snapshot, _ := s.options.Store.ReadSnapshot(ctx, s.scope)
 	prepared := detachedForTest(t, op, snapshot)
 	c, _ := testBroadcaster(t, op, []int64{5}, false)
-	prepared, e = prepared.WithBroadcaster(ctx, c, sdk.WithBroadcasterOptions{MaxFeeAmount: big.NewInt(10)})
+	e = c.Quote(ctx, prepared, sdk.BroadcasterQuoteOptions{MaxFeeAmount: big.NewInt(10)})
 	if e != nil {
 		t.Fatal(e)
 	}
@@ -531,7 +536,7 @@ func TestScheduledCancellationRefreshesAndReleasesReservations(t *testing.T) {
 	}
 	c, _ := testBroadcaster(t, original, []int64{5}, false)
 	after := time.Now().Add(8 * 24 * time.Hour).Unix()
-	next, e := original.WithBroadcaster(ctx, c, sdk.WithBroadcasterOptions{MaxFeeAmount: big.NewInt(10), Schedule: &sdk.ScheduleOptions{PublishAfter: strconv.FormatInt(after, 10)}})
+	next, e := original, c.Quote(ctx, original, sdk.BroadcasterQuoteOptions{MaxFeeAmount: big.NewInt(10), Schedule: &sdk.ScheduleOptions{PublishAfter: strconv.FormatInt(after, 10)}})
 	if e != nil {
 		t.Fatal(e)
 	}
@@ -613,7 +618,7 @@ func TestScheduledDeadlineMustCoverWindowAndSlack(t *testing.T) {
 	}
 	c, _ := testBroadcaster(t, original, []int64{5}, false)
 	after := time.Now().Add(8 * 24 * time.Hour).Unix()
-	if _, e = original.WithBroadcaster(ctx, c, sdk.WithBroadcasterOptions{MaxFeeAmount: big.NewInt(10), Schedule: &sdk.ScheduleOptions{PublishAfter: strconv.FormatInt(after, 10)}}); e == nil {
+	if e = c.Quote(ctx, original, sdk.BroadcasterQuoteOptions{MaxFeeAmount: big.NewInt(10), Schedule: &sdk.ScheduleOptions{PublishAfter: strconv.FormatInt(after, 10)}}); e == nil {
 		t.Fatal("accepted native deadline before execution window")
 	}
 }
@@ -686,7 +691,7 @@ func TestScheduledLostSubmitRetainsScopedHandleAndCancellationAcknowledgement(t 
 		}
 	})
 	after := time.Now().Add(8 * 24 * time.Hour).Unix()
-	op, e := original.WithBroadcaster(ctx, c, sdk.WithBroadcasterOptions{MaxFeeAmount: big.NewInt(10), Schedule: &sdk.ScheduleOptions{PublishAfter: strconv.FormatInt(after, 10)}})
+	op, e := original, c.Quote(ctx, original, sdk.BroadcasterQuoteOptions{MaxFeeAmount: big.NewInt(10), Schedule: &sdk.ScheduleOptions{PublishAfter: strconv.FormatInt(after, 10)}})
 	if e != nil {
 		t.Fatal(e)
 	}

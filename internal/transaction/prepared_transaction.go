@@ -8,6 +8,7 @@ import (
 
 	"github.com/invisi-lab/invisi-sdk-go/protocol"
 	"github.com/invisi-lab/invisi-sdk-go/prover"
+	"github.com/invisi-lab/invisi-sdk-go/rpc/broadcaster"
 )
 
 type TransactionCall = protocol.TransactionCall
@@ -19,11 +20,13 @@ type TransactionLifecycle struct {
 }
 
 // PreparedTransaction is a Frozen local transaction handle. It has no Store, submission or recovery API.
-// Successful stages replace the handle. A failed or canceled stage leaves it available for retry.
+// Authorization/proving stages replace the handle; Client.Quote atomically updates the unsigned target.
+// A failed or canceled stage leaves the current handle available for retry.
 type PreparedTransaction struct {
-	operation  *Execution
-	lifecycle  *TransactionLifecycle
-	generation uint64
+	broadcaster.QuoteTarget `json:"-"`
+	operation               *Execution
+	lifecycle               *TransactionLifecycle
+	generation              uint64
 }
 
 func Detached(op *Execution, err error) (*PreparedTransaction, error) {
@@ -31,7 +34,7 @@ func Detached(op *Execution, err error) (*PreparedTransaction, error) {
 		return nil, err
 	}
 
-	return &PreparedTransaction{operation: op, lifecycle: &TransactionLifecycle{}}, nil
+	return (&PreparedTransaction{operation: op, lifecycle: &TransactionLifecycle{}}).bindBroadcasterQuote(), nil
 }
 
 func (p *PreparedTransaction) String() string { return "PreparedTransaction([private plan redacted])" }
@@ -44,7 +47,7 @@ func (p *PreparedTransaction) MarshalJSON() ([]byte, error) {
 
 func (p *PreparedTransaction) Preview() OperationPreview { return p.operation.Preview() }
 
-func (p *PreparedTransaction) stage(ctx context.Context, perform func(*Execution) error) (*PreparedTransaction, error) {
+func (p *PreparedTransaction) stage(ctx context.Context, perform func(*Execution) error, install ...bool) (*PreparedTransaction, error) {
 	if err := ctx.Err(); err != nil {
 		return nil, err
 	}
@@ -80,8 +83,13 @@ func (p *PreparedTransaction) stage(ctx context.Context, perform func(*Execution
 	l.mu.Lock()
 	l.generation++
 	generation := l.generation
+	if len(install) != 0 && install[0] {
+		p.operation, p.generation = next, generation
+		l.mu.Unlock()
+		return p, nil
+	}
 	l.mu.Unlock()
-	return &PreparedTransaction{operation: next, lifecycle: l, generation: generation}, nil
+	return (&PreparedTransaction{operation: next, lifecycle: l, generation: generation}).bindBroadcasterQuote(), nil
 }
 
 func (p *PreparedTransaction) Prove(ctx context.Context, options ...TransactionProveOptions) (*PreparedTransaction, error) {

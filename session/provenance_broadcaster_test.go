@@ -16,7 +16,7 @@ func TestRequiredProvenanceMissingCapabilityPreservesPrepared(t *testing.T) {
 		t.Fatal(e)
 	}
 	c, _ := testBroadcaster(t, prepared, []int64{5}, false)
-	if _, e = prepared.WithBroadcaster(context.Background(), c, sdk.WithBroadcasterOptions{MaxFeeAmount: big.NewInt(10)}); e != nil {
+	if e = c.Quote(context.Background(), prepared, sdk.BroadcasterQuoteOptions{MaxFeeAmount: big.NewInt(10)}); e != nil {
 		t.Fatal("quotation must not require local Source capability", e)
 	}
 }

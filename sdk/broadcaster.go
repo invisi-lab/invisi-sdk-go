@@ -18,7 +18,7 @@ func NewBroadcasterClient(config BroadcasterConfiguration, options ...Broadcaste
 	return transaction.NewBroadcasterClient(config, options...)
 }
 
-type WithBroadcasterOptions = transaction.WithBroadcasterOptions
+type BroadcasterQuoteOptions = transaction.BroadcasterQuoteOptions
 
 const BroadcasterFeePublicFunding = transaction.BroadcasterFeePublicFunding
 

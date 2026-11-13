@@ -106,8 +106,8 @@ A cached operation exposes `SubmissionValidation: "required"`. Exported calldata
 
 ### Scheduled broadcaster submissions
 
-Pass `sdk.WithBroadcasterOptions{MaxFeeAmount: maxFee, Schedule:
-&sdk.ScheduleOptions{PublishAfter: "2000000100"}}` to `WithBroadcaster` before
+Pass `sdk.BroadcasterQuoteOptions{MaxFeeAmount: maxFee, Schedule:
+&sdk.ScheduleOptions{PublishAfter: "2000000100"}}` to `client.Quote(ctx, operation, options)` before
 signing or proving. `ExecuteBefore` is optional and defaults to the server's
 advertised execution window (normally 300 seconds). Capabilities are bound to
 the selected endpoint, chain and protocol. Prepare the operation, funding

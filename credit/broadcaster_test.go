@@ -115,7 +115,7 @@ func TestCreditQuoteFreezesFeeBeforeAuthorization(t *testing.T) {
 	key, _ := crypto.ToECDSA(common.LeftPadBytes([]byte{9}, 32))
 	collector := common.HexToAddress("0x1234")
 	client := creditBroadcaster(t, c, key, collector)
-	if err = prepared.WithBroadcaster(context.Background(), client, WithBroadcasterOptions{MaxFeeAmount: big.NewInt(2)}); err != nil {
+	if err = client.Quote(context.Background(), prepared, BroadcasterQuoteOptions{MaxFeeAmount: big.NewInt(2)}); err != nil {
 		t.Fatal(err)
 	}
 	quoted, err := prepared.ExportIntent()
@@ -151,7 +151,7 @@ func TestCreditRequiredPolicyQuoteWithoutSourceProver(t *testing.T) {
 	key, _ := crypto.ToECDSA(common.LeftPadBytes([]byte{9}, 32))
 	collector := common.HexToAddress("0x1234")
 	client := creditBroadcaster(t, c, key, collector, common.HexToHash("0x77"))
-	if err = prepared.WithBroadcaster(context.Background(), client, WithBroadcasterOptions{MaxFeeAmount: big.NewInt(2)}); err != nil {
+	if err = client.Quote(context.Background(), prepared, BroadcasterQuoteOptions{MaxFeeAmount: big.NewInt(2)}); err != nil {
 		t.Fatal(err)
 	}
 	quoted, err := prepared.ExportIntent()
@@ -175,7 +175,7 @@ func TestCreditKnownSubmissionQueriesWithoutFreshProof(t *testing.T) {
 	}
 	key, _ := crypto.GenerateKey()
 	client := creditBroadcaster(t, c, key, common.HexToAddress("0x1234"), common.HexToHash("0x77"))
-	if err = prepared.WithBroadcaster(context.Background(), client, WithBroadcasterOptions{MaxFeeAmount: big.NewInt(2)}); err != nil {
+	if err = client.Quote(context.Background(), prepared, BroadcasterQuoteOptions{MaxFeeAmount: big.NewInt(2)}); err != nil {
 		t.Fatal(err)
 	}
 	prepared.submission = Submission{RequestID: "original", State: "uncertain"}

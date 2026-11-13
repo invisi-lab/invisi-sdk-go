@@ -69,7 +69,7 @@ func (o *Operation) stage(ctx context.Context, work func(*Operation) error, comm
 		})
 		return nil, errors.Join(err, cleanupErr)
 	}
-	return next, nil
+	return next.bindBroadcasterQuote(), nil
 }
 
 func (o *Operation) Prove(ctx context.Context, options ...sdk.TransactionProveOptions) (*Operation, error) {

@@ -92,7 +92,7 @@ func (s *Session) Resume(ctx context.Context, id string, backend prover.Prover) 
 	if err != nil {
 		return nil, err
 	}
-	return &Operation{session: s, id: id, worker: worker, prepared: prepared}, nil
+	return (&Operation{session: s, id: id, worker: worker, prepared: prepared}).bindBroadcasterQuote(), nil
 }
 
 type Outcome struct {

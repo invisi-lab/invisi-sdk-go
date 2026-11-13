@@ -33,15 +33,15 @@ func (o *Operation) broadcasterIntent() ([]byte, error) {
 	result0, result1 := execution.BroadcasterIntent()
 	return result0, result1
 }
-func (o *Operation) applyBroadcasterFee(ctx context.Context, base transaction.Plan, recipient common.Address, fee *big.Int, opt sdk.WithBroadcasterOptions) error {
+func (o *Operation) applyBroadcasterFee(ctx context.Context, base transaction.Plan, recipient common.Address, fee *big.Int, opt sdk.BroadcasterQuoteOptions) error {
 	execution := o.execution()
 	result0 := execution.ApplyBroadcasterFee(ctx, base, recipient, fee, opt)
 	o.apply(execution)
 	return result0
 }
-func (o *Operation) withBroadcaster(ctx context.Context, c *broadcaster.Client, opt sdk.WithBroadcasterOptions) error {
+func (o *Operation) quoteBroadcaster(ctx context.Context, c *broadcaster.Client, opt sdk.BroadcasterQuoteOptions) error {
 	execution := o.execution()
-	result0 := execution.WithBroadcaster(ctx, c, opt)
+	result0 := execution.QuoteBroadcaster(ctx, c, opt)
 	o.apply(execution)
 	return result0
 }

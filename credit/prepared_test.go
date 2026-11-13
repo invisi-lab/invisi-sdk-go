@@ -71,7 +71,7 @@ func TestDrawToNoteFreezesOrdinaryOutputForFeeQuotation(t *testing.T) {
 
 	quoteKey, _ := crypto.ToECDSA(common.LeftPadBytes([]byte{9}, 32))
 	client := creditBroadcaster(t, c, quoteKey, common.HexToAddress("0x1234"))
-	if err = prepared.WithBroadcaster(context.Background(), client, WithBroadcasterOptions{MaxFeeAmount: big.NewInt(2)}); err != nil {
+	if err = client.Quote(context.Background(), prepared, BroadcasterQuoteOptions{MaxFeeAmount: big.NewInt(2)}); err != nil {
 		t.Fatal(err)
 	}
 	quoted, err := prepared.ExportIntent()

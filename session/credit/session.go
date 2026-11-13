@@ -5,6 +5,7 @@ import (
 	"crypto/rand"
 	"encoding/hex"
 	"fmt"
+	"github.com/invisi-lab/invisi-sdk-go/rpc/broadcaster"
 	"sync"
 	"time"
 
@@ -114,10 +115,11 @@ func workerID() (string, error) {
 }
 
 type Operation struct {
-	mu         sync.Mutex
-	session    *Session
-	id, worker string
-	prepared   *credit.Prepared
+	broadcaster.QuoteTarget `json:"-"`
+	mu                      sync.Mutex
+	session                 *Session
+	id, worker              string
+	prepared                *credit.Prepared
 }
 
 func (s *Session) Prepare(ctx context.Context, id string, prepared *credit.Prepared) (*Operation, error) {
@@ -225,7 +227,7 @@ func (s *Session) Prepare(ctx context.Context, id string, prepared *credit.Prepa
 			return nil, err
 		}
 	}
-	return &Operation{session: s, id: id, worker: worker, prepared: prepared}, nil
+	return (&Operation{session: s, id: id, worker: worker, prepared: prepared}).bindBroadcasterQuote(), nil
 }
 func (o *Operation) check(ctx context.Context) error {
 	state, err := o.session.store.ReadSnapshot(ctx)

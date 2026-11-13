@@ -37,7 +37,7 @@ func SetPlanFee(p *Plan, r common.Address, f *big.Int) {
 	}
 }
 
-func (o *Execution) ApplyBroadcasterFee(ctx context.Context, base Plan, recipient common.Address, fee *big.Int, opt WithBroadcasterOptions) error {
+func (o *Execution) ApplyBroadcasterFee(ctx context.Context, base Plan, recipient common.Address, fee *big.Int, opt BroadcasterQuoteOptions) error {
 	_, previousFee := PlanFee(base)
 	requestedFee := new(big.Int).Set(fee)
 	fee = new(big.Int).Sub(fee, previousFee)

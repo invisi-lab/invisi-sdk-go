@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/invisi-lab/invisi-sdk-go/rpc/broadcaster"
 	"math/big"
 	"sync"
 
@@ -34,12 +35,13 @@ type Intent struct {
 
 // Prepared keeps authorization and local witnesses outside portable recovery plans.
 type Prepared struct {
-	mu              sync.Mutex
-	intent          Intent
-	authority       *Authority
-	proof           *prover.ProofBundle
-	revokeSignature []byte
-	submission      Submission
+	broadcaster.QuoteTarget `json:"-"`
+	mu                      sync.Mutex
+	intent                  Intent
+	authority               *Authority
+	proof                   *prover.ProofBundle
+	revokeSignature         []byte
+	submission              Submission
 }
 
 func (p *Prepared) String() string   { return "PreparedCredit([redacted])" }
@@ -100,7 +102,7 @@ func prepare(i Intent) (*Prepared, error) {
 			return nil, fmt.Errorf("update change differs from frozen transition")
 		}
 	}
-	return &Prepared{intent: frozen}, nil
+	return (&Prepared{intent: frozen}).bindBroadcasterQuote(), nil
 }
 func PrepareCreate(c Context, p CreateParams, ds []protocol.Delivery, state State) (*Prepared, error) {
 	return prepare(Intent{Version: 2, Context: c, Create: &p, Deliveries: ds, CreatedState: &state})

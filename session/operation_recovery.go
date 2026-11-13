@@ -50,5 +50,8 @@ func (s *WalletSession) Resume(ctx context.Context, id string) (*Operation, erro
 		state.Operations[id] = record
 		return nil
 	})
-	return operation, err
+	if err != nil {
+		return nil, err
+	}
+	return operation.bindBroadcasterQuote(), nil
 }
