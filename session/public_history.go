@@ -353,23 +353,35 @@ func (h *PublicHistory) page(ctx context.Context, q BlockRange, offline bool) (P
 		return PublicPage{}, errors.New("public page must contain 1..256 blocks")
 	}
 	p := PublicPage{Range: q}
-	for n := q.FromBlock; ; n++ {
-		head, e := h.options.Provider.HeaderByNumber(ctx, new(big.Int).SetUint64(n))
-		if e != nil {
-			return p, e
+	for offset, count := uint64(0), q.ToBlock-q.FromBlock+1; offset < count; {
+		size := min(uint64(8), count-offset)
+		headers := make([]*types.Header, size)
+		errs := make([]error, size)
+		var reads sync.WaitGroup
+		for i := range headers {
+			reads.Add(1)
+			go func(i int) {
+				defer reads.Done()
+				headers[i], errs[i] = h.options.Provider.HeaderByNumber(ctx, new(big.Int).SetUint64(q.FromBlock+offset+uint64(i)))
+			}(i)
 		}
-		if head == nil || head.Number == nil || head.Number.Uint64() != n {
-			return p, errors.New("invalid public header")
+		reads.Wait()
+		for i, head := range headers {
+			if errs[i] != nil {
+				return p, errs[i]
+			}
+			n := q.FromBlock + offset + uint64(i)
+			if head == nil || head.Number == nil || !head.Number.IsUint64() || head.Number.Uint64() != n {
+				return p, errors.New("invalid public header")
+			}
+			b := protocolrpc.CanonicalBlock{Number: n, Hash: head.Hash(), ParentHash: head.ParentHash, Timestamp: head.Time}
+			if len(p.Headers) > 0 && b.ParentHash != p.Headers[len(p.Headers)-1].Hash {
+				return p, errors.New("public header chain mismatch")
+			}
+			p.Headers = append(p.Headers, b)
+			p.Block = b
 		}
-		b := protocolrpc.CanonicalBlock{Number: n, Hash: head.Hash(), ParentHash: head.ParentHash, Timestamp: head.Time}
-		if len(p.Headers) > 0 && b.ParentHash != p.Headers[len(p.Headers)-1].Hash {
-			return p, errors.New("public header chain mismatch")
-		}
-		p.Headers = append(p.Headers, b)
-		p.Block = b
-		if n == q.ToBlock {
-			break
-		}
+		offset += size
 	}
 	query := protocolrpc.ProtocolUpdateRange{FromBlock: q.FromBlock, ToBlock: q.ToBlock}
 	ns, e := h.options.ProtocolRPC.GetNoteUpdates(ctx, h.options.Protocol.Context(), query)
