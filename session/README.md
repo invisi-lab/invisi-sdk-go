@@ -103,3 +103,38 @@ A successful online `Refresh`/`ScanHistory` state refresh retains preparation ev
 Keep using `PrepareTransfer`, `PrepareShield` and `Credit().Prepare` as before. Cached facts are selected automatically; a missing fact retries the existing online path. Reopening a session with the same encrypted store and pinned Protocol supports offline preparation, EOA authorization, local proving and calldata export. Unknown tokens/payers and contract-wallet authorization may still require online data or verification. Canonical anchor timestamps stay historical; construction deadlines use the current local time when later than that anchor.
 
 A cached operation exposes `SubmissionValidation: "required"`. Exported calldata is not permission to submit: call `operation.ValidateSubmission(ctx)` immediately before a host sends it. Credit operations expose the same method. Session-managed sending and first Broadcaster submission perform the live check automatically. These checks validate deployment and canonical state, accepted roots, consumed inputs, deadlines, funding nonce/signature, Credit allocation/revocation and any payer balance/Protocol allowance. They never treat a historical snapshot as current spending authority. A quote still requires the selected Broadcaster's online service.
+
+### Scheduled broadcaster submissions
+
+Pass `sdk.WithBroadcasterOptions{MaxFeeAmount: maxFee, Schedule:
+&sdk.ScheduleOptions{PublishAfter: "2000000100"}}` to `WithBroadcaster` before
+signing or proving. `ExecuteBefore` is optional and defaults to the server's
+advertised execution window (normally 300 seconds). Capabilities are bound to
+the selected endpoint, chain and protocol. Prepare the operation, funding
+authorization and permit with deadlines covering `executeBefore` plus the
+advertised `minDeadlineSlackSeconds`; scheduling never silently extends signed
+business deadlines. The server's advertised maximum delay
+is honored, so deployments can configure a limit other than seven days.
+
+The SDK generates a random 32-byte cancellation secret and persists it locally
+with the signed quote and frozen broadcaster request before the first submit
+attempt. Submission IDs are opaque and allocated by the server; the SDK stores
+the actual response ID before returning it. If a response is lost, explicitly
+retry `SubmitBroadcaster` to replay the original frozen request idempotently and
+recover that ID before calling `CancelBroadcaster`. Cancellation never creates
+a remote job for an operation that has not been submitted. Quotes and submission RPCs
+carry only its Keccak-256 hash. Use encrypted storage for raw operation snapshots and backups; JSON deliberately
+retains the secret for recovery, while normal Go formatting redacts it.
+`Operation.CancelBroadcaster(ctx, client)` sends the secret to the same endpoint;
+inputs remain reserved on errors or any response other than `cancelled`. An
+explicit cancellation acknowledgement is persisted before canonical state refresh;
+if refresh fails, a resumed operation can retry reconciliation while the
+broadcaster is offline. Canonical state refresh must finish before reservations
+are released. Reconcile submitted transactions normally if cancellation loses
+the race to publication. Provenance remains the ordinary admission policy;
+scheduling fields are never sent to Provenance.
+
+Low-level callers can use `broadcaster.NewCancelToken()`,
+`EstimateQuote(ctx, data, schedule)`, `GetQuote(ctx, data, trust, schedule)` and
+`Cancel(ctx, id, token)`. Store the secret before sending the transaction, and
+retain it when a transport error leaves admission uncertain.

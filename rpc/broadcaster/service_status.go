@@ -6,16 +6,26 @@ import (
 	"math/big"
 
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/invisi-lab/invisi-sdk-go/protocol/settlement"
 )
 
+type SchedulingCapabilities struct {
+	Enabled                       bool   `json:"enabled"`
+	MaxDelaySeconds               string `json:"maxDelaySeconds"`
+	DefaultExecutionWindowSeconds string `json:"defaultExecutionWindowSeconds"`
+	MaxExecutionWindowSeconds     string `json:"maxExecutionWindowSeconds"`
+	MinDeadlineSlackSeconds       string `json:"minDeadlineSlackSeconds"`
+}
+
 type ServiceStatus struct {
-	APIVersion       string         `json:"apiVersion"`
-	ProtocolVersion  string         `json:"protocolVersion"`
-	ChainID          string         `json:"chainId"`
-	Protocol         common.Address `json:"protocol"`
-	Sender           common.Address `json:"sender"`
-	FeeRecipient     common.Address `json:"feeRecipient"`
-	SubmissionHalted bool           `json:"submissionHalted"`
+	Scheduling       SchedulingCapabilities `json:"scheduling"`
+	APIVersion       string                 `json:"apiVersion"`
+	ProtocolVersion  string                 `json:"protocolVersion"`
+	ChainID          string                 `json:"chainId"`
+	Protocol         common.Address         `json:"protocol"`
+	Sender           common.Address         `json:"sender"`
+	FeeRecipient     common.Address         `json:"feeRecipient"`
+	SubmissionHalted bool                   `json:"submissionHalted"`
 	Provenance       struct {
 		AggregateSupported bool   `json:"aggregateSupported"`
 		Enabled            bool   `json:"enabled"`
@@ -67,4 +77,27 @@ func (c *Client) SupportsToken(ctx context.Context, token common.Address, trust 
 		return false, errors.New("invalid broadcaster token support")
 	}
 	return !raw.SubmissionHalted && raw.Supported, nil
+}
+
+func (c *Client) ServiceStatus(ctx context.Context, trust Trust) (ServiceStatus, error) {
+	var status ServiceStatus
+	if e := c.call(ctx, "broadcaster_getStatus", nil, &status); e != nil {
+		return status, e
+	}
+	n, ok := new(big.Int).SetString(status.ChainID, 10)
+	if !ok || trust.ChainID == nil || n.Cmp(trust.ChainID) != 0 || status.Protocol != trust.Protocol || status.Sender != c.configuration.QuoteSigner || status.FeeRecipient != c.configuration.FeeRecipient || status.APIVersion != "v1" || status.ProtocolVersion != "1" {
+		return status, errors.New("invalid broadcaster service status")
+	}
+	if status.Scheduling.Enabled {
+		for _, v := range []string{status.Scheduling.MaxDelaySeconds, status.Scheduling.DefaultExecutionWindowSeconds, status.Scheduling.MaxExecutionWindowSeconds} {
+			if _, e := settlement.ScheduleSeconds(v); e != nil {
+				return status, e
+			}
+		}
+		slack, e := decimal(status.Scheduling.MinDeadlineSlackSeconds)
+		if e != nil || slack.BitLen() > 53 || slack.String() != status.Scheduling.MinDeadlineSlackSeconds {
+			return status, errors.New("invalid scheduling deadline slack")
+		}
+	}
+	return status, nil
 }

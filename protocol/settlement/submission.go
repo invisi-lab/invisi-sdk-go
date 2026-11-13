@@ -9,7 +9,8 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 )
 
-// SubmissionID binds the unsigned semantic intent to its deployment scope.
+// SubmissionID is the default server-side deduplication algorithm.
+// Clients must use the ID returned by their Broadcaster, which may allocate IDs differently.
 func SubmissionID(chainID *big.Int, protocol common.Address, data []byte) (common.Hash, error) {
 	hash, err := RequestHash(data)
 	if err != nil {
@@ -18,6 +19,7 @@ func SubmissionID(chainID *big.Int, protocol common.Address, data []byte) (commo
 	return SubmissionIDFromHash(chainID, protocol, hash)
 }
 
+// SubmissionIDFromHash implements the default server strategy for an already bound semantic hash.
 func SubmissionIDFromHash(chainID *big.Int, protocol common.Address, hash common.Hash) (common.Hash, error) {
 	if chainID == nil || chainID.Sign() <= 0 || chainID.BitLen() > 256 || protocol == (common.Address{}) {
 		return common.Hash{}, errors.New("invalid submission scope")

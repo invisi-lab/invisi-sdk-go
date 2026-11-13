@@ -38,7 +38,7 @@ func (q *Quote) UnmarshalJSON(raw []byte) error {
 	if e := json.Unmarshal(raw, &fields); e != nil {
 		return e
 	}
-	if len(fields) != 7 || (value.Execution != "direct" && value.Execution != "aggregate") {
+	if (len(fields) != 7 && !(len(fields) == 8 && value.Schedule != nil)) || (value.Execution != "direct" && value.Execution != "aggregate") {
 		return errors.New("invalid broadcaster quote execution or fields")
 	}
 	*q = Quote(value)

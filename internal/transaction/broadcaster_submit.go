@@ -7,6 +7,7 @@ import (
 	"errors"
 
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/crypto"
 
 	"github.com/invisi-lab/invisi-sdk-go/provenance"
 	"github.com/invisi-lab/invisi-sdk-go/rpc/broadcaster"
@@ -74,6 +75,9 @@ func (o *Execution) SubmitBroadcaster(ctx context.Context, c *broadcaster.Client
 	if c.Configuration() != o.Plan.Broadcaster.Configuration {
 		return empty, errors.New("broadcaster differs from quoted registration")
 	}
+	if o.Plan.Broadcaster.CancellationConfirmed {
+		return empty, errors.New("broadcaster cancellation already acknowledged")
+	}
 	retry := o.Status == "uncertain" || o.Status == "submitted"
 	if !retry {
 		if o.Runtime.Options.Provider == nil {
@@ -135,6 +139,7 @@ func (o *Execution) SubmitBroadcaster(ctx context.Context, c *broadcaster.Client
 	if retry && o.Plan.Broadcaster.RequestID != "" {
 		return c.Status(ctx, o.Plan.Broadcaster.RequestID)
 	}
+
 	o.Plan.Broadcaster.Request = &request
 	if o.Runtime.OnExternalize != nil {
 		if e = o.Runtime.OnExternalize(ctx, o); e != nil {
@@ -182,6 +187,15 @@ func (o *Execution) ValidateBroadcasterPlan() error {
 	saved := o.Plan.Broadcaster
 	if saved == nil {
 		return nil
+	}
+	if len(saved.RequestID) > 256 || saved.CancellationConfirmed && saved.RequestID == "" {
+		return errors.New("invalid retained broadcaster submission ID")
+	}
+	if schedule := saved.Signed.Quote.Schedule; schedule != nil {
+		token := common.FromHex(saved.CancelToken)
+		if len(token) != 32 || saved.CancelToken != "0x"+common.Bytes2Hex(token) || crypto.Keccak256Hash(token).Hex() != schedule.CancelTokenHash {
+			return errors.New("invalid local cancellation handle")
+		}
 	}
 	if saved.ChainID == nil || saved.ChainID.Cmp(o.Plan.Context.ChainID) != 0 || saved.Protocol != o.Plan.Context.ProtocolAddress || saved.Signed.Quote.FeeRecipient != saved.Configuration.FeeRecipient {
 		return errors.New("broadcaster quote context mismatch")
@@ -255,4 +269,40 @@ func (o *Execution) validateFrozenBroadcasterRequest() error {
 		return errors.New("prepared broadcaster submission changed")
 	}
 	return nil
+}
+
+func (p *PreparedTransaction) CancelBroadcaster(ctx context.Context, c *broadcaster.Client) (broadcaster.Status, error) {
+	p.lifecycle.mu.Lock()
+	defer p.lifecycle.mu.Unlock()
+	if e := p.current(ctx); e != nil {
+		return broadcaster.Status{}, e
+	}
+	saved := p.operation.Plan.Broadcaster
+	if c == nil || saved == nil || saved.Signed.Quote.Schedule == nil || saved.CancelToken == "" || c.Configuration() != saved.Configuration {
+		return broadcaster.Status{}, errors.New("scoped scheduled cancellation handle required")
+	}
+	if saved.RequestID == "" {
+		if saved.Request == nil {
+			return broadcaster.Status{}, errors.New("broadcaster submission must be attempted before cancellation")
+		}
+		return broadcaster.Status{}, errors.New("broadcaster submission ID unknown; retry the original frozen SubmitBroadcaster call to recover it before cancellation")
+	}
+	if saved.CancellationConfirmed {
+		return broadcaster.Status{ID: saved.RequestID, State: "cancelled"}, nil
+	}
+	result, e := c.Cancel(ctx, saved.RequestID, saved.CancelToken)
+	if e == nil && result.State == "cancelled" {
+		if result.TransactionHash != "" {
+			return result, errors.New("cancelled submission has transaction hash")
+		}
+		previous := p.operation.Status
+		saved.CancellationConfirmed = true
+		p.operation.Status = "cancelled"
+		e = p.operation.Persist(context.WithoutCancel(ctx), "cancelled")
+		if e != nil {
+			saved.CancellationConfirmed = false
+			p.operation.Status = previous
+		}
+	}
+	return result, e
 }

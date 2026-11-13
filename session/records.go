@@ -178,10 +178,10 @@ func IsTerminalRecord(r WalletRecord, pinCredits bool) bool {
 		if json.Unmarshal(r.Value, &o) != nil {
 			return false
 		}
-		if o.Externalized && (o.Status == "failed" || o.Status == "expired") && o.ResolvedAt == nil {
+		if o.Externalized && (o.Status == "failed" || o.Status == "expired" || o.Status == "cancelled") && o.ResolvedAt == nil {
 			return false
 		}
-		return o.Status == "confirmed" || o.Status == "reverted" || o.Status == "expired" || o.Status == "failed"
+		return o.Status == "confirmed" || o.Status == "reverted" || o.Status == "expired" || o.Status == "failed" || o.Status == "cancelled"
 	case "credit-operations":
 		var o creditsession.Journal
 		if json.Unmarshal(r.Value, &o) != nil {

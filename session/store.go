@@ -226,7 +226,7 @@ func (c *EncryptedWalletCodec) Open(scope WalletScope, data []byte) (WalletState
 // restoreReservations preserves pending spends when rebuilding the local inventory.
 func restoreReservations(state *WalletState) error {
 	for id, record := range state.Operations {
-		if record.Status == "confirmed" || record.Status == "expired" || (record.Status == "failed" && (!record.Externalized || record.ResolvedAt != nil)) {
+		if record.Status == "confirmed" || record.Status == "expired" || (record.Status == "cancelled" && record.ResolvedAt != nil) || (record.Status == "failed" && (!record.Externalized || record.ResolvedAt != nil)) {
 			continue
 		}
 		var plan transaction.Plan

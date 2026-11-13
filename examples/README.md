@@ -30,9 +30,9 @@ Replace `shared.AppDeliveryDecryptor` in [shared/decryptor.go](shared/decryptor.
 | `04-credit` | Managed postpaid create/draw/update/revoke, role-bound discovery and reservations. |
 | `05-wallet-session` | Encrypted inventory restore, persistent shared public cache, scan/funds status, paginated history, transfer and Note/Credit operation recovery. |
 | `06-disclosure` | Authenticated Note/Credit opening and memo disclosure; output is sensitive application data. |
-| `07-broadcaster` | Standard relay delivery, independent Source submission and recovery from saved operations/public proof packets. |
+| `07-broadcaster` | Standard relay delivery, independent Source submission, encrypted recovery and scheduled Shield cancellation. |
 
-Most examples log unsigned calldata. Submit through an ordinary geth transaction signer and retain the operation ID/hash for canonical reconciliation. The explicitly gated examples in [07-broadcaster](07-broadcaster/README.md) demonstrate actual sending. Public ERC20 allowance and transaction gas remain separate from private-spending authorization.
+Most examples log unsigned calldata. Submit through an ordinary geth transaction signer and retain the operation ID/hash for canonical reconciliation. The examples in [07-broadcaster](07-broadcaster/README.md) demonstrate actual sending; its scheduled Shield cancellation example runs its submit-and-cancel flow directly when invoked. Public ERC20 allowance and transaction gas remain separate from private-spending authorization.
 
 Session/Credit examples use `examples/wallet.sqlite`. Set `INVISI_EXAMPLE_STORAGE_KEY` to your application-owned 32-byte hex storage encryption key and retain it across runs. It is independent of the EVM signer and App viewing/decryption keys. Keep the encrypted inventory and journals: they contain sensitive openings and preserve reservations after uncertain submissions. Select a new Credit `--operation-id` only for a new intent; resume the original ID to recover an uncertain operation.
 

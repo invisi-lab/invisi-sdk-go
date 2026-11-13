@@ -117,13 +117,16 @@ func (c *Client) call(ctx context.Context, method string, params any, result any
 	}
 	return json.Unmarshal(res, result)
 }
-func (c *Client) EstimateQuote(ctx context.Context, data []byte) (Fee, error) {
+func (c *Client) EstimateQuote(ctx context.Context, data []byte, schedules ...*Schedule) (Fee, error) {
 	if _, e := DecodeIntent(data); e != nil {
 		return Fee{}, e
 	}
 	p := map[string]any{}
 	if len(data) > 0 {
 		p["data"] = "0x" + common.Bytes2Hex(data)
+	}
+	if e := addSchedule(p, schedules); e != nil {
+		return Fee{}, e
 	}
 	var f Fee
 	e := c.call(ctx, "broadcaster_estimateQuote", p, &f)
@@ -143,15 +146,21 @@ func (c *Client) EstimateQuote(ctx context.Context, data []byte) (Fee, error) {
 	}
 	return f, nil
 }
-func (c *Client) GetQuote(ctx context.Context, data []byte, trust Trust) (SignedQuote, error) {
+func (c *Client) GetQuote(ctx context.Context, data []byte, trust Trust, schedules ...*Schedule) (SignedQuote, error) {
 	var s SignedQuote
 	params := map[string]any{"data": "0x" + common.Bytes2Hex(data)}
+	if e := addSchedule(params, schedules); e != nil {
+		return s, e
+	}
 	_, e := DecodeIntent(data)
 	if e != nil {
 		return s, e
 	}
 	if e := c.call(ctx, "broadcaster_getQuote", params, &s); e != nil {
 		return s, e
+	}
+	if !sameSchedule(s.Quote.Schedule, schedules) {
+		return s, errors.New("broadcaster schedule mismatch")
 	}
 	trust.Signer = c.configuration.QuoteSigner
 	if e := VerifyQuote(s, trust, data, uint64(time.Now().Unix())); e != nil {
@@ -169,13 +178,13 @@ func checkStatus(s Status, id string) error {
 		return errors.New("invalid broadcaster status")
 	}
 	switch s.State {
-	case "pending", "submitted", "confirmed", "reverted", "uncertain", "queued", "proving", "rejected", "expired":
+	case "pending", "submitted", "confirmed", "reverted", "uncertain", "queued", "proving", "rejected", "expired", "scheduled", "preparing", "cancelled":
 	default:
 		return errors.New("invalid broadcaster state")
 	}
 	if s.Confirmation != nil {
 		switch s.State {
-		case "queued", "proving", "rejected", "expired":
+		case "queued", "proving", "rejected", "expired", "scheduled", "preparing", "cancelled":
 			return errors.New("unexpected broadcaster confirmation")
 		}
 		if s.Confirmation.Level != "pending" && s.TransactionHash == "" {

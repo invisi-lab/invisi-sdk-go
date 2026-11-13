@@ -16,13 +16,14 @@ import (
 
 // Quote uses decimal strings on the JSON wire, matching the TypeScript SDK.
 type Quote struct {
-	Token        string `json:"token"`
-	FeeRecipient string `json:"feeRecipient"`
-	FeeAmount    string `json:"feeAmount"`
-	Deadline     string `json:"deadline"`
-	MaxGas       string `json:"maxGas"`
-	RequestHash  string `json:"requestHash"`
-	Execution    string `json:"execution"`
+	Schedule     *Schedule `json:"schedule,omitempty"`
+	Token        string    `json:"token"`
+	FeeRecipient string    `json:"feeRecipient"`
+	FeeAmount    string    `json:"feeAmount"`
+	Deadline     string    `json:"deadline"`
+	MaxGas       string    `json:"maxGas"`
+	RequestHash  string    `json:"requestHash"`
+	Execution    string    `json:"execution"`
 }
 type ProvenanceTrackingMatch struct {
 	TxHash         string `json:"txHash"`
@@ -109,7 +110,19 @@ func QuoteDigest(d QuoteDomain, q Quote) (common.Hash, error) {
 	}
 	domainHash := crypto.Keccak256(encoded)
 	quoteArgs := abi.Arguments{{Type: word}, {Type: address}, {Type: address}, {Type: integer}, {Type: integer}, {Type: integer}, {Type: word}, {Type: word}}
-	encoded, e = quoteArgs.Pack(quoteTypeHash, common.HexToAddress(q.Token), common.HexToAddress(q.FeeRecipient), fee, deadline, gas, common.BytesToHash(hashBytes), crypto.Keccak256Hash([]byte(q.Execution)))
+	typeHash := quoteTypeHash
+	values := []any{typeHash, common.HexToAddress(q.Token), common.HexToAddress(q.FeeRecipient), fee, deadline, gas, common.BytesToHash(hashBytes), crypto.Keccak256Hash([]byte(q.Execution))}
+	if q.Schedule != nil {
+		if e := q.Schedule.Validate(); e != nil {
+			return common.Hash{}, e
+		}
+		values[0] = scheduledQuoteTypeHash
+		a, _ := Uint256(q.Schedule.PublishAfter)
+		b, _ := Uint256(q.Schedule.ExecuteBefore)
+		quoteArgs = append(quoteArgs, abi.Argument{Type: integer}, abi.Argument{Type: integer}, abi.Argument{Type: word})
+		values = append(values, a, b, common.HexToHash(q.Schedule.CancelTokenHash))
+	}
+	encoded, e = quoteArgs.Pack(values...)
 	if e != nil {
 		return common.Hash{}, e
 	}
@@ -176,7 +189,7 @@ func (q *Quote) UnmarshalJSON(raw []byte) error {
 	if err := json.Unmarshal(raw, &fields); err != nil {
 		return err
 	}
-	if len(fields) != 7 || value.Execution != "direct" && value.Execution != "aggregate" {
+	if (len(fields) != 7 && !(len(fields) == 8 && value.Schedule != nil)) || value.Execution != "direct" && value.Execution != "aggregate" {
 		return ErrQuote
 	}
 	*q = Quote(value)

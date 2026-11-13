@@ -12,6 +12,9 @@ func (s *WalletSession) invalidate(ctx context.Context) error {
 	return s.options.Store.Update(ctx, s.scope, func(state *WalletState) error {
 		state.Invalidated = true
 		for id, record := range state.Operations {
+			if record.Status == "cancelled" {
+				continue
+			}
 			if (record.Status == "failed" || record.Status == "expired") && !record.Externalized {
 				continue
 			}

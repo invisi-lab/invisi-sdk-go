@@ -4,11 +4,14 @@ import (
 	"context"
 	"errors"
 	"math/big"
+	"strconv"
+	"time"
 
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
 
 	"github.com/invisi-lab/invisi-sdk-go/protocol"
+	"github.com/invisi-lab/invisi-sdk-go/protocol/settlement"
 	"github.com/invisi-lab/invisi-sdk-go/rpc/broadcaster"
 )
 
@@ -25,7 +28,13 @@ const (
 	BroadcasterFeePayout        BroadcasterFeeSource = "payout"
 )
 
+type ScheduleOptions struct {
+	PublishAfter  string
+	ExecuteBefore string
+}
+
 type WithBroadcasterOptions struct {
+	Schedule      *ScheduleOptions
 	MaxFeeAmount  *big.Int
 	MaxAttempts   int
 	FeeSource     BroadcasterFeeSource
@@ -33,13 +42,15 @@ type WithBroadcasterOptions struct {
 }
 
 type BroadcasterPlan struct {
-	Configuration broadcaster.Configuration
-	Signed        broadcaster.SignedQuote
-	ChainID       *big.Int
-	Protocol      common.Address
-	Intent        []byte
-	Request       *broadcaster.Submission
-	RequestID     string
+	CancelToken           string `json:"cancelToken,omitempty"`
+	CancellationConfirmed bool   `json:"cancellationConfirmed,omitempty"`
+	Configuration         broadcaster.Configuration
+	Signed                broadcaster.SignedQuote
+	ChainID               *big.Int
+	Protocol              common.Address
+	Intent                []byte
+	Request               *broadcaster.Submission
+	RequestID             string
 }
 
 func (o *Execution) BroadcasterIntent() ([]byte, error) {
@@ -106,6 +117,52 @@ func (o *Execution) WithBroadcaster(ctx context.Context, c *broadcaster.Client, 
 		return errors.New("max attempts must be 1..16")
 	}
 
+	var schedule *broadcaster.Schedule
+	var cancelToken string
+	var scheduleMinimum *big.Int
+	if opt.Schedule != nil {
+		caps, err := c.ServiceStatus(ctx, broadcaster.Trust{ChainID: o.Plan.Context.ChainID, Protocol: o.Plan.Context.ProtocolAddress})
+		if err != nil {
+			return err
+		}
+		if !caps.Scheduling.Enabled || caps.SubmissionHalted {
+			return errors.New("broadcaster scheduling unavailable")
+		}
+		request := *opt.Schedule
+		after, err := settlement.ScheduleSeconds(request.PublishAfter)
+		if err != nil {
+			return err
+		}
+		delay, _ := settlement.ScheduleSeconds(caps.Scheduling.MaxDelaySeconds)
+		now := uint64(time.Now().Unix())
+		if after <= now || after-now > delay {
+			return errors.New("schedule outside broadcaster delay bounds")
+		}
+		if request.ExecuteBefore == "" {
+			window, _ := settlement.ScheduleSeconds(caps.Scheduling.DefaultExecutionWindowSeconds)
+			request.ExecuteBefore = strconv.FormatUint(after+window, 10)
+		}
+		before, err := settlement.ScheduleSeconds(request.ExecuteBefore)
+		if err != nil {
+			return err
+		}
+		maxWindow, _ := settlement.ScheduleSeconds(caps.Scheduling.MaxExecutionWindowSeconds)
+		if before <= after || before-after > maxWindow {
+			return errors.New("schedule outside broadcaster execution window")
+		}
+		slack, _ := new(big.Int).SetString(caps.Scheduling.MinDeadlineSlackSeconds, 10)
+		scheduleMinimum = new(big.Int).Add(new(big.Int).SetUint64(before), slack)
+		opt.Schedule = &request
+		token, hash, err := broadcaster.NewCancelToken()
+		if err != nil {
+			return err
+		}
+		cancelToken = token
+		schedule = &broadcaster.Schedule{PublishAfter: opt.Schedule.PublishAfter, ExecuteBefore: opt.Schedule.ExecuteBefore, CancelTokenHash: hash}
+		if err = schedule.Validate(); err != nil {
+			return err
+		}
+	}
 	base, e := ClonePlan(o.Plan)
 	if e != nil {
 		return e
@@ -114,7 +171,10 @@ func (o *Execution) WithBroadcaster(ctx context.Context, c *broadcaster.Client, 
 	if e != nil {
 		return e
 	}
-	fee, e := c.EstimateQuote(ctx, initial)
+	if e = validateScheduledDeadlines(initial, scheduleMinimum); e != nil {
+		return e
+	}
+	fee, e := c.EstimateQuote(ctx, initial, schedule)
 	if e != nil {
 		return e
 	}
@@ -130,7 +190,7 @@ func (o *Execution) WithBroadcaster(ctx context.Context, c *broadcaster.Client, 
 		if e != nil {
 			return e
 		}
-		required, e := c.EstimateQuote(ctx, data)
+		required, e := c.EstimateQuote(ctx, data, schedule)
 		if e != nil {
 			return e
 		}
@@ -159,7 +219,7 @@ func (o *Execution) WithBroadcaster(ctx context.Context, c *broadcaster.Client, 
 			if e != nil {
 				return e
 			}
-			finalFee, err := c.EstimateQuote(ctx, data)
+			finalFee, err := c.EstimateQuote(ctx, data, schedule)
 			if err != nil {
 				return err
 			}
@@ -169,12 +229,15 @@ func (o *Execution) WithBroadcaster(ctx context.Context, c *broadcaster.Client, 
 			}
 		}
 		trust := broadcaster.Trust{ChainID: o.Plan.Context.ChainID, Protocol: o.Plan.Context.ProtocolAddress}
-		signed, e := c.GetQuote(ctx, data, trust)
+		if e = validateScheduledDeadlines(data, scheduleMinimum); e != nil {
+			return e
+		}
+		signed, e := c.GetQuote(ctx, data, trust, schedule)
 		if e != nil {
 			return e
 		}
 
-		o.Plan.Broadcaster = &BroadcasterPlan{Configuration: c.Configuration(), Signed: signed, ChainID: new(big.Int).Set(trust.ChainID), Protocol: trust.Protocol, Intent: append([]byte{}, data...)}
+		o.Plan.Broadcaster = &BroadcasterPlan{CancelToken: cancelToken, Configuration: c.Configuration(), Signed: signed, ChainID: new(big.Int).Set(trust.ChainID), Protocol: trust.Protocol, Intent: append([]byte{}, data...)}
 		return o.CommitBroadcasterPlan(ctx)
 	}
 	return errors.New("broadcaster fee did not converge")
@@ -186,3 +249,28 @@ func (p *PreparedTransaction) WithBroadcaster(ctx context.Context, c *broadcaste
 	}
 	return p.stage(ctx, func(next *Execution) error { return next.WithBroadcaster(ctx, c, opt) })
 }
+
+func validateScheduledDeadlines(data []byte, minimum *big.Int) error {
+	if minimum == nil {
+		return nil
+	}
+	request, err := settlement.DecodeSingle(data)
+	if err != nil {
+		return err
+	}
+	if request.Statement().Deadline.Cmp(minimum) < 0 {
+		return errors.New("intent deadline does not cover scheduled window and slack")
+	}
+	if request.HasFunding() && request.Funding.Amount.Sign() > 0 {
+		if request.Funding.Deadline.Cmp(minimum) < 0 {
+			return errors.New("funding deadline does not cover scheduled window and slack")
+		}
+		if request.Funding.Permit.Deadline.Sign() != 0 && request.Funding.Permit.Deadline.Cmp(minimum) < 0 {
+			return errors.New("permit deadline does not cover scheduled window and slack")
+		}
+	}
+	return nil
+}
+
+func (BroadcasterPlan) String() string     { return "BroadcasterPlan([sensitive])" }
+func (b BroadcasterPlan) GoString() string { return b.String() }

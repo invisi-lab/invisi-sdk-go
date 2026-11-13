@@ -25,3 +25,5 @@ const BroadcasterFeePublicFunding = transaction.BroadcasterFeePublicFunding
 const BroadcasterFeePrivateInputs = transaction.BroadcasterFeePrivateInputs
 
 const BroadcasterFeePayout = transaction.BroadcasterFeePayout
+
+type ScheduleOptions = transaction.ScheduleOptions

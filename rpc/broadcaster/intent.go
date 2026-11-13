@@ -20,7 +20,10 @@ type Trust struct {
 	Protocol common.Address
 	Signer   common.Address
 }
+type Schedule = settlement.Schedule
+
 type Quote struct {
+	Schedule     *Schedule      `json:"schedule,omitempty"`
 	Token        common.Address `json:"token"`
 	FeeRecipient common.Address `json:"feeRecipient"`
 	FeeAmount    string         `json:"feeAmount"`
@@ -72,7 +75,19 @@ func QuoteTypedData(q Quote, t Trust) (apitypes.TypedData, error) {
 	if t.ChainID == nil || t.ChainID.Sign() <= 0 || t.Protocol == (common.Address{}) || t.Signer == (common.Address{}) {
 		return apitypes.TypedData{}, errors.New("invalid broadcaster trust")
 	}
-	return apitypes.TypedData{Types: apitypes.Types{"EIP712Domain": {{Name: "name", Type: "string"}, {Name: "version", Type: "string"}, {Name: "chainId", Type: "uint256"}, {Name: "verifyingContract", Type: "address"}}, "Quote": {{Name: "token", Type: "address"}, {Name: "feeRecipient", Type: "address"}, {Name: "feeAmount", Type: "uint256"}, {Name: "deadline", Type: "uint256"}, {Name: "maxGas", Type: "uint256"}, {Name: "requestHash", Type: "bytes32"}, {Name: "execution", Type: "string"}}}, PrimaryType: "Quote", Domain: apitypes.TypedDataDomain{Name: "InvisiBroadcaster", Version: "1", ChainId: (*math.HexOrDecimal256)(new(big.Int).Set(t.ChainID)), VerifyingContract: t.Protocol.Hex()}, Message: apitypes.TypedDataMessage{"token": q.Token.Hex(), "feeRecipient": q.FeeRecipient.Hex(), "feeAmount": q.FeeAmount, "deadline": q.Deadline, "maxGas": q.MaxGas, "requestHash": q.RequestHash.Hex(), "execution": q.Execution}}, nil
+	td := apitypes.TypedData{Types: apitypes.Types{"EIP712Domain": {{Name: "name", Type: "string"}, {Name: "version", Type: "string"}, {Name: "chainId", Type: "uint256"}, {Name: "verifyingContract", Type: "address"}}, "Quote": {{Name: "token", Type: "address"}, {Name: "feeRecipient", Type: "address"}, {Name: "feeAmount", Type: "uint256"}, {Name: "deadline", Type: "uint256"}, {Name: "maxGas", Type: "uint256"}, {Name: "requestHash", Type: "bytes32"}, {Name: "execution", Type: "string"}}}, PrimaryType: "Quote", Domain: apitypes.TypedDataDomain{Name: "InvisiBroadcaster", Version: "1", ChainId: (*math.HexOrDecimal256)(new(big.Int).Set(t.ChainID)), VerifyingContract: t.Protocol.Hex()}, Message: apitypes.TypedDataMessage{"token": q.Token.Hex(), "feeRecipient": q.FeeRecipient.Hex(), "feeAmount": q.FeeAmount, "deadline": q.Deadline, "maxGas": q.MaxGas, "requestHash": q.RequestHash.Hex(), "execution": q.Execution}}
+	if q.Schedule != nil {
+		if err := q.Schedule.Validate(); err != nil {
+			return apitypes.TypedData{}, err
+		}
+		td.PrimaryType = "ScheduledQuote"
+		td.Types["ScheduledQuote"] = append(td.Types["Quote"], apitypes.Type{Name: "publishAfter", Type: "uint256"}, apitypes.Type{Name: "executeBefore", Type: "uint256"}, apitypes.Type{Name: "cancelTokenHash", Type: "bytes32"})
+		delete(td.Types, "Quote")
+		td.Message["publishAfter"] = q.Schedule.PublishAfter
+		td.Message["executeBefore"] = q.Schedule.ExecuteBefore
+		td.Message["cancelTokenHash"] = q.Schedule.CancelTokenHash
+	}
+	return td, nil
 }
 func VerifyQuote(s SignedQuote, t Trust, data []byte, now uint64) error {
 	if (s.ProvenanceRequired && s.RequestHashFormat != ProvenanceRequestHashFormat) || (!s.ProvenanceRequired && s.RequestHashFormat != "") {

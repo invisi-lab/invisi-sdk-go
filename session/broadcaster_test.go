@@ -10,11 +10,14 @@ import (
 	"math/big"
 	"net/http"
 	"net/http/httptest"
+	"strconv"
+	"sync"
 	"sync/atomic"
 	"testing"
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/signer/core/apitypes"
 
@@ -39,6 +42,7 @@ func testBroadcasterExecution(t *testing.T, p *Operation, fees []int64, failQuot
 	key, _ := crypto.GenerateKey()
 	recipient := common.HexToAddress("0x8877")
 	calls := new(atomic.Int64)
+	cancelCalls := new(atomic.Int64)
 	server := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		var req struct {
 			ID     uint64
@@ -51,6 +55,8 @@ func testBroadcasterExecution(t *testing.T, p *Operation, fees []int64, failQuot
 		}
 		var param struct {
 			Data           string
+			Schedule       *broadcaster.Schedule `json:"schedule"`
+			Quote          broadcaster.Quote     `json:"quote"`
 			IdempotencyKey string
 			ID             string
 			ProofSidecars  []provenance.ProofSidecar
@@ -93,7 +99,7 @@ func testBroadcasterExecution(t *testing.T, p *Operation, fees []int64, failQuot
 				}
 				h = common.HexToHash(bound)
 			}
-			q := broadcaster.Quote{Token: i.Token, FeeRecipient: i.FeeRecipient, FeeAmount: i.FeeAmount.String(), Deadline: i.Deadline.String(), MaxGas: "1000000", RequestHash: h, Execution: execution}
+			q := broadcaster.Quote{Schedule: param.Schedule, Token: i.Token, FeeRecipient: i.FeeRecipient, FeeAmount: i.FeeAmount.String(), Deadline: i.Deadline.String(), MaxGas: "1000000", RequestHash: h, Execution: execution}
 			trust := broadcaster.Trust{ChainID: p.plan.Context.ChainID, Protocol: p.plan.Context.ProtocolAddress, Signer: crypto.PubkeyToAddress(key.PublicKey)}
 			td, _ := broadcaster.QuoteTypedData(q, trust)
 			digest, _, _ := apitypes.TypedDataAndHash(td)
@@ -109,7 +115,13 @@ func testBroadcasterExecution(t *testing.T, p *Operation, fees []int64, failQuot
 			}
 			result = signed
 		case "broadcaster_getStatus":
-			result = map[string]any{"apiVersion": "v1", "protocolVersion": "1", "chainId": p.plan.Context.ChainID.String(), "protocol": p.plan.Context.ProtocolAddress.Hex(), "sender": crypto.PubkeyToAddress(key.PublicKey).Hex(), "feeRecipient": recipient.Hex(), "submissionHalted": false, "provenance": map[string]any{"enabled": len(policies) > 0, "requestHashFormat": broadcaster.ProvenanceRequestHashFormat, "trackingRequired": true, "trackingSupported": true, "aggregateSupported": true}}
+			result = map[string]any{"apiVersion": "v1", "protocolVersion": "1", "chainId": p.plan.Context.ChainID.String(), "protocol": p.plan.Context.ProtocolAddress.Hex(), "sender": crypto.PubkeyToAddress(key.PublicKey).Hex(), "feeRecipient": recipient.Hex(), "submissionHalted": false, "scheduling": map[string]any{"enabled": true, "maxDelaySeconds": "1209600", "defaultExecutionWindowSeconds": "300", "maxExecutionWindowSeconds": "3600", "minDeadlineSlackSeconds": "30"}, "provenance": map[string]any{"enabled": len(policies) > 0, "requestHashFormat": broadcaster.ProvenanceRequestHashFormat, "trackingRequired": true, "trackingSupported": true, "aggregateSupported": true}}
+		case "broadcaster_cancelTransaction":
+			state := "cancelled"
+			if cancelCalls.Add(1) == 1 {
+				state = "scheduled"
+			}
+			result = broadcaster.Status{ID: param.ID, State: state}
 		case "broadcaster_getTransactionStatus":
 			if param.ID == "not-found" {
 				json.NewEncoder(w).Encode(map[string]any{"jsonrpc": "2.0", "id": req.ID, "error": map[string]any{"code": -32001, "message": "not found"}})
@@ -128,6 +140,9 @@ func testBroadcasterExecution(t *testing.T, p *Operation, fees []int64, failQuot
 				}
 			}
 			result = broadcaster.Status{ID: "server-request-id", State: "uncertain"}
+			if param.Quote.Schedule != nil {
+				result = broadcaster.Status{ID: "opaque-server-job/17", State: "scheduled"}
+			}
 		}
 		json.NewEncoder(w).Encode(map[string]any{"jsonrpc": "2.0", "id": req.ID, "result": result})
 	}))
@@ -503,5 +518,260 @@ func TestBroadcasterDetachedFailedSubmitRetainsInspectableUncertainty(t *testing
 	}
 	if status, err := prepared.SubmitBroadcaster(ctx, c); err != nil || status.State != "uncertain" {
 		t.Fatal("retained request retry failed", status, err)
+	}
+}
+
+func TestScheduledCancellationRefreshesAndReleasesReservations(t *testing.T) {
+	ctx := context.Background()
+	s, token, _ := testSession(t, uint64(time.Now().Unix()))
+	address, _ := s.wallet.GetAddress()
+	original, e := s.PrepareTransfer(ctx, sdk.TransferPreparation{Deadline: uint64(time.Now().Add(9 * 24 * time.Hour).Unix()), TokenAddress: token, Outputs: testOutputs(s, []testPaymentOutput{{To: address, Amount: big.NewInt(30)}})})
+	if e != nil {
+		t.Fatal(e)
+	}
+	c, _ := testBroadcaster(t, original, []int64{5}, false)
+	after := time.Now().Add(8 * 24 * time.Hour).Unix()
+	next, e := original.WithBroadcaster(ctx, c, sdk.WithBroadcasterOptions{MaxFeeAmount: big.NewInt(10), Schedule: &sdk.ScheduleOptions{PublishAfter: strconv.FormatInt(after, 10)}})
+	if e != nil {
+		t.Fatal(e)
+	}
+	saved := next.plan.Broadcaster
+	if saved.CancelToken == "" || saved.Signed.Quote.Schedule == nil {
+		t.Fatal("missing local cancellation handle")
+	}
+	a, _ := strconv.ParseUint(saved.Signed.Quote.Schedule.ExecuteBefore, 10, 64)
+	if a != uint64(after+300) {
+		t.Fatal("incorrect default execution window")
+	}
+	if saved.RequestID != "" {
+		t.Fatal("SDK invented a broadcaster ID before submission")
+	}
+	if _, err := next.CancelBroadcaster(ctx, c); err == nil {
+		t.Fatal("unsubmitted cancellation created a remote job")
+	}
+	next, e = authorizeForTest(next, ctx)
+	if e != nil {
+		t.Fatal(e)
+	}
+	next, e = next.Prove(ctx)
+	if e != nil {
+		t.Fatal(e)
+	}
+	admitted, e := next.SubmitBroadcaster(ctx, c)
+	if e != nil || admitted.ID != "opaque-server-job/17" {
+		t.Fatal("opaque server ID rejected", admitted, e)
+	}
+	persisted, _ := s.options.Store.ReadSnapshot(ctx, s.scope)
+	var admittedPlan transaction.Plan
+	if err := json.Unmarshal(persisted.Operations[next.ID()].Plan, &admittedPlan); err != nil || admittedPlan.Broadcaster.RequestID != admitted.ID {
+		t.Fatal("server ID not durable before response", err)
+	}
+
+	status, e := next.CancelBroadcaster(ctx, c)
+	if e != nil || status.State != "scheduled" {
+		t.Fatal(status, e)
+	}
+	retained, _ := s.options.Store.ReadSnapshot(ctx, s.scope)
+	for _, input := range next.plan.Inputs {
+		if retained.Notes[input.Commitment].ReservedBy != next.ID() {
+			t.Fatal("nonterminal cancellation released input")
+		}
+	}
+	status, e = next.CancelBroadcaster(ctx, c)
+	if e != nil || status.State != "cancelled" {
+		t.Fatal(status, e)
+	}
+	state, e := s.options.Store.ReadSnapshot(ctx, s.scope)
+	if e != nil {
+		t.Fatal(e)
+	}
+	if state.Operations[next.ID()].Status != "cancelled" {
+		t.Fatal("cancellation not persisted")
+	}
+	for _, note := range state.Notes {
+		if note.ReservedBy == next.ID() {
+			t.Fatal("reservation retained after canonical cancellation")
+		}
+	}
+	if e = restoreReservations(&state); e != nil {
+		t.Fatal(e)
+	}
+	for _, note := range state.Notes {
+		if note.ReservedBy == next.ID() {
+			t.Fatal("cancellation lost during restore")
+		}
+	}
+}
+
+func TestScheduledDeadlineMustCoverWindowAndSlack(t *testing.T) {
+	ctx := context.Background()
+	s, token, _ := testSession(t, uint64(time.Now().Unix()))
+	address, _ := s.wallet.GetAddress()
+	original, e := s.PrepareTransfer(ctx, sdk.TransferPreparation{TokenAddress: token, Outputs: testOutputs(s, []testPaymentOutput{{To: address, Amount: big.NewInt(30)}})})
+	if e != nil {
+		t.Fatal(e)
+	}
+	c, _ := testBroadcaster(t, original, []int64{5}, false)
+	after := time.Now().Add(8 * 24 * time.Hour).Unix()
+	if _, e = original.WithBroadcaster(ctx, c, sdk.WithBroadcasterOptions{MaxFeeAmount: big.NewInt(10), Schedule: &sdk.ScheduleOptions{PublishAfter: strconv.FormatInt(after, 10)}}); e == nil {
+		t.Fatal("accepted native deadline before execution window")
+	}
+}
+
+type failedCancellationRefresh struct{ sdk.Provider }
+
+func (failedCancellationRefresh) HeaderByNumber(context.Context, *big.Int) (*types.Header, error) {
+	return nil, errors.New("temporary canonical refresh unavailable")
+}
+
+type rejectCancellationTransport struct{}
+
+func (rejectCancellationTransport) RoundTrip(*http.Request) (*http.Response, error) {
+	return nil, errors.New("broadcaster offline after acknowledged cancellation")
+}
+
+type dropScheduledSubmitResponse struct{}
+
+func (dropScheduledSubmitResponse) RoundTrip(r *http.Request) (*http.Response, error) {
+	raw, e := io.ReadAll(r.Body)
+	if e != nil {
+		return nil, e
+	}
+	r.Body = io.NopCloser(bytes.NewReader(raw))
+	var req struct{ Method string }
+	json.Unmarshal(raw, &req)
+	transport := http.DefaultTransport.(*http.Transport).Clone()
+	transport.TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
+	response, e := transport.RoundTrip(r)
+	if req.Method == "broadcaster_submitTransaction" && e == nil {
+		response.Body.Close()
+		return nil, errors.New("lost response after server admission")
+	}
+	return response, e
+}
+func TestScheduledLostSubmitRetainsScopedHandleAndCancellationAcknowledgement(t *testing.T) {
+	ctx := context.Background()
+	s, token, _ := testSession(t, uint64(time.Now().Unix()))
+	address, _ := s.wallet.GetAddress()
+	original, e := s.PrepareTransfer(ctx, sdk.TransferPreparation{Deadline: uint64(time.Now().Add(9 * 24 * time.Hour).Unix()), TokenAddress: token, Outputs: testOutputs(s, []testPaymentOutput{{To: address, Amount: big.NewInt(30)}})})
+	if e != nil {
+		t.Fatal(e)
+	}
+	var payloadMu sync.Mutex
+	var payloads [][]byte
+	var cancellationCalls, statusCalls atomic.Int64
+	c, _ := testBroadcasterExecution(t, original, []int64{5}, false, nil, "direct", func(method string, raw json.RawMessage) {
+		if method == "broadcaster_submitTransaction" {
+			snapshot, err := s.options.Store.ReadSnapshot(ctx, s.scope)
+			if err != nil {
+				t.Error(err)
+			} else {
+				record := snapshot.Operations[original.ID()]
+				var plan transaction.Plan
+				if err = json.Unmarshal(record.Plan, &plan); err != nil {
+					t.Error(err)
+				} else if plan.Broadcaster == nil || plan.Broadcaster.Request == nil || plan.Broadcaster.CancelToken == "" || plan.Broadcaster.Signed.Signature == "" || plan.Broadcaster.RequestID != "" || !record.Externalized {
+					t.Error("secret, signed quote and unknown-ID frozen request were not durable before network send")
+				}
+			}
+			payloadMu.Lock()
+			payloads = append(payloads, append([]byte(nil), raw...))
+			payloadMu.Unlock()
+		}
+		if method == "broadcaster_cancelTransaction" {
+			cancellationCalls.Add(1)
+		}
+		if method == "broadcaster_getTransactionStatus" {
+			statusCalls.Add(1)
+		}
+	})
+	after := time.Now().Add(8 * 24 * time.Hour).Unix()
+	op, e := original.WithBroadcaster(ctx, c, sdk.WithBroadcasterOptions{MaxFeeAmount: big.NewInt(10), Schedule: &sdk.ScheduleOptions{PublishAfter: strconv.FormatInt(after, 10)}})
+	if e != nil {
+		t.Fatal(e)
+	}
+	requestID := op.plan.Broadcaster.RequestID
+	if requestID != "" || op.plan.Broadcaster.CancelToken == "" {
+		t.Fatal("ID must be opaque and unknown before submit; secret must be held locally")
+	}
+	op, e = authorizeForTest(op, ctx)
+	if e != nil {
+		t.Fatal(e)
+	}
+	op, e = op.Prove(ctx)
+	if e != nil {
+		t.Fatal(e)
+	}
+	failing, e := broadcaster.NewClient(c.Configuration(), broadcaster.Options{HTTPClient: &http.Client{Transport: dropScheduledSubmitResponse{}}})
+	if e != nil {
+		t.Fatal(e)
+	}
+	if _, e = op.SubmitBroadcaster(ctx, failing); e == nil {
+		t.Fatal("lost submit response swallowed")
+	}
+	if op.plan.Broadcaster.RequestID != requestID || op.status != "uncertain" {
+		t.Fatal("lost scoped cancellation handle")
+	}
+	if op.plan.Broadcaster.Request == nil {
+		t.Fatal("lost response discarded frozen submission")
+	}
+	if _, e = op.CancelBroadcaster(ctx, c); e == nil {
+		t.Fatal("unknown ID cancellation did not require explicit recovery")
+	}
+	if cancellationCalls.Load() != 0 || statusCalls.Load() != 0 {
+		t.Fatal("SDK guessed opaque ID or silently admitted during cancellation")
+	}
+	recovered, e := op.SubmitBroadcaster(ctx, c)
+	if e != nil || recovered.ID != "opaque-server-job/17" || op.plan.Broadcaster.RequestID != recovered.ID {
+		t.Fatal("frozen replay did not recover server ID", recovered, e)
+	}
+	payloadMu.Lock()
+	same := len(payloads) == 2 && bytes.Equal(payloads[0], payloads[1])
+	payloadMu.Unlock()
+	if !same {
+		t.Fatal("recovery changed frozen submission")
+	}
+	if _, e = op.CancelBroadcaster(ctx, c); e != nil {
+		t.Fatal(e)
+	}
+	provider := op.session.options.Provider
+	op.session.options.Provider = failedCancellationRefresh{provider}
+	result, e := op.CancelBroadcaster(ctx, c)
+	if e == nil || result.State != "cancelled" {
+		t.Fatal("refresh outage not surfaced", result, e)
+	}
+	snapshot, e := s.options.Store.ReadSnapshot(ctx, s.scope)
+	if e != nil {
+		t.Fatal(e)
+	}
+	var persisted transaction.Plan
+	if e = json.Unmarshal(snapshot.Operations[op.ID()].Plan, &persisted); e != nil {
+		t.Fatal(e)
+	}
+	if !persisted.Broadcaster.CancellationConfirmed {
+		t.Fatal("acknowledgement lost before canonical refresh")
+	}
+	for _, input := range op.plan.Inputs {
+		if snapshot.Notes[input.Commitment].ReservedBy != op.ID() {
+			t.Fatal("refresh outage released input")
+		}
+	}
+	op.session.options.Provider = provider
+	op, e = s.Resume(ctx, op.ID())
+	if e != nil {
+		t.Fatal(e)
+	}
+	offline, e := broadcaster.NewClient(c.Configuration(), broadcaster.Options{HTTPClient: &http.Client{Transport: rejectCancellationTransport{}}})
+	if e != nil {
+		t.Fatal(e)
+	}
+	if result, e = op.CancelBroadcaster(ctx, offline); e != nil || result.State != "cancelled" {
+		t.Fatal("persisted acknowledgement could not reconcile offline", result, e)
+	}
+	snapshot, _ = s.options.Store.ReadSnapshot(ctx, s.scope)
+	for _, input := range op.plan.Inputs {
+		if snapshot.Notes[input.Commitment].ReservedBy == op.ID() {
+			t.Fatal("confirmed cancellation retained reservation")
+		}
 	}
 }
