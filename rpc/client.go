@@ -24,6 +24,7 @@ type ProtocolRpcClient struct {
 	mu         sync.Mutex
 	deployment *ProtocolDeployment
 	provider   ChainProvider
+	pinned     bool
 }
 
 func NewProtocolRpcClient(endpoint string, options ...ClientOptions) (*ProtocolRpcClient, error) {
@@ -55,6 +56,7 @@ func NewProtocolRpcClient(endpoint string, options ...ClientOptions) (*ProtocolR
 			d.Registry = &r
 		}
 		c.deployment = &d
+		c.pinned = true
 	}
 	return c, nil
 }
@@ -67,7 +69,7 @@ func (c *ProtocolRpcClient) WithProvider(provider ChainProvider) *ProtocolRpcCli
 		copy := cloneDeployment(*c.deployment)
 		d = &copy
 	}
-	return &ProtocolRpcClient{url: c.url, http: c.http, headers: c.headers.Clone(), deployment: d, provider: provider}
+	return &ProtocolRpcClient{url: c.url, http: c.http, headers: c.headers.Clone(), deployment: d, provider: provider, pinned: c.pinned}
 }
 
 func (c *ProtocolRpcClient) context(context DeploymentContext) (ProtocolDeployment, error) {

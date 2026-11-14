@@ -193,3 +193,14 @@ Managed `SendTransaction` requires a positive caller-supplied gas limit in the s
 Chain confirmation uses native `latest`, `safe`, and `finalized` tags. Explicit payment Note and disclosure verification default to `finalized`; choose `Finality: "latest"` or `"safe"` explicitly when the application needs another boundary. No confirmation-count or elapsed-time fallback is applied. Spendability and live wallet reconciliation still use current canonical state.
 
 Protocol RPC indexed progress is independent of native finality. Its claimed finality heads are checked against the configured primary provider. Broadcaster receipt success/revert is separate from its optional confirmation progress; wallet operations independently query the chain rather than trust relay claims. Unsupported tags, transient outages, inconsistent headers, and finality still pending are distinct outcomes. SDK observations are stateless and do not replace the services' durable accepted-finality fences.
+
+`rpc.ProtocolRpcClient.GetNoteFromTrustedRPC(ctx, scope, commitment, "safe" | "finalized")`
+queries the confirmation selector of `invisi_getNote`. Construct the client with
+`rpc.ClientOptions{Deployment: &deployment}` to explicitly pin the full deployment;
+a deployment discovered from the server is insufficient. This path makes one Protocol
+RPC request and needs no chain provider. Its distinct `TrustedNoteEvidence` result
+validates the envelope, deployment, block bindings and Merkle proof locally, while
+receipt success, canonicality, rootHistory and native finality remain trusted RPC
+claims. Pending evidence has a reason and no output, membership or confirmation;
+it does not prove that a payment is absent. Existing `GetNote` continues to perform
+independent chain authentication.
