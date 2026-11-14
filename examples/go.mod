@@ -11,7 +11,7 @@ require (
 	github.com/invisi-lab/invisi-sdk-go/prover v1.2.4
 	github.com/invisi-lab/invisi-sdk-go/rpc v1.2.4
 	github.com/invisi-lab/invisi-sdk-go/session v1.2.4
-	modernc.org/sqlite v1.61.0 // indirect
+	modernc.org/sqlite v1.61.0
 )
 
 require (
