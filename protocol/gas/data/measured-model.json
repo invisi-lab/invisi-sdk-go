@@ -1,7 +1,7 @@
 {
   "formatVersion": 1,
-  "sourceSha256": "62a558a1907830eab2520f99cdce2c9dc4fe3bed7d9cac54f7ada94a997a7d4a",
-  "protocolCommit": "a8f449d7b6d0f36b067a20308b629c999b1e22f5",
+  "sourceSha256": "685f32977e19a8bc6e43a388e50210564c554f6510f7fb9635c64f36b84023ae",
+  "protocolCommit": "f787289033eb0f907f69a9c9e36bf91523d7e64b",
   "capacities": [
     1,
     2,
@@ -49,58 +49,58 @@
   ],
   "coefficients": {
     "transact": [
-      972012.629,
-      930888.711,
-      967200.41,
-      1015749.577,
-      999018.125,
-      998578.923,
-      986922.971,
-      1000645.769,
-      983846.068,
-      990595.573,
-      1016590.196,
-      1018319.55,
-      1026997.982,
-      1015911.081,
-      1059075.513,
-      1113285.278,
-      1148040.044,
-      1136834.643,
-      1174483.075,
-      1173858.174,
-      1202522.106,
-      1189658.872,
-      1248075.471,
-      1260331.737,
-      1263358.502,
-      1270954.768,
-      1311681.533,
-      1311316.828,
-      24286.458,
-      63922.116,
-      518334.421,
-      16336.935,
-      38202.903,
-      31388.827
+      974407.045,
+      933774.364,
+      970534.01,
+      1019572.635,
+      1003260.963,
+      1003253.541,
+      992257.37,
+      1006333.948,
+      990074.026,
+      997351.515,
+      1028073.952,
+      1034585.872,
+      1016466.316,
+      1003149.427,
+      1044055.871,
+      1095951.648,
+      1128512.425,
+      1115041.036,
+      1150435.48,
+      1147534.591,
+      1173930.535,
+      1158835.312,
+      1215017.923,
+      1224962.2,
+      1225902.977,
+      1231191.255,
+      1269550.032,
+      1266962.516,
+      24526.869,
+      64318.273,
+      518104.387,
+      16438.596,
+      38235.077,
+      31370.002
     ],
     "draw": [
-      1529541.052,
-      1525540.673,
-      1536473.399,
-      1534814.072,
-      1540910.746,
-      1586600.883,
-      1650781.819,
-      1694447.553,
-      1771765.286,
-      1838529.02,
-      1922830.253,
-      2019010.986,
-      2149311.219,
-      123779.439,
-      23340.888,
-      24482.227
+      1533444.883,
+      1531089.619,
+      1543612.806,
+      1543553.267,
+      1551327.728,
+      1605104.711,
+      1634800.574,
+      1670913.185,
+      1740686.797,
+      1799867.408,
+      1876567.519,
+      1965288.131,
+      2088029.242,
+      124025.999,
+      23325.54,
+      24528.14
     ]
   },
   "rows": [
@@ -108,120 +108,81 @@
       "shape": {
         "kind": "shield",
         "noteOutputs": 1,
-        "fee": false
+        "fee": true
       },
-      "gasUnits": 737255
+      "gasUnits": 761714
     },
     {
       "shape": {
         "kind": "shield",
         "noteOutputs": 2,
-        "fee": false
+        "fee": true
       },
-      "gasUnits": 825712
+      "gasUnits": 850339
     },
     {
       "shape": {
         "kind": "shield",
         "noteOutputs": 3,
-        "fee": false
+        "fee": true
       },
-      "gasUnits": 963047
+      "gasUnits": 987878
     },
     {
       "shape": {
         "kind": "shield",
         "noteOutputs": 4,
-        "fee": false
+        "fee": true
       },
-      "gasUnits": 1029391
+      "gasUnits": 1054294
     },
     {
       "shape": {
         "kind": "shield",
         "noteOutputs": 5,
-        "fee": false
+        "fee": true
       },
-      "gasUnits": 1193535
+      "gasUnits": 1218618
     },
     {
       "shape": {
         "kind": "shield",
         "noteOutputs": 6,
-        "fee": false
+        "fee": true
       },
-      "gasUnits": 1282012
+      "gasUnits": 1307275
     },
     {
       "shape": {
         "kind": "shield",
         "noteOutputs": 7,
-        "fee": false
+        "fee": true
       },
-      "gasUnits": 1419380
+      "gasUnits": 1444799
     },
     {
       "shape": {
         "kind": "shield",
         "noteOutputs": 8,
-        "fee": false
+        "fee": true
       },
-      "gasUnits": 1463584
+      "gasUnits": 1489159
     },
     {
       "shape": {
         "kind": "shield",
         "noteOutputs": 9,
-        "fee": false
+        "fee": true
       },
-      "gasUnits": 1654572
+      "gasUnits": 1680279
     },
     {
       "shape": {
         "kind": "shield",
         "noteOutputs": 10,
-        "fee": false
+        "fee": true
       },
-      "gasUnits": 1743020
-    },
-    {
-      "shape": {
-        "kind": "transact",
-        "capacity": 1,
-        "noteInputs": 1,
-        "noteOutputs": 0,
-        "sourceTrees": 1,
-        "deposit": false,
-        "withdrawal": true,
-        "fee": false
-      },
-      "gasUnits": 1034502
-    },
-    {
-      "shape": {
-        "kind": "transact",
-        "capacity": 2,
-        "noteInputs": 2,
-        "noteOutputs": 0,
-        "sourceTrees": 1,
-        "deposit": false,
-        "withdrawal": true,
-        "fee": false
-      },
-      "gasUnits": 1060024
-    },
-    {
-      "shape": {
-        "kind": "transact",
-        "capacity": 2,
-        "noteInputs": 0,
-        "noteOutputs": 2,
-        "sourceTrees": 0,
-        "deposit": true,
-        "withdrawal": false,
-        "fee": false
-      },
-      "gasUnits": 1554389
+      "gasUnits": 1768847
     },
     {
       "shape": {
@@ -232,9 +193,9 @@
         "sourceTrees": 1,
         "deposit": false,
         "withdrawal": false,
-        "fee": false
+        "fee": true
       },
-      "gasUnits": 1542345
+      "gasUnits": 1569965
     },
     {
       "shape": {
@@ -244,400 +205,23 @@
         "noteOutputs": 1,
         "sourceTrees": 1,
         "deposit": true,
-        "withdrawal": true,
-        "fee": true
-      },
-      "gasUnits": 1614693
-    },
-    {
-      "shape": {
-        "kind": "transact",
-        "capacity": 3,
-        "noteInputs": 3,
-        "noteOutputs": 0,
-        "sourceTrees": 1,
-        "deposit": false,
-        "withdrawal": true,
-        "fee": false
-      },
-      "gasUnits": 1085619
-    },
-    {
-      "shape": {
-        "kind": "transact",
-        "capacity": 3,
-        "noteInputs": 0,
-        "noteOutputs": 3,
-        "sourceTrees": 0,
-        "deposit": true,
         "withdrawal": false,
         "fee": false
       },
-      "gasUnits": 1774814
+      "gasUnits": 1566794
     },
     {
       "shape": {
         "kind": "transact",
-        "capacity": 3,
+        "capacity": 2,
         "noteInputs": 1,
-        "noteOutputs": 2,
-        "sourceTrees": 1,
-        "deposit": false,
-        "withdrawal": false,
-        "fee": false
-      },
-      "gasUnits": 1562738
-    },
-    {
-      "shape": {
-        "kind": "transact",
-        "capacity": 3,
-        "noteInputs": 1,
-        "noteOutputs": 2,
-        "sourceTrees": 1,
-        "deposit": true,
-        "withdrawal": true,
-        "fee": true
-      },
-      "gasUnits": 1635062
-    },
-    {
-      "shape": {
-        "kind": "transact",
-        "capacity": 4,
-        "noteInputs": 4,
-        "noteOutputs": 0,
+        "noteOutputs": 1,
         "sourceTrees": 1,
         "deposit": false,
         "withdrawal": true,
         "fee": false
       },
-      "gasUnits": 1111289
-    },
-    {
-      "shape": {
-        "kind": "transact",
-        "capacity": 4,
-        "noteInputs": 0,
-        "noteOutputs": 4,
-        "sourceTrees": 0,
-        "deposit": true,
-        "withdrawal": false,
-        "fee": false
-      },
-      "gasUnits": 1793273
-    },
-    {
-      "shape": {
-        "kind": "transact",
-        "capacity": 4,
-        "noteInputs": 1,
-        "noteOutputs": 3,
-        "sourceTrees": 1,
-        "deposit": false,
-        "withdrawal": false,
-        "fee": false
-      },
-      "gasUnits": 1783298
-    },
-    {
-      "shape": {
-        "kind": "transact",
-        "capacity": 4,
-        "noteInputs": 1,
-        "noteOutputs": 3,
-        "sourceTrees": 1,
-        "deposit": true,
-        "withdrawal": true,
-        "fee": true
-      },
-      "gasUnits": 1855550
-    },
-    {
-      "shape": {
-        "kind": "transact",
-        "capacity": 5,
-        "noteInputs": 5,
-        "noteOutputs": 0,
-        "sourceTrees": 1,
-        "deposit": false,
-        "withdrawal": true,
-        "fee": false
-      },
-      "gasUnits": 1136838
-    },
-    {
-      "shape": {
-        "kind": "transact",
-        "capacity": 5,
-        "noteInputs": 0,
-        "noteOutputs": 5,
-        "sourceTrees": 0,
-        "deposit": true,
-        "withdrawal": false,
-        "fee": false
-      },
-      "gasUnits": 1880027
-    },
-    {
-      "shape": {
-        "kind": "transact",
-        "capacity": 5,
-        "noteInputs": 1,
-        "noteOutputs": 4,
-        "sourceTrees": 1,
-        "deposit": false,
-        "withdrawal": false,
-        "fee": false
-      },
-      "gasUnits": 1801650
-    },
-    {
-      "shape": {
-        "kind": "transact",
-        "capacity": 5,
-        "noteInputs": 1,
-        "noteOutputs": 4,
-        "sourceTrees": 1,
-        "deposit": true,
-        "withdrawal": true,
-        "fee": true
-      },
-      "gasUnits": 1874022
-    },
-    {
-      "shape": {
-        "kind": "transact",
-        "capacity": 6,
-        "noteInputs": 6,
-        "noteOutputs": 0,
-        "sourceTrees": 1,
-        "deposit": false,
-        "withdrawal": true,
-        "fee": false
-      },
-      "gasUnits": 1162413
-    },
-    {
-      "shape": {
-        "kind": "transact",
-        "capacity": 6,
-        "noteInputs": 0,
-        "noteOutputs": 6,
-        "sourceTrees": 0,
-        "deposit": true,
-        "withdrawal": false,
-        "fee": false
-      },
-      "gasUnits": 1895512
-    },
-    {
-      "shape": {
-        "kind": "transact",
-        "capacity": 6,
-        "noteInputs": 1,
-        "noteOutputs": 5,
-        "sourceTrees": 1,
-        "deposit": false,
-        "withdrawal": false,
-        "fee": false
-      },
-      "gasUnits": 1888358
-    },
-    {
-      "shape": {
-        "kind": "transact",
-        "capacity": 6,
-        "noteInputs": 1,
-        "noteOutputs": 5,
-        "sourceTrees": 1,
-        "deposit": true,
-        "withdrawal": true,
-        "fee": true
-      },
-      "gasUnits": 1960550
-    },
-    {
-      "shape": {
-        "kind": "transact",
-        "capacity": 7,
-        "noteInputs": 7,
-        "noteOutputs": 0,
-        "sourceTrees": 1,
-        "deposit": false,
-        "withdrawal": true,
-        "fee": false
-      },
-      "gasUnits": 1187975
-    },
-    {
-      "shape": {
-        "kind": "transact",
-        "capacity": 7,
-        "noteInputs": 0,
-        "noteOutputs": 7,
-        "sourceTrees": 0,
-        "deposit": true,
-        "withdrawal": false,
-        "fee": false
-      },
-      "gasUnits": 2008703
-    },
-    {
-      "shape": {
-        "kind": "transact",
-        "capacity": 7,
-        "noteInputs": 1,
-        "noteOutputs": 6,
-        "sourceTrees": 1,
-        "deposit": false,
-        "withdrawal": false,
-        "fee": false
-      },
-      "gasUnits": 1903558
-    },
-    {
-      "shape": {
-        "kind": "transact",
-        "capacity": 7,
-        "noteInputs": 1,
-        "noteOutputs": 6,
-        "sourceTrees": 1,
-        "deposit": true,
-        "withdrawal": true,
-        "fee": true
-      },
-      "gasUnits": 1976026
-    },
-    {
-      "shape": {
-        "kind": "transact",
-        "capacity": 8,
-        "noteInputs": 8,
-        "noteOutputs": 0,
-        "sourceTrees": 1,
-        "deposit": false,
-        "withdrawal": true,
-        "fee": false
-      },
-      "gasUnits": 1213719
-    },
-    {
-      "shape": {
-        "kind": "transact",
-        "capacity": 8,
-        "noteInputs": 0,
-        "noteOutputs": 8,
-        "sourceTrees": 0,
-        "deposit": true,
-        "withdrawal": false,
-        "fee": false
-      },
-      "gasUnits": 2027231
-    },
-    {
-      "shape": {
-        "kind": "transact",
-        "capacity": 8,
-        "noteInputs": 1,
-        "noteOutputs": 7,
-        "sourceTrees": 1,
-        "deposit": false,
-        "withdrawal": false,
-        "fee": false
-      },
-      "gasUnits": 2016966
-    },
-    {
-      "shape": {
-        "kind": "transact",
-        "capacity": 8,
-        "noteInputs": 1,
-        "noteOutputs": 7,
-        "sourceTrees": 1,
-        "deposit": true,
-        "withdrawal": true,
-        "fee": true
-      },
-      "gasUnits": 2089290
-    },
-    {
-      "shape": {
-        "kind": "transact",
-        "capacity": 9,
-        "noteInputs": 9,
-        "noteOutputs": 0,
-        "sourceTrees": 1,
-        "deposit": false,
-        "withdrawal": true,
-        "fee": false
-      },
-      "gasUnits": 1239128
-    },
-    {
-      "shape": {
-        "kind": "transact",
-        "capacity": 9,
-        "noteInputs": 0,
-        "noteOutputs": 9,
-        "sourceTrees": 0,
-        "deposit": true,
-        "withdrawal": false,
-        "fee": false
-      },
-      "gasUnits": 2113780
-    },
-    {
-      "shape": {
-        "kind": "transact",
-        "capacity": 9,
-        "noteInputs": 1,
-        "noteOutputs": 8,
-        "sourceTrees": 1,
-        "deposit": false,
-        "withdrawal": false,
-        "fee": false
-      },
-      "gasUnits": 2035366
-    },
-    {
-      "shape": {
-        "kind": "transact",
-        "capacity": 9,
-        "noteInputs": 1,
-        "noteOutputs": 8,
-        "sourceTrees": 1,
-        "deposit": true,
-        "withdrawal": true,
-        "fee": true
-      },
-      "gasUnits": 2107786
-    },
-    {
-      "shape": {
-        "kind": "transact",
-        "capacity": 10,
-        "noteInputs": 10,
-        "noteOutputs": 0,
-        "sourceTrees": 1,
-        "deposit": false,
-        "withdrawal": true,
-        "fee": false
-      },
-      "gasUnits": 1264801
-    },
-    {
-      "shape": {
-        "kind": "transact",
-        "capacity": 10,
-        "noteInputs": 0,
-        "noteOutputs": 10,
-        "sourceTrees": 0,
-        "deposit": true,
-        "withdrawal": false,
-        "fee": false
-      },
-      "gasUnits": 2126222
+      "gasUnits": 1576839
     },
     {
       "shape": {
@@ -648,9 +232,9 @@
         "sourceTrees": 1,
         "deposit": false,
         "withdrawal": false,
-        "fee": false
+        "fee": true
       },
-      "gasUnits": 2122023
+      "gasUnits": 2156819
     },
     {
       "shape": {
@@ -660,36 +244,23 @@
         "noteOutputs": 9,
         "sourceTrees": 1,
         "deposit": true,
-        "withdrawal": true,
-        "fee": true
+        "withdrawal": false,
+        "fee": false
       },
-      "gasUnits": 2194347
+      "gasUnits": 2153744
     },
     {
       "shape": {
         "kind": "transact",
-        "capacity": 20,
-        "noteInputs": 20,
-        "noteOutputs": 0,
+        "capacity": 10,
+        "noteInputs": 1,
+        "noteOutputs": 9,
         "sourceTrees": 1,
         "deposit": false,
         "withdrawal": true,
         "fee": false
       },
-      "gasUnits": 1521493
-    },
-    {
-      "shape": {
-        "kind": "transact",
-        "capacity": 20,
-        "noteInputs": 0,
-        "noteOutputs": 20,
-        "sourceTrees": 0,
-        "deposit": true,
-        "withdrawal": false,
-        "fee": false
-      },
-      "gasUnits": 2801054
+      "gasUnits": 2163705
     },
     {
       "shape": {
@@ -700,9 +271,9 @@
         "sourceTrees": 1,
         "deposit": false,
         "withdrawal": false,
-        "fee": false
+        "fee": true
       },
-      "gasUnits": 2791033
+      "gasUnits": 2834601
     },
     {
       "shape": {
@@ -712,1310 +283,23 @@
         "noteOutputs": 19,
         "sourceTrees": 1,
         "deposit": true,
-        "withdrawal": true,
-        "fee": true
+        "withdrawal": false,
+        "fee": false
       },
-      "gasUnits": 2863453
+      "gasUnits": 2831454
     },
     {
       "shape": {
         "kind": "transact",
         "capacity": 20,
         "noteInputs": 1,
-        "noteOutputs": 10,
-        "sourceTrees": 1,
-        "deposit": false,
-        "withdrawal": false,
-        "fee": false
-      },
-      "gasUnits": 2152262
-    },
-    {
-      "shape": {
-        "kind": "transact",
-        "capacity": 20,
-        "noteInputs": 0,
-        "noteOutputs": 11,
-        "sourceTrees": 0,
-        "deposit": true,
-        "withdrawal": false,
-        "fee": false
-      },
-      "gasUnits": 2284059
-    },
-    {
-      "shape": {
-        "kind": "transact",
-        "capacity": 30,
-        "noteInputs": 30,
-        "noteOutputs": 0,
+        "noteOutputs": 19,
         "sourceTrees": 1,
         "deposit": false,
         "withdrawal": true,
         "fee": false
       },
-      "gasUnits": 1802239
-    },
-    {
-      "shape": {
-        "kind": "transact",
-        "capacity": 30,
-        "noteInputs": 0,
-        "noteOutputs": 30,
-        "sourceTrees": 0,
-        "deposit": true,
-        "withdrawal": false,
-        "fee": false
-      },
-      "gasUnits": 3421870
-    },
-    {
-      "shape": {
-        "kind": "transact",
-        "capacity": 30,
-        "noteInputs": 1,
-        "noteOutputs": 29,
-        "sourceTrees": 1,
-        "deposit": false,
-        "withdrawal": false,
-        "fee": false
-      },
-      "gasUnits": 3414311
-    },
-    {
-      "shape": {
-        "kind": "transact",
-        "capacity": 30,
-        "noteInputs": 1,
-        "noteOutputs": 29,
-        "sourceTrees": 1,
-        "deposit": true,
-        "withdrawal": true,
-        "fee": true
-      },
-      "gasUnits": 3486599
-    },
-    {
-      "shape": {
-        "kind": "transact",
-        "capacity": 30,
-        "noteInputs": 1,
-        "noteOutputs": 20,
-        "sourceTrees": 1,
-        "deposit": false,
-        "withdrawal": false,
-        "fee": false
-      },
-      "gasUnits": 2851176
-    },
-    {
-      "shape": {
-        "kind": "transact",
-        "capacity": 30,
-        "noteInputs": 0,
-        "noteOutputs": 21,
-        "sourceTrees": 0,
-        "deposit": true,
-        "withdrawal": false,
-        "fee": false
-      },
-      "gasUnits": 2929606
-    },
-    {
-      "shape": {
-        "kind": "transact",
-        "capacity": 40,
-        "noteInputs": 40,
-        "noteOutputs": 0,
-        "sourceTrees": 1,
-        "deposit": false,
-        "withdrawal": true,
-        "fee": false
-      },
-      "gasUnits": 2058529
-    },
-    {
-      "shape": {
-        "kind": "transact",
-        "capacity": 40,
-        "noteInputs": 0,
-        "noteOutputs": 40,
-        "sourceTrees": 0,
-        "deposit": true,
-        "withdrawal": false,
-        "fee": false
-      },
-      "gasUnits": 4095686
-    },
-    {
-      "shape": {
-        "kind": "transact",
-        "capacity": 40,
-        "noteInputs": 1,
-        "noteOutputs": 39,
-        "sourceTrees": 1,
-        "deposit": false,
-        "withdrawal": false,
-        "fee": false
-      },
-      "gasUnits": 4085438
-    },
-    {
-      "shape": {
-        "kind": "transact",
-        "capacity": 40,
-        "noteInputs": 1,
-        "noteOutputs": 39,
-        "sourceTrees": 1,
-        "deposit": true,
-        "withdrawal": true,
-        "fee": true
-      },
-      "gasUnits": 4157930
-    },
-    {
-      "shape": {
-        "kind": "transact",
-        "capacity": 40,
-        "noteInputs": 1,
-        "noteOutputs": 30,
-        "sourceTrees": 1,
-        "deposit": false,
-        "withdrawal": false,
-        "fee": false
-      },
-      "gasUnits": 3446929
-    },
-    {
-      "shape": {
-        "kind": "transact",
-        "capacity": 40,
-        "noteInputs": 0,
-        "noteOutputs": 31,
-        "sourceTrees": 0,
-        "deposit": true,
-        "withdrawal": false,
-        "fee": false
-      },
-      "gasUnits": 3552330
-    },
-    {
-      "shape": {
-        "kind": "transact",
-        "capacity": 50,
-        "noteInputs": 50,
-        "noteOutputs": 0,
-        "sourceTrees": 1,
-        "deposit": false,
-        "withdrawal": true,
-        "fee": false
-      },
-      "gasUnits": 2314741
-    },
-    {
-      "shape": {
-        "kind": "transact",
-        "capacity": 50,
-        "noteInputs": 0,
-        "noteOutputs": 50,
-        "sourceTrees": 0,
-        "deposit": true,
-        "withdrawal": false,
-        "fee": false
-      },
-      "gasUnits": 4688203
-    },
-    {
-      "shape": {
-        "kind": "transact",
-        "capacity": 50,
-        "noteInputs": 1,
-        "noteOutputs": 49,
-        "sourceTrees": 1,
-        "deposit": false,
-        "withdrawal": false,
-        "fee": false
-      },
-      "gasUnits": 4686372
-    },
-    {
-      "shape": {
-        "kind": "transact",
-        "capacity": 50,
-        "noteInputs": 1,
-        "noteOutputs": 49,
-        "sourceTrees": 1,
-        "deposit": true,
-        "withdrawal": true,
-        "fee": true
-      },
-      "gasUnits": 4758660
-    },
-    {
-      "shape": {
-        "kind": "transact",
-        "capacity": 50,
-        "noteInputs": 1,
-        "noteOutputs": 40,
-        "sourceTrees": 1,
-        "deposit": false,
-        "withdrawal": false,
-        "fee": false
-      },
-      "gasUnits": 4121251
-    },
-    {
-      "shape": {
-        "kind": "transact",
-        "capacity": 50,
-        "noteInputs": 0,
-        "noteOutputs": 41,
-        "sourceTrees": 0,
-        "deposit": true,
-        "withdrawal": false,
-        "fee": false
-      },
-      "gasUnits": 4200064
-    },
-    {
-      "shape": {
-        "kind": "transact",
-        "capacity": 60,
-        "noteInputs": 60,
-        "noteOutputs": 0,
-        "sourceTrees": 1,
-        "deposit": false,
-        "withdrawal": true,
-        "fee": false
-      },
-      "gasUnits": 2595820
-    },
-    {
-      "shape": {
-        "kind": "transact",
-        "capacity": 60,
-        "noteInputs": 0,
-        "noteOutputs": 60,
-        "sourceTrees": 0,
-        "deposit": true,
-        "withdrawal": false,
-        "fee": false
-      },
-      "gasUnits": 5394613
-    },
-    {
-      "shape": {
-        "kind": "transact",
-        "capacity": 60,
-        "noteInputs": 1,
-        "noteOutputs": 59,
-        "sourceTrees": 1,
-        "deposit": false,
-        "withdrawal": false,
-        "fee": false
-      },
-      "gasUnits": 5384244
-    },
-    {
-      "shape": {
-        "kind": "transact",
-        "capacity": 60,
-        "noteInputs": 1,
-        "noteOutputs": 59,
-        "sourceTrees": 1,
-        "deposit": true,
-        "withdrawal": true,
-        "fee": true
-      },
-      "gasUnits": 5456784
-    },
-    {
-      "shape": {
-        "kind": "transact",
-        "capacity": 60,
-        "noteInputs": 1,
-        "noteOutputs": 50,
-        "sourceTrees": 1,
-        "deposit": false,
-        "withdrawal": false,
-        "fee": false
-      },
-      "gasUnits": 4738440
-    },
-    {
-      "shape": {
-        "kind": "transact",
-        "capacity": 60,
-        "noteInputs": 0,
-        "noteOutputs": 51,
-        "sourceTrees": 0,
-        "deposit": true,
-        "withdrawal": false,
-        "fee": false
-      },
-      "gasUnits": 4897347
-    },
-    {
-      "shape": {
-        "kind": "transact",
-        "capacity": 70,
-        "noteInputs": 70,
-        "noteOutputs": 0,
-        "sourceTrees": 1,
-        "deposit": false,
-        "withdrawal": true,
-        "fee": false
-      },
-      "gasUnits": 2852315
-    },
-    {
-      "shape": {
-        "kind": "transact",
-        "capacity": 70,
-        "noteInputs": 0,
-        "noteOutputs": 70,
-        "sourceTrees": 0,
-        "deposit": true,
-        "withdrawal": false,
-        "fee": false
-      },
-      "gasUnits": 6134363
-    },
-    {
-      "shape": {
-        "kind": "transact",
-        "capacity": 70,
-        "noteInputs": 1,
-        "noteOutputs": 69,
-        "sourceTrees": 1,
-        "deposit": false,
-        "withdrawal": false,
-        "fee": false
-      },
-      "gasUnits": 6126334
-    },
-    {
-      "shape": {
-        "kind": "transact",
-        "capacity": 70,
-        "noteInputs": 1,
-        "noteOutputs": 69,
-        "sourceTrees": 1,
-        "deposit": true,
-        "withdrawal": true,
-        "fee": true
-      },
-      "gasUnits": 6198598
-    },
-    {
-      "shape": {
-        "kind": "transact",
-        "capacity": 70,
-        "noteInputs": 1,
-        "noteOutputs": 60,
-        "sourceTrees": 1,
-        "deposit": false,
-        "withdrawal": false,
-        "fee": false
-      },
-      "gasUnits": 5420346
-    },
-    {
-      "shape": {
-        "kind": "transact",
-        "capacity": 70,
-        "noteInputs": 0,
-        "noteOutputs": 61,
-        "sourceTrees": 0,
-        "deposit": true,
-        "withdrawal": false,
-        "fee": false
-      },
-      "gasUnits": 5499521
-    },
-    {
-      "shape": {
-        "kind": "transact",
-        "capacity": 80,
-        "noteInputs": 80,
-        "noteOutputs": 0,
-        "sourceTrees": 1,
-        "deposit": false,
-        "withdrawal": true,
-        "fee": false
-      },
-      "gasUnits": 3108946
-    },
-    {
-      "shape": {
-        "kind": "transact",
-        "capacity": 80,
-        "noteInputs": 0,
-        "noteOutputs": 80,
-        "sourceTrees": 0,
-        "deposit": true,
-        "withdrawal": false,
-        "fee": false
-      },
-      "gasUnits": 6764206
-    },
-    {
-      "shape": {
-        "kind": "transact",
-        "capacity": 80,
-        "noteInputs": 1,
-        "noteOutputs": 79,
-        "sourceTrees": 1,
-        "deposit": false,
-        "withdrawal": false,
-        "fee": false
-      },
-      "gasUnits": 6754015
-    },
-    {
-      "shape": {
-        "kind": "transact",
-        "capacity": 80,
-        "noteInputs": 1,
-        "noteOutputs": 79,
-        "sourceTrees": 1,
-        "deposit": true,
-        "withdrawal": true,
-        "fee": true
-      },
-      "gasUnits": 6826411
-    },
-    {
-      "shape": {
-        "kind": "transact",
-        "capacity": 80,
-        "noteInputs": 1,
-        "noteOutputs": 70,
-        "sourceTrees": 1,
-        "deposit": false,
-        "withdrawal": false,
-        "fee": false
-      },
-      "gasUnits": 6159763
-    },
-    {
-      "shape": {
-        "kind": "transact",
-        "capacity": 80,
-        "noteInputs": 0,
-        "noteOutputs": 71,
-        "sourceTrees": 0,
-        "deposit": true,
-        "withdrawal": false,
-        "fee": false
-      },
-      "gasUnits": 6265635
-    },
-    {
-      "shape": {
-        "kind": "transact",
-        "capacity": 90,
-        "noteInputs": 90,
-        "noteOutputs": 0,
-        "sourceTrees": 1,
-        "deposit": false,
-        "withdrawal": true,
-        "fee": false
-      },
-      "gasUnits": 3365555
-    },
-    {
-      "shape": {
-        "kind": "transact",
-        "capacity": 90,
-        "noteInputs": 0,
-        "noteOutputs": 90,
-        "sourceTrees": 0,
-        "deposit": true,
-        "withdrawal": false,
-        "fee": false
-      },
-      "gasUnits": 7387612
-    },
-    {
-      "shape": {
-        "kind": "transact",
-        "capacity": 90,
-        "noteInputs": 1,
-        "noteOutputs": 89,
-        "sourceTrees": 1,
-        "deposit": false,
-        "withdrawal": false,
-        "fee": false
-      },
-      "gasUnits": 7382661
-    },
-    {
-      "shape": {
-        "kind": "transact",
-        "capacity": 90,
-        "noteInputs": 1,
-        "noteOutputs": 89,
-        "sourceTrees": 1,
-        "deposit": true,
-        "withdrawal": true,
-        "fee": true
-      },
-      "gasUnits": 7455093
-    },
-    {
-      "shape": {
-        "kind": "transact",
-        "capacity": 90,
-        "noteInputs": 1,
-        "noteOutputs": 80,
-        "sourceTrees": 1,
-        "deposit": false,
-        "withdrawal": false,
-        "fee": false
-      },
-      "gasUnits": 6790135
-    },
-    {
-      "shape": {
-        "kind": "transact",
-        "capacity": 90,
-        "noteInputs": 0,
-        "noteOutputs": 81,
-        "sourceTrees": 0,
-        "deposit": true,
-        "withdrawal": false,
-        "fee": false
-      },
-      "gasUnits": 6869658
-    },
-    {
-      "shape": {
-        "kind": "transact",
-        "capacity": 100,
-        "noteInputs": 100,
-        "noteOutputs": 0,
-        "sourceTrees": 1,
-        "deposit": false,
-        "withdrawal": true,
-        "fee": false
-      },
-      "gasUnits": 3622194
-    },
-    {
-      "shape": {
-        "kind": "transact",
-        "capacity": 100,
-        "noteInputs": 0,
-        "noteOutputs": 100,
-        "sourceTrees": 0,
-        "deposit": true,
-        "withdrawal": false,
-        "fee": false
-      },
-      "gasUnits": 8093890
-    },
-    {
-      "shape": {
-        "kind": "transact",
-        "capacity": 100,
-        "noteInputs": 1,
-        "noteOutputs": 99,
-        "sourceTrees": 1,
-        "deposit": false,
-        "withdrawal": false,
-        "fee": false
-      },
-      "gasUnits": 8083686
-    },
-    {
-      "shape": {
-        "kind": "transact",
-        "capacity": 100,
-        "noteInputs": 1,
-        "noteOutputs": 99,
-        "sourceTrees": 1,
-        "deposit": true,
-        "withdrawal": true,
-        "fee": true
-      },
-      "gasUnits": 8156058
-    },
-    {
-      "shape": {
-        "kind": "transact",
-        "capacity": 100,
-        "noteInputs": 1,
-        "noteOutputs": 90,
-        "sourceTrees": 1,
-        "deposit": false,
-        "withdrawal": false,
-        "fee": false
-      },
-      "gasUnits": 7413711
-    },
-    {
-      "shape": {
-        "kind": "transact",
-        "capacity": 100,
-        "noteInputs": 0,
-        "noteOutputs": 91,
-        "sourceTrees": 0,
-        "deposit": true,
-        "withdrawal": false,
-        "fee": false
-      },
-      "gasUnits": 7546036
-    },
-    {
-      "shape": {
-        "kind": "transact",
-        "capacity": 110,
-        "noteInputs": 110,
-        "noteOutputs": 0,
-        "sourceTrees": 1,
-        "deposit": false,
-        "withdrawal": true,
-        "fee": false
-      },
-      "gasUnits": 3878692
-    },
-    {
-      "shape": {
-        "kind": "transact",
-        "capacity": 110,
-        "noteInputs": 0,
-        "noteOutputs": 110,
-        "sourceTrees": 0,
-        "deposit": true,
-        "withdrawal": false,
-        "fee": false
-      },
-      "gasUnits": 8698622
-    },
-    {
-      "shape": {
-        "kind": "transact",
-        "capacity": 110,
-        "noteInputs": 1,
-        "noteOutputs": 109,
-        "sourceTrees": 1,
-        "deposit": false,
-        "withdrawal": false,
-        "fee": false
-      },
-      "gasUnits": 8690520
-    },
-    {
-      "shape": {
-        "kind": "transact",
-        "capacity": 110,
-        "noteInputs": 1,
-        "noteOutputs": 109,
-        "sourceTrees": 1,
-        "deposit": true,
-        "withdrawal": true,
-        "fee": true
-      },
-      "gasUnits": 8762892
-    },
-    {
-      "shape": {
-        "kind": "transact",
-        "capacity": 110,
-        "noteInputs": 1,
-        "noteOutputs": 100,
-        "sourceTrees": 1,
-        "deposit": false,
-        "withdrawal": false,
-        "fee": false
-      },
-      "gasUnits": 8120183
-    },
-    {
-      "shape": {
-        "kind": "transact",
-        "capacity": 110,
-        "noteInputs": 0,
-        "noteOutputs": 101,
-        "sourceTrees": 0,
-        "deposit": true,
-        "withdrawal": false,
-        "fee": false
-      },
-      "gasUnits": 8199887
-    },
-    {
-      "shape": {
-        "kind": "transact",
-        "capacity": 120,
-        "noteInputs": 120,
-        "noteOutputs": 0,
-        "sourceTrees": 1,
-        "deposit": false,
-        "withdrawal": true,
-        "fee": false
-      },
-      "gasUnits": 4160531
-    },
-    {
-      "shape": {
-        "kind": "transact",
-        "capacity": 120,
-        "noteInputs": 0,
-        "noteOutputs": 120,
-        "sourceTrees": 0,
-        "deposit": true,
-        "withdrawal": false,
-        "fee": false
-      },
-      "gasUnits": 9381248
-    },
-    {
-      "shape": {
-        "kind": "transact",
-        "capacity": 120,
-        "noteInputs": 1,
-        "noteOutputs": 119,
-        "sourceTrees": 1,
-        "deposit": false,
-        "withdrawal": false,
-        "fee": false
-      },
-      "gasUnits": 9370838
-    },
-    {
-      "shape": {
-        "kind": "transact",
-        "capacity": 120,
-        "noteInputs": 1,
-        "noteOutputs": 119,
-        "sourceTrees": 1,
-        "deposit": true,
-        "withdrawal": true,
-        "fee": true
-      },
-      "gasUnits": 9443474
-    },
-    {
-      "shape": {
-        "kind": "transact",
-        "capacity": 120,
-        "noteInputs": 1,
-        "noteOutputs": 110,
-        "sourceTrees": 1,
-        "deposit": false,
-        "withdrawal": false,
-        "fee": false
-      },
-      "gasUnits": 8749681
-    },
-    {
-      "shape": {
-        "kind": "transact",
-        "capacity": 120,
-        "noteInputs": 0,
-        "noteOutputs": 111,
-        "sourceTrees": 0,
-        "deposit": true,
-        "withdrawal": false,
-        "fee": false
-      },
-      "gasUnits": 8855978
-    },
-    {
-      "shape": {
-        "kind": "transact",
-        "capacity": 130,
-        "noteInputs": 130,
-        "noteOutputs": 0,
-        "sourceTrees": 1,
-        "deposit": false,
-        "withdrawal": true,
-        "fee": false
-      },
-      "gasUnits": 4417372
-    },
-    {
-      "shape": {
-        "kind": "transact",
-        "capacity": 130,
-        "noteInputs": 0,
-        "noteOutputs": 130,
-        "sourceTrees": 0,
-        "deposit": true,
-        "withdrawal": false,
-        "fee": false
-      },
-      "gasUnits": 9978511
-    },
-    {
-      "shape": {
-        "kind": "transact",
-        "capacity": 130,
-        "noteInputs": 1,
-        "noteOutputs": 129,
-        "sourceTrees": 1,
-        "deposit": false,
-        "withdrawal": false,
-        "fee": false
-      },
-      "gasUnits": 9979793
-    },
-    {
-      "shape": {
-        "kind": "transact",
-        "capacity": 130,
-        "noteInputs": 1,
-        "noteOutputs": 129,
-        "sourceTrees": 1,
-        "deposit": true,
-        "withdrawal": true,
-        "fee": true
-      },
-      "gasUnits": 10052381
-    },
-    {
-      "shape": {
-        "kind": "transact",
-        "capacity": 130,
-        "noteInputs": 1,
-        "noteOutputs": 120,
-        "sourceTrees": 1,
-        "deposit": false,
-        "withdrawal": false,
-        "fee": false
-      },
-      "gasUnits": 9407720
-    },
-    {
-      "shape": {
-        "kind": "transact",
-        "capacity": 130,
-        "noteInputs": 0,
-        "noteOutputs": 121,
-        "sourceTrees": 0,
-        "deposit": true,
-        "withdrawal": false,
-        "fee": false
-      },
-      "gasUnits": 9487764
-    },
-    {
-      "shape": {
-        "kind": "transact",
-        "capacity": 140,
-        "noteInputs": 140,
-        "noteOutputs": 0,
-        "sourceTrees": 1,
-        "deposit": false,
-        "withdrawal": true,
-        "fee": false
-      },
-      "gasUnits": 4674315
-    },
-    {
-      "shape": {
-        "kind": "transact",
-        "capacity": 140,
-        "noteInputs": 0,
-        "noteOutputs": 140,
-        "sourceTrees": 0,
-        "deposit": true,
-        "withdrawal": false,
-        "fee": false
-      },
-      "gasUnits": 10721354
-    },
-    {
-      "shape": {
-        "kind": "transact",
-        "capacity": 140,
-        "noteInputs": 1,
-        "noteOutputs": 139,
-        "sourceTrees": 1,
-        "deposit": false,
-        "withdrawal": false,
-        "fee": false
-      },
-      "gasUnits": 10710896
-    },
-    {
-      "shape": {
-        "kind": "transact",
-        "capacity": 140,
-        "noteInputs": 1,
-        "noteOutputs": 139,
-        "sourceTrees": 1,
-        "deposit": true,
-        "withdrawal": true,
-        "fee": true
-      },
-      "gasUnits": 10783316
-    },
-    {
-      "shape": {
-        "kind": "transact",
-        "capacity": 140,
-        "noteInputs": 1,
-        "noteOutputs": 130,
-        "sourceTrees": 1,
-        "deposit": false,
-        "withdrawal": false,
-        "fee": false
-      },
-      "gasUnits": 10004939
-    },
-    {
-      "shape": {
-        "kind": "transact",
-        "capacity": 140,
-        "noteInputs": 0,
-        "noteOutputs": 131,
-        "sourceTrees": 0,
-        "deposit": true,
-        "withdrawal": false,
-        "fee": false
-      },
-      "gasUnits": 10218191
-    },
-    {
-      "shape": {
-        "kind": "transact",
-        "capacity": 150,
-        "noteInputs": 150,
-        "noteOutputs": 0,
-        "sourceTrees": 1,
-        "deposit": false,
-        "withdrawal": true,
-        "fee": false
-      },
-      "gasUnits": 4931476
-    },
-    {
-      "shape": {
-        "kind": "transact",
-        "capacity": 150,
-        "noteInputs": 0,
-        "noteOutputs": 150,
-        "sourceTrees": 0,
-        "deposit": true,
-        "withdrawal": false,
-        "fee": false
-      },
-      "gasUnits": 11354042
-    },
-    {
-      "shape": {
-        "kind": "transact",
-        "capacity": 150,
-        "noteInputs": 1,
-        "noteOutputs": 149,
-        "sourceTrees": 1,
-        "deposit": false,
-        "withdrawal": false,
-        "fee": false
-      },
-      "gasUnits": 11345733
-    },
-    {
-      "shape": {
-        "kind": "transact",
-        "capacity": 150,
-        "noteInputs": 1,
-        "noteOutputs": 149,
-        "sourceTrees": 1,
-        "deposit": true,
-        "withdrawal": true,
-        "fee": true
-      },
-      "gasUnits": 11417997
-    },
-    {
-      "shape": {
-        "kind": "transact",
-        "capacity": 150,
-        "noteInputs": 1,
-        "noteOutputs": 140,
-        "sourceTrees": 1,
-        "deposit": false,
-        "withdrawal": false,
-        "fee": false
-      },
-      "gasUnits": 10748011
-    },
-    {
-      "shape": {
-        "kind": "transact",
-        "capacity": 150,
-        "noteInputs": 0,
-        "noteOutputs": 141,
-        "sourceTrees": 0,
-        "deposit": true,
-        "withdrawal": false,
-        "fee": false
-      },
-      "gasUnits": 10828260
-    },
-    {
-      "shape": {
-        "kind": "transact",
-        "capacity": 160,
-        "noteInputs": 160,
-        "noteOutputs": 0,
-        "sourceTrees": 1,
-        "deposit": false,
-        "withdrawal": true,
-        "fee": false
-      },
-      "gasUnits": 5188533
-    },
-    {
-      "shape": {
-        "kind": "transact",
-        "capacity": 160,
-        "noteInputs": 0,
-        "noteOutputs": 160,
-        "sourceTrees": 0,
-        "deposit": true,
-        "withdrawal": false,
-        "fee": false
-      },
-      "gasUnits": 11991598
-    },
-    {
-      "shape": {
-        "kind": "transact",
-        "capacity": 160,
-        "noteInputs": 1,
-        "noteOutputs": 159,
-        "sourceTrees": 1,
-        "deposit": false,
-        "withdrawal": false,
-        "fee": false
-      },
-      "gasUnits": 11981247
-    },
-    {
-      "shape": {
-        "kind": "transact",
-        "capacity": 160,
-        "noteInputs": 1,
-        "noteOutputs": 159,
-        "sourceTrees": 1,
-        "deposit": true,
-        "withdrawal": true,
-        "fee": true
-      },
-      "gasUnits": 12053523
-    },
-    {
-      "shape": {
-        "kind": "transact",
-        "capacity": 160,
-        "noteInputs": 1,
-        "noteOutputs": 150,
-        "sourceTrees": 1,
-        "deposit": false,
-        "withdrawal": false,
-        "fee": false
-      },
-      "gasUnits": 11380738
-    },
-    {
-      "shape": {
-        "kind": "transact",
-        "capacity": 160,
-        "noteInputs": 0,
-        "noteOutputs": 151,
-        "sourceTrees": 0,
-        "deposit": true,
-        "withdrawal": false,
-        "fee": false
-      },
-      "gasUnits": 11487011
-    },
-    {
-      "shape": {
-        "kind": "transact",
-        "capacity": 170,
-        "noteInputs": 170,
-        "noteOutputs": 0,
-        "sourceTrees": 1,
-        "deposit": false,
-        "withdrawal": true,
-        "fee": false
-      },
-      "gasUnits": 5445786
-    },
-    {
-      "shape": {
-        "kind": "transact",
-        "capacity": 170,
-        "noteInputs": 0,
-        "noteOutputs": 170,
-        "sourceTrees": 0,
-        "deposit": true,
-        "withdrawal": false,
-        "fee": false
-      },
-      "gasUnits": 12647435
-    },
-    {
-      "shape": {
-        "kind": "transact",
-        "capacity": 170,
-        "noteInputs": 1,
-        "noteOutputs": 169,
-        "sourceTrees": 1,
-        "deposit": false,
-        "withdrawal": false,
-        "fee": false
-      },
-      "gasUnits": 12641903
-    },
-    {
-      "shape": {
-        "kind": "transact",
-        "capacity": 170,
-        "noteInputs": 1,
-        "noteOutputs": 169,
-        "sourceTrees": 1,
-        "deposit": true,
-        "withdrawal": true,
-        "fee": true
-      },
-      "gasUnits": 12714227
-    },
-    {
-      "shape": {
-        "kind": "transact",
-        "capacity": 170,
-        "noteInputs": 1,
-        "noteOutputs": 160,
-        "sourceTrees": 1,
-        "deposit": false,
-        "withdrawal": false,
-        "fee": false
-      },
-      "gasUnits": 12018739
-    },
-    {
-      "shape": {
-        "kind": "transact",
-        "capacity": 170,
-        "noteInputs": 0,
-        "noteOutputs": 161,
-        "sourceTrees": 0,
-        "deposit": true,
-        "withdrawal": false,
-        "fee": false
-      },
-      "gasUnits": 12099108
-    },
-    {
-      "shape": {
-        "kind": "transact",
-        "capacity": 180,
-        "noteInputs": 180,
-        "noteOutputs": 0,
-        "sourceTrees": 1,
-        "deposit": false,
-        "withdrawal": true,
-        "fee": false
-      },
-      "gasUnits": 5703079
-    },
-    {
-      "shape": {
-        "kind": "transact",
-        "capacity": 180,
-        "noteInputs": 0,
-        "noteOutputs": 180,
-        "sourceTrees": 0,
-        "deposit": true,
-        "withdrawal": false,
-        "fee": false
-      },
-      "gasUnits": 13337861
-    },
-    {
-      "shape": {
-        "kind": "transact",
-        "capacity": 180,
-        "noteInputs": 1,
-        "noteOutputs": 179,
-        "sourceTrees": 1,
-        "deposit": false,
-        "withdrawal": false,
-        "fee": false
-      },
-      "gasUnits": 13327451
-    },
-    {
-      "shape": {
-        "kind": "transact",
-        "capacity": 180,
-        "noteInputs": 1,
-        "noteOutputs": 179,
-        "sourceTrees": 1,
-        "deposit": true,
-        "withdrawal": true,
-        "fee": true
-      },
-      "gasUnits": 13399715
-    },
-    {
-      "shape": {
-        "kind": "transact",
-        "capacity": 180,
-        "noteInputs": 1,
-        "noteOutputs": 170,
-        "sourceTrees": 1,
-        "deposit": false,
-        "withdrawal": false,
-        "fee": false
-      },
-      "gasUnits": 12674675
-    },
-    {
-      "shape": {
-        "kind": "transact",
-        "capacity": 180,
-        "noteInputs": 0,
-        "noteOutputs": 171,
-        "sourceTrees": 0,
-        "deposit": true,
-        "withdrawal": false,
-        "fee": false
-      },
-      "gasUnits": 12807748
-    },
-    {
-      "shape": {
-        "kind": "transact",
-        "capacity": 190,
-        "noteInputs": 190,
-        "noteOutputs": 0,
-        "sourceTrees": 1,
-        "deposit": false,
-        "withdrawal": true,
-        "fee": false
-      },
-      "gasUnits": 5955673
-    },
-    {
-      "shape": {
-        "kind": "transact",
-        "capacity": 190,
-        "noteInputs": 0,
-        "noteOutputs": 190,
-        "sourceTrees": 0,
-        "deposit": true,
-        "withdrawal": false,
-        "fee": false
-      },
-      "gasUnits": 13951029
+      "gasUnits": 2841355
     },
     {
       "shape": {
@@ -2026,9 +310,9 @@
         "sourceTrees": 1,
         "deposit": false,
         "withdrawal": false,
-        "fee": false
+        "fee": true
       },
-      "gasUnits": 13942227
+      "gasUnits": 13997403
     },
     {
       "shape": {
@@ -2038,140 +322,23 @@
         "noteOutputs": 189,
         "sourceTrees": 1,
         "deposit": true,
-        "withdrawal": true,
-        "fee": true
+        "withdrawal": false,
+        "fee": false
       },
-      "gasUnits": 14014599
+      "gasUnits": 13994112
     },
     {
       "shape": {
         "kind": "transact",
         "capacity": 190,
         "noteInputs": 1,
-        "noteOutputs": 180,
+        "noteOutputs": 189,
         "sourceTrees": 1,
         "deposit": false,
-        "withdrawal": false,
+        "withdrawal": true,
         "fee": false
       },
-      "gasUnits": 13365295
-    },
-    {
-      "shape": {
-        "kind": "transact",
-        "capacity": 190,
-        "noteInputs": 0,
-        "noteOutputs": 181,
-        "sourceTrees": 0,
-        "deposit": true,
-        "withdrawal": false,
-        "fee": false
-      },
-      "gasUnits": 13445893
-    },
-    {
-      "shape": {
-        "kind": "transact",
-        "capacity": 3,
-        "noteInputs": 2,
-        "noteOutputs": 1,
-        "sourceTrees": 1,
-        "deposit": false,
-        "withdrawal": false,
-        "fee": false
-      },
-      "gasUnits": 1567774
-    },
-    {
-      "shape": {
-        "kind": "transact",
-        "capacity": 4,
-        "noteInputs": 2,
-        "noteOutputs": 2,
-        "sourceTrees": 1,
-        "deposit": false,
-        "withdrawal": false,
-        "fee": false
-      },
-      "gasUnits": 1588120
-    },
-    {
-      "shape": {
-        "kind": "transact",
-        "capacity": 5,
-        "noteInputs": 3,
-        "noteOutputs": 2,
-        "sourceTrees": 1,
-        "deposit": false,
-        "withdrawal": false,
-        "fee": false
-      },
-      "gasUnits": 1613768
-    },
-    {
-      "shape": {
-        "kind": "transact",
-        "capacity": 10,
-        "noteInputs": 5,
-        "noteOutputs": 5,
-        "sourceTrees": 1,
-        "deposit": false,
-        "withdrawal": false,
-        "fee": false
-      },
-      "gasUnits": 1990581
-    },
-    {
-      "shape": {
-        "kind": "transact",
-        "capacity": 20,
-        "noteInputs": 7,
-        "noteOutputs": 4,
-        "sourceTrees": 1,
-        "deposit": false,
-        "withdrawal": false,
-        "fee": false
-      },
-      "gasUnits": 1972875
-    },
-    {
-      "shape": {
-        "kind": "transact",
-        "capacity": 20,
-        "noteInputs": 10,
-        "noteOutputs": 10,
-        "sourceTrees": 1,
-        "deposit": false,
-        "withdrawal": false,
-        "fee": false
-      },
-      "gasUnits": 2365722
-    },
-    {
-      "shape": {
-        "kind": "transact",
-        "capacity": 50,
-        "noteInputs": 25,
-        "noteOutputs": 25,
-        "sourceTrees": 1,
-        "deposit": false,
-        "withdrawal": false,
-        "fee": false
-      },
-      "gasUnits": 3770554
-    },
-    {
-      "shape": {
-        "kind": "transact",
-        "capacity": 190,
-        "noteInputs": 95,
-        "noteOutputs": 95,
-        "sourceTrees": 1,
-        "deposit": false,
-        "withdrawal": false,
-        "fee": false
-      },
-      "gasUnits": 10220423
+      "gasUnits": 14004349
     },
     {
       "shape": {
@@ -2182,7 +349,7 @@
         "sourceTrees": 1,
         "fee": false
       },
-      "gasUnits": 1676676
+      "gasUnits": 1680750
     },
     {
       "shape": {
@@ -2193,7 +360,7 @@
         "sourceTrees": 1,
         "fee": true
       },
-      "gasUnits": 1701129
+      "gasUnits": 1705371
     },
     {
       "shape": {
@@ -2204,7 +371,7 @@
         "sourceTrees": 1,
         "fee": false
       },
-      "gasUnits": 1826935
+      "gasUnits": 1832894
     },
     {
       "shape": {
@@ -2215,7 +382,7 @@
         "sourceTrees": 1,
         "fee": true
       },
-      "gasUnits": 1851316
+      "gasUnits": 1857371
     },
     {
       "shape": {
@@ -2226,7 +393,7 @@
         "sourceTrees": 1,
         "fee": false
       },
-      "gasUnits": 1977735
+      "gasUnits": 1985711
     },
     {
       "shape": {
@@ -2237,7 +404,7 @@
         "sourceTrees": 1,
         "fee": true
       },
-      "gasUnits": 2002416
+      "gasUnits": 2010152
     },
     {
       "shape": {
@@ -2248,7 +415,7 @@
         "sourceTrees": 1,
         "fee": false
       },
-      "gasUnits": 2123316
+      "gasUnits": 2133021
     },
     {
       "shape": {
@@ -2259,7 +426,7 @@
         "sourceTrees": 1,
         "fee": true
       },
-      "gasUnits": 2147757
+      "gasUnits": 2157426
     },
     {
       "shape": {
@@ -2270,7 +437,7 @@
         "sourceTrees": 1,
         "fee": false
       },
-      "gasUnits": 2276557
+      "gasUnits": 2288087
     },
     {
       "shape": {
@@ -2281,7 +448,7 @@
         "sourceTrees": 1,
         "fee": true
       },
-      "gasUnits": 2300950
+      "gasUnits": 2312612
     },
     {
       "shape": {
@@ -2292,7 +459,7 @@
         "sourceTrees": 1,
         "fee": false
       },
-      "gasUnits": 2476556
+      "gasUnits": 2496308
     },
     {
       "shape": {
@@ -2303,7 +470,7 @@
         "sourceTrees": 1,
         "fee": true
       },
-      "gasUnits": 2500889
+      "gasUnits": 2520881
     },
     {
       "shape": {
@@ -2314,7 +481,7 @@
         "sourceTrees": 1,
         "fee": false
       },
-      "gasUnits": 3049907
+      "gasUnits": 3070683
     },
     {
       "shape": {
@@ -2325,7 +492,7 @@
         "sourceTrees": 1,
         "fee": true
       },
-      "gasUnits": 3074288
+      "gasUnits": 3095280
     },
     {
       "shape": {
@@ -2336,7 +503,7 @@
         "sourceTrees": 1,
         "fee": false
       },
-      "gasUnits": 3285306
+      "gasUnits": 3271856
     },
     {
       "shape": {
@@ -2347,7 +514,7 @@
         "sourceTrees": 1,
         "fee": true
       },
-      "gasUnits": 3309855
+      "gasUnits": 3296441
     },
     {
       "shape": {
@@ -2358,7 +525,7 @@
         "sourceTrees": 1,
         "fee": false
       },
-      "gasUnits": 4576999
+      "gasUnits": 4565616
     },
     {
       "shape": {
@@ -2369,7 +536,7 @@
         "sourceTrees": 1,
         "fee": true
       },
-      "gasUnits": 4601392
+      "gasUnits": 4590141
     },
     {
       "shape": {
@@ -2380,7 +547,7 @@
         "sourceTrees": 1,
         "fee": false
       },
-      "gasUnits": 4791810
+      "gasUnits": 4773050
     },
     {
       "shape": {
@@ -2391,7 +558,7 @@
         "sourceTrees": 1,
         "fee": true
       },
-      "gasUnits": 4816167
+      "gasUnits": 4797515
     },
     {
       "shape": {
@@ -2402,7 +569,7 @@
         "sourceTrees": 1,
         "fee": false
       },
-      "gasUnits": 6100215
+      "gasUnits": 6083690
     },
     {
       "shape": {
@@ -2413,7 +580,7 @@
         "sourceTrees": 1,
         "fee": true
       },
-      "gasUnits": 6124836
+      "gasUnits": 6108311
     },
     {
       "shape": {
@@ -2424,7 +591,7 @@
         "sourceTrees": 1,
         "fee": false
       },
-      "gasUnits": 6341290
+      "gasUnits": 6317412
     },
     {
       "shape": {
@@ -2435,7 +602,7 @@
         "sourceTrees": 1,
         "fee": true
       },
-      "gasUnits": 6365743
+      "gasUnits": 6341913
     },
     {
       "shape": {
@@ -2446,7 +613,7 @@
         "sourceTrees": 1,
         "fee": false
       },
-      "gasUnits": 7647729
+      "gasUnits": 7625990
     },
     {
       "shape": {
@@ -2457,7 +624,7 @@
         "sourceTrees": 1,
         "fee": true
       },
-      "gasUnits": 7672350
+      "gasUnits": 7650407
     },
     {
       "shape": {
@@ -2468,7 +635,7 @@
         "sourceTrees": 1,
         "fee": false
       },
-      "gasUnits": 7868067
+      "gasUnits": 7838915
     },
     {
       "shape": {
@@ -2479,7 +646,7 @@
         "sourceTrees": 1,
         "fee": true
       },
-      "gasUnits": 7892400
+      "gasUnits": 7863356
     },
     {
       "shape": {
@@ -2490,7 +657,7 @@
         "sourceTrees": 1,
         "fee": false
       },
-      "gasUnits": 9196958
+      "gasUnits": 9169849
     },
     {
       "shape": {
@@ -2501,7 +668,7 @@
         "sourceTrees": 1,
         "fee": true
       },
-      "gasUnits": 9221555
+      "gasUnits": 9194386
     },
     {
       "shape": {
@@ -2512,7 +679,7 @@
         "sourceTrees": 1,
         "fee": false
       },
-      "gasUnits": 9417771
+      "gasUnits": 9383405
     },
     {
       "shape": {
@@ -2523,7 +690,7 @@
         "sourceTrees": 1,
         "fee": true
       },
-      "gasUnits": 9442380
+      "gasUnits": 9407930
     },
     {
       "shape": {
@@ -2534,7 +701,7 @@
         "sourceTrees": 1,
         "fee": false
       },
-      "gasUnits": 10758065
+      "gasUnits": 10725730
     },
     {
       "shape": {
@@ -2545,7 +712,7 @@
         "sourceTrees": 1,
         "fee": true
       },
-      "gasUnits": 10782782
+      "gasUnits": 10750303
     },
     {
       "shape": {
@@ -2556,7 +723,7 @@
         "sourceTrees": 1,
         "fee": false
       },
-      "gasUnits": 10983641
+      "gasUnits": 10943953
     },
     {
       "shape": {
@@ -2567,7 +734,7 @@
         "sourceTrees": 1,
         "fee": true
       },
-      "gasUnits": 11008178
+      "gasUnits": 10968526
     },
     {
       "shape": {
@@ -2578,7 +745,7 @@
         "sourceTrees": 1,
         "fee": false
       },
-      "gasUnits": 12327125
+      "gasUnits": 12289696
     },
     {
       "shape": {
@@ -2589,7 +756,7 @@
         "sourceTrees": 1,
         "fee": true
       },
-      "gasUnits": 12351590
+      "gasUnits": 12314137
     },
     {
       "shape": {
@@ -2600,7 +767,7 @@
         "sourceTrees": 1,
         "fee": false
       },
-      "gasUnits": 12579156
+      "gasUnits": 12534278
     },
     {
       "shape": {
@@ -2611,7 +778,7 @@
         "sourceTrees": 1,
         "fee": true
       },
-      "gasUnits": 12603669
+      "gasUnits": 12558911
     },
     {
       "shape": {
@@ -2622,7 +789,7 @@
         "sourceTrees": 1,
         "fee": false
       },
-      "gasUnits": 13934653
+      "gasUnits": 13891830
     },
     {
       "shape": {
@@ -2633,7 +800,7 @@
         "sourceTrees": 1,
         "fee": true
       },
-      "gasUnits": 13959070
+      "gasUnits": 13916319
     },
     {
       "shape": {
@@ -2644,7 +811,7 @@
         "sourceTrees": 1,
         "fee": false
       },
-      "gasUnits": 1789376
+      "gasUnits": 1795333
     },
     {
       "shape": {
@@ -2655,7 +822,7 @@
         "sourceTrees": 1,
         "fee": true
       },
-      "gasUnits": 1813781
+      "gasUnits": 1819978
     },
     {
       "shape": {
@@ -2666,7 +833,7 @@
         "sourceTrees": 1,
         "fee": false
       },
-      "gasUnits": 2125765
+      "gasUnits": 2137143
     },
     {
       "shape": {
@@ -2677,7 +844,7 @@
         "sourceTrees": 1,
         "fee": true
       },
-      "gasUnits": 2150266
+      "gasUnits": 2161740
     },
     {
       "shape": {
@@ -2688,7 +855,7 @@
         "sourceTrees": 1,
         "fee": false
       },
-      "gasUnits": 2848546
+      "gasUnits": 2869472
     },
     {
       "shape": {
@@ -2699,35 +866,35 @@
         "sourceTrees": 1,
         "fee": true
       },
-      "gasUnits": 2872987
+      "gasUnits": 2894009
     },
     {
       "shape": {
         "kind": "create-credit",
         "fee": false
       },
-      "gasUnits": 1566275
+      "gasUnits": 1567935
     },
     {
       "shape": {
         "kind": "create-credit",
         "fee": true
       },
-      "gasUnits": 1629660
+      "gasUnits": 1631609
     },
     {
       "shape": {
         "kind": "update-credit",
         "fee": false
       },
-      "gasUnits": 1545531
+      "gasUnits": 1547764
     },
     {
       "shape": {
         "kind": "update-credit",
         "fee": true
       },
-      "gasUnits": 1591840
+      "gasUnits": 1594194
     },
     {
       "shape": {
@@ -2754,7 +921,7 @@
         "authorization": "direct",
         "bitmapWord": "empty"
       },
-      "gasUnits": 109629
+      "gasUnits": 109702
     },
     {
       "shape": {
@@ -2763,87 +930,126 @@
         "authorization": "eoa",
         "bitmapWord": "empty"
       },
-      "gasUnits": 115387
+      "gasUnits": 115460
     },
     {
       "shape": {
         "kind": "shield",
         "noteOutputs": 1,
-        "fee": true
+        "fee": false
       },
-      "gasUnits": 761732
+      "gasUnits": 737225
     },
     {
       "shape": {
         "kind": "shield",
         "noteOutputs": 2,
-        "fee": true
+        "fee": false
       },
-      "gasUnits": 850225
+      "gasUnits": 825862
     },
     {
       "shape": {
         "kind": "shield",
         "noteOutputs": 3,
-        "fee": true
+        "fee": false
       },
-      "gasUnits": 987548
+      "gasUnits": 963365
     },
     {
       "shape": {
         "kind": "shield",
         "noteOutputs": 4,
-        "fee": true
+        "fee": false
       },
-      "gasUnits": 1053880
+      "gasUnits": 1029829
     },
     {
       "shape": {
         "kind": "shield",
         "noteOutputs": 5,
-        "fee": true
+        "fee": false
       },
-      "gasUnits": 1218048
+      "gasUnits": 1194141
     },
     {
       "shape": {
         "kind": "shield",
         "noteOutputs": 6,
-        "fee": true
+        "fee": false
       },
-      "gasUnits": 1306513
+      "gasUnits": 1282726
     },
     {
       "shape": {
         "kind": "shield",
         "noteOutputs": 7,
-        "fee": true
+        "fee": false
       },
-      "gasUnits": 1443857
+      "gasUnits": 1420286
     },
     {
       "shape": {
         "kind": "shield",
         "noteOutputs": 8,
-        "fee": true
+        "fee": false
       },
-      "gasUnits": 1488037
+      "gasUnits": 1464634
     },
     {
       "shape": {
         "kind": "shield",
         "noteOutputs": 9,
-        "fee": true
+        "fee": false
       },
-      "gasUnits": 1679085
+      "gasUnits": 1655826
     },
     {
       "shape": {
         "kind": "shield",
         "noteOutputs": 10,
-        "fee": true
+        "fee": false
       },
-      "gasUnits": 1767521
+      "gasUnits": 1744406
+    },
+    {
+      "shape": {
+        "kind": "transact",
+        "capacity": 1,
+        "noteInputs": 1,
+        "noteOutputs": 0,
+        "sourceTrees": 1,
+        "deposit": false,
+        "withdrawal": true,
+        "fee": false
+      },
+      "gasUnits": 1037169
+    },
+    {
+      "shape": {
+        "kind": "transact",
+        "capacity": 2,
+        "noteInputs": 2,
+        "noteOutputs": 0,
+        "sourceTrees": 1,
+        "deposit": false,
+        "withdrawal": true,
+        "fee": false
+      },
+      "gasUnits": 1063531
+    },
+    {
+      "shape": {
+        "kind": "transact",
+        "capacity": 2,
+        "noteInputs": 0,
+        "noteOutputs": 2,
+        "sourceTrees": 0,
+        "deposit": true,
+        "withdrawal": false,
+        "fee": false
+      },
+      "gasUnits": 1557965
     },
     {
       "shape": {
@@ -2854,9 +1060,9 @@
         "sourceTrees": 1,
         "deposit": false,
         "withdrawal": false,
-        "fee": true
+        "fee": false
       },
-      "gasUnits": 1566750
+      "gasUnits": 1545536
     },
     {
       "shape": {
@@ -2866,140 +1072,1934 @@
         "noteOutputs": 1,
         "sourceTrees": 1,
         "deposit": true,
-        "withdrawal": false,
-        "fee": false
+        "withdrawal": true,
+        "fee": true
       },
-      "gasUnits": 1563374
+      "gasUnits": 1617906
     },
     {
       "shape": {
         "kind": "transact",
-        "capacity": 2,
+        "capacity": 3,
+        "noteInputs": 3,
+        "noteOutputs": 0,
+        "sourceTrees": 1,
+        "deposit": false,
+        "withdrawal": true,
+        "fee": false
+      },
+      "gasUnits": 1089642
+    },
+    {
+      "shape": {
+        "kind": "transact",
+        "capacity": 3,
+        "noteInputs": 0,
+        "noteOutputs": 3,
+        "sourceTrees": 0,
+        "deposit": true,
+        "withdrawal": false,
+        "fee": false
+      },
+      "gasUnits": 1779326
+    },
+    {
+      "shape": {
+        "kind": "transact",
+        "capacity": 3,
         "noteInputs": 1,
+        "noteOutputs": 2,
+        "sourceTrees": 1,
+        "deposit": false,
+        "withdrawal": false,
+        "fee": false
+      },
+      "gasUnits": 1566949
+    },
+    {
+      "shape": {
+        "kind": "transact",
+        "capacity": 3,
+        "noteInputs": 1,
+        "noteOutputs": 2,
+        "sourceTrees": 1,
+        "deposit": true,
+        "withdrawal": true,
+        "fee": true
+      },
+      "gasUnits": 1639259
+    },
+    {
+      "shape": {
+        "kind": "transact",
+        "capacity": 4,
+        "noteInputs": 4,
+        "noteOutputs": 0,
+        "sourceTrees": 1,
+        "deposit": false,
+        "withdrawal": true,
+        "fee": false
+      },
+      "gasUnits": 1115900
+    },
+    {
+      "shape": {
+        "kind": "transact",
+        "capacity": 4,
+        "noteInputs": 0,
+        "noteOutputs": 4,
+        "sourceTrees": 0,
+        "deposit": true,
+        "withdrawal": false,
+        "fee": false
+      },
+      "gasUnits": 1798757
+    },
+    {
+      "shape": {
+        "kind": "transact",
+        "capacity": 4,
+        "noteInputs": 1,
+        "noteOutputs": 3,
+        "sourceTrees": 1,
+        "deposit": false,
+        "withdrawal": false,
+        "fee": false
+      },
+      "gasUnits": 1788385
+    },
+    {
+      "shape": {
+        "kind": "transact",
+        "capacity": 4,
+        "noteInputs": 1,
+        "noteOutputs": 3,
+        "sourceTrees": 1,
+        "deposit": true,
+        "withdrawal": true,
+        "fee": true
+      },
+      "gasUnits": 1860623
+    },
+    {
+      "shape": {
+        "kind": "transact",
+        "capacity": 5,
+        "noteInputs": 5,
+        "noteOutputs": 0,
+        "sourceTrees": 1,
+        "deposit": false,
+        "withdrawal": true,
+        "fee": false
+      },
+      "gasUnits": 1142289
+    },
+    {
+      "shape": {
+        "kind": "transact",
+        "capacity": 5,
+        "noteInputs": 0,
+        "noteOutputs": 5,
+        "sourceTrees": 0,
+        "deposit": true,
+        "withdrawal": false,
+        "fee": false
+      },
+      "gasUnits": 1886099
+    },
+    {
+      "shape": {
+        "kind": "transact",
+        "capacity": 5,
+        "noteInputs": 1,
+        "noteOutputs": 4,
+        "sourceTrees": 1,
+        "deposit": false,
+        "withdrawal": false,
+        "fee": false
+      },
+      "gasUnits": 1807457
+    },
+    {
+      "shape": {
+        "kind": "transact",
+        "capacity": 5,
+        "noteInputs": 1,
+        "noteOutputs": 4,
+        "sourceTrees": 1,
+        "deposit": true,
+        "withdrawal": true,
+        "fee": true
+      },
+      "gasUnits": 1880055
+    },
+    {
+      "shape": {
+        "kind": "transact",
+        "capacity": 6,
+        "noteInputs": 6,
+        "noteOutputs": 0,
+        "sourceTrees": 1,
+        "deposit": false,
+        "withdrawal": true,
+        "fee": false
+      },
+      "gasUnits": 1168584
+    },
+    {
+      "shape": {
+        "kind": "transact",
+        "capacity": 6,
+        "noteInputs": 0,
+        "noteOutputs": 6,
+        "sourceTrees": 0,
+        "deposit": true,
+        "withdrawal": false,
+        "fee": false
+      },
+      "gasUnits": 1902304
+    },
+    {
+      "shape": {
+        "kind": "transact",
+        "capacity": 6,
+        "noteInputs": 1,
+        "noteOutputs": 5,
+        "sourceTrees": 1,
+        "deposit": false,
+        "withdrawal": false,
+        "fee": false
+      },
+      "gasUnits": 1894945
+    },
+    {
+      "shape": {
+        "kind": "transact",
+        "capacity": 6,
+        "noteInputs": 1,
+        "noteOutputs": 5,
+        "sourceTrees": 1,
+        "deposit": true,
+        "withdrawal": true,
+        "fee": true
+      },
+      "gasUnits": 1967519
+    },
+    {
+      "shape": {
+        "kind": "transact",
+        "capacity": 7,
+        "noteInputs": 7,
+        "noteOutputs": 0,
+        "sourceTrees": 1,
+        "deposit": false,
+        "withdrawal": true,
+        "fee": false
+      },
+      "gasUnits": 1195082
+    },
+    {
+      "shape": {
+        "kind": "transact",
+        "capacity": 7,
+        "noteInputs": 0,
+        "noteOutputs": 7,
+        "sourceTrees": 0,
+        "deposit": true,
+        "withdrawal": false,
+        "fee": false
+      },
+      "gasUnits": 2016551
+    },
+    {
+      "shape": {
+        "kind": "transact",
+        "capacity": 7,
+        "noteInputs": 1,
+        "noteOutputs": 6,
+        "sourceTrees": 1,
+        "deposit": false,
+        "withdrawal": false,
+        "fee": false
+      },
+      "gasUnits": 1911405
+    },
+    {
+      "shape": {
+        "kind": "transact",
+        "capacity": 7,
+        "noteInputs": 1,
+        "noteOutputs": 6,
+        "sourceTrees": 1,
+        "deposit": true,
+        "withdrawal": true,
+        "fee": true
+      },
+      "gasUnits": 1983811
+    },
+    {
+      "shape": {
+        "kind": "transact",
+        "capacity": 8,
+        "noteInputs": 8,
+        "noteOutputs": 0,
+        "sourceTrees": 1,
+        "deposit": false,
+        "withdrawal": true,
+        "fee": false
+      },
+      "gasUnits": 1221270
+    },
+    {
+      "shape": {
+        "kind": "transact",
+        "capacity": 8,
+        "noteInputs": 0,
+        "noteOutputs": 8,
+        "sourceTrees": 0,
+        "deposit": true,
+        "withdrawal": false,
+        "fee": false
+      },
+      "gasUnits": 2035811
+    },
+    {
+      "shape": {
+        "kind": "transact",
+        "capacity": 8,
+        "noteInputs": 1,
+        "noteOutputs": 7,
+        "sourceTrees": 1,
+        "deposit": false,
+        "withdrawal": false,
+        "fee": false
+      },
+      "gasUnits": 2025593
+    },
+    {
+      "shape": {
+        "kind": "transact",
+        "capacity": 8,
+        "noteInputs": 1,
+        "noteOutputs": 7,
+        "sourceTrees": 1,
+        "deposit": true,
+        "withdrawal": true,
+        "fee": true
+      },
+      "gasUnits": 2097963
+    },
+    {
+      "shape": {
+        "kind": "transact",
+        "capacity": 9,
+        "noteInputs": 9,
+        "noteOutputs": 0,
+        "sourceTrees": 1,
+        "deposit": false,
+        "withdrawal": true,
+        "fee": false
+      },
+      "gasUnits": 1247699
+    },
+    {
+      "shape": {
+        "kind": "transact",
+        "capacity": 9,
+        "noteInputs": 0,
+        "noteOutputs": 9,
+        "sourceTrees": 0,
+        "deposit": true,
+        "withdrawal": false,
+        "fee": false
+      },
+      "gasUnits": 2123440
+    },
+    {
+      "shape": {
+        "kind": "transact",
+        "capacity": 9,
+        "noteInputs": 1,
+        "noteOutputs": 8,
+        "sourceTrees": 1,
+        "deposit": false,
+        "withdrawal": false,
+        "fee": false
+      },
+      "gasUnits": 2044629
+    },
+    {
+      "shape": {
+        "kind": "transact",
+        "capacity": 9,
+        "noteInputs": 1,
+        "noteOutputs": 8,
+        "sourceTrees": 1,
+        "deposit": true,
+        "withdrawal": true,
+        "fee": true
+      },
+      "gasUnits": 2117311
+    },
+    {
+      "shape": {
+        "kind": "transact",
+        "capacity": 10,
+        "noteInputs": 10,
+        "noteOutputs": 0,
+        "sourceTrees": 1,
+        "deposit": false,
+        "withdrawal": true,
+        "fee": false
+      },
+      "gasUnits": 1273900
+    },
+    {
+      "shape": {
+        "kind": "transact",
+        "capacity": 10,
+        "noteInputs": 0,
+        "noteOutputs": 10,
+        "sourceTrees": 0,
+        "deposit": true,
+        "withdrawal": false,
+        "fee": false
+      },
+      "gasUnits": 2136926
+    },
+    {
+      "shape": {
+        "kind": "transact",
+        "capacity": 10,
+        "noteInputs": 1,
+        "noteOutputs": 9,
+        "sourceTrees": 1,
+        "deposit": false,
+        "withdrawal": false,
+        "fee": false
+      },
+      "gasUnits": 2132426
+    },
+    {
+      "shape": {
+        "kind": "transact",
+        "capacity": 10,
+        "noteInputs": 1,
+        "noteOutputs": 9,
+        "sourceTrees": 1,
+        "deposit": true,
+        "withdrawal": true,
+        "fee": true
+      },
+      "gasUnits": 2204736
+    },
+    {
+      "shape": {
+        "kind": "transact",
+        "capacity": 20,
+        "noteInputs": 20,
+        "noteOutputs": 0,
+        "sourceTrees": 1,
+        "deposit": false,
+        "withdrawal": true,
+        "fee": false
+      },
+      "gasUnits": 1537888
+    },
+    {
+      "shape": {
+        "kind": "transact",
+        "capacity": 20,
+        "noteInputs": 0,
+        "noteOutputs": 20,
+        "sourceTrees": 0,
+        "deposit": true,
+        "withdrawal": false,
+        "fee": false
+      },
+      "gasUnits": 2820398
+    },
+    {
+      "shape": {
+        "kind": "transact",
+        "capacity": 20,
+        "noteInputs": 1,
+        "noteOutputs": 19,
+        "sourceTrees": 1,
+        "deposit": false,
+        "withdrawal": false,
+        "fee": false
+      },
+      "gasUnits": 2809980
+    },
+    {
+      "shape": {
+        "kind": "transact",
+        "capacity": 20,
+        "noteInputs": 1,
+        "noteOutputs": 19,
+        "sourceTrees": 1,
+        "deposit": true,
+        "withdrawal": true,
+        "fee": true
+      },
+      "gasUnits": 2882506
+    },
+    {
+      "shape": {
+        "kind": "transact",
+        "capacity": 20,
+        "noteInputs": 1,
+        "noteOutputs": 10,
+        "sourceTrees": 1,
+        "deposit": false,
+        "withdrawal": false,
+        "fee": false
+      },
+      "gasUnits": 2167714
+    },
+    {
+      "shape": {
+        "kind": "transact",
+        "capacity": 20,
+        "noteInputs": 0,
+        "noteOutputs": 11,
+        "sourceTrees": 0,
+        "deposit": true,
+        "withdrawal": false,
+        "fee": false
+      },
+      "gasUnits": 2299788
+    },
+    {
+      "shape": {
+        "kind": "transact",
+        "capacity": 30,
+        "noteInputs": 30,
+        "noteOutputs": 0,
+        "sourceTrees": 1,
+        "deposit": false,
+        "withdrawal": true,
+        "fee": false
+      },
+      "gasUnits": 1825822
+    },
+    {
+      "shape": {
+        "kind": "transact",
+        "capacity": 30,
+        "noteInputs": 0,
+        "noteOutputs": 30,
+        "sourceTrees": 0,
+        "deposit": true,
+        "withdrawal": false,
+        "fee": false
+      },
+      "gasUnits": 3449782
+    },
+    {
+      "shape": {
+        "kind": "transact",
+        "capacity": 30,
+        "noteInputs": 1,
+        "noteOutputs": 29,
+        "sourceTrees": 1,
+        "deposit": false,
+        "withdrawal": false,
+        "fee": false
+      },
+      "gasUnits": 3442066
+    },
+    {
+      "shape": {
+        "kind": "transact",
+        "capacity": 30,
+        "noteInputs": 1,
+        "noteOutputs": 29,
+        "sourceTrees": 1,
+        "deposit": true,
+        "withdrawal": true,
+        "fee": true
+      },
+      "gasUnits": 3514532
+    },
+    {
+      "shape": {
+        "kind": "transact",
+        "capacity": 30,
+        "noteInputs": 1,
+        "noteOutputs": 20,
+        "sourceTrees": 1,
+        "deposit": false,
+        "withdrawal": false,
+        "fee": false
+      },
+      "gasUnits": 2875316
+    },
+    {
+      "shape": {
+        "kind": "transact",
+        "capacity": 30,
+        "noteInputs": 0,
+        "noteOutputs": 21,
+        "sourceTrees": 0,
+        "deposit": true,
+        "withdrawal": false,
+        "fee": false
+      },
+      "gasUnits": 2954119
+    },
+    {
+      "shape": {
+        "kind": "transact",
+        "capacity": 40,
+        "noteInputs": 40,
+        "noteOutputs": 0,
+        "sourceTrees": 1,
+        "deposit": false,
+        "withdrawal": true,
+        "fee": false
+      },
+      "gasUnits": 2057582
+    },
+    {
+      "shape": {
+        "kind": "transact",
+        "capacity": 40,
+        "noteInputs": 0,
+        "noteOutputs": 40,
+        "sourceTrees": 0,
+        "deposit": true,
+        "withdrawal": false,
+        "fee": false
+      },
+      "gasUnits": 4100952
+    },
+    {
+      "shape": {
+        "kind": "transact",
+        "capacity": 40,
+        "noteInputs": 1,
+        "noteOutputs": 39,
+        "sourceTrees": 1,
+        "deposit": false,
+        "withdrawal": false,
+        "fee": false
+      },
+      "gasUnits": 4090499
+    },
+    {
+      "shape": {
+        "kind": "transact",
+        "capacity": 40,
+        "noteInputs": 1,
+        "noteOutputs": 39,
+        "sourceTrees": 1,
+        "deposit": true,
+        "withdrawal": true,
+        "fee": true
+      },
+      "gasUnits": 4162857
+    },
+    {
+      "shape": {
+        "kind": "transact",
+        "capacity": 40,
+        "noteInputs": 1,
+        "noteOutputs": 30,
+        "sourceTrees": 1,
+        "deposit": false,
+        "withdrawal": false,
+        "fee": false
+      },
+      "gasUnits": 3448315
+    },
+    {
+      "shape": {
+        "kind": "transact",
+        "capacity": 40,
+        "noteInputs": 0,
+        "noteOutputs": 31,
+        "sourceTrees": 0,
+        "deposit": true,
+        "withdrawal": false,
+        "fee": false
+      },
+      "gasUnits": 3553897
+    },
+    {
+      "shape": {
+        "kind": "transact",
+        "capacity": 50,
+        "noteInputs": 50,
+        "noteOutputs": 0,
+        "sourceTrees": 1,
+        "deposit": false,
+        "withdrawal": true,
+        "fee": false
+      },
+      "gasUnits": 2314112
+    },
+    {
+      "shape": {
+        "kind": "transact",
+        "capacity": 50,
+        "noteInputs": 0,
+        "noteOutputs": 50,
+        "sourceTrees": 0,
+        "deposit": true,
+        "withdrawal": false,
+        "fee": false
+      },
+      "gasUnits": 4695011
+    },
+    {
+      "shape": {
+        "kind": "transact",
+        "capacity": 50,
+        "noteInputs": 1,
+        "noteOutputs": 49,
+        "sourceTrees": 1,
+        "deposit": false,
+        "withdrawal": false,
+        "fee": false
+      },
+      "gasUnits": 4693035
+    },
+    {
+      "shape": {
+        "kind": "transact",
+        "capacity": 50,
+        "noteInputs": 1,
+        "noteOutputs": 49,
+        "sourceTrees": 1,
+        "deposit": true,
+        "withdrawal": true,
+        "fee": true
+      },
+      "gasUnits": 4765453
+    },
+    {
+      "shape": {
+        "kind": "transact",
+        "capacity": 50,
+        "noteInputs": 1,
+        "noteOutputs": 40,
+        "sourceTrees": 1,
+        "deposit": false,
+        "withdrawal": false,
+        "fee": false
+      },
+      "gasUnits": 4124371
+    },
+    {
+      "shape": {
+        "kind": "transact",
+        "capacity": 50,
+        "noteInputs": 0,
+        "noteOutputs": 41,
+        "sourceTrees": 0,
+        "deposit": true,
+        "withdrawal": false,
+        "fee": false
+      },
+      "gasUnits": 4203401
+    },
+    {
+      "shape": {
+        "kind": "transact",
+        "capacity": 60,
+        "noteInputs": 60,
+        "noteOutputs": 0,
+        "sourceTrees": 1,
+        "deposit": false,
+        "withdrawal": true,
+        "fee": false
+      },
+      "gasUnits": 2595221
+    },
+    {
+      "shape": {
+        "kind": "transact",
+        "capacity": 60,
+        "noteInputs": 0,
+        "noteOutputs": 60,
+        "sourceTrees": 0,
+        "deposit": true,
+        "withdrawal": false,
+        "fee": false
+      },
+      "gasUnits": 5403311
+    },
+    {
+      "shape": {
+        "kind": "transact",
+        "capacity": 60,
+        "noteInputs": 1,
+        "noteOutputs": 59,
+        "sourceTrees": 1,
+        "deposit": false,
+        "withdrawal": false,
+        "fee": false
+      },
+      "gasUnits": 5392665
+    },
+    {
+      "shape": {
+        "kind": "transact",
+        "capacity": 60,
+        "noteInputs": 1,
+        "noteOutputs": 59,
+        "sourceTrees": 1,
+        "deposit": true,
+        "withdrawal": true,
+        "fee": true
+      },
+      "gasUnits": 5465275
+    },
+    {
+      "shape": {
+        "kind": "transact",
+        "capacity": 60,
+        "noteInputs": 1,
+        "noteOutputs": 50,
+        "sourceTrees": 1,
+        "deposit": false,
+        "withdrawal": false,
+        "fee": false
+      },
+      "gasUnits": 4743174
+    },
+    {
+      "shape": {
+        "kind": "transact",
+        "capacity": 60,
+        "noteInputs": 0,
+        "noteOutputs": 51,
+        "sourceTrees": 0,
+        "deposit": true,
+        "withdrawal": false,
+        "fee": false
+      },
+      "gasUnits": 4902358
+    },
+    {
+      "shape": {
+        "kind": "transact",
+        "capacity": 70,
+        "noteInputs": 70,
+        "noteOutputs": 0,
+        "sourceTrees": 1,
+        "deposit": false,
+        "withdrawal": true,
+        "fee": false
+      },
+      "gasUnits": 2851974
+    },
+    {
+      "shape": {
+        "kind": "transact",
+        "capacity": 70,
+        "noteInputs": 0,
+        "noteOutputs": 70,
+        "sourceTrees": 0,
+        "deposit": true,
+        "withdrawal": false,
+        "fee": false
+      },
+      "gasUnits": 6144531
+    },
+    {
+      "shape": {
+        "kind": "transact",
+        "capacity": 70,
+        "noteInputs": 1,
+        "noteOutputs": 69,
+        "sourceTrees": 1,
+        "deposit": false,
+        "withdrawal": false,
+        "fee": false
+      },
+      "gasUnits": 6136393
+    },
+    {
+      "shape": {
+        "kind": "transact",
+        "capacity": 70,
+        "noteInputs": 1,
+        "noteOutputs": 69,
+        "sourceTrees": 1,
+        "deposit": true,
+        "withdrawal": true,
+        "fee": true
+      },
+      "gasUnits": 6208871
+    },
+    {
+      "shape": {
+        "kind": "transact",
+        "capacity": 70,
+        "noteInputs": 1,
+        "noteOutputs": 60,
+        "sourceTrees": 1,
+        "deposit": false,
+        "withdrawal": false,
+        "fee": false
+      },
+      "gasUnits": 5426730
+    },
+    {
+      "shape": {
+        "kind": "transact",
+        "capacity": 70,
+        "noteInputs": 0,
+        "noteOutputs": 61,
+        "sourceTrees": 0,
+        "deposit": true,
+        "withdrawal": false,
+        "fee": false
+      },
+      "gasUnits": 5506062
+    },
+    {
+      "shape": {
+        "kind": "transact",
+        "capacity": 80,
+        "noteInputs": 80,
+        "noteOutputs": 0,
+        "sourceTrees": 1,
+        "deposit": false,
+        "withdrawal": true,
+        "fee": false
+      },
+      "gasUnits": 3108575
+    },
+    {
+      "shape": {
+        "kind": "transact",
+        "capacity": 80,
+        "noteInputs": 0,
+        "noteOutputs": 80,
+        "sourceTrees": 0,
+        "deposit": true,
+        "withdrawal": false,
+        "fee": false
+      },
+      "gasUnits": 6776336
+    },
+    {
+      "shape": {
+        "kind": "transact",
+        "capacity": 80,
+        "noteInputs": 1,
+        "noteOutputs": 79,
+        "sourceTrees": 1,
+        "deposit": false,
+        "withdrawal": false,
+        "fee": false
+      },
+      "gasUnits": 6765676
+    },
+    {
+      "shape": {
+        "kind": "transact",
+        "capacity": 80,
+        "noteInputs": 1,
+        "noteOutputs": 79,
+        "sourceTrees": 1,
+        "deposit": true,
+        "withdrawal": true,
+        "fee": true
+      },
+      "gasUnits": 6838334
+    },
+    {
+      "shape": {
+        "kind": "transact",
+        "capacity": 80,
+        "noteInputs": 1,
+        "noteOutputs": 70,
+        "sourceTrees": 1,
+        "deposit": false,
+        "withdrawal": false,
+        "fee": false
+      },
+      "gasUnits": 6168157
+    },
+    {
+      "shape": {
+        "kind": "transact",
+        "capacity": 80,
+        "noteInputs": 0,
+        "noteOutputs": 71,
+        "sourceTrees": 0,
+        "deposit": true,
+        "withdrawal": false,
+        "fee": false
+      },
+      "gasUnits": 6274030
+    },
+    {
+      "shape": {
+        "kind": "transact",
+        "capacity": 90,
+        "noteInputs": 90,
+        "noteOutputs": 0,
+        "sourceTrees": 1,
+        "deposit": false,
+        "withdrawal": true,
+        "fee": false
+      },
+      "gasUnits": 3365346
+    },
+    {
+      "shape": {
+        "kind": "transact",
+        "capacity": 90,
+        "noteInputs": 0,
+        "noteOutputs": 90,
+        "sourceTrees": 0,
+        "deposit": true,
+        "withdrawal": false,
+        "fee": false
+      },
+      "gasUnits": 7401380
+    },
+    {
+      "shape": {
+        "kind": "transact",
+        "capacity": 90,
+        "noteInputs": 1,
+        "noteOutputs": 89,
+        "sourceTrees": 1,
+        "deposit": false,
+        "withdrawal": false,
+        "fee": false
+      },
+      "gasUnits": 7396032
+    },
+    {
+      "shape": {
+        "kind": "transact",
+        "capacity": 90,
+        "noteInputs": 1,
+        "noteOutputs": 89,
+        "sourceTrees": 1,
+        "deposit": true,
+        "withdrawal": true,
+        "fee": true
+      },
+      "gasUnits": 7468618
+    },
+    {
+      "shape": {
+        "kind": "transact",
+        "capacity": 90,
+        "noteInputs": 1,
+        "noteOutputs": 80,
+        "sourceTrees": 1,
+        "deposit": false,
+        "withdrawal": false,
+        "fee": false
+      },
+      "gasUnits": 6800191
+    },
+    {
+      "shape": {
+        "kind": "transact",
+        "capacity": 90,
+        "noteInputs": 0,
+        "noteOutputs": 81,
+        "sourceTrees": 0,
+        "deposit": true,
+        "withdrawal": false,
+        "fee": false
+      },
+      "gasUnits": 6879895
+    },
+    {
+      "shape": {
+        "kind": "transact",
+        "capacity": 100,
+        "noteInputs": 100,
+        "noteOutputs": 0,
+        "sourceTrees": 1,
+        "deposit": false,
+        "withdrawal": true,
+        "fee": false
+      },
+      "gasUnits": 3622135
+    },
+    {
+      "shape": {
+        "kind": "transact",
+        "capacity": 100,
+        "noteInputs": 0,
+        "noteOutputs": 100,
+        "sourceTrees": 0,
+        "deposit": true,
+        "withdrawal": false,
+        "fee": false
+      },
+      "gasUnits": 8109440
+    },
+    {
+      "shape": {
+        "kind": "transact",
+        "capacity": 100,
+        "noteInputs": 1,
+        "noteOutputs": 99,
+        "sourceTrees": 1,
+        "deposit": false,
+        "withdrawal": false,
+        "fee": false
+      },
+      "gasUnits": 8098911
+    },
+    {
+      "shape": {
+        "kind": "transact",
+        "capacity": 100,
+        "noteInputs": 1,
+        "noteOutputs": 99,
+        "sourceTrees": 1,
+        "deposit": true,
+        "withdrawal": true,
+        "fee": true
+      },
+      "gasUnits": 8171317
+    },
+    {
+      "shape": {
+        "kind": "transact",
+        "capacity": 100,
+        "noteInputs": 1,
+        "noteOutputs": 90,
+        "sourceTrees": 1,
+        "deposit": false,
+        "withdrawal": false,
+        "fee": false
+      },
+      "gasUnits": 7425333
+    },
+    {
+      "shape": {
+        "kind": "transact",
+        "capacity": 100,
+        "noteInputs": 0,
+        "noteOutputs": 91,
+        "sourceTrees": 0,
+        "deposit": true,
+        "withdrawal": false,
+        "fee": false
+      },
+      "gasUnits": 7557875
+    },
+    {
+      "shape": {
+        "kind": "transact",
+        "capacity": 110,
+        "noteInputs": 110,
+        "noteOutputs": 0,
+        "sourceTrees": 1,
+        "deposit": false,
+        "withdrawal": true,
+        "fee": false
+      },
+      "gasUnits": 3879083
+    },
+    {
+      "shape": {
+        "kind": "transact",
+        "capacity": 110,
+        "noteInputs": 0,
+        "noteOutputs": 110,
+        "sourceTrees": 0,
+        "deposit": true,
+        "withdrawal": false,
+        "fee": false
+      },
+      "gasUnits": 8715654
+    },
+    {
+      "shape": {
+        "kind": "transact",
+        "capacity": 110,
+        "noteInputs": 1,
+        "noteOutputs": 109,
+        "sourceTrees": 1,
+        "deposit": false,
+        "withdrawal": false,
+        "fee": false
+      },
+      "gasUnits": 8707275
+    },
+    {
+      "shape": {
+        "kind": "transact",
+        "capacity": 110,
+        "noteInputs": 1,
+        "noteOutputs": 109,
+        "sourceTrees": 1,
+        "deposit": true,
+        "withdrawal": true,
+        "fee": true
+      },
+      "gasUnits": 8779861
+    },
+    {
+      "shape": {
+        "kind": "transact",
+        "capacity": 110,
+        "noteInputs": 1,
+        "noteOutputs": 100,
+        "sourceTrees": 1,
+        "deposit": false,
+        "withdrawal": false,
+        "fee": false
+      },
+      "gasUnits": 8133587
+    },
+    {
+      "shape": {
+        "kind": "transact",
+        "capacity": 110,
+        "noteInputs": 0,
+        "noteOutputs": 101,
+        "sourceTrees": 0,
+        "deposit": true,
+        "withdrawal": false,
+        "fee": false
+      },
+      "gasUnits": 8213328
+    },
+    {
+      "shape": {
+        "kind": "transact",
+        "capacity": 120,
+        "noteInputs": 120,
+        "noteOutputs": 0,
+        "sourceTrees": 1,
+        "deposit": false,
+        "withdrawal": true,
+        "fee": false
+      },
+      "gasUnits": 4160856
+    },
+    {
+      "shape": {
+        "kind": "transact",
+        "capacity": 120,
+        "noteInputs": 0,
+        "noteOutputs": 120,
+        "sourceTrees": 0,
+        "deposit": true,
+        "withdrawal": false,
+        "fee": false
+      },
+      "gasUnits": 9400074
+    },
+    {
+      "shape": {
+        "kind": "transact",
+        "capacity": 120,
+        "noteInputs": 1,
+        "noteOutputs": 119,
+        "sourceTrees": 1,
+        "deposit": false,
+        "withdrawal": false,
+        "fee": false
+      },
+      "gasUnits": 9389399
+    },
+    {
+      "shape": {
+        "kind": "transact",
+        "capacity": 120,
+        "noteInputs": 1,
+        "noteOutputs": 119,
+        "sourceTrees": 1,
+        "deposit": true,
+        "withdrawal": true,
+        "fee": true
+      },
+      "gasUnits": 9462033
+    },
+    {
+      "shape": {
+        "kind": "transact",
+        "capacity": 120,
+        "noteInputs": 1,
+        "noteOutputs": 110,
+        "sourceTrees": 1,
+        "deposit": false,
+        "withdrawal": false,
+        "fee": false
+      },
+      "gasUnits": 8764975
+    },
+    {
+      "shape": {
+        "kind": "transact",
+        "capacity": 120,
+        "noteInputs": 0,
+        "noteOutputs": 111,
+        "sourceTrees": 0,
+        "deposit": true,
+        "withdrawal": false,
+        "fee": false
+      },
+      "gasUnits": 8871009
+    },
+    {
+      "shape": {
+        "kind": "transact",
+        "capacity": 130,
+        "noteInputs": 130,
+        "noteOutputs": 0,
+        "sourceTrees": 1,
+        "deposit": false,
+        "withdrawal": true,
+        "fee": false
+      },
+      "gasUnits": 4417859
+    },
+    {
+      "shape": {
+        "kind": "transact",
+        "capacity": 130,
+        "noteInputs": 0,
+        "noteOutputs": 130,
+        "sourceTrees": 0,
+        "deposit": true,
+        "withdrawal": false,
+        "fee": false
+      },
+      "gasUnits": 9999191
+    },
+    {
+      "shape": {
+        "kind": "transact",
+        "capacity": 130,
+        "noteInputs": 1,
+        "noteOutputs": 129,
+        "sourceTrees": 1,
+        "deposit": false,
+        "withdrawal": false,
+        "fee": false
+      },
+      "gasUnits": 10000016
+    },
+    {
+      "shape": {
+        "kind": "transact",
+        "capacity": 130,
+        "noteInputs": 1,
+        "noteOutputs": 129,
+        "sourceTrees": 1,
+        "deposit": true,
+        "withdrawal": true,
+        "fee": true
+      },
+      "gasUnits": 10072566
+    },
+    {
+      "shape": {
+        "kind": "transact",
+        "capacity": 130,
+        "noteInputs": 1,
+        "noteOutputs": 120,
+        "sourceTrees": 1,
+        "deposit": false,
+        "withdrawal": false,
+        "fee": false
+      },
+      "gasUnits": 9424604
+    },
+    {
+      "shape": {
+        "kind": "transact",
+        "capacity": 130,
+        "noteInputs": 0,
+        "noteOutputs": 121,
+        "sourceTrees": 0,
+        "deposit": true,
+        "withdrawal": false,
+        "fee": false
+      },
+      "gasUnits": 9504721
+    },
+    {
+      "shape": {
+        "kind": "transact",
+        "capacity": 140,
+        "noteInputs": 140,
+        "noteOutputs": 0,
+        "sourceTrees": 1,
+        "deposit": false,
+        "withdrawal": true,
+        "fee": false
+      },
+      "gasUnits": 4675000
+    },
+    {
+      "shape": {
+        "kind": "transact",
+        "capacity": 140,
+        "noteInputs": 0,
+        "noteOutputs": 140,
+        "sourceTrees": 0,
+        "deposit": true,
+        "withdrawal": false,
+        "fee": false
+      },
+      "gasUnits": 10743636
+    },
+    {
+      "shape": {
+        "kind": "transact",
+        "capacity": 140,
+        "noteInputs": 1,
+        "noteOutputs": 139,
+        "sourceTrees": 1,
+        "deposit": false,
+        "withdrawal": false,
+        "fee": false
+      },
+      "gasUnits": 10732901
+    },
+    {
+      "shape": {
+        "kind": "transact",
+        "capacity": 140,
+        "noteInputs": 1,
+        "noteOutputs": 139,
+        "sourceTrees": 1,
+        "deposit": true,
+        "withdrawal": true,
+        "fee": true
+      },
+      "gasUnits": 10805487
+    },
+    {
+      "shape": {
+        "kind": "transact",
+        "capacity": 140,
+        "noteInputs": 1,
+        "noteOutputs": 130,
+        "sourceTrees": 1,
+        "deposit": false,
+        "withdrawal": false,
+        "fee": false
+      },
+      "gasUnits": 10023389
+    },
+    {
+      "shape": {
+        "kind": "transact",
+        "capacity": 140,
+        "noteInputs": 0,
+        "noteOutputs": 131,
+        "sourceTrees": 0,
+        "deposit": true,
+        "withdrawal": false,
+        "fee": false
+      },
+      "gasUnits": 10236822
+    },
+    {
+      "shape": {
+        "kind": "transact",
+        "capacity": 150,
+        "noteInputs": 150,
+        "noteOutputs": 0,
+        "sourceTrees": 1,
+        "deposit": false,
+        "withdrawal": true,
+        "fee": false
+      },
+      "gasUnits": 4931987
+    },
+    {
+      "shape": {
+        "kind": "transact",
+        "capacity": 150,
+        "noteInputs": 0,
+        "noteOutputs": 150,
+        "sourceTrees": 0,
+        "deposit": true,
+        "withdrawal": false,
+        "fee": false
+      },
+      "gasUnits": 11377902
+    },
+    {
+      "shape": {
+        "kind": "transact",
+        "capacity": 150,
+        "noteInputs": 1,
+        "noteOutputs": 149,
+        "sourceTrees": 1,
+        "deposit": false,
+        "withdrawal": false,
+        "fee": false
+      },
+      "gasUnits": 11369364
+    },
+    {
+      "shape": {
+        "kind": "transact",
+        "capacity": 150,
+        "noteInputs": 1,
+        "noteOutputs": 149,
+        "sourceTrees": 1,
+        "deposit": true,
+        "withdrawal": true,
+        "fee": true
+      },
+      "gasUnits": 11441782
+    },
+    {
+      "shape": {
+        "kind": "transact",
+        "capacity": 150,
+        "noteInputs": 1,
+        "noteOutputs": 140,
+        "sourceTrees": 1,
+        "deposit": false,
+        "withdrawal": false,
+        "fee": false
+      },
+      "gasUnits": 10768447
+    },
+    {
+      "shape": {
+        "kind": "transact",
+        "capacity": 150,
+        "noteInputs": 0,
+        "noteOutputs": 141,
+        "sourceTrees": 0,
+        "deposit": true,
+        "withdrawal": false,
+        "fee": false
+      },
+      "gasUnits": 10848601
+    },
+    {
+      "shape": {
+        "kind": "transact",
+        "capacity": 160,
+        "noteInputs": 160,
+        "noteOutputs": 0,
+        "sourceTrees": 1,
+        "deposit": false,
+        "withdrawal": true,
+        "fee": false
+      },
+      "gasUnits": 5189602
+    },
+    {
+      "shape": {
+        "kind": "transact",
+        "capacity": 160,
+        "noteInputs": 0,
+        "noteOutputs": 160,
+        "sourceTrees": 0,
+        "deposit": true,
+        "withdrawal": false,
+        "fee": false
+      },
+      "gasUnits": 12017564
+    },
+    {
+      "shape": {
+        "kind": "transact",
+        "capacity": 160,
+        "noteInputs": 1,
+        "noteOutputs": 159,
+        "sourceTrees": 1,
+        "deposit": false,
+        "withdrawal": false,
+        "fee": false
+      },
+      "gasUnits": 12006612
+    },
+    {
+      "shape": {
+        "kind": "transact",
+        "capacity": 160,
+        "noteInputs": 1,
+        "noteOutputs": 159,
+        "sourceTrees": 1,
+        "deposit": true,
+        "withdrawal": true,
+        "fee": true
+      },
+      "gasUnits": 12079294
+    },
+    {
+      "shape": {
+        "kind": "transact",
+        "capacity": 160,
+        "noteInputs": 1,
+        "noteOutputs": 150,
+        "sourceTrees": 1,
+        "deposit": false,
+        "withdrawal": false,
+        "fee": false
+      },
+      "gasUnits": 11402560
+    },
+    {
+      "shape": {
+        "kind": "transact",
+        "capacity": 160,
+        "noteInputs": 0,
+        "noteOutputs": 151,
+        "sourceTrees": 0,
+        "deposit": true,
+        "withdrawal": false,
+        "fee": false
+      },
+      "gasUnits": 11509278
+    },
+    {
+      "shape": {
+        "kind": "transact",
+        "capacity": 170,
+        "noteInputs": 170,
+        "noteOutputs": 0,
+        "sourceTrees": 1,
+        "deposit": false,
+        "withdrawal": true,
+        "fee": false
+      },
+      "gasUnits": 5446981
+    },
+    {
+      "shape": {
+        "kind": "transact",
+        "capacity": 170,
+        "noteInputs": 0,
+        "noteOutputs": 170,
+        "sourceTrees": 0,
+        "deposit": true,
+        "withdrawal": false,
+        "fee": false
+      },
+      "gasUnits": 12675075
+    },
+    {
+      "shape": {
+        "kind": "transact",
+        "capacity": 170,
+        "noteInputs": 1,
+        "noteOutputs": 169,
+        "sourceTrees": 1,
+        "deposit": false,
+        "withdrawal": false,
+        "fee": false
+      },
+      "gasUnits": 12668702
+    },
+    {
+      "shape": {
+        "kind": "transact",
+        "capacity": 170,
+        "noteInputs": 1,
+        "noteOutputs": 169,
+        "sourceTrees": 1,
+        "deposit": true,
+        "withdrawal": true,
+        "fee": true
+      },
+      "gasUnits": 12741684
+    },
+    {
+      "shape": {
+        "kind": "transact",
+        "capacity": 170,
+        "noteInputs": 1,
+        "noteOutputs": 160,
+        "sourceTrees": 1,
+        "deposit": false,
+        "withdrawal": false,
+        "fee": false
+      },
+      "gasUnits": 12042343
+    },
+    {
+      "shape": {
+        "kind": "transact",
+        "capacity": 170,
+        "noteInputs": 0,
+        "noteOutputs": 161,
+        "sourceTrees": 0,
+        "deposit": true,
+        "withdrawal": false,
+        "fee": false
+      },
+      "gasUnits": 12123037
+    },
+    {
+      "shape": {
+        "kind": "transact",
+        "capacity": 180,
+        "noteInputs": 180,
+        "noteOutputs": 0,
+        "sourceTrees": 1,
+        "deposit": false,
+        "withdrawal": true,
+        "fee": false
+      },
+      "gasUnits": 5704244
+    },
+    {
+      "shape": {
+        "kind": "transact",
+        "capacity": 180,
+        "noteInputs": 0,
+        "noteOutputs": 180,
+        "sourceTrees": 0,
+        "deposit": true,
+        "withdrawal": false,
+        "fee": false
+      },
+      "gasUnits": 13366959
+    },
+    {
+      "shape": {
+        "kind": "transact",
+        "capacity": 180,
+        "noteInputs": 1,
+        "noteOutputs": 179,
+        "sourceTrees": 1,
+        "deposit": false,
+        "withdrawal": false,
+        "fee": false
+      },
+      "gasUnits": 13356236
+    },
+    {
+      "shape": {
+        "kind": "transact",
+        "capacity": 180,
+        "noteInputs": 1,
+        "noteOutputs": 179,
+        "sourceTrees": 1,
+        "deposit": true,
+        "withdrawal": true,
+        "fee": true
+      },
+      "gasUnits": 13428546
+    },
+    {
+      "shape": {
+        "kind": "transact",
+        "capacity": 180,
+        "noteInputs": 1,
+        "noteOutputs": 170,
+        "sourceTrees": 1,
+        "deposit": false,
+        "withdrawal": false,
+        "fee": false
+      },
+      "gasUnits": 12699797
+    },
+    {
+      "shape": {
+        "kind": "transact",
+        "capacity": 180,
+        "noteInputs": 0,
+        "noteOutputs": 171,
+        "sourceTrees": 0,
+        "deposit": true,
+        "withdrawal": false,
+        "fee": false
+      },
+      "gasUnits": 12833375
+    },
+    {
+      "shape": {
+        "kind": "transact",
+        "capacity": 190,
+        "noteInputs": 190,
+        "noteOutputs": 0,
+        "sourceTrees": 1,
+        "deposit": false,
+        "withdrawal": true,
+        "fee": false
+      },
+      "gasUnits": 5956988
+    },
+    {
+      "shape": {
+        "kind": "transact",
+        "capacity": 190,
+        "noteInputs": 0,
+        "noteOutputs": 190,
+        "sourceTrees": 0,
+        "deposit": true,
+        "withdrawal": false,
+        "fee": false
+      },
+      "gasUnits": 13981789
+    },
+    {
+      "shape": {
+        "kind": "transact",
+        "capacity": 190,
+        "noteInputs": 1,
+        "noteOutputs": 189,
+        "sourceTrees": 1,
+        "deposit": false,
+        "withdrawal": false,
+        "fee": false
+      },
+      "gasUnits": 13972890
+    },
+    {
+      "shape": {
+        "kind": "transact",
+        "capacity": 190,
+        "noteInputs": 1,
+        "noteOutputs": 189,
+        "sourceTrees": 1,
+        "deposit": true,
+        "withdrawal": true,
+        "fee": true
+      },
+      "gasUnits": 14045488
+    },
+    {
+      "shape": {
+        "kind": "transact",
+        "capacity": 190,
+        "noteInputs": 1,
+        "noteOutputs": 180,
+        "sourceTrees": 1,
+        "deposit": false,
+        "withdrawal": false,
+        "fee": false
+      },
+      "gasUnits": 13392019
+    },
+    {
+      "shape": {
+        "kind": "transact",
+        "capacity": 190,
+        "noteInputs": 0,
+        "noteOutputs": 181,
+        "sourceTrees": 0,
+        "deposit": true,
+        "withdrawal": false,
+        "fee": false
+      },
+      "gasUnits": 13473062
+    },
+    {
+      "shape": {
+        "kind": "transact",
+        "capacity": 3,
+        "noteInputs": 2,
         "noteOutputs": 1,
         "sourceTrees": 1,
         "deposit": false,
-        "withdrawal": true,
+        "withdrawal": false,
         "fee": false
       },
-      "gasUnits": 1573423
+      "gasUnits": 1571781
+    },
+    {
+      "shape": {
+        "kind": "transact",
+        "capacity": 4,
+        "noteInputs": 2,
+        "noteOutputs": 2,
+        "sourceTrees": 1,
+        "deposit": false,
+        "withdrawal": false,
+        "fee": false
+      },
+      "gasUnits": 1593123
+    },
+    {
+      "shape": {
+        "kind": "transact",
+        "capacity": 5,
+        "noteInputs": 3,
+        "noteOutputs": 2,
+        "sourceTrees": 1,
+        "deposit": false,
+        "withdrawal": false,
+        "fee": false
+      },
+      "gasUnits": 1619491
     },
     {
       "shape": {
         "kind": "transact",
         "capacity": 10,
-        "noteInputs": 1,
-        "noteOutputs": 9,
+        "noteInputs": 5,
+        "noteOutputs": 5,
         "sourceTrees": 1,
         "deposit": false,
         "withdrawal": false,
-        "fee": true
-      },
-      "gasUnits": 2146500
-    },
-    {
-      "shape": {
-        "kind": "transact",
-        "capacity": 10,
-        "noteInputs": 1,
-        "noteOutputs": 9,
-        "sourceTrees": 1,
-        "deposit": true,
-        "withdrawal": false,
         "fee": false
       },
-      "gasUnits": 2143268
-    },
-    {
-      "shape": {
-        "kind": "transact",
-        "capacity": 10,
-        "noteInputs": 1,
-        "noteOutputs": 9,
-        "sourceTrees": 1,
-        "deposit": false,
-        "withdrawal": true,
-        "fee": false
-      },
-      "gasUnits": 2153425
+      "gasUnits": 2000324
     },
     {
       "shape": {
         "kind": "transact",
         "capacity": 20,
-        "noteInputs": 1,
-        "noteOutputs": 19,
+        "noteInputs": 7,
+        "noteOutputs": 4,
         "sourceTrees": 1,
         "deposit": false,
         "withdrawal": false,
-        "fee": true
+        "fee": false
       },
-      "gasUnits": 2815534
+      "gasUnits": 1987319
     },
     {
       "shape": {
         "kind": "transact",
         "capacity": 20,
-        "noteInputs": 1,
-        "noteOutputs": 19,
+        "noteInputs": 10,
+        "noteOutputs": 10,
         "sourceTrees": 1,
-        "deposit": true,
+        "deposit": false,
         "withdrawal": false,
         "fee": false
       },
-      "gasUnits": 2812314
+      "gasUnits": 2383469
     },
     {
       "shape": {
         "kind": "transact",
-        "capacity": 20,
-        "noteInputs": 1,
-        "noteOutputs": 19,
+        "capacity": 50,
+        "noteInputs": 25,
+        "noteOutputs": 25,
         "sourceTrees": 1,
         "deposit": false,
-        "withdrawal": true,
+        "withdrawal": false,
         "fee": false
       },
-      "gasUnits": 2822375
+      "gasUnits": 3773341
     },
     {
       "shape": {
         "kind": "transact",
         "capacity": 190,
-        "noteInputs": 1,
-        "noteOutputs": 189,
+        "noteInputs": 95,
+        "noteOutputs": 95,
         "sourceTrees": 1,
         "deposit": false,
         "withdrawal": false,
-        "fee": true
-      },
-      "gasUnits": 13966908
-    },
-    {
-      "shape": {
-        "kind": "transact",
-        "capacity": 190,
-        "noteInputs": 1,
-        "noteOutputs": 189,
-        "sourceTrees": 1,
-        "deposit": true,
-        "withdrawal": false,
         "fee": false
       },
-      "gasUnits": 13963544
-    },
-    {
-      "shape": {
-        "kind": "transact",
-        "capacity": 190,
-        "noteInputs": 1,
-        "noteOutputs": 189,
-        "sourceTrees": 1,
-        "deposit": false,
-        "withdrawal": true,
-        "fee": false
-      },
-      "gasUnits": 13973725
+      "gasUnits": 10236422
     }
   ]
 }

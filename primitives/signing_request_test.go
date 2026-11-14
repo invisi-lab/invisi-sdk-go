@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/consensys/gnark-crypto/ecc/bn254/fr"
+	"github.com/ethereum/go-ethereum/accounts/abi"
 	ethmath "github.com/ethereum/go-ethereum/common/math"
 	ethcrypto "github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/signer/core/apitypes"
@@ -145,5 +146,45 @@ func TestExternalWalletSignatureAcceptsCompactEncoding(t *testing.T) {
 	expected, err := BuildWalletAuthorizationWitnessFromSignature(wallet.OwnerAddress, request, signature)
 	if err != nil || witness != expected {
 		t.Fatal("compact witness differs", err)
+	}
+}
+
+func TestWalletStatementBulkBoundaryMatchesABI(t *testing.T) {
+	uintType, err := abi.NewType("uint256", "", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	wordsType, err := abi.NewType("bytes32[]", "", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	arguments := abi.Arguments{{Type: uintType}, {Type: wordsType}}
+	// Guard the signed transcript on both sides of the contract bulk-copy threshold; 128 is not a validity limit.
+	for _, length := range []int{2, 127, 128, 129, 1024} {
+		t.Run(big.NewInt(int64(length)).String(), func(t *testing.T) {
+			words := make([]fr.Element, length)
+			encodedWords := make([][32]byte, length)
+			for i := range words {
+				words[i] = ElementFromUint64(uint64(i + 1))
+			}
+			words[0], words[1] = ElementFromUint64(97), ElementFromUint64(2)
+			for i := range words {
+				encodedWords[i] = words[i].Bytes()
+			}
+			for _, operation := range []WalletOperation{WalletTransact, WalletCreateCredit, WalletCreditDraw, WalletUpdateCredit} {
+				request := WalletAuthorizationRequest{Context: ProtocolContext{words[0], words[1]}, Operation: operation, Capacity: 1, Words: words}
+				typed, err := WalletAuthorizationTypedData(request)
+				if err != nil {
+					t.Fatal(err)
+				}
+				encoded, err := arguments.Pack(big.NewInt(1), encodedWords)
+				if err != nil {
+					t.Fatal(err)
+				}
+				if typed.Message["statementHash"] != ethcrypto.Keccak256Hash(encoded).Hex() {
+					t.Fatalf("%s statement differs from ABI", operation)
+				}
+			}
+		})
 	}
 }
