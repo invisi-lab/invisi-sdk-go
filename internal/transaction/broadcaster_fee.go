@@ -38,6 +38,39 @@ func SetPlanFee(p *Plan, r common.Address, f *big.Int) {
 }
 
 func (o *Execution) ApplyBroadcasterFee(ctx context.Context, base Plan, recipient common.Address, fee *big.Int, opt BroadcasterQuoteOptions) error {
+	if opt.FeeSource == BroadcasterFeePayout {
+		if base.Kind != "transact" || len(base.Inputs) == 0 || len(base.Outputs) != 0 || len(base.Params.NoteCommitments) != 0 || base.Funding.Amount == nil || base.Funding.Amount.Sign() != 0 || base.Params.WithdrawalAddress == (common.Address{}) || base.Params.WithdrawalAmount == nil || base.Params.WithdrawalAmount.Sign() <= 0 {
+			return errors.New("payout fee requires a pure unfunded withdrawal")
+		}
+		if fee == nil || fee.Sign() <= 0 || fee.BitLen() > 128 || recipient == (common.Address{}) {
+			return errors.New("invalid payout fee")
+		}
+		if opt.MaxFeeAmount != nil && fee.Cmp(opt.MaxFeeAmount) > 0 {
+			return errors.New("broadcaster fee exceeds maximum")
+		}
+		_, oldFee := PlanFee(base)
+		gross := new(big.Int).Add(base.Params.WithdrawalAmount, oldFee)
+		sum := new(big.Int)
+		for _, n := range base.Inputs {
+			sum.Add(sum, primitives.ElementToBigInt(n.Note.Amount))
+		}
+		if sum.Cmp(gross) != 0 {
+			return errors.New("payout requires the full selected note sum")
+		}
+		net := new(big.Int).Sub(gross, fee)
+		if net.Sign() <= 0 {
+			return errors.New("payout fee leaves no positive withdrawal")
+		}
+		p, err := ClonePlan(base)
+		if err != nil {
+			return err
+		}
+		p.Params.WithdrawalAmount = net
+		p.NeedsAuthorization = true
+		SetPlanFee(&p, recipient, fee)
+		o.Plan = p
+		return nil
+	}
 	_, previousFee := PlanFee(base)
 	requestedFee := new(big.Int).Set(fee)
 	fee = new(big.Int).Sub(fee, previousFee)

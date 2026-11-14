@@ -89,7 +89,7 @@ func (o *Execution) QuoteBroadcaster(ctx context.Context, c *broadcaster.Client,
 	default:
 		return errors.New("unsupported fee source")
 	}
-	if opt.FeeSource == BroadcasterFeePayout || o.Plan.Kind == "shield" && opt.FeeSource == BroadcasterFeePrivateInputs {
+	if o.Plan.Kind == "shield" && (opt.FeeSource == BroadcasterFeePrivateInputs || opt.FeeSource == BroadcasterFeePayout) {
 		return errors.New("fee source unavailable for operation")
 	}
 

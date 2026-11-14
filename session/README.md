@@ -34,6 +34,16 @@ Managed `Operation` uses the same preparation, statements, signatures, witnesses
 
 All packages belong to the existing Go module and share its version. No compatibility exports remain under `sdk` or `sdk/sqlite`.
 
+## Collecting known Notes
+
+`managed.ImportNotes(ctx, []sdk.NoteInput{...})` authenticates locally held openings against the session owner, deployment, commitment, canonical membership and consumption state. It preserves spent flags and reservations, and does not claim that undiscovered history has been scanned.
+
+`managed.PrepareCollection(ctx, token, recipient, commitments, session.CollectionOptions{Deadline: deadline})` reserves exactly those available Notes and prepares their full sum as one withdrawal without change or public funding. The options argument is optional; set an absolute Unix deadline long enough for local proving when using large circuit capacities. The selected inputs and deadline remain frozen across persistence and recovery.
+
+Quote through the existing Broadcaster client with `FeeSource: sdk.BroadcasterFeePayout` and a positive `MaxFeeAmount`. This source is restricted to pure unfunded withdrawals: each quote deducts its fee from the original gross Note sum, requires a positive net payout and owner authorization, and creates no change or extra inputs. Sign the final quoted statement before proving and submitting through the ordinary operation workflow.
+
+When `rpc.NewTrustedProvider` supplies chain reads over Protocol RPC, the operator explicitly trusts that service for chain state. Deployment pinning and consistency checks do not provide independent chain authentication. The RPC service sees membership and consumption queries; keep openings, signing keys and proof witnesses local.
+
 ## Shared public history
 
 A deployment-wide `PublicHistory` caches canonical headers, successful receipts, parsed Note/Credit deliveries (including clues), insertion positions and validated membership. Its scope binds chain, protocol address, runtime code hash and deployment height; it contains no account key or private opening. Inject the same instance in multiple `Connect` calls. Sessions using one `sdk.Invisi` and Protocol handle receive an ephemeral shared instance by default.

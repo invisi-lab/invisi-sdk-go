@@ -11,6 +11,9 @@ type ProtocolRpcError struct {
 	Data    json.RawMessage `json:"data,omitempty"`
 }
 
+// ErrorCode preserves JSON-RPC classification, including unsupported native tags.
+func (e *ProtocolRpcError) ErrorCode() int { return e.Code }
+
 func (e *ProtocolRpcError) Error() string {
 	return fmt.Sprintf("protocol RPC (%d): %s", e.Code, e.Message)
 }

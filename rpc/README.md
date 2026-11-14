@@ -52,3 +52,32 @@ handles are rejected before networking. The capability is excluded from JSON,
 never serialized into a journal, and is rebound when restoring an operation.
 Custom capabilities can run only their own callback; they do not expose another
 operation's private state or bypass its authorization/persistence checks.
+
+### Explicitly trusted chain provider
+
+`NewTrustedProvider(client, DeploymentContext{ChainID: chainID, ProtocolAddress: address})`
+requires a client constructed with `ClientOptions{Deployment: &pins}`. It implements
+SDK `Provider`, native `HeaderByTag` and transaction-by-hash reads using only the
+Protocol RPC URL. Use `client.WithProvider(provider)` when constructing a session.
+This trusts the service's chain data; it does not independently authenticate it.
+Deployment discovery alone does not authorize this mode. Every response checks
+API `v1`, Protocol version `1`, and the complete pinned deployment. Calls are
+fresh requests, with no provider cache.
+
+Wire method: `invisi_readChainState`, one object parameter. `kind` is `header`,
+`code`, `call`, `receipt`, or `transaction`. Optional fields are `block` (`latest`,
+`safe`, `finalized`, or a canonical hex quantity), `address`, `from`, `data` (hex),
+`gas` (integer), and `transactionHash`. Responses contain `apiVersion`,
+`protocolVersion`, `deployment`, and the requested `header` + `headerHash`, `data`,
+`receipt`, or `transaction` + `pending`. A missing receipt or transaction becomes
+`ethereum.NotFound`. Full geth headers preserve canonical hash computation;
+receipts are checked against their canonical header on both sides.
+
+The gateway has no submission, signing, endpoint selection, or generic Ethereum
+RPC forwarding. Calls allow fixed-length Protocol state selectors and ERC20
+metadata/balance/allowance reads; configured address and broadcaster registries
+have narrow read selectors. Simulation permits only canonical ABI-encoded
+`shield`, `transact`, and `crossTreeTransact` calls to the pinned Protocol.
+Calldata is capped at 128 KiB, gas at 30 million, and returned code/data at 1 MiB.
+Nonzero value, fee overrides, access lists, blobs, and authorizations are not
+supported by the provider.
