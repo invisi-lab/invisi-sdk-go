@@ -150,3 +150,7 @@ Low-level callers can use `broadcaster.NewCancelToken()`,
 retain it when a transport error leaves admission uncertain.
 
 Credit scheduling supports create, update, draw and revoke. Low-level `credit/session.Options.CheckCancellation` must check anchored canonical consumption, revocation and allocation independently of expired authorization or payer allowance; `WalletSession.Credit()` supplies that checker. An acknowledged cancellation retains reservations until this check succeeds.
+
+## Contributing
+
+See the [contribution guidelines](../README.md#contributing) for issues, pull requests, validation, and handling sensitive material.

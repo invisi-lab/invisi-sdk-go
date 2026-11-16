@@ -49,3 +49,7 @@ go run ./examples/07-broadcaster/04-scheduled-cancel \
 ```
 
 The flow authenticates the chain/protocol and registry endpoint, reads live scheduling capabilities, and covers the execution window plus minimum slack in the Note authorization deadline. The SDK stores the random secret, signed quote and frozen request before sending. The submission ID is opaque and allocated by the server. A lost response is recovered by explicitly replaying the same frozen submission before status or cancellation calls. An acknowledged cancellation is durably recorded before canonical refresh, so a refresh outage preserves input reservations and can be reconciled after reconnecting without another relay response. Source receives its ordinary evaluations and no scheduling fields.
+
+## Contributing
+
+See the [contribution guidelines](../../README.md#contributing) for issues, pull requests, validation, and handling sensitive material.

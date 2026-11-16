@@ -25,3 +25,7 @@ Low-level operation wire requests remain optional; EIP-712 export/signature atta
 `internal/testsupport/testdata/wallet-wire-vectors.json` is identical to the TypeScript/Rust portable fixture and covers all five methods. Its key and execution simulator exist only for tests.
 
 Credit create, draw and update use the same wire authorization. Credit revocation retains separate public EVM owner authorization. `wallet/protocol` holds the dependency-free wire types so Credit and the generic wallet validator share one contract without import cycles.
+
+## Contributing
+
+See the [contribution guidelines](../README.md#contributing) for issues, pull requests, validation, and handling sensitive material.

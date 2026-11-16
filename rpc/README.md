@@ -81,3 +81,7 @@ have narrow read selectors. Simulation permits only canonical ABI-encoded
 Calldata is capped at 128 KiB, gas at 30 million, and returned code/data at 1 MiB.
 Nonzero value, fee overrides, access lists, blobs, and authorizations are not
 supported by the provider.
+
+## Contributing
+
+See the [contribution guidelines](../README.md#contributing) for issues, pull requests, validation, and handling sensitive material.

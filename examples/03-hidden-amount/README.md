@@ -7,3 +7,7 @@ Private transfers sign the exact frozen EIP-712 statement using geth and `OWNER_
 The commands log unsigned calldata. Preparation/proving does not send a payment. Ordinary broadcaster delivery and independent Source pre-/post-payment submission are consolidated under [07-broadcaster](../07-broadcaster/README.md).
 
 `ShieldPreparation` and `TransferPreparation` accept an optional `Fee: &sdk.Fee{Recipient: collector, Amount: feeAmount}`. Shield funding must equal the output sum plus this fee; transfers deduct it before computing private change. The fee is bound into the authorization, witness and calldata. Selecting a broadcaster replaces this fee using the difference in amount, including when public funding pays it.
+
+## Contributing
+
+See the [contribution guidelines](../../README.md#contributing) for issues, pull requests, validation, and handling sensitive material.

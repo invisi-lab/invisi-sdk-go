@@ -39,3 +39,7 @@ Session/Credit examples use `examples/wallet.sqlite`. Set `INVISI_EXAMPLE_STORAG
 Credit business transition construction remains explicit through `credit.Prepare*`; `managed.Credit().Prepare` validates current allocation, roots/nullifiers and cross-role reservations. `05-wallet-session/04-recover-credit` resumes the frozen Credit journal and does not apply a quota change again. Call `Externalize` before handing direct Credit calldata to a signer, then reconcile the actual hash before releasing reservations.
 
 The restore-session example composes public history and encrypted account records in separate tables of the same SQLite database. Reuse its PublicHistory instance for another public wallet and an account-specific private Store/codec. Default Refresh stages a recent page and Decrypt resumes head-first/backward recovery per committed batch. Return wallet.ErrAuthenticationFailed for ambiguous authentication; native detection keys remain in the App. Earlier committed batches survive interruption. See session/README.md for offline scans, retained coverage and bounded paging.
+
+## Contributing
+
+See the [contribution guidelines](../README.md#contributing) for issues, pull requests, validation, and handling sensitive material.

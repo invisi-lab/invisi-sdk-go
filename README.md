@@ -204,3 +204,7 @@ receipt success, canonicality, rootHistory and native finality remain trusted RP
 claims. Pending evidence has a reason and no output, membership or confirmation;
 it does not prove that a payment is absent. Existing `GetNote` continues to perform
 independent chain authentication.
+
+## Contributing
+
+Open a focused GitHub issue or pull request describing the problem, scope, and validation. Run `python3 scripts/test-modules.py` and `python3 scripts/check-packages.py` for your change. Never include private keys, credentials, or private witnesses in issues, pull requests, logs, or fixtures.

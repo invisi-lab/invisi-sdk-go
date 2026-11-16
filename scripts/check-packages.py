@@ -40,6 +40,8 @@ def download_links(src, dst, relative=''):
 if (existing / 'cache/download').exists():
     download_links(existing / 'cache/download', cache / 'cache/download')
 files = subprocess.check_output(['git', 'ls-files', '--cached', '--others', '--exclude-standard'], cwd=ROOT, text=True).splitlines()
+license_text = (ROOT / 'LICENSE').read_bytes()
+assert b'END OF TERMS AND CONDITIONS' in license_text and len(license_text) > 10000
 for name, base in MODULES:
     module = PREFIX + ('/' + name if name else '')
     dest = proxy / module / '@v'
@@ -66,6 +68,8 @@ for name, base in MODULES:
                 archive.writestr(target, content)
             else:
                 archive.write(p, target)
+    with zipfile.ZipFile(dest / (VERSION + '.zip')) as archive:
+        assert archive.read(module + '@' + VERSION + '/LICENSE') == license_text, module + ': incomplete packaged LICENSE'
 env = {**os.environ, 'GOWORK': 'off', 'GOPROXY': proxy.as_uri() + ',https://proxy.golang.org', 'GOMODCACHE': str(cache), 'GONOSUMDB': PREFIX + '*', 'GONOPROXY': 'none', 'GOFLAGS': '-mod=mod'}
 for name, _ in MODULES:
     module = PREFIX + ('/' + name if name else '')
