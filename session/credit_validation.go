@@ -66,7 +66,7 @@ func (s *WalletSession) validateCreditIntentWithProvider(ctx context.Context, in
 	if err = prepared.CheckTimestamp(now); err != nil {
 		return err
 	}
-	contract, err := contracts.NewInvisiProtocolCaller(s.scope.ProtocolAddress, provider)
+	contract, err := contracts.NewInvisiCoreCaller(s.scope.ProtocolAddress, provider)
 	if err != nil {
 		return err
 	}
@@ -374,7 +374,7 @@ func (s *WalletSession) checkCreditCancellation(ctx context.Context, intent cred
 	if head == nil || head.Number == nil || !head.Number.IsUint64() {
 		return errors.New("current Credit block unavailable")
 	}
-	contract, err := contracts.NewInvisiProtocolCaller(s.scope.ProtocolAddress, provider)
+	contract, err := contracts.NewInvisiCoreCaller(s.scope.ProtocolAddress, provider)
 	if err != nil {
 		return err
 	}

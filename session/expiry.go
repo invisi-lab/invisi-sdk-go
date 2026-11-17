@@ -9,8 +9,8 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 
 	transaction "github.com/invisi-lab/invisi-sdk-go/internal/transaction"
-	"github.com/invisi-lab/invisi-sdk-go/rpc/contracts"
 	protocolrpc "github.com/invisi-lab/invisi-sdk-go/rpc"
+	"github.com/invisi-lab/invisi-sdk-go/rpc/contracts"
 )
 
 // reconcileSpendState resolves dropped/reverted transactions without assuming that
@@ -86,7 +86,7 @@ func (o *Operation) reconcileSpendState(ctx context.Context) (transaction.Confir
 }
 
 func (o *Operation) spentAt(ctx context.Context, height *big.Int) (map[common.Hash]bool, error) {
-	caller, err := contracts.NewInvisiProtocolCaller(o.plan.Context.ProtocolAddress, o.session.options.Provider)
+	caller, err := contracts.NewInvisiCoreCaller(o.plan.Context.ProtocolAddress, o.session.options.Provider)
 	if err != nil {
 		return nil, err
 	}

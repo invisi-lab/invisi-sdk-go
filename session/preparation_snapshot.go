@@ -157,7 +157,7 @@ func (s *WalletSession) finishPreparationSnapshot(ctx context.Context, before *W
 		}
 		owners[token][common.BigToAddress(primitives.ElementToBigInt(n.OwnerWalletIdentity))] = true
 	}
-	caller, e := contracts.NewInvisiProtocolCaller(s.scope.ProtocolAddress, r)
+	caller, e := contracts.NewInvisiCoreCaller(s.scope.ProtocolAddress, r)
 	if e != nil {
 		return e
 	}

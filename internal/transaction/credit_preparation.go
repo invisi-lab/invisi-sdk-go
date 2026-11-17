@@ -73,7 +73,7 @@ func (i *Invisi) creditBuilder(ctx context.Context, identity TransactionIdentity
 			return credit.Context{ProtocolContext: r.CoreContext(), TokenAddress: token, Timestamp: c.Now.Uint64()}, d, nil
 		},
 		Allocation: func(ctx context.Context, c credit.Context) (uint64, uint16, error) {
-			caller, err := contracts.NewInvisiProtocolCaller(r.Scope.ProtocolAddress, r.Options.Provider)
+			caller, err := contracts.NewInvisiCoreCaller(r.Scope.ProtocolAddress, r.Options.Provider)
 			if err != nil {
 				return 0, 0, err
 			}
@@ -97,7 +97,7 @@ func (i *Invisi) creditBuilder(ctx context.Context, identity TransactionIdentity
 			if s.ProtocolContext != c.ProtocolContext || common.BigToAddress(primitives.ElementToBigInt(s.TokenAddress)) != c.TokenAddress || common.BigToAddress(primitives.ElementToBigInt(who)) != identity.Wallet.ownerAddress || common.Hash(leaf.Bytes()) != h {
 				return credit.PreparationInput{}, errors.New("Credit role, commitment or deployment mismatch")
 			}
-			caller, err := contracts.NewInvisiProtocolCaller(r.Scope.ProtocolAddress, r.Options.Provider)
+			caller, err := contracts.NewInvisiCoreCaller(r.Scope.ProtocolAddress, r.Options.Provider)
 			if err != nil {
 				return credit.PreparationInput{}, err
 			}

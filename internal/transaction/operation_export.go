@@ -41,7 +41,7 @@ func (o *Execution) ValidateExport(ctx context.Context) error {
 	if OperationExpired(o.Plan, head.Time) {
 		return errors.New("operation has expired")
 	}
-	caller, err := contracts.NewInvisiProtocolCaller(o.Plan.Context.ProtocolAddress, o.Runtime.Options.Provider)
+	caller, err := contracts.NewInvisiCoreCaller(o.Plan.Context.ProtocolAddress, o.Runtime.Options.Provider)
 	if err != nil {
 		return err
 	}

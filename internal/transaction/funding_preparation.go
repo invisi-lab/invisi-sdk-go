@@ -9,8 +9,8 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 
 	"github.com/invisi-lab/invisi-sdk-go/protocol"
-	"github.com/invisi-lab/invisi-sdk-go/rpc/contracts"
 	protocolrpc "github.com/invisi-lab/invisi-sdk-go/rpc"
+	"github.com/invisi-lab/invisi-sdk-go/rpc/contracts"
 )
 
 func (s *Runtime) Funding(ctx context.Context, source *FundingSource, block protocolrpc.CanonicalBlock, deadline uint64) (protocol.FundingParams, string, error) {
@@ -46,7 +46,7 @@ func (s *Runtime) Funding(ctx context.Context, source *FundingSource, block prot
 		if source.SigNonce != nil {
 			f.SigNonce = new(big.Int).Set(source.SigNonce)
 		} else {
-			caller, err := contracts.NewInvisiProtocolCaller(s.Scope.ProtocolAddress, s.Options.Provider)
+			caller, err := contracts.NewInvisiCoreCaller(s.Scope.ProtocolAddress, s.Options.Provider)
 			if err != nil {
 				return protocol.FundingParams{}, "", err
 			}

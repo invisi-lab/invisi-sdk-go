@@ -145,7 +145,7 @@ func (r creditReconciler) Reconcile(ctx context.Context, intent credit.Intent, d
 			}
 		}
 		if intent.Revoke != nil {
-			filter, err := contracts.NewInvisiProtocolFilterer(s.scope.ProtocolAddress, nil)
+			filter, err := contracts.NewInvisiCoreFilterer(s.scope.ProtocolAddress, nil)
 			if err != nil {
 				return nil, err
 			}

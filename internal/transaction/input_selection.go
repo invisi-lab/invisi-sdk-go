@@ -78,7 +78,7 @@ func (s *Runtime) SelectInputs(ctx context.Context, token common.Address, amount
 	memberships = make([]protocolrpc.Membership, len(inputs))
 	read := func(ctx context.Context, i int, root *common.Hash) (protocolrpc.Membership, error) {
 		n := inputs[i]
-		contract, err := contracts.NewInvisiProtocolCaller(s.Scope.ProtocolAddress, s.Options.Provider)
+		contract, err := contracts.NewInvisiCoreCaller(s.Scope.ProtocolAddress, s.Options.Provider)
 		if err != nil {
 			return protocolrpc.Membership{}, err
 		}

@@ -47,7 +47,7 @@ func (s *WalletSession) buildCreditRequestWithRuntime(ctx context.Context, r *tr
 			return credit.Context{ProtocolContext: s.coreContext(), TokenAddress: token, Timestamp: c.Now.Uint64()}, d, err
 		},
 		Allocation: func(ctx context.Context, c credit.Context) (uint64, uint16, error) {
-			caller, err := contracts.NewInvisiProtocolCaller(s.scope.ProtocolAddress, r.Options.Provider)
+			caller, err := contracts.NewInvisiCoreCaller(s.scope.ProtocolAddress, r.Options.Provider)
 			if err != nil {
 				return 0, 0, err
 			}

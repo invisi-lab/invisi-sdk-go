@@ -17,7 +17,7 @@ import (
 )
 
 type authenticatedCreditDraw struct {
-	*contracts.InvisiProtocolCreditDraw
+	*contracts.InvisiCoreCreditDraw
 	Timestamp uint64
 }
 
@@ -73,7 +73,7 @@ func (s *WalletSession) readPublicTransaction(ctx context.Context, tx PublicTran
 	notes := []StoredNote{}
 	credits := []creditsession.StoredState{}
 	draws := []*authenticatedCreditDraw{}
-	filter, e := contracts.NewInvisiProtocolFilterer(s.scope.ProtocolAddress, nil)
+	filter, e := contracts.NewInvisiCoreFilterer(s.scope.ProtocolAddress, nil)
 	if e != nil {
 		return nil, nil, nil, e
 	}

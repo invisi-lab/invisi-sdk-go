@@ -3,11 +3,11 @@ import {readFileSync,writeFileSync} from 'node:fs';
 import {createHash} from 'node:crypto';
 import assert from 'node:assert/strict';
 import {createRequire} from 'node:module';
-const require=createRequire(new URL('../../../../invisi-protocol/package.json',import.meta.url));
+const require=createRequire(new URL('../../../../invisi-core/package.json',import.meta.url));
 const {Interface,Wallet,TypedDataEncoder,AbiCoder,keccak256}=require('ethers');
-const artifactBytes=readFileSync(new URL('../../../../invisi-protocol/contracts/out/InvisiProtocol.sol/InvisiProtocol.json',import.meta.url)),artifact=JSON.parse(artifactBytes);
+const artifactBytes=readFileSync(new URL('../../../../invisi-core/contracts/out/InvisiCore.sol/InvisiCore.json',import.meta.url)),artifact=JSON.parse(artifactBytes);
 // Refuse artifacts compiled from a different local Solidity source closure.
-const sourceRoot=new URL('../../../../invisi-protocol/',import.meta.url);
+const sourceRoot=new URL('../../../../invisi-core/',import.meta.url);
 assert(Object.keys(artifact.metadata?.sources??{}).length>0,'artifact source metadata missing');
 for(const[path,record]of Object.entries(artifact.metadata.sources))assert.equal(keccak256(readFileSync(new URL(path,sourceRoot))),record.keccak256,'artifact source mismatch: '+path);
 const methods=['transact','shield','createCredit','creditDraw','updateCredit','revokeCredit'];

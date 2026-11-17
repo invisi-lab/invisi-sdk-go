@@ -4,12 +4,12 @@ import argparse, json, os, pathlib, re, shutil, subprocess, tempfile
 HERE = pathlib.Path(__file__).resolve().parent
 SDK = HERE.parents[1]
 p = argparse.ArgumentParser()
-p.add_argument('--protocol-root', type=pathlib.Path, default=pathlib.Path(os.environ.get('INVISI_PROTOCOL_ROOT', str(SDK.parent / 'invisi-protocol'))))
+p.add_argument('--protocol-root', type=pathlib.Path, default=pathlib.Path(os.environ.get('INVISI_PROTOCOL_ROOT', str(SDK.parent / 'invisi-core'))))
 a = p.parse_args()
 abigen = os.environ.get('ABIGEN') or shutil.which('abigen') or str(pathlib.Path.home() / 'go/bin/abigen')
 network = SDK / 'rpc/contracts'
 network.mkdir(exist_ok=True)
-names = {'InvisiProtocol': 'invisi_protocol', 'InvisiFactory': 'invisi_factory', 'VerifierRouter': 'verifier_router', 'CreditVerifierRouter': 'credit_verifier_router', 'IERC20': 'ierc20', 'InvisiAddressRegistry': 'invisi_address_registry'}
+names = {'InvisiCore': 'invisi_core', 'InvisiCoreFactory': 'invisi_core_factory', 'VerifierRouter': 'verifier_router', 'CreditVerifierRouter': 'credit_verifier_router', 'IERC20': 'ierc20', 'InvisiAddressRegistry': 'invisi_address_registry'}
 with tempfile.TemporaryDirectory(prefix='invisi-bindings-') as tmp:
     for name, stem in names.items():
         source = a.protocol_root / 'contracts/out' / (name + '.sol') / (name + '.json')

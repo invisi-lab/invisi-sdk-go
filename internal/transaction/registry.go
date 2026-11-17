@@ -50,7 +50,7 @@ func (r *AddressRegistry) ValidateDeployment(ctx context.Context) error {
 	if len(code) == 0 || HashCode(code) != r.deployment.RuntimeCodeHash {
 		return errors.New("registry runtime code mismatch")
 	}
-	caller, e := contracts.NewInvisiProtocolCaller(r.protocolAddress, r.provider)
+	caller, e := contracts.NewInvisiCoreCaller(r.protocolAddress, r.provider)
 	if e != nil {
 		return e
 	}

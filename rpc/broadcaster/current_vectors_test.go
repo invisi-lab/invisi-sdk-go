@@ -31,7 +31,7 @@ func TestCurrentCanonicalSixMethodVectors(t *testing.T) {
 	if len(rows) != 6 {
 		t.Fatal("six current operations required")
 	}
-	a, err := contracts.InvisiProtocolMetaData.GetAbi()
+	a, err := contracts.InvisiCoreMetaData.GetAbi()
 	if err != nil {
 		t.Fatal(err)
 	}

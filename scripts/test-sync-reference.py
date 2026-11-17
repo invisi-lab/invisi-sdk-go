@@ -2,7 +2,7 @@
 """Authenticated reference imports fail before publication, including with Python assertions disabled."""
 import hashlib,json,pathlib,os,subprocess,sys,tempfile,unittest
 ROOT=pathlib.Path(__file__).resolve().parents[1]
-PROTOCOL=pathlib.Path(os.environ.get('INVISI_PROTOCOL_ROOT',str(ROOT.parent/'invisi-protocol')))
+PROTOCOL=pathlib.Path(os.environ.get('INVISI_PROTOCOL_ROOT',str(ROOT.parent/'invisi-core')))
 TS=pathlib.Path(os.environ.get('INVISI_TS_ROOT',str(ROOT.parent/'invisi-sdk-ts')))
 class SynchronizationTests(unittest.TestCase):
  def command(self,source=TS):

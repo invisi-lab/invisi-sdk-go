@@ -20,7 +20,7 @@ arguments = sys.argv[1:]
 proving_only = '--proving-only' in arguments
 arguments = [value for value in arguments if value != '--proving-only']
 source = pathlib.Path(arguments[0]).resolve() if arguments else root.parent / 'invisi-sdk-ts'
-protocol = pathlib.Path(arguments[1]).resolve() if len(arguments) > 1 else root.parent / 'invisi-protocol'
+protocol = pathlib.Path(arguments[1]).resolve() if len(arguments) > 1 else root.parent / 'invisi-core'
 
 def digest(data):
     return hashlib.sha256(data).hexdigest()

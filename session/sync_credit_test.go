@@ -76,15 +76,15 @@ func TestCanonicalCreditCreationReceiptProducesStatesAndNoCashNotes(t *testing.T
 	keys := primitives.ReceivingKeys{ViewingPublicKey: session.wallet.ViewingPublicKey(), ClueKey: session.wallet.ClueKey()}
 	delivery := credit.DeliveryState{State: state, OwnerReceivingKeys: keys, SpenderReceivingKeys: keys}
 	deliveryContext := credit.DeliveryContext{ProtocolContext: session.coreContext(), TokenAddress: state.TokenAddress, Commitment: commitment, RecipientIdentity: identity}
-	envelopes := []contracts.IInvisiProtocolDelivery{}
+	envelopes := []contracts.IInvisiCoreDelivery{}
 	for _, role := range []credit.Role{credit.Owner, credit.Spender} {
 		cipher, e := credit.Encrypt(delivery, deliveryContext, role)
 		if e != nil {
 			t.Fatal(e)
 		}
-		envelopes = append(envelopes, contracts.IInvisiProtocolDelivery{Ciphertext: cipher, Clue: make([]byte, 68)})
+		envelopes = append(envelopes, contracts.IInvisiCoreDelivery{Ciphertext: cipher, Clue: make([]byte, 68)})
 	}
-	contract, e := contracts.InvisiProtocolMetaData.GetAbi()
+	contract, e := contracts.InvisiCoreMetaData.GetAbi()
 	if e != nil {
 		t.Fatal(e)
 	}
@@ -134,7 +134,7 @@ type creditDrawSyncProvider struct {
 }
 
 func (p creditDrawSyncProvider) CallContract(ctx context.Context, msg ethereum.CallMsg, height *big.Int) ([]byte, error) {
-	a, e := contracts.InvisiProtocolMetaData.GetAbi()
+	a, e := contracts.InvisiCoreMetaData.GetAbi()
 	if e != nil {
 		return nil, e
 	}
@@ -191,7 +191,7 @@ func TestRefreshKeepsAuthenticatedChildPayloadAndDropsUnknownRecoveredPayload(t 
 			child.State.Payload = []byte{4, 5}
 			note := common.HexToHash("8")
 			cipherContext := credit.DeliveryContext{ProtocolContext: session.coreContext(), TokenAddress: state.TokenAddress, Commitment: draw.StateCommitment, RecipientIdentity: identity}
-			deliveries := []contracts.IInvisiProtocolDelivery{}
+			deliveries := []contracts.IInvisiCoreDelivery{}
 			for _, role := range []credit.Role{credit.Owner, credit.Spender} {
 				cipher, e := credit.Encrypt(child, cipherContext, role)
 				if e != nil {
@@ -200,10 +200,10 @@ func TestRefreshKeepsAuthenticatedChildPayloadAndDropsUnknownRecoveredPayload(t 
 				if corrupt {
 					cipher[len(cipher)-1] ^= 1
 				}
-				deliveries = append(deliveries, contracts.IInvisiProtocolDelivery{Ciphertext: cipher, Clue: make([]byte, 68)})
+				deliveries = append(deliveries, contracts.IInvisiCoreDelivery{Ciphertext: cipher, Clue: make([]byte, 68)})
 			}
-			deliveries = append(deliveries, contracts.IInvisiProtocolDelivery{})
-			a, e := contracts.InvisiProtocolMetaData.GetAbi()
+			deliveries = append(deliveries, contracts.IInvisiCoreDelivery{})
+			a, e := contracts.InvisiCoreMetaData.GetAbi()
 			if e != nil {
 				t.Fatal(e)
 			}
@@ -227,7 +227,7 @@ func TestRefreshKeepsAuthenticatedChildPayloadAndDropsUnknownRecoveredPayload(t 
 			}
 			leaf := common.Hash(draw.StateCommitment.Bytes())
 			nf := common.Hash(draw.Nullifier.Bytes())
-			params := contracts.IInvisiProtocolCreditDrawParams{Token: token, Sources: []contracts.IInvisiProtocolInputSource{{TreeId: big.NewInt(1), MerkleRoot: [32]byte{9}}}, Payers: []contracts.IInvisiProtocolCreditPayer{{Payer: session.wallet.OwnerAddress(), Amount: big.NewInt(7)}}, GrantRefs: []contracts.IInvisiProtocolCreditGrantRef{{PayerIndex: big.NewInt(0), Shard: 1, Slot: 0}}, Nullifiers: [][32]byte{nf}, CreditCommitments: [][32]byte{leaf}, RecoveryAmounts: [][32]byte{draw.RecoveryAmount.Bytes()}, NoteCommitment: note, TotalAmount: big.NewInt(7), Deadline: new(big.Int).SetUint64(base.head.Time + 100), FeeAmount: big.NewInt(0)}
+			params := contracts.IInvisiCoreCreditDrawParams{Token: token, Sources: []contracts.IInvisiCoreInputSource{{TreeId: big.NewInt(1), MerkleRoot: [32]byte{9}}}, Payers: []contracts.IInvisiCoreCreditPayer{{Payer: session.wallet.OwnerAddress(), Amount: big.NewInt(7)}}, GrantRefs: []contracts.IInvisiCoreCreditGrantRef{{PayerIndex: big.NewInt(0), Shard: 1, Slot: 0}}, Nullifiers: [][32]byte{nf}, CreditCommitments: [][32]byte{leaf}, RecoveryAmounts: [][32]byte{draw.RecoveryAmount.Bytes()}, NoteCommitment: note, TotalAmount: big.NewInt(7), Deadline: new(big.Int).SetUint64(base.head.Time + 100), FeeAmount: big.NewInt(0)}
 			insertion := pack("CommitmentsInserted", 1, []any{big.NewInt(2)}, uint32(0), [][32]byte{leaf, note})
 			event := pack("CreditDraw", 2, []any{big.NewInt(2)}, params, []uint32{0, 1}, deliveries)
 			receipt := &types.Receipt{TxHash: tx, Status: types.ReceiptStatusSuccessful, BlockNumber: big.NewInt(10), BlockHash: block.Hash, Logs: []*types.Log{insertion, event}}

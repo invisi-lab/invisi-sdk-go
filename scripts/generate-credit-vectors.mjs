@@ -4,7 +4,7 @@ import path from 'node:path';
 import {pathToFileURL,fileURLToPath} from 'node:url';
 import {createECDH,createHash} from 'node:crypto';
 const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..');
-const protocol=path.resolve(process.argv[2]??path.join(root,'../invisi-protocol'));
+const protocol=path.resolve(process.argv[2]??path.join(root,'../invisi-core'));
 const load=name=>import(pathToFileURL(path.join(protocol,'scripts',name)).href);
 const {creditCommitment,encryptCreditNote,createCreditPublicInputs,encodeCreateCreditTypedData}=await load('create-credit-client.mjs');
 const {deriveCreditUpdate,deriveCreditState,creditDrawPublicInputs,updateCreditPublicInputs,encodeCreditDrawTypedData,encodeUpdateCreditTypedData}=await load('credit-lifecycle-client.mjs');

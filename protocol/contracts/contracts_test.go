@@ -12,23 +12,23 @@ import (
 // TestBindingsCompile verifies that all generated ABI bindings parse correctly
 // and that their MetaData is valid.
 func TestBindingsCompile(t *testing.T) {
-	t.Run("InvisiProtocol ABI parses", func(t *testing.T) {
-		if contracts.InvisiProtocolMetaData == nil {
-			t.Fatal("InvisiProtocolMetaData is nil")
+	t.Run("InvisiCore ABI parses", func(t *testing.T) {
+		if contracts.InvisiCoreMetaData == nil {
+			t.Fatal("InvisiCoreMetaData is nil")
 		}
-		_, err := contracts.InvisiProtocolMetaData.GetAbi()
+		_, err := contracts.InvisiCoreMetaData.GetAbi()
 		if err != nil {
-			t.Fatalf("InvisiProtocol ABI parse error: %v", err)
+			t.Fatalf("InvisiCore ABI parse error: %v", err)
 		}
 	})
 
-	t.Run("InvisiFactory ABI parses", func(t *testing.T) {
-		if contracts.InvisiFactoryMetaData == nil {
-			t.Fatal("InvisiFactoryMetaData is nil")
+	t.Run("InvisiCoreFactory ABI parses", func(t *testing.T) {
+		if contracts.InvisiCoreFactoryMetaData == nil {
+			t.Fatal("InvisiCoreFactoryMetaData is nil")
 		}
-		_, err := contracts.InvisiFactoryMetaData.GetAbi()
+		_, err := contracts.InvisiCoreFactoryMetaData.GetAbi()
 		if err != nil {
-			t.Fatalf("InvisiFactory ABI parse error: %v", err)
+			t.Fatalf("InvisiCoreFactory ABI parse error: %v", err)
 		}
 	})
 
@@ -53,9 +53,9 @@ func TestBindingsCompile(t *testing.T) {
 	})
 }
 
-// TestInvisiProtocolKeyMethods verifies that critical methods exist in the ABI.
-func TestInvisiProtocolKeyMethods(t *testing.T) {
-	parsed, err := contracts.InvisiProtocolMetaData.GetAbi()
+// TestInvisiCoreKeyMethods verifies that critical methods exist in the ABI.
+func TestInvisiCoreKeyMethods(t *testing.T) {
+	parsed, err := contracts.InvisiCoreMetaData.GetAbi()
 	if err != nil {
 		t.Fatalf("failed to parse ABI: %v", err)
 	}
@@ -63,21 +63,21 @@ func TestInvisiProtocolKeyMethods(t *testing.T) {
 	required := []string{"shield", "transact", "createCredit", "creditDraw", "updateCredit", "revokeCredit", "creditAllocation", "creditRevocationBitmap", "activeNoteTreeId", "getNoteTreeRoot", "getNoteTreeNextLeafIndex", "isCommitmentRegistered", "isNullifierSpent"}
 	for _, name := range required {
 		if _, ok := parsed.Methods[name]; !ok {
-			t.Errorf("InvisiProtocol ABI missing method: %s", name)
+			t.Errorf("InvisiCore ABI missing method: %s", name)
 		}
 	}
 }
 
-// TestInvisiFactoryGetInstanceAddress verifies that getInstanceAddress is present.
-func TestInvisiFactoryGetInstanceAddress(t *testing.T) {
-	parsed, err := contracts.InvisiFactoryMetaData.GetAbi()
+// TestInvisiCoreFactoryGetInstanceAddress verifies that getInstanceAddress is present.
+func TestInvisiCoreFactoryGetInstanceAddress(t *testing.T) {
+	parsed, err := contracts.InvisiCoreFactoryMetaData.GetAbi()
 	if err != nil {
 		t.Fatalf("failed to parse ABI: %v", err)
 	}
 
 	method, ok := parsed.Methods["getInstanceAddress"]
 	if !ok {
-		t.Fatal("InvisiFactory ABI missing method: getInstanceAddress")
+		t.Fatal("InvisiCoreFactory ABI missing method: getInstanceAddress")
 	}
 	if len(method.Inputs) != 1 {
 		t.Errorf("getInstanceAddress: expected 1 input, got %d", len(method.Inputs))
@@ -103,7 +103,7 @@ func TestIERC20KeyMethods(t *testing.T) {
 }
 
 func TestCurrentABIArtifacts(t *testing.T) {
-	for name, metadata := range map[string]*contracts.MetaData{"InvisiProtocol": contracts.InvisiProtocolMetaData, "InvisiFactory": contracts.InvisiFactoryMetaData, "VerifierRouter": contracts.VerifierRouterMetaData, "CreditVerifierRouter": contracts.CreditVerifierRouterMetaData, "IERC20": contracts.IERC20MetaData, "InvisiAddressRegistry": contracts.InvisiAddressRegistryMetaData} {
+	for name, metadata := range map[string]*contracts.MetaData{"InvisiCore": contracts.InvisiCoreMetaData, "InvisiCoreFactory": contracts.InvisiCoreFactoryMetaData, "VerifierRouter": contracts.VerifierRouterMetaData, "CreditVerifierRouter": contracts.CreditVerifierRouterMetaData, "IERC20": contracts.IERC20MetaData, "InvisiAddressRegistry": contracts.InvisiAddressRegistryMetaData} {
 		t.Run(name, func(t *testing.T) {
 			source, err := os.ReadFile("abi/" + name + ".abi.json")
 			if err != nil {
@@ -121,7 +121,7 @@ func TestCurrentABIArtifacts(t *testing.T) {
 			}
 		})
 	}
-	parsed, _ := contracts.InvisiProtocolMetaData.GetAbi()
+	parsed, _ := contracts.InvisiCoreMetaData.GetAbi()
 	for _, name := range []string{"CommitmentsInserted", "BatchOutputs", "TreeCreated", "Shield", "CreditCreated"} {
 		if _, ok := parsed.Events[name]; !ok {
 			t.Errorf("missing current event %s", name)
@@ -158,7 +158,7 @@ func TestFinalRegistryAndFactoryABIContract(t *testing.T) {
 		}
 	}
 
-	protocol, err := contracts.InvisiProtocolMetaData.GetAbi()
+	protocol, err := contracts.InvisiCoreMetaData.GetAbi()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -168,7 +168,7 @@ func TestFinalRegistryAndFactoryABIContract(t *testing.T) {
 	if _, ok := protocol.Methods["setAddressRegistry"]; ok {
 		t.Fatal("protocol registry must be immutable")
 	}
-	factory, err := contracts.InvisiFactoryMetaData.GetAbi()
+	factory, err := contracts.InvisiCoreFactoryMetaData.GetAbi()
 	if err != nil {
 		t.Fatal(err)
 	}

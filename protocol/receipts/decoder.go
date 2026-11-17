@@ -19,7 +19,7 @@ import (
 type Decoder struct{ abi abi.ABI }
 
 func NewDecoder() (*Decoder, error) {
-	a, e := contracts.InvisiProtocolMetaData.GetAbi()
+	a, e := contracts.InvisiCoreMetaData.GetAbi()
 	if e != nil {
 		return nil, e
 	}

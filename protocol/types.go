@@ -9,14 +9,14 @@ import (
 )
 
 // Contract tuples use the generated, current ABI types.
-type Delivery = contracts.IInvisiProtocolDelivery
-type InputSource = contracts.IInvisiProtocolInputSource
+type Delivery = contracts.IInvisiCoreDelivery
+type InputSource = contracts.IInvisiCoreInputSource
 type TokenPermit = contracts.IMetaTxTokenPermit
-type FundingParams = contracts.IInvisiProtocolFundingParams
-type ShieldParams = contracts.IInvisiProtocolShieldParams
-type ShieldOutput = contracts.IInvisiProtocolShieldOutput
-type CrossTreeTransactParams = contracts.IInvisiProtocolCrossTreeTransactParams
-type TransactRequest = contracts.IInvisiProtocolTransactRequest
+type FundingParams = contracts.IInvisiCoreFundingParams
+type ShieldParams = contracts.IInvisiCoreShieldParams
+type ShieldOutput = contracts.IInvisiCoreShieldOutput
+type CrossTreeTransactParams = contracts.IInvisiCoreCrossTreeTransactParams
+type TransactRequest = contracts.IInvisiCoreTransactRequest
 
 type TransactionContext struct {
 	ChainID         *big.Int

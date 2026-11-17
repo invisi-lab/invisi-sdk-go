@@ -79,7 +79,7 @@ func TestManagedRevocationUsesOriginalReferenceAndCurrentFeeAllowance(t *testing
 	if _, err = managed.Prepare(ctx, "unapproved-fee", prepared); err == nil {
 		t.Fatal("accepted unapproved owner fee")
 	}
-	contract, err := contracts.NewInvisiProtocolCaller(wallet.scope.ProtocolAddress, wallet.options.Provider)
+	contract, err := contracts.NewInvisiCoreCaller(wallet.scope.ProtocolAddress, wallet.options.Provider)
 	if err != nil {
 		t.Fatal(err)
 	}

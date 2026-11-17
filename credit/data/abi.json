@@ -11,7 +11,7 @@
       {
         "name": "p",
         "type": "tuple",
-        "internalType": "struct IInvisiProtocol.CreateCreditParams",
+        "internalType": "struct IInvisiCore.CreateCreditParams",
         "components": [
           {
             "name": "token",
@@ -58,7 +58,7 @@
       {
         "name": "",
         "type": "tuple[]",
-        "internalType": "struct IInvisiProtocol.Delivery[]",
+        "internalType": "struct IInvisiCore.Delivery[]",
         "components": [
           {
             "name": "ciphertext",
@@ -117,7 +117,7 @@
       {
         "name": "p",
         "type": "tuple",
-        "internalType": "struct IInvisiProtocol.CreditDrawParams",
+        "internalType": "struct IInvisiCore.CreditDrawParams",
         "components": [
           {
             "name": "token",
@@ -127,7 +127,7 @@
           {
             "name": "sources",
             "type": "tuple[]",
-            "internalType": "struct IInvisiProtocol.InputSource[]",
+            "internalType": "struct IInvisiCore.InputSource[]",
             "components": [
               {
                 "name": "treeId",
@@ -144,7 +144,7 @@
           {
             "name": "payers",
             "type": "tuple[]",
-            "internalType": "struct IInvisiProtocol.CreditPayer[]",
+            "internalType": "struct IInvisiCore.CreditPayer[]",
             "components": [
               {
                 "name": "payer",
@@ -161,7 +161,7 @@
           {
             "name": "grantRefs",
             "type": "tuple[]",
-            "internalType": "struct IInvisiProtocol.CreditGrantRef[]",
+            "internalType": "struct IInvisiCore.CreditGrantRef[]",
             "components": [
               {
                 "name": "payerIndex",
@@ -225,7 +225,7 @@
       {
         "name": "",
         "type": "tuple[]",
-        "internalType": "struct IInvisiProtocol.Delivery[]",
+        "internalType": "struct IInvisiCore.Delivery[]",
         "components": [
           {
             "name": "ciphertext",
@@ -337,7 +337,7 @@
       {
         "name": "p",
         "type": "tuple",
-        "internalType": "struct IInvisiProtocol.UpdateCreditParams",
+        "internalType": "struct IInvisiCore.UpdateCreditParams",
         "components": [
           {
             "name": "token",
@@ -352,7 +352,7 @@
           {
             "name": "source",
             "type": "tuple",
-            "internalType": "struct IInvisiProtocol.InputSource",
+            "internalType": "struct IInvisiCore.InputSource",
             "components": [
               {
                 "name": "treeId",
@@ -406,7 +406,7 @@
       {
         "name": "",
         "type": "tuple[]",
-        "internalType": "struct IInvisiProtocol.Delivery[]",
+        "internalType": "struct IInvisiCore.Delivery[]",
         "components": [
           {
             "name": "ciphertext",
@@ -474,7 +474,7 @@
         "name": "deliveries",
         "type": "tuple[]",
         "indexed": false,
-        "internalType": "struct IInvisiProtocol.Delivery[]",
+        "internalType": "struct IInvisiCore.Delivery[]",
         "components": [
           {
             "name": "ciphertext",
@@ -523,7 +523,7 @@
         "name": "params",
         "type": "tuple",
         "indexed": false,
-        "internalType": "struct IInvisiProtocol.CreditDrawParams",
+        "internalType": "struct IInvisiCore.CreditDrawParams",
         "components": [
           {
             "name": "token",
@@ -533,7 +533,7 @@
           {
             "name": "sources",
             "type": "tuple[]",
-            "internalType": "struct IInvisiProtocol.InputSource[]",
+            "internalType": "struct IInvisiCore.InputSource[]",
             "components": [
               {
                 "name": "treeId",
@@ -550,7 +550,7 @@
           {
             "name": "payers",
             "type": "tuple[]",
-            "internalType": "struct IInvisiProtocol.CreditPayer[]",
+            "internalType": "struct IInvisiCore.CreditPayer[]",
             "components": [
               {
                 "name": "payer",
@@ -567,7 +567,7 @@
           {
             "name": "grantRefs",
             "type": "tuple[]",
-            "internalType": "struct IInvisiProtocol.CreditGrantRef[]",
+            "internalType": "struct IInvisiCore.CreditGrantRef[]",
             "components": [
               {
                 "name": "payerIndex",
@@ -638,7 +638,7 @@
         "name": "deliveries",
         "type": "tuple[]",
         "indexed": false,
-        "internalType": "struct IInvisiProtocol.Delivery[]",
+        "internalType": "struct IInvisiCore.Delivery[]",
         "components": [
           {
             "name": "ciphertext",
@@ -718,7 +718,7 @@
         "name": "params",
         "type": "tuple",
         "indexed": false,
-        "internalType": "struct IInvisiProtocol.UpdateCreditParams",
+        "internalType": "struct IInvisiCore.UpdateCreditParams",
         "components": [
           {
             "name": "token",
@@ -733,7 +733,7 @@
           {
             "name": "source",
             "type": "tuple",
-            "internalType": "struct IInvisiProtocol.InputSource",
+            "internalType": "struct IInvisiCore.InputSource",
             "components": [
               {
                 "name": "treeId",
@@ -794,7 +794,7 @@
         "name": "deliveries",
         "type": "tuple[]",
         "indexed": false,
-        "internalType": "struct IInvisiProtocol.Delivery[]",
+        "internalType": "struct IInvisiCore.Delivery[]",
         "components": [
           {
             "name": "ciphertext",

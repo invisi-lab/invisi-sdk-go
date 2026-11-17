@@ -11,11 +11,11 @@ func TestNewBinderConstructors(t *testing.T) {
 	zero := common.Address{}
 
 	// Each constructor should succeed (nil caller is stored, not validated until call time).
-	if _, err := contracts.NewInvisiProtocolCaller(zero, nil); err != nil {
-		t.Errorf("NewInvisiProtocolCaller: %v", err)
+	if _, err := contracts.NewInvisiCoreCaller(zero, nil); err != nil {
+		t.Errorf("NewInvisiCoreCaller: %v", err)
 	}
-	if _, err := contracts.NewInvisiFactoryCaller(zero, nil); err != nil {
-		t.Errorf("NewInvisiFactoryCaller: %v", err)
+	if _, err := contracts.NewInvisiCoreFactoryCaller(zero, nil); err != nil {
+		t.Errorf("NewInvisiCoreFactoryCaller: %v", err)
 	}
 	if _, err := contracts.NewVerifierRouterCaller(zero, nil); err != nil {
 		t.Errorf("NewVerifierRouterCaller: %v", err)

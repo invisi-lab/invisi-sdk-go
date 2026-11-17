@@ -16,7 +16,7 @@ import (
 )
 
 func (s *WalletSession) checkKnownState(ctx context.Context, v *WalletState, b protocolrpc.CanonicalBlock) error {
-	c, e := contracts.NewInvisiProtocolCaller(s.scope.ProtocolAddress, s.options.Provider)
+	c, e := contracts.NewInvisiCoreCaller(s.scope.ProtocolAddress, s.options.Provider)
 	if e != nil {
 		return e
 	}
@@ -162,7 +162,7 @@ func (s *WalletSession) replayCredits(ctx context.Context, target protocolrpc.Ca
 			return e
 		}
 		for _, tx := range page.Transactions {
-			filter, e := contracts.NewInvisiProtocolFilterer(s.scope.ProtocolAddress, nil)
+			filter, e := contracts.NewInvisiCoreFilterer(s.scope.ProtocolAddress, nil)
 			if e != nil {
 				return e
 			}

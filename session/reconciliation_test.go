@@ -79,7 +79,7 @@ func (p *confirmingProvider) HeaderByNumber(ctx context.Context, number *big.Int
 	return p.sendingProvider.HeaderByNumber(ctx, number)
 }
 func (p *confirmingProvider) CallContract(ctx context.Context, message ethereum.CallMsg, number *big.Int) ([]byte, error) {
-	contractABI, _ := contracts.InvisiProtocolMetaData.GetAbi()
+	contractABI, _ := contracts.InvisiCoreMetaData.GetAbi()
 	if len(message.Data) >= 4 {
 		if method, err := contractABI.MethodById(message.Data[:4]); err == nil && method.RawName == "isNullifierSpent" {
 			if p.hook != nil {

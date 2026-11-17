@@ -224,7 +224,7 @@ func HashABI(arguments abi.Arguments, values ...any) (common.Hash, error) {
 	}
 	return crypto.Keccak256Hash(v), nil
 }
-func ProtocolABI() (*abi.ABI, error) { return contracts.InvisiProtocolMetaData.GetAbi() }
+func ProtocolABI() (*abi.ABI, error) { return contracts.InvisiCoreMetaData.GetAbi() }
 func PackProtocolCalldata(name string, values ...any) ([]byte, error) {
 	a, err := ProtocolABI()
 	if err != nil {

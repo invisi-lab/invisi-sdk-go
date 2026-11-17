@@ -24,13 +24,13 @@ func intent(t *testing.T) ([]byte, Trust, *ecdsa.PrivateKey) {
 	t.Helper()
 	key, _ := crypto.GenerateKey()
 	trust := Trust{big.NewInt(97), common.HexToAddress("0x11"), crypto.PubkeyToAddress(key.PublicKey)}
-	a, e := contracts.InvisiProtocolMetaData.GetAbi()
+	a, e := contracts.InvisiCoreMetaData.GetAbi()
 	if e != nil {
 		t.Fatal(e)
 	}
-	p := contracts.IInvisiProtocolShieldParams{Token: common.HexToAddress("0x22"), Deadline: big.NewInt(time.Now().Unix() + 3600), FeeRecipient: common.HexToAddress("0x33"), FeeAmount: big.NewInt(5)}
-	f := contracts.IInvisiProtocolFundingParams{Amount: big.NewInt(105), SigNonce: big.NewInt(0), Deadline: p.Deadline, Permit: contracts.IMetaTxTokenPermit{Deadline: big.NewInt(0)}}
-	data, e := a.Pack("shield", p, []contracts.IInvisiProtocolShieldOutput{}, []contracts.IInvisiProtocolDelivery{}, f)
+	p := contracts.IInvisiCoreShieldParams{Token: common.HexToAddress("0x22"), Deadline: big.NewInt(time.Now().Unix() + 3600), FeeRecipient: common.HexToAddress("0x33"), FeeAmount: big.NewInt(5)}
+	f := contracts.IInvisiCoreFundingParams{Amount: big.NewInt(105), SigNonce: big.NewInt(0), Deadline: p.Deadline, Permit: contracts.IMetaTxTokenPermit{Deadline: big.NewInt(0)}}
+	data, e := a.Pack("shield", p, []contracts.IInvisiCoreShieldOutput{}, []contracts.IInvisiCoreDelivery{}, f)
 	if e != nil {
 		t.Fatal(e)
 	}
@@ -135,7 +135,7 @@ func TestClientPositionalJSONRPCAndSafeSubmission(t *testing.T) {
 }
 
 func TestEverySupportedIntentCanonicalHash(t *testing.T) {
-	a, _ := contracts.InvisiProtocolMetaData.GetAbi()
+	a, _ := contracts.InvisiCoreMetaData.GetAbi()
 	var initialize func(reflect.Value)
 	initialize = func(v reflect.Value) {
 		switch v.Kind() {
