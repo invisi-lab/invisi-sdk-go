@@ -318,3 +318,41 @@ func TestSharedResourceCacheDefaultsAndPrecedence(t *testing.T) {
 		t.Fatal("explicit override ignored")
 	}
 }
+
+func TestPrefetchResourcesValidatesSelectionAndSupportsOfflineReuse(t *testing.T) {
+	loader, hits, digest := fixtureStore(t, nil)
+	if err := loader.prefetch(context.Background(), []string{"circuits/test.json", "circuits/missing.json"}); err == nil {
+		t.Fatal("missing resource accepted")
+	}
+	if hits.Load() != 1 {
+		t.Fatal("downloaded objects before validating selection")
+	}
+	if err := loader.prefetch(context.Background(), nil); err != nil {
+		t.Fatal(err)
+	}
+	if hits.Load() != 2 {
+		t.Fatalf("unexpected requests: %d", hits.Load())
+	}
+	loader.options.Offline = true
+	if err := loader.prefetch(context.Background(), nil); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(loader.options.CacheDir, digest+".json"), []byte("corrupt"), 0600); err != nil {
+		t.Fatal(err)
+	}
+	if err := loader.prefetch(context.Background(), nil); err == nil {
+		t.Fatal("corrupt offline resource accepted")
+	}
+}
+
+func TestPublicPrefetchUsesPinnedSnapshotAndCancellation(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+	err := PrefetchResources(ctx, ResourceOptions{CacheDir: t.TempDir(), Sources: []string{}}, nil)
+	if !errors.Is(err, context.Canceled) {
+		t.Fatalf("unexpected cancellation result: %v", err)
+	}
+	if ResourceIndexSHA256 != resourceIndexSHA256 {
+		t.Fatal("public pin differs from trusted loader pin")
+	}
+}

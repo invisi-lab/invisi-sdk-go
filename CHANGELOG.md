@@ -4,6 +4,7 @@
 
 - Add the independent IPP module and Invisi preparation adapter.
 - Load fixed-hash public proving resources lazily, with local directory and offline support, verified cache reads and shared cache naming.
+- Expose authenticated resource prefetch for deployment images without requiring local proving executables.
 - Align contract bindings with Invisi Core.
 
 

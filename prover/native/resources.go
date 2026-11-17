@@ -14,6 +14,7 @@ import (
 	"path"
 	"path/filepath"
 	"regexp"
+	"sort"
 	"strings"
 	"sync"
 	"time"
@@ -271,4 +272,45 @@ func resourceExtension(name string) string {
 		return ".vk"
 	}
 	return path.Ext(name)
+}
+
+// ResourceIndexSHA256 identifies the immutable public resource snapshot pinned by this SDK.
+const ResourceIndexSHA256 = resourceIndexSHA256
+
+// PrefetchResources verifies the pinned index and makes selected resources available
+// before proving, without requiring Noir or BB binaries. An empty selection prepares
+// the complete snapshot. Local directory/cache hits are verified and reused; missing
+// files are downloaded into CacheDir unless Offline is enabled.
+func PrefetchResources(ctx context.Context, options ResourceOptions, logicalPaths []string) error {
+	loader, err := newResourceLoader(options, resourceIndexSHA256)
+	if err != nil {
+		return err
+	}
+	return loader.prefetch(ctx, logicalPaths)
+}
+
+func (l *resourceLoader) prefetch(ctx context.Context, logicalPaths []string) error {
+	index, err := l.index(ctx)
+	if err != nil {
+		return err
+	}
+	names := append([]string(nil), logicalPaths...)
+	if len(names) == 0 {
+		for name := range index.Files {
+			names = append(names, name)
+		}
+	}
+	sort.Strings(names)
+	for _, name := range names {
+		if _, ok := index.Files[name]; !ok {
+			return fmt.Errorf("resource absent from pinned index: %s", name)
+		}
+	}
+	for _, name := range names {
+		file := index.Files[name]
+		if _, err = l.object(ctx, file.SHA256+resourceExtension(name), file.SHA256, file.Size, file.Size); err != nil {
+			return err
+		}
+	}
+	return nil
 }

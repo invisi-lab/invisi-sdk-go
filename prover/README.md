@@ -50,3 +50,9 @@ The default disk cache is the system cache directory plus `invisi/prover-assets`
 An explicit cache option overrides `INVISI_PROVER_CACHE_DIR`, which overrides this default.
 Index files use `<index-sha256>.index.json`; objects use `<sha256>.json` or `<sha256>.vk`,
 so Node, Go and Rust can share the same verified disk cache. Offline mode defaults to false.
+
+Deployment builds can call `native.PrefetchResources(ctx, options, nil)` to prepare
+the complete pinned snapshot without invoking Noir or BB. Pass logical resource
+paths to prepare only a subset. `native.ResourceIndexSHA256` exposes the SDK's
+fixed index identity for build reports. Existing directory/cache files are verified
+and reused; missing resources download into `CacheDir` unless offline mode is set.
