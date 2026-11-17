@@ -7,6 +7,14 @@
 - Align contract bindings with Invisi Core.
 
 
+## 1.2.4
+
+- Refresh receipt-calibrated gas estimates for optimized Protocol contracts and validate authorization and unsigned funding boundaries.
+- Add trusted RPC Note confirmation and collection with broadcaster fees deducted from the payout.
+- Support scheduled broadcaster submissions and cancellation; align quote lifecycle, Credit proof validation and managed recovery.
+- Bound parallel public-history header reads during wallet synchronization.
+- Preserve Protocol ABI and authenticated circuit formats. Gas estimates remain distinct from transaction gas limits.
+
 ## 1.2.3
 
 - Align transaction, Credit, history and Provenance workflows across the three SDKs.

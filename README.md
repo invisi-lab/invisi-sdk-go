@@ -213,3 +213,10 @@ independent chain authentication.
 ## Contributing
 
 Open a focused GitHub issue or pull request describing the problem, scope, and validation. Run `python3 scripts/test-modules.py` and `python3 scripts/check-packages.py` for your change. Never include private keys, credentials, or private witnesses in issues, pull requests, logs, or fixtures.
+
+Release notes use the local versioned CHANGELOG as the only maintained source.
+`scripts/release-notes.py vMAJOR.MINOR.PATCH --output NOTES.md` renders the complete
+current entry (all public package entries for TypeScript) into the GitHub Release
+body. Missing, duplicate, empty or link-only entries fail validation before
+publication. Historical entries are retained locally; a release body includes only
+its matching version. Release retries update the same body from the same source.
