@@ -3,7 +3,6 @@ package native
 import (
 	"context"
 	"crypto/sha256"
-	"embed"
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
@@ -11,9 +10,6 @@ import (
 	"github.com/invisi-lab/invisi-sdk-go/prover"
 	source "github.com/invisi-lab/invisi-sdk-go/prover/provenance"
 )
-
-//go:embed provenance-assets/*
-var provenanceResources embed.FS
 
 // GetProvenanceCapability reuses the local native executables with authenticated Source assets.
 func (p *NativeProver) GetProvenanceCapability() (source.ManifestIdentity, source.OfflineProver, error) {
@@ -24,7 +20,34 @@ func (p *NativeProver) GetProvenanceCapability() (source.ManifestIdentity, sourc
 	if err != nil {
 		return source.ManifestIdentity{}, nil, err
 	}
-	backend := source.NativeProver{NoirExecutePath: p.options.NoirBinary, BBPath: p.options.BBBinary, TrustedManifestSHA256: pin, Run: func(ctx context.Context, args ...string) error { _, err := p.run(ctx, args...); return err }, ExecuteWitness: func(ctx context.Context, artifact, witness []byte) ([]byte, error) {
+	load := func(ctx context.Context, capacity int) (source.LocalAssets, error) {
+		var artifactPath, keyPath string
+		for _, entry := range identity.Manifest.Circuits {
+			if entry.Capacity == capacity {
+				artifactPath, keyPath = entry.Artifact, entry.VK
+			}
+		}
+		if artifactPath == "" {
+			return source.LocalAssets{}, fmt.Errorf("unsupported provenance capacity %d", capacity)
+		}
+		manifest, e := p.resources.read(ctx, "provenance/manifest.json")
+		if e != nil {
+			return source.LocalAssets{}, e
+		}
+		if _, e = source.AuthenticateManifest(manifest, pin); e != nil {
+			return source.LocalAssets{}, e
+		}
+		artifact, e := p.resources.read(ctx, "provenance/"+artifactPath)
+		if e != nil {
+			return source.LocalAssets{}, e
+		}
+		key, e := p.resources.read(ctx, "provenance/"+keyPath)
+		if e != nil {
+			return source.LocalAssets{}, e
+		}
+		return source.LocalAssets{Manifest: manifest, Artifact: artifact, VerificationKey: key}, nil
+	}
+	backend := source.NativeProver{LoadAssetsContext: load, NoirExecutePath: p.options.NoirBinary, BBPath: p.options.BBBinary, TrustedManifestSHA256: pin, Run: func(ctx context.Context, args ...string) error { _, err := p.run(ctx, args...); return err }, ExecuteWitness: func(ctx context.Context, artifact, witness []byte) ([]byte, error) {
 		if err := p.version(ctx); err != nil {
 			return nil, err
 		}
@@ -37,16 +60,6 @@ func (p *NativeProver) GetProvenanceCapability() (source.ManifestIdentity, sourc
 			return nil, err
 		}
 		return p.options.WitnessExecutor.Execute(ctx, artifact, local)
-	}, LoadAssets: func(capacity int) (source.LocalAssets, error) {
-		artifact, e := provenanceResources.ReadFile(fmt.Sprintf("provenance-assets/k%d.json", capacity))
-		if e != nil {
-			return source.LocalAssets{}, e
-		}
-		key, e := provenanceResources.ReadFile(fmt.Sprintf("provenance-assets/k%d.vk", capacity))
-		if e != nil {
-			return source.LocalAssets{}, e
-		}
-		return source.LocalAssets{Manifest: raw, Artifact: artifact, VerificationKey: key}, nil
-	}}
+	}, LoadAssets: func(capacity int) (source.LocalAssets, error) { return load(context.Background(), capacity) }}
 	return identity, backend, nil
 }

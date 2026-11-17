@@ -5,7 +5,6 @@ import (
 	"bytes"
 	"context"
 	"crypto/sha256"
-	"embed"
 	"encoding/hex"
 	"encoding/json"
 	"errors"
@@ -20,9 +19,6 @@ import (
 	"github.com/invisi-lab/invisi-sdk-go/prover"
 )
 
-//go:embed circuits/*
-var resources embed.FS
-
 // WitnessExecutor runs locally and returns the gzip-encoded ACVM witness.
 // Its implementation must never send inputs to an external service.
 type WitnessExecutor interface {
@@ -34,8 +30,12 @@ type NativeOptions struct {
 	Threads         int
 	Timeout         time.Duration
 	WitnessExecutor WitnessExecutor
+	Resources       ResourceOptions
 }
-type NativeProver struct{ options NativeOptions }
+type NativeProver struct {
+	options   NativeOptions
+	resources *resourceLoader
+}
 
 func NewNativeProver(options NativeOptions) (*NativeProver, error) {
 	if options.BBBinary == "" {
@@ -59,7 +59,11 @@ func NewNativeProver(options NativeOptions) (*NativeProver, error) {
 	if options.WitnessExecutor == nil {
 		options.WitnessExecutor = noirWitnessExecutor{binary: options.NoirBinary, timeout: options.Timeout}
 	}
-	return &NativeProver{options}, nil
+	loader, err := newResourceLoader(options.Resources, resourceIndexSHA256)
+	if err != nil {
+		return nil, err
+	}
+	return &NativeProver{options: options, resources: loader}, nil
 }
 func (p *NativeProver) run(ctx context.Context, args ...string) ([]byte, error) {
 	ctx, cancel := context.WithTimeout(ctx, p.options.Timeout)
@@ -96,7 +100,7 @@ func (p *NativeProver) version(ctx context.Context) error {
 	}
 	return nil
 }
-func assets(statement prover.ProofStatement) ([]byte, []byte, error) {
+func (p *NativeProver) assets(ctx context.Context, statement prover.ProofStatement) ([]byte, []byte, error) {
 	expected, e := prover.Statement(statement.CircuitName, statement.Target, statement.ExpectedPublicInputs)
 	if e != nil {
 		return nil, nil, e
@@ -104,11 +108,11 @@ func assets(statement prover.ProofStatement) ([]byte, []byte, error) {
 	if expected.ArtifactSHA256 != statement.ArtifactSHA256 || expected.VKSHA256 != statement.VKSHA256 {
 		return nil, nil, errors.New("untrusted circuit metadata")
 	}
-	artifact, e := resources.ReadFile("circuits/" + statement.CircuitName + ".json")
+	artifact, e := p.resources.read(ctx, "circuits/"+statement.CircuitName+".json")
 	if e != nil {
 		return nil, nil, e
 	}
-	key, e := resources.ReadFile("circuits/" + statement.CircuitName + "." + statement.Target + ".vk")
+	key, e := p.resources.read(ctx, "circuits/"+statement.CircuitName+"."+statement.Target+".vk")
 	if e != nil {
 		return nil, nil, e
 	}
@@ -142,7 +146,7 @@ func (p *NativeProver) Verify(ctx context.Context, bundle prover.ProofBundle, st
 	if e := prover.AssertProofBundle(bundle, statement); e != nil {
 		return false, e
 	}
-	_, key, e := assets(statement)
+	_, key, e := p.assets(ctx, statement)
 	if e != nil {
 		return false, e
 	}
@@ -174,7 +178,7 @@ func (p *NativeProver) Prove(ctx context.Context, request prover.ProvingRequest,
 	if p.options.WitnessExecutor == nil {
 		return bundle, errors.New("local Noir witness executor required")
 	}
-	artifact, key, e := assets(request.ProofStatement)
+	artifact, key, e := p.assets(ctx, request.ProofStatement)
 	if e != nil {
 		return bundle, e
 	}

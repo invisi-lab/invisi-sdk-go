@@ -69,6 +69,9 @@ for name, base in MODULES:
             else:
                 archive.write(p, target)
     with zipfile.ZipFile(dest / (VERSION + '.zip')) as archive:
+        if name == 'prover':
+            assert not any('/native/circuits/' in p or '/native/provenance-assets/' in p for p in archive.namelist()), 'large circuit assets leaked into module'
+            assert sum(p.file_size for p in archive.infolist()) < 2 * 1024 * 1024, 'prover module exceeds tiny metadata budget'
         assert archive.read(module + '@' + VERSION + '/LICENSE') == license_text, module + ': incomplete packaged LICENSE'
 env = {**os.environ, 'GOWORK': 'off', 'GOPROXY': proxy.as_uri() + ',https://proxy.golang.org', 'GOMODCACHE': str(cache), 'GONOSUMDB': PREFIX + '*', 'GONOPROXY': 'none', 'GOFLAGS': '-mod=mod'}
 for name, _ in MODULES:

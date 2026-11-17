@@ -1,37 +1,36 @@
 #!/usr/bin/env python3
-"""从经过固定摘要认证的本地协议工作区同步独立来源证明产物。"""
-import argparse
-import hashlib
-import json
-from pathlib import Path
+"""Export pinned provenance resources into an offline native ResourceOptions.Directory.
 
-PIN = "6107789c5c0d24c4130bff05da6d389336feb5ccb247c4030eae5198ab05d762"
-parser = argparse.ArgumentParser(description=__doc__)
-parser.add_argument("protocol_root", type=Path)
-parser.add_argument("--output", type=Path, default=Path(__file__).resolve().parents[1] / ".cache" / "provenance")
-args = parser.parse_args()
-source = args.protocol_root.resolve()
-manifest_bytes = (source / "circuits/provenance/manifest.json").read_bytes()
-if hashlib.sha256(manifest_bytes).hexdigest() != PIN:
-    raise SystemExit("Untrusted provenance manifest; review and explicitly update the release pin")
-manifest = json.loads(manifest_bytes)
-if manifest["family"] != "provenance" or manifest["target"] != "evm" or len(manifest["circuits"]) != 7:
-    raise SystemExit("Unsupported provenance release")
-payloads = [("manifest.json", manifest_bytes)]
-for entry in manifest["circuits"]:
-    for key in ("artifact", "vk"):
-        relative = Path(entry[key])
-        if relative.is_absolute() or ".." in relative.parts or relative.parts[:2] != ("circuits", "provenance"):
-            raise SystemExit("Invalid provenance artifact path")
-        path = (source / relative).resolve()
-        if not path.is_relative_to(source):
-            raise SystemExit("Provenance artifact escaped checkout")
-        data = path.read_bytes()
-        if hashlib.sha256(data).hexdigest() != entry[key + "Sha256"]:
-            raise SystemExit(f"Provenance {key} integrity mismatch for K{entry['capacity']}")
-        payloads.append((str(relative), data))
-for relative, data in payloads:
-    destination = args.output / relative
-    destination.parent.mkdir(parents=True, exist_ok=True)
-    destination.write_bytes(data)
-print(f"Authenticated {len(manifest['circuits'])} provenance artifacts/VKs to {args.output}")
+Build Core's complete resource directory first with scripts/prover-assets.mjs.
+This copies only public provenance objects and the SDK-pinned full index; unrelated
+circuit objects may be added to the same directory later from that snapshot.
+"""
+import argparse, hashlib, json, re
+from pathlib import Path
+ROOT=Path(__file__).resolve().parents[1]
+p=argparse.ArgumentParser(description=__doc__)
+p.add_argument('protocol_root',type=Path)
+p.add_argument('--resource-dir',required=True,type=Path)
+p.add_argument('--output',type=Path,default=ROOT/'.cache'/'provenance')
+a=p.parse_args()
+def require(ok,message):
+    if not ok:raise ValueError(message)
+def digest(data):return hashlib.sha256(data).hexdigest()
+pin=re.search(r'"([0-9a-f]{64})"',(ROOT/'prover/native/resource_pin.go').read_text())[1]
+raw=(a.resource_dir/'index.json').read_bytes();require(digest(raw)==pin,'untrusted resource index')
+index=json.loads(raw);require(index['format']=='invisi.prover-assets.v1' and index['noirVersion']=='1.0.0' and index['bbVersion']=='6.0.0','unsupported resource version')
+payloads={'index.json':raw}
+def load(name):
+    row=index['files'][name];require(re.fullmatch('[0-9a-f]{64}',row['sha256']),'invalid object hash')
+    filename=row['sha256']+('.vk' if name.endswith('/vk') else '.json')
+    data=(a.resource_dir/filename).read_bytes();require(len(data)==row['size'] and digest(data)==row['sha256'],'corrupt resource')
+    payloads[filename]=data;return data
+manifest=load('provenance/manifest.json')
+require(digest(manifest)==digest((a.protocol_root/'circuits/provenance/manifest.json').read_bytes())=='6107789c5c0d24c4130bff05da6d389336feb5ccb247c4030eae5198ab05d762','untrusted provenance manifest')
+for entry in json.loads(manifest)['circuits']:
+    for field in ('artifact','vk'):
+        path=entry[field];require(path.startswith('circuits/provenance/') and '..' not in Path(path).parts and '\\' not in path,'invalid provenance path')
+        require(digest(load('provenance/'+path))==entry[field+'Sha256'],'untrusted provenance identity')
+a.output.mkdir(parents=True,exist_ok=True)
+for name,data in payloads.items():(a.output/name).write_bytes(data)
+print(f'Authenticated pinned offline provenance resources to {a.output}')

@@ -13,8 +13,8 @@ import (
 	"time"
 )
 
-func TestNativeProvenanceCapabilityAuthenticatesAllPackagedAssets(t *testing.T) {
-	backend, err := NewNativeProver(NativeOptions{BBBinary: "configured-bb", NoirBinary: "configured-noir"})
+func TestNativeProvenanceCapabilityAuthenticatesPinnedAssets(t *testing.T) {
+	backend, err := NewNativeProver(NativeOptions{BBBinary: "configured-bb", NoirBinary: "configured-noir", Resources: ResourceOptions{Directory: os.Getenv("INVISI_PROVER_RESOURCE_DIR"), CacheDir: t.TempDir(), Offline: true}})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -29,6 +29,9 @@ func TestNativeProvenanceCapabilityAuthenticatesAllPackagedAssets(t *testing.T) 
 	if len(identity.Manifest.Circuits) != 7 {
 		t.Fatal("frozen seven circuit family changed")
 	}
+	if os.Getenv("INVISI_PROVER_RESOURCE_DIR") == "" {
+		return
+	}
 	for _, entry := range identity.Manifest.Circuits {
 		assets, err := native.LoadAssets(entry.Capacity)
 		if err != nil {
@@ -40,7 +43,7 @@ func TestNativeProvenanceCapabilityAuthenticatesAllPackagedAssets(t *testing.T) 
 		}{{assets.Artifact, entry.ArtifactSHA256}, {assets.VerificationKey, entry.VKSHA256}} {
 			sum := sha256.Sum256(check.data)
 			if hex.EncodeToString(sum[:]) != check.hash {
-				t.Fatal("untrusted packaged asset", entry.Capacity)
+				t.Fatal("untrusted pinned asset", entry.Capacity)
 			}
 		}
 	}
@@ -51,7 +54,7 @@ func TestRealNativeProvenanceK10(t *testing.T) {
 	if bb == "" || noir == "" {
 		t.Skip("set BB_BINARY_PATH and NOIR_EXECUTE_PATH for genuine local proving")
 	}
-	backend, err := NewNativeProver(NativeOptions{BBBinary: bb, NoirBinary: noir, Threads: 4})
+	backend, err := NewNativeProver(NativeOptions{BBBinary: bb, NoirBinary: noir, Threads: 4, Resources: integrationResources(t)})
 	if err != nil {
 		t.Fatal(err)
 	}

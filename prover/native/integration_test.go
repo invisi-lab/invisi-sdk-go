@@ -12,6 +12,15 @@ import (
 	"time"
 )
 
+func integrationResources(t *testing.T) ResourceOptions {
+	t.Helper()
+	dir := os.Getenv("INVISI_PROVER_RESOURCE_DIR")
+	if dir == "" {
+		t.Skip("set INVISI_PROVER_RESOURCE_DIR to a local pinned Core resource directory")
+	}
+	return ResourceOptions{Directory: dir, CacheDir: t.TempDir(), Offline: true}
+}
+
 type publicFixture struct {
 	Label, Name, Target string
 	Witness             map[string]any
@@ -50,7 +59,11 @@ func TestRealOfficialWitnessExecutor(t *testing.T) {
 	scratch := t.TempDir()
 	t.Setenv("TMPDIR", scratch)
 	request := fixtureRequest(t, currentFixtures(t)[0])
-	artifact, _, err := assets(request.ProofStatement)
+	backend, err := NewNativeProver(NativeOptions{Resources: integrationResources(t)})
+	if err != nil {
+		t.Fatal(err)
+	}
+	artifact, _, err := backend.assets(context.Background(), request.ProofStatement)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -88,7 +101,7 @@ func TestRealNativeCurrentCreditNoteAndMixedAggregation(t *testing.T) {
 	if bb == "" || noir == "" {
 		t.Skip("set BB_BINARY_PATH and NOIR_EXECUTE_PATH for genuine proving")
 	}
-	backend, err := NewNativeProver(NativeOptions{BBBinary: bb, NoirBinary: noir, Threads: 4})
+	backend, err := NewNativeProver(NativeOptions{BBBinary: bb, NoirBinary: noir, Threads: 4, Resources: integrationResources(t)})
 	if err != nil {
 		t.Fatal(err)
 	}

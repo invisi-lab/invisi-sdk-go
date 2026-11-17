@@ -15,7 +15,7 @@ import (
 )
 
 func TestExecutorMetadataDoesNotChangePublishedCircuit(t *testing.T) {
-	original, err := resources.ReadFile("circuits/credit_update.json")
+	original, err := json.Marshal(map[string]any{"noir_version": "1.0.0+275d3ab1a5c916c6ea73e8d6b943f685f574500c", "abi": map[string]any{"parameters": []any{}}, "bytecode": "tiny-test-only"})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -70,7 +70,7 @@ func TestExecutorRejectsArtifactMismatchAndHonorsCancellation(t *testing.T) {
 	if _, err = executor.Execute(context.Background(), []byte(`{"noir_version":"invalid-version"}`), witness); err == nil {
 		t.Fatal("mismatched Noir artifact accepted")
 	}
-	artifact, err := resources.ReadFile("circuits/credit_update.json")
+	artifact, err := json.Marshal(map[string]any{"noir_version": "1.0.0+275d3ab1a5c916c6ea73e8d6b943f685f574500c", "abi": map[string]any{"parameters": []any{}}, "bytecode": "tiny-test-only"})
 	if err != nil {
 		t.Fatal(err)
 	}

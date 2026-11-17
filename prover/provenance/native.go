@@ -24,15 +24,22 @@ type NativeProver struct {
 	BBPath                string
 	TrustedManifestSHA256 string
 	LoadAssets            func(int) (LocalAssets, error)
+	LoadAssetsContext     func(context.Context, int) (LocalAssets, error)
 	ExecuteWitness        func(context.Context, []byte, []byte) ([]byte, error)
 	Run                   func(context.Context, ...string) error
 }
 
 func (p NativeProver) Prove(ctx context.Context, identity ManifestIdentity, capacity int, w Witness, expected []string) (ProofResult, error) {
-	if identity.SHA256 != p.TrustedManifestSHA256 || p.LoadAssets == nil {
+	if identity.SHA256 != p.TrustedManifestSHA256 || (p.LoadAssets == nil && p.LoadAssetsContext == nil) {
 		return ProofResult{}, errors.New("native prover trust configuration")
 	}
-	assets, e := p.LoadAssets(capacity)
+	var assets LocalAssets
+	var e error
+	if p.LoadAssetsContext != nil {
+		assets, e = p.LoadAssetsContext(ctx, capacity)
+	} else {
+		assets, e = p.LoadAssets(capacity)
+	}
 	if e != nil {
 		return ProofResult{}, e
 	}
