@@ -2,6 +2,8 @@
 
 ## 1.2.5
 
+- Restore required non-semantic compiler metadata when executing stripped resources with the official Noir CLI, preserving the pinned artifact and verification-key identities.
+
 - Add the independent IPP module and Invisi preparation adapter.
 - Load fixed-hash public proving resources lazily, with local directory and offline support, verified cache reads and shared cache naming.
 - Expose authenticated resource prefetch for deployment images without requiring local proving executables.

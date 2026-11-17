@@ -42,6 +42,9 @@ func TestExecutorMetadataDoesNotChangePublishedCircuit(t *testing.T) {
 			t.Fatalf("published circuit field %s changed", key)
 		}
 	}
+	if string(after["hash"]) != "0" {
+		t.Fatal("official executor requires the non-semantic hash metadata field")
+	}
 	var encoded string
 	if err = json.Unmarshal(after["debug_symbols"], &encoded); err != nil {
 		t.Fatal(err)
@@ -90,5 +93,20 @@ func TestLocalDiagnosticBufferIsBounded(t *testing.T) {
 	}
 	if _, err = io.Copy(&output, bytes.NewReader(input)); err != nil || output.Len() != 64<<10 {
 		t.Fatal("diagnostic limit failed")
+	}
+}
+
+func TestExecutorPreservesExistingMetadataHash(t *testing.T) {
+	raw := []byte(`{"hash":123,"abi":{},"bytecode":"test"}`)
+	adapted, err := executableArtifact(raw)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var fields map[string]json.RawMessage
+	if err = json.Unmarshal(adapted, &fields); err != nil {
+		t.Fatal(err)
+	}
+	if string(fields["hash"]) != "123" {
+		t.Fatal("overwrote existing compiler metadata")
 	}
 }

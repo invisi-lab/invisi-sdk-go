@@ -131,6 +131,10 @@ func executableArtifact(artifact []byte) ([]byte, error) {
 			return nil, err
 		}
 	}
+	// noir-execute deserializes this compiler cache field even for stripped artifacts.
+	if _, ok := fields["hash"]; !ok {
+		fields["hash"] = json.RawMessage(`0`)
+	}
 	if _, ok := fields["file_map"]; !ok {
 		fields["file_map"] = json.RawMessage(`{}`)
 	}
