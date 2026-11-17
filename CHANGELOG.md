@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.2.5
+
+- Add the independent IPP module and Invisi preparation adapter.
+- Load fixed-hash public proving resources lazily, with local directory and offline support, verified cache reads and shared cache naming.
+- Align contract bindings with Invisi Core.
+
+
 ## 1.2.3
 
 - Align transaction, Credit, history and Provenance workflows across the three SDKs.

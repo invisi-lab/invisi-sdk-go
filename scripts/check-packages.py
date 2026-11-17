@@ -3,7 +3,7 @@
 import json, os, pathlib, shutil, subprocess, tempfile, zipfile
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 PREFIX = 'github.com/invisi-lab/invisi-sdk-go'
-VERSION = 'v1.2.4'
+VERSION = 'v1.2.5'
 MODULES = [('primitives', ROOT / 'primitives'), ('protocol', ROOT / 'protocol'), ('prover', ROOT / 'prover'), ('rpc', ROOT / 'rpc'), ('', ROOT), ('session', ROOT / 'session'), ('ipp', ROOT / 'ipp')]
 work = pathlib.Path(tempfile.mkdtemp(prefix='invisi-go-package-check-'))
 proxy = work / 'proxy'
