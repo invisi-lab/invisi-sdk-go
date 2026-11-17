@@ -3,6 +3,7 @@ package sqlite
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
 	"errors"
 	"path/filepath"
 	"testing"
@@ -56,8 +57,18 @@ func TestSQLiteEncryptedStateReopensAndRollsBack(t *testing.T) {
 	if e = db.QueryRow("SELECT data FROM invisi_wallet_state WHERE scope_key=?", scope.Key()).Scan(&raw); e != nil {
 		t.Fatal(e)
 	}
-	if len(raw) == 0 || raw[0] == '{' {
+	if len(raw) == 0 || json.Valid(raw) {
 		t.Fatal("wallet stored plaintext JSON")
+	}
+	// Ciphertext starts with a random nonce, which may legitimately begin with '{'.
+	var wrongKey [32]byte
+	wrongKey[0] = 1
+	wrongCodec, err := session.NewEncryptedWalletCodec(wrongKey[:])
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err = wrongCodec.Open(scope, raw); err == nil {
+		t.Fatal("stored state did not authenticate the encryption key")
 	}
 }
 
