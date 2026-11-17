@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-"""Run the six public modules and private examples in an isolated local workspace."""
+"""Run the public modules and private examples in an isolated local workspace."""
 import os, pathlib, subprocess, tempfile
 ROOT = pathlib.Path(__file__).resolve().parents[1]
-MODULES = ['primitives', 'protocol', 'prover', 'rpc', '.', 'session', 'examples']
-with tempfile.TemporaryDirectory(prefix='invisi-six-workspace-') as tmp:
+MODULES = ['primitives', 'protocol', 'prover', 'rpc', '.', 'session', 'ipp', 'examples']
+with tempfile.TemporaryDirectory(prefix='invisi-module-workspace-') as tmp:
     work = pathlib.Path(tmp) / 'go.work'
     paths = [(ROOT / m).resolve() for m in MODULES]
     work.write_text('go 1.26.1\nuse (\n' + ''.join((str(p) + '\n' for p in paths)) + ')\nreplace (\n' + ''.join(('github.com/invisi-lab/invisi-sdk-go' + ('/' + m if m != '.' else '') + ' v1.2.4 => ' + str(p) + '\n' for m, p in zip(MODULES, paths))) + ')\n')

@@ -22,10 +22,12 @@ type CreatePreparation struct {
 	SingleLimit, DailyLimit, MonthlyLimit fr.Element
 	Expiry                                uint64
 	AvailableCredit                       *big.Int
-	Unlimited                             bool
-	Payload                               []byte
-	Deadline                              uint64
-	Fee                                   *Fee
+	// CreditSharedKey is an optional canonical nonzero BN254 scalar; nil generates a fresh key.
+	CreditSharedKey *big.Int
+	Unlimited       bool
+	Payload         []byte
+	Deadline        uint64
+	Fee             *Fee
 }
 type UpdatePreparation struct {
 	TokenAddress common.Address
@@ -134,9 +136,17 @@ func (b PreparationBuilder) Create(ctx context.Context, p CreatePreparation) (*P
 	if err != nil {
 		return nil, err
 	}
-	key, err := GenerateSharedKey()
-	if err != nil {
-		return nil, err
+	var key fr.Element
+	if p.CreditSharedKey != nil {
+		if p.CreditSharedKey.Sign() <= 0 || p.CreditSharedKey.Cmp(fr.Modulus()) >= 0 {
+			return nil, fmt.Errorf("credit shared key must be a canonical nonzero field element")
+		}
+		key.SetBigInt(p.CreditSharedKey)
+	} else {
+		key, err = GenerateSharedKey()
+		if err != nil {
+			return nil, err
+		}
 	}
 	nonce, err := primitives.GenerateNonce()
 	if err != nil {

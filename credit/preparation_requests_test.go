@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/ethereum/go-ethereum/common"
+	ethcrypto "github.com/ethereum/go-ethereum/crypto"
 	"github.com/invisi-lab/invisi-sdk-go/primitives"
 	"github.com/invisi-lab/invisi-sdk-go/protocol"
 )
@@ -117,5 +118,80 @@ func TestRequestRevokeNeedsOnlyOriginalReference(t *testing.T) {
 	i, _ := p.ExportIntent()
 	if i.Revoke.Shard != 1 || len(i.Inputs) != 0 {
 		t.Fatal("revocation invented a spend")
+	}
+}
+
+func TestExplicitCreditSharedKeyPreservedAndValidated(t *testing.T) {
+	b, s, f := requestBuilder(t)
+	key := big.NewInt(123456789)
+	input := CreatePreparation{TokenAddress: common.BigToAddress(primitives.ElementToBigInt(s.TokenAddress)), Spender: "spender", Expiry: 2100000000, AvailableCredit: big.NewInt(90), CreditSharedKey: key}
+	copied := input.Clone()
+	key.SetInt64(777)
+	p, err := b.Create(context.Background(), copied)
+	if err != nil {
+		t.Fatal(err)
+	}
+	intent, err := p.ExportIntent()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if primitives.ElementToBigInt(intent.CreatedState.CreditSharedKey).Cmp(big.NewInt(123456789)) != 0 {
+		t.Fatal("explicit key changed")
+	}
+	commitment, err := intent.CreatedState.Commitment()
+	if err != nil {
+		t.Fatal(err)
+	}
+	for i, role := range []Role{Owner, Spender} {
+		name := "owner"
+		identity := intent.CreatedState.OwnerWalletIdentity
+		if role == Spender {
+			name = "spender"
+			identity = intent.CreatedState.SpenderWalletIdentity
+		}
+		private := bytesHex(t, f["delivery"].(map[string]any)[name+"PrivateKey"].(string))
+		got, err := Decrypt(private, intent.Deliveries[i].Ciphertext, DeliveryContext{ProtocolContext: s.ProtocolContext, TokenAddress: s.TokenAddress, Commitment: commitment, RecipientIdentity: identity}, role)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if got.State.CreditSharedKey != intent.CreatedState.CreditSharedKey {
+			t.Fatal("ciphertext key changed")
+		}
+	}
+
+	signer, err := ethcrypto.ToECDSA(common.LeftPadBytes([]byte{9}, 32))
+	if err != nil {
+		t.Fatal(err)
+	}
+	client := creditBroadcaster(t, intent.Context, signer, common.HexToAddress("0x1234"))
+	if err = client.Quote(context.Background(), p, BroadcasterQuoteOptions{MaxFeeAmount: big.NewInt(2)}); err != nil {
+		t.Fatal(err)
+	}
+	quoted, err := p.ExportIntent()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if quoted.CreatedState.CreditSharedKey != intent.CreatedState.CreditSharedKey || quoted.Create.CreditCommitment != intent.Create.CreditCommitment {
+		t.Fatal("quote changed explicit key")
+	}
+	restored, err := Restore(context.Background(), quoted, nil, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	resumed, err := restored.ExportIntent()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if resumed.CreatedState.CreditSharedKey != intent.CreatedState.CreditSharedKey {
+		t.Fatal("restored intent changed key")
+	}
+	for _, bad := range []*big.Int{new(big.Int), big.NewInt(-1), new(big.Int).Set(primitives.ElementToBigInt(primitives.ElementFromUint64(1)))} {
+		if bad.Sign() == 1 {
+			bad.SetString("21888242871839275222246405745257275088548364400416034343698204186575808495617", 10)
+		}
+		copied.CreditSharedKey = bad
+		if _, err = b.Create(context.Background(), copied); err == nil {
+			t.Fatal("noncanonical key accepted")
+		}
 	}
 }

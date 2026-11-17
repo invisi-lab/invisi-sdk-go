@@ -4,7 +4,7 @@ import json, os, pathlib, shutil, subprocess, tempfile, zipfile
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 PREFIX = 'github.com/invisi-lab/invisi-sdk-go'
 VERSION = 'v1.2.4'
-MODULES = [('primitives', ROOT / 'primitives'), ('protocol', ROOT / 'protocol'), ('prover', ROOT / 'prover'), ('rpc', ROOT / 'rpc'), ('', ROOT), ('session', ROOT / 'session')]
+MODULES = [('primitives', ROOT / 'primitives'), ('protocol', ROOT / 'protocol'), ('prover', ROOT / 'prover'), ('rpc', ROOT / 'rpc'), ('', ROOT), ('session', ROOT / 'session'), ('ipp', ROOT / 'ipp')]
 work = pathlib.Path(tempfile.mkdtemp(prefix='invisi-go-package-check-'))
 proxy = work / 'proxy'
 cache = work / 'modcache'
@@ -86,4 +86,4 @@ for name, _ in MODULES:
         entry.chmod(493 if entry.is_dir() else 420)
     for command in [['go', 'test', './...'], ['go', 'vet', './...'], ['go', 'build', './...']]:
         subprocess.run(command, cwd=consumer, env=env, check=True)
-print('PASS six independently extracted module archives: ' + str(work), flush=True)
+print('PASS independently extracted module archives: ' + str(work), flush=True)

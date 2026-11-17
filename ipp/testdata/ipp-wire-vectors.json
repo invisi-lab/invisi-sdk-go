@@ -1,0 +1,330 @@
+{
+  "ippVersion": 1,
+  "origin": "https://connect.invisipay.fi",
+  "cases": [
+    {
+      "name": "payment-open",
+      "kind": "session",
+      "valid": true,
+      "json": "{\"ippVersion\":1,\"type\":\"payment_session\",\"mode\":\"payment\",\"sessionId\":\"ses_test\",\"status\":\"open\",\"merchant\":{\"name\":\"Example Store\"},\"description\":\"A report\",\"options\":[{\"id\":\"base_usdc\",\"method\":\"invisi\",\"network\":\"eip155:8453\",\"asset\":{\"address\":\"0x1111111111111111111111111111111111111111\",\"symbol\":\"USDC\",\"decimals\":6},\"amount\":\"10000000\"}],\"activeRequestId\":null,\"createdAt\":\"2026-11-17T08:00:00Z\",\"expiresAt\":\"2026-11-17T08:05:00Z\",\"links\":{\"confirm\":{\"href\":\"https://connect.invisipay.fi/custom/confirm\",\"method\":\"POST\"},\"request\":null},\"failureReason\":null,\"receipt\":null,\"evidenceStatus\":null,\"exceptionSummary\":{\"count\":0,\"unresolvedCount\":0}}"
+    },
+    {
+      "name": "payment-request",
+      "kind": "request",
+      "valid": true,
+      "json": "{\"ippVersion\":1,\"type\":\"payment_request\",\"mode\":\"payment\",\"method\":\"invisi\",\"sessionId\":\"ses_test\",\"requestId\":\"req_test\",\"optionId\":\"base_usdc\",\"status\":\"requires_action\",\"payment\":{\"network\":\"eip155:8453\",\"protocolAddress\":\"0x3333333333333333333333333333333333333333\",\"tokenAddress\":\"0x1111111111111111111111111111111111111111\",\"amount\":\"10000000\",\"recipient\":{\"type\":\"identity\",\"identity\":\"0x0101010101010101010101010101010101010101010101010101010101010101\"}},\"action\":{\"type\":\"invisi_transaction\"},\"createdAt\":\"2026-11-17T08:02:00Z\",\"expiresAt\":\"2026-11-17T08:20:00Z\",\"links\":{\"credentials\":{\"href\":\"https://connect.invisipay.fi/custom/hints\",\"method\":\"POST\"}},\"failureReason\":null}"
+    },
+    {
+      "name": "credit-open",
+      "kind": "session",
+      "valid": true,
+      "json": "{\"ippVersion\":1,\"type\":\"payment_session\",\"mode\":\"credit\",\"sessionId\":\"ses_test\",\"status\":\"open\",\"merchant\":{\"name\":\"Example Store\"},\"description\":\"A report\",\"options\":[{\"id\":\"base_usdc\",\"method\":\"invisi\",\"network\":\"eip155:8453\",\"asset\":{\"address\":\"0x1111111111111111111111111111111111111111\",\"symbol\":\"USDC\",\"decimals\":6},\"credit\":{\"spender\":\"0iqY352Euf40X77QFrG4NcN27DaUqJX3t8QfUMUEn7l8wtHtz45p3FTN58pvRs9XlumvKUu2Xet8EgZkCklQTeShnK47w8gFh6cNvcL2u22ddW6QTqfV5Lmn69330k27sES28pJeqj\",\"availableCredit\":\"1000000000\",\"unlimited\":false,\"singleLimit\":\"10000000\",\"dailyLimit\":\"50000000\",\"monthlyLimit\":\"300000000\",\"expiresAt\":\"2027-11-17T08:00:00Z\"}}],\"activeRequestId\":null,\"createdAt\":\"2026-11-17T08:00:00Z\",\"expiresAt\":\"2026-11-17T08:05:00Z\",\"links\":{\"confirm\":{\"href\":\"https://connect.invisipay.fi/custom/confirm\",\"method\":\"POST\"},\"request\":null},\"failureReason\":null,\"receipt\":null,\"evidenceStatus\":null,\"exceptionSummary\":{\"count\":0,\"unresolvedCount\":0}}"
+    },
+    {
+      "name": "credit-request",
+      "kind": "request",
+      "valid": true,
+      "json": "{\"ippVersion\":1,\"type\":\"credit_request\",\"mode\":\"credit\",\"method\":\"invisi\",\"sessionId\":\"ses_test\",\"requestId\":\"req_test\",\"optionId\":\"base_usdc\",\"status\":\"requires_action\",\"credit\":{\"operation\":\"create\",\"network\":\"eip155:8453\",\"protocolAddress\":\"0x3333333333333333333333333333333333333333\",\"tokenAddress\":\"0x1111111111111111111111111111111111111111\",\"spender\":\"0iqY352Euf40X77QFrG4NcN27DaUqJX3t8QfUMUEn7l8wtHtz45p3FTN58pvRs9XlumvKUu2Xet8EgZkCklQTeShnK47w8gFh6cNvcL2u22ddW6QTqfV5Lmn69330k27sES28pJeqj\",\"availableCredit\":\"1000000000\",\"unlimited\":false,\"singleLimit\":\"10000000\",\"dailyLimit\":\"50000000\",\"monthlyLimit\":\"300000000\",\"expiresAt\":\"2027-11-17T08:00:00Z\",\"creditSharedKey\":\"0x0101010101010101010101010101010101010101010101010101010101010101\"},\"action\":{\"type\":\"invisi_transaction\"},\"createdAt\":\"2026-11-17T08:02:00Z\",\"expiresAt\":\"2026-11-17T08:20:00Z\",\"links\":{\"credentials\":{\"href\":\"https://connect.invisipay.fi/custom/hints\",\"method\":\"POST\"}},\"failureReason\":null}"
+    },
+    {
+      "name": "checkout",
+      "kind": "checkout",
+      "valid": true,
+      "json": "{\"ippVersion\":1,\"type\":\"checkout\",\"sessionUrl\":\"https://connect.invisipay.fi/custom/session?route=one\",\"checkoutUrl\":\"https://dapp.invisipay.fi/checkout#sessionUrl=https%3A%2F%2Fconnect.invisipay.fi%2Fcustom%2Fsession%3Froute%3Done&token=EXAMPLE_SESSION_TOKEN\",\"expiresAt\":\"2026-11-17T08:05:00Z\"}"
+    },
+    {
+      "name": "create-payment",
+      "kind": "input",
+      "valid": true,
+      "json": "{\"ippVersion\":1,\"mode\":\"payment\",\"options\":[{\"id\":\"base_usdc\",\"method\":\"invisi\",\"network\":\"eip155:8453\",\"asset\":{\"address\":\"0x1111111111111111111111111111111111111111\",\"symbol\":\"USDC\",\"decimals\":6},\"amount\":\"10000000\"}],\"expiresAt\":\"2026-11-17T08:05:00Z\"}"
+    },
+    {
+      "name": "create-credit",
+      "kind": "input",
+      "valid": true,
+      "json": "{\"ippVersion\":1,\"mode\":\"credit\",\"options\":[{\"id\":\"base_usdc\",\"method\":\"invisi\",\"network\":\"eip155:8453\",\"asset\":{\"address\":\"0x1111111111111111111111111111111111111111\",\"symbol\":\"USDC\",\"decimals\":6},\"credit\":{\"spender\":\"0iqY352Euf40X77QFrG4NcN27DaUqJX3t8QfUMUEn7l8wtHtz45p3FTN58pvRs9XlumvKUu2Xet8EgZkCklQTeShnK47w8gFh6cNvcL2u22ddW6QTqfV5Lmn69330k27sES28pJeqj\",\"availableCredit\":\"1000000000\",\"unlimited\":false,\"singleLimit\":\"10000000\",\"dailyLimit\":\"50000000\",\"monthlyLimit\":\"300000000\",\"expiresAt\":\"2027-11-17T08:00:00Z\"}}],\"expiresAt\":\"2026-11-17T08:05:00Z\"}"
+    },
+    {
+      "name": "succeeded",
+      "kind": "session",
+      "valid": true,
+      "json": "{\"ippVersion\":1,\"type\":\"payment_session\",\"mode\":\"payment\",\"sessionId\":\"ses_test\",\"status\":\"succeeded\",\"merchant\":{\"name\":\"Example Store\"},\"description\":\"A report\",\"options\":[{\"id\":\"base_usdc\",\"method\":\"invisi\",\"network\":\"eip155:8453\",\"asset\":{\"address\":\"0x1111111111111111111111111111111111111111\",\"symbol\":\"USDC\",\"decimals\":6},\"amount\":\"10000000\"}],\"activeRequestId\":\"req_test\",\"createdAt\":\"2026-11-17T08:00:00Z\",\"expiresAt\":\"2026-11-17T08:05:00Z\",\"links\":{\"confirm\":{\"href\":\"https://connect.invisipay.fi/custom/confirm\",\"method\":\"POST\"},\"request\":{\"href\":\"https://connect.invisipay.fi/read\",\"method\":\"GET\"}},\"failureReason\":null,\"receipt\":{\"network\":\"eip155:8453\",\"protocolAddress\":\"0x3333333333333333333333333333333333333333\",\"transactionHash\":\"0x0101010101010101010101010101010101010101010101010101010101010101\",\"commitment\":\"0x0101010101010101010101010101010101010101010101010101010101010101\",\"blockNumber\":\"38000000\",\"blockHash\":\"0x0101010101010101010101010101010101010101010101010101010101010101\",\"completedAt\":\"2026-11-17T08:03:00Z\"},\"evidenceStatus\":\"confirmed\",\"exceptionSummary\":{\"count\":0,\"unresolvedCount\":0}}"
+    },
+    {
+      "name": "expired-with-exception",
+      "kind": "session",
+      "valid": true,
+      "json": "{\"ippVersion\":1,\"type\":\"payment_session\",\"mode\":\"payment\",\"sessionId\":\"ses_test\",\"status\":\"failed\",\"merchant\":{\"name\":\"Example Store\"},\"description\":\"A report\",\"options\":[{\"id\":\"base_usdc\",\"method\":\"invisi\",\"network\":\"eip155:8453\",\"asset\":{\"address\":\"0x1111111111111111111111111111111111111111\",\"symbol\":\"USDC\",\"decimals\":6},\"amount\":\"10000000\"}],\"activeRequestId\":null,\"createdAt\":\"2026-11-17T08:00:00Z\",\"expiresAt\":\"2026-11-17T08:05:00Z\",\"links\":{\"confirm\":{\"href\":\"https://connect.invisipay.fi/custom/confirm\",\"method\":\"POST\"},\"request\":null},\"failureReason\":\"expired\",\"receipt\":null,\"evidenceStatus\":null,\"exceptionSummary\":{\"count\":1,\"unresolvedCount\":1}}"
+    },
+    {
+      "name": "payment-credential",
+      "kind": "credential",
+      "valid": true,
+      "json": "{\"ippVersion\":1,\"type\":\"credential\",\"mode\":\"payment\",\"method\":\"invisi\",\"sessionId\":\"ses_test\",\"requestId\":\"req_test\",\"proof\":{\"type\":\"note\",\"transactionHash\":\"0x0101010101010101010101010101010101010101010101010101010101010101\",\"commitment\":\"0x0101010101010101010101010101010101010101010101010101010101010101\"}}"
+    },
+    {
+      "name": "credit-credential",
+      "kind": "credential",
+      "valid": true,
+      "json": "{\"ippVersion\":1,\"type\":\"credential\",\"mode\":\"credit\",\"method\":\"invisi\",\"sessionId\":\"ses_test\",\"requestId\":\"req_test\",\"proof\":{\"type\":\"credit_created\",\"transactionHash\":\"0x0101010101010101010101010101010101010101010101010101010101010101\",\"commitment\":\"0x0101010101010101010101010101010101010101010101010101010101010101\"}}"
+    },
+    {
+      "name": "unknown-session-field",
+      "kind": "session",
+      "valid": false,
+      "json": "{\"ippVersion\":1,\"type\":\"payment_session\",\"mode\":\"payment\",\"sessionId\":\"ses_test\",\"status\":\"open\",\"merchant\":{\"name\":\"Example Store\"},\"description\":\"A report\",\"options\":[{\"id\":\"base_usdc\",\"method\":\"invisi\",\"network\":\"eip155:8453\",\"asset\":{\"address\":\"0x1111111111111111111111111111111111111111\",\"symbol\":\"USDC\",\"decimals\":6},\"amount\":\"10000000\"}],\"activeRequestId\":null,\"createdAt\":\"2026-11-17T08:00:00Z\",\"expiresAt\":\"2026-11-17T08:05:00Z\",\"links\":{\"confirm\":{\"href\":\"https://connect.invisipay.fi/custom/confirm\",\"method\":\"POST\"},\"request\":null},\"failureReason\":null,\"receipt\":null,\"evidenceStatus\":null,\"exceptionSummary\":{\"count\":0,\"unresolvedCount\":0},\"requestHash\":\"not-ipp\"}"
+    },
+    {
+      "name": "unknown-method",
+      "kind": "session",
+      "valid": false,
+      "json": "{\"ippVersion\":1,\"type\":\"payment_session\",\"mode\":\"payment\",\"sessionId\":\"ses_test\",\"status\":\"open\",\"merchant\":{\"name\":\"Example Store\"},\"description\":\"A report\",\"options\":[{\"id\":\"base_usdc\",\"method\":\"alipay\",\"network\":\"eip155:8453\",\"asset\":{\"address\":\"0x1111111111111111111111111111111111111111\",\"symbol\":\"USDC\",\"decimals\":6},\"amount\":\"10000000\"}],\"activeRequestId\":null,\"createdAt\":\"2026-11-17T08:00:00Z\",\"expiresAt\":\"2026-11-17T08:05:00Z\",\"links\":{\"confirm\":{\"href\":\"https://connect.invisipay.fi/custom/confirm\",\"method\":\"POST\"},\"request\":null},\"failureReason\":null,\"receipt\":null,\"evidenceStatus\":null,\"exceptionSummary\":{\"count\":0,\"unresolvedCount\":0}}"
+    },
+    {
+      "name": "wrong-link-method",
+      "kind": "session",
+      "valid": false,
+      "json": "{\"ippVersion\":1,\"type\":\"payment_session\",\"mode\":\"payment\",\"sessionId\":\"ses_test\",\"status\":\"open\",\"merchant\":{\"name\":\"Example Store\"},\"description\":\"A report\",\"options\":[{\"id\":\"base_usdc\",\"method\":\"invisi\",\"network\":\"eip155:8453\",\"asset\":{\"address\":\"0x1111111111111111111111111111111111111111\",\"symbol\":\"USDC\",\"decimals\":6},\"amount\":\"10000000\"}],\"activeRequestId\":null,\"createdAt\":\"2026-11-17T08:00:00Z\",\"expiresAt\":\"2026-11-17T08:05:00Z\",\"links\":{\"confirm\":{\"href\":\"https://connect.invisipay.fi/custom/confirm\",\"method\":\"GET\"},\"request\":null},\"failureReason\":null,\"receipt\":null,\"evidenceStatus\":null,\"exceptionSummary\":{\"count\":0,\"unresolvedCount\":0}}"
+    },
+    {
+      "name": "cross-origin-link",
+      "kind": "session",
+      "valid": false,
+      "json": "{\"ippVersion\":1,\"type\":\"payment_session\",\"mode\":\"payment\",\"sessionId\":\"ses_test\",\"status\":\"open\",\"merchant\":{\"name\":\"Example Store\"},\"description\":\"A report\",\"options\":[{\"id\":\"base_usdc\",\"method\":\"invisi\",\"network\":\"eip155:8453\",\"asset\":{\"address\":\"0x1111111111111111111111111111111111111111\",\"symbol\":\"USDC\",\"decimals\":6},\"amount\":\"10000000\"}],\"activeRequestId\":null,\"createdAt\":\"2026-11-17T08:00:00Z\",\"expiresAt\":\"2026-11-17T08:05:00Z\",\"links\":{\"confirm\":{\"href\":\"https://evil.example/confirm\",\"method\":\"POST\"},\"request\":null},\"failureReason\":null,\"receipt\":null,\"evidenceStatus\":null,\"exceptionSummary\":{\"count\":0,\"unresolvedCount\":0}}"
+    },
+    {
+      "name": "insecure-link",
+      "kind": "session",
+      "valid": false,
+      "json": "{\"ippVersion\":1,\"type\":\"payment_session\",\"mode\":\"payment\",\"sessionId\":\"ses_test\",\"status\":\"open\",\"merchant\":{\"name\":\"Example Store\"},\"description\":\"A report\",\"options\":[{\"id\":\"base_usdc\",\"method\":\"invisi\",\"network\":\"eip155:8453\",\"asset\":{\"address\":\"0x1111111111111111111111111111111111111111\",\"symbol\":\"USDC\",\"decimals\":6},\"amount\":\"10000000\"}],\"activeRequestId\":null,\"createdAt\":\"2026-11-17T08:00:00Z\",\"expiresAt\":\"2026-11-17T08:05:00Z\",\"links\":{\"confirm\":{\"href\":\"http://connect.invisipay.fi/confirm\",\"method\":\"POST\"},\"request\":null},\"failureReason\":null,\"receipt\":null,\"evidenceStatus\":null,\"exceptionSummary\":{\"count\":0,\"unresolvedCount\":0}}"
+    },
+    {
+      "name": "link-fragment",
+      "kind": "session",
+      "valid": false,
+      "json": "{\"ippVersion\":1,\"type\":\"payment_session\",\"mode\":\"payment\",\"sessionId\":\"ses_test\",\"status\":\"open\",\"merchant\":{\"name\":\"Example Store\"},\"description\":\"A report\",\"options\":[{\"id\":\"base_usdc\",\"method\":\"invisi\",\"network\":\"eip155:8453\",\"asset\":{\"address\":\"0x1111111111111111111111111111111111111111\",\"symbol\":\"USDC\",\"decimals\":6},\"amount\":\"10000000\"}],\"activeRequestId\":null,\"createdAt\":\"2026-11-17T08:00:00Z\",\"expiresAt\":\"2026-11-17T08:05:00Z\",\"links\":{\"confirm\":{\"href\":\"https://connect.invisipay.fi/custom/confirm#secret\",\"method\":\"POST\"},\"request\":null},\"failureReason\":null,\"receipt\":null,\"evidenceStatus\":null,\"exceptionSummary\":{\"count\":0,\"unresolvedCount\":0}}"
+    },
+    {
+      "name": "url-userinfo",
+      "kind": "session",
+      "valid": false,
+      "json": "{\"ippVersion\":1,\"type\":\"payment_session\",\"mode\":\"payment\",\"sessionId\":\"ses_test\",\"status\":\"open\",\"merchant\":{\"name\":\"Example Store\"},\"description\":\"A report\",\"options\":[{\"id\":\"base_usdc\",\"method\":\"invisi\",\"network\":\"eip155:8453\",\"asset\":{\"address\":\"0x1111111111111111111111111111111111111111\",\"symbol\":\"USDC\",\"decimals\":6},\"amount\":\"10000000\"}],\"activeRequestId\":null,\"createdAt\":\"2026-11-17T08:00:00Z\",\"expiresAt\":\"2026-11-17T08:05:00Z\",\"links\":{\"confirm\":{\"href\":\"https://user:pass@connect.invisipay.fi/confirm\",\"method\":\"POST\"},\"request\":null},\"failureReason\":null,\"receipt\":null,\"evidenceStatus\":null,\"exceptionSummary\":{\"count\":0,\"unresolvedCount\":0}}"
+    },
+    {
+      "name": "explicit-default-port",
+      "kind": "session",
+      "valid": false,
+      "json": "{\"ippVersion\":1,\"type\":\"payment_session\",\"mode\":\"payment\",\"sessionId\":\"ses_test\",\"status\":\"open\",\"merchant\":{\"name\":\"Example Store\"},\"description\":\"A report\",\"options\":[{\"id\":\"base_usdc\",\"method\":\"invisi\",\"network\":\"eip155:8453\",\"asset\":{\"address\":\"0x1111111111111111111111111111111111111111\",\"symbol\":\"USDC\",\"decimals\":6},\"amount\":\"10000000\"}],\"activeRequestId\":null,\"createdAt\":\"2026-11-17T08:00:00Z\",\"expiresAt\":\"2026-11-17T08:05:00Z\",\"links\":{\"confirm\":{\"href\":\"https://connect.invisipay.fi:443/confirm\",\"method\":\"POST\"},\"request\":null},\"failureReason\":null,\"receipt\":null,\"evidenceStatus\":null,\"exceptionSummary\":{\"count\":0,\"unresolvedCount\":0}}"
+    },
+    {
+      "name": "uppercase-host",
+      "kind": "session",
+      "valid": false,
+      "json": "{\"ippVersion\":1,\"type\":\"payment_session\",\"mode\":\"payment\",\"sessionId\":\"ses_test\",\"status\":\"open\",\"merchant\":{\"name\":\"Example Store\"},\"description\":\"A report\",\"options\":[{\"id\":\"base_usdc\",\"method\":\"invisi\",\"network\":\"eip155:8453\",\"asset\":{\"address\":\"0x1111111111111111111111111111111111111111\",\"symbol\":\"USDC\",\"decimals\":6},\"amount\":\"10000000\"}],\"activeRequestId\":null,\"createdAt\":\"2026-11-17T08:00:00Z\",\"expiresAt\":\"2026-11-17T08:05:00Z\",\"links\":{\"confirm\":{\"href\":\"https://CONNECT.invisipay.fi/confirm\",\"method\":\"POST\"},\"request\":null},\"failureReason\":null,\"receipt\":null,\"evidenceStatus\":null,\"exceptionSummary\":{\"count\":0,\"unresolvedCount\":0}}"
+    },
+    {
+      "name": "credential-in-query",
+      "kind": "session",
+      "valid": false,
+      "json": "{\"ippVersion\":1,\"type\":\"payment_session\",\"mode\":\"payment\",\"sessionId\":\"ses_test\",\"status\":\"open\",\"merchant\":{\"name\":\"Example Store\"},\"description\":\"A report\",\"options\":[{\"id\":\"base_usdc\",\"method\":\"invisi\",\"network\":\"eip155:8453\",\"asset\":{\"address\":\"0x1111111111111111111111111111111111111111\",\"symbol\":\"USDC\",\"decimals\":6},\"amount\":\"10000000\"}],\"activeRequestId\":null,\"createdAt\":\"2026-11-17T08:00:00Z\",\"expiresAt\":\"2026-11-17T08:05:00Z\",\"links\":{\"confirm\":{\"href\":\"https://connect.invisipay.fi/custom/confirm?token=secret\",\"method\":\"POST\"},\"request\":null},\"failureReason\":null,\"receipt\":null,\"evidenceStatus\":null,\"exceptionSummary\":{\"count\":0,\"unresolvedCount\":0}}"
+    },
+    {
+      "name": "duplicate-option",
+      "kind": "session",
+      "valid": false,
+      "json": "{\"ippVersion\":1,\"type\":\"payment_session\",\"mode\":\"payment\",\"sessionId\":\"ses_test\",\"status\":\"open\",\"merchant\":{\"name\":\"Example Store\"},\"description\":\"A report\",\"options\":[{\"id\":\"base_usdc\",\"method\":\"invisi\",\"network\":\"eip155:8453\",\"asset\":{\"address\":\"0x1111111111111111111111111111111111111111\",\"symbol\":\"USDC\",\"decimals\":6},\"amount\":\"10000000\"},{\"id\":\"base_usdc\",\"method\":\"invisi\",\"network\":\"eip155:8453\",\"asset\":{\"address\":\"0x1111111111111111111111111111111111111111\",\"symbol\":\"USDC\",\"decimals\":6},\"amount\":\"10000000\"}],\"activeRequestId\":null,\"createdAt\":\"2026-11-17T08:00:00Z\",\"expiresAt\":\"2026-11-17T08:05:00Z\",\"links\":{\"confirm\":{\"href\":\"https://connect.invisipay.fi/custom/confirm\",\"method\":\"POST\"},\"request\":null},\"failureReason\":null,\"receipt\":null,\"evidenceStatus\":null,\"exceptionSummary\":{\"count\":0,\"unresolvedCount\":0}}"
+    },
+    {
+      "name": "active-request-without-link",
+      "kind": "session",
+      "valid": false,
+      "json": "{\"ippVersion\":1,\"type\":\"payment_session\",\"mode\":\"payment\",\"sessionId\":\"ses_test\",\"status\":\"open\",\"merchant\":{\"name\":\"Example Store\"},\"description\":\"A report\",\"options\":[{\"id\":\"base_usdc\",\"method\":\"invisi\",\"network\":\"eip155:8453\",\"asset\":{\"address\":\"0x1111111111111111111111111111111111111111\",\"symbol\":\"USDC\",\"decimals\":6},\"amount\":\"10000000\"}],\"activeRequestId\":\"req_test\",\"createdAt\":\"2026-11-17T08:00:00Z\",\"expiresAt\":\"2026-11-17T08:05:00Z\",\"links\":{\"confirm\":{\"href\":\"https://connect.invisipay.fi/custom/confirm\",\"method\":\"POST\"},\"request\":null},\"failureReason\":null,\"receipt\":null,\"evidenceStatus\":null,\"exceptionSummary\":{\"count\":0,\"unresolvedCount\":0}}"
+    },
+    {
+      "name": "fractional-timestamp",
+      "kind": "session",
+      "valid": false,
+      "json": "{\"ippVersion\":1,\"type\":\"payment_session\",\"mode\":\"payment\",\"sessionId\":\"ses_test\",\"status\":\"open\",\"merchant\":{\"name\":\"Example Store\"},\"description\":\"A report\",\"options\":[{\"id\":\"base_usdc\",\"method\":\"invisi\",\"network\":\"eip155:8453\",\"asset\":{\"address\":\"0x1111111111111111111111111111111111111111\",\"symbol\":\"USDC\",\"decimals\":6},\"amount\":\"10000000\"}],\"activeRequestId\":null,\"createdAt\":\"2026-11-17T08:00:00Z\",\"expiresAt\":\"2026-11-17T08:05:00.000Z\",\"links\":{\"confirm\":{\"href\":\"https://connect.invisipay.fi/custom/confirm\",\"method\":\"POST\"},\"request\":null},\"failureReason\":null,\"receipt\":null,\"evidenceStatus\":null,\"exceptionSummary\":{\"count\":0,\"unresolvedCount\":0}}"
+    },
+    {
+      "name": "invalid-calendar-date",
+      "kind": "session",
+      "valid": false,
+      "json": "{\"ippVersion\":1,\"type\":\"payment_session\",\"mode\":\"payment\",\"sessionId\":\"ses_test\",\"status\":\"open\",\"merchant\":{\"name\":\"Example Store\"},\"description\":\"A report\",\"options\":[{\"id\":\"base_usdc\",\"method\":\"invisi\",\"network\":\"eip155:8453\",\"asset\":{\"address\":\"0x1111111111111111111111111111111111111111\",\"symbol\":\"USDC\",\"decimals\":6},\"amount\":\"10000000\"}],\"activeRequestId\":null,\"createdAt\":\"2026-11-17T08:00:00Z\",\"expiresAt\":\"2026-02-30T08:05:00Z\",\"links\":{\"confirm\":{\"href\":\"https://connect.invisipay.fi/custom/confirm\",\"method\":\"POST\"},\"request\":null},\"failureReason\":null,\"receipt\":null,\"evidenceStatus\":null,\"exceptionSummary\":{\"count\":0,\"unresolvedCount\":0}}"
+    },
+    {
+      "name": "unknown-mode",
+      "kind": "session",
+      "valid": false,
+      "json": "{\"ippVersion\":1,\"type\":\"payment_session\",\"mode\":\"subscription\",\"sessionId\":\"ses_test\",\"status\":\"open\",\"merchant\":{\"name\":\"Example Store\"},\"description\":\"A report\",\"options\":[{\"id\":\"base_usdc\",\"method\":\"invisi\",\"network\":\"eip155:8453\",\"asset\":{\"address\":\"0x1111111111111111111111111111111111111111\",\"symbol\":\"USDC\",\"decimals\":6},\"amount\":\"10000000\"}],\"activeRequestId\":null,\"createdAt\":\"2026-11-17T08:00:00Z\",\"expiresAt\":\"2026-11-17T08:05:00Z\",\"links\":{\"confirm\":{\"href\":\"https://connect.invisipay.fi/custom/confirm\",\"method\":\"POST\"},\"request\":null},\"failureReason\":null,\"receipt\":null,\"evidenceStatus\":null,\"exceptionSummary\":{\"count\":0,\"unresolvedCount\":0}}"
+    },
+    {
+      "name": "unpaired-surrogate",
+      "kind": "session",
+      "valid": false,
+      "json": "{\"ippVersion\":1,\"type\":\"payment_session\",\"mode\":\"payment\",\"sessionId\":\"ses_test\",\"status\":\"open\",\"merchant\":{\"name\":\"\\ud800\"},\"description\":\"A report\",\"options\":[{\"id\":\"base_usdc\",\"method\":\"invisi\",\"network\":\"eip155:8453\",\"asset\":{\"address\":\"0x1111111111111111111111111111111111111111\",\"symbol\":\"USDC\",\"decimals\":6},\"amount\":\"10000000\"}],\"activeRequestId\":null,\"createdAt\":\"2026-11-17T08:00:00Z\",\"expiresAt\":\"2026-11-17T08:05:00Z\",\"links\":{\"confirm\":{\"href\":\"https://connect.invisipay.fi/custom/confirm\",\"method\":\"POST\"},\"request\":null},\"failureReason\":null,\"receipt\":null,\"evidenceStatus\":null,\"exceptionSummary\":{\"count\":0,\"unresolvedCount\":0}}"
+    },
+    {
+      "name": "success-without-receipt",
+      "kind": "session",
+      "valid": false,
+      "json": "{\"ippVersion\":1,\"type\":\"payment_session\",\"mode\":\"payment\",\"sessionId\":\"ses_test\",\"status\":\"succeeded\",\"merchant\":{\"name\":\"Example Store\"},\"description\":\"A report\",\"options\":[{\"id\":\"base_usdc\",\"method\":\"invisi\",\"network\":\"eip155:8453\",\"asset\":{\"address\":\"0x1111111111111111111111111111111111111111\",\"symbol\":\"USDC\",\"decimals\":6},\"amount\":\"10000000\"}],\"activeRequestId\":\"req_test\",\"createdAt\":\"2026-11-17T08:00:00Z\",\"expiresAt\":\"2026-11-17T08:05:00Z\",\"links\":{\"confirm\":{\"href\":\"https://connect.invisipay.fi/custom/confirm\",\"method\":\"POST\"},\"request\":{\"href\":\"https://connect.invisipay.fi/read\",\"method\":\"GET\"}},\"failureReason\":null,\"receipt\":null,\"evidenceStatus\":\"confirmed\",\"exceptionSummary\":{\"count\":0,\"unresolvedCount\":0}}"
+    },
+    {
+      "name": "legacy-receipt-wrapper",
+      "kind": "session",
+      "valid": false,
+      "json": "{\"ippVersion\":1,\"type\":\"payment_session\",\"mode\":\"payment\",\"sessionId\":\"ses_test\",\"status\":\"succeeded\",\"merchant\":{\"name\":\"Example Store\"},\"description\":\"A report\",\"options\":[{\"id\":\"base_usdc\",\"method\":\"invisi\",\"network\":\"eip155:8453\",\"asset\":{\"address\":\"0x1111111111111111111111111111111111111111\",\"symbol\":\"USDC\",\"decimals\":6},\"amount\":\"10000000\"}],\"activeRequestId\":\"req_test\",\"createdAt\":\"2026-11-17T08:00:00Z\",\"expiresAt\":\"2026-11-17T08:05:00Z\",\"links\":{\"confirm\":{\"href\":\"https://connect.invisipay.fi/custom/confirm\",\"method\":\"POST\"},\"request\":{\"href\":\"https://connect.invisipay.fi/read\",\"method\":\"GET\"}},\"failureReason\":null,\"receipt\":{\"network\":\"eip155:8453\",\"protocolAddress\":\"0x3333333333333333333333333333333333333333\",\"transactionHash\":\"0x0101010101010101010101010101010101010101010101010101010101010101\",\"commitment\":\"0x0101010101010101010101010101010101010101010101010101010101010101\",\"blockNumber\":\"38000000\",\"blockHash\":\"0x0101010101010101010101010101010101010101010101010101010101010101\",\"completedAt\":\"2026-11-17T08:03:00Z\",\"receiptId\":\"old\"},\"evidenceStatus\":\"confirmed\",\"exceptionSummary\":{\"count\":0,\"unresolvedCount\":0}}"
+    },
+    {
+      "name": "amount-0",
+      "kind": "request",
+      "valid": false,
+      "json": "{\"ippVersion\":1,\"type\":\"payment_request\",\"mode\":\"payment\",\"method\":\"invisi\",\"sessionId\":\"ses_test\",\"requestId\":\"req_test\",\"optionId\":\"base_usdc\",\"status\":\"requires_action\",\"payment\":{\"network\":\"eip155:8453\",\"protocolAddress\":\"0x3333333333333333333333333333333333333333\",\"tokenAddress\":\"0x1111111111111111111111111111111111111111\",\"amount\":\"0\",\"recipient\":{\"type\":\"identity\",\"identity\":\"0x0101010101010101010101010101010101010101010101010101010101010101\"}},\"action\":{\"type\":\"invisi_transaction\"},\"createdAt\":\"2026-11-17T08:02:00Z\",\"expiresAt\":\"2026-11-17T08:20:00Z\",\"links\":{\"credentials\":{\"href\":\"https://connect.invisipay.fi/custom/hints\",\"method\":\"POST\"}},\"failureReason\":null}"
+    },
+    {
+      "name": "amount-01",
+      "kind": "request",
+      "valid": false,
+      "json": "{\"ippVersion\":1,\"type\":\"payment_request\",\"mode\":\"payment\",\"method\":\"invisi\",\"sessionId\":\"ses_test\",\"requestId\":\"req_test\",\"optionId\":\"base_usdc\",\"status\":\"requires_action\",\"payment\":{\"network\":\"eip155:8453\",\"protocolAddress\":\"0x3333333333333333333333333333333333333333\",\"tokenAddress\":\"0x1111111111111111111111111111111111111111\",\"amount\":\"01\",\"recipient\":{\"type\":\"identity\",\"identity\":\"0x0101010101010101010101010101010101010101010101010101010101010101\"}},\"action\":{\"type\":\"invisi_transaction\"},\"createdAt\":\"2026-11-17T08:02:00Z\",\"expiresAt\":\"2026-11-17T08:20:00Z\",\"links\":{\"credentials\":{\"href\":\"https://connect.invisipay.fi/custom/hints\",\"method\":\"POST\"}},\"failureReason\":null}"
+    },
+    {
+      "name": "amount--1",
+      "kind": "request",
+      "valid": false,
+      "json": "{\"ippVersion\":1,\"type\":\"payment_request\",\"mode\":\"payment\",\"method\":\"invisi\",\"sessionId\":\"ses_test\",\"requestId\":\"req_test\",\"optionId\":\"base_usdc\",\"status\":\"requires_action\",\"payment\":{\"network\":\"eip155:8453\",\"protocolAddress\":\"0x3333333333333333333333333333333333333333\",\"tokenAddress\":\"0x1111111111111111111111111111111111111111\",\"amount\":\"-1\",\"recipient\":{\"type\":\"identity\",\"identity\":\"0x0101010101010101010101010101010101010101010101010101010101010101\"}},\"action\":{\"type\":\"invisi_transaction\"},\"createdAt\":\"2026-11-17T08:02:00Z\",\"expiresAt\":\"2026-11-17T08:20:00Z\",\"links\":{\"credentials\":{\"href\":\"https://connect.invisipay.fi/custom/hints\",\"method\":\"POST\"}},\"failureReason\":null}"
+    },
+    {
+      "name": "amount-1e6",
+      "kind": "request",
+      "valid": false,
+      "json": "{\"ippVersion\":1,\"type\":\"payment_request\",\"mode\":\"payment\",\"method\":\"invisi\",\"sessionId\":\"ses_test\",\"requestId\":\"req_test\",\"optionId\":\"base_usdc\",\"status\":\"requires_action\",\"payment\":{\"network\":\"eip155:8453\",\"protocolAddress\":\"0x3333333333333333333333333333333333333333\",\"tokenAddress\":\"0x1111111111111111111111111111111111111111\",\"amount\":\"1e6\",\"recipient\":{\"type\":\"identity\",\"identity\":\"0x0101010101010101010101010101010101010101010101010101010101010101\"}},\"action\":{\"type\":\"invisi_transaction\"},\"createdAt\":\"2026-11-17T08:02:00Z\",\"expiresAt\":\"2026-11-17T08:20:00Z\",\"links\":{\"credentials\":{\"href\":\"https://connect.invisipay.fi/custom/hints\",\"method\":\"POST\"}},\"failureReason\":null}"
+    },
+    {
+      "name": "amount-1.0",
+      "kind": "request",
+      "valid": false,
+      "json": "{\"ippVersion\":1,\"type\":\"payment_request\",\"mode\":\"payment\",\"method\":\"invisi\",\"sessionId\":\"ses_test\",\"requestId\":\"req_test\",\"optionId\":\"base_usdc\",\"status\":\"requires_action\",\"payment\":{\"network\":\"eip155:8453\",\"protocolAddress\":\"0x3333333333333333333333333333333333333333\",\"tokenAddress\":\"0x1111111111111111111111111111111111111111\",\"amount\":\"1.0\",\"recipient\":{\"type\":\"identity\",\"identity\":\"0x0101010101010101010101010101010101010101010101010101010101010101\"}},\"action\":{\"type\":\"invisi_transaction\"},\"createdAt\":\"2026-11-17T08:02:00Z\",\"expiresAt\":\"2026-11-17T08:20:00Z\",\"links\":{\"credentials\":{\"href\":\"https://connect.invisipay.fi/custom/hints\",\"method\":\"POST\"}},\"failureReason\":null}"
+    },
+    {
+      "name": "amount-340282366920938463463374607431768211456",
+      "kind": "request",
+      "valid": false,
+      "json": "{\"ippVersion\":1,\"type\":\"payment_request\",\"mode\":\"payment\",\"method\":\"invisi\",\"sessionId\":\"ses_test\",\"requestId\":\"req_test\",\"optionId\":\"base_usdc\",\"status\":\"requires_action\",\"payment\":{\"network\":\"eip155:8453\",\"protocolAddress\":\"0x3333333333333333333333333333333333333333\",\"tokenAddress\":\"0x1111111111111111111111111111111111111111\",\"amount\":\"340282366920938463463374607431768211456\",\"recipient\":{\"type\":\"identity\",\"identity\":\"0x0101010101010101010101010101010101010101010101010101010101010101\"}},\"action\":{\"type\":\"invisi_transaction\"},\"createdAt\":\"2026-11-17T08:02:00Z\",\"expiresAt\":\"2026-11-17T08:20:00Z\",\"links\":{\"credentials\":{\"href\":\"https://connect.invisipay.fi/custom/hints\",\"method\":\"POST\"}},\"failureReason\":null}"
+    },
+    {
+      "name": "non-integer-wire-amount",
+      "kind": "request",
+      "valid": false,
+      "json": "{\"ippVersion\":1,\"type\":\"payment_request\",\"mode\":\"payment\",\"method\":\"invisi\",\"sessionId\":\"ses_test\",\"requestId\":\"req_test\",\"optionId\":\"base_usdc\",\"status\":\"requires_action\",\"payment\":{\"network\":\"eip155:8453\",\"protocolAddress\":\"0x3333333333333333333333333333333333333333\",\"tokenAddress\":\"0x1111111111111111111111111111111111111111\",\"amount\":10,\"recipient\":{\"type\":\"identity\",\"identity\":\"0x0101010101010101010101010101010101010101010101010101010101010101\"}},\"action\":{\"type\":\"invisi_transaction\"},\"createdAt\":\"2026-11-17T08:02:00Z\",\"expiresAt\":\"2026-11-17T08:20:00Z\",\"links\":{\"credentials\":{\"href\":\"https://connect.invisipay.fi/custom/hints\",\"method\":\"POST\"}},\"failureReason\":null}"
+    },
+    {
+      "name": "zero-identity",
+      "kind": "request",
+      "valid": false,
+      "json": "{\"ippVersion\":1,\"type\":\"payment_request\",\"mode\":\"payment\",\"method\":\"invisi\",\"sessionId\":\"ses_test\",\"requestId\":\"req_test\",\"optionId\":\"base_usdc\",\"status\":\"requires_action\",\"payment\":{\"network\":\"eip155:8453\",\"protocolAddress\":\"0x3333333333333333333333333333333333333333\",\"tokenAddress\":\"0x1111111111111111111111111111111111111111\",\"amount\":\"10000000\",\"recipient\":{\"type\":\"identity\",\"identity\":\"0x0000000000000000000000000000000000000000000000000000000000000000\"}},\"action\":{\"type\":\"invisi_transaction\"},\"createdAt\":\"2026-11-17T08:02:00Z\",\"expiresAt\":\"2026-11-17T08:20:00Z\",\"links\":{\"credentials\":{\"href\":\"https://connect.invisipay.fi/custom/hints\",\"method\":\"POST\"}},\"failureReason\":null}"
+    },
+    {
+      "name": "field-overflow",
+      "kind": "request",
+      "valid": false,
+      "json": "{\"ippVersion\":1,\"type\":\"payment_request\",\"mode\":\"payment\",\"method\":\"invisi\",\"sessionId\":\"ses_test\",\"requestId\":\"req_test\",\"optionId\":\"base_usdc\",\"status\":\"requires_action\",\"payment\":{\"network\":\"eip155:8453\",\"protocolAddress\":\"0x3333333333333333333333333333333333333333\",\"tokenAddress\":\"0x1111111111111111111111111111111111111111\",\"amount\":\"10000000\",\"recipient\":{\"type\":\"identity\",\"identity\":\"0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff\"}},\"action\":{\"type\":\"invisi_transaction\"},\"createdAt\":\"2026-11-17T08:02:00Z\",\"expiresAt\":\"2026-11-17T08:20:00Z\",\"links\":{\"credentials\":{\"href\":\"https://connect.invisipay.fi/custom/hints\",\"method\":\"POST\"}},\"failureReason\":null}"
+    },
+    {
+      "name": "extra-payment-opening",
+      "kind": "request",
+      "valid": false,
+      "json": "{\"ippVersion\":1,\"type\":\"payment_request\",\"mode\":\"payment\",\"method\":\"invisi\",\"sessionId\":\"ses_test\",\"requestId\":\"req_test\",\"optionId\":\"base_usdc\",\"status\":\"requires_action\",\"payment\":{\"network\":\"eip155:8453\",\"protocolAddress\":\"0x3333333333333333333333333333333333333333\",\"tokenAddress\":\"0x1111111111111111111111111111111111111111\",\"amount\":\"10000000\",\"recipient\":{\"type\":\"identity\",\"identity\":\"0x0101010101010101010101010101010101010101010101010101010101010101\",\"nonce\":\"1\"}},\"action\":{\"type\":\"invisi_transaction\"},\"createdAt\":\"2026-11-17T08:02:00Z\",\"expiresAt\":\"2026-11-17T08:20:00Z\",\"links\":{\"credentials\":{\"href\":\"https://connect.invisipay.fi/custom/hints\",\"method\":\"POST\"}},\"failureReason\":null}"
+    },
+    {
+      "name": "unknown-action",
+      "kind": "request",
+      "valid": false,
+      "json": "{\"ippVersion\":1,\"type\":\"payment_request\",\"mode\":\"payment\",\"method\":\"invisi\",\"sessionId\":\"ses_test\",\"requestId\":\"req_test\",\"optionId\":\"base_usdc\",\"status\":\"requires_action\",\"payment\":{\"network\":\"eip155:8453\",\"protocolAddress\":\"0x3333333333333333333333333333333333333333\",\"tokenAddress\":\"0x1111111111111111111111111111111111111111\",\"amount\":\"10000000\",\"recipient\":{\"type\":\"identity\",\"identity\":\"0x0101010101010101010101010101010101010101010101010101010101010101\"}},\"action\":{\"type\":\"execute_code\"},\"createdAt\":\"2026-11-17T08:02:00Z\",\"expiresAt\":\"2026-11-17T08:20:00Z\",\"links\":{\"credentials\":{\"href\":\"https://connect.invisipay.fi/custom/hints\",\"method\":\"POST\"}},\"failureReason\":null}"
+    },
+    {
+      "name": "mixed-request-payloads",
+      "kind": "request",
+      "valid": false,
+      "json": "{\"ippVersion\":1,\"type\":\"payment_request\",\"mode\":\"payment\",\"method\":\"invisi\",\"sessionId\":\"ses_test\",\"requestId\":\"req_test\",\"optionId\":\"base_usdc\",\"status\":\"requires_action\",\"payment\":{\"network\":\"eip155:8453\",\"protocolAddress\":\"0x3333333333333333333333333333333333333333\",\"tokenAddress\":\"0x1111111111111111111111111111111111111111\",\"amount\":\"10000000\",\"recipient\":{\"type\":\"identity\",\"identity\":\"0x0101010101010101010101010101010101010101010101010101010101010101\"}},\"action\":{\"type\":\"invisi_transaction\"},\"createdAt\":\"2026-11-17T08:02:00Z\",\"expiresAt\":\"2026-11-17T08:20:00Z\",\"links\":{\"credentials\":{\"href\":\"https://connect.invisipay.fi/custom/hints\",\"method\":\"POST\"}},\"failureReason\":null,\"credit\":{\"operation\":\"create\",\"network\":\"eip155:8453\",\"protocolAddress\":\"0x3333333333333333333333333333333333333333\",\"tokenAddress\":\"0x1111111111111111111111111111111111111111\",\"spender\":\"0iqY352Euf40X77QFrG4NcN27DaUqJX3t8QfUMUEn7l8wtHtz45p3FTN58pvRs9XlumvKUu2Xet8EgZkCklQTeShnK47w8gFh6cNvcL2u22ddW6QTqfV5Lmn69330k27sES28pJeqj\",\"availableCredit\":\"1000000000\",\"unlimited\":false,\"singleLimit\":\"10000000\",\"dailyLimit\":\"50000000\",\"monthlyLimit\":\"300000000\",\"expiresAt\":\"2027-11-17T08:00:00Z\",\"creditSharedKey\":\"0x0101010101010101010101010101010101010101010101010101010101010101\"}}"
+    },
+    {
+      "name": "zero-shared-key",
+      "kind": "request",
+      "valid": false,
+      "json": "{\"ippVersion\":1,\"type\":\"credit_request\",\"mode\":\"credit\",\"method\":\"invisi\",\"sessionId\":\"ses_test\",\"requestId\":\"req_test\",\"optionId\":\"base_usdc\",\"status\":\"requires_action\",\"credit\":{\"operation\":\"create\",\"network\":\"eip155:8453\",\"protocolAddress\":\"0x3333333333333333333333333333333333333333\",\"tokenAddress\":\"0x1111111111111111111111111111111111111111\",\"spender\":\"0iqY352Euf40X77QFrG4NcN27DaUqJX3t8QfUMUEn7l8wtHtz45p3FTN58pvRs9XlumvKUu2Xet8EgZkCklQTeShnK47w8gFh6cNvcL2u22ddW6QTqfV5Lmn69330k27sES28pJeqj\",\"availableCredit\":\"1000000000\",\"unlimited\":false,\"singleLimit\":\"10000000\",\"dailyLimit\":\"50000000\",\"monthlyLimit\":\"300000000\",\"expiresAt\":\"2027-11-17T08:00:00Z\",\"creditSharedKey\":\"0x0000000000000000000000000000000000000000000000000000000000000000\"},\"action\":{\"type\":\"invisi_transaction\"},\"createdAt\":\"2026-11-17T08:02:00Z\",\"expiresAt\":\"2026-11-17T08:20:00Z\",\"links\":{\"credentials\":{\"href\":\"https://connect.invisipay.fi/custom/hints\",\"method\":\"POST\"}},\"failureReason\":null}"
+    },
+    {
+      "name": "noncanonical-shared-key",
+      "kind": "request",
+      "valid": false,
+      "json": "{\"ippVersion\":1,\"type\":\"credit_request\",\"mode\":\"credit\",\"method\":\"invisi\",\"sessionId\":\"ses_test\",\"requestId\":\"req_test\",\"optionId\":\"base_usdc\",\"status\":\"requires_action\",\"credit\":{\"operation\":\"create\",\"network\":\"eip155:8453\",\"protocolAddress\":\"0x3333333333333333333333333333333333333333\",\"tokenAddress\":\"0x1111111111111111111111111111111111111111\",\"spender\":\"0iqY352Euf40X77QFrG4NcN27DaUqJX3t8QfUMUEn7l8wtHtz45p3FTN58pvRs9XlumvKUu2Xet8EgZkCklQTeShnK47w8gFh6cNvcL2u22ddW6QTqfV5Lmn69330k27sES28pJeqj\",\"availableCredit\":\"1000000000\",\"unlimited\":false,\"singleLimit\":\"10000000\",\"dailyLimit\":\"50000000\",\"monthlyLimit\":\"300000000\",\"expiresAt\":\"2027-11-17T08:00:00Z\",\"creditSharedKey\":\"0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff\"},\"action\":{\"type\":\"invisi_transaction\"},\"createdAt\":\"2026-11-17T08:02:00Z\",\"expiresAt\":\"2026-11-17T08:20:00Z\",\"links\":{\"credentials\":{\"href\":\"https://connect.invisipay.fi/custom/hints\",\"method\":\"POST\"}},\"failureReason\":null}"
+    },
+    {
+      "name": "finite-zero-credit",
+      "kind": "request",
+      "valid": false,
+      "json": "{\"ippVersion\":1,\"type\":\"credit_request\",\"mode\":\"credit\",\"method\":\"invisi\",\"sessionId\":\"ses_test\",\"requestId\":\"req_test\",\"optionId\":\"base_usdc\",\"status\":\"requires_action\",\"credit\":{\"operation\":\"create\",\"network\":\"eip155:8453\",\"protocolAddress\":\"0x3333333333333333333333333333333333333333\",\"tokenAddress\":\"0x1111111111111111111111111111111111111111\",\"spender\":\"0iqY352Euf40X77QFrG4NcN27DaUqJX3t8QfUMUEn7l8wtHtz45p3FTN58pvRs9XlumvKUu2Xet8EgZkCklQTeShnK47w8gFh6cNvcL2u22ddW6QTqfV5Lmn69330k27sES28pJeqj\",\"availableCredit\":\"0\",\"unlimited\":false,\"singleLimit\":\"10000000\",\"dailyLimit\":\"50000000\",\"monthlyLimit\":\"300000000\",\"expiresAt\":\"2027-11-17T08:00:00Z\",\"creditSharedKey\":\"0x0101010101010101010101010101010101010101010101010101010101010101\"},\"action\":{\"type\":\"invisi_transaction\"},\"createdAt\":\"2026-11-17T08:02:00Z\",\"expiresAt\":\"2026-11-17T08:20:00Z\",\"links\":{\"credentials\":{\"href\":\"https://connect.invisipay.fi/custom/hints\",\"method\":\"POST\"}},\"failureReason\":null}"
+    },
+    {
+      "name": "unlimited-nonzero-credit",
+      "kind": "request",
+      "valid": false,
+      "json": "{\"ippVersion\":1,\"type\":\"credit_request\",\"mode\":\"credit\",\"method\":\"invisi\",\"sessionId\":\"ses_test\",\"requestId\":\"req_test\",\"optionId\":\"base_usdc\",\"status\":\"requires_action\",\"credit\":{\"operation\":\"create\",\"network\":\"eip155:8453\",\"protocolAddress\":\"0x3333333333333333333333333333333333333333\",\"tokenAddress\":\"0x1111111111111111111111111111111111111111\",\"spender\":\"0iqY352Euf40X77QFrG4NcN27DaUqJX3t8QfUMUEn7l8wtHtz45p3FTN58pvRs9XlumvKUu2Xet8EgZkCklQTeShnK47w8gFh6cNvcL2u22ddW6QTqfV5Lmn69330k27sES28pJeqj\",\"availableCredit\":\"1000000000\",\"unlimited\":true,\"singleLimit\":\"10000000\",\"dailyLimit\":\"50000000\",\"monthlyLimit\":\"300000000\",\"expiresAt\":\"2027-11-17T08:00:00Z\",\"creditSharedKey\":\"0x0101010101010101010101010101010101010101010101010101010101010101\"},\"action\":{\"type\":\"invisi_transaction\"},\"createdAt\":\"2026-11-17T08:02:00Z\",\"expiresAt\":\"2026-11-17T08:20:00Z\",\"links\":{\"credentials\":{\"href\":\"https://connect.invisipay.fi/custom/hints\",\"method\":\"POST\"}},\"failureReason\":null}"
+    },
+    {
+      "name": "limit-overflow",
+      "kind": "request",
+      "valid": false,
+      "json": "{\"ippVersion\":1,\"type\":\"credit_request\",\"mode\":\"credit\",\"method\":\"invisi\",\"sessionId\":\"ses_test\",\"requestId\":\"req_test\",\"optionId\":\"base_usdc\",\"status\":\"requires_action\",\"credit\":{\"operation\":\"create\",\"network\":\"eip155:8453\",\"protocolAddress\":\"0x3333333333333333333333333333333333333333\",\"tokenAddress\":\"0x1111111111111111111111111111111111111111\",\"spender\":\"0iqY352Euf40X77QFrG4NcN27DaUqJX3t8QfUMUEn7l8wtHtz45p3FTN58pvRs9XlumvKUu2Xet8EgZkCklQTeShnK47w8gFh6cNvcL2u22ddW6QTqfV5Lmn69330k27sES28pJeqj\",\"availableCredit\":\"1000000000\",\"unlimited\":false,\"singleLimit\":\"10000000\",\"dailyLimit\":\"85070591730234615865843651857942052864\",\"monthlyLimit\":\"300000000\",\"expiresAt\":\"2027-11-17T08:00:00Z\",\"creditSharedKey\":\"0x0101010101010101010101010101010101010101010101010101010101010101\"},\"action\":{\"type\":\"invisi_transaction\"},\"createdAt\":\"2026-11-17T08:02:00Z\",\"expiresAt\":\"2026-11-17T08:20:00Z\",\"links\":{\"credentials\":{\"href\":\"https://connect.invisipay.fi/custom/hints\",\"method\":\"POST\"}},\"failureReason\":null}"
+    },
+    {
+      "name": "grant-expiry-before-deadline",
+      "kind": "request",
+      "valid": false,
+      "json": "{\"ippVersion\":1,\"type\":\"credit_request\",\"mode\":\"credit\",\"method\":\"invisi\",\"sessionId\":\"ses_test\",\"requestId\":\"req_test\",\"optionId\":\"base_usdc\",\"status\":\"requires_action\",\"credit\":{\"operation\":\"create\",\"network\":\"eip155:8453\",\"protocolAddress\":\"0x3333333333333333333333333333333333333333\",\"tokenAddress\":\"0x1111111111111111111111111111111111111111\",\"spender\":\"0iqY352Euf40X77QFrG4NcN27DaUqJX3t8QfUMUEn7l8wtHtz45p3FTN58pvRs9XlumvKUu2Xet8EgZkCklQTeShnK47w8gFh6cNvcL2u22ddW6QTqfV5Lmn69330k27sES28pJeqj\",\"availableCredit\":\"1000000000\",\"unlimited\":false,\"singleLimit\":\"10000000\",\"dailyLimit\":\"50000000\",\"monthlyLimit\":\"300000000\",\"expiresAt\":\"2026-11-17T08:03:00Z\",\"creditSharedKey\":\"0x0101010101010101010101010101010101010101010101010101010101010101\"},\"action\":{\"type\":\"invisi_transaction\"},\"createdAt\":\"2026-11-17T08:02:00Z\",\"expiresAt\":\"2026-11-17T08:20:00Z\",\"links\":{\"credentials\":{\"href\":\"https://connect.invisipay.fi/custom/hints\",\"method\":\"POST\"}},\"failureReason\":null}"
+    },
+    {
+      "name": "mismatched-checkout-entry",
+      "kind": "checkout",
+      "valid": false,
+      "json": "{\"ippVersion\":1,\"type\":\"checkout\",\"sessionUrl\":\"https://connect.invisipay.fi/other\",\"checkoutUrl\":\"https://dapp.invisipay.fi/checkout#sessionUrl=https%3A%2F%2Fconnect.invisipay.fi%2Fcustom%2Fsession%3Froute%3Done&token=EXAMPLE_SESSION_TOKEN\",\"expiresAt\":\"2026-11-17T08:05:00Z\"}"
+    },
+    {
+      "name": "token-in-checkout-query",
+      "kind": "checkout",
+      "valid": false,
+      "json": "{\"ippVersion\":1,\"type\":\"checkout\",\"sessionUrl\":\"https://connect.invisipay.fi/custom/session?route=one\",\"checkoutUrl\":\"https://dapp.invisipay.fi/checkout?token=EXAMPLE_SESSION_TOKEN#sessionUrl=https%3A%2F%2Fconnect.invisipay.fi%2Fcustom%2Fsession%3Froute%3Done&token=EXAMPLE_SESSION_TOKEN\",\"expiresAt\":\"2026-11-17T08:05:00Z\"}"
+    },
+    {
+      "name": "duplicate-fragment-token",
+      "kind": "checkout",
+      "valid": false,
+      "json": "{\"ippVersion\":1,\"type\":\"checkout\",\"sessionUrl\":\"https://connect.invisipay.fi/custom/session?route=one\",\"checkoutUrl\":\"https://dapp.invisipay.fi/checkout#sessionUrl=https%3A%2F%2Fconnect.invisipay.fi%2Fcustom%2Fsession%3Froute%3Done&token=EXAMPLE_SESSION_TOKEN&token=again\",\"expiresAt\":\"2026-11-17T08:05:00Z\"}"
+    },
+    {
+      "name": "duplicate-json-field",
+      "kind": "session",
+      "valid": false,
+      "json": "{\"ippVersion\":1,\"type\":\"payment_session\",\"mode\":\"payment\",\"sessionId\":\"ses_test\",\"sessionId\":\"ses_other\",\"status\":\"open\",\"merchant\":{\"name\":\"Example Store\"},\"description\":\"A report\",\"options\":[{\"id\":\"base_usdc\",\"method\":\"invisi\",\"network\":\"eip155:8453\",\"asset\":{\"address\":\"0x1111111111111111111111111111111111111111\",\"symbol\":\"USDC\",\"decimals\":6},\"amount\":\"10000000\"}],\"activeRequestId\":null,\"createdAt\":\"2026-11-17T08:00:00Z\",\"expiresAt\":\"2026-11-17T08:05:00Z\",\"links\":{\"confirm\":{\"href\":\"https://connect.invisipay.fi/custom/confirm\",\"method\":\"POST\"},\"request\":null},\"failureReason\":null,\"receipt\":null,\"evidenceStatus\":null,\"exceptionSummary\":{\"count\":0,\"unresolvedCount\":0}}"
+    },
+    {
+      "name": "escaped-duplicate-json-field",
+      "kind": "session",
+      "valid": false,
+      "json": "{\"ippVersion\":1,\"type\":\"payment_session\",\"mode\":\"payment\",\"sessionId\":\"ses_test\",\"\\u0073essionId\":\"ses_other\",\"status\":\"open\",\"merchant\":{\"name\":\"Example Store\"},\"description\":\"A report\",\"options\":[{\"id\":\"base_usdc\",\"method\":\"invisi\",\"network\":\"eip155:8453\",\"asset\":{\"address\":\"0x1111111111111111111111111111111111111111\",\"symbol\":\"USDC\",\"decimals\":6},\"amount\":\"10000000\"}],\"activeRequestId\":null,\"createdAt\":\"2026-11-17T08:00:00Z\",\"expiresAt\":\"2026-11-17T08:05:00Z\",\"links\":{\"confirm\":{\"href\":\"https://connect.invisipay.fi/custom/confirm\",\"method\":\"POST\"},\"request\":null},\"failureReason\":null,\"receipt\":null,\"evidenceStatus\":null,\"exceptionSummary\":{\"count\":0,\"unresolvedCount\":0}}"
+    },
+    {
+      "name": "numeric-metadata-integer-decimal",
+      "kind": "session",
+      "valid": true,
+      "json": "{\"ippVersion\":1.0,\"type\":\"payment_session\",\"mode\":\"payment\",\"sessionId\":\"ses_test\",\"status\":\"open\",\"merchant\":{\"name\":\"Example Store\"},\"description\":\"A report\",\"options\":[{\"id\":\"base_usdc\",\"method\":\"invisi\",\"network\":\"eip155:8453\",\"asset\":{\"address\":\"0x1111111111111111111111111111111111111111\",\"symbol\":\"USDC\",\"decimals\":6},\"amount\":\"10000000\"}],\"activeRequestId\":null,\"createdAt\":\"2026-11-17T08:00:00Z\",\"expiresAt\":\"2026-11-17T08:05:00Z\",\"links\":{\"confirm\":{\"href\":\"https://connect.invisipay.fi/custom/confirm\",\"method\":\"POST\"},\"request\":null},\"failureReason\":null,\"receipt\":null,\"evidenceStatus\":null,\"exceptionSummary\":{\"count\":0,\"unresolvedCount\":0}}"
+    },
+    {
+      "name": "numeric-metadata-integer-exponent",
+      "kind": "session",
+      "valid": true,
+      "json": "{\"ippVersion\":1,\"type\":\"payment_session\",\"mode\":\"payment\",\"sessionId\":\"ses_test\",\"status\":\"open\",\"merchant\":{\"name\":\"Example Store\"},\"description\":\"A report\",\"options\":[{\"id\":\"base_usdc\",\"method\":\"invisi\",\"network\":\"eip155:8453\",\"asset\":{\"address\":\"0x1111111111111111111111111111111111111111\",\"symbol\":\"USDC\",\"decimals\":6e0},\"amount\":\"10000000\"}],\"activeRequestId\":null,\"createdAt\":\"2026-11-17T08:00:00Z\",\"expiresAt\":\"2026-11-17T08:05:00Z\",\"links\":{\"confirm\":{\"href\":\"https://connect.invisipay.fi/custom/confirm\",\"method\":\"POST\"},\"request\":null},\"failureReason\":null,\"receipt\":null,\"evidenceStatus\":null,\"exceptionSummary\":{\"count\":0,\"unresolvedCount\":0}}"
+    }
+  ]
+}

@@ -46,6 +46,7 @@ func (p UpdatePatch) Clone() UpdatePatch {
 }
 func (p CreatePreparation) Clone() CreatePreparation {
 	p.AvailableCredit = snapshotAmount(p.AvailableCredit)
+	p.CreditSharedKey = snapshotAmount(p.CreditSharedKey)
 	p.Payload = snapshotPayload(p.Payload)
 	p.Fee = p.Fee.clone()
 	return p
