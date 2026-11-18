@@ -4,9 +4,9 @@ import (
 	"context"
 	"errors"
 
-	transaction "github.com/invisi-lab/invisi-sdk-go/internal/transaction"
-	"github.com/invisi-lab/invisi-sdk-go/prover"
-	sdk "github.com/invisi-lab/invisi-sdk-go/sdk"
+	transaction "github.com/invisi-labs/invisi-sdk-go/internal/transaction"
+	"github.com/invisi-labs/invisi-sdk-go/prover"
+	sdk "github.com/invisi-labs/invisi-sdk-go/sdk"
 )
 
 // stage claims persisted work before invoking local capabilities. Failed local work

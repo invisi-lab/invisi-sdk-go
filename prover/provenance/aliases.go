@@ -1,7 +1,7 @@
 package provenance
 
 import (
-	public "github.com/invisi-lab/invisi-sdk-go/protocol/provenance"
+	public "github.com/invisi-labs/invisi-sdk-go/protocol/provenance"
 )
 
 type RecognizedTree = public.RecognizedTree

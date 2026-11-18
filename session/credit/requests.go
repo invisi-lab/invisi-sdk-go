@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/invisi-lab/invisi-sdk-go/credit"
+	"github.com/invisi-labs/invisi-sdk-go/credit"
 )
 
 func (s *Session) prepareRequest(ctx context.Context, id string, request any) (result *Operation, failure error) {

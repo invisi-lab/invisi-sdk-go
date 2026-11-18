@@ -13,8 +13,8 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/signer/core/apitypes"
 
-	"github.com/invisi-lab/invisi-sdk-go/primitives"
-	"github.com/invisi-lab/invisi-sdk-go/protocol/contracts"
+	"github.com/invisi-labs/invisi-sdk-go/primitives"
+	"github.com/invisi-labs/invisi-sdk-go/protocol/contracts"
 )
 
 func registrationCase(t *testing.T) (RegistryContext, AddressRegistration) {

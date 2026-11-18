@@ -120,7 +120,7 @@ func newResourceLoader(options ResourceOptions, pin string) (*resourceLoader, er
 		options.CacheDir = filepath.Join(base, "invisi", "prover-assets")
 	}
 	if options.Sources == nil {
-		options.Sources = []string{"https://assets.invisipay.fi/prover/sets/" + pin + "/", "https://github.com/invisi-lab/invisi-core/releases/download/prover-assets-" + pin + "/"}
+		options.Sources = []string{"https://assets.invisipay.fi/prover/sets/" + pin + "/", "https://github.com/invisi-labs/invisi-core/releases/download/prover-assets-" + pin + "/"}
 	}
 	options.Sources = append([]string(nil), options.Sources...)
 	for _, source := range options.Sources {

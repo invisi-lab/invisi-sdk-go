@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"testing"
 
-	"github.com/invisi-lab/invisi-sdk-go/primitives"
+	"github.com/invisi-labs/invisi-sdk-go/primitives"
 )
 
 func TestStatePersistenceIsCanonicalAndBindsGrantKey(t *testing.T) {

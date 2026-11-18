@@ -6,7 +6,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/invisi-lab/invisi-sdk-go/protocol/contracts"
+	"github.com/invisi-labs/invisi-sdk-go/protocol/contracts"
 )
 
 // TestBindingsCompile verifies that all generated ABI bindings parse correctly

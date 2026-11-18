@@ -9,7 +9,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	protocol "github.com/invisi-lab/invisi-sdk-go/protocol/provenance"
+	protocol "github.com/invisi-labs/invisi-sdk-go/protocol/provenance"
 	"io"
 	"net/http"
 	"strings"

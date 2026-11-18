@@ -5,13 +5,13 @@ import (
 	"errors"
 	"math/big"
 
-	"github.com/invisi-lab/invisi-sdk-go/protocol"
+	"github.com/invisi-labs/invisi-sdk-go/protocol"
 
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 
-	protocolrpc "github.com/invisi-lab/invisi-sdk-go/rpc"
+	protocolrpc "github.com/invisi-labs/invisi-sdk-go/rpc"
 )
 
 // Protocol describes one multi-token deployment and optional public connections. It owns no wallet keys.

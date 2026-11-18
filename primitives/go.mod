@@ -1,4 +1,4 @@
-module github.com/invisi-lab/invisi-sdk-go/primitives
+module github.com/invisi-labs/invisi-sdk-go/primitives
 
 go 1.26.1
 

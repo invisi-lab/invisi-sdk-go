@@ -6,7 +6,7 @@ import (
 	"reflect"
 	"strings"
 
-	"github.com/invisi-lab/invisi-sdk-go/primitives"
+	"github.com/invisi-labs/invisi-sdk-go/primitives"
 )
 
 func validCredit(v any, extra string) bool {

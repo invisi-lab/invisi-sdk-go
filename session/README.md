@@ -2,11 +2,11 @@
 
 Managed wallet state, persistence and operation recovery.
 
-Module version: `1.2.0`. See the [SDK repository](https://github.com/invisi-lab/invisi-sdk-go) for the six-module dependency boundary.
+Module version: `1.2.0`. See the [SDK repository](https://github.com/invisi-labs/invisi-sdk-go) for the six-module dependency boundary.
 
 # Managed wallet sessions
 
-Import `github.com/invisi-lab/invisi-sdk-go/session` when the SDK should manage inventory, canonical refresh, reservations, private history and durable operations. Stateless callers use `sdk` without this package or a database driver.
+Import `github.com/invisi-labs/invisi-sdk-go/session` when the SDK should manage inventory, canonical refresh, reservations, private history and durable operations. Stateless callers use `sdk` without this package or a database driver.
 
 ```go
 invisi := sdk.NewInvisi(sdk.InvisiOptions{

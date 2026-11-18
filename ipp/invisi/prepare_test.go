@@ -9,9 +9,9 @@ import (
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/invisi-lab/invisi-sdk-go/ipp"
-	protocolrpc "github.com/invisi-lab/invisi-sdk-go/rpc"
-	"github.com/invisi-lab/invisi-sdk-go/sdk"
+	"github.com/invisi-labs/invisi-sdk-go/ipp"
+	protocolrpc "github.com/invisi-labs/invisi-sdk-go/rpc"
+	"github.com/invisi-labs/invisi-sdk-go/sdk"
 )
 
 func fixture(t *testing.T, kind string) *ipp.Request {

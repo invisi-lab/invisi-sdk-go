@@ -8,10 +8,10 @@ import (
 	"sync"
 
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/invisi-lab/invisi-sdk-go/credit"
-	"github.com/invisi-lab/invisi-sdk-go/prover"
-	protocolrpc "github.com/invisi-lab/invisi-sdk-go/rpc"
-	"github.com/invisi-lab/invisi-sdk-go/rpc/broadcaster"
+	"github.com/invisi-labs/invisi-sdk-go/credit"
+	"github.com/invisi-labs/invisi-sdk-go/prover"
+	protocolrpc "github.com/invisi-labs/invisi-sdk-go/rpc"
+	"github.com/invisi-labs/invisi-sdk-go/rpc/broadcaster"
 )
 
 type StoredState struct {

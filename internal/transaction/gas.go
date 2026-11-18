@@ -3,8 +3,8 @@ package transaction
 import (
 	"math/big"
 
-	"github.com/invisi-lab/invisi-sdk-go/protocol"
-	"github.com/invisi-lab/invisi-sdk-go/protocol/gas"
+	"github.com/invisi-labs/invisi-sdk-go/protocol"
+	"github.com/invisi-labs/invisi-sdk-go/protocol/gas"
 )
 
 func (p *PreparedTransaction) EstimateGas() (protocol.GasEstimate, error) {

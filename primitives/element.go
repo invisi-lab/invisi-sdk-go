@@ -5,7 +5,7 @@ import (
 
 	"github.com/consensys/gnark-crypto/ecc/bn254/fr"
 
-	"github.com/invisi-lab/invisi-sdk-go/primitives/internal/cryptography/field"
+	"github.com/invisi-labs/invisi-sdk-go/primitives/internal/cryptography/field"
 )
 
 func HexToElement(h string) (fr.Element, error) { return field.HexToElement(h) }

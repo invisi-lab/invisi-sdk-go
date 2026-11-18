@@ -7,8 +7,8 @@ import (
 	"github.com/consensys/gnark-crypto/ecc/bn254/fr"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/signer/core/apitypes"
-	"github.com/invisi-lab/invisi-sdk-go/primitives"
-	"github.com/invisi-lab/invisi-sdk-go/protocol"
+	"github.com/invisi-labs/invisi-sdk-go/primitives"
+	"github.com/invisi-labs/invisi-sdk-go/protocol"
 )
 
 type Context struct {

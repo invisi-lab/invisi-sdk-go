@@ -10,8 +10,8 @@ import (
 	"regexp"
 
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/invisi-lab/invisi-sdk-go/protocol/provenance"
-	"github.com/invisi-lab/invisi-sdk-go/protocol/settlement"
+	"github.com/invisi-labs/invisi-sdk-go/protocol/provenance"
+	"github.com/invisi-labs/invisi-sdk-go/protocol/settlement"
 )
 
 // MemberProof contains only public recursive proof evidence.

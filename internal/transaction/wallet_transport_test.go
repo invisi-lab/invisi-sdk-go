@@ -10,10 +10,10 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
-	"github.com/invisi-lab/invisi-sdk-go/credit"
-	native "github.com/invisi-lab/invisi-sdk-go/internal/testsupport"
-	"github.com/invisi-lab/invisi-sdk-go/primitives"
-	"github.com/invisi-lab/invisi-sdk-go/wallet"
+	"github.com/invisi-labs/invisi-sdk-go/credit"
+	native "github.com/invisi-labs/invisi-sdk-go/internal/testsupport"
+	"github.com/invisi-labs/invisi-sdk-go/primitives"
+	"github.com/invisi-labs/invisi-sdk-go/wallet"
 )
 
 func TestWalletRejectsSubstitutedPublicResponse(t *testing.T) {

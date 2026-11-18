@@ -7,7 +7,7 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 
-	"github.com/invisi-lab/invisi-sdk-go/primitives"
+	"github.com/invisi-labs/invisi-sdk-go/primitives"
 )
 
 func (c *ProtocolRpcClient) GetReceivingAddress(ctx context.Context, owner common.Address) (*RegisteredReceivingAddress, error) {

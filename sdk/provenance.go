@@ -3,7 +3,7 @@ package sdk
 import (
 	"context"
 
-	"github.com/invisi-lab/invisi-sdk-go/provenance"
+	"github.com/invisi-labs/invisi-sdk-go/provenance"
 )
 
 type ProvenanceProof = provenance.ProvenanceProof

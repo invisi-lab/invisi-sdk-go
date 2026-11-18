@@ -6,10 +6,10 @@ import (
 	"sync"
 
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/invisi-lab/invisi-sdk-go/credit"
-	"github.com/invisi-lab/invisi-sdk-go/primitives"
-	protocolrpc "github.com/invisi-lab/invisi-sdk-go/rpc"
-	"github.com/invisi-lab/invisi-sdk-go/wallet"
+	"github.com/invisi-labs/invisi-sdk-go/credit"
+	"github.com/invisi-labs/invisi-sdk-go/primitives"
+	protocolrpc "github.com/invisi-labs/invisi-sdk-go/rpc"
+	"github.com/invisi-labs/invisi-sdk-go/wallet"
 )
 
 type walletResolver func(wallet.Method, wallet.DecryptParams) (any, error)

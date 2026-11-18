@@ -8,15 +8,15 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/invisi-lab/invisi-sdk-go/protocol/receipts"
-	protocolrpc "github.com/invisi-lab/invisi-sdk-go/rpc"
-	"github.com/invisi-lab/invisi-sdk-go/wallet"
+	"github.com/invisi-labs/invisi-sdk-go/protocol/receipts"
+	protocolrpc "github.com/invisi-labs/invisi-sdk-go/rpc"
+	"github.com/invisi-labs/invisi-sdk-go/wallet"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 
-	"github.com/invisi-lab/invisi-sdk-go/primitives"
-	"github.com/invisi-lab/invisi-sdk-go/protocol"
+	"github.com/invisi-labs/invisi-sdk-go/primitives"
+	"github.com/invisi-labs/invisi-sdk-go/protocol"
 )
 
 type receiptProvider struct {

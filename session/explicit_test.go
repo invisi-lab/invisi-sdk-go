@@ -12,11 +12,11 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/signer/core/apitypes"
 
-	transaction "github.com/invisi-lab/invisi-sdk-go/internal/transaction"
-	"github.com/invisi-lab/invisi-sdk-go/primitives"
-	"github.com/invisi-lab/invisi-sdk-go/prover"
-	"github.com/invisi-lab/invisi-sdk-go/prover/native"
-	sdk "github.com/invisi-lab/invisi-sdk-go/sdk"
+	transaction "github.com/invisi-labs/invisi-sdk-go/internal/transaction"
+	"github.com/invisi-labs/invisi-sdk-go/primitives"
+	"github.com/invisi-labs/invisi-sdk-go/prover"
+	"github.com/invisi-labs/invisi-sdk-go/prover/native"
+	sdk "github.com/invisi-labs/invisi-sdk-go/sdk"
 )
 
 type forbiddenStore struct{}

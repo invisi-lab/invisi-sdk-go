@@ -11,10 +11,10 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 
-	transaction "github.com/invisi-lab/invisi-sdk-go/internal/transaction"
-	"github.com/invisi-lab/invisi-sdk-go/primitives"
-	protocolrpc "github.com/invisi-lab/invisi-sdk-go/rpc"
-	sdk "github.com/invisi-lab/invisi-sdk-go/sdk"
+	transaction "github.com/invisi-labs/invisi-sdk-go/internal/transaction"
+	"github.com/invisi-labs/invisi-sdk-go/primitives"
+	protocolrpc "github.com/invisi-labs/invisi-sdk-go/rpc"
+	sdk "github.com/invisi-labs/invisi-sdk-go/sdk"
 )
 
 func TestMemoPreparationCopiesAndPersists(t *testing.T) {

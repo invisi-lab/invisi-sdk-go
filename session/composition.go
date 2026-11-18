@@ -3,19 +3,19 @@ package session
 import (
 	"context"
 	"errors"
-	"github.com/invisi-lab/invisi-sdk-go/rpc/broadcaster"
+	"github.com/invisi-labs/invisi-sdk-go/rpc/broadcaster"
 	"sync"
 
-	"github.com/invisi-lab/invisi-sdk-go/rpc/chain"
+	"github.com/invisi-labs/invisi-sdk-go/rpc/chain"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 
-	transaction "github.com/invisi-lab/invisi-sdk-go/internal/transaction"
-	"github.com/invisi-lab/invisi-sdk-go/primitives"
-	"github.com/invisi-lab/invisi-sdk-go/prover"
-	protocolrpc "github.com/invisi-lab/invisi-sdk-go/rpc"
-	"github.com/invisi-lab/invisi-sdk-go/sdk"
+	transaction "github.com/invisi-labs/invisi-sdk-go/internal/transaction"
+	"github.com/invisi-labs/invisi-sdk-go/primitives"
+	"github.com/invisi-labs/invisi-sdk-go/prover"
+	protocolrpc "github.com/invisi-labs/invisi-sdk-go/rpc"
+	"github.com/invisi-labs/invisi-sdk-go/sdk"
 )
 
 type Options struct {

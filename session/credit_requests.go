@@ -8,13 +8,13 @@ import (
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/invisi-lab/invisi-sdk-go/credit"
-	transaction "github.com/invisi-lab/invisi-sdk-go/internal/transaction"
-	"github.com/invisi-lab/invisi-sdk-go/primitives"
-	"github.com/invisi-lab/invisi-sdk-go/protocol"
-	protocolrpc "github.com/invisi-lab/invisi-sdk-go/rpc"
-	"github.com/invisi-lab/invisi-sdk-go/rpc/contracts"
-	creditsession "github.com/invisi-lab/invisi-sdk-go/session/credit"
+	"github.com/invisi-labs/invisi-sdk-go/credit"
+	transaction "github.com/invisi-labs/invisi-sdk-go/internal/transaction"
+	"github.com/invisi-labs/invisi-sdk-go/primitives"
+	"github.com/invisi-labs/invisi-sdk-go/protocol"
+	protocolrpc "github.com/invisi-labs/invisi-sdk-go/rpc"
+	"github.com/invisi-labs/invisi-sdk-go/rpc/contracts"
+	creditsession "github.com/invisi-labs/invisi-sdk-go/session/credit"
 )
 
 func (s *WalletSession) buildCreditRequest(ctx context.Context, request any) (result *credit.Prepared, failure error) {

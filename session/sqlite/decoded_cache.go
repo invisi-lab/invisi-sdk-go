@@ -5,7 +5,7 @@ import (
 	"crypto/sha256"
 	"sync"
 
-	"github.com/invisi-lab/invisi-sdk-go/session"
+	"github.com/invisi-labs/invisi-sdk-go/session"
 )
 
 type decodedRecord struct {

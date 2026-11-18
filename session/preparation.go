@@ -2,9 +2,9 @@ package session
 
 import (
 	"context"
-	transaction "github.com/invisi-lab/invisi-sdk-go/internal/transaction"
+	transaction "github.com/invisi-labs/invisi-sdk-go/internal/transaction"
 
-	"github.com/invisi-lab/invisi-sdk-go/sdk"
+	"github.com/invisi-labs/invisi-sdk-go/sdk"
 )
 
 func (s *WalletSession) PrepareTransfer(ctx context.Context, p sdk.TransferPreparation) (*Operation, error) {

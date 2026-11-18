@@ -1,6 +1,6 @@
 package primitives
 
-import "github.com/invisi-lab/invisi-sdk-go/primitives/internal/cryptography/fmd"
+import "github.com/invisi-labs/invisi-sdk-go/primitives/internal/cryptography/fmd"
 
 type PreparedClue = fmd.PreparedClue
 

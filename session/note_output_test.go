@@ -9,8 +9,8 @@ import (
 	"github.com/consensys/gnark-crypto/ecc/bn254/fr"
 	"github.com/ethereum/go-ethereum/common"
 
-	"github.com/invisi-lab/invisi-sdk-go/primitives"
-	sdk "github.com/invisi-lab/invisi-sdk-go/sdk"
+	"github.com/invisi-labs/invisi-sdk-go/primitives"
+	sdk "github.com/invisi-labs/invisi-sdk-go/sdk"
 )
 
 func TestNoteOutputFactoryIdentityAndImmutability(t *testing.T) {

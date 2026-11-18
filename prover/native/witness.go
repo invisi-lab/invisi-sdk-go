@@ -15,7 +15,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/invisi-lab/invisi-sdk-go/prover"
+	"github.com/invisi-labs/invisi-sdk-go/prover"
 )
 
 const noirVersion = "1.0.0"

@@ -3,9 +3,9 @@ package transaction
 import (
 	"context"
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/invisi-lab/invisi-sdk-go/wallet"
+	"github.com/invisi-labs/invisi-sdk-go/wallet"
 
-	native "github.com/invisi-lab/invisi-sdk-go/internal/testsupport"
+	native "github.com/invisi-labs/invisi-sdk-go/internal/testsupport"
 )
 
 func WalletFromPrivateKey(key string) (*Wallet, error) {

@@ -8,7 +8,7 @@ import (
 	"fmt"
 	"math/big"
 
-	"github.com/invisi-lab/invisi-sdk-go/primitives"
+	"github.com/invisi-labs/invisi-sdk-go/primitives"
 
 	"github.com/ethereum/go-ethereum/common"
 )

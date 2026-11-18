@@ -3,10 +3,10 @@
 Go client for the current Invisi Protocol. Requires Go 1.26.1 or newer.
 
 ```sh
-go get github.com/invisi-lab/invisi-sdk-go@v1.2.5
+go get github.com/invisi-labs/invisi-sdk-go@v1.2.6
 ```
 
-Release target: **1.2.5**. Module versions are repository tags; preparing this source does not create `v1.2.5` or publish a release. The `go 1.26.1` directive remains the toolchain requirement. The SDK remains in the v1 series. Source synchronization does not publish a new module version or upgrade deployed contracts.
+Release target: **1.2.6**. Module versions are repository tags; preparing this source does not create `v1.2.6` or publish a release. The `go 1.26.1` directive remains the toolchain requirement. The SDK remains in the v1 series. Source synchronization does not publish a new module version or upgrade deployed contracts.
 
 ## Core contract bindings
 
@@ -14,7 +14,7 @@ Contract bindings follow the current `invisi-core` compiler artifacts: `InvisiCo
 
 ## Seven independently versioned modules
 
-All seven modules target **1.2.5**. Applications normally import the SDK's `sdk` package; backend services can depend only on the pure Protocol module and its Primitives dependency.
+All seven modules target **1.2.6**. Applications normally import the SDK's `sdk` package; backend services can depend only on the pure Protocol module and its Primitives dependency.
 
 | Module | Responsibility | Internal dependencies |
 | --- | --- | --- |
@@ -26,7 +26,7 @@ All seven modules target **1.2.5**. Applications normally import the SDK's `sdk`
 | `session` | Note/Credit inventory, reservations, journals, encrypted storage and operation recovery | SDK and its public protocol/prover/client types |
 | `ipp` | Independent IPP protocol types, HTTP client and merchant helpers; Invisi transaction preparation through `ipp/invisi` | primitives; SDK for the Invisi adapter |
 
-Module paths use `github.com/invisi-lab/invisi-sdk-go/<name>`; the SDK uses the repository-root module path. Nested module release tags are `<name>/v1.2.5`; the root SDK tag is `v1.2.5`. The examples are a separate development module, not a public release package. No `core`, `runtime` or `protocolkit` compatibility module is retained.
+Module paths use `github.com/invisi-labs/invisi-sdk-go/<name>`; the SDK uses the repository-root module path. Nested module release tags are `<name>/v1.2.6`; the root SDK tag is `v1.2.6`. The examples are a separate development module, not a public release package. No `core`, `runtime` or `protocolkit` compatibility module is retained.
 
 Pure ABI/types are in `protocol/contracts`; network-bound geth clients are in `rpc/contracts`. Maintainers regenerate both from the same compiler ABIs with `go generate ./contracts` in the Protocol module. `session/credit` owns managed Credit state. `protocol/gas` owns receipt-calibrated local estimates, while final transaction simulation belongs to the application and deployment/operator pricing remains outside the pure module.
 

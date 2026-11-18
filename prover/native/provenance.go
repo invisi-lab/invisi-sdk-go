@@ -6,9 +6,9 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	protocol "github.com/invisi-lab/invisi-sdk-go/protocol/provenance"
-	"github.com/invisi-lab/invisi-sdk-go/prover"
-	source "github.com/invisi-lab/invisi-sdk-go/prover/provenance"
+	protocol "github.com/invisi-labs/invisi-sdk-go/protocol/provenance"
+	"github.com/invisi-labs/invisi-sdk-go/prover"
+	source "github.com/invisi-labs/invisi-sdk-go/prover/provenance"
 )
 
 // GetProvenanceCapability reuses the local native executables with authenticated Source assets.

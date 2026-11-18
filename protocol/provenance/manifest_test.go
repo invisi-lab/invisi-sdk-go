@@ -3,7 +3,7 @@ package provenance_test
 import (
 	"testing"
 
-	"github.com/invisi-lab/invisi-sdk-go/protocol/provenance"
+	"github.com/invisi-labs/invisi-sdk-go/protocol/provenance"
 )
 
 func TestManifestBytesAuthenticatedAndIndependent(t *testing.T) {

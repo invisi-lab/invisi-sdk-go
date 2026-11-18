@@ -3,8 +3,8 @@ package session
 import (
 	"testing"
 
-	transaction "github.com/invisi-lab/invisi-sdk-go/internal/transaction"
-	"github.com/invisi-lab/invisi-sdk-go/sdk"
+	transaction "github.com/invisi-labs/invisi-sdk-go/internal/transaction"
+	"github.com/invisi-labs/invisi-sdk-go/sdk"
 )
 
 func walletAddress(w sdk.WalletReference) string {

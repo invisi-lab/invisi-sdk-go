@@ -1,7 +1,7 @@
 package transaction
 
 import (
-	"github.com/invisi-lab/invisi-sdk-go/rpc/broadcaster"
+	"github.com/invisi-labs/invisi-sdk-go/rpc/broadcaster"
 	"testing"
 )
 

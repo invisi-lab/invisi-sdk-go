@@ -5,9 +5,9 @@ import (
 	"errors"
 	"testing"
 
-	transaction "github.com/invisi-lab/invisi-sdk-go/internal/transaction"
-	"github.com/invisi-lab/invisi-sdk-go/primitives"
-	sdk "github.com/invisi-lab/invisi-sdk-go/sdk"
+	transaction "github.com/invisi-labs/invisi-sdk-go/internal/transaction"
+	"github.com/invisi-labs/invisi-sdk-go/primitives"
+	sdk "github.com/invisi-labs/invisi-sdk-go/sdk"
 )
 
 type codedPreparationError interface {

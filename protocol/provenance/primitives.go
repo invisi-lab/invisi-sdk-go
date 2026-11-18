@@ -15,7 +15,7 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
-	"github.com/invisi-lab/invisi-sdk-go/primitives"
+	"github.com/invisi-labs/invisi-sdk-go/primitives"
 )
 
 var publicInputNames = [...]string{"chain_id", "protocol_address", "token_address", "chain_generation", "source_count", "sources_digest", "input_count", "operation_digest_hi", "operation_digest_lo", "input_digest", "binding"}

@@ -1,6 +1,6 @@
 package sdk
 
-import transaction "github.com/invisi-lab/invisi-sdk-go/internal/transaction"
+import transaction "github.com/invisi-labs/invisi-sdk-go/internal/transaction"
 
 type PaymentNoteData = transaction.PaymentNoteData
 type PaymentNote = transaction.PaymentNote

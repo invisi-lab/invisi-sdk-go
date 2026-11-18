@@ -3,9 +3,9 @@ package session
 import (
 	"context"
 	"errors"
-	transaction "github.com/invisi-lab/invisi-sdk-go/internal/transaction"
+	transaction "github.com/invisi-labs/invisi-sdk-go/internal/transaction"
 
-	creditsession "github.com/invisi-lab/invisi-sdk-go/session/credit"
+	creditsession "github.com/invisi-labs/invisi-sdk-go/session/credit"
 )
 
 // Credit composes independent grant state and journals with this wallet's encrypted Store.

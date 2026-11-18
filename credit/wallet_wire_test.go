@@ -6,9 +6,9 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
-	"github.com/invisi-lab/invisi-sdk-go/primitives"
-	"github.com/invisi-lab/invisi-sdk-go/protocol"
-	wire "github.com/invisi-lab/invisi-sdk-go/wallet/protocol"
+	"github.com/invisi-labs/invisi-sdk-go/primitives"
+	"github.com/invisi-labs/invisi-sdk-go/protocol"
+	wire "github.com/invisi-labs/invisi-sdk-go/wallet/protocol"
 )
 
 func TestCreditPreparedWalletWireAuthorization(t *testing.T) {

@@ -4,8 +4,8 @@ import (
 	"context"
 	"errors"
 	"github.com/ethereum/go-ethereum/common"
-	protocolrpc "github.com/invisi-lab/invisi-sdk-go/rpc"
-	creditsession "github.com/invisi-lab/invisi-sdk-go/session/credit"
+	protocolrpc "github.com/invisi-labs/invisi-sdk-go/rpc"
+	creditsession "github.com/invisi-labs/invisi-sdk-go/session/credit"
 )
 
 func (s *WalletSession) invalidate(ctx context.Context) error {

@@ -4,14 +4,14 @@ import (
 	"context"
 	"errors"
 
-	registryrpc "github.com/invisi-lab/invisi-sdk-go/rpc"
+	registryrpc "github.com/invisi-labs/invisi-sdk-go/rpc"
 
 	"github.com/consensys/gnark-crypto/ecc/bn254/fr"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 
-	"github.com/invisi-lab/invisi-sdk-go/primitives"
-	"github.com/invisi-lab/invisi-sdk-go/rpc/contracts"
+	"github.com/invisi-labs/invisi-sdk-go/primitives"
+	"github.com/invisi-labs/invisi-sdk-go/rpc/contracts"
 )
 
 func (s *Runtime) ResolveRecipient(ctx context.Context, address string) (primitives.ReceivingAddress, error) {

@@ -3,7 +3,7 @@ package credit
 import (
 	"testing"
 
-	"github.com/invisi-lab/invisi-sdk-go/primitives"
+	"github.com/invisi-labs/invisi-sdk-go/primitives"
 )
 
 func TestOptionalUpdatePreservesAndClearsPayload(t *testing.T) {

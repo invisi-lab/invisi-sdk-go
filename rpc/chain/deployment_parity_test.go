@@ -5,7 +5,7 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 
-	"github.com/invisi-lab/invisi-sdk-go/rpc"
+	"github.com/invisi-labs/invisi-sdk-go/rpc"
 )
 
 func TestBroadcasterRegistryDeploymentSnapshot(t *testing.T) {

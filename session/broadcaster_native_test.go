@@ -7,8 +7,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/invisi-lab/invisi-sdk-go/prover/native"
-	sdk "github.com/invisi-lab/invisi-sdk-go/sdk"
+	"github.com/invisi-labs/invisi-sdk-go/prover/native"
+	sdk "github.com/invisi-labs/invisi-sdk-go/sdk"
 )
 
 // The relay and chain reads are controlled HTTP fixtures. Witness execution,

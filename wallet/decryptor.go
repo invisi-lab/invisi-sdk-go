@@ -5,8 +5,8 @@ import (
 	"errors"
 
 	"github.com/ethereum/go-ethereum/crypto"
-	"github.com/invisi-lab/invisi-sdk-go/credit"
-	"github.com/invisi-lab/invisi-sdk-go/primitives"
+	"github.com/invisi-labs/invisi-sdk-go/credit"
+	"github.com/invisi-labs/invisi-sdk-go/primitives"
 )
 
 // DeliveryDecryptor is implemented by the App. Only nil plaintext with no error is a nonrecipient.

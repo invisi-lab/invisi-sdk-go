@@ -10,12 +10,12 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/signer/core/apitypes"
-	"github.com/invisi-lab/invisi-sdk-go/credit"
-	transaction "github.com/invisi-lab/invisi-sdk-go/internal/transaction"
-	"github.com/invisi-lab/invisi-sdk-go/protocol"
-	"github.com/invisi-lab/invisi-sdk-go/prover"
-	"github.com/invisi-lab/invisi-sdk-go/rpc/contracts"
-	creditsession "github.com/invisi-lab/invisi-sdk-go/session/credit"
+	"github.com/invisi-labs/invisi-sdk-go/credit"
+	transaction "github.com/invisi-labs/invisi-sdk-go/internal/transaction"
+	"github.com/invisi-labs/invisi-sdk-go/protocol"
+	"github.com/invisi-labs/invisi-sdk-go/prover"
+	"github.com/invisi-labs/invisi-sdk-go/rpc/contracts"
+	creditsession "github.com/invisi-labs/invisi-sdk-go/session/credit"
 )
 
 func (s *WalletSession) validateCreditIntent(ctx context.Context, intent credit.Intent) error {

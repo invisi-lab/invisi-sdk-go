@@ -6,7 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/invisi-lab/invisi-sdk-go/sdk"
+	"github.com/invisi-labs/invisi-sdk-go/sdk"
 )
 
 func TestSDKOptionsContainOnlyInfrastructure(t *testing.T) {
@@ -23,7 +23,7 @@ func TestSDKOptionsContainOnlyInfrastructure(t *testing.T) {
 }
 
 func TestSDKDependenciesExcludeManagedWalletState(t *testing.T) {
-	output, err := exec.Command("go", "list", "-deps", "github.com/invisi-lab/invisi-sdk-go/sdk").CombinedOutput()
+	output, err := exec.Command("go", "list", "-deps", "github.com/invisi-labs/invisi-sdk-go/sdk").CombinedOutput()
 	if err != nil {
 		t.Fatalf("inspect dependencies: %s: %v", output, err)
 	}

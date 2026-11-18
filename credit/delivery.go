@@ -12,7 +12,7 @@ import (
 
 	"github.com/consensys/gnark-crypto/ecc/bn254/fr"
 	ethcrypto "github.com/ethereum/go-ethereum/crypto"
-	"github.com/invisi-lab/invisi-sdk-go/primitives"
+	"github.com/invisi-labs/invisi-sdk-go/primitives"
 )
 
 const deliveryDomain = "Invisi.CreditDelivery.v2"

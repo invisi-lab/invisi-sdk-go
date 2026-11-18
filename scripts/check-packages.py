@@ -2,8 +2,8 @@
 """Test unpublished module archives through an isolated local Go proxy/cache."""
 import json, os, pathlib, shutil, subprocess, tempfile, zipfile
 ROOT = pathlib.Path(__file__).resolve().parents[1]
-PREFIX = 'github.com/invisi-lab/invisi-sdk-go'
-VERSION = 'v1.2.5'
+PREFIX = 'github.com/invisi-labs/invisi-sdk-go'
+VERSION = 'v1.2.6'
 subprocess.run(['python3', str(ROOT / 'scripts/release-notes.py'), VERSION], check=True, stdout=subprocess.DEVNULL)
 MODULES = [('primitives', ROOT / 'primitives'), ('protocol', ROOT / 'protocol'), ('prover', ROOT / 'prover'), ('rpc', ROOT / 'rpc'), ('', ROOT), ('session', ROOT / 'session'), ('ipp', ROOT / 'ipp')]
 work = pathlib.Path(tempfile.mkdtemp(prefix='invisi-go-package-check-'))
@@ -29,7 +29,7 @@ def download_links(src, dst, relative=''):
     dst.mkdir(parents=True, exist_ok=True)
     for p in src.iterdir():
         rel = relative + '/' + p.name
-        if 'github.com/invisi-lab/invisi-sdk-go' in rel:
+        if 'github.com/invisi-labs/invisi-sdk-go' in rel:
             continue
         target = dst / p.name
         if p.name == '@v':

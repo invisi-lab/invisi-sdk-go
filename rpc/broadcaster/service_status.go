@@ -6,7 +6,7 @@ import (
 	"math/big"
 
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/invisi-lab/invisi-sdk-go/protocol/settlement"
+	"github.com/invisi-labs/invisi-sdk-go/protocol/settlement"
 )
 
 type SchedulingCapabilities struct {

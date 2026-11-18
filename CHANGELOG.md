@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.2.6
+
+- Move all Go module paths and public imports to `github.com/invisi-labs/invisi-sdk-go`. Consumers must update imports together; existing release tags remain unchanged.
+
 ## 1.2.5
 
 - Restore required non-semantic compiler metadata when executing stripped resources with the official Noir CLI, preserving the pinned artifact and verification-key identities.

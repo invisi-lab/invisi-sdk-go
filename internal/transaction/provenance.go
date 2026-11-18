@@ -5,13 +5,13 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	source "github.com/invisi-lab/invisi-sdk-go/prover/provenance"
+	source "github.com/invisi-labs/invisi-sdk-go/prover/provenance"
 	"math/big"
 	"sort"
 
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/invisi-lab/invisi-sdk-go/primitives"
-	"github.com/invisi-lab/invisi-sdk-go/provenance"
+	"github.com/invisi-labs/invisi-sdk-go/primitives"
+	"github.com/invisi-labs/invisi-sdk-go/provenance"
 )
 
 // ProvenanceCapability is explicitly local: only public proof evidence leaves the runtime.

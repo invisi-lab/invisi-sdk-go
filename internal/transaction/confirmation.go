@@ -3,7 +3,7 @@ package transaction
 import (
 	"context"
 	"github.com/ethereum/go-ethereum/common"
-	protocolrpc "github.com/invisi-lab/invisi-sdk-go/rpc"
+	protocolrpc "github.com/invisi-labs/invisi-sdk-go/rpc"
 )
 
 // GetConfirmation observes inclusion/finality, independently of intended operation effects.

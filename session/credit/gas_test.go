@@ -3,7 +3,7 @@ package session
 import (
 	"context"
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/invisi-lab/invisi-sdk-go/credit"
+	"github.com/invisi-labs/invisi-sdk-go/credit"
 	"math/big"
 	"reflect"
 	"testing"

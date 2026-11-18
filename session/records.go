@@ -9,7 +9,7 @@ import (
 	"encoding/json"
 	"errors"
 	"github.com/ethereum/go-ethereum/common"
-	creditsession "github.com/invisi-lab/invisi-sdk-go/session/credit"
+	creditsession "github.com/invisi-labs/invisi-sdk-go/session/credit"
 	"sort"
 )
 

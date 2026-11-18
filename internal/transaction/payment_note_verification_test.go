@@ -10,15 +10,15 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/invisi-lab/invisi-sdk-go/rpc/chain"
+	"github.com/invisi-labs/invisi-sdk-go/rpc/chain"
 
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	ethcrypto "github.com/ethereum/go-ethereum/crypto"
-	"github.com/invisi-lab/invisi-sdk-go/primitives"
-	"github.com/invisi-lab/invisi-sdk-go/protocol"
-	protocolrpc "github.com/invisi-lab/invisi-sdk-go/rpc"
+	"github.com/invisi-labs/invisi-sdk-go/primitives"
+	"github.com/invisi-labs/invisi-sdk-go/protocol"
+	protocolrpc "github.com/invisi-labs/invisi-sdk-go/rpc"
 )
 
 type noteProvider struct {

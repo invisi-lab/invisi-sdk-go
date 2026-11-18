@@ -3,8 +3,8 @@ package sdk
 import (
 	"context"
 
-	transaction "github.com/invisi-lab/invisi-sdk-go/internal/transaction"
-	protocolrpc "github.com/invisi-lab/invisi-sdk-go/rpc"
+	transaction "github.com/invisi-labs/invisi-sdk-go/internal/transaction"
+	protocolrpc "github.com/invisi-labs/invisi-sdk-go/rpc"
 )
 
 const MaxUpdateBlocks = transaction.MaxUpdateBlocks

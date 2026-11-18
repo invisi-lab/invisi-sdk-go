@@ -20,8 +20,8 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 
-	"github.com/invisi-lab/invisi-sdk-go/provenance"
-	sdk "github.com/invisi-lab/invisi-sdk-go/sdk"
+	"github.com/invisi-labs/invisi-sdk-go/provenance"
+	sdk "github.com/invisi-labs/invisi-sdk-go/sdk"
 )
 
 // This prover exercises orchestration only; real Noir/BB acceptance is tested by the owned-chain harness.

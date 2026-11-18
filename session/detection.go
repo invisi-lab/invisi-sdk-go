@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/invisi-lab/invisi-sdk-go/wallet"
+	"github.com/invisi-labs/invisi-sdk-go/wallet"
 )
 
 func decodeClue(v string) []byte { b, _ := wallet.Bytes(v, -1); return b }

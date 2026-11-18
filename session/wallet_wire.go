@@ -2,7 +2,7 @@ package session
 
 import (
 	"context"
-	"github.com/invisi-lab/invisi-sdk-go/wallet"
+	"github.com/invisi-labs/invisi-sdk-go/wallet"
 )
 
 func (o *Operation) ExportWalletRequest(ctx context.Context, id string) (wallet.Request, error) {

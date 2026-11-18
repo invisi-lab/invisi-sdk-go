@@ -7,7 +7,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/signer/core/apitypes"
-	"github.com/invisi-lab/invisi-sdk-go/protocol/provenance"
+	"github.com/invisi-labs/invisi-sdk-go/protocol/provenance"
 )
 
 func TestProvenanceQuoteRequirementBinding(t *testing.T) {

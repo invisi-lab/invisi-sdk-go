@@ -2,7 +2,7 @@
 """Check the Go modules against their actual production package dependencies."""
 import json, os, pathlib, subprocess
 ROOT = pathlib.Path(__file__).resolve().parents[1]
-PREFIX = 'github.com/invisi-lab/invisi-sdk-go'
+PREFIX = 'github.com/invisi-labs/invisi-sdk-go'
 MODULES = {'sdk': ROOT, **{n: ROOT / n for n in ('primitives', 'protocol', 'prover', 'rpc', 'session', 'ipp')}}
 ALLOWED = {'primitives': set(), 'protocol': {'primitives'}, 'prover': {'primitives', 'protocol'}, 'rpc': {'primitives', 'protocol'}, 'sdk': {'primitives', 'protocol', 'prover', 'rpc'}, 'session': {'sdk', 'primitives', 'protocol', 'rpc', 'prover'}, 'ipp': {'sdk', 'primitives', 'protocol', 'rpc'}}
 

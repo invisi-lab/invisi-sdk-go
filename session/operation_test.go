@@ -16,13 +16,13 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 
-	transaction "github.com/invisi-lab/invisi-sdk-go/internal/transaction"
-	"github.com/invisi-lab/invisi-sdk-go/primitives"
-	"github.com/invisi-lab/invisi-sdk-go/protocol"
-	"github.com/invisi-lab/invisi-sdk-go/protocol/contracts"
-	"github.com/invisi-lab/invisi-sdk-go/prover"
-	protocolrpc "github.com/invisi-lab/invisi-sdk-go/rpc"
-	sdk "github.com/invisi-lab/invisi-sdk-go/sdk"
+	transaction "github.com/invisi-labs/invisi-sdk-go/internal/transaction"
+	"github.com/invisi-labs/invisi-sdk-go/primitives"
+	"github.com/invisi-labs/invisi-sdk-go/protocol"
+	"github.com/invisi-labs/invisi-sdk-go/protocol/contracts"
+	"github.com/invisi-labs/invisi-sdk-go/prover"
+	protocolrpc "github.com/invisi-labs/invisi-sdk-go/rpc"
+	sdk "github.com/invisi-labs/invisi-sdk-go/sdk"
 )
 
 type sessionProvider struct {

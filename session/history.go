@@ -10,10 +10,10 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 
-	transaction "github.com/invisi-lab/invisi-sdk-go/internal/transaction"
-	"github.com/invisi-lab/invisi-sdk-go/primitives"
-	protocolrpc "github.com/invisi-lab/invisi-sdk-go/rpc"
-	sdk "github.com/invisi-lab/invisi-sdk-go/sdk"
+	transaction "github.com/invisi-labs/invisi-sdk-go/internal/transaction"
+	"github.com/invisi-labs/invisi-sdk-go/primitives"
+	protocolrpc "github.com/invisi-labs/invisi-sdk-go/rpc"
+	sdk "github.com/invisi-labs/invisi-sdk-go/sdk"
 )
 
 // HistoryOptions selects an asset without exposing the internal persisted plan.

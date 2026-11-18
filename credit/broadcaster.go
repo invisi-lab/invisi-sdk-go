@@ -3,14 +3,14 @@ package credit
 import (
 	"context"
 	"fmt"
-	"github.com/invisi-lab/invisi-sdk-go/protocol/settlement"
+	"github.com/invisi-labs/invisi-sdk-go/protocol/settlement"
 	"math/big"
 	"strconv"
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/invisi-lab/invisi-sdk-go/primitives"
-	"github.com/invisi-lab/invisi-sdk-go/rpc/broadcaster"
+	"github.com/invisi-labs/invisi-sdk-go/primitives"
+	"github.com/invisi-labs/invisi-sdk-go/rpc/broadcaster"
 )
 
 type BroadcasterQuoteOptions = broadcaster.QuoteOptions

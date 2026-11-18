@@ -6,7 +6,7 @@ import (
 	"math/big"
 	"testing"
 
-	"github.com/invisi-lab/invisi-sdk-go/wallet"
+	"github.com/invisi-labs/invisi-sdk-go/wallet"
 )
 
 func TestDetachedWalletWireAuthorization(t *testing.T) {

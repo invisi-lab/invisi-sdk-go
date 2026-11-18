@@ -8,11 +8,11 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 
-	transaction "github.com/invisi-lab/invisi-sdk-go/internal/transaction"
-	"github.com/invisi-lab/invisi-sdk-go/primitives"
-	"github.com/invisi-lab/invisi-sdk-go/prover"
-	"github.com/invisi-lab/invisi-sdk-go/prover/native"
-	sdk "github.com/invisi-lab/invisi-sdk-go/sdk"
+	transaction "github.com/invisi-labs/invisi-sdk-go/internal/transaction"
+	"github.com/invisi-labs/invisi-sdk-go/primitives"
+	"github.com/invisi-labs/invisi-sdk-go/prover"
+	"github.com/invisi-labs/invisi-sdk-go/prover/native"
+	sdk "github.com/invisi-labs/invisi-sdk-go/sdk"
 )
 
 // Chain and index reads use controlled fixtures. Witness execution, proof

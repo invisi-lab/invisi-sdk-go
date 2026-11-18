@@ -12,9 +12,9 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 
-	transaction "github.com/invisi-lab/invisi-sdk-go/internal/transaction"
-	protocolrpc "github.com/invisi-lab/invisi-sdk-go/rpc"
-	creditsession "github.com/invisi-lab/invisi-sdk-go/session/credit"
+	transaction "github.com/invisi-labs/invisi-sdk-go/internal/transaction"
+	protocolrpc "github.com/invisi-labs/invisi-sdk-go/rpc"
+	creditsession "github.com/invisi-labs/invisi-sdk-go/session/credit"
 )
 
 type OperationRecord struct {

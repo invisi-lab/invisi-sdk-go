@@ -5,7 +5,7 @@ import (
 	"errors"
 	"math/big"
 
-	"github.com/invisi-lab/invisi-sdk-go/primitives"
+	"github.com/invisi-labs/invisi-sdk-go/primitives"
 )
 
 func (o *Execution) ExtendBroadcasterInputs(ctx context.Context, base Plan, fee *big.Int) (Plan, error) {

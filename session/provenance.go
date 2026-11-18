@@ -3,8 +3,8 @@ package session
 import (
 	"context"
 
-	"github.com/invisi-lab/invisi-sdk-go/provenance"
-	"github.com/invisi-lab/invisi-sdk-go/sdk"
+	"github.com/invisi-labs/invisi-sdk-go/provenance"
+	"github.com/invisi-labs/invisi-sdk-go/sdk"
 )
 
 func (o *Operation) ExportProvenanceTracking(ctx context.Context) ([]provenance.Tracking, error) {

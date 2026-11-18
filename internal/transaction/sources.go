@@ -3,8 +3,8 @@ package transaction
 import (
 	"errors"
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/invisi-lab/invisi-sdk-go/protocol"
-	protocolrpc "github.com/invisi-lab/invisi-sdk-go/rpc"
+	"github.com/invisi-labs/invisi-sdk-go/protocol"
+	protocolrpc "github.com/invisi-labs/invisi-sdk-go/rpc"
 	"math/big"
 	"sort"
 )

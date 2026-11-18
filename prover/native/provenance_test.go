@@ -7,7 +7,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	source "github.com/invisi-lab/invisi-sdk-go/prover/provenance"
+	source "github.com/invisi-labs/invisi-sdk-go/prover/provenance"
 	"os"
 	"testing"
 	"time"

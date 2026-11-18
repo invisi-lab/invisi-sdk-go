@@ -3,7 +3,7 @@ package session
 import (
 	"context"
 
-	wire "github.com/invisi-lab/invisi-sdk-go/wallet/protocol"
+	wire "github.com/invisi-labs/invisi-sdk-go/wallet/protocol"
 )
 
 func (o *Operation) ExportWalletRequest(ctx context.Context, id string) (wire.Request, error) {

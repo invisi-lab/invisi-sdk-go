@@ -3,7 +3,7 @@ package chain
 import (
 	"math/big"
 
-	"github.com/invisi-lab/invisi-sdk-go/protocol"
+	"github.com/invisi-labs/invisi-sdk-go/protocol"
 )
 
 func (p *Protocol) Aggregate(request protocol.AggregateRequest) (protocol.TransactionCall, error) {

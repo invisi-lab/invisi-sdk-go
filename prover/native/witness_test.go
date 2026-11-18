@@ -11,7 +11,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/invisi-lab/invisi-sdk-go/prover"
+	"github.com/invisi-labs/invisi-sdk-go/prover"
 )
 
 func TestExecutorMetadataDoesNotChangePublishedCircuit(t *testing.T) {

@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 
-	"github.com/invisi-lab/invisi-sdk-go/rpc/broadcaster"
+	"github.com/invisi-labs/invisi-sdk-go/rpc/broadcaster"
 )
 
 // submitViaBroadcaster preserves reservations after any potentially externalized request.

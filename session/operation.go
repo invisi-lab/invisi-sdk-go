@@ -9,8 +9,8 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 
-	transaction "github.com/invisi-lab/invisi-sdk-go/internal/transaction"
-	protocolrpc "github.com/invisi-lab/invisi-sdk-go/rpc"
+	transaction "github.com/invisi-labs/invisi-sdk-go/internal/transaction"
+	protocolrpc "github.com/invisi-labs/invisi-sdk-go/rpc"
 )
 
 func (o *Operation) persist(ctx context.Context, status string) error {

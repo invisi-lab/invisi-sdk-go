@@ -1,8 +1,8 @@
 package sdk
 
 import (
-	"github.com/invisi-lab/invisi-sdk-go/credit"
-	transaction "github.com/invisi-lab/invisi-sdk-go/internal/transaction"
+	"github.com/invisi-labs/invisi-sdk-go/credit"
+	transaction "github.com/invisi-labs/invisi-sdk-go/internal/transaction"
 )
 
 type CreateCreditPreparation = credit.CreatePreparation

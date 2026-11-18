@@ -4,7 +4,7 @@ import (
 	"context"
 	"encoding/hex"
 	"errors"
-	"github.com/invisi-lab/invisi-sdk-go/protocol/settlement"
+	"github.com/invisi-labs/invisi-sdk-go/protocol/settlement"
 )
 
 func NewCancelToken() (string, string, error) { return settlement.NewCancelToken() }

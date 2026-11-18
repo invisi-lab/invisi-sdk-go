@@ -7,7 +7,7 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 
-	sdk "github.com/invisi-lab/invisi-sdk-go/sdk"
+	sdk "github.com/invisi-labs/invisi-sdk-go/sdk"
 )
 
 // ExportTransaction exposes only the frozen public call and keeps managed inputs reserved.

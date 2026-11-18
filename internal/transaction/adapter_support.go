@@ -5,7 +5,7 @@ package transaction
 import (
 	"context"
 
-	"github.com/invisi-lab/invisi-sdk-go/primitives"
+	"github.com/invisi-labs/invisi-sdk-go/primitives"
 )
 
 func PreparedExecution(p *PreparedTransaction) *Execution { return p.operation }

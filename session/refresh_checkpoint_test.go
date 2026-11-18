@@ -16,9 +16,9 @@ import (
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/core/types"
 
-	"github.com/invisi-lab/invisi-sdk-go/protocol"
-	protocolrpc "github.com/invisi-lab/invisi-sdk-go/rpc"
-	sdk "github.com/invisi-lab/invisi-sdk-go/sdk"
+	"github.com/invisi-labs/invisi-sdk-go/protocol"
+	protocolrpc "github.com/invisi-labs/invisi-sdk-go/rpc"
+	sdk "github.com/invisi-labs/invisi-sdk-go/sdk"
 )
 
 type checkpointProvider struct {

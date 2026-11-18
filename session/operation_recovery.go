@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 
-	transaction "github.com/invisi-lab/invisi-sdk-go/internal/transaction"
+	transaction "github.com/invisi-labs/invisi-sdk-go/internal/transaction"
 )
 
 func (s *WalletSession) Resume(ctx context.Context, id string) (*Operation, error) {

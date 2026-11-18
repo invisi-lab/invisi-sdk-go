@@ -8,8 +8,8 @@ import (
 
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/invisi-lab/invisi-sdk-go/protocol"
-	"github.com/invisi-lab/invisi-sdk-go/rpc/broadcaster"
+	"github.com/invisi-labs/invisi-sdk-go/protocol"
+	"github.com/invisi-labs/invisi-sdk-go/rpc/broadcaster"
 )
 
 // ValidateProvenanceProof binds public recovery evidence to the native statement.

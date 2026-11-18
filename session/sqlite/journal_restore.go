@@ -4,8 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"github.com/invisi-lab/invisi-sdk-go/session"
-	creditsession "github.com/invisi-lab/invisi-sdk-go/session/credit"
+	"github.com/invisi-labs/invisi-sdk-go/session"
+	creditsession "github.com/invisi-labs/invisi-sdk-go/session/credit"
 )
 
 func (s *WalletStore) RestoreExternalizedOperations(ctx context.Context, scope session.WalletScope) error {

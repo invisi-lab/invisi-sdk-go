@@ -6,15 +6,15 @@ import (
 	"encoding/hex"
 	"fmt"
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/invisi-lab/invisi-sdk-go/prover/native"
-	protocolrpc "github.com/invisi-lab/invisi-sdk-go/rpc"
+	"github.com/invisi-labs/invisi-sdk-go/prover/native"
+	protocolrpc "github.com/invisi-labs/invisi-sdk-go/rpc"
 	"os"
 	"path/filepath"
 	"strings"
 	"time"
 
-	"github.com/invisi-lab/invisi-sdk-go/provenance"
-	"github.com/invisi-lab/invisi-sdk-go/sdk"
+	"github.com/invisi-labs/invisi-sdk-go/provenance"
+	"github.com/invisi-labs/invisi-sdk-go/sdk"
 )
 
 const ProvenanceEndpoint = "https://provenance.invisipay.fi"

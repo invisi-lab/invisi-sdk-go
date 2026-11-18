@@ -6,9 +6,9 @@ import (
 	"math/big"
 	"sync"
 
-	"github.com/invisi-lab/invisi-sdk-go/protocol"
-	"github.com/invisi-lab/invisi-sdk-go/prover"
-	"github.com/invisi-lab/invisi-sdk-go/rpc/broadcaster"
+	"github.com/invisi-labs/invisi-sdk-go/protocol"
+	"github.com/invisi-labs/invisi-sdk-go/prover"
+	"github.com/invisi-labs/invisi-sdk-go/rpc/broadcaster"
 )
 
 type TransactionCall = protocol.TransactionCall

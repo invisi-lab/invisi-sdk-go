@@ -5,7 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/invisi-lab/invisi-sdk-go/prover"
+	"github.com/invisi-labs/invisi-sdk-go/prover"
 	"os"
 	"strings"
 	"testing"

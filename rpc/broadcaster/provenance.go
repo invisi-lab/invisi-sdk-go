@@ -4,7 +4,7 @@ import (
 	"errors"
 
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/invisi-lab/invisi-sdk-go/protocol/provenance"
+	"github.com/invisi-labs/invisi-sdk-go/protocol/provenance"
 )
 
 const ProvenanceRequestHashFormat = "invisi-broadcaster-provenance-intent-v1"

@@ -7,9 +7,9 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
-	"github.com/invisi-lab/invisi-sdk-go/credit"
-	"github.com/invisi-lab/invisi-sdk-go/primitives"
-	wire "github.com/invisi-lab/invisi-sdk-go/wallet/protocol"
+	"github.com/invisi-labs/invisi-sdk-go/credit"
+	"github.com/invisi-labs/invisi-sdk-go/primitives"
+	wire "github.com/invisi-labs/invisi-sdk-go/wallet/protocol"
 )
 
 // Accept independently verifies the response against the original request.

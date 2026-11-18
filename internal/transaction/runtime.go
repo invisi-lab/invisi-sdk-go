@@ -5,12 +5,12 @@ import (
 	"encoding/json"
 	"errors"
 
-	"github.com/invisi-lab/invisi-sdk-go/rpc/chain"
+	"github.com/invisi-labs/invisi-sdk-go/rpc/chain"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 
-	protocolrpc "github.com/invisi-lab/invisi-sdk-go/rpc"
+	protocolrpc "github.com/invisi-labs/invisi-sdk-go/rpc"
 )
 
 type Inventory struct {

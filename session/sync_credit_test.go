@@ -11,17 +11,17 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/invisi-lab/invisi-sdk-go/wallet"
+	"github.com/invisi-labs/invisi-sdk-go/wallet"
 
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
-	"github.com/invisi-lab/invisi-sdk-go/credit"
-	"github.com/invisi-lab/invisi-sdk-go/primitives"
-	"github.com/invisi-lab/invisi-sdk-go/protocol/contracts"
-	protocolrpc "github.com/invisi-lab/invisi-sdk-go/rpc"
-	creditsession "github.com/invisi-lab/invisi-sdk-go/session/credit"
+	"github.com/invisi-labs/invisi-sdk-go/credit"
+	"github.com/invisi-labs/invisi-sdk-go/primitives"
+	"github.com/invisi-labs/invisi-sdk-go/protocol/contracts"
+	protocolrpc "github.com/invisi-labs/invisi-sdk-go/rpc"
+	creditsession "github.com/invisi-labs/invisi-sdk-go/session/credit"
 )
 
 func syncGrantState() credit.State {

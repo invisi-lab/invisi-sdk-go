@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 
-	transaction "github.com/invisi-lab/invisi-sdk-go/internal/transaction"
+	transaction "github.com/invisi-labs/invisi-sdk-go/internal/transaction"
 )
 
 func (s *WalletSession) externalize(ctx context.Context, e *transaction.Execution) error {

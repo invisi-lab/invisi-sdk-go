@@ -6,7 +6,7 @@ import (
 
 	"github.com/ethereum/go-ethereum/signer/core/apitypes"
 
-	"github.com/invisi-lab/invisi-sdk-go/protocol"
+	"github.com/invisi-labs/invisi-sdk-go/protocol"
 )
 
 func (o *Execution) FundingTypedData() (apitypes.TypedData, error) {

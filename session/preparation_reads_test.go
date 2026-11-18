@@ -5,7 +5,7 @@ import (
 	"math/big"
 	"testing"
 
-	"github.com/invisi-lab/invisi-sdk-go/sdk"
+	"github.com/invisi-labs/invisi-sdk-go/sdk"
 )
 
 type preparationCountingStore struct {

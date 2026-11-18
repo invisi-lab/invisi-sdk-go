@@ -10,7 +10,7 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 
-	"github.com/invisi-lab/invisi-sdk-go/session"
+	"github.com/invisi-labs/invisi-sdk-go/session"
 )
 
 func TestSQLiteEncryptedStateReopensAndRollsBack(t *testing.T) {

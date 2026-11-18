@@ -8,9 +8,9 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 
-	transaction "github.com/invisi-lab/invisi-sdk-go/internal/transaction"
-	protocolrpc "github.com/invisi-lab/invisi-sdk-go/rpc"
-	"github.com/invisi-lab/invisi-sdk-go/rpc/contracts"
+	transaction "github.com/invisi-labs/invisi-sdk-go/internal/transaction"
+	protocolrpc "github.com/invisi-labs/invisi-sdk-go/rpc"
+	"github.com/invisi-labs/invisi-sdk-go/rpc/contracts"
 )
 
 // reconcileSpendState resolves dropped/reverted transactions without assuming that

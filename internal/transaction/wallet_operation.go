@@ -4,8 +4,8 @@ import (
 	"context"
 	"errors"
 
-	"github.com/invisi-lab/invisi-sdk-go/primitives"
-	"github.com/invisi-lab/invisi-sdk-go/wallet"
+	"github.com/invisi-labs/invisi-sdk-go/primitives"
+	"github.com/invisi-labs/invisi-sdk-go/wallet"
 )
 
 func (o *Execution) ExportWalletRequest(ctx context.Context, id string) (wallet.Request, error) {

@@ -5,7 +5,7 @@ import (
 	"math/big"
 	"testing"
 
-	sdk "github.com/invisi-lab/invisi-sdk-go/sdk"
+	sdk "github.com/invisi-labs/invisi-sdk-go/sdk"
 )
 
 func TestResumeFencesPreviousWorkerAndRequiresFreshAuthorization(t *testing.T) {

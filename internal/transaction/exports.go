@@ -3,10 +3,10 @@ package transaction
 import (
 	"context"
 
-	"github.com/invisi-lab/invisi-sdk-go/rpc/chain"
+	"github.com/invisi-labs/invisi-sdk-go/rpc/chain"
 
-	"github.com/invisi-lab/invisi-sdk-go/prover"
-	protocolrpc "github.com/invisi-lab/invisi-sdk-go/rpc"
+	"github.com/invisi-labs/invisi-sdk-go/prover"
+	protocolrpc "github.com/invisi-labs/invisi-sdk-go/rpc"
 )
 
 type Protocol = chain.Protocol

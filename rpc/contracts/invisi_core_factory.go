@@ -8,7 +8,7 @@ import (
 	"math/big"
 	"strings"
 
-	protocolcontracts "github.com/invisi-lab/invisi-sdk-go/protocol/contracts"
+	protocolcontracts "github.com/invisi-labs/invisi-sdk-go/protocol/contracts"
 
 	ethereum "github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi"

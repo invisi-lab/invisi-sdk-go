@@ -16,7 +16,7 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/event"
 
-	sdk "github.com/invisi-lab/invisi-sdk-go/sdk"
+	sdk "github.com/invisi-labs/invisi-sdk-go/sdk"
 )
 
 type sendingProvider struct {

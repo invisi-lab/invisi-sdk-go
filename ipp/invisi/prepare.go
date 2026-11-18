@@ -7,10 +7,10 @@ import (
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/invisi-lab/invisi-sdk-go/ipp"
-	"github.com/invisi-lab/invisi-sdk-go/primitives"
-	protocolrpc "github.com/invisi-lab/invisi-sdk-go/rpc"
-	"github.com/invisi-lab/invisi-sdk-go/sdk"
+	"github.com/invisi-labs/invisi-sdk-go/ipp"
+	"github.com/invisi-labs/invisi-sdk-go/primitives"
+	protocolrpc "github.com/invisi-labs/invisi-sdk-go/rpc"
+	"github.com/invisi-labs/invisi-sdk-go/sdk"
 )
 
 // Target binds a trusted wallet deployment and preparation capabilities. Callers can bind

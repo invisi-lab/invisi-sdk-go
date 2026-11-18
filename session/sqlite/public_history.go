@@ -7,7 +7,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/invisi-lab/invisi-sdk-go/session"
+	"github.com/invisi-labs/invisi-sdk-go/session"
 	"sync"
 )
 

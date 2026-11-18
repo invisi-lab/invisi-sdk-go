@@ -9,8 +9,8 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 
-	"github.com/invisi-lab/invisi-sdk-go/provenance"
-	"github.com/invisi-lab/invisi-sdk-go/rpc/broadcaster"
+	"github.com/invisi-labs/invisi-sdk-go/provenance"
+	"github.com/invisi-labs/invisi-sdk-go/rpc/broadcaster"
 )
 
 func (o *Execution) ExportBroadcasterQuoteInternal() (broadcaster.SignedQuote, error) {

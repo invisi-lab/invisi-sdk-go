@@ -2,7 +2,7 @@ package session
 
 import (
 	"context"
-	sdk "github.com/invisi-lab/invisi-sdk-go/sdk"
+	sdk "github.com/invisi-labs/invisi-sdk-go/sdk"
 	"math/big"
 	"testing"
 	"time"

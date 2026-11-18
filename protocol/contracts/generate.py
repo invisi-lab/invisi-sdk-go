@@ -37,7 +37,7 @@ with tempfile.TemporaryDirectory(prefix='invisi-bindings-') as tmp:
         (HERE / (stem + '.go')).write_text(pure)
         for declaration, typename in zip(declarations, structs):
             s = s.replace(declaration, 'type ' + typename + ' = protocolcontracts.' + typename)
-        s = s.replace('import (', 'import (\nprotocolcontracts "github.com/invisi-lab/invisi-sdk-go/protocol/contracts"', 1)
+        s = s.replace('import (', 'import (\nprotocolcontracts "github.com/invisi-labs/invisi-sdk-go/protocol/contracts"', 1)
         s = re.sub('var ' + name + 'MetaData = &bind.MetaData\\{.*?\\n\\}', f'var {name}MetaData = &bind.MetaData{{ABI:protocolcontracts.{name}MetaData.ABI}}', s, count=1, flags=re.S)
         (network / (stem + '.go')).write_text(s)
 formatter = shutil.which('goimports') or str(pathlib.Path.home() / 'go/bin/goimports')

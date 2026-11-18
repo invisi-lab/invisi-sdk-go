@@ -2,9 +2,9 @@ package transaction
 
 import (
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/invisi-lab/invisi-sdk-go/rpc/chain"
+	"github.com/invisi-labs/invisi-sdk-go/rpc/chain"
 
-	"github.com/invisi-lab/invisi-sdk-go/primitives"
+	"github.com/invisi-labs/invisi-sdk-go/primitives"
 )
 
 // NoteInput is an application-selected private note and its authenticated tree position.

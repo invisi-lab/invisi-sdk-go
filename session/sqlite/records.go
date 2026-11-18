@@ -8,7 +8,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"errors"
-	"github.com/invisi-lab/invisi-sdk-go/session"
+	"github.com/invisi-labs/invisi-sdk-go/session"
 	"reflect"
 	"sort"
 )

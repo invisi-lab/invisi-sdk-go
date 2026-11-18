@@ -16,12 +16,12 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
-	"github.com/invisi-lab/invisi-sdk-go/examples/shared"
-	"github.com/invisi-lab/invisi-sdk-go/provenance"
-	"github.com/invisi-lab/invisi-sdk-go/prover/native"
-	"github.com/invisi-lab/invisi-sdk-go/sdk"
-	walletsession "github.com/invisi-lab/invisi-sdk-go/session"
-	walletsqlite "github.com/invisi-lab/invisi-sdk-go/session/sqlite"
+	"github.com/invisi-labs/invisi-sdk-go/examples/shared"
+	"github.com/invisi-labs/invisi-sdk-go/provenance"
+	"github.com/invisi-labs/invisi-sdk-go/prover/native"
+	"github.com/invisi-labs/invisi-sdk-go/sdk"
+	walletsession "github.com/invisi-labs/invisi-sdk-go/session"
+	walletsqlite "github.com/invisi-labs/invisi-sdk-go/session/sqlite"
 )
 
 func main() {

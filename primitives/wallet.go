@@ -15,7 +15,7 @@ import (
 	ethcrypto "github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/signer/core/apitypes"
 
-	"github.com/invisi-lab/invisi-sdk-go/primitives/internal/cryptography/fmd"
+	"github.com/invisi-labs/invisi-sdk-go/primitives/internal/cryptography/fmd"
 )
 
 // InvisiWallet is a private key group. Never serialize it into payment requests,

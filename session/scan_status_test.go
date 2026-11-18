@@ -3,7 +3,7 @@ package session
 import (
 	"context"
 	"github.com/ethereum/go-ethereum/common"
-	protocolrpc "github.com/invisi-lab/invisi-sdk-go/rpc"
+	protocolrpc "github.com/invisi-labs/invisi-sdk-go/rpc"
 	"testing"
 )
 

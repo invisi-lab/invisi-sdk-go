@@ -5,8 +5,8 @@ import (
 
 	"github.com/consensys/gnark-crypto/ecc/bn254/fr"
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/invisi-lab/invisi-sdk-go/primitives"
-	wire "github.com/invisi-lab/invisi-sdk-go/wallet/protocol"
+	"github.com/invisi-labs/invisi-sdk-go/primitives"
+	wire "github.com/invisi-labs/invisi-sdk-go/wallet/protocol"
 )
 
 func (p *Prepared) ExportWalletRequest(id string) (wire.Request, error) {

@@ -3,9 +3,9 @@ package session
 import (
 	"context"
 	"errors"
-	protocolrpc "github.com/invisi-lab/invisi-sdk-go/rpc"
-	creditsession "github.com/invisi-lab/invisi-sdk-go/session/credit"
-	"github.com/invisi-lab/invisi-sdk-go/wallet"
+	protocolrpc "github.com/invisi-labs/invisi-sdk-go/rpc"
+	creditsession "github.com/invisi-labs/invisi-sdk-go/session/credit"
+	"github.com/invisi-labs/invisi-sdk-go/wallet"
 )
 
 type RetryUnresolvedOptions struct{ Offline bool }

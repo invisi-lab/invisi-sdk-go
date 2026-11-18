@@ -5,7 +5,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
-	protocol "github.com/invisi-lab/invisi-sdk-go/protocol/provenance"
+	protocol "github.com/invisi-labs/invisi-sdk-go/protocol/provenance"
 	"net/http"
 	"net/http/httptest"
 	"strings"

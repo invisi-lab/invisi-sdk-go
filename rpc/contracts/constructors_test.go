@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/invisi-lab/invisi-sdk-go/rpc/contracts"
+	"github.com/invisi-labs/invisi-sdk-go/rpc/contracts"
 )
 
 func TestNewBinderConstructors(t *testing.T) {

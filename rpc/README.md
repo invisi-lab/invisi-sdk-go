@@ -2,7 +2,7 @@
 
 Public chain, Broadcaster and Provenance clients.
 
-Module version: `1.2.0`. See the [SDK repository](https://github.com/invisi-lab/invisi-sdk-go) for the six-module dependency boundary.
+Module version: `1.2.0`. See the [SDK repository](https://github.com/invisi-labs/invisi-sdk-go) for the six-module dependency boundary.
 
 # Protocol RPC client
 

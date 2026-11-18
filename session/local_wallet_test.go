@@ -5,13 +5,13 @@ import (
 	"sync"
 
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/invisi-lab/invisi-sdk-go/credit"
-	native "github.com/invisi-lab/invisi-sdk-go/internal/testsupport"
-	"github.com/invisi-lab/invisi-sdk-go/primitives"
-	protocolrpc "github.com/invisi-lab/invisi-sdk-go/rpc"
-	"github.com/invisi-lab/invisi-sdk-go/sdk"
-	creditsession "github.com/invisi-lab/invisi-sdk-go/session/credit"
-	"github.com/invisi-lab/invisi-sdk-go/wallet"
+	"github.com/invisi-labs/invisi-sdk-go/credit"
+	native "github.com/invisi-labs/invisi-sdk-go/internal/testsupport"
+	"github.com/invisi-labs/invisi-sdk-go/primitives"
+	protocolrpc "github.com/invisi-labs/invisi-sdk-go/rpc"
+	"github.com/invisi-labs/invisi-sdk-go/sdk"
+	creditsession "github.com/invisi-labs/invisi-sdk-go/session/credit"
+	"github.com/invisi-labs/invisi-sdk-go/wallet"
 )
 
 var testMaterials sync.Map

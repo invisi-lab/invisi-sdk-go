@@ -1,9 +1,9 @@
 package provenance
 
 import (
-	public "github.com/invisi-lab/invisi-sdk-go/protocol/provenance"
-	local "github.com/invisi-lab/invisi-sdk-go/prover/provenance"
-	client "github.com/invisi-lab/invisi-sdk-go/rpc/provenance"
+	public "github.com/invisi-labs/invisi-sdk-go/protocol/provenance"
+	local "github.com/invisi-labs/invisi-sdk-go/prover/provenance"
+	client "github.com/invisi-labs/invisi-sdk-go/rpc/provenance"
 )
 
 type RecognizedTree = public.RecognizedTree

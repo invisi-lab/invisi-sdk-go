@@ -4,7 +4,7 @@ import (
 	"context"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
-	protocolrpc "github.com/invisi-lab/invisi-sdk-go/rpc"
+	protocolrpc "github.com/invisi-labs/invisi-sdk-go/rpc"
 	"math/big"
 	"testing"
 )
