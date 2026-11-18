@@ -120,6 +120,11 @@ func (p *registrationReceiptProvider) HeaderByNumber(ctx context.Context, number
 }
 
 func registeredOperationFixture(t *testing.T) (*sdk.RegistrationOperation, *registrationReceiptProvider) {
+	tracked, provider, _, _ := registrationRecoveryFixture(t)
+	return tracked, provider
+}
+
+func registrationRecoveryFixture(t *testing.T) (*sdk.RegistrationOperation, *registrationReceiptProvider, *sdk.AddressRegistry, *sdk.Wallet) {
 	t.Helper()
 	session, _, _ := testSession(t)
 	registry := testRegistry(t, session, false)
@@ -151,7 +156,7 @@ func registeredOperationFixture(t *testing.T) (*sdk.RegistrationOperation, *regi
 	if err != nil {
 		t.Fatal(err)
 	}
-	return tracked, provider
+	return tracked, provider, registry, session.wallet
 }
 
 type erc1271ResponseProvider struct {

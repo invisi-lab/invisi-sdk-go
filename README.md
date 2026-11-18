@@ -220,3 +220,10 @@ current entry (all public package entries for TypeScript) into the GitHub Releas
 body. Missing, duplicate, empty or link-only entries fail validation before
 publication. Historical entries are retained locally; a release body includes only
 its matching version. Release retries update the same body from the same source.
+
+After broadcasting an address registration, call `TrackTransaction` and persist
+the tracked operation's `ConfirmationSnapshot` as JSON. On restart, load it
+as `sdk.RegistrationSnapshot` and call
+`registry.RestoreRegistrationConfirmation(ctx, wallet, snapshot)`.
+If the result is uncertain, call `Reconcile` again. Restored operations cannot
+export a transaction.

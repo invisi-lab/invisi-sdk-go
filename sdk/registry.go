@@ -15,3 +15,5 @@ type RegistrationOperation = transaction.RegistrationOperation
 type RegistrationPreparation = transaction.RegistrationPreparation
 
 type RegistrationPreview = transaction.RegistrationPreview
+
+type RegistrationSnapshot = transaction.RegistrationSnapshot

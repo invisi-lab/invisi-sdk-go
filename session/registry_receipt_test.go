@@ -2,6 +2,9 @@ package session
 
 import (
 	"context"
+	"encoding/json"
+
+	"github.com/invisi-labs/invisi-sdk-go/sdk"
 	"testing"
 
 	"github.com/ethereum/go-ethereum"
@@ -79,5 +82,29 @@ func TestRegistrationConfirmationReturnsToUncertainAfterReorg(t *testing.T) {
 				t.Fatal("orphaned receipt remained confirmed", err)
 			}
 		})
+	}
+}
+
+func TestRegistrationConfirmationRestoresOriginalTransaction(t *testing.T) {
+	ctx := context.Background()
+	tracked, _, registry, wallet := registrationRecoveryFixture(t)
+	snapshot, err := tracked.ConfirmationSnapshot()
+	if err != nil {
+		t.Fatal(err)
+	}
+	data, err := json.Marshal(snapshot)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var persisted sdk.RegistrationSnapshot
+	if err := json.Unmarshal(data, &persisted); err != nil {
+		t.Fatal(err)
+	}
+	restored, err := registry.RestoreRegistrationConfirmation(ctx, wallet, persisted)
+	if err != nil || restored.Status() != "confirmed" {
+		t.Fatal("restore original registration", err)
+	}
+	if _, err := restored.ExportTransaction(ctx); err == nil {
+		t.Fatal("restored transaction is exportable")
 	}
 }

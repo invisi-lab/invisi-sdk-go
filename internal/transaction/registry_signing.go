@@ -35,7 +35,7 @@ func (o *RegistrationOperation) ExportTransaction(ctx context.Context) (Transact
 
 	o.mu.Lock()
 	defer o.mu.Unlock()
-	if len(o.data) == 0 || o.status == "prepared" {
+	if len(o.data) == 0 || o.status != "ready" {
 		return TransactionCall{}, errors.New("authorized registration required")
 	}
 	if _, err := o.currentContext(ctx); err != nil {
