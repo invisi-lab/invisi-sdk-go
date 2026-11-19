@@ -35,7 +35,7 @@ func (c *ProtocolRpcClient) parseTransitions(ctx context.Context, rows []json.Ra
 			return nil, errors.New("invalid Credit transition name")
 		}
 		switch name {
-		case "CreditCreated", "CreditDraw", "CreditUpdated", "CreditRevoked":
+		case "CreditCreated", "CreditStateTransition", "CreditUpdated", "CreditRevoked":
 		default:
 			return nil, errors.New("invalid Credit transition name")
 		}

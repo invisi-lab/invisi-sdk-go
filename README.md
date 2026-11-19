@@ -227,3 +227,8 @@ as `sdk.RegistrationSnapshot` and call
 `registry.RestoreRegistrationConfirmation(ctx, wallet, snapshot)`.
 If the result is uncertain, call `Reconcile` again. Restored operations cannot
 export a transaction.
+
+
+Credit creation supports `InitialPayment: &credit.InitialPayment{Amount: gross, Payload: payload}`. The SDK encrypts one net payment Note to the grant spender and two postdebit grant deliveries, then obtains only the owner's combined authorization. The gross debit includes the actual fee. IPP's `credit.initialPayment.amount` is net; its preparation adapter adds the locally selected fee. Omit `InitialPayment` for pure creation. `CreationABI: "initial-payment"` explicitly selects the current ABI for pure creation; the default preserves legacy pure-creation calldata.
+
+The combined circuit uses the separately pinned `9161f92f5789d8eedae15b23fa2651d5399f64ff8fbfc8de6f3f683f0d93be36` resource set. Loading remains lazy and honors the existing local, cache, mirror and offline options. A directory containing both resource sets can retain each index as `<index-sha256>.index.json` alongside flat content-addressed objects.

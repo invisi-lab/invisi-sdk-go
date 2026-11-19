@@ -35,6 +35,7 @@ func main() {
 	spenderAddress := flag.String("spender", "", "spender public long receiving address")
 	available := flag.Int64("available-credit", 400, "initial finite credit in token base units")
 	unlimited := flag.Bool("unlimited", false, "unlimited mode requires available-credit zero")
+	initialPayment := flag.Int64("initial-payment", 0, "optional gross initial debit; pays the spender a private Note")
 	flag.Parse()
 
 	publicWallet, err := sdk.WalletFromAddress(*address)
@@ -114,8 +115,16 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+	var initial *credit.InitialPayment
+	if *initialPayment < 0 {
+		log.Fatal("initial-payment must be nonnegative")
+	}
+	if *initialPayment > 0 {
+		initial = &credit.InitialPayment{Amount: big.NewInt(*initialPayment)}
+	}
 	operation, err := creditSession.PrepareCreate(ctx, *operationID, credit.CreatePreparation{
-		TokenAddress: token, Spender: *spenderAddress, Expiry: head.Time + 7*86400,
+		InitialPayment: initial,
+		TokenAddress:   token, Spender: *spenderAddress, Expiry: head.Time + 7*86400,
 		AvailableCredit: big.NewInt(*available), Unlimited: *unlimited,
 		SingleLimit: primitives.ElementFromUint64(100), DailyLimit: primitives.ElementFromUint64(1000), MonthlyLimit: primitives.ElementFromUint64(10000),
 	})

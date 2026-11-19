@@ -45,6 +45,12 @@ func (p UpdatePatch) Clone() UpdatePatch {
 	return p
 }
 func (p CreatePreparation) Clone() CreatePreparation {
+	if p.InitialPayment != nil {
+		v := *p.InitialPayment
+		v.Amount = snapshotAmount(v.Amount)
+		v.Payload = snapshotPayload(v.Payload)
+		p.InitialPayment = &v
+	}
 	p.AvailableCredit = snapshotAmount(p.AvailableCredit)
 	p.CreditSharedKey = snapshotAmount(p.CreditSharedKey)
 	p.Payload = snapshotPayload(p.Payload)

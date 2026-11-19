@@ -6,6 +6,8 @@ Create/update/draw export the frozen EIP-712 statement and sign with ordinary ge
 
 `managed.Credit().PrepareCreate/PrepareUpdate/PrepareDraw/PrepareRevoke` resolve recipients, allocate grants, build quota transitions, encrypt deliveries, validate chain state and reserve grants. Omitted update fields preserve their current values; an explicit empty payload clears it. Local proving independently verifies the result. The examples log unsigned calldata and call `Externalize` before exposing it. Retain the encrypted journal until canonical reconciliation resolves the original operation.
 
+`01-bob-create --initial-payment 7` optionally creates the grant and pays its spender a private Note in one owner-authorized proof. The amount is the gross credit debit including the actual fee; the Note receives gross minus fee. The default remains pure grant creation. UTC day/month usage and available credit start after this debit.
+
 Relay delivery is consolidated under [07-broadcaster](../07-broadcaster/README.md). Source evidence applies to private Note ancestry; the ordinary Credit transitions shown here do not require a Source proof.
 
 ## Contributing

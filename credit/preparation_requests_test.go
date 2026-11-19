@@ -195,3 +195,39 @@ func TestExplicitCreditSharedKeyPreservedAndValidated(t *testing.T) {
 		}
 	}
 }
+
+func TestCreateInitialPaymentBuildsPostDebitGrantAndSpenderNote(t *testing.T) {
+	b, s, _ := requestBuilder(t)
+	p := CreatePreparation{TokenAddress: common.BigToAddress(primitives.ElementToBigInt(s.TokenAddress)), Spender: "spender", SingleLimit: s.SingleLimit, DailyLimit: s.DailyLimit, MonthlyLimit: s.MonthlyLimit, Expiry: 2100000000, AvailableCredit: big.NewInt(90), InitialPayment: &InitialPayment{Amount: big.NewInt(7), Payload: []byte("merchant")}, Fee: &Fee{Recipient: common.HexToAddress("44"), Amount: big.NewInt(1)}}
+	prepared, e := b.Create(context.Background(), p)
+	if e != nil {
+		t.Fatal(e)
+	}
+	p.InitialPayment.Amount.SetInt64(999)
+	i, e := prepared.ExportIntent()
+	if e != nil {
+		t.Fatal(e)
+	}
+	if i.CreatedState.AvailableCredit != primitives.ElementFromUint64(83) || i.CreatedState.TotalSpent != primitives.ElementFromUint64(7) || i.OutputNote.Amount != primitives.ElementFromUint64(6) || i.OutputNote.OwnerAddress != s.SpenderWalletIdentity || len(i.Deliveries) != 3 {
+		t.Fatal("incorrect initial debit, merchant amount, recipient or deliveries")
+	}
+	request, e := prepared.AuthorizationRequest()
+	if e != nil || request.Operation != primitives.WalletCreateCreditInitialPayment || len(request.Words) != 16 {
+		t.Fatal(request, e)
+	}
+	if e = prepared.CheckTimestamp(2000000000 + 86400); e == nil {
+		t.Fatal("accepted next UTC period")
+	}
+	preview := prepared.Preview()
+	if preview.NoteOutputCount != 1 || preview.GrossAmount.Cmp(big.NewInt(7)) != 0 || preview.NoteAmount.Cmp(big.NewInt(6)) != 0 {
+		t.Fatal(preview)
+	}
+	estimate, e := prepared.EstimateGas()
+	if e != nil || !estimate.Available || *estimate.GasUnits == 0 {
+		t.Fatal(estimate, e)
+	}
+	p.InitialPayment.Amount = big.NewInt(100)
+	if _, e = b.Create(context.Background(), p); e == nil {
+		t.Fatal("accepted exhausted quota")
+	}
+}

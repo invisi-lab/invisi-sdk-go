@@ -16,7 +16,15 @@ type Fee struct {
 	Recipient common.Address
 	Amount    *big.Int
 }
+type InitialPayment struct {
+	// Amount is the gross debit including the actual fee. The merchant receives Amount minus Fee.
+	Amount  *big.Int
+	Payload []byte
+}
 type CreatePreparation struct {
+	InitialPayment *InitialPayment
+	// CreationABI may be legacy (default) or initial-payment.
+	CreationABI                           string
 	TokenAddress                          common.Address
 	Spender                               string
 	SingleLimit, DailyLimit, MonthlyLimit fr.Element
@@ -109,6 +117,12 @@ func Seal(d DeliveryState) ([]protocol.Delivery, error) {
 }
 func (b PreparationBuilder) Create(ctx context.Context, p CreatePreparation) (*Prepared, error) {
 	p = p.Clone()
+	if p.CreationABI != "" && p.CreationABI != "legacy" && p.CreationABI != "initial-payment" {
+		return nil, fmt.Errorf("unsupported creation ABI")
+	}
+	if p.InitialPayment != nil && p.CreationABI == "legacy" {
+		return nil, fmt.Errorf("initial payment requires current creation ABI")
+	}
 	c, deadline, err := b.Frame(ctx, p.TokenAddress, p.Deadline)
 	if err != nil {
 		return nil, err
@@ -160,6 +174,33 @@ func (b PreparationBuilder) Create(ctx context.Context, p CreatePreparation) (*P
 		return nil, fmt.Errorf("available credit must be uint128")
 	}
 	state := State{ProtocolContext: c.ProtocolContext, Policy: Policy{SingleLimit: p.SingleLimit, DailyLimit: p.DailyLimit, MonthlyLimit: p.MonthlyLimit}, TokenAddress: primitives.BigIntToElement(p.TokenAddress.Big()), OwnerWalletIdentity: owner.OwnerAddress, SpenderWalletIdentity: spender.OwnerAddress, RevocationShard: primitives.ElementFromUint64(shard), RevocationSlot: primitives.ElementFromUint64(uint64(slot)), Nonce: nonce, Expiry: primitives.ElementFromUint64(p.Expiry), CreditSharedKey: key, AvailableCredit: primitives.BigIntToElement(amount), Unlimited: p.Unlimited, Payload: append([]byte(nil), p.Payload...)}
+	var ordinary *primitives.Note
+	var noteKeys *primitives.ReceivingKeys
+	var total *big.Int
+	if p.InitialPayment != nil {
+		total = p.InitialPayment.Amount
+		if total == nil || total.Sign() <= 0 || total.BitLen() > 126 || total.Cmp(f) <= 0 {
+			return nil, fmt.Errorf("initial payment must leave a positive Note")
+		}
+		debit := primitives.BigIntToElement(total)
+		usage, e := state.drawUsage(debit, c.Timestamp)
+		if e != nil {
+			return nil, e
+		}
+		if !state.Unlimited {
+			if state.AvailableCredit.Cmp(&debit) < 0 {
+				return nil, fmt.Errorf("initial payment exceeds available credit")
+			}
+			state.AvailableCredit.Sub(&state.AvailableCredit, &debit)
+		}
+		state.Usage = usage
+		noteNonce, e := primitives.GenerateNonce()
+		if e != nil {
+			return nil, e
+		}
+		ordinary = &primitives.Note{ProtocolContext: c.ProtocolContext, TokenAddress: state.TokenAddress, OwnerAddress: spender.OwnerAddress, Nonce: noteNonce, Amount: primitives.BigIntToElement(new(big.Int).Sub(total, f)), Payload: append([]byte(nil), p.InitialPayment.Payload...)}
+		noteKeys = &primitives.ReceivingKeys{ViewingPublicKey: spender.ViewingPublicKey, ClueKey: spender.ClueKey}
+	}
 	d := DeliveryState{State: state, OwnerReceivingKeys: primitives.ReceivingKeys{ViewingPublicKey: owner.ViewingPublicKey, ClueKey: owner.ClueKey}, SpenderReceivingKeys: primitives.ReceivingKeys{ViewingPublicKey: spender.ViewingPublicKey, ClueKey: spender.ClueKey}}
 	ds, err := Seal(d)
 	if err != nil {
@@ -169,7 +210,32 @@ func (b PreparationBuilder) Create(ctx context.Context, p CreatePreparation) (*P
 	if err != nil {
 		return nil, err
 	}
-	return PrepareCreate(c, CreateParams{Token: p.TokenAddress, Owner: common.BigToAddress(primitives.ElementToBigInt(owner.OwnerAddress)), RevocationShard: shard, RevocationSlot: slot, CreditCommitment: common.Hash(commitment.Bytes()), Deadline: new(big.Int).SetUint64(deadline), FeeRecipient: r, FeeAmount: f}, ds, state)
+	params := CreateParams{Token: p.TokenAddress, Owner: common.BigToAddress(primitives.ElementToBigInt(owner.OwnerAddress)), RevocationShard: shard, RevocationSlot: slot, CreditCommitment: common.Hash(commitment.Bytes()), Deadline: new(big.Int).SetUint64(deadline), FeeRecipient: r, FeeAmount: f}
+	if ordinary != nil {
+		yes := true
+		params.HasInitialPayment = &yes
+		params.TotalAmount = total
+		identity, e := primitives.ComputeNoteIdentity(ordinary.OwnerAddress, ordinary.Nonce)
+		if e != nil {
+			return nil, e
+		}
+		nc, e := primitives.ComputeNoteCommitment(c.ChainID, c.ProtocolAddress, identity, state.TokenAddress, ordinary.Amount)
+		if e != nil {
+			return nil, e
+		}
+		params.NoteCommitment = common.Hash(nc.Bytes())
+		nd, e := noteDelivery(*ordinary, noteKeys)
+		if e != nil {
+			return nil, e
+		}
+		ds = append(ds, nd)
+		return prepare(Intent{Version: 2, Context: c, Create: &params, Deliveries: ds, CreatedState: &state, OutputNote: ordinary, NoteRecipientKeys: noteKeys, OutputIdentity: identity, InitialPaymentInitialAvailableCredit: amount})
+	}
+	if p.CreationABI == "initial-payment" {
+		no := false
+		params.HasInitialPayment = &no
+	}
+	return PrepareCreate(c, params, ds, state)
 }
 func (b PreparationBuilder) Update(ctx context.Context, p UpdatePreparation) (*Prepared, error) {
 	p = p.Clone()

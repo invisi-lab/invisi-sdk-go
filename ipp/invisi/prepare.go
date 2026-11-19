@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/invisi-labs/invisi-sdk-go/credit"
 	"github.com/invisi-labs/invisi-sdk-go/ipp"
 	"github.com/invisi-labs/invisi-sdk-go/primitives"
 	protocolrpc "github.com/invisi-labs/invisi-sdk-go/rpc"
@@ -21,7 +22,13 @@ type Target[T any] struct {
 	PrepareTransfer     func(context.Context, sdk.TransferPreparation) (T, error)
 	PrepareCreateCredit func(context.Context, sdk.CreateCreditPreparation) (T, error)
 }
-type Options struct{ Now func() time.Time }
+type Options struct {
+	Now func() time.Time
+	// CreationABI selects the deployed selector for pure Credit creation.
+	CreationABI string
+	// InitialPaymentFee is a local actual fee; IPP terms contain only the merchant net amount.
+	InitialPaymentFee *credit.Fee
+}
 
 func PrepareRequest[T any](ctx context.Context, value *ipp.Request, target Target[T], options Options) (T, error) {
 	var zero T
@@ -56,6 +63,9 @@ func PrepareRequest[T any](ctx context.Context, value *ipp.Request, target Targe
 	}
 	deadline := uint64(expires.Unix())
 	token := common.HexToAddress(tokenAddress)
+	if options.InitialPaymentFee != nil && (r.Mode != ipp.Credit || r.Credit == nil || r.Credit.InitialPayment == nil) {
+		return zero, &ipp.Error{Code: "execution_not_allowed"}
+	}
 	if r.Mode == ipp.Payment {
 		if target.PrepareTransfer == nil {
 			return zero, &ipp.Error{Code: "missing_capability"}
@@ -77,5 +87,20 @@ func PrepareRequest[T any](ctx context.Context, value *ipp.Request, target Targe
 	daily, _ := new(big.Int).SetString(c.DailyLimit, 10)
 	monthly, _ := new(big.Int).SetString(c.MonthlyLimit, 10)
 	expiry, _ := time.Parse("2006-01-02T15:04:05Z", c.ExpiresAt)
-	return target.PrepareCreateCredit(ctx, sdk.CreateCreditPreparation{TokenAddress: token, Spender: c.Spender, CreditSharedKey: key, AvailableCredit: amount, Unlimited: c.Unlimited, SingleLimit: primitives.BigIntToElement(single), DailyLimit: primitives.BigIntToElement(daily), MonthlyLimit: primitives.BigIntToElement(monthly), Expiry: uint64(expiry.Unix()), Deadline: deadline})
+	preparation := sdk.CreateCreditPreparation{TokenAddress: token, Spender: c.Spender, CreditSharedKey: key, AvailableCredit: amount, Unlimited: c.Unlimited, SingleLimit: primitives.BigIntToElement(single), DailyLimit: primitives.BigIntToElement(daily), MonthlyLimit: primitives.BigIntToElement(monthly), Expiry: uint64(expiry.Unix()), Deadline: deadline, CreationABI: options.CreationABI}
+	if c.InitialPayment != nil {
+		gross, _ := new(big.Int).SetString(c.InitialPayment.Amount, 10)
+		if fee := options.InitialPaymentFee; fee != nil {
+			if fee.Amount == nil || fee.Amount.Sign() < 0 || (fee.Amount.Sign() == 0) != (fee.Recipient == (common.Address{})) {
+				return zero, &ipp.Error{Code: "execution_not_allowed"}
+			}
+			gross.Add(gross, fee.Amount)
+			preparation.Fee = &credit.Fee{Recipient: fee.Recipient, Amount: new(big.Int).Set(fee.Amount)}
+		}
+		if gross.Sign() <= 0 || gross.BitLen() > 126 {
+			return zero, &ipp.Error{Code: "execution_not_allowed"}
+		}
+		preparation.InitialPayment = &credit.InitialPayment{Amount: gross}
+	}
+	return target.PrepareCreateCredit(ctx, preparation)
 }

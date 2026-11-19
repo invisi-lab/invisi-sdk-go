@@ -108,11 +108,18 @@ func (p *NativeProver) assets(ctx context.Context, statement prover.ProofStateme
 	if expected.ArtifactSHA256 != statement.ArtifactSHA256 || expected.VKSHA256 != statement.VKSHA256 {
 		return nil, nil, errors.New("untrusted circuit metadata")
 	}
-	artifact, e := p.resources.read(ctx, "circuits/"+statement.CircuitName+".json")
+	loader := p.resources
+	if statement.CircuitName == "create_credit_initial_payment" {
+		loader, e = newResourceLoader(p.options.Resources, InitialPaymentResourceIndexSHA256)
+		if e != nil {
+			return nil, nil, e
+		}
+	}
+	artifact, e := loader.read(ctx, "circuits/"+statement.CircuitName+".json")
 	if e != nil {
 		return nil, nil, e
 	}
-	key, e := p.resources.read(ctx, "circuits/"+statement.CircuitName+"."+statement.Target+".vk")
+	key, e := loader.read(ctx, "circuits/"+statement.CircuitName+"."+statement.Target+".vk")
 	if e != nil {
 		return nil, nil, e
 	}

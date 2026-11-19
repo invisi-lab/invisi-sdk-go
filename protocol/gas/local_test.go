@@ -34,3 +34,22 @@ func TestEstimateUsesSinglePublicResultLayout(t *testing.T) {
 		t.Fatal("obsolete nested gas reference remains in public result")
 	}
 }
+
+func TestInitialPaymentMeasuredGas(t *testing.T) {
+	for _, tc := range []struct {
+		kind  string
+		fee   bool
+		units uint64
+	}{{"create-credit", false, 1569276}, {"create-credit", true, 1632766}, {"create-credit-initial-payment", false, 1677215}, {"create-credit-initial-payment", true, 1701560}} {
+		q := Shape{"kind": tc.kind, "creationAbi": "initial-payment", "feeEnabled": tc.fee}
+		r, e := EstimateGasChecked(q)
+		if e != nil || !r.Available || *r.GasUnits != tc.units || r.SampleCount != 3 || r.ReleaseIdentity["creditManifestVersion"] != 7 {
+			t.Fatal(q, r, e)
+		}
+		q["extraDeliveryBytes"] = 1
+		r, e = EstimateGasChecked(q)
+		if e != nil || *r.GasUnits != tc.units+32 || r.SampleCount != 0 {
+			t.Fatal(q, r, e)
+		}
+	}
+}

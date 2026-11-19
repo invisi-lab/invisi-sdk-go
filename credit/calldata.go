@@ -17,6 +17,9 @@ import (
 //go:embed data/abi.json
 var abiJSON string
 
+//go:embed data/current-abi.json
+var currentABIJSON string
+
 func ContractABI() (abi.ABI, error) { return abi.JSON(strings.NewReader(abiJSON)) }
 func pack(name string, args ...any) ([]byte, error) {
 	a, err := ContractABI()
@@ -34,7 +37,7 @@ func (p CreateParams) Calldata(c Context, proof []byte, deliveries []protocol.De
 		return nil, err
 	}
 	p.FeeAmount, _ = normalizeFee(p.FeeRecipient, p.FeeAmount)
-	return pack("createCredit", encoded, p, deliveries)
+	return packCreate(p, encoded, deliveries)
 }
 func (p UpdateParams) Calldata(c Context, proof []byte, deliveries []protocol.Delivery) ([]byte, error) {
 	if _, _, err := p.Statement(c, deliveries); err != nil {
@@ -115,4 +118,31 @@ func encodeProof(proof []byte) ([]byte, error) {
 		return nil, err
 	}
 	return (abi.Arguments{{Type: schema}, {Type: bytesType}}).Pack(uint8(0), proof)
+}
+
+func packCreate(p CreateParams, proof []byte, deliveries []protocol.Delivery) ([]byte, error) {
+	if p.HasInitialPayment == nil {
+		return pack("createCredit", proof, p, deliveries)
+	}
+	a, err := abi.JSON(strings.NewReader(currentABIJSON))
+	if err != nil {
+		return nil, err
+	}
+	total := p.TotalAmount
+	if total == nil {
+		total = new(big.Int)
+	}
+	args := struct {
+		Token, Owner      common.Address
+		RevocationShard   uint64
+		RevocationSlot    uint16
+		CreditCommitment  common.Hash
+		Deadline          *big.Int
+		FeeRecipient      common.Address
+		FeeAmount         *big.Int
+		HasInitialPayment bool
+		TotalAmount       *big.Int
+		NoteCommitment    common.Hash
+	}{p.Token, p.Owner, p.RevocationShard, p.RevocationSlot, p.CreditCommitment, p.Deadline, p.FeeRecipient, p.FeeAmount, *p.HasInitialPayment, total, p.NoteCommitment}
+	return a.Pack("createCredit", proof, args, deliveries)
 }

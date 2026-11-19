@@ -229,8 +229,9 @@ func TestRefreshKeepsAuthenticatedChildPayloadAndDropsUnknownRecoveredPayload(t 
 			nf := common.Hash(draw.Nullifier.Bytes())
 			params := contracts.IInvisiCoreCreditDrawParams{Token: token, Sources: []contracts.IInvisiCoreInputSource{{TreeId: big.NewInt(1), MerkleRoot: [32]byte{9}}}, Payers: []contracts.IInvisiCoreCreditPayer{{Payer: session.wallet.OwnerAddress(), Amount: big.NewInt(7)}}, GrantRefs: []contracts.IInvisiCoreCreditGrantRef{{PayerIndex: big.NewInt(0), Shard: 1, Slot: 0}}, Nullifiers: [][32]byte{nf}, CreditCommitments: [][32]byte{leaf}, RecoveryAmounts: [][32]byte{draw.RecoveryAmount.Bytes()}, NoteCommitment: note, TotalAmount: big.NewInt(7), Deadline: new(big.Int).SetUint64(base.head.Time + 100), FeeAmount: big.NewInt(0)}
 			insertion := pack("CommitmentsInserted", 1, []any{big.NewInt(2)}, uint32(0), [][32]byte{leaf, note})
-			event := pack("CreditDraw", 2, []any{big.NewInt(2)}, params, []uint32{0, 1}, deliveries)
-			receipt := &types.Receipt{TxHash: tx, Status: types.ReceiptStatusSuccessful, BlockNumber: big.NewInt(10), BlockHash: block.Hash, Logs: []*types.Log{insertion, event}}
+			transition := pack("CreditStateTransition", 2, []any{big.NewInt(2), params.NoteCommitment}, contracts.IInvisiCoreCreditDrawState{Sources: params.Sources, Payers: params.Payers, GrantRefs: params.GrantRefs, Nullifiers: params.Nullifiers, CreditCommitments: params.CreditCommitments, RecoveryAmounts: params.RecoveryAmounts}, []uint32{0}, deliveries[:2])
+			event := pack("CreditDraw", 3, []any{token, big.NewInt(2), params.NoteCommitment}, uint32(1), params.TotalAmount, params.Deadline, params.FeeRecipient, params.FeeAmount, deliveries[2])
+			receipt := &types.Receipt{TxHash: tx, Status: types.ReceiptStatusSuccessful, BlockNumber: big.NewInt(10), BlockHash: block.Hash, Logs: []*types.Log{insertion, transition, event}}
 			provider := creditDrawSyncProvider{receiptProvider{base, receipt}, nf}
 			siblings := make([]common.Hash, 16)
 			siblings[0] = note
@@ -256,7 +257,7 @@ func TestRefreshKeepsAuthenticatedChildPayloadAndDropsUnknownRecoveredPayload(t 
 				case "invisi_getNoteUpdates":
 					result = map[string]any{"blockHash": block.Hash, "notes": []any{}}
 				case "invisi_getCreditTransitions":
-					result = []any{map[string]any{"block": block, "name": "CreditDraw", "transactionHash": tx, "logIndex": 2, "data": map[string]any{}}}
+					result = []any{map[string]any{"block": block, "name": "CreditStateTransition", "transactionHash": tx, "logIndex": 2, "data": map[string]any{}}}
 				case "invisi_getRoots":
 					var tree uint64
 					_ = json.Unmarshal(request.Params[0], &tree)

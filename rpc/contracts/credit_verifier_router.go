@@ -180,6 +180,37 @@ func (_CreditVerifierRouter *CreditVerifierRouterTransactorRaw) Transact(opts *b
 	return _CreditVerifierRouter.Contract.contract.Transact(opts, method, params...)
 }
 
+// CreateCreditInitialPaymentVerifier is a free data retrieval call binding the contract method 0xcad9d58f.
+//
+// Solidity: function createCreditInitialPaymentVerifier() view returns(address)
+func (_CreditVerifierRouter *CreditVerifierRouterCaller) CreateCreditInitialPaymentVerifier(opts *bind.CallOpts) (common.Address, error) {
+	var out []interface{}
+	err := _CreditVerifierRouter.contract.Call(opts, &out, "createCreditInitialPaymentVerifier")
+
+	if err != nil {
+		return *new(common.Address), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(common.Address)).(*common.Address)
+
+	return out0, err
+
+}
+
+// CreateCreditInitialPaymentVerifier is a free data retrieval call binding the contract method 0xcad9d58f.
+//
+// Solidity: function createCreditInitialPaymentVerifier() view returns(address)
+func (_CreditVerifierRouter *CreditVerifierRouterSession) CreateCreditInitialPaymentVerifier() (common.Address, error) {
+	return _CreditVerifierRouter.Contract.CreateCreditInitialPaymentVerifier(&_CreditVerifierRouter.CallOpts)
+}
+
+// CreateCreditInitialPaymentVerifier is a free data retrieval call binding the contract method 0xcad9d58f.
+//
+// Solidity: function createCreditInitialPaymentVerifier() view returns(address)
+func (_CreditVerifierRouter *CreditVerifierRouterCallerSession) CreateCreditInitialPaymentVerifier() (common.Address, error) {
+	return _CreditVerifierRouter.Contract.CreateCreditInitialPaymentVerifier(&_CreditVerifierRouter.CallOpts)
+}
+
 // CreateCreditVerifier is a free data retrieval call binding the contract method 0xf1b90628.
 //
 // Solidity: function createCreditVerifier() view returns(address)
@@ -674,6 +705,37 @@ func (_CreditVerifierRouter *CreditVerifierRouterSession) CrossTreeRegistry() (c
 // Solidity: function crossTreeRegistry() view returns(address)
 func (_CreditVerifierRouter *CreditVerifierRouterCallerSession) CrossTreeRegistry() (common.Address, error) {
 	return _CreditVerifierRouter.Contract.CrossTreeRegistry(&_CreditVerifierRouter.CallOpts)
+}
+
+// GetCreateCreditInitialPaymentVerifier is a free data retrieval call binding the contract method 0x5b97982d.
+//
+// Solidity: function getCreateCreditInitialPaymentVerifier() view returns(address)
+func (_CreditVerifierRouter *CreditVerifierRouterCaller) GetCreateCreditInitialPaymentVerifier(opts *bind.CallOpts) (common.Address, error) {
+	var out []interface{}
+	err := _CreditVerifierRouter.contract.Call(opts, &out, "getCreateCreditInitialPaymentVerifier")
+
+	if err != nil {
+		return *new(common.Address), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(common.Address)).(*common.Address)
+
+	return out0, err
+
+}
+
+// GetCreateCreditInitialPaymentVerifier is a free data retrieval call binding the contract method 0x5b97982d.
+//
+// Solidity: function getCreateCreditInitialPaymentVerifier() view returns(address)
+func (_CreditVerifierRouter *CreditVerifierRouterSession) GetCreateCreditInitialPaymentVerifier() (common.Address, error) {
+	return _CreditVerifierRouter.Contract.GetCreateCreditInitialPaymentVerifier(&_CreditVerifierRouter.CallOpts)
+}
+
+// GetCreateCreditInitialPaymentVerifier is a free data retrieval call binding the contract method 0x5b97982d.
+//
+// Solidity: function getCreateCreditInitialPaymentVerifier() view returns(address)
+func (_CreditVerifierRouter *CreditVerifierRouterCallerSession) GetCreateCreditInitialPaymentVerifier() (common.Address, error) {
+	return _CreditVerifierRouter.Contract.GetCreateCreditInitialPaymentVerifier(&_CreditVerifierRouter.CallOpts)
 }
 
 // GetCreateCreditVerifier is a free data retrieval call binding the contract method 0x445fc806.

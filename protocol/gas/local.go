@@ -9,18 +9,19 @@ import (
 )
 
 type EstimateResult struct {
-	Source         string   `json:"source"`
-	Available      bool     `json:"available"`
-	GasUnits       *uint64  `json:"gasUnits,omitempty"`
-	Reason         string   `json:"reason,omitempty"`
-	Statistic      string   `json:"statistic,omitempty"`
-	SampleCount    int      `json:"sampleCount,omitempty"`
-	ProtocolCommit string   `json:"protocolCommit,omitempty"`
-	SourceSHA256   string   `json:"sourceSha256,omitempty"`
-	ReferenceID    string   `json:"referenceId,omitempty"`
-	Document       string   `json:"document,omitempty"`
-	Conditions     string   `json:"conditions,omitempty"`
-	Assumptions    []string `json:"assumptions,omitempty"`
+	ReleaseIdentity map[string]any `json:"releaseIdentity,omitempty"`
+	Source          string         `json:"source"`
+	Available       bool           `json:"available"`
+	GasUnits        *uint64        `json:"gasUnits,omitempty"`
+	Reason          string         `json:"reason,omitempty"`
+	Statistic       string         `json:"statistic,omitempty"`
+	SampleCount     int            `json:"sampleCount,omitempty"`
+	ProtocolCommit  string         `json:"protocolCommit,omitempty"`
+	SourceSHA256    string         `json:"sourceSha256,omitempty"`
+	ReferenceID     string         `json:"referenceId,omitempty"`
+	Document        string         `json:"document,omitempty"`
+	Conditions      string         `json:"conditions,omitempty"`
+	Assumptions     []string       `json:"assumptions,omitempty"`
 }
 
 // MarshalJSON 在可用估算中保留零样本数，避免将模型结果误读为收据统计。
@@ -39,11 +40,12 @@ func (r EstimateResult) MarshalJSON() ([]byte, error) {
 //go:embed data/measured-model.json
 var measuredJSON []byte
 var measured = func() struct {
-	ProtocolCommit   string
-	SourceSHA256     string
-	Capacities       []int
-	CreditCapacities []int
-	Coefficients     struct {
+	CreditDrawMeasurement struct{ ProtocolCommit, SourceSHA256, Conditions string }
+	ProtocolCommit        string
+	SourceSHA256          string
+	Capacities            []int
+	CreditCapacities      []int
+	Coefficients          struct {
 		Transact []float64
 		Draw     []float64
 	}
@@ -53,11 +55,12 @@ var measured = func() struct {
 	}
 } {
 	var model struct {
-		ProtocolCommit   string
-		SourceSHA256     string
-		Capacities       []int
-		CreditCapacities []int
-		Coefficients     struct {
+		CreditDrawMeasurement struct{ ProtocolCommit, SourceSHA256, Conditions string }
+		ProtocolCommit        string
+		SourceSHA256          string
+		Capacities            []int
+		CreditCapacities      []int
+		Coefficients          struct {
 			Transact []float64
 			Draw     []float64
 		}
@@ -85,6 +88,9 @@ func EstimateGas(shape Shape) EstimateResult {
 func EstimateGasChecked(query Shape) (EstimateResult, error) {
 	unavailable := EstimateResult{Source: "benchmark", Reason: "shape-not-covered"}
 	kind, _ := query["kind"].(string)
+	if kind == "create-credit-initial-payment" || kind == "create-credit" && query["creationAbi"] == "initial-payment" {
+		return estimateInitialPayment(query)
+	}
 	switch kind {
 	case "shield", "transact", "create-credit", "update-credit", "revoke-credit", "draw-credit":
 	default:
@@ -287,7 +293,17 @@ func EstimateGasChecked(query Shape) (EstimateResult, error) {
 	document := "05-benchmarks/5.10-sdk-gas-estimation.md"
 	conditions := "Local Anvil31337 / Prague, Solidity0.8.38 optimizer200, real verifiers, reference ERC20."
 	assumptions := []string{"Pre-signing local fee preview; not an RPC simulation or transaction gas limit.", "Token behavior, storage warmth, tree cursor and rollover can change actual gas.", "Additional source trees, authorization and delivery bytes use explicit benchmark-calibrated allowances."}
-	return EstimateResult{Source: "benchmark", Available: true, GasUnits: &units, Statistic: statistic, SampleCount: samples, ProtocolCommit: measured.ProtocolCommit, SourceSHA256: measured.SourceSHA256, ReferenceID: id, Document: document, Conditions: conditions, Assumptions: assumptions}, nil
+	if kind == "draw-credit" {
+		conditions = measured.CreditDrawMeasurement.Conditions
+		document = "test-support/gas-benchmark/measure-credit.mjs"
+		assumptions = append(assumptions, "Unified CreditDraw / CreditStateTransition receipts; measured working-tree source hash before commit.")
+	}
+	commit, source := measured.ProtocolCommit, measured.SourceSHA256
+	if kind == "draw-credit" {
+		commit = measured.CreditDrawMeasurement.ProtocolCommit
+		source = measured.CreditDrawMeasurement.SourceSHA256
+	}
+	return EstimateResult{Source: "benchmark", Available: true, GasUnits: &units, Statistic: statistic, SampleCount: samples, ProtocolCommit: commit, SourceSHA256: source, ReferenceID: id, Document: document, Conditions: conditions, Assumptions: assumptions}, nil
 }
 
 func boolNumber(v bool) float64 {
@@ -324,4 +340,78 @@ func measuredRow(shape Shape) int {
 		}
 	}
 	return -1
+}
+
+//go:embed data/initial-payment-measurements.json
+var initialPaymentJSON []byte
+
+func estimateInitialPayment(q Shape) (EstimateResult, error) {
+	var m struct {
+		ProtocolCommit, SourceSHA256, CreditManifestSHA256, Conditions string
+		Rows                                                           []struct {
+			Kind       string
+			FeeEnabled bool
+			GasUnits   uint64
+			Samples    []uint64
+		}
+	}
+	if err := json.Unmarshal(initialPaymentJSON, &m); err != nil {
+		return EstimateResult{}, err
+	}
+	raw, err := json.Marshal(q)
+	if err != nil {
+		return EstimateResult{}, err
+	}
+	var normalized Shape
+	if err = json.Unmarshal(raw, &normalized); err != nil {
+		return EstimateResult{}, err
+	}
+	count := func(name string, base int) (int, error) {
+		v, ok := normalized[name]
+		if !ok {
+			return base, nil
+		}
+		f, ok := v.(float64)
+		if !ok || f < 0 || f > 9007199254740991 || math.Trunc(f) != f {
+			return 0, fmt.Errorf("invalid gas shape %s", name)
+		}
+		return int(f), nil
+	}
+	extra, err := count("extraDeliveryBytes", 0)
+	if err != nil {
+		return EstimateResult{}, err
+	}
+	for _, d := range []struct {
+		name    string
+		base, n int
+	}{{"creditCiphertextBytes", 485, 2}, {"noteCiphertextBytes", 160, 1}, {"clueBytes", 68, 3}} {
+		n := d.n
+		if q["kind"] == "create-credit" {
+			if d.name == "noteCiphertextBytes" {
+				n = 0
+			}
+			if d.name == "clueBytes" {
+				n = 2
+			}
+		}
+		v, e := count(d.name, d.base)
+		if e != nil {
+			return EstimateResult{}, e
+		}
+		extra += max(0, v-d.base) * n
+	}
+	fee := q["feeEnabled"] == true || q["feeEnabled"] == nil && q["fee"] == true
+	for _, row := range m.Rows {
+		if row.Kind == q["kind"] && row.FeeEnabled == fee {
+			units := row.GasUnits + uint64(extra)*32
+			stat := "median"
+			samples := len(row.Samples)
+			if extra > 0 {
+				stat = "estimate"
+				samples = 0
+			}
+			return EstimateResult{Source: "benchmark", Available: true, GasUnits: &units, Statistic: stat, SampleCount: samples, ProtocolCommit: m.ProtocolCommit, SourceSHA256: m.SourceSHA256, ReferenceID: "initial-payment-receipt-v1", Document: "scripts/benchmark-credit-initial-payment-gas.mjs", Conditions: m.Conditions, Assumptions: []string{"Pre-signing local fee preview; not an RPC simulation or transaction gas limit.", "Token behavior, storage warmth, tree cursor and rollover can change actual gas.", "Additional source trees, authorization and delivery bytes use explicit benchmark-calibrated allowances.", "Measured against the recorded working-tree source hash before commit."}, ReleaseIdentity: map[string]any{"creditManifestVersion": 7, "creditFormatVersion": 8, "creditManifestSha256": m.CreditManifestSHA256}}, nil
+		}
+	}
+	return EstimateResult{Source: "benchmark", Reason: "shape-not-covered"}, nil
 }

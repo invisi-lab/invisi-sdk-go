@@ -17,13 +17,16 @@ type Context struct {
 	Timestamp    uint64
 }
 type CreateParams struct {
-	Token, Owner     common.Address
-	RevocationShard  uint64
-	RevocationSlot   uint16
-	CreditCommitment common.Hash
-	Deadline         *big.Int
-	FeeRecipient     common.Address
-	FeeAmount        *big.Int
+	HasInitialPayment *bool
+	TotalAmount       *big.Int
+	NoteCommitment    common.Hash
+	Token, Owner      common.Address
+	RevocationShard   uint64
+	RevocationSlot    uint16
+	CreditCommitment  common.Hash
+	Deadline          *big.Int
+	FeeRecipient      common.Address
+	FeeAmount         *big.Int
 }
 type UpdateParams struct {
 	Token, Owner                common.Address
@@ -113,6 +116,8 @@ func split(h *big.Int) (*big.Int, *big.Int) {
 func authorize(c Context, name string, capacity int, words []*big.Int) ([]common.Hash, apitypes.TypedData, error) {
 	operation := primitives.WalletOperation("")
 	switch name {
+	case "CreateCreditInitialPayment":
+		operation = primitives.WalletCreateCreditInitialPayment
 	case "CreateCredit":
 		operation = primitives.WalletCreateCredit
 	case "CreditDraw":
@@ -160,13 +165,34 @@ func (p CreateParams) Statement(c Context, deliveries []protocol.Delivery) ([]co
 	if err := fieldHash(p.CreditCommitment, true); err != nil {
 		return nil, apitypes.TypedData{}, err
 	}
-	h, err := deliveryHash(deliveries, 2, false)
+	initial := p.HasInitialPayment != nil && *p.HasInitialPayment
+	count := 2
+	if initial {
+		count = 3
+		if p.TotalAmount == nil || p.TotalAmount.Sign() <= 0 || p.TotalAmount.BitLen() > 126 || p.TotalAmount.Cmp(fee) <= 0 || c.Timestamp == 0 {
+			return nil, apitypes.TypedData{}, fmt.Errorf("initial payment requires positive net amount and timestamp")
+		}
+		if err := fieldHash(p.NoteCommitment, true); err != nil {
+			return nil, apitypes.TypedData{}, err
+		}
+		if p.NoteCommitment == p.CreditCommitment {
+			return nil, apitypes.TypedData{}, fmt.Errorf("duplicate output commitment")
+		}
+	} else if p.TotalAmount != nil && (p.TotalAmount.Sign() != 0 || p.HasInitialPayment == nil) || p.NoteCommitment != (common.Hash{}) {
+		return nil, apitypes.TypedData{}, fmt.Errorf("unexpected initial payment fields")
+	}
+	h, err := deliveryHash(deliveries, count, initial)
 	if err != nil {
 		return nil, apitypes.TypedData{}, err
 	}
 	high, low := split(h)
 	words := append(contextWords(c), p.Owner.Big(), new(big.Int).SetUint64(p.RevocationShard), new(big.Int).SetUint64(uint64(p.RevocationSlot)), p.CreditCommitment.Big(), p.Deadline, high, low)
 	words = append(words, p.FeeRecipient.Big(), fee)
+	if initial {
+		periods := Periods(c.Timestamp)
+		words = append(words, p.NoteCommitment.Big(), p.TotalAmount, new(big.Int).SetUint64(periods.CurrentDay), new(big.Int).SetUint64(periods.CurrentMonth))
+		return authorize(c, "CreateCreditInitialPayment", 1, words)
+	}
 	return authorize(c, "CreateCredit", 1, words)
 }
 func (p UpdateParams) Statement(c Context, deliveries []protocol.Delivery) ([]common.Hash, apitypes.TypedData, error) {

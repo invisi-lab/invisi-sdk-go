@@ -32,7 +32,7 @@ func TestTrustedNoteProofAndBindings(t *testing.T) {
 		current, _ = primitives.Poseidon2Hash(current, primitives.ElementFromUint64(0))
 	}
 	fixture := func() map[string]any {
-		return map[string]any{"apiVersion": "v1", "protocolVersion": "1", "deployment": d, "indexedHead": b, "status": "confirmed", "reason": nil, "output": map[string]any{"block": b, "treeId": 1, "leafIndex": 0, "commitment": leaf, "token": common.HexToAddress("0x03"), "transactionHash": common.HexToHash("0x04"), "logIndex": 0, "kind": "Shield", "ciphertext": "0x", "clue": "0x"}, "membership": map[string]any{"anchor": map[string]any{"treeId": 1, "root": common.Hash(current.Bytes()), "leafCount": 1, "block": b}, "leafIndex": 0, "commitment": leaf, "siblings": path}, "confirmation": map[string]any{"finality": "safe", "verifiedAt": b, "finalityHead": b}}
+		return map[string]any{"apiVersion": "v1", "protocolVersion": "1", "deployment": d, "indexedHead": b, "status": "confirmed", "reason": nil, "output": map[string]any{"block": b, "treeId": 1, "leafIndex": 0, "commitment": leaf, "token": common.HexToAddress("0x03"), "transactionHash": common.HexToHash("0x04"), "logIndex": 0, "kind": "NoteOutputs", "ciphertext": "0x", "clue": "0x"}, "membership": map[string]any{"anchor": map[string]any{"treeId": 1, "root": common.Hash(current.Bytes()), "leafCount": 1, "block": b}, "leafIndex": 0, "commitment": leaf, "siblings": path}, "confirmation": map[string]any{"finality": "safe", "verifiedAt": b, "finalityHead": b}}
 	}
 	for _, tc := range []struct {
 		name   string

@@ -19,14 +19,19 @@ type Asset struct {
 	Symbol   string `json:"symbol"`
 	Decimals int    `json:"decimals"`
 }
+type InitialPaymentTerms struct {
+	Amount string `json:"amount"`
+}
+
 type CreditTerms struct {
-	Spender         string `json:"spender"`
-	AvailableCredit string `json:"availableCredit"`
-	Unlimited       bool   `json:"unlimited"`
-	SingleLimit     string `json:"singleLimit"`
-	DailyLimit      string `json:"dailyLimit"`
-	MonthlyLimit    string `json:"monthlyLimit"`
-	ExpiresAt       string `json:"expiresAt"`
+	InitialPayment  *InitialPaymentTerms `json:"initialPayment,omitempty"`
+	Spender         string               `json:"spender"`
+	AvailableCredit string               `json:"availableCredit"`
+	Unlimited       bool                 `json:"unlimited"`
+	SingleLimit     string               `json:"singleLimit"`
+	DailyLimit      string               `json:"dailyLimit"`
+	MonthlyLimit    string               `json:"monthlyLimit"`
+	ExpiresAt       string               `json:"expiresAt"`
 }
 type Option struct {
 	ID      string       `json:"id"`
@@ -98,9 +103,6 @@ type CreditDetails struct {
 	TokenAddress    string `json:"tokenAddress"`
 	CreditSharedKey string `json:"creditSharedKey"`
 }
-type Action struct {
-	Type string `json:"type"`
-}
 type RequestLinks struct {
 	Credentials Link `json:"credentials"`
 }
@@ -113,7 +115,6 @@ type Request struct {
 	RequestID     string          `json:"requestId"`
 	OptionID      string          `json:"optionId"`
 	Status        string          `json:"status"`
-	Action        Action          `json:"action"`
 	Payment       *PaymentDetails `json:"payment,omitempty"`
 	Credit        *CreditDetails  `json:"credit,omitempty"`
 	CreatedAt     string          `json:"createdAt"`
@@ -126,21 +127,29 @@ type VerificationBlock struct {
 	Hash      string `json:"hash"`
 	Timestamp string `json:"timestamp"`
 }
+type InitialPaymentReceipt struct {
+	NoteCommitment string `json:"noteCommitment"`
+	GrossAmount    string `json:"grossAmount"`
+	NetAmount      string `json:"netAmount"`
+	FeeAmount      string `json:"feeAmount"`
+	FeeRecipient   string `json:"feeRecipient"`
+}
 type Receipt struct {
-	Network           string             `json:"network"`
-	ProtocolAddress   string             `json:"protocolAddress"`
-	TransactionHash   string             `json:"transactionHash"`
-	Commitment        string             `json:"commitment"`
-	BlockNumber       string             `json:"blockNumber"`
-	BlockHash         string             `json:"blockHash"`
-	CompletedAt       string             `json:"completedAt"`
-	CreditID          string             `json:"creditId,omitempty"`
-	CreditStatus      string             `json:"creditStatus,omitempty"`
-	Owner             string             `json:"owner,omitempty"`
-	RevocationShard   string             `json:"revocationShard,omitempty"`
-	RevocationSlot    *uint16            `json:"revocationSlot,omitempty"`
-	VerificationBlock *VerificationBlock `json:"verificationBlock,omitempty"`
-	ExpiresAt         string             `json:"expiresAt,omitempty"`
+	InitialPayment    *InitialPaymentReceipt `json:"initialPayment,omitempty"`
+	Network           string                 `json:"network"`
+	ProtocolAddress   string                 `json:"protocolAddress"`
+	TransactionHash   string                 `json:"transactionHash"`
+	Commitment        string                 `json:"commitment"`
+	BlockNumber       string                 `json:"blockNumber"`
+	BlockHash         string                 `json:"blockHash"`
+	CompletedAt       string                 `json:"completedAt"`
+	CreditID          string                 `json:"creditId,omitempty"`
+	CreditStatus      string                 `json:"creditStatus,omitempty"`
+	Owner             string                 `json:"owner,omitempty"`
+	RevocationShard   string                 `json:"revocationShard,omitempty"`
+	RevocationSlot    *uint16                `json:"revocationSlot,omitempty"`
+	VerificationBlock *VerificationBlock     `json:"verificationBlock,omitempty"`
+	ExpiresAt         string                 `json:"expiresAt,omitempty"`
 }
 type Proof struct {
 	Type            string  `json:"type"`

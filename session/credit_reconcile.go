@@ -97,7 +97,7 @@ func (r creditReconciler) Reconcile(ctx context.Context, intent credit.Intent, d
 				seen[creditsession.GrantKey(state.Commitment, state.Role)] = true
 			}
 			for _, draw := range draws {
-				for i, nf := range draw.Params.Nullifiers {
+				for i, nf := range draw.State.Nullifiers {
 					for _, input := range intent.Inputs {
 						expected, err := input.State.Nullifier()
 						if err != nil {
@@ -106,10 +106,10 @@ func (r creditReconciler) Reconcile(ctx context.Context, intent credit.Intent, d
 						if common.Hash(expected.Bytes()) != common.Hash(nf) {
 							continue
 						}
-						if i >= len(draw.Params.CreditCommitments) || i >= len(draw.Params.RecoveryAmounts) || i >= len(draw.LeafIndices) {
+						if i >= len(draw.State.CreditCommitments) || i >= len(draw.State.RecoveryAmounts) || i >= len(draw.CreditLeafIndices) {
 							return nil, errors.New("Credit draw event vector mismatch")
 						}
-						next, err := input.State.Recover(primitives.BigIntToElement(common.Hash(nf).Big()), primitives.BigIntToElement(common.Hash(draw.Params.CreditCommitments[i]).Big()), primitives.BigIntToElement(common.Hash(draw.Params.RecoveryAmounts[i]).Big()), draw.Timestamp)
+						next, err := input.State.Recover(primitives.BigIntToElement(common.Hash(nf).Big()), primitives.BigIntToElement(common.Hash(draw.State.CreditCommitments[i]).Big()), primitives.BigIntToElement(common.Hash(draw.State.RecoveryAmounts[i]).Big()), draw.Timestamp)
 						if err != nil {
 							return nil, err
 						}
@@ -121,7 +121,7 @@ func (r creditReconciler) Reconcile(ctx context.Context, intent credit.Intent, d
 							if old.Commitment != common.Hash(previousCommitment.Bytes()) {
 								continue
 							}
-							commitment := common.Hash(draw.Params.CreditCommitments[i])
+							commitment := common.Hash(draw.State.CreditCommitments[i])
 							key := creditsession.GrantKey(commitment, old.Role)
 							if seen[key] {
 								continue
@@ -134,7 +134,7 @@ func (r creditReconciler) Reconcile(ctx context.Context, intent credit.Intent, d
 							}
 							old.Nullifier = common.Hash(nullifier.Bytes())
 							old.TreeID = draw.OutputTreeId.Uint64()
-							old.LeafIndex = uint16(draw.LeafIndices[i])
+							old.LeafIndex = uint16(draw.CreditLeafIndices[i])
 							old.Consumed = false
 							old.ReservedBy = ""
 							outcome.Successors = append(outcome.Successors, old)

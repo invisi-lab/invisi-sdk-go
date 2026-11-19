@@ -3,6 +3,9 @@ package session
 import (
 	"context"
 	"errors"
+	"math/big"
+
+	"github.com/invisi-labs/invisi-sdk-go/protocol"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
@@ -17,7 +20,7 @@ import (
 )
 
 type authenticatedCreditDraw struct {
-	*contracts.InvisiCoreCreditDraw
+	*contracts.InvisiCoreCreditStateTransition
 	Timestamp uint64
 }
 
@@ -49,7 +52,7 @@ func (s *WalletSession) readTransaction(ctx context.Context, hash common.Hash, a
 		}
 		logs = append(logs, *l)
 	}
-	decoder, e := receipts.NewDecoder()
+	decoder, e := receipts.NewDecoder(protocol.TransactionContext{ChainID: new(big.Int).SetUint64(s.scope.ChainID), ProtocolAddress: s.scope.ProtocolAddress})
 	if e != nil {
 		return nil, nil, nil, e
 	}
@@ -78,7 +81,7 @@ func (s *WalletSession) readPublicTransaction(ctx context.Context, tx PublicTran
 		return nil, nil, nil, e
 	}
 	for _, l := range logs {
-		if draw, e := filter.ParseCreditDraw(l); e == nil {
+		if draw, e := filter.ParseCreditStateTransition(l); e == nil {
 			draws = append(draws, &authenticatedCreditDraw{draw, header.Time})
 		}
 	}

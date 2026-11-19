@@ -20,6 +20,12 @@ func (p *Prepared) EstimateGas() (protocol.GasEstimate, error) {
 	case p.intent.Create != nil:
 		creditDeliveries = 2
 		shape = gas.Shape{"kind": "create-credit", "feeEnabled": positive(p.intent.Create.FeeAmount)}
+		if p.intent.Create.HasInitialPayment != nil {
+			shape["creationAbi"] = "initial-payment"
+			if *p.intent.Create.HasInitialPayment {
+				shape["kind"] = "create-credit-initial-payment"
+			}
+		}
 	case p.intent.Update != nil:
 		creditDeliveries = 2
 		shape = gas.Shape{"kind": "update-credit", "feeEnabled": positive(p.intent.Update.FeeAmount)}

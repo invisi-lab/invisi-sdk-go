@@ -15,7 +15,7 @@ func sessionJSON() []byte {
 	return []byte(`{"ippVersion":1,"type":"payment_session","mode":"payment","sessionId":"ses_test","status":"open","merchant":{"name":"Store"},"options":[{"id":"base_usdc","method":"invisi","network":"eip155:8453","asset":{"address":"` + address + `","symbol":"USDC","decimals":6},"amount":"10000000"}],"activeRequestId":null,"createdAt":"2026-11-17T08:00:00Z","expiresAt":"2026-11-17T08:05:00Z","links":{"confirm":{"href":"` + origin + `/custom/confirm","method":"POST"},"request":null},"failureReason":null,"receipt":null,"evidenceStatus":null,"exceptionSummary":{"count":0,"unresolvedCount":0}}`)
 }
 func requestJSON() []byte {
-	return []byte(`{"ippVersion":1,"type":"payment_request","mode":"payment","method":"invisi","sessionId":"ses_test","requestId":"req_test","optionId":"base_usdc","status":"requires_action","payment":{"network":"eip155:8453","protocolAddress":"` + protocolAddress + `","tokenAddress":"` + address + `","amount":"10000000","recipient":{"type":"identity","identity":"` + hash + `"}},"action":{"type":"invisi_transaction"},"createdAt":"2026-11-17T08:02:00Z","expiresAt":"2026-11-17T08:20:00Z","links":{"credentials":{"href":"` + origin + `/custom/hints","method":"POST"}},"failureReason":null}`)
+	return []byte(`{"ippVersion":1,"type":"payment_request","mode":"payment","method":"invisi","sessionId":"ses_test","requestId":"req_test","optionId":"base_usdc","status":"requires_action","payment":{"network":"eip155:8453","protocolAddress":"` + protocolAddress + `","tokenAddress":"` + address + `","amount":"10000000","recipient":{"type":"identity","identity":"` + hash + `"}},"createdAt":"2026-11-17T08:02:00Z","expiresAt":"2026-11-17T08:20:00Z","links":{"credentials":{"href":"` + origin + `/custom/hints","method":"POST"}},"failureReason":null}`)
 }
 func TestValidationAndIndependentWindows(t *testing.T) {
 	s, e := ParsePaymentSession(sessionJSON(), origin)
@@ -98,5 +98,18 @@ func TestTypedInputDoesNotRepairInvalidUnicode(t *testing.T) {
 	r.SessionID = bad
 	if _, e := EncodeJSON(r); e == nil {
 		t.Fatal("invalid request identity repaired")
+	}
+}
+
+func TestRequestRejectsLegacyAction(t *testing.T) {
+	raw := strings.Replace(string(requestJSON()), `"createdAt":`, `"action":{"type":"invisi_transaction"},"createdAt":`, 1)
+	if _, err := ParsePaymentRequest([]byte(raw), ""); err == nil {
+		t.Fatal("legacy action accepted")
+	}
+}
+
+func TestRequestWithoutAction(t *testing.T) {
+	if _, err := ParsePaymentRequest(requestJSON(), ""); err != nil {
+		t.Fatal(err)
 	}
 }

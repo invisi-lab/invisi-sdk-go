@@ -9,6 +9,7 @@ import (
 	"github.com/ethereum/go-ethereum/core/types"
 
 	"github.com/invisi-labs/invisi-sdk-go/primitives"
+	"github.com/invisi-labs/invisi-sdk-go/protocol"
 	"github.com/invisi-labs/invisi-sdk-go/protocol/receipts"
 	protocolrpc "github.com/invisi-labs/invisi-sdk-go/rpc"
 )
@@ -114,7 +115,7 @@ func (v *DisclosureVerifier) ReadOutput(ctx context.Context, reference Disclosur
 		}
 		logs = append(logs, *log)
 	}
-	decoder, e := receipts.NewDecoder()
+	decoder, e := receipts.NewDecoder(protocol.TransactionContext{ChainID: new(big.Int).SetUint64(context.ChainID), ProtocolAddress: context.ProtocolAddress})
 	if e != nil {
 		return result, e
 	}

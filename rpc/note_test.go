@@ -51,7 +51,7 @@ func TestGetNote(t *testing.T) {
 				result = nil
 				break
 			}
-			output := map[string]any{"block": block, "treeId": 1, "leafIndex": 0, "commitment": common.Hash(leaf.Bytes()), "token": common.HexToAddress("22"), "ciphertext": "0x", "clue": "0x", "transactionHash": common.HexToHash("33"), "logIndex": 0, "kind": "Shield"}
+			output := map[string]any{"block": block, "treeId": 1, "leafIndex": 0, "commitment": common.Hash(leaf.Bytes()), "token": common.HexToAddress("22"), "ciphertext": "0x", "clue": "0x", "transactionHash": common.HexToHash("33"), "logIndex": 0, "kind": "NoteOutputs"}
 			if mode == "bad" {
 				proof["leafIndex"] = 1
 			}

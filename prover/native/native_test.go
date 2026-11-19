@@ -54,3 +54,13 @@ func TestNativeProverConfiguresOfficialWitnessExecutorByDefault(t *testing.T) {
 		t.Fatal("default local executor missing")
 	}
 }
+
+func TestPrefetchCombinedCircuitOffline(t *testing.T) {
+	directory := os.Getenv("INVISI_PROVER_RESOURCE_DIR")
+	if directory == "" {
+		t.Skip("set INVISI_PROVER_RESOURCE_DIR to a local directory containing both pinned sets")
+	}
+	if e := PrefetchResources(context.Background(), ResourceOptions{Directory: directory, CacheDir: t.TempDir(), Offline: true}, []string{"circuits/create_credit_initial_payment.json", "circuits/create_credit_initial_payment.evm.vk"}); e != nil {
+		t.Fatal(e)
+	}
+}

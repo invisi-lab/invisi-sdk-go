@@ -2,6 +2,7 @@ package ipp
 
 import (
 	"encoding/json"
+	"math/big"
 	"net/url"
 	"reflect"
 	"strings"
@@ -10,7 +11,7 @@ import (
 )
 
 func validCredit(v any, extra string) bool {
-	c, e := object(v, "spender availableCredit unlimited singleLimit dailyLimit monthlyLimit expiresAt "+extra)
+	c, e := object(v, "spender availableCredit unlimited singleLimit dailyLimit monthlyLimit expiresAt "+extra, "initialPayment")
 	if e != nil {
 		return false
 	}
@@ -24,6 +25,12 @@ func validCredit(v any, extra string) bool {
 	unlimited, ok := c["unlimited"].(bool)
 	if !ok || !integer(c["availableCredit"], 128, false) || unlimited != (c["availableCredit"] == "0") {
 		return false
+	}
+	if initial, ok := c["initialPayment"]; ok {
+		terms, e := object(initial, "amount")
+		if e != nil || !integer(terms["amount"], 126, true) {
+			return false
+		}
 	}
 	return integer(c["singleLimit"], 126, false) && integer(c["dailyLimit"], 126, false) && integer(c["monthlyLimit"], 126, false) && timestamp(c["expiresAt"])
 }
@@ -66,13 +73,29 @@ func validReceipt(v any, m any) bool {
 	if m == "credit" {
 		extra = "creditId creditStatus owner revocationShard revocationSlot verificationBlock expiresAt"
 	}
-	r, e := object(v, "network protocolAddress transactionHash commitment blockNumber blockHash completedAt "+extra)
+	optional := ""
+	if m == "credit" {
+		optional = "initialPayment"
+	}
+	r, e := object(v, "network protocolAddress transactionHash commitment blockNumber blockHash completedAt "+extra, optional)
 	if e != nil || !network(r["network"]) || !hex(r["protocolAddress"], 20, true) || !hex(r["transactionHash"], 32, true) || !field(r["commitment"]) || !integer(r["blockNumber"], 64, false) || !hex(r["blockHash"], 32, true) || !timestamp(r["completedAt"]) {
 		return false
 	}
 	if m == "credit" {
-		if !text(r["creditId"]) || r["creditStatus"] != "active" || !hex(r["owner"], 20, true) || !integer(r["revocationShard"], 64, false) || !number(r["revocationSlot"], 65535) || !timestamp(r["expiresAt"]) {
+		if !text(r["creditId"]) || (r["creditStatus"] != "active" && !(r["creditStatus"] == "depleted" && r["initialPayment"] != nil)) || !hex(r["owner"], 20, true) || !integer(r["revocationShard"], 64, false) || !number(r["revocationSlot"], 65535) || !timestamp(r["expiresAt"]) {
 			return false
+		}
+		if initial, ok := r["initialPayment"]; ok {
+			draw, e := object(initial, "noteCommitment grossAmount netAmount feeAmount feeRecipient")
+			if e != nil || !field(draw["noteCommitment"]) || draw["noteCommitment"] == r["commitment"] || !integer(draw["grossAmount"], 126, true) || !integer(draw["netAmount"], 126, true) || !integer(draw["feeAmount"], 126, false) || !hex(draw["feeRecipient"], 20, false) {
+				return false
+			}
+			gross, _ := new(big.Int).SetString(draw["grossAmount"].(string), 10)
+			net, _ := new(big.Int).SetString(draw["netAmount"].(string), 10)
+			fee, _ := new(big.Int).SetString(draw["feeAmount"].(string), 10)
+			if gross.Cmp(new(big.Int).Add(net, fee)) != 0 || (fee.Sign() == 0) != (strings.Trim(draw["feeRecipient"].(string)[2:], "0") == "") {
+				return false
+			}
 		}
 		b, e := object(r["verificationBlock"], "number hash timestamp")
 		if e != nil || !integer(b["number"], 64, false) || !hex(b["hash"], 32, true) || !timestamp(b["timestamp"]) {
@@ -135,12 +158,8 @@ func ParsePaymentRequest(data []byte, origin string) (*Request, error) {
 	if e != nil {
 		return nil, e
 	}
-	r, e := object(v, "ippVersion type mode method sessionId requestId optionId status action createdAt expiresAt links failureReason", "payment credit")
+	r, e := object(v, "ippVersion type mode method sessionId requestId optionId status createdAt expiresAt links failureReason", "payment credit")
 	if e != nil || !mode(r["mode"]) || r["method"] != "invisi" || !text(r["sessionId"]) || !text(r["requestId"]) || !text(r["optionId"]) || !status(r, false) || !timestamp(r["createdAt"]) || !timestamp(r["expiresAt"]) || !before(r["createdAt"], r["expiresAt"]) {
-		return nil, invalid()
-	}
-	a, e := object(r["action"], "type")
-	if e != nil || a["type"] != "invisi_transaction" {
 		return nil, invalid()
 	}
 	l, e := object(r["links"], "credentials")
@@ -193,7 +212,7 @@ func AssertRequestMatchesSession(r *Request, s *PaymentSession) error {
 		if r.Mode == Payment && r.Payment != nil && o.Credit == nil && r.Payment.Network == o.Network && r.Payment.TokenAddress == o.Asset.Address && r.Payment.Amount == o.Amount {
 			return nil
 		}
-		if r.Mode == Credit && r.Credit != nil && o.Credit != nil && r.Credit.Network == o.Network && r.Credit.TokenAddress == o.Asset.Address && r.Credit.CreditTerms == *o.Credit {
+		if r.Mode == Credit && r.Credit != nil && o.Credit != nil && r.Credit.Network == o.Network && r.Credit.TokenAddress == o.Asset.Address && same(r.Credit.CreditTerms, *o.Credit) {
 			return nil
 		}
 		return invalid()
@@ -212,6 +231,12 @@ func AssertReceiptMatchesRequest(receipt *Receipt, r *Request) error {
 	}
 	if receipt.Network != n || receipt.ProtocolAddress != p {
 		return invalid()
+	}
+	if r.Mode == Credit && r.Credit != nil {
+		terms, draw := r.Credit.InitialPayment, receipt.InitialPayment
+		if (terms == nil) != (draw == nil) || (terms != nil && draw != nil && terms.Amount != draw.NetAmount) {
+			return invalid()
+		}
 	}
 	return nil
 }

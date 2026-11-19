@@ -66,6 +66,9 @@ var createNames = []string{"chain_id", "protocol_address", "token_address", "own
 var updateNames = []string{"chain_id", "protocol_address", "token_address", "owner_address", "input_tree_id", "merkle_root", "nullifier", "credit_commitment", "revocation_shard", "revocation_slot", "deadline", "delivery_hash_high", "delivery_hash_low", "fee_recipient", "fee_amount", "auth_digest_high", "auth_digest_low"}
 
 func (p CreateParams) Witness(c Context, deliveries []protocol.Delivery, state State, auth Authority) (*prover.LocalWitness, error) {
+	return p.createWitness(c, deliveries, state, auth, nil, nil)
+}
+func (p CreateParams) createWitness(c Context, deliveries []protocol.Delivery, state State, auth Authority, initialAvailable *big.Int, output *primitives.Note) (*prover.LocalWitness, error) {
 	inputs, typed, err := p.Statement(c, deliveries)
 	if err != nil {
 		return nil, err
@@ -77,9 +80,49 @@ func (p CreateParams) Witness(c Context, deliveries []protocol.Delivery, state S
 	if state.ProtocolContext != c.ProtocolContext || primitives.ElementToBigInt(state.TokenAddress).Cmp(c.TokenAddress.Big()) != 0 || primitives.ElementToBigInt(state.OwnerWalletIdentity).Cmp(p.Owner.Big()) != 0 || primitives.ElementToBigInt(state.RevocationShard).Uint64() != p.RevocationShard || primitives.ElementToBigInt(state.RevocationSlot).Uint64() != uint64(p.RevocationSlot) || common.Hash(commitment.Bytes()) != p.CreditCommitment {
 		return nil, fmt.Errorf("created Credit opening mismatch")
 	}
-	for _, v := range state.Usage.Fields() {
-		if !v.IsZero() {
-			return nil, fmt.Errorf("created grant must have zero usage")
+	initial := p.HasInitialPayment != nil && *p.HasInitialPayment
+	if initial {
+		if initialAvailable == nil || initialAvailable.Sign() < 0 || initialAvailable.BitLen() > 128 || output == nil {
+			return nil, fmt.Errorf("initial payment witness required")
+		}
+		initialState := state.Clone()
+		initialState.AvailableCredit = primitives.BigIntToElement(initialAvailable)
+		initialState.Usage = Usage{}
+		debit := primitives.BigIntToElement(p.TotalAmount)
+		expected, e := initialState.drawUsage(debit, c.Timestamp)
+		if e != nil {
+			return nil, e
+		}
+		available := primitives.ElementToBigInt(initialState.AvailableCredit)
+		if !state.Unlimited {
+			if available.Cmp(p.TotalAmount) < 0 {
+				return nil, fmt.Errorf("initial payment exceeds available credit")
+			}
+			available.Sub(available, p.TotalAmount)
+		}
+		if expected != state.Usage || available.Cmp(primitives.ElementToBigInt(state.AvailableCredit)) != 0 {
+			return nil, fmt.Errorf("initial payment usage mismatch")
+		}
+		fee, _ := normalizeFee(p.FeeRecipient, p.FeeAmount)
+		if output.ProtocolContext != c.ProtocolContext || output.TokenAddress != state.TokenAddress || output.OwnerAddress != state.SpenderWalletIdentity || output.Nonce.IsZero() || primitives.ElementToBigInt(output.Amount).Cmp(new(big.Int).Sub(p.TotalAmount, fee)) != 0 {
+			return nil, fmt.Errorf("initial payment Note mismatch")
+		}
+		identity, e := primitives.ComputeNoteIdentity(output.OwnerAddress, output.Nonce)
+		if e != nil {
+			return nil, e
+		}
+		nc, e := primitives.ComputeNoteCommitment(c.ChainID, c.ProtocolAddress, identity, output.TokenAddress, output.Amount)
+		if e != nil {
+			return nil, e
+		}
+		if common.Hash(nc.Bytes()) != p.NoteCommitment {
+			return nil, fmt.Errorf("initial payment Note commitment mismatch")
+		}
+	} else {
+		for _, v := range state.Usage.Fields() {
+			if !v.IsZero() {
+				return nil, fmt.Errorf("created grant must have zero usage")
+			}
 		}
 	}
 	if primitives.ElementToBigInt(state.Expiry).Cmp(p.Deadline) < 0 {
@@ -96,6 +139,13 @@ func (p CreateParams) Witness(c Context, deliveries []protocol.Delivery, state S
 	private["limits"] = stringFields(state.Policy.Fields())
 	private["available_credit"] = state.AvailableCredit.String()
 	private["unlimited"] = boolString(state.Unlimited)
+	if initial {
+		private["available_credit"] = initialAvailable.String()
+		private["output_nonce"] = output.Nonce.String()
+		names := append([]string(nil), createNames[:12]...)
+		names = append(names, "note_commitment", "total_amount", "current_day", "current_month", "auth_digest_high", "auth_digest_low")
+		return makeWitness(private, names, inputs)
+	}
 	return makeWitness(private, createNames, inputs)
 }
 
@@ -317,4 +367,13 @@ func boolString(v bool) string {
 		return "1"
 	}
 	return "0"
+}
+
+// InitialPaymentWitness verifies the postdebit grant and spender-only Note,
+// producing the combined owner-authorized circuit witness.
+func (p CreateParams) InitialPaymentWitness(c Context, deliveries []protocol.Delivery, state State, initialAvailableCredit *big.Int, output primitives.Note, auth Authority) (*prover.LocalWitness, error) {
+	if p.HasInitialPayment == nil || !*p.HasInitialPayment {
+		return nil, fmt.Errorf("initial payment mode required")
+	}
+	return p.createWitness(c, deliveries, state, auth, initialAvailableCredit, &output)
 }

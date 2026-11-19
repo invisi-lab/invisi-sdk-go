@@ -45,10 +45,11 @@ func (w InvisiWallet) MarshalJSON() ([]byte, error) {
 type WalletOperation string
 
 const (
-	WalletTransact     WalletOperation = "transact"
-	WalletCreateCredit WalletOperation = "create-credit"
-	WalletCreditDraw   WalletOperation = "credit-draw"
-	WalletUpdateCredit WalletOperation = "update-credit"
+	WalletTransact                   WalletOperation = "transact"
+	WalletCreateCredit               WalletOperation = "create-credit"
+	WalletCreateCreditInitialPayment WalletOperation = "create-credit-initial-payment"
+	WalletCreditDraw                 WalletOperation = "credit-draw"
+	WalletUpdateCredit               WalletOperation = "update-credit"
 )
 
 // WalletAuthorizationRequest binds a private spending-key signature to the
@@ -156,6 +157,9 @@ func walletOperationName(operation WalletOperation, capacity int) (string, error
 	case WalletTransact:
 		name = "Transact"
 		allowed = capacity >= 1 && capacity <= 10 || capacity >= 20 && capacity <= 190 && capacity%10 == 0
+	case WalletCreateCreditInitialPayment:
+		name = "CreateCreditInitialPayment"
+		allowed = capacity == 1
 	case WalletCreateCredit:
 		name = "CreateCredit"
 		allowed = capacity == 1

@@ -17,20 +17,21 @@ import (
 )
 
 type Intent struct {
-	Version           int
-	Context           Context
-	Create            *CreateParams
-	Draw              *DrawParams
-	Update            *UpdateParams
-	Revoke            *RevokeParams
-	Deliveries        []protocol.Delivery
-	CreatedState      *State
-	Inputs            []LocatedState
-	UpdateChange      *Change
-	OutputIdentity    fr.Element
-	OutputNote        *primitives.Note
-	NoteRecipientKeys *primitives.ReceivingKeys
-	Broadcaster       *BroadcasterBinding
+	InitialPaymentInitialAvailableCredit *big.Int
+	Version                              int
+	Context                              Context
+	Create                               *CreateParams
+	Draw                                 *DrawParams
+	Update                               *UpdateParams
+	Revoke                               *RevokeParams
+	Deliveries                           []protocol.Delivery
+	CreatedState                         *State
+	Inputs                               []LocatedState
+	UpdateChange                         *Change
+	OutputIdentity                       fr.Element
+	OutputNote                           *primitives.Note
+	NoteRecipientKeys                    *primitives.ReceivingKeys
+	Broadcaster                          *BroadcasterBinding
 }
 
 // Prepared keeps authorization and local witnesses outside portable recovery plans.
@@ -137,7 +138,7 @@ func (p *Prepared) witness(auth Authority) (*prover.LocalWitness, error) {
 		if i.CreatedState == nil {
 			return nil, fmt.Errorf("created Credit opening required")
 		}
-		return i.Create.Witness(i.Context, i.Deliveries, *i.CreatedState, auth)
+		return i.Create.createWitness(i.Context, i.Deliveries, *i.CreatedState, auth, i.InitialPaymentInitialAvailableCredit, i.OutputNote)
 	case i.Update != nil:
 		if len(i.Inputs) != 1 || i.UpdateChange == nil {
 			return nil, fmt.Errorf("update requires one Credit input")
@@ -168,6 +169,9 @@ func (p *Prepared) expected() (prover.ProofStatement, error) {
 	switch {
 	case p.intent.Create != nil:
 		name = "create_credit"
+		if p.intent.Create.HasInitialPayment != nil && *p.intent.Create.HasInitialPayment {
+			name = "create_credit_initial_payment"
+		}
 	case p.intent.Update != nil:
 		name = "credit_update"
 	case p.intent.Draw != nil:
@@ -332,6 +336,9 @@ func (p *Prepared) AuthorizationRequest() (primitives.WalletAuthorizationRequest
 	switch {
 	case p.intent.Create != nil:
 		operation = primitives.WalletCreateCredit
+		if p.intent.Create.HasInitialPayment != nil && *p.intent.Create.HasInitialPayment {
+			operation = primitives.WalletCreateCreditInitialPayment
+		}
 	case p.intent.Update != nil:
 		operation = primitives.WalletUpdateCredit
 	case p.intent.Draw != nil:
@@ -451,6 +458,9 @@ func (p *Prepared) CheckTimestamp(timestamp uint64) error {
 	switch {
 	case i.Create != nil:
 		deadline = i.Create.Deadline
+		if i.Create.HasInitialPayment != nil && *i.Create.HasInitialPayment && Periods(timestamp) != Periods(i.Context.Timestamp) {
+			return fmt.Errorf("initial payment crossed a UTC usage period; prepare again")
+		}
 	case i.Update != nil:
 		deadline = i.Update.Deadline
 	case i.Draw != nil:
@@ -467,4 +477,17 @@ func (p *Prepared) CheckTimestamp(timestamp uint64) error {
 		return fmt.Errorf("Credit operation expired")
 	}
 	return nil
+}
+
+// PrepareCreateInitialPayment freezes the complete combined proof inputs. State
+// is the postdebit grant and output must pay its spender the net merchant amount.
+func PrepareCreateInitialPayment(c Context, p CreateParams, ds []protocol.Delivery, state State, initialAvailableCredit *big.Int, output primitives.Note, keys *primitives.ReceivingKeys) (*Prepared, error) {
+	if p.HasInitialPayment == nil || !*p.HasInitialPayment || initialAvailableCredit == nil {
+		return nil, fmt.Errorf("initial payment mode and initial available credit required")
+	}
+	identity, err := primitives.ComputeNoteIdentity(output.OwnerAddress, output.Nonce)
+	if err != nil {
+		return nil, err
+	}
+	return prepare(Intent{Version: 2, Context: c, Create: &p, Deliveries: ds, CreatedState: &state, OutputNote: &output, OutputIdentity: identity, NoteRecipientKeys: keys, InitialPaymentInitialAvailableCredit: initialAvailableCredit})
 }

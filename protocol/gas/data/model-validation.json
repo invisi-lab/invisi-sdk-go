@@ -1,5 +1,5 @@
 {
-  "protocolCommit": "f787289033eb0f907f69a9c9e36bf91523d7e64b",
+  "protocolCommit": "c30ef1e4a0cb4338877ec4e7d3351e57c2fff9b5",
   "environment": {
     "chainId": 31337,
     "evm": "prague",
@@ -9,40 +9,12 @@
     "samples": 3
   },
   "reportSha256": [
-    "295a9ed55d9e3d3858a42853a5232b92020b0f4ca1e315525eaf5b7470d5e908",
-    "bd3bb6f714b4cafb559027bcf97a34a04fd8b6b89aa12ddbec7c5cefeab84c99",
-    "0706c33bfd39147842474c8c7136b30d04c84680c37491b0492a057fc083c28e"
+    "a82a51c4284593f291a4f79a5530b91d33953e434b86bf9f983b956f457c90b3",
+    "ceac4d2d03853e921d197c1e7db2c47e964a7509d989729e034494f0071cd2fc",
+    "b11fe1e1804b5a6ea73abfb3eae0714bbc65022e6319abf940b8f46b3b4f6fb4"
   ],
   "measuredScenarioCount": 243,
   "cases": [
-    {
-      "shape": {
-        "kind": "draw-credit",
-        "capacity": 5,
-        "creditInputs": 5,
-        "distinctPayers": 1,
-        "sourceTrees": 1,
-        "fee": false,
-        "validation": true
-      },
-      "measuredGas": 2137143,
-      "modeledGas": 2194783,
-      "errorPercent": 2.7
-    },
-    {
-      "shape": {
-        "kind": "draw-credit",
-        "capacity": 5,
-        "creditInputs": 5,
-        "distinctPayers": 1,
-        "sourceTrees": 1,
-        "fee": true,
-        "validation": true
-      },
-      "measuredGas": 2161740,
-      "modeledGas": 2219311,
-      "errorPercent": 2.66
-    },
     {
       "shape": {
         "kind": "transact",
@@ -55,9 +27,9 @@
         "fee": false,
         "validation": true
       },
-      "measuredGas": 1545536,
-      "modeledGas": 1540724,
-      "errorPercent": -0.31
+      "measuredGas": 1550306,
+      "modeledGas": 1543994,
+      "errorPercent": -0.41
     },
     {
       "shape": {
@@ -71,9 +43,9 @@
         "fee": false,
         "validation": true
       },
-      "measuredGas": 1566949,
-      "modeledGas": 1641802,
-      "errorPercent": 4.78
+      "measuredGas": 1570913,
+      "modeledGas": 1643005,
+      "errorPercent": 4.59
     },
     {
       "shape": {
@@ -87,9 +59,9 @@
         "fee": false,
         "validation": true
       },
-      "measuredGas": 1571781,
-      "modeledGas": 1602010,
-      "errorPercent": 1.92
+      "measuredGas": 1576759,
+      "modeledGas": 1603518,
+      "errorPercent": 1.7
     },
     {
       "shape": {
@@ -103,9 +75,9 @@
         "fee": false,
         "validation": true
       },
-      "measuredGas": 1593123,
-      "modeledGas": 1715367,
-      "errorPercent": 7.67
+      "measuredGas": 1597223,
+      "modeledGas": 1716834,
+      "errorPercent": 7.49
     },
     {
       "shape": {
@@ -119,9 +91,9 @@
         "fee": false,
         "validation": true
       },
-      "measuredGas": 1619491,
-      "modeledGas": 1723583,
-      "errorPercent": 6.43
+      "measuredGas": 1623751,
+      "modeledGas": 1724737,
+      "errorPercent": 6.22
     },
     {
       "shape": {
@@ -135,9 +107,9 @@
         "fee": false,
         "validation": true
       },
-      "measuredGas": 2000324,
-      "modeledGas": 1959682,
-      "errorPercent": -2.03
+      "measuredGas": 2002126,
+      "modeledGas": 1958756,
+      "errorPercent": -2.17
     },
     {
       "shape": {
@@ -151,9 +123,9 @@
         "fee": false,
         "validation": true
       },
-      "measuredGas": 1987319,
-      "modeledGas": 1975140,
-      "errorPercent": -0.61
+      "measuredGas": 1990235,
+      "modeledGas": 1971256,
+      "errorPercent": -0.95
     },
     {
       "shape": {
@@ -167,9 +139,9 @@
         "fee": false,
         "validation": true
       },
-      "measuredGas": 2383469,
-      "modeledGas": 2434630,
-      "errorPercent": 2.15
+      "measuredGas": 2381955,
+      "modeledGas": 2431337,
+      "errorPercent": 2.07
     },
     {
       "shape": {
@@ -183,9 +155,9 @@
         "fee": false,
         "validation": true
       },
-      "measuredGas": 3773341,
-      "modeledGas": 3742382,
-      "errorPercent": -0.82
+      "measuredGas": 3765698,
+      "modeledGas": 3730411,
+      "errorPercent": -0.94
     },
     {
       "shape": {
@@ -199,9 +171,37 @@
         "fee": false,
         "validation": true
       },
-      "measuredGas": 10236422,
-      "modeledGas": 10225355,
-      "errorPercent": -0.11
+      "measuredGas": 10212377,
+      "modeledGas": 10226377,
+      "errorPercent": 0.14
+    },
+    {
+      "shape": {
+        "kind": "draw-credit",
+        "capacity": 5,
+        "creditInputs": 5,
+        "distinctPayers": 1,
+        "sourceTrees": 1,
+        "fee": false,
+        "validation": true
+      },
+      "measuredGas": 2146114,
+      "modeledGas": 2203361,
+      "errorPercent": 2.67
+    },
+    {
+      "shape": {
+        "kind": "draw-credit",
+        "capacity": 5,
+        "creditInputs": 5,
+        "distinctPayers": 1,
+        "sourceTrees": 1,
+        "fee": true,
+        "validation": true
+      },
+      "measuredGas": 2170555,
+      "modeledGas": 2227867,
+      "errorPercent": 2.64
     }
   ]
 }

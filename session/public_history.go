@@ -6,15 +6,17 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"math/big"
+	"sort"
+	"sync"
+
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
+	"github.com/invisi-labs/invisi-sdk-go/protocol"
 	"github.com/invisi-labs/invisi-sdk-go/protocol/receipts"
 	protocolrpc "github.com/invisi-labs/invisi-sdk-go/rpc"
 	"github.com/invisi-labs/invisi-sdk-go/rpc/chain"
 	"github.com/invisi-labs/invisi-sdk-go/sdk"
-	"math/big"
-	"sort"
-	"sync"
 )
 
 var ErrPublicHistoryReorg = errors.New("public history reorg; account reset required")
@@ -402,7 +404,7 @@ func (h *PublicHistory) page(ctx context.Context, q BlockRange, offline bool) (P
 	for _, c := range cs.Transitions {
 		hashes[c.TransactionHash] = true
 	}
-	decoder, e := receipts.NewDecoder()
+	decoder, e := receipts.NewDecoder(protocol.TransactionContext{ChainID: new(big.Int).SetUint64(h.options.Protocol.Context().ChainID), ProtocolAddress: h.options.Protocol.Context().ProtocolAddress})
 	if e != nil {
 		return p, e
 	}

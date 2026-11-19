@@ -52,7 +52,7 @@ func TestMaxUpdateBlocksExactBoundaryAndEmptyPage(t *testing.T) {
 	}
 }
 func TestEmptyDeliveryPreservesOriginalLeafPosition(t *testing.T) {
-	row := map[string]any{"block": CanonicalBlock{Number: 10}, "treeId": 1, "leafIndex": 7, "commitment": common.HexToHash("0x03"), "token": common.HexToAddress("0x11"), "ciphertext": "0x", "clue": "0x", "transactionHash": common.HexToHash("0x04"), "logIndex": 1, "kind": "Shield"}
+	row := map[string]any{"block": CanonicalBlock{Number: 10}, "treeId": 1, "leafIndex": 7, "commitment": common.HexToHash("0x03"), "token": common.HexToAddress("0x11"), "ciphertext": "0x", "clue": "0x", "transactionHash": common.HexToHash("0x04"), "logIndex": 1, "kind": "NoteOutputs"}
 	raw, _ := json.Marshal(row)
 	out, e := parseNoteOutput(raw)
 	if e != nil || out.LeafIndex != 7 || len(out.Ciphertext) != 0 {

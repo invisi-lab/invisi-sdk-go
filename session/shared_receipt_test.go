@@ -2,20 +2,18 @@ package session
 
 import (
 	"context"
-	"encoding/binary"
 	"encoding/json"
-	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/core/types"
-	"github.com/invisi-labs/invisi-sdk-go/primitives"
-	"github.com/invisi-labs/invisi-sdk-go/protocol"
-	protocolrpc "github.com/invisi-labs/invisi-sdk-go/rpc"
-	"github.com/invisi-labs/invisi-sdk-go/wallet"
-	"math/big"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"sync/atomic"
 	"testing"
+
+	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/core/types"
+	"github.com/invisi-labs/invisi-sdk-go/primitives"
+	protocolrpc "github.com/invisi-labs/invisi-sdk-go/rpc"
+	"github.com/invisi-labs/invisi-sdk-go/wallet"
 )
 
 type countingReceiptProvider struct {
@@ -34,44 +32,7 @@ func TestTwoAccountsReuseDownloadedCanonicalReceiptAndPositions(t *testing.T) {
 	base := s.options.Provider.(sessionProvider)
 	tx := p.Transactions[0]
 	o := tx.Batch.Outputs[0]
-	abi, _ := protocol.ProtocolABI()
-	event := abi.Events["BatchOutputs"]
-	topics := []common.Hash{event.ID}
-	values := []any{}
-	for _, arg := range event.Inputs {
-		var v any
-		switch arg.Name {
-		case "treeId":
-			v = big.NewInt(1)
-		case "firstOutputOffset":
-			v = big.NewInt(0)
-		case "startLeafIndex":
-			v = uint32(0)
-		case "noteCommitments":
-			v = [][32]byte{n.Commitment}
-		case "tokens":
-			v = []common.Address{o.Token}
-		case "packedDeliveries":
-			v = append(append(binary.BigEndian.AppendUint16(nil, uint16(len(o.Ciphertext))), o.Ciphertext...), o.Clue...)
-		default:
-			t.Fatal(arg.Name)
-		}
-		if arg.Indexed {
-			switch v := v.(type) {
-			case *big.Int:
-				topics = append(topics, common.BigToHash(v))
-			case uint32:
-				topics = append(topics, common.BigToHash(new(big.Int).SetUint64(uint64(v))))
-			}
-		} else {
-			values = append(values, v)
-		}
-	}
-	data, e := event.Inputs.NonIndexed().Pack(values...)
-	if e != nil {
-		t.Fatal(e)
-	}
-	tx.Receipt.Logs = []*types.Log{{Address: s.scope.ProtocolAddress, Topics: topics, Data: data, BlockNumber: 10, BlockHash: p.Block.Hash, TxHash: tx.Receipt.TxHash}}
+	tx.Receipt.Logs = unifiedNoteLogs(t, s.scope.ProtocolAddress, tx.Receipt.TxHash, p.Block.Hash, o.Token, n.Commitment, o.Ciphertext, o.Clue)
 	var receiptCalls, updateCalls atomic.Int32
 	provider := countingReceiptProvider{base, tx.Receipt, &receiptCalls}
 	deployment := s.protocol.Deployment()
@@ -92,7 +53,7 @@ func TestTwoAccountsReuseDownloadedCanonicalReceiptAndPositions(t *testing.T) {
 			result = map[string]any{"apiVersion": "v1", "protocolVersion": "1", "deployment": deployment, "indexedHead": p.Block}
 		case "invisi_getNoteUpdates":
 			updateCalls.Add(1)
-			result = map[string]any{"blockHash": p.Block.Hash, "notes": []any{map[string]any{"block": p.Block, "treeId": 1, "leafIndex": 0, "commitment": n.Commitment, "token": o.Token, "ciphertext": wallet.Hex(o.Ciphertext), "clue": wallet.Hex(o.Clue), "transactionHash": tx.Receipt.TxHash, "logIndex": 0, "kind": "BatchOutputs"}}}
+			result = map[string]any{"blockHash": p.Block.Hash, "notes": []any{map[string]any{"block": p.Block, "treeId": 1, "leafIndex": 0, "commitment": n.Commitment, "token": o.Token, "ciphertext": wallet.Hex(o.Ciphertext), "clue": wallet.Hex(o.Clue), "transactionHash": tx.Receipt.TxHash, "logIndex": 0, "kind": "NoteOutputs"}}}
 		case "invisi_getCreditTransitions":
 			result = []any{}
 		case "invisi_getRoots":

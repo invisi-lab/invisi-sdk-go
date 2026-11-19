@@ -286,7 +286,30 @@ func PrefetchResources(ctx context.Context, options ResourceOptions, logicalPath
 	if err != nil {
 		return err
 	}
-	return loader.prefetch(ctx, logicalPaths)
+	if len(logicalPaths) == 0 {
+		return loader.prefetch(ctx, logicalPaths)
+	}
+	var initial, regular []string
+	for _, name := range logicalPaths {
+		if strings.HasPrefix(name, "circuits/create_credit_initial_payment.") {
+			initial = append(initial, name)
+		} else {
+			regular = append(regular, name)
+		}
+	}
+	if len(regular) > 0 {
+		if err = loader.prefetch(ctx, regular); err != nil {
+			return err
+		}
+	}
+	if len(initial) > 0 {
+		other, e := newResourceLoader(options, InitialPaymentResourceIndexSHA256)
+		if e != nil {
+			return e
+		}
+		return other.prefetch(ctx, initial)
+	}
+	return nil
 }
 
 func (l *resourceLoader) prefetch(ctx context.Context, logicalPaths []string) error {

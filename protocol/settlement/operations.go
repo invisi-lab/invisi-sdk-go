@@ -20,14 +20,17 @@ type ShieldOutput struct {
 	Amount   *big.Int
 }
 type CreateCreditParams struct {
-	Token            common.Address
-	Owner            common.Address
-	RevocationShard  uint64
-	RevocationSlot   uint16
-	CreditCommitment [32]byte
-	Deadline         *big.Int
-	FeeRecipient     common.Address
-	FeeAmount        *big.Int
+	Token             common.Address
+	Owner             common.Address
+	RevocationShard   uint64
+	RevocationSlot    uint16
+	CreditCommitment  [32]byte
+	Deadline          *big.Int
+	FeeRecipient      common.Address
+	FeeAmount         *big.Int
+	HasInitialPayment bool
+	TotalAmount       *big.Int
+	NoteCommitment    [32]byte
 }
 type CreditPayer struct {
 	Payer  common.Address

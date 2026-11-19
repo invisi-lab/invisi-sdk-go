@@ -170,25 +170,25 @@ func (s *WalletSession) replayCredits(ctx context.Context, target protocolrpc.Ca
 				if log == nil || log.Address != s.scope.ProtocolAddress {
 					continue
 				}
-				draw, e := filter.ParseCreditDraw(*log)
+				draw, e := filter.ParseCreditStateTransition(*log)
 				if e != nil {
 					continue
 				}
 				for _, previous := range next.PostpaidCredit.Grants {
-					for j, nf := range draw.Params.Nullifiers {
+					for j, nf := range draw.State.Nullifiers {
 						if previous.Nullifier != common.Hash(nf) {
 							continue
 						}
-						commitment := common.Hash(draw.Params.CreditCommitments[j])
+						commitment := common.Hash(draw.State.CreditCommitments[j])
 						key := creditsession.GrantKey(commitment, previous.Role)
 						if _, ok := next.PostpaidCredit.Grants[key]; ok {
 							continue
 						}
-						recovered, e := previous.Delivery.State.Recover(primitives.BigIntToElement(new(big.Int).SetBytes(nf[:])), primitives.BigIntToElement(commitment.Big()), primitives.BigIntToElement(new(big.Int).SetBytes(draw.Params.RecoveryAmounts[j][:])), tx.Header.Time)
+						recovered, e := previous.Delivery.State.Recover(primitives.BigIntToElement(new(big.Int).SetBytes(nf[:])), primitives.BigIntToElement(commitment.Big()), primitives.BigIntToElement(new(big.Int).SetBytes(draw.State.RecoveryAmounts[j][:])), tx.Header.Time)
 						if e != nil {
 							return e
 						}
-						if _, e = s.rpc.GetMembership(ctx, s.protocol.Context(), protocolrpc.MembershipInput{TreeID: draw.OutputTreeId.Uint64(), LeafIndex: draw.LeafIndices[j], Commitment: commitment}, target); e != nil {
+						if _, e = s.rpc.GetMembership(ctx, s.protocol.Context(), protocolrpc.MembershipInput{TreeID: draw.OutputTreeId.Uint64(), LeafIndex: draw.CreditLeafIndices[j], Commitment: commitment}, target); e != nil {
 							return e
 						}
 						child := previous
@@ -200,7 +200,7 @@ func (s *WalletSession) replayCredits(ctx context.Context, target protocolrpc.Ca
 						}
 						child.Nullifier = common.Hash(nullifier.Bytes())
 						child.TreeID = draw.OutputTreeId.Uint64()
-						child.LeafIndex = uint16(draw.LeafIndices[j])
+						child.LeafIndex = uint16(draw.CreditLeafIndices[j])
 						child.Consumed = false
 						child.Revoked = false
 						child.ReservedBy = ""

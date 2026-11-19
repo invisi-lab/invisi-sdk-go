@@ -151,7 +151,7 @@ func newNoteFixture(t *testing.T) *noteFixture {
 			result = proof
 		case "invisi_getNote":
 			if !f.missing {
-				result = map[string]any{"output": map[string]any{"block": block, "treeId": 1, "leafIndex": 0, "commitment": output.Commitment(), "token": f.note.TokenAddress(), "ciphertext": "0x", "clue": "0x", "transactionHash": common.HexToHash("33"), "logIndex": 0, "kind": "Shield"}, "membership": proof}
+				result = map[string]any{"output": map[string]any{"block": block, "treeId": 1, "leafIndex": 0, "commitment": output.Commitment(), "token": f.note.TokenAddress(), "ciphertext": "0x", "clue": "0x", "transactionHash": common.HexToHash("33"), "logIndex": 0, "kind": "NoteOutputs"}, "membership": proof}
 			}
 		default:
 			t.Errorf("unexpected RPC %s", req.Method)

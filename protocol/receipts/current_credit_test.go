@@ -110,18 +110,27 @@ func TestCreditDrawAndUpdateHaveDistinctStateAndNoteProjections(t *testing.T) {
 	token := common.HexToAddress("2")
 	p := currentDrawTuple{Token: token, Sources: []sourceTuple{{big.NewInt(1), [32]byte{9}}}, Payers: []payerTuple{{common.HexToAddress("1"), big.NewInt(3)}, {common.HexToAddress("2"), big.NewInt(4)}}, GrantRefs: []refTuple{{big.NewInt(0), 1, 0}, {big.NewInt(1), 1, 0}}, Nullifiers: [][32]byte{{1}, {2}}, CreditCommitments: [][32]byte{{3}, {4}}, RecoveryAmounts: [][32]byte{{5}, {6}}, NoteCommitment: [32]byte{7}, TotalAmount: big.NewInt(7), Deadline: big.NewInt(99), FeeRecipient: common.HexToAddress("44"), FeeAmount: big.NewInt(1)}
 	ins := log("CommitmentsInserted", 1, tx, []any{big.NewInt(1)}, uint32(0), [][32]byte{{3}, {4}, {7}})
-	draw := log("CreditDraw", 2, tx, []any{big.NewInt(1)}, p, []uint32{0, 1, 2}, []delivery{{[]byte{1}, nil}, {[]byte{2}, nil}, {[]byte{3}, nil}, {[]byte{4}, nil}, {[]byte{5}, nil}})
-	b, e := d.Decode(Block{Number: 10, Timestamp: 100}, []types.Log{ins, draw})
+	state := struct {
+		Sources                                        []sourceTuple
+		Payers                                         []payerTuple
+		GrantRefs                                      []refTuple
+		Nullifiers, CreditCommitments, RecoveryAmounts [][32]byte
+	}{p.Sources, p.Payers, p.GrantRefs, p.Nullifiers, p.CreditCommitments, p.RecoveryAmounts}
+	transition := log("CreditStateTransition", 2, tx, []any{big.NewInt(1), p.NoteCommitment}, state, []uint32{0, 1}, []delivery{{[]byte{1}, nil}, {[]byte{2}, nil}, {[]byte{3}, nil}, {[]byte{4}, nil}})
+	draw := log("CreditDraw", 3, tx, []any{token, big.NewInt(1), p.NoteCommitment}, uint32(2), p.TotalAmount, p.Deadline, p.FeeRecipient, p.FeeAmount, delivery{[]byte{5}, nil})
+	b, e := d.Decode(Block{Number: 10, Timestamp: 100}, []types.Log{ins, transition, draw})
 	if e != nil {
 		t.Fatal(e)
 	}
-	assertCreditFee(t, b.Events[1].Data, true, "1")
+	assertCreditFee(t, b.Events[2].Data, false, "1")
 	if len(b.Outputs) != 1 || b.Outputs[0].Commitment != p.NoteCommitment || len(b.CreditStates) != 2 || len(b.CreditStates[1].Deliveries) != 2 || len(b.CreditNullifiers) != 2 || len(b.Nullifiers) != 0 {
 		t.Fatalf("incorrect postpaid draw %+v", b)
 	}
-	bad := log("CreditDraw", 2, tx, []any{big.NewInt(1)}, p, []uint32{0, 1}, []delivery{{}, {}, {}, {}, {}})
-	if _, e = d.Decode(Block{}, []types.Log{ins, bad}); e == nil {
-		t.Fatal("accepted missing ordinary Note position")
+	bad := draw
+	bad.Topics = append([]common.Hash(nil), draw.Topics...)
+	bad.Topics[3] = common.HexToHash("999")
+	if _, e = d.Decode(Block{}, []types.Log{ins, transition, bad}); e == nil {
+		t.Fatal("accepted unmatched Note result")
 	}
 	up := updateTuple{Token: token, Owner: common.HexToAddress("1"), Source: sourceTuple{big.NewInt(1), [32]byte{9}}, Nullifier: [32]byte{8}, CreditCommitment: [32]byte{9}, RevocationShard: 1, Deadline: big.NewInt(99), FeeRecipient: common.HexToAddress("44"), FeeAmount: big.NewInt(2)}
 	ins = log("CommitmentsInserted", 1, tx, []any{big.NewInt(1)}, uint32(3), [][32]byte{{9}})

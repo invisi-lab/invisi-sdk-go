@@ -37,6 +37,9 @@ type IInvisiCoreCreateCreditParams = protocolcontracts.IInvisiCoreCreateCreditPa
 // IInvisiCoreCreditDrawParams is an auto generated low-level Go binding around an user-defined struct.
 type IInvisiCoreCreditDrawParams = protocolcontracts.IInvisiCoreCreditDrawParams
 
+// IInvisiCoreCreditDrawState is an auto generated low-level Go binding around an user-defined struct.
+type IInvisiCoreCreditDrawState = protocolcontracts.IInvisiCoreCreditDrawState
+
 // IInvisiCoreCreditGrantRef is an auto generated low-level Go binding around an user-defined struct.
 type IInvisiCoreCreditGrantRef = protocolcontracts.IInvisiCoreCreditGrantRef
 
@@ -1133,23 +1136,23 @@ func (_InvisiCore *InvisiCoreTransactorSession) AcceptOwnership() (*types.Transa
 	return _InvisiCore.Contract.AcceptOwnership(&_InvisiCore.TransactOpts)
 }
 
-// CreateCredit is a paid mutator transaction binding the contract method 0x5550f27a.
+// CreateCredit is a paid mutator transaction binding the contract method 0x00b6fa56.
 //
-// Solidity: function createCredit(bytes , (address,address,uint64,uint16,bytes32,uint256,address,uint256) p, (bytes,bytes)[] ) returns()
+// Solidity: function createCredit(bytes , (address,address,uint64,uint16,bytes32,uint256,address,uint256,bool,uint256,bytes32) p, (bytes,bytes)[] ) returns()
 func (_InvisiCore *InvisiCoreTransactor) CreateCredit(opts *bind.TransactOpts, arg0 []byte, p IInvisiCoreCreateCreditParams, arg2 []IInvisiCoreDelivery) (*types.Transaction, error) {
 	return _InvisiCore.contract.Transact(opts, "createCredit", arg0, p, arg2)
 }
 
-// CreateCredit is a paid mutator transaction binding the contract method 0x5550f27a.
+// CreateCredit is a paid mutator transaction binding the contract method 0x00b6fa56.
 //
-// Solidity: function createCredit(bytes , (address,address,uint64,uint16,bytes32,uint256,address,uint256) p, (bytes,bytes)[] ) returns()
+// Solidity: function createCredit(bytes , (address,address,uint64,uint16,bytes32,uint256,address,uint256,bool,uint256,bytes32) p, (bytes,bytes)[] ) returns()
 func (_InvisiCore *InvisiCoreSession) CreateCredit(arg0 []byte, p IInvisiCoreCreateCreditParams, arg2 []IInvisiCoreDelivery) (*types.Transaction, error) {
 	return _InvisiCore.Contract.CreateCredit(&_InvisiCore.TransactOpts, arg0, p, arg2)
 }
 
-// CreateCredit is a paid mutator transaction binding the contract method 0x5550f27a.
+// CreateCredit is a paid mutator transaction binding the contract method 0x00b6fa56.
 //
-// Solidity: function createCredit(bytes , (address,address,uint64,uint16,bytes32,uint256,address,uint256) p, (bytes,bytes)[] ) returns()
+// Solidity: function createCredit(bytes , (address,address,uint64,uint16,bytes32,uint256,address,uint256,bool,uint256,bytes32) p, (bytes,bytes)[] ) returns()
 func (_InvisiCore *InvisiCoreTransactorSession) CreateCredit(arg0 []byte, p IInvisiCoreCreateCreditParams, arg2 []IInvisiCoreDelivery) (*types.Transaction, error) {
 	return _InvisiCore.Contract.CreateCredit(&_InvisiCore.TransactOpts, arg0, p, arg2)
 }
@@ -1467,310 +1470,6 @@ func (_InvisiCore *InvisiCoreSession) WithdrawBroadcasterFees(token common.Addre
 // Solidity: function withdrawBroadcasterFees(address token, address recipient) returns(uint256)
 func (_InvisiCore *InvisiCoreTransactorSession) WithdrawBroadcasterFees(token common.Address, recipient common.Address) (*types.Transaction, error) {
 	return _InvisiCore.Contract.WithdrawBroadcasterFees(&_InvisiCore.TransactOpts, token, recipient)
-}
-
-// InvisiCoreBatchOutputsIterator is returned from FilterBatchOutputs and is used to iterate over the raw logs and unpacked data for BatchOutputs events raised by the InvisiCore contract.
-type InvisiCoreBatchOutputsIterator struct {
-	Event *InvisiCoreBatchOutputs // Event containing the contract specifics and raw log
-
-	contract *bind.BoundContract // Generic contract to use for unpacking event data
-	event    string              // Event name to use for unpacking event data
-
-	logs chan types.Log        // Log channel receiving the found contract events
-	sub  ethereum.Subscription // Subscription for errors, completion and termination
-	done bool                  // Whether the subscription completed delivering logs
-	fail error                 // Occurred error to stop iteration
-}
-
-// Next advances the iterator to the subsequent event, returning whether there
-// are any more events found. In case of a retrieval or parsing error, false is
-// returned and Error() can be queried for the exact failure.
-func (it *InvisiCoreBatchOutputsIterator) Next() bool {
-	// If the iterator failed, stop iterating
-	if it.fail != nil {
-		return false
-	}
-	// If the iterator completed, deliver directly whatever's available
-	if it.done {
-		select {
-		case log := <-it.logs:
-			it.Event = new(InvisiCoreBatchOutputs)
-			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
-				it.fail = err
-				return false
-			}
-			it.Event.Raw = log
-			return true
-
-		default:
-			return false
-		}
-	}
-	// Iterator still in progress, wait for either a data or an error event
-	select {
-	case log := <-it.logs:
-		it.Event = new(InvisiCoreBatchOutputs)
-		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
-			it.fail = err
-			return false
-		}
-		it.Event.Raw = log
-		return true
-
-	case err := <-it.sub.Err():
-		it.done = true
-		it.fail = err
-		return it.Next()
-	}
-}
-
-// Error returns any retrieval or parsing error occurred during filtering.
-func (it *InvisiCoreBatchOutputsIterator) Error() error {
-	return it.fail
-}
-
-// Close terminates the iteration process, releasing any pending underlying
-// resources.
-func (it *InvisiCoreBatchOutputsIterator) Close() error {
-	it.sub.Unsubscribe()
-	return nil
-}
-
-// InvisiCoreBatchOutputs represents a BatchOutputs event raised by the InvisiCore contract.
-type InvisiCoreBatchOutputs struct {
-	TreeId            *big.Int
-	StartLeafIndex    uint32
-	FirstOutputOffset *big.Int
-	Tokens            []common.Address
-	NoteCommitments   [][32]byte
-	PackedDeliveries  []byte
-	Raw               types.Log // Blockchain specific contextual infos
-}
-
-// FilterBatchOutputs is a free log retrieval operation binding the contract event 0xf5c3c1e590ac45e708a69991fe84df4bb1dc4c185bf0a1ec6794c31b776a1be0.
-//
-// Solidity: event BatchOutputs(uint256 indexed treeId, uint32 startLeafIndex, uint256 firstOutputOffset, address[] tokens, bytes32[] noteCommitments, bytes packedDeliveries)
-func (_InvisiCore *InvisiCoreFilterer) FilterBatchOutputs(opts *bind.FilterOpts, treeId []*big.Int) (*InvisiCoreBatchOutputsIterator, error) {
-
-	var treeIdRule []interface{}
-	for _, treeIdItem := range treeId {
-		treeIdRule = append(treeIdRule, treeIdItem)
-	}
-
-	logs, sub, err := _InvisiCore.contract.FilterLogs(opts, "BatchOutputs", treeIdRule)
-	if err != nil {
-		return nil, err
-	}
-	return &InvisiCoreBatchOutputsIterator{contract: _InvisiCore.contract, event: "BatchOutputs", logs: logs, sub: sub}, nil
-}
-
-// WatchBatchOutputs is a free log subscription operation binding the contract event 0xf5c3c1e590ac45e708a69991fe84df4bb1dc4c185bf0a1ec6794c31b776a1be0.
-//
-// Solidity: event BatchOutputs(uint256 indexed treeId, uint32 startLeafIndex, uint256 firstOutputOffset, address[] tokens, bytes32[] noteCommitments, bytes packedDeliveries)
-func (_InvisiCore *InvisiCoreFilterer) WatchBatchOutputs(opts *bind.WatchOpts, sink chan<- *InvisiCoreBatchOutputs, treeId []*big.Int) (event.Subscription, error) {
-
-	var treeIdRule []interface{}
-	for _, treeIdItem := range treeId {
-		treeIdRule = append(treeIdRule, treeIdItem)
-	}
-
-	logs, sub, err := _InvisiCore.contract.WatchLogs(opts, "BatchOutputs", treeIdRule)
-	if err != nil {
-		return nil, err
-	}
-	return event.NewSubscription(func(quit <-chan struct{}) error {
-		defer sub.Unsubscribe()
-		for {
-			select {
-			case log := <-logs:
-				// New log arrived, parse the event and forward to the user
-				event := new(InvisiCoreBatchOutputs)
-				if err := _InvisiCore.contract.UnpackLog(event, "BatchOutputs", log); err != nil {
-					return err
-				}
-				event.Raw = log
-
-				select {
-				case sink <- event:
-				case err := <-sub.Err():
-					return err
-				case <-quit:
-					return nil
-				}
-			case err := <-sub.Err():
-				return err
-			case <-quit:
-				return nil
-			}
-		}
-	}), nil
-}
-
-// ParseBatchOutputs is a log parse operation binding the contract event 0xf5c3c1e590ac45e708a69991fe84df4bb1dc4c185bf0a1ec6794c31b776a1be0.
-//
-// Solidity: event BatchOutputs(uint256 indexed treeId, uint32 startLeafIndex, uint256 firstOutputOffset, address[] tokens, bytes32[] noteCommitments, bytes packedDeliveries)
-func (_InvisiCore *InvisiCoreFilterer) ParseBatchOutputs(log types.Log) (*InvisiCoreBatchOutputs, error) {
-	event := new(InvisiCoreBatchOutputs)
-	if err := _InvisiCore.contract.UnpackLog(event, "BatchOutputs", log); err != nil {
-		return nil, err
-	}
-	event.Raw = log
-	return event, nil
-}
-
-// InvisiCoreBatchRequestIterator is returned from FilterBatchRequest and is used to iterate over the raw logs and unpacked data for BatchRequest events raised by the InvisiCore contract.
-type InvisiCoreBatchRequestIterator struct {
-	Event *InvisiCoreBatchRequest // Event containing the contract specifics and raw log
-
-	contract *bind.BoundContract // Generic contract to use for unpacking event data
-	event    string              // Event name to use for unpacking event data
-
-	logs chan types.Log        // Log channel receiving the found contract events
-	sub  ethereum.Subscription // Subscription for errors, completion and termination
-	done bool                  // Whether the subscription completed delivering logs
-	fail error                 // Occurred error to stop iteration
-}
-
-// Next advances the iterator to the subsequent event, returning whether there
-// are any more events found. In case of a retrieval or parsing error, false is
-// returned and Error() can be queried for the exact failure.
-func (it *InvisiCoreBatchRequestIterator) Next() bool {
-	// If the iterator failed, stop iterating
-	if it.fail != nil {
-		return false
-	}
-	// If the iterator completed, deliver directly whatever's available
-	if it.done {
-		select {
-		case log := <-it.logs:
-			it.Event = new(InvisiCoreBatchRequest)
-			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
-				it.fail = err
-				return false
-			}
-			it.Event.Raw = log
-			return true
-
-		default:
-			return false
-		}
-	}
-	// Iterator still in progress, wait for either a data or an error event
-	select {
-	case log := <-it.logs:
-		it.Event = new(InvisiCoreBatchRequest)
-		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
-			it.fail = err
-			return false
-		}
-		it.Event.Raw = log
-		return true
-
-	case err := <-it.sub.Err():
-		it.done = true
-		it.fail = err
-		return it.Next()
-	}
-}
-
-// Error returns any retrieval or parsing error occurred during filtering.
-func (it *InvisiCoreBatchRequestIterator) Error() error {
-	return it.fail
-}
-
-// Close terminates the iteration process, releasing any pending underlying
-// resources.
-func (it *InvisiCoreBatchRequestIterator) Close() error {
-	it.sub.Unsubscribe()
-	return nil
-}
-
-// InvisiCoreBatchRequest represents a BatchRequest event raised by the InvisiCore contract.
-type InvisiCoreBatchRequest struct {
-	Token             common.Address
-	RequestIndex      *big.Int
-	Capacity          *big.Int
-	Sources           []IInvisiCoreInputSource
-	Nullifiers        [][32]byte
-	OutputCount       *big.Int
-	Payer             common.Address
-	DepositAmount     *big.Int
-	WithdrawalAddress common.Address
-	WithdrawalAmount  *big.Int
-	Deadline          *big.Int
-	StatementHash     [32]byte
-	Raw               types.Log // Blockchain specific contextual infos
-}
-
-// FilterBatchRequest is a free log retrieval operation binding the contract event 0xbceb7ab95985373d11b26c1454947414ae0b754a3b33e0f3c0d779bf540f9db5.
-//
-// Solidity: event BatchRequest(address token, uint256 indexed requestIndex, uint256 capacity, (uint256,bytes32)[] sources, bytes32[] nullifiers, uint256 outputCount, address payer, uint256 depositAmount, address withdrawalAddress, uint256 withdrawalAmount, uint256 deadline, bytes32 statementHash)
-func (_InvisiCore *InvisiCoreFilterer) FilterBatchRequest(opts *bind.FilterOpts, requestIndex []*big.Int) (*InvisiCoreBatchRequestIterator, error) {
-
-	var requestIndexRule []interface{}
-	for _, requestIndexItem := range requestIndex {
-		requestIndexRule = append(requestIndexRule, requestIndexItem)
-	}
-
-	logs, sub, err := _InvisiCore.contract.FilterLogs(opts, "BatchRequest", requestIndexRule)
-	if err != nil {
-		return nil, err
-	}
-	return &InvisiCoreBatchRequestIterator{contract: _InvisiCore.contract, event: "BatchRequest", logs: logs, sub: sub}, nil
-}
-
-// WatchBatchRequest is a free log subscription operation binding the contract event 0xbceb7ab95985373d11b26c1454947414ae0b754a3b33e0f3c0d779bf540f9db5.
-//
-// Solidity: event BatchRequest(address token, uint256 indexed requestIndex, uint256 capacity, (uint256,bytes32)[] sources, bytes32[] nullifiers, uint256 outputCount, address payer, uint256 depositAmount, address withdrawalAddress, uint256 withdrawalAmount, uint256 deadline, bytes32 statementHash)
-func (_InvisiCore *InvisiCoreFilterer) WatchBatchRequest(opts *bind.WatchOpts, sink chan<- *InvisiCoreBatchRequest, requestIndex []*big.Int) (event.Subscription, error) {
-
-	var requestIndexRule []interface{}
-	for _, requestIndexItem := range requestIndex {
-		requestIndexRule = append(requestIndexRule, requestIndexItem)
-	}
-
-	logs, sub, err := _InvisiCore.contract.WatchLogs(opts, "BatchRequest", requestIndexRule)
-	if err != nil {
-		return nil, err
-	}
-	return event.NewSubscription(func(quit <-chan struct{}) error {
-		defer sub.Unsubscribe()
-		for {
-			select {
-			case log := <-logs:
-				// New log arrived, parse the event and forward to the user
-				event := new(InvisiCoreBatchRequest)
-				if err := _InvisiCore.contract.UnpackLog(event, "BatchRequest", log); err != nil {
-					return err
-				}
-				event.Raw = log
-
-				select {
-				case sink <- event:
-				case err := <-sub.Err():
-					return err
-				case <-quit:
-					return nil
-				}
-			case err := <-sub.Err():
-				return err
-			case <-quit:
-				return nil
-			}
-		}
-	}), nil
-}
-
-// ParseBatchRequest is a log parse operation binding the contract event 0xbceb7ab95985373d11b26c1454947414ae0b754a3b33e0f3c0d779bf540f9db5.
-//
-// Solidity: event BatchRequest(address token, uint256 indexed requestIndex, uint256 capacity, (uint256,bytes32)[] sources, bytes32[] nullifiers, uint256 outputCount, address payer, uint256 depositAmount, address withdrawalAddress, uint256 withdrawalAmount, uint256 deadline, bytes32 statementHash)
-func (_InvisiCore *InvisiCoreFilterer) ParseBatchRequest(log types.Log) (*InvisiCoreBatchRequest, error) {
-	event := new(InvisiCoreBatchRequest)
-	if err := _InvisiCore.contract.UnpackLog(event, "BatchRequest", log); err != nil {
-		return nil, err
-	}
-	event.Raw = log
-	return event, nil
 }
 
 // InvisiCoreBroadcasterFeeIterator is returned from FilterBroadcasterFee and is used to iterate over the raw logs and unpacked data for BroadcasterFee events raised by the InvisiCore contract.
@@ -2600,41 +2299,62 @@ func (it *InvisiCoreCreditDrawIterator) Close() error {
 
 // InvisiCoreCreditDraw represents a CreditDraw event raised by the InvisiCore contract.
 type InvisiCoreCreditDraw struct {
-	OutputTreeId *big.Int
-	Params       IInvisiCoreCreditDrawParams
-	LeafIndices  []uint32
-	Deliveries   []IInvisiCoreDelivery
-	Raw          types.Log // Blockchain specific contextual infos
+	Token          common.Address
+	OutputTreeId   *big.Int
+	NoteCommitment [32]byte
+	NoteLeafIndex  uint32
+	TotalAmount    *big.Int
+	Deadline       *big.Int
+	FeeRecipient   common.Address
+	FeeAmount      *big.Int
+	Delivery       IInvisiCoreDelivery
+	Raw            types.Log // Blockchain specific contextual infos
 }
 
-// FilterCreditDraw is a free log retrieval operation binding the contract event 0xa68be504130022fbd729573715873c6c515c318a014d5273815e20abcc08439d.
+// FilterCreditDraw is a free log retrieval operation binding the contract event 0x2ec095e4edccddd919763ec1a653b334c331c75743d7ccda699c23522bff175e.
 //
-// Solidity: event CreditDraw(uint256 indexed outputTreeId, (address,(uint256,bytes32)[],(address,uint256)[],(uint256,uint64,uint16)[],bytes32[],bytes32[],bytes32[],bytes32,uint256,uint256,address,uint256) params, uint32[] leafIndices, (bytes,bytes)[] deliveries)
-func (_InvisiCore *InvisiCoreFilterer) FilterCreditDraw(opts *bind.FilterOpts, outputTreeId []*big.Int) (*InvisiCoreCreditDrawIterator, error) {
+// Solidity: event CreditDraw(address indexed token, uint256 indexed outputTreeId, bytes32 indexed noteCommitment, uint32 noteLeafIndex, uint256 totalAmount, uint256 deadline, address feeRecipient, uint256 feeAmount, (bytes,bytes) delivery)
+func (_InvisiCore *InvisiCoreFilterer) FilterCreditDraw(opts *bind.FilterOpts, token []common.Address, outputTreeId []*big.Int, noteCommitment [][32]byte) (*InvisiCoreCreditDrawIterator, error) {
 
+	var tokenRule []interface{}
+	for _, tokenItem := range token {
+		tokenRule = append(tokenRule, tokenItem)
+	}
 	var outputTreeIdRule []interface{}
 	for _, outputTreeIdItem := range outputTreeId {
 		outputTreeIdRule = append(outputTreeIdRule, outputTreeIdItem)
 	}
+	var noteCommitmentRule []interface{}
+	for _, noteCommitmentItem := range noteCommitment {
+		noteCommitmentRule = append(noteCommitmentRule, noteCommitmentItem)
+	}
 
-	logs, sub, err := _InvisiCore.contract.FilterLogs(opts, "CreditDraw", outputTreeIdRule)
+	logs, sub, err := _InvisiCore.contract.FilterLogs(opts, "CreditDraw", tokenRule, outputTreeIdRule, noteCommitmentRule)
 	if err != nil {
 		return nil, err
 	}
 	return &InvisiCoreCreditDrawIterator{contract: _InvisiCore.contract, event: "CreditDraw", logs: logs, sub: sub}, nil
 }
 
-// WatchCreditDraw is a free log subscription operation binding the contract event 0xa68be504130022fbd729573715873c6c515c318a014d5273815e20abcc08439d.
+// WatchCreditDraw is a free log subscription operation binding the contract event 0x2ec095e4edccddd919763ec1a653b334c331c75743d7ccda699c23522bff175e.
 //
-// Solidity: event CreditDraw(uint256 indexed outputTreeId, (address,(uint256,bytes32)[],(address,uint256)[],(uint256,uint64,uint16)[],bytes32[],bytes32[],bytes32[],bytes32,uint256,uint256,address,uint256) params, uint32[] leafIndices, (bytes,bytes)[] deliveries)
-func (_InvisiCore *InvisiCoreFilterer) WatchCreditDraw(opts *bind.WatchOpts, sink chan<- *InvisiCoreCreditDraw, outputTreeId []*big.Int) (event.Subscription, error) {
+// Solidity: event CreditDraw(address indexed token, uint256 indexed outputTreeId, bytes32 indexed noteCommitment, uint32 noteLeafIndex, uint256 totalAmount, uint256 deadline, address feeRecipient, uint256 feeAmount, (bytes,bytes) delivery)
+func (_InvisiCore *InvisiCoreFilterer) WatchCreditDraw(opts *bind.WatchOpts, sink chan<- *InvisiCoreCreditDraw, token []common.Address, outputTreeId []*big.Int, noteCommitment [][32]byte) (event.Subscription, error) {
 
+	var tokenRule []interface{}
+	for _, tokenItem := range token {
+		tokenRule = append(tokenRule, tokenItem)
+	}
 	var outputTreeIdRule []interface{}
 	for _, outputTreeIdItem := range outputTreeId {
 		outputTreeIdRule = append(outputTreeIdRule, outputTreeIdItem)
 	}
+	var noteCommitmentRule []interface{}
+	for _, noteCommitmentItem := range noteCommitment {
+		noteCommitmentRule = append(noteCommitmentRule, noteCommitmentItem)
+	}
 
-	logs, sub, err := _InvisiCore.contract.WatchLogs(opts, "CreditDraw", outputTreeIdRule)
+	logs, sub, err := _InvisiCore.contract.WatchLogs(opts, "CreditDraw", tokenRule, outputTreeIdRule, noteCommitmentRule)
 	if err != nil {
 		return nil, err
 	}
@@ -2666,9 +2386,9 @@ func (_InvisiCore *InvisiCoreFilterer) WatchCreditDraw(opts *bind.WatchOpts, sin
 	}), nil
 }
 
-// ParseCreditDraw is a log parse operation binding the contract event 0xa68be504130022fbd729573715873c6c515c318a014d5273815e20abcc08439d.
+// ParseCreditDraw is a log parse operation binding the contract event 0x2ec095e4edccddd919763ec1a653b334c331c75743d7ccda699c23522bff175e.
 //
-// Solidity: event CreditDraw(uint256 indexed outputTreeId, (address,(uint256,bytes32)[],(address,uint256)[],(uint256,uint64,uint16)[],bytes32[],bytes32[],bytes32[],bytes32,uint256,uint256,address,uint256) params, uint32[] leafIndices, (bytes,bytes)[] deliveries)
+// Solidity: event CreditDraw(address indexed token, uint256 indexed outputTreeId, bytes32 indexed noteCommitment, uint32 noteLeafIndex, uint256 totalAmount, uint256 deadline, address feeRecipient, uint256 feeAmount, (bytes,bytes) delivery)
 func (_InvisiCore *InvisiCoreFilterer) ParseCreditDraw(log types.Log) (*InvisiCoreCreditDraw, error) {
 	event := new(InvisiCoreCreditDraw)
 	if err := _InvisiCore.contract.UnpackLog(event, "CreditDraw", log); err != nil {
@@ -2843,6 +2563,162 @@ func (_InvisiCore *InvisiCoreFilterer) ParseCreditRevoked(log types.Log) (*Invis
 	return event, nil
 }
 
+// InvisiCoreCreditStateTransitionIterator is returned from FilterCreditStateTransition and is used to iterate over the raw logs and unpacked data for CreditStateTransition events raised by the InvisiCore contract.
+type InvisiCoreCreditStateTransitionIterator struct {
+	Event *InvisiCoreCreditStateTransition // Event containing the contract specifics and raw log
+
+	contract *bind.BoundContract // Generic contract to use for unpacking event data
+	event    string              // Event name to use for unpacking event data
+
+	logs chan types.Log        // Log channel receiving the found contract events
+	sub  ethereum.Subscription // Subscription for errors, completion and termination
+	done bool                  // Whether the subscription completed delivering logs
+	fail error                 // Occurred error to stop iteration
+}
+
+// Next advances the iterator to the subsequent event, returning whether there
+// are any more events found. In case of a retrieval or parsing error, false is
+// returned and Error() can be queried for the exact failure.
+func (it *InvisiCoreCreditStateTransitionIterator) Next() bool {
+	// If the iterator failed, stop iterating
+	if it.fail != nil {
+		return false
+	}
+	// If the iterator completed, deliver directly whatever's available
+	if it.done {
+		select {
+		case log := <-it.logs:
+			it.Event = new(InvisiCoreCreditStateTransition)
+			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+				it.fail = err
+				return false
+			}
+			it.Event.Raw = log
+			return true
+
+		default:
+			return false
+		}
+	}
+	// Iterator still in progress, wait for either a data or an error event
+	select {
+	case log := <-it.logs:
+		it.Event = new(InvisiCoreCreditStateTransition)
+		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+			it.fail = err
+			return false
+		}
+		it.Event.Raw = log
+		return true
+
+	case err := <-it.sub.Err():
+		it.done = true
+		it.fail = err
+		return it.Next()
+	}
+}
+
+// Error returns any retrieval or parsing error occurred during filtering.
+func (it *InvisiCoreCreditStateTransitionIterator) Error() error {
+	return it.fail
+}
+
+// Close terminates the iteration process, releasing any pending underlying
+// resources.
+func (it *InvisiCoreCreditStateTransitionIterator) Close() error {
+	it.sub.Unsubscribe()
+	return nil
+}
+
+// InvisiCoreCreditStateTransition represents a CreditStateTransition event raised by the InvisiCore contract.
+type InvisiCoreCreditStateTransition struct {
+	OutputTreeId      *big.Int
+	NoteCommitment    [32]byte
+	State             IInvisiCoreCreditDrawState
+	CreditLeafIndices []uint32
+	CreditDeliveries  []IInvisiCoreDelivery
+	Raw               types.Log // Blockchain specific contextual infos
+}
+
+// FilterCreditStateTransition is a free log retrieval operation binding the contract event 0xbe23d3cefc9b903825f494f1a83f2cbc4a1c489078f8ee40565d0244a4535125.
+//
+// Solidity: event CreditStateTransition(uint256 indexed outputTreeId, bytes32 indexed noteCommitment, ((uint256,bytes32)[],(address,uint256)[],(uint256,uint64,uint16)[],bytes32[],bytes32[],bytes32[]) state, uint32[] creditLeafIndices, (bytes,bytes)[] creditDeliveries)
+func (_InvisiCore *InvisiCoreFilterer) FilterCreditStateTransition(opts *bind.FilterOpts, outputTreeId []*big.Int, noteCommitment [][32]byte) (*InvisiCoreCreditStateTransitionIterator, error) {
+
+	var outputTreeIdRule []interface{}
+	for _, outputTreeIdItem := range outputTreeId {
+		outputTreeIdRule = append(outputTreeIdRule, outputTreeIdItem)
+	}
+	var noteCommitmentRule []interface{}
+	for _, noteCommitmentItem := range noteCommitment {
+		noteCommitmentRule = append(noteCommitmentRule, noteCommitmentItem)
+	}
+
+	logs, sub, err := _InvisiCore.contract.FilterLogs(opts, "CreditStateTransition", outputTreeIdRule, noteCommitmentRule)
+	if err != nil {
+		return nil, err
+	}
+	return &InvisiCoreCreditStateTransitionIterator{contract: _InvisiCore.contract, event: "CreditStateTransition", logs: logs, sub: sub}, nil
+}
+
+// WatchCreditStateTransition is a free log subscription operation binding the contract event 0xbe23d3cefc9b903825f494f1a83f2cbc4a1c489078f8ee40565d0244a4535125.
+//
+// Solidity: event CreditStateTransition(uint256 indexed outputTreeId, bytes32 indexed noteCommitment, ((uint256,bytes32)[],(address,uint256)[],(uint256,uint64,uint16)[],bytes32[],bytes32[],bytes32[]) state, uint32[] creditLeafIndices, (bytes,bytes)[] creditDeliveries)
+func (_InvisiCore *InvisiCoreFilterer) WatchCreditStateTransition(opts *bind.WatchOpts, sink chan<- *InvisiCoreCreditStateTransition, outputTreeId []*big.Int, noteCommitment [][32]byte) (event.Subscription, error) {
+
+	var outputTreeIdRule []interface{}
+	for _, outputTreeIdItem := range outputTreeId {
+		outputTreeIdRule = append(outputTreeIdRule, outputTreeIdItem)
+	}
+	var noteCommitmentRule []interface{}
+	for _, noteCommitmentItem := range noteCommitment {
+		noteCommitmentRule = append(noteCommitmentRule, noteCommitmentItem)
+	}
+
+	logs, sub, err := _InvisiCore.contract.WatchLogs(opts, "CreditStateTransition", outputTreeIdRule, noteCommitmentRule)
+	if err != nil {
+		return nil, err
+	}
+	return event.NewSubscription(func(quit <-chan struct{}) error {
+		defer sub.Unsubscribe()
+		for {
+			select {
+			case log := <-logs:
+				// New log arrived, parse the event and forward to the user
+				event := new(InvisiCoreCreditStateTransition)
+				if err := _InvisiCore.contract.UnpackLog(event, "CreditStateTransition", log); err != nil {
+					return err
+				}
+				event.Raw = log
+
+				select {
+				case sink <- event:
+				case err := <-sub.Err():
+					return err
+				case <-quit:
+					return nil
+				}
+			case err := <-sub.Err():
+				return err
+			case <-quit:
+				return nil
+			}
+		}
+	}), nil
+}
+
+// ParseCreditStateTransition is a log parse operation binding the contract event 0xbe23d3cefc9b903825f494f1a83f2cbc4a1c489078f8ee40565d0244a4535125.
+//
+// Solidity: event CreditStateTransition(uint256 indexed outputTreeId, bytes32 indexed noteCommitment, ((uint256,bytes32)[],(address,uint256)[],(uint256,uint64,uint16)[],bytes32[],bytes32[],bytes32[]) state, uint32[] creditLeafIndices, (bytes,bytes)[] creditDeliveries)
+func (_InvisiCore *InvisiCoreFilterer) ParseCreditStateTransition(log types.Log) (*InvisiCoreCreditStateTransition, error) {
+	event := new(InvisiCoreCreditStateTransition)
+	if err := _InvisiCore.contract.UnpackLog(event, "CreditStateTransition", log); err != nil {
+		return nil, err
+	}
+	event.Raw = log
+	return event, nil
+}
+
 // InvisiCoreCreditUpdatedIterator is returned from FilterCreditUpdated and is used to iterate over the raw logs and unpacked data for CreditUpdated events raised by the InvisiCore contract.
 type InvisiCoreCreditUpdatedIterator struct {
 	Event *InvisiCoreCreditUpdated // Event containing the contract specifics and raw log
@@ -2993,159 +2869,6 @@ func (_InvisiCore *InvisiCoreFilterer) WatchCreditUpdated(opts *bind.WatchOpts, 
 func (_InvisiCore *InvisiCoreFilterer) ParseCreditUpdated(log types.Log) (*InvisiCoreCreditUpdated, error) {
 	event := new(InvisiCoreCreditUpdated)
 	if err := _InvisiCore.contract.UnpackLog(event, "CreditUpdated", log); err != nil {
-		return nil, err
-	}
-	event.Raw = log
-	return event, nil
-}
-
-// InvisiCoreCrossTreeTransactIterator is returned from FilterCrossTreeTransact and is used to iterate over the raw logs and unpacked data for CrossTreeTransact events raised by the InvisiCore contract.
-type InvisiCoreCrossTreeTransactIterator struct {
-	Event *InvisiCoreCrossTreeTransact // Event containing the contract specifics and raw log
-
-	contract *bind.BoundContract // Generic contract to use for unpacking event data
-	event    string              // Event name to use for unpacking event data
-
-	logs chan types.Log        // Log channel receiving the found contract events
-	sub  ethereum.Subscription // Subscription for errors, completion and termination
-	done bool                  // Whether the subscription completed delivering logs
-	fail error                 // Occurred error to stop iteration
-}
-
-// Next advances the iterator to the subsequent event, returning whether there
-// are any more events found. In case of a retrieval or parsing error, false is
-// returned and Error() can be queried for the exact failure.
-func (it *InvisiCoreCrossTreeTransactIterator) Next() bool {
-	// If the iterator failed, stop iterating
-	if it.fail != nil {
-		return false
-	}
-	// If the iterator completed, deliver directly whatever's available
-	if it.done {
-		select {
-		case log := <-it.logs:
-			it.Event = new(InvisiCoreCrossTreeTransact)
-			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
-				it.fail = err
-				return false
-			}
-			it.Event.Raw = log
-			return true
-
-		default:
-			return false
-		}
-	}
-	// Iterator still in progress, wait for either a data or an error event
-	select {
-	case log := <-it.logs:
-		it.Event = new(InvisiCoreCrossTreeTransact)
-		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
-			it.fail = err
-			return false
-		}
-		it.Event.Raw = log
-		return true
-
-	case err := <-it.sub.Err():
-		it.done = true
-		it.fail = err
-		return it.Next()
-	}
-}
-
-// Error returns any retrieval or parsing error occurred during filtering.
-func (it *InvisiCoreCrossTreeTransactIterator) Error() error {
-	return it.fail
-}
-
-// Close terminates the iteration process, releasing any pending underlying
-// resources.
-func (it *InvisiCoreCrossTreeTransactIterator) Close() error {
-	it.sub.Unsubscribe()
-	return nil
-}
-
-// InvisiCoreCrossTreeTransact represents a CrossTreeTransact event raised by the InvisiCore contract.
-type InvisiCoreCrossTreeTransact struct {
-	Token             common.Address
-	OutputTreeId      *big.Int
-	Sources           []IInvisiCoreInputSource
-	Nullifiers        [][32]byte
-	NoteCommitments   [][32]byte
-	LeafIndices       []uint32
-	Deliveries        []IInvisiCoreDelivery
-	WithdrawalAddress common.Address
-	WithdrawalAmount  *big.Int
-	Deadline          *big.Int
-	Raw               types.Log // Blockchain specific contextual infos
-}
-
-// FilterCrossTreeTransact is a free log retrieval operation binding the contract event 0x4f0edefe49cf4f3b4346ad9b94338d41abb8bdd8fdcdd7fdb9debeb27b80113d.
-//
-// Solidity: event CrossTreeTransact(address token, uint256 indexed outputTreeId, (uint256,bytes32)[] sources, bytes32[] nullifiers, bytes32[] noteCommitments, uint32[] leafIndices, (bytes,bytes)[] deliveries, address withdrawalAddress, uint256 withdrawalAmount, uint256 deadline)
-func (_InvisiCore *InvisiCoreFilterer) FilterCrossTreeTransact(opts *bind.FilterOpts, outputTreeId []*big.Int) (*InvisiCoreCrossTreeTransactIterator, error) {
-
-	var outputTreeIdRule []interface{}
-	for _, outputTreeIdItem := range outputTreeId {
-		outputTreeIdRule = append(outputTreeIdRule, outputTreeIdItem)
-	}
-
-	logs, sub, err := _InvisiCore.contract.FilterLogs(opts, "CrossTreeTransact", outputTreeIdRule)
-	if err != nil {
-		return nil, err
-	}
-	return &InvisiCoreCrossTreeTransactIterator{contract: _InvisiCore.contract, event: "CrossTreeTransact", logs: logs, sub: sub}, nil
-}
-
-// WatchCrossTreeTransact is a free log subscription operation binding the contract event 0x4f0edefe49cf4f3b4346ad9b94338d41abb8bdd8fdcdd7fdb9debeb27b80113d.
-//
-// Solidity: event CrossTreeTransact(address token, uint256 indexed outputTreeId, (uint256,bytes32)[] sources, bytes32[] nullifiers, bytes32[] noteCommitments, uint32[] leafIndices, (bytes,bytes)[] deliveries, address withdrawalAddress, uint256 withdrawalAmount, uint256 deadline)
-func (_InvisiCore *InvisiCoreFilterer) WatchCrossTreeTransact(opts *bind.WatchOpts, sink chan<- *InvisiCoreCrossTreeTransact, outputTreeId []*big.Int) (event.Subscription, error) {
-
-	var outputTreeIdRule []interface{}
-	for _, outputTreeIdItem := range outputTreeId {
-		outputTreeIdRule = append(outputTreeIdRule, outputTreeIdItem)
-	}
-
-	logs, sub, err := _InvisiCore.contract.WatchLogs(opts, "CrossTreeTransact", outputTreeIdRule)
-	if err != nil {
-		return nil, err
-	}
-	return event.NewSubscription(func(quit <-chan struct{}) error {
-		defer sub.Unsubscribe()
-		for {
-			select {
-			case log := <-logs:
-				// New log arrived, parse the event and forward to the user
-				event := new(InvisiCoreCrossTreeTransact)
-				if err := _InvisiCore.contract.UnpackLog(event, "CrossTreeTransact", log); err != nil {
-					return err
-				}
-				event.Raw = log
-
-				select {
-				case sink <- event:
-				case err := <-sub.Err():
-					return err
-				case <-quit:
-					return nil
-				}
-			case err := <-sub.Err():
-				return err
-			case <-quit:
-				return nil
-			}
-		}
-	}), nil
-}
-
-// ParseCrossTreeTransact is a log parse operation binding the contract event 0x4f0edefe49cf4f3b4346ad9b94338d41abb8bdd8fdcdd7fdb9debeb27b80113d.
-//
-// Solidity: event CrossTreeTransact(address token, uint256 indexed outputTreeId, (uint256,bytes32)[] sources, bytes32[] nullifiers, bytes32[] noteCommitments, uint32[] leafIndices, (bytes,bytes)[] deliveries, address withdrawalAddress, uint256 withdrawalAmount, uint256 deadline)
-func (_InvisiCore *InvisiCoreFilterer) ParseCrossTreeTransact(log types.Log) (*InvisiCoreCrossTreeTransact, error) {
-	event := new(InvisiCoreCrossTreeTransact)
-	if err := _InvisiCore.contract.UnpackLog(event, "CrossTreeTransact", log); err != nil {
 		return nil, err
 	}
 	event.Raw = log
@@ -3424,6 +3147,465 @@ func (_InvisiCore *InvisiCoreFilterer) WatchNonceInvalidated(opts *bind.WatchOpt
 func (_InvisiCore *InvisiCoreFilterer) ParseNonceInvalidated(log types.Log) (*InvisiCoreNonceInvalidated, error) {
 	event := new(InvisiCoreNonceInvalidated)
 	if err := _InvisiCore.contract.UnpackLog(event, "NonceInvalidated", log); err != nil {
+		return nil, err
+	}
+	event.Raw = log
+	return event, nil
+}
+
+// InvisiCoreNoteOperationIterator is returned from FilterNoteOperation and is used to iterate over the raw logs and unpacked data for NoteOperation events raised by the InvisiCore contract.
+type InvisiCoreNoteOperationIterator struct {
+	Event *InvisiCoreNoteOperation // Event containing the contract specifics and raw log
+
+	contract *bind.BoundContract // Generic contract to use for unpacking event data
+	event    string              // Event name to use for unpacking event data
+
+	logs chan types.Log        // Log channel receiving the found contract events
+	sub  ethereum.Subscription // Subscription for errors, completion and termination
+	done bool                  // Whether the subscription completed delivering logs
+	fail error                 // Occurred error to stop iteration
+}
+
+// Next advances the iterator to the subsequent event, returning whether there
+// are any more events found. In case of a retrieval or parsing error, false is
+// returned and Error() can be queried for the exact failure.
+func (it *InvisiCoreNoteOperationIterator) Next() bool {
+	// If the iterator failed, stop iterating
+	if it.fail != nil {
+		return false
+	}
+	// If the iterator completed, deliver directly whatever's available
+	if it.done {
+		select {
+		case log := <-it.logs:
+			it.Event = new(InvisiCoreNoteOperation)
+			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+				it.fail = err
+				return false
+			}
+			it.Event.Raw = log
+			return true
+
+		default:
+			return false
+		}
+	}
+	// Iterator still in progress, wait for either a data or an error event
+	select {
+	case log := <-it.logs:
+		it.Event = new(InvisiCoreNoteOperation)
+		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+			it.fail = err
+			return false
+		}
+		it.Event.Raw = log
+		return true
+
+	case err := <-it.sub.Err():
+		it.done = true
+		it.fail = err
+		return it.Next()
+	}
+}
+
+// Error returns any retrieval or parsing error occurred during filtering.
+func (it *InvisiCoreNoteOperationIterator) Error() error {
+	return it.fail
+}
+
+// Close terminates the iteration process, releasing any pending underlying
+// resources.
+func (it *InvisiCoreNoteOperationIterator) Close() error {
+	it.sub.Unsubscribe()
+	return nil
+}
+
+// InvisiCoreNoteOperation represents a NoteOperation event raised by the InvisiCore contract.
+type InvisiCoreNoteOperation struct {
+	OperationId  [32]byte
+	Token        common.Address
+	Kind         uint8
+	OutputCount  *big.Int
+	Deadline     *big.Int
+	FeeRecipient common.Address
+	FeeAmount    *big.Int
+	Raw          types.Log // Blockchain specific contextual infos
+}
+
+// FilterNoteOperation is a free log retrieval operation binding the contract event 0x4e56888342f858881f3ddf2560f4c6fca8a9cf54dda777498d5fb44a8b04e8f4.
+//
+// Solidity: event NoteOperation(bytes32 indexed operationId, address indexed token, uint8 kind, uint256 outputCount, uint256 deadline, address feeRecipient, uint256 feeAmount)
+func (_InvisiCore *InvisiCoreFilterer) FilterNoteOperation(opts *bind.FilterOpts, operationId [][32]byte, token []common.Address) (*InvisiCoreNoteOperationIterator, error) {
+
+	var operationIdRule []interface{}
+	for _, operationIdItem := range operationId {
+		operationIdRule = append(operationIdRule, operationIdItem)
+	}
+	var tokenRule []interface{}
+	for _, tokenItem := range token {
+		tokenRule = append(tokenRule, tokenItem)
+	}
+
+	logs, sub, err := _InvisiCore.contract.FilterLogs(opts, "NoteOperation", operationIdRule, tokenRule)
+	if err != nil {
+		return nil, err
+	}
+	return &InvisiCoreNoteOperationIterator{contract: _InvisiCore.contract, event: "NoteOperation", logs: logs, sub: sub}, nil
+}
+
+// WatchNoteOperation is a free log subscription operation binding the contract event 0x4e56888342f858881f3ddf2560f4c6fca8a9cf54dda777498d5fb44a8b04e8f4.
+//
+// Solidity: event NoteOperation(bytes32 indexed operationId, address indexed token, uint8 kind, uint256 outputCount, uint256 deadline, address feeRecipient, uint256 feeAmount)
+func (_InvisiCore *InvisiCoreFilterer) WatchNoteOperation(opts *bind.WatchOpts, sink chan<- *InvisiCoreNoteOperation, operationId [][32]byte, token []common.Address) (event.Subscription, error) {
+
+	var operationIdRule []interface{}
+	for _, operationIdItem := range operationId {
+		operationIdRule = append(operationIdRule, operationIdItem)
+	}
+	var tokenRule []interface{}
+	for _, tokenItem := range token {
+		tokenRule = append(tokenRule, tokenItem)
+	}
+
+	logs, sub, err := _InvisiCore.contract.WatchLogs(opts, "NoteOperation", operationIdRule, tokenRule)
+	if err != nil {
+		return nil, err
+	}
+	return event.NewSubscription(func(quit <-chan struct{}) error {
+		defer sub.Unsubscribe()
+		for {
+			select {
+			case log := <-logs:
+				// New log arrived, parse the event and forward to the user
+				event := new(InvisiCoreNoteOperation)
+				if err := _InvisiCore.contract.UnpackLog(event, "NoteOperation", log); err != nil {
+					return err
+				}
+				event.Raw = log
+
+				select {
+				case sink <- event:
+				case err := <-sub.Err():
+					return err
+				case <-quit:
+					return nil
+				}
+			case err := <-sub.Err():
+				return err
+			case <-quit:
+				return nil
+			}
+		}
+	}), nil
+}
+
+// ParseNoteOperation is a log parse operation binding the contract event 0x4e56888342f858881f3ddf2560f4c6fca8a9cf54dda777498d5fb44a8b04e8f4.
+//
+// Solidity: event NoteOperation(bytes32 indexed operationId, address indexed token, uint8 kind, uint256 outputCount, uint256 deadline, address feeRecipient, uint256 feeAmount)
+func (_InvisiCore *InvisiCoreFilterer) ParseNoteOperation(log types.Log) (*InvisiCoreNoteOperation, error) {
+	event := new(InvisiCoreNoteOperation)
+	if err := _InvisiCore.contract.UnpackLog(event, "NoteOperation", log); err != nil {
+		return nil, err
+	}
+	event.Raw = log
+	return event, nil
+}
+
+// InvisiCoreNoteOutputsIterator is returned from FilterNoteOutputs and is used to iterate over the raw logs and unpacked data for NoteOutputs events raised by the InvisiCore contract.
+type InvisiCoreNoteOutputsIterator struct {
+	Event *InvisiCoreNoteOutputs // Event containing the contract specifics and raw log
+
+	contract *bind.BoundContract // Generic contract to use for unpacking event data
+	event    string              // Event name to use for unpacking event data
+
+	logs chan types.Log        // Log channel receiving the found contract events
+	sub  ethereum.Subscription // Subscription for errors, completion and termination
+	done bool                  // Whether the subscription completed delivering logs
+	fail error                 // Occurred error to stop iteration
+}
+
+// Next advances the iterator to the subsequent event, returning whether there
+// are any more events found. In case of a retrieval or parsing error, false is
+// returned and Error() can be queried for the exact failure.
+func (it *InvisiCoreNoteOutputsIterator) Next() bool {
+	// If the iterator failed, stop iterating
+	if it.fail != nil {
+		return false
+	}
+	// If the iterator completed, deliver directly whatever's available
+	if it.done {
+		select {
+		case log := <-it.logs:
+			it.Event = new(InvisiCoreNoteOutputs)
+			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+				it.fail = err
+				return false
+			}
+			it.Event.Raw = log
+			return true
+
+		default:
+			return false
+		}
+	}
+	// Iterator still in progress, wait for either a data or an error event
+	select {
+	case log := <-it.logs:
+		it.Event = new(InvisiCoreNoteOutputs)
+		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+			it.fail = err
+			return false
+		}
+		it.Event.Raw = log
+		return true
+
+	case err := <-it.sub.Err():
+		it.done = true
+		it.fail = err
+		return it.Next()
+	}
+}
+
+// Error returns any retrieval or parsing error occurred during filtering.
+func (it *InvisiCoreNoteOutputsIterator) Error() error {
+	return it.fail
+}
+
+// Close terminates the iteration process, releasing any pending underlying
+// resources.
+func (it *InvisiCoreNoteOutputsIterator) Close() error {
+	it.sub.Unsubscribe()
+	return nil
+}
+
+// InvisiCoreNoteOutputs represents a NoteOutputs event raised by the InvisiCore contract.
+type InvisiCoreNoteOutputs struct {
+	OperationId      [32]byte
+	TreeId           *big.Int
+	StartLeafIndex   uint32
+	PackedDeliveries []byte
+	Raw              types.Log // Blockchain specific contextual infos
+}
+
+// FilterNoteOutputs is a free log retrieval operation binding the contract event 0x9d9d69480fdc7e222ae8781287c535f5a441fbbb50e6eb719810e9426bb5b517.
+//
+// Solidity: event NoteOutputs(bytes32 indexed operationId, uint256 indexed treeId, uint32 startLeafIndex, bytes packedDeliveries)
+func (_InvisiCore *InvisiCoreFilterer) FilterNoteOutputs(opts *bind.FilterOpts, operationId [][32]byte, treeId []*big.Int) (*InvisiCoreNoteOutputsIterator, error) {
+
+	var operationIdRule []interface{}
+	for _, operationIdItem := range operationId {
+		operationIdRule = append(operationIdRule, operationIdItem)
+	}
+	var treeIdRule []interface{}
+	for _, treeIdItem := range treeId {
+		treeIdRule = append(treeIdRule, treeIdItem)
+	}
+
+	logs, sub, err := _InvisiCore.contract.FilterLogs(opts, "NoteOutputs", operationIdRule, treeIdRule)
+	if err != nil {
+		return nil, err
+	}
+	return &InvisiCoreNoteOutputsIterator{contract: _InvisiCore.contract, event: "NoteOutputs", logs: logs, sub: sub}, nil
+}
+
+// WatchNoteOutputs is a free log subscription operation binding the contract event 0x9d9d69480fdc7e222ae8781287c535f5a441fbbb50e6eb719810e9426bb5b517.
+//
+// Solidity: event NoteOutputs(bytes32 indexed operationId, uint256 indexed treeId, uint32 startLeafIndex, bytes packedDeliveries)
+func (_InvisiCore *InvisiCoreFilterer) WatchNoteOutputs(opts *bind.WatchOpts, sink chan<- *InvisiCoreNoteOutputs, operationId [][32]byte, treeId []*big.Int) (event.Subscription, error) {
+
+	var operationIdRule []interface{}
+	for _, operationIdItem := range operationId {
+		operationIdRule = append(operationIdRule, operationIdItem)
+	}
+	var treeIdRule []interface{}
+	for _, treeIdItem := range treeId {
+		treeIdRule = append(treeIdRule, treeIdItem)
+	}
+
+	logs, sub, err := _InvisiCore.contract.WatchLogs(opts, "NoteOutputs", operationIdRule, treeIdRule)
+	if err != nil {
+		return nil, err
+	}
+	return event.NewSubscription(func(quit <-chan struct{}) error {
+		defer sub.Unsubscribe()
+		for {
+			select {
+			case log := <-logs:
+				// New log arrived, parse the event and forward to the user
+				event := new(InvisiCoreNoteOutputs)
+				if err := _InvisiCore.contract.UnpackLog(event, "NoteOutputs", log); err != nil {
+					return err
+				}
+				event.Raw = log
+
+				select {
+				case sink <- event:
+				case err := <-sub.Err():
+					return err
+				case <-quit:
+					return nil
+				}
+			case err := <-sub.Err():
+				return err
+			case <-quit:
+				return nil
+			}
+		}
+	}), nil
+}
+
+// ParseNoteOutputs is a log parse operation binding the contract event 0x9d9d69480fdc7e222ae8781287c535f5a441fbbb50e6eb719810e9426bb5b517.
+//
+// Solidity: event NoteOutputs(bytes32 indexed operationId, uint256 indexed treeId, uint32 startLeafIndex, bytes packedDeliveries)
+func (_InvisiCore *InvisiCoreFilterer) ParseNoteOutputs(log types.Log) (*InvisiCoreNoteOutputs, error) {
+	event := new(InvisiCoreNoteOutputs)
+	if err := _InvisiCore.contract.UnpackLog(event, "NoteOutputs", log); err != nil {
+		return nil, err
+	}
+	event.Raw = log
+	return event, nil
+}
+
+// InvisiCoreNoteStateTransitionIterator is returned from FilterNoteStateTransition and is used to iterate over the raw logs and unpacked data for NoteStateTransition events raised by the InvisiCore contract.
+type InvisiCoreNoteStateTransitionIterator struct {
+	Event *InvisiCoreNoteStateTransition // Event containing the contract specifics and raw log
+
+	contract *bind.BoundContract // Generic contract to use for unpacking event data
+	event    string              // Event name to use for unpacking event data
+
+	logs chan types.Log        // Log channel receiving the found contract events
+	sub  ethereum.Subscription // Subscription for errors, completion and termination
+	done bool                  // Whether the subscription completed delivering logs
+	fail error                 // Occurred error to stop iteration
+}
+
+// Next advances the iterator to the subsequent event, returning whether there
+// are any more events found. In case of a retrieval or parsing error, false is
+// returned and Error() can be queried for the exact failure.
+func (it *InvisiCoreNoteStateTransitionIterator) Next() bool {
+	// If the iterator failed, stop iterating
+	if it.fail != nil {
+		return false
+	}
+	// If the iterator completed, deliver directly whatever's available
+	if it.done {
+		select {
+		case log := <-it.logs:
+			it.Event = new(InvisiCoreNoteStateTransition)
+			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+				it.fail = err
+				return false
+			}
+			it.Event.Raw = log
+			return true
+
+		default:
+			return false
+		}
+	}
+	// Iterator still in progress, wait for either a data or an error event
+	select {
+	case log := <-it.logs:
+		it.Event = new(InvisiCoreNoteStateTransition)
+		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+			it.fail = err
+			return false
+		}
+		it.Event.Raw = log
+		return true
+
+	case err := <-it.sub.Err():
+		it.done = true
+		it.fail = err
+		return it.Next()
+	}
+}
+
+// Error returns any retrieval or parsing error occurred during filtering.
+func (it *InvisiCoreNoteStateTransitionIterator) Error() error {
+	return it.fail
+}
+
+// Close terminates the iteration process, releasing any pending underlying
+// resources.
+func (it *InvisiCoreNoteStateTransitionIterator) Close() error {
+	it.sub.Unsubscribe()
+	return nil
+}
+
+// InvisiCoreNoteStateTransition represents a NoteStateTransition event raised by the InvisiCore contract.
+type InvisiCoreNoteStateTransition struct {
+	OperationId [32]byte
+	Sources     []IInvisiCoreInputSource
+	Nullifiers  [][32]byte
+	Raw         types.Log // Blockchain specific contextual infos
+}
+
+// FilterNoteStateTransition is a free log retrieval operation binding the contract event 0x255d558968f0a79ff79c4073f67577f4c387247dd50a0510e5cfd3981c174473.
+//
+// Solidity: event NoteStateTransition(bytes32 indexed operationId, (uint256,bytes32)[] sources, bytes32[] nullifiers)
+func (_InvisiCore *InvisiCoreFilterer) FilterNoteStateTransition(opts *bind.FilterOpts, operationId [][32]byte) (*InvisiCoreNoteStateTransitionIterator, error) {
+
+	var operationIdRule []interface{}
+	for _, operationIdItem := range operationId {
+		operationIdRule = append(operationIdRule, operationIdItem)
+	}
+
+	logs, sub, err := _InvisiCore.contract.FilterLogs(opts, "NoteStateTransition", operationIdRule)
+	if err != nil {
+		return nil, err
+	}
+	return &InvisiCoreNoteStateTransitionIterator{contract: _InvisiCore.contract, event: "NoteStateTransition", logs: logs, sub: sub}, nil
+}
+
+// WatchNoteStateTransition is a free log subscription operation binding the contract event 0x255d558968f0a79ff79c4073f67577f4c387247dd50a0510e5cfd3981c174473.
+//
+// Solidity: event NoteStateTransition(bytes32 indexed operationId, (uint256,bytes32)[] sources, bytes32[] nullifiers)
+func (_InvisiCore *InvisiCoreFilterer) WatchNoteStateTransition(opts *bind.WatchOpts, sink chan<- *InvisiCoreNoteStateTransition, operationId [][32]byte) (event.Subscription, error) {
+
+	var operationIdRule []interface{}
+	for _, operationIdItem := range operationId {
+		operationIdRule = append(operationIdRule, operationIdItem)
+	}
+
+	logs, sub, err := _InvisiCore.contract.WatchLogs(opts, "NoteStateTransition", operationIdRule)
+	if err != nil {
+		return nil, err
+	}
+	return event.NewSubscription(func(quit <-chan struct{}) error {
+		defer sub.Unsubscribe()
+		for {
+			select {
+			case log := <-logs:
+				// New log arrived, parse the event and forward to the user
+				event := new(InvisiCoreNoteStateTransition)
+				if err := _InvisiCore.contract.UnpackLog(event, "NoteStateTransition", log); err != nil {
+					return err
+				}
+				event.Raw = log
+
+				select {
+				case sink <- event:
+				case err := <-sub.Err():
+					return err
+				case <-quit:
+					return nil
+				}
+			case err := <-sub.Err():
+				return err
+			case <-quit:
+				return nil
+			}
+		}
+	}), nil
+}
+
+// ParseNoteStateTransition is a log parse operation binding the contract event 0x255d558968f0a79ff79c4073f67577f4c387247dd50a0510e5cfd3981c174473.
+//
+// Solidity: event NoteStateTransition(bytes32 indexed operationId, (uint256,bytes32)[] sources, bytes32[] nullifiers)
+func (_InvisiCore *InvisiCoreFilterer) ParseNoteStateTransition(log types.Log) (*InvisiCoreNoteStateTransition, error) {
+	event := new(InvisiCoreNoteStateTransition)
+	if err := _InvisiCore.contract.UnpackLog(event, "NoteStateTransition", log); err != nil {
 		return nil, err
 	}
 	event.Raw = log
@@ -3939,18 +4121,22 @@ func (it *InvisiCorePublicDepositIterator) Close() error {
 
 // InvisiCorePublicDeposit represents a PublicDeposit event raised by the InvisiCore contract.
 type InvisiCorePublicDeposit struct {
-	Token     common.Address
-	Payer     common.Address
-	Amount    *big.Int
-	ProofHash [32]byte
-	Raw       types.Log // Blockchain specific contextual infos
+	OperationId [32]byte
+	Token       common.Address
+	Payer       common.Address
+	Amount      *big.Int
+	Raw         types.Log // Blockchain specific contextual infos
 }
 
-// FilterPublicDeposit is a free log retrieval operation binding the contract event 0x1626a1d6f055052717d0a40e4bb7e02f2b2b379432abf8fcd2ef80d2374e6661.
+// FilterPublicDeposit is a free log retrieval operation binding the contract event 0x9d47b8310e9ff9fddd67b4466b94e05dccd8f877c6e789f2839befb8bad4df92.
 //
-// Solidity: event PublicDeposit(address indexed token, address indexed payer, uint256 amount, bytes32 proofHash)
-func (_InvisiCore *InvisiCoreFilterer) FilterPublicDeposit(opts *bind.FilterOpts, token []common.Address, payer []common.Address) (*InvisiCorePublicDepositIterator, error) {
+// Solidity: event PublicDeposit(bytes32 indexed operationId, address indexed token, address indexed payer, uint256 amount)
+func (_InvisiCore *InvisiCoreFilterer) FilterPublicDeposit(opts *bind.FilterOpts, operationId [][32]byte, token []common.Address, payer []common.Address) (*InvisiCorePublicDepositIterator, error) {
 
+	var operationIdRule []interface{}
+	for _, operationIdItem := range operationId {
+		operationIdRule = append(operationIdRule, operationIdItem)
+	}
 	var tokenRule []interface{}
 	for _, tokenItem := range token {
 		tokenRule = append(tokenRule, tokenItem)
@@ -3960,18 +4146,22 @@ func (_InvisiCore *InvisiCoreFilterer) FilterPublicDeposit(opts *bind.FilterOpts
 		payerRule = append(payerRule, payerItem)
 	}
 
-	logs, sub, err := _InvisiCore.contract.FilterLogs(opts, "PublicDeposit", tokenRule, payerRule)
+	logs, sub, err := _InvisiCore.contract.FilterLogs(opts, "PublicDeposit", operationIdRule, tokenRule, payerRule)
 	if err != nil {
 		return nil, err
 	}
 	return &InvisiCorePublicDepositIterator{contract: _InvisiCore.contract, event: "PublicDeposit", logs: logs, sub: sub}, nil
 }
 
-// WatchPublicDeposit is a free log subscription operation binding the contract event 0x1626a1d6f055052717d0a40e4bb7e02f2b2b379432abf8fcd2ef80d2374e6661.
+// WatchPublicDeposit is a free log subscription operation binding the contract event 0x9d47b8310e9ff9fddd67b4466b94e05dccd8f877c6e789f2839befb8bad4df92.
 //
-// Solidity: event PublicDeposit(address indexed token, address indexed payer, uint256 amount, bytes32 proofHash)
-func (_InvisiCore *InvisiCoreFilterer) WatchPublicDeposit(opts *bind.WatchOpts, sink chan<- *InvisiCorePublicDeposit, token []common.Address, payer []common.Address) (event.Subscription, error) {
+// Solidity: event PublicDeposit(bytes32 indexed operationId, address indexed token, address indexed payer, uint256 amount)
+func (_InvisiCore *InvisiCoreFilterer) WatchPublicDeposit(opts *bind.WatchOpts, sink chan<- *InvisiCorePublicDeposit, operationId [][32]byte, token []common.Address, payer []common.Address) (event.Subscription, error) {
 
+	var operationIdRule []interface{}
+	for _, operationIdItem := range operationId {
+		operationIdRule = append(operationIdRule, operationIdItem)
+	}
 	var tokenRule []interface{}
 	for _, tokenItem := range token {
 		tokenRule = append(tokenRule, tokenItem)
@@ -3981,7 +4171,7 @@ func (_InvisiCore *InvisiCoreFilterer) WatchPublicDeposit(opts *bind.WatchOpts, 
 		payerRule = append(payerRule, payerItem)
 	}
 
-	logs, sub, err := _InvisiCore.contract.WatchLogs(opts, "PublicDeposit", tokenRule, payerRule)
+	logs, sub, err := _InvisiCore.contract.WatchLogs(opts, "PublicDeposit", operationIdRule, tokenRule, payerRule)
 	if err != nil {
 		return nil, err
 	}
@@ -4013,12 +4203,175 @@ func (_InvisiCore *InvisiCoreFilterer) WatchPublicDeposit(opts *bind.WatchOpts, 
 	}), nil
 }
 
-// ParsePublicDeposit is a log parse operation binding the contract event 0x1626a1d6f055052717d0a40e4bb7e02f2b2b379432abf8fcd2ef80d2374e6661.
+// ParsePublicDeposit is a log parse operation binding the contract event 0x9d47b8310e9ff9fddd67b4466b94e05dccd8f877c6e789f2839befb8bad4df92.
 //
-// Solidity: event PublicDeposit(address indexed token, address indexed payer, uint256 amount, bytes32 proofHash)
+// Solidity: event PublicDeposit(bytes32 indexed operationId, address indexed token, address indexed payer, uint256 amount)
 func (_InvisiCore *InvisiCoreFilterer) ParsePublicDeposit(log types.Log) (*InvisiCorePublicDeposit, error) {
 	event := new(InvisiCorePublicDeposit)
 	if err := _InvisiCore.contract.UnpackLog(event, "PublicDeposit", log); err != nil {
+		return nil, err
+	}
+	event.Raw = log
+	return event, nil
+}
+
+// InvisiCorePublicWithdrawalIterator is returned from FilterPublicWithdrawal and is used to iterate over the raw logs and unpacked data for PublicWithdrawal events raised by the InvisiCore contract.
+type InvisiCorePublicWithdrawalIterator struct {
+	Event *InvisiCorePublicWithdrawal // Event containing the contract specifics and raw log
+
+	contract *bind.BoundContract // Generic contract to use for unpacking event data
+	event    string              // Event name to use for unpacking event data
+
+	logs chan types.Log        // Log channel receiving the found contract events
+	sub  ethereum.Subscription // Subscription for errors, completion and termination
+	done bool                  // Whether the subscription completed delivering logs
+	fail error                 // Occurred error to stop iteration
+}
+
+// Next advances the iterator to the subsequent event, returning whether there
+// are any more events found. In case of a retrieval or parsing error, false is
+// returned and Error() can be queried for the exact failure.
+func (it *InvisiCorePublicWithdrawalIterator) Next() bool {
+	// If the iterator failed, stop iterating
+	if it.fail != nil {
+		return false
+	}
+	// If the iterator completed, deliver directly whatever's available
+	if it.done {
+		select {
+		case log := <-it.logs:
+			it.Event = new(InvisiCorePublicWithdrawal)
+			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+				it.fail = err
+				return false
+			}
+			it.Event.Raw = log
+			return true
+
+		default:
+			return false
+		}
+	}
+	// Iterator still in progress, wait for either a data or an error event
+	select {
+	case log := <-it.logs:
+		it.Event = new(InvisiCorePublicWithdrawal)
+		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+			it.fail = err
+			return false
+		}
+		it.Event.Raw = log
+		return true
+
+	case err := <-it.sub.Err():
+		it.done = true
+		it.fail = err
+		return it.Next()
+	}
+}
+
+// Error returns any retrieval or parsing error occurred during filtering.
+func (it *InvisiCorePublicWithdrawalIterator) Error() error {
+	return it.fail
+}
+
+// Close terminates the iteration process, releasing any pending underlying
+// resources.
+func (it *InvisiCorePublicWithdrawalIterator) Close() error {
+	it.sub.Unsubscribe()
+	return nil
+}
+
+// InvisiCorePublicWithdrawal represents a PublicWithdrawal event raised by the InvisiCore contract.
+type InvisiCorePublicWithdrawal struct {
+	OperationId [32]byte
+	Token       common.Address
+	Recipient   common.Address
+	Amount      *big.Int
+	Raw         types.Log // Blockchain specific contextual infos
+}
+
+// FilterPublicWithdrawal is a free log retrieval operation binding the contract event 0x501befef3c73a0262258ef1992e9dd87244ca30eb5c7815b5f0595bfaeb3c242.
+//
+// Solidity: event PublicWithdrawal(bytes32 indexed operationId, address indexed token, address indexed recipient, uint256 amount)
+func (_InvisiCore *InvisiCoreFilterer) FilterPublicWithdrawal(opts *bind.FilterOpts, operationId [][32]byte, token []common.Address, recipient []common.Address) (*InvisiCorePublicWithdrawalIterator, error) {
+
+	var operationIdRule []interface{}
+	for _, operationIdItem := range operationId {
+		operationIdRule = append(operationIdRule, operationIdItem)
+	}
+	var tokenRule []interface{}
+	for _, tokenItem := range token {
+		tokenRule = append(tokenRule, tokenItem)
+	}
+	var recipientRule []interface{}
+	for _, recipientItem := range recipient {
+		recipientRule = append(recipientRule, recipientItem)
+	}
+
+	logs, sub, err := _InvisiCore.contract.FilterLogs(opts, "PublicWithdrawal", operationIdRule, tokenRule, recipientRule)
+	if err != nil {
+		return nil, err
+	}
+	return &InvisiCorePublicWithdrawalIterator{contract: _InvisiCore.contract, event: "PublicWithdrawal", logs: logs, sub: sub}, nil
+}
+
+// WatchPublicWithdrawal is a free log subscription operation binding the contract event 0x501befef3c73a0262258ef1992e9dd87244ca30eb5c7815b5f0595bfaeb3c242.
+//
+// Solidity: event PublicWithdrawal(bytes32 indexed operationId, address indexed token, address indexed recipient, uint256 amount)
+func (_InvisiCore *InvisiCoreFilterer) WatchPublicWithdrawal(opts *bind.WatchOpts, sink chan<- *InvisiCorePublicWithdrawal, operationId [][32]byte, token []common.Address, recipient []common.Address) (event.Subscription, error) {
+
+	var operationIdRule []interface{}
+	for _, operationIdItem := range operationId {
+		operationIdRule = append(operationIdRule, operationIdItem)
+	}
+	var tokenRule []interface{}
+	for _, tokenItem := range token {
+		tokenRule = append(tokenRule, tokenItem)
+	}
+	var recipientRule []interface{}
+	for _, recipientItem := range recipient {
+		recipientRule = append(recipientRule, recipientItem)
+	}
+
+	logs, sub, err := _InvisiCore.contract.WatchLogs(opts, "PublicWithdrawal", operationIdRule, tokenRule, recipientRule)
+	if err != nil {
+		return nil, err
+	}
+	return event.NewSubscription(func(quit <-chan struct{}) error {
+		defer sub.Unsubscribe()
+		for {
+			select {
+			case log := <-logs:
+				// New log arrived, parse the event and forward to the user
+				event := new(InvisiCorePublicWithdrawal)
+				if err := _InvisiCore.contract.UnpackLog(event, "PublicWithdrawal", log); err != nil {
+					return err
+				}
+				event.Raw = log
+
+				select {
+				case sink <- event:
+				case err := <-sub.Err():
+					return err
+				case <-quit:
+					return nil
+				}
+			case err := <-sub.Err():
+				return err
+			case <-quit:
+				return nil
+			}
+		}
+	}), nil
+}
+
+// ParsePublicWithdrawal is a log parse operation binding the contract event 0x501befef3c73a0262258ef1992e9dd87244ca30eb5c7815b5f0595bfaeb3c242.
+//
+// Solidity: event PublicWithdrawal(bytes32 indexed operationId, address indexed token, address indexed recipient, uint256 amount)
+func (_InvisiCore *InvisiCoreFilterer) ParsePublicWithdrawal(log types.Log) (*InvisiCorePublicWithdrawal, error) {
+	event := new(InvisiCorePublicWithdrawal)
+	if err := _InvisiCore.contract.UnpackLog(event, "PublicWithdrawal", log); err != nil {
 		return nil, err
 	}
 	event.Raw = log
@@ -4169,335 +4522,6 @@ func (_InvisiCore *InvisiCoreFilterer) ParseScreenerUpdated(log types.Log) (*Inv
 	return event, nil
 }
 
-// InvisiCoreShieldIterator is returned from FilterShield and is used to iterate over the raw logs and unpacked data for Shield events raised by the InvisiCore contract.
-type InvisiCoreShieldIterator struct {
-	Event *InvisiCoreShield // Event containing the contract specifics and raw log
-
-	contract *bind.BoundContract // Generic contract to use for unpacking event data
-	event    string              // Event name to use for unpacking event data
-
-	logs chan types.Log        // Log channel receiving the found contract events
-	sub  ethereum.Subscription // Subscription for errors, completion and termination
-	done bool                  // Whether the subscription completed delivering logs
-	fail error                 // Occurred error to stop iteration
-}
-
-// Next advances the iterator to the subsequent event, returning whether there
-// are any more events found. In case of a retrieval or parsing error, false is
-// returned and Error() can be queried for the exact failure.
-func (it *InvisiCoreShieldIterator) Next() bool {
-	// If the iterator failed, stop iterating
-	if it.fail != nil {
-		return false
-	}
-	// If the iterator completed, deliver directly whatever's available
-	if it.done {
-		select {
-		case log := <-it.logs:
-			it.Event = new(InvisiCoreShield)
-			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
-				it.fail = err
-				return false
-			}
-			it.Event.Raw = log
-			return true
-
-		default:
-			return false
-		}
-	}
-	// Iterator still in progress, wait for either a data or an error event
-	select {
-	case log := <-it.logs:
-		it.Event = new(InvisiCoreShield)
-		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
-			it.fail = err
-			return false
-		}
-		it.Event.Raw = log
-		return true
-
-	case err := <-it.sub.Err():
-		it.done = true
-		it.fail = err
-		return it.Next()
-	}
-}
-
-// Error returns any retrieval or parsing error occurred during filtering.
-func (it *InvisiCoreShieldIterator) Error() error {
-	return it.fail
-}
-
-// Close terminates the iteration process, releasing any pending underlying
-// resources.
-func (it *InvisiCoreShieldIterator) Close() error {
-	it.sub.Unsubscribe()
-	return nil
-}
-
-// InvisiCoreShield represents a Shield event raised by the InvisiCore contract.
-type InvisiCoreShield struct {
-	Token          common.Address
-	Payer          common.Address
-	Amount         *big.Int
-	TreeId         *big.Int
-	StartLeafIndex uint32
-	Deliveries     []IInvisiCoreDelivery
-	Deadline       *big.Int
-	Raw            types.Log // Blockchain specific contextual infos
-}
-
-// FilterShield is a free log retrieval operation binding the contract event 0xefe7bab38d42993e5331d7dd43bbf9a0e1fa493cdd18f5d6d0b980f5b324f0d1.
-//
-// Solidity: event Shield(address indexed token, address indexed payer, uint256 amount, uint256 indexed treeId, uint32 startLeafIndex, (bytes,bytes)[] deliveries, uint256 deadline)
-func (_InvisiCore *InvisiCoreFilterer) FilterShield(opts *bind.FilterOpts, token []common.Address, payer []common.Address, treeId []*big.Int) (*InvisiCoreShieldIterator, error) {
-
-	var tokenRule []interface{}
-	for _, tokenItem := range token {
-		tokenRule = append(tokenRule, tokenItem)
-	}
-	var payerRule []interface{}
-	for _, payerItem := range payer {
-		payerRule = append(payerRule, payerItem)
-	}
-
-	var treeIdRule []interface{}
-	for _, treeIdItem := range treeId {
-		treeIdRule = append(treeIdRule, treeIdItem)
-	}
-
-	logs, sub, err := _InvisiCore.contract.FilterLogs(opts, "Shield", tokenRule, payerRule, treeIdRule)
-	if err != nil {
-		return nil, err
-	}
-	return &InvisiCoreShieldIterator{contract: _InvisiCore.contract, event: "Shield", logs: logs, sub: sub}, nil
-}
-
-// WatchShield is a free log subscription operation binding the contract event 0xefe7bab38d42993e5331d7dd43bbf9a0e1fa493cdd18f5d6d0b980f5b324f0d1.
-//
-// Solidity: event Shield(address indexed token, address indexed payer, uint256 amount, uint256 indexed treeId, uint32 startLeafIndex, (bytes,bytes)[] deliveries, uint256 deadline)
-func (_InvisiCore *InvisiCoreFilterer) WatchShield(opts *bind.WatchOpts, sink chan<- *InvisiCoreShield, token []common.Address, payer []common.Address, treeId []*big.Int) (event.Subscription, error) {
-
-	var tokenRule []interface{}
-	for _, tokenItem := range token {
-		tokenRule = append(tokenRule, tokenItem)
-	}
-	var payerRule []interface{}
-	for _, payerItem := range payer {
-		payerRule = append(payerRule, payerItem)
-	}
-
-	var treeIdRule []interface{}
-	for _, treeIdItem := range treeId {
-		treeIdRule = append(treeIdRule, treeIdItem)
-	}
-
-	logs, sub, err := _InvisiCore.contract.WatchLogs(opts, "Shield", tokenRule, payerRule, treeIdRule)
-	if err != nil {
-		return nil, err
-	}
-	return event.NewSubscription(func(quit <-chan struct{}) error {
-		defer sub.Unsubscribe()
-		for {
-			select {
-			case log := <-logs:
-				// New log arrived, parse the event and forward to the user
-				event := new(InvisiCoreShield)
-				if err := _InvisiCore.contract.UnpackLog(event, "Shield", log); err != nil {
-					return err
-				}
-				event.Raw = log
-
-				select {
-				case sink <- event:
-				case err := <-sub.Err():
-					return err
-				case <-quit:
-					return nil
-				}
-			case err := <-sub.Err():
-				return err
-			case <-quit:
-				return nil
-			}
-		}
-	}), nil
-}
-
-// ParseShield is a log parse operation binding the contract event 0xefe7bab38d42993e5331d7dd43bbf9a0e1fa493cdd18f5d6d0b980f5b324f0d1.
-//
-// Solidity: event Shield(address indexed token, address indexed payer, uint256 amount, uint256 indexed treeId, uint32 startLeafIndex, (bytes,bytes)[] deliveries, uint256 deadline)
-func (_InvisiCore *InvisiCoreFilterer) ParseShield(log types.Log) (*InvisiCoreShield, error) {
-	event := new(InvisiCoreShield)
-	if err := _InvisiCore.contract.UnpackLog(event, "Shield", log); err != nil {
-		return nil, err
-	}
-	event.Raw = log
-	return event, nil
-}
-
-// InvisiCoreTransactIterator is returned from FilterTransact and is used to iterate over the raw logs and unpacked data for Transact events raised by the InvisiCore contract.
-type InvisiCoreTransactIterator struct {
-	Event *InvisiCoreTransact // Event containing the contract specifics and raw log
-
-	contract *bind.BoundContract // Generic contract to use for unpacking event data
-	event    string              // Event name to use for unpacking event data
-
-	logs chan types.Log        // Log channel receiving the found contract events
-	sub  ethereum.Subscription // Subscription for errors, completion and termination
-	done bool                  // Whether the subscription completed delivering logs
-	fail error                 // Occurred error to stop iteration
-}
-
-// Next advances the iterator to the subsequent event, returning whether there
-// are any more events found. In case of a retrieval or parsing error, false is
-// returned and Error() can be queried for the exact failure.
-func (it *InvisiCoreTransactIterator) Next() bool {
-	// If the iterator failed, stop iterating
-	if it.fail != nil {
-		return false
-	}
-	// If the iterator completed, deliver directly whatever's available
-	if it.done {
-		select {
-		case log := <-it.logs:
-			it.Event = new(InvisiCoreTransact)
-			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
-				it.fail = err
-				return false
-			}
-			it.Event.Raw = log
-			return true
-
-		default:
-			return false
-		}
-	}
-	// Iterator still in progress, wait for either a data or an error event
-	select {
-	case log := <-it.logs:
-		it.Event = new(InvisiCoreTransact)
-		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
-			it.fail = err
-			return false
-		}
-		it.Event.Raw = log
-		return true
-
-	case err := <-it.sub.Err():
-		it.done = true
-		it.fail = err
-		return it.Next()
-	}
-}
-
-// Error returns any retrieval or parsing error occurred during filtering.
-func (it *InvisiCoreTransactIterator) Error() error {
-	return it.fail
-}
-
-// Close terminates the iteration process, releasing any pending underlying
-// resources.
-func (it *InvisiCoreTransactIterator) Close() error {
-	it.sub.Unsubscribe()
-	return nil
-}
-
-// InvisiCoreTransact represents a Transact event raised by the InvisiCore contract.
-type InvisiCoreTransact struct {
-	Token             common.Address
-	InputTreeId       *big.Int
-	OutputTreeId      *big.Int
-	Nullifiers        [][32]byte
-	NoteCommitments   [][32]byte
-	LeafIndices       []uint32
-	Deliveries        []IInvisiCoreDelivery
-	WithdrawalAddress common.Address
-	WithdrawalAmount  *big.Int
-	Deadline          *big.Int
-	Raw               types.Log // Blockchain specific contextual infos
-}
-
-// FilterTransact is a free log retrieval operation binding the contract event 0xac5599eb2d39ff304a3cfae313226db689176cd11a081b088a08b2ade0c88382.
-//
-// Solidity: event Transact(address token, uint256 indexed inputTreeId, uint256 indexed outputTreeId, bytes32[] nullifiers, bytes32[] noteCommitments, uint32[] leafIndices, (bytes,bytes)[] deliveries, address withdrawalAddress, uint256 withdrawalAmount, uint256 deadline)
-func (_InvisiCore *InvisiCoreFilterer) FilterTransact(opts *bind.FilterOpts, inputTreeId []*big.Int, outputTreeId []*big.Int) (*InvisiCoreTransactIterator, error) {
-
-	var inputTreeIdRule []interface{}
-	for _, inputTreeIdItem := range inputTreeId {
-		inputTreeIdRule = append(inputTreeIdRule, inputTreeIdItem)
-	}
-	var outputTreeIdRule []interface{}
-	for _, outputTreeIdItem := range outputTreeId {
-		outputTreeIdRule = append(outputTreeIdRule, outputTreeIdItem)
-	}
-
-	logs, sub, err := _InvisiCore.contract.FilterLogs(opts, "Transact", inputTreeIdRule, outputTreeIdRule)
-	if err != nil {
-		return nil, err
-	}
-	return &InvisiCoreTransactIterator{contract: _InvisiCore.contract, event: "Transact", logs: logs, sub: sub}, nil
-}
-
-// WatchTransact is a free log subscription operation binding the contract event 0xac5599eb2d39ff304a3cfae313226db689176cd11a081b088a08b2ade0c88382.
-//
-// Solidity: event Transact(address token, uint256 indexed inputTreeId, uint256 indexed outputTreeId, bytes32[] nullifiers, bytes32[] noteCommitments, uint32[] leafIndices, (bytes,bytes)[] deliveries, address withdrawalAddress, uint256 withdrawalAmount, uint256 deadline)
-func (_InvisiCore *InvisiCoreFilterer) WatchTransact(opts *bind.WatchOpts, sink chan<- *InvisiCoreTransact, inputTreeId []*big.Int, outputTreeId []*big.Int) (event.Subscription, error) {
-
-	var inputTreeIdRule []interface{}
-	for _, inputTreeIdItem := range inputTreeId {
-		inputTreeIdRule = append(inputTreeIdRule, inputTreeIdItem)
-	}
-	var outputTreeIdRule []interface{}
-	for _, outputTreeIdItem := range outputTreeId {
-		outputTreeIdRule = append(outputTreeIdRule, outputTreeIdItem)
-	}
-
-	logs, sub, err := _InvisiCore.contract.WatchLogs(opts, "Transact", inputTreeIdRule, outputTreeIdRule)
-	if err != nil {
-		return nil, err
-	}
-	return event.NewSubscription(func(quit <-chan struct{}) error {
-		defer sub.Unsubscribe()
-		for {
-			select {
-			case log := <-logs:
-				// New log arrived, parse the event and forward to the user
-				event := new(InvisiCoreTransact)
-				if err := _InvisiCore.contract.UnpackLog(event, "Transact", log); err != nil {
-					return err
-				}
-				event.Raw = log
-
-				select {
-				case sink <- event:
-				case err := <-sub.Err():
-					return err
-				case <-quit:
-					return nil
-				}
-			case err := <-sub.Err():
-				return err
-			case <-quit:
-				return nil
-			}
-		}
-	}), nil
-}
-
-// ParseTransact is a log parse operation binding the contract event 0xac5599eb2d39ff304a3cfae313226db689176cd11a081b088a08b2ade0c88382.
-//
-// Solidity: event Transact(address token, uint256 indexed inputTreeId, uint256 indexed outputTreeId, bytes32[] nullifiers, bytes32[] noteCommitments, uint32[] leafIndices, (bytes,bytes)[] deliveries, address withdrawalAddress, uint256 withdrawalAmount, uint256 deadline)
-func (_InvisiCore *InvisiCoreFilterer) ParseTransact(log types.Log) (*InvisiCoreTransact, error) {
-	event := new(InvisiCoreTransact)
-	if err := _InvisiCore.contract.UnpackLog(event, "Transact", log); err != nil {
-		return nil, err
-	}
-	event.Raw = log
-	return event, nil
-}
-
 // InvisiCoreTransactAggregatedIterator is returned from FilterTransactAggregated and is used to iterate over the raw logs and unpacked data for TransactAggregated events raised by the InvisiCore contract.
 type InvisiCoreTransactAggregatedIterator struct {
 	Event *InvisiCoreTransactAggregated // Event containing the contract specifics and raw log
@@ -4568,13 +4592,13 @@ func (it *InvisiCoreTransactAggregatedIterator) Close() error {
 // InvisiCoreTransactAggregated represents a TransactAggregated event raised by the InvisiCore contract.
 type InvisiCoreTransactAggregated struct {
 	ProofHash    [32]byte
-	RequestCount *big.Int
+	OperationIds [][32]byte
 	Raw          types.Log // Blockchain specific contextual infos
 }
 
-// FilterTransactAggregated is a free log retrieval operation binding the contract event 0xb550ba00978bffde806b7356916d552dea8794ebdc978bc7d205be9d2ce1a8df.
+// FilterTransactAggregated is a free log retrieval operation binding the contract event 0xbba51cdcc332e4c637d0eb850d94a27af9395d3c79a417bb1615aa894b489e07.
 //
-// Solidity: event TransactAggregated(bytes32 indexed proofHash, uint256 requestCount)
+// Solidity: event TransactAggregated(bytes32 indexed proofHash, bytes32[] operationIds)
 func (_InvisiCore *InvisiCoreFilterer) FilterTransactAggregated(opts *bind.FilterOpts, proofHash [][32]byte) (*InvisiCoreTransactAggregatedIterator, error) {
 
 	var proofHashRule []interface{}
@@ -4589,9 +4613,9 @@ func (_InvisiCore *InvisiCoreFilterer) FilterTransactAggregated(opts *bind.Filte
 	return &InvisiCoreTransactAggregatedIterator{contract: _InvisiCore.contract, event: "TransactAggregated", logs: logs, sub: sub}, nil
 }
 
-// WatchTransactAggregated is a free log subscription operation binding the contract event 0xb550ba00978bffde806b7356916d552dea8794ebdc978bc7d205be9d2ce1a8df.
+// WatchTransactAggregated is a free log subscription operation binding the contract event 0xbba51cdcc332e4c637d0eb850d94a27af9395d3c79a417bb1615aa894b489e07.
 //
-// Solidity: event TransactAggregated(bytes32 indexed proofHash, uint256 requestCount)
+// Solidity: event TransactAggregated(bytes32 indexed proofHash, bytes32[] operationIds)
 func (_InvisiCore *InvisiCoreFilterer) WatchTransactAggregated(opts *bind.WatchOpts, sink chan<- *InvisiCoreTransactAggregated, proofHash [][32]byte) (event.Subscription, error) {
 
 	var proofHashRule []interface{}
@@ -4631,9 +4655,9 @@ func (_InvisiCore *InvisiCoreFilterer) WatchTransactAggregated(opts *bind.WatchO
 	}), nil
 }
 
-// ParseTransactAggregated is a log parse operation binding the contract event 0xb550ba00978bffde806b7356916d552dea8794ebdc978bc7d205be9d2ce1a8df.
+// ParseTransactAggregated is a log parse operation binding the contract event 0xbba51cdcc332e4c637d0eb850d94a27af9395d3c79a417bb1615aa894b489e07.
 //
-// Solidity: event TransactAggregated(bytes32 indexed proofHash, uint256 requestCount)
+// Solidity: event TransactAggregated(bytes32 indexed proofHash, bytes32[] operationIds)
 func (_InvisiCore *InvisiCoreFilterer) ParseTransactAggregated(log types.Log) (*InvisiCoreTransactAggregated, error) {
 	event := new(InvisiCoreTransactAggregated)
 	if err := _InvisiCore.contract.UnpackLog(event, "TransactAggregated", log); err != nil {

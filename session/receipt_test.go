@@ -44,54 +44,12 @@ func TestOwnedReceiptRequiresCanonicalInsertionAndMembership(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	abi, err := protocol.ProtocolABI()
-	if err != nil {
-		t.Fatal(err)
-	}
-	event := abi.Events["BatchOutputs"]
-	// Pack the current event dynamically so the test is bound to the published ABI.
-	values := []any{}
-	topics := []common.Hash{event.ID}
-	for _, arg := range event.Inputs {
-		var value any
-		switch arg.Name {
-		case "treeId":
-			value = big.NewInt(1)
-		case "firstOutputOffset":
-			value = big.NewInt(0)
-		case "startLeafIndex":
-			value = uint32(0)
-		case "noteCommitments":
-			value = [][32]byte{stored.Commitment}
-		case "tokens":
-			value = []common.Address{token}
-		case "packedDeliveries":
-			clue := make([]byte, 68)
-			clue[64] = 24
-			value = append(append(binary.BigEndian.AppendUint16(nil, uint16(len(ciphertext))), ciphertext...), clue...)
-		default:
-			t.Fatalf("unexpected BatchOutputs field %s", arg.Name)
-		}
-		if arg.Indexed {
-			switch v := value.(type) {
-			case *big.Int:
-				topics = append(topics, common.BigToHash(v))
-			case uint32:
-				topics = append(topics, common.BigToHash(new(big.Int).SetUint64(uint64(v))))
-			default:
-				t.Fatal("unsupported indexed test field")
-			}
-		} else {
-			values = append(values, value)
-		}
-	}
-	data, err := event.Inputs.NonIndexed().Pack(values...)
-	if err != nil {
-		t.Fatal(err)
-	}
 	tx := common.HexToHash("0x1234")
-	log := &types.Log{Address: session.scope.ProtocolAddress, Topics: topics, Data: data, BlockNumber: 10, BlockHash: original.head.Hash(), TxHash: tx}
-	receipt := &types.Receipt{TxHash: tx, Status: types.ReceiptStatusSuccessful, BlockNumber: big.NewInt(10), BlockHash: original.head.Hash(), Logs: []*types.Log{log}}
+	clue := make([]byte, 68)
+	clue[64] = 24
+	logs := unifiedNoteLogs(t, session.scope.ProtocolAddress, tx, original.head.Hash(), token, stored.Commitment, ciphertext, clue)
+	log := logs[2]
+	receipt := &types.Receipt{TxHash: tx, Status: types.ReceiptStatusSuccessful, BlockNumber: big.NewInt(10), BlockHash: original.head.Hash(), Logs: logs}
 	provider := receiptProvider{original, receipt}
 	session.options.Provider = provider
 	session.rpc = session.rpc.WithProvider(provider)
@@ -99,7 +57,7 @@ func TestOwnedReceiptRequiresCanonicalInsertionAndMembership(t *testing.T) {
 	// An App error wrapping the nonrecipient sentinel must not commit inventory or checkpoints.
 	for _, appErr := range []error{wallet.ErrNotRecipient, fmt.Errorf("App failure: %w", wallet.ErrNotRecipient)} {
 		decoder, _ := receipts.NewDecoder()
-		batch, e := decoder.Decode(receipts.Block{Number: 10, Hash: receipt.BlockHash, ParentHash: original.head.ParentHash, Timestamp: original.head.Time}, []types.Log{*log})
+		batch, e := decoder.Decode(receipts.Block{Number: 10, Hash: receipt.BlockHash, ParentHash: original.head.ParentHash, Timestamp: original.head.Time}, []types.Log{*logs[0], *logs[1], *logs[2], *logs[3]})
 		if e != nil {
 			t.Fatal(e)
 		}
@@ -141,4 +99,30 @@ func TestOwnedReceiptRequiresCanonicalInsertionAndMembership(t *testing.T) {
 	if _, _, _, err := readTransactionForTest(session, ctx, tx, *state.ObservedThrough); err == nil {
 		t.Fatal("substituted receipt accepted")
 	}
+}
+
+func unifiedNoteLogs(t *testing.T, core common.Address, tx, block common.Hash, token common.Address, commitment common.Hash, cipher, clue []byte) []*types.Log {
+	t.Helper()
+	a, e := protocol.ProtocolABI()
+	if e != nil {
+		t.Fatal(e)
+	}
+	id, err := protocol.NoteOperationID(protocol.TransactionContext{ChainID: big.NewInt(31337), ProtocolAddress: core}, 0, protocol.CrossTreeTransactParams{Token: token, Sources: []protocol.InputSource{}, Nullifiers: [][32]byte{}, NoteCommitments: [][32]byte{commitment}, WithdrawalAmount: new(big.Int), Deadline: big.NewInt(9999999999), FeeAmount: new(big.Int)}, []protocol.Delivery{{Ciphertext: cipher, Clue: clue}}, protocol.FundingParams{Payer: token, Amount: big.NewInt(1)})
+	if err != nil {
+		t.Fatal(err)
+	}
+	pack := func(name string, index uint, indexed []common.Hash, args ...any) *types.Log {
+		event := a.Events[name]
+		data, e := event.Inputs.NonIndexed().Pack(args...)
+		if e != nil {
+			t.Fatal(e)
+		}
+		return &types.Log{Address: core, Topics: append([]common.Hash{event.ID}, indexed...), Data: data, BlockNumber: 10, BlockHash: block, TxHash: tx, Index: index}
+	}
+	packed := binary.BigEndian.AppendUint16(nil, uint16(len(cipher)))
+	packed = append(packed, cipher...)
+	if len(cipher) > 0 {
+		packed = append(packed, clue...)
+	}
+	return []*types.Log{pack("NoteOperation", 0, []common.Hash{id, common.BytesToHash(token.Bytes())}, uint8(0), big.NewInt(1), big.NewInt(9999999999), common.Address{}, big.NewInt(0)), pack("CommitmentsInserted", 1, []common.Hash{common.BigToHash(big.NewInt(1))}, uint32(0), [][32]byte{commitment}), pack("NoteOutputs", 2, []common.Hash{id, common.BigToHash(big.NewInt(1))}, uint32(0), packed), pack("PublicDeposit", 3, []common.Hash{id, common.BytesToHash(token.Bytes()), common.BytesToHash(token.Bytes())}, big.NewInt(1))}
 }

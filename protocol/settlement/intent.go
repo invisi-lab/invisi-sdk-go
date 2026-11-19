@@ -68,18 +68,19 @@ type wireRequest struct {
 	Funding    Funding
 }
 type Request struct {
-	Method        string
-	Members       []Request
-	Shield        ShieldParams
-	ShieldOutputs []ShieldOutput
-	Creation      CreateCreditParams
-	Draw          CreditDrawParams
-	Update        UpdateCreditParams
-	Revocation    RevokeCreditParams
-	Proof         []byte
-	Params        Params
-	Deliveries    []Delivery
-	Funding       Funding
+	LegacyCreation bool
+	Method         string
+	Members        []Request
+	Shield         ShieldParams
+	ShieldOutputs  []ShieldOutput
+	Creation       CreateCreditParams
+	Draw           CreditDrawParams
+	Update         UpdateCreditParams
+	Revocation     RevokeCreditParams
+	Proof          []byte
+	Params         Params
+	Deliveries     []Delivery
+	Funding        Funding
 }
 
 // Decode rejects unsupported selectors, trailing bytes, nonzero padding and
@@ -129,7 +130,13 @@ func Decode(data []byte) (request *Request, err error) {
 		request.Funding = *abi.ConvertType(values[3], new(Funding)).(*Funding)
 	case "createCredit":
 		request.Proof = values[0].([]byte)
-		request.Creation = *abi.ConvertType(values[1], new(CreateCreditParams)).(*CreateCreditParams)
+		request.LegacyCreation = len(method.Inputs[1].Type.TupleElems) == 8
+		if request.LegacyCreation {
+			old := *abi.ConvertType(values[1], new(legacyCreateCreditParams)).(*legacyCreateCreditParams)
+			request.Creation = CreateCreditParams{Token: old.Token, Owner: old.Owner, RevocationShard: old.RevocationShard, RevocationSlot: old.RevocationSlot, CreditCommitment: old.CreditCommitment, Deadline: old.Deadline, FeeRecipient: old.FeeRecipient, FeeAmount: old.FeeAmount, TotalAmount: new(big.Int)}
+		} else {
+			request.Creation = *abi.ConvertType(values[1], new(CreateCreditParams)).(*CreateCreditParams)
+		}
 		request.Deliveries = *abi.ConvertType(values[2], new([]Delivery)).(*[]Delivery)
 	case "creditDraw":
 		request.Proof = values[0].([]byte)
@@ -188,7 +195,16 @@ func Encode(r *Request) (encoded []byte, err error) {
 	case "shield":
 		return contractABI.Pack("shield", r.Shield, r.ShieldOutputs, r.Deliveries, r.Funding)
 	case "createCredit":
-		return contractABI.Pack("createCredit", r.Proof, r.Creation, r.Deliveries)
+		for name, method := range contractABI.Methods {
+			if method.RawName == "createCredit" && (len(method.Inputs[1].Type.TupleElems) == 8) == r.LegacyCreation {
+				p := r.Creation
+				if p.TotalAmount == nil {
+					p.TotalAmount = new(big.Int)
+				}
+				return contractABI.Pack(name, r.Proof, p, r.Deliveries)
+			}
+		}
+		return nil, ErrCalldata
 	case "creditDraw":
 		return contractABI.Pack("creditDraw", r.Proof, r.Draw, r.Deliveries)
 	case "updateCredit":
@@ -288,4 +304,14 @@ func DecodeSingle(data []byte) (*Request, error) {
 		return nil, ErrCalldata
 	}
 	return r, nil
+}
+
+type legacyCreateCreditParams struct {
+	Token, Owner     common.Address
+	RevocationShard  uint64
+	RevocationSlot   uint16
+	CreditCommitment [32]byte
+	Deadline         *big.Int
+	FeeRecipient     common.Address
+	FeeAmount        *big.Int
 }

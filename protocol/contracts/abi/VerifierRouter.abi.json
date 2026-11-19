@@ -1,6 +1,19 @@
 [
   {
     "type": "function",
+    "name": "getCreateCreditInitialPaymentVerifier",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "address",
+        "internalType": "contract IVerifier"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
     "name": "getCreateCreditVerifier",
     "inputs": [],
     "outputs": [

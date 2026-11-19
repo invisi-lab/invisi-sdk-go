@@ -86,7 +86,7 @@ func parseNoteOutput(raw json.RawMessage) (ProtocolNoteOutput, error) {
 		return o, e
 	}
 	switch m.Kind {
-	case "Shield", "Transact", "CrossTreeTransact", "BatchOutputs", "CreditDraw":
+	case "NoteOutputs", "CreditDraw":
 	default:
 		return o, errors.New("Credit state cannot appear in Note results")
 	}
@@ -103,7 +103,7 @@ func parseCreditState(raw json.RawMessage) (IndexedCreditState, error) {
 		return o, e
 	}
 	switch m.Kind {
-	case "CreditCreated", "CreditDraw", "CreditUpdated":
+	case "CreditCreated", "CreditStateTransition", "CreditUpdated":
 	default:
 		return o, errors.New("invalid Credit state event")
 	}

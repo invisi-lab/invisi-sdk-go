@@ -17,3 +17,5 @@ type ExplicitUpdateCreditPreparation = transaction.ExplicitUpdateCreditPreparati
 type ExplicitDrawCreditPreparation = transaction.ExplicitDrawCreditPreparation
 type ExplicitRevokeCreditPreparation = transaction.ExplicitRevokeCreditPreparation
 type CreditInput = transaction.CreditInput
+
+type CreditInitialPayment = credit.InitialPayment

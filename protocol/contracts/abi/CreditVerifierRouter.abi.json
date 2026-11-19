@@ -14,11 +14,24 @@
       },
       {
         "name": "creditVerifiers",
-        "type": "address[15]",
-        "internalType": "contract IVerifier[15]"
+        "type": "address[16]",
+        "internalType": "contract IVerifier[16]"
       }
     ],
     "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "createCreditInitialPaymentVerifier",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "address",
+        "internalType": "contract IVerifier"
+      }
+    ],
+    "stateMutability": "view"
   },
   {
     "type": "function",
@@ -224,6 +237,19 @@
         "name": "",
         "type": "address",
         "internalType": "contract CrossTreeVerifierRegistry"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "getCreateCreditInitialPaymentVerifier",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "address",
+        "internalType": "contract IVerifier"
       }
     ],
     "stateMutability": "view"

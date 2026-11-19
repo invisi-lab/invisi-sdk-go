@@ -122,12 +122,12 @@ func TestCurrentABIArtifacts(t *testing.T) {
 		})
 	}
 	parsed, _ := contracts.InvisiCoreMetaData.GetAbi()
-	for _, name := range []string{"CommitmentsInserted", "BatchOutputs", "TreeCreated", "Shield", "CreditCreated"} {
+	for _, name := range []string{"CommitmentsInserted", "NoteOutputs", "TreeCreated", "NoteOperation", "CreditCreated"} {
 		if _, ok := parsed.Events[name]; !ok {
 			t.Errorf("missing current event %s", name)
 		}
 	}
-	for event, field := range map[string]string{"BatchOutputs": "noteCommitments", "CommitmentsInserted": "commitments"} {
+	for event, field := range map[string]string{"NoteOutputs": "packedDeliveries", "CommitmentsInserted": "commitments"} {
 		found := false
 		for _, input := range parsed.Events[event].Inputs {
 			found = found || input.Name == field

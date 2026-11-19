@@ -34,6 +34,11 @@ func (p *Prepared) Preview() Preview {
 			result.AvailableCredit.Set(primitives.ElementToBigInt(i.CreatedState.AvailableCredit))
 			result.Unlimited = i.CreatedState.Unlimited
 		}
+		if i.Create.HasInitialPayment != nil && *i.Create.HasInitialPayment {
+			result.NoteOutputCount = 1
+			result.GrossAmount.Set(i.Create.TotalAmount)
+			result.NoteAmount.Sub(i.Create.TotalAmount, result.FeeAmount)
+		}
 		result.Owner = i.Create.Owner
 		result.StateOutputCount = 1
 		result.Deadline = i.Create.Deadline.Uint64()

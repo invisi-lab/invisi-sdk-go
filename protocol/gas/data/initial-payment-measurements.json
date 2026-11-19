@@ -1,0 +1,49 @@
+{
+  "protocolCommit": "c30ef1e4a0cb4338877ec4e7d3351e57c2fff9b5",
+  "sourceState": "working-tree",
+  "sourceSha256": "1bde16dc5bdedd32023c0d0ff749856f7626cbcb53b4d5c08f7b5040ad0988bd",
+  "creditManifestSha256": "535ec60473248b57c6d86125c2f2380ccfa5eb390256d9384f9d4cb98cc9471d",
+  "conditions": "Anvil31337, Prague, Solidity0.8.38 optimizer200, real verifier, first allocation, fresh tree, funded owner and allowance",
+  "rows": [
+    {
+      "kind": "create-credit",
+      "feeEnabled": false,
+      "gasUnits": 1569276,
+      "samples": [
+        1569276,
+        1569276,
+        1569276
+      ]
+    },
+    {
+      "kind": "create-credit",
+      "feeEnabled": true,
+      "gasUnits": 1632766,
+      "samples": [
+        1632766,
+        1632766,
+        1632766
+      ]
+    },
+    {
+      "kind": "create-credit-initial-payment",
+      "feeEnabled": false,
+      "gasUnits": 1677215,
+      "samples": [
+        1677215,
+        1677215,
+        1677215
+      ]
+    },
+    {
+      "kind": "create-credit-initial-payment",
+      "feeEnabled": true,
+      "gasUnits": 1701560,
+      "samples": [
+        1701560,
+        1701560,
+        1701560
+      ]
+    }
+  ]
+}

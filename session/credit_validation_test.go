@@ -16,6 +16,7 @@ type creditValidationProvider struct {
 	sessionProvider
 	revoked   bool
 	allowance *big.Int
+	balance   *big.Int
 }
 
 func (p creditValidationProvider) CallContract(ctx context.Context, message ethereum.CallMsg, block *big.Int) ([]byte, error) {
@@ -38,7 +39,11 @@ func (p creditValidationProvider) CallContract(ctx context.Context, message ethe
 	if method, e := erc20.MethodById(message.Data[:4]); e == nil {
 		switch method.RawName {
 		case "balanceOf":
-			return method.Outputs.Pack(big.NewInt(1000))
+			value := big.NewInt(1000)
+			if p.balance != nil {
+				value = p.balance
+			}
+			return method.Outputs.Pack(value)
 		case "allowance":
 			value := big.NewInt(1000)
 			if p.allowance != nil {
@@ -118,5 +123,27 @@ func TestCreditCancellationIgnoresExpiredAuthorizationButChecksRevocation(t *tes
 	s.options.Provider = creditValidationProvider{sessionProvider: base, revoked: true}
 	if err = s.checkCreditCancellation(context.Background(), intent); err == nil {
 		t.Fatal("revoked authority permitted cancellation release")
+	}
+}
+
+func TestInitialPaymentValidationRequiresGrossOwnerFunds(t *testing.T) {
+	s, token, _ := testSession(t)
+	base := s.options.Provider.(sessionProvider)
+	yes := true
+	clue := make([]byte, 68)
+	clue[64] = 24
+	intent := credit.Intent{Version: 2, Context: credit.Context{ProtocolContext: s.coreContext(), TokenAddress: token, Timestamp: base.head.Time}, Create: &credit.CreateParams{Token: token, Owner: s.wallet.OwnerAddress(), RevocationShard: 1, RevocationSlot: 1, CreditCommitment: common.HexToHash("1"), Deadline: new(big.Int).SetUint64(base.head.Time + 300), FeeRecipient: common.HexToAddress("44"), FeeAmount: big.NewInt(1), HasInitialPayment: &yes, TotalAmount: big.NewInt(7), NoteCommitment: common.HexToHash("2")}, Deliveries: []protocol.Delivery{{Ciphertext: []byte{1}, Clue: clue}, {Ciphertext: []byte{2}, Clue: clue}, {Ciphertext: []byte{3}, Clue: clue}}}
+	for _, tc := range []struct {
+		name               string
+		balance, allowance *big.Int
+		valid              bool
+	}{{"only-fee-allowance", big.NewInt(7), big.NewInt(1), false}, {"only-fee-balance", big.NewInt(1), big.NewInt(7), false}, {"gross", big.NewInt(7), big.NewInt(7), true}} {
+		t.Run(tc.name, func(t *testing.T) {
+			s.options.Provider = creditValidationProvider{sessionProvider: base, balance: tc.balance, allowance: tc.allowance}
+			err := s.validateCreditIntent(context.Background(), intent)
+			if (err == nil) != tc.valid {
+				t.Fatalf("valid=%v err=%v", tc.valid, err)
+			}
+		})
 	}
 }

@@ -171,7 +171,7 @@ func TestWalletStatementBulkBoundaryMatchesABI(t *testing.T) {
 			for i := range words {
 				encodedWords[i] = words[i].Bytes()
 			}
-			for _, operation := range []WalletOperation{WalletTransact, WalletCreateCredit, WalletCreditDraw, WalletUpdateCredit} {
+			for _, operation := range []WalletOperation{WalletTransact, WalletCreateCredit, WalletCreateCreditInitialPayment, WalletCreditDraw, WalletUpdateCredit} {
 				request := WalletAuthorizationRequest{Context: ProtocolContext{words[0], words[1]}, Operation: operation, Capacity: 1, Words: words}
 				typed, err := WalletAuthorizationTypedData(request)
 				if err != nil {

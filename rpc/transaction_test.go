@@ -133,7 +133,7 @@ func TestTransactionUpdatesValidation(t *testing.T) {
 					v["notes"] = []any{map[string]any{"transactionHash": common.HexToHash("0x99")}}
 				case "conflicting_transition":
 					event := func(amount string) any {
-						return map[string]any{"block": v["indexedHead"], "transactionHash": v["transactionHash"], "name": "CreditDraw", "logIndex": 1, "data": map[string]any{"amount": amount}}
+						return map[string]any{"block": v["indexedHead"], "transactionHash": v["transactionHash"], "name": "CreditStateTransition", "logIndex": 1, "data": map[string]any{"amount": amount}}
 					}
 					v["transitions"] = []any{event("1"), event("2")}
 				}
@@ -162,9 +162,9 @@ func TestTransactionUpdatesValidation(t *testing.T) {
 
 func TestCreditTransactionPreservesDeliveriesAndPrecision(t *testing.T) {
 	client, scope, hash := transactionClient(t, func(v map[string]any) {
-		state := map[string]any{"block": v["indexedHead"], "treeId": 1, "leafIndex": 0, "commitment": common.HexToHash("3"), "token": common.HexToAddress("22"), "transactionHash": v["transactionHash"], "logIndex": 1, "kind": "CreditDraw", "deliveries": []any{map[string]any{"ciphertext": "0x81", "clue": "0x" + repeatZero(68)}, map[string]any{"ciphertext": "0x8101", "clue": "0x" + repeatZero(68)}}}
+		state := map[string]any{"block": v["indexedHead"], "treeId": 1, "leafIndex": 0, "commitment": common.HexToHash("3"), "token": common.HexToAddress("22"), "transactionHash": v["transactionHash"], "logIndex": 1, "kind": "CreditStateTransition", "deliveries": []any{map[string]any{"ciphertext": "0x81", "clue": "0x" + repeatZero(68)}, map[string]any{"ciphertext": "0x8101", "clue": "0x" + repeatZero(68)}}}
 		v["states"] = []any{state, state}
-		event := map[string]any{"block": v["indexedHead"], "transactionHash": v["transactionHash"], "name": "CreditDraw", "logIndex": 2, "data": map[string]any{"amount": "12345678901234567890"}}
+		event := map[string]any{"block": v["indexedHead"], "transactionHash": v["transactionHash"], "name": "CreditStateTransition", "logIndex": 2, "data": map[string]any{"amount": "12345678901234567890"}}
 		v["transitions"] = []any{event, event}
 	}, false)
 	result, e := client.GetTransactionCreditUpdates(t.Context(), scope, hash)

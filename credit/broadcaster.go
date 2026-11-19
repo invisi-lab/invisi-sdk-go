@@ -34,7 +34,7 @@ func unsignedIntent(i Intent) ([]byte, error) {
 	case i.Create != nil:
 		p := *i.Create
 		p.FeeAmount, _ = normalizeFee(p.FeeRecipient, p.FeeAmount)
-		return pack("createCredit", []byte{}, p, i.Deliveries)
+		return packCreate(p, []byte{}, i.Deliveries)
 	case i.Update != nil:
 		p := *i.Update
 		p.FeeAmount, _ = normalizeFee(p.FeeRecipient, p.FeeAmount)
@@ -83,6 +83,22 @@ func reprice(i Intent, recipient common.Address, amount *big.Int) (Intent, error
 	case next.Create != nil:
 		next.Create.FeeRecipient = recipient
 		next.Create.FeeAmount = fee
+		if next.Create.HasInitialPayment != nil && *next.Create.HasInitialPayment {
+			if fee.Cmp(next.Create.TotalAmount) >= 0 || next.OutputNote == nil || next.NoteRecipientKeys == nil {
+				return Intent{}, fmt.Errorf("initial payment fee consumes Note or recipient keys missing")
+			}
+			next.OutputNote.Amount = primitives.BigIntToElement(new(big.Int).Sub(next.Create.TotalAmount, fee))
+			commitment, e := primitives.ComputeNoteCommitment(next.Context.ChainID, next.Context.ProtocolAddress, next.OutputIdentity, next.OutputNote.TokenAddress, next.OutputNote.Amount)
+			if e != nil {
+				return Intent{}, e
+			}
+			next.Create.NoteCommitment = common.Hash(commitment.Bytes())
+			nd, e := noteDelivery(*next.OutputNote, next.NoteRecipientKeys)
+			if e != nil {
+				return Intent{}, e
+			}
+			next.Deliveries[len(next.Deliveries)-1] = nd
+		}
 	case next.Update != nil:
 		next.Update.FeeRecipient = recipient
 		next.Update.FeeAmount = fee

@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/invisi-labs/invisi-sdk-go/credit"
 	"github.com/invisi-labs/invisi-sdk-go/ipp"
 	protocolrpc "github.com/invisi-labs/invisi-sdk-go/rpc"
 	"github.com/invisi-labs/invisi-sdk-go/sdk"
@@ -78,5 +79,56 @@ func TestCreditKeyPassesExactly(t *testing.T) {
 	}}
 	if _, e := PrepareRequest(context.Background(), r, target, Options{Now: func() time.Time { return time.Date(2026, 11, 17, 8, 3, 0, 0, time.UTC) }}); e != nil {
 		t.Fatal(e)
+	}
+}
+
+func TestInitialPaymentPreparesGrossDebitWithoutChangingFrozenNet(t *testing.T) {
+	for _, fee := range []*credit.Fee{nil, {Recipient: common.HexToAddress("0x1111111111111111111111111111111111111111"), Amount: big.NewInt(1)}} {
+		r := fixture(t, "credit")
+		r.Credit.InitialPayment = &ipp.InitialPaymentTerms{Amount: "5"}
+		expected := int64(5)
+		if fee != nil {
+			expected = 6
+		}
+		target := Target[string]{Context: protocolrpc.DeploymentContext{ChainID: 8453, ProtocolAddress: common.HexToAddress(r.Credit.ProtocolAddress)}, PrepareCreateCredit: func(_ context.Context, p sdk.CreateCreditPreparation) (string, error) {
+			if p.InitialPayment == nil || p.InitialPayment.Amount.Cmp(big.NewInt(expected)) != 0 {
+				t.Fatal("initial gross debit was lost")
+			}
+			if p.Spender != r.Credit.Spender || p.CreationABI != "initial-payment" {
+				t.Fatal("spender or deployment selection changed")
+			}
+			if fee != nil && (p.Fee == nil || p.Fee.Recipient != fee.Recipient || p.Fee.Amount.Cmp(fee.Amount) != 0) {
+				t.Fatal("actual fee was lost")
+			}
+			return "credit", nil
+		}}
+		_, err := PrepareRequest(context.Background(), r, target, Options{CreationABI: "initial-payment", InitialPaymentFee: fee, Now: func() time.Time { return time.Date(2026, 11, 17, 8, 3, 0, 0, time.UTC) }})
+		if err != nil {
+			t.Fatal(err)
+		}
+		if r.Credit.InitialPayment.Amount != "5" {
+			t.Fatal("mutated the merchant frozen amount")
+		}
+		if fee != nil && fee.Amount.Cmp(big.NewInt(1)) != 0 {
+			t.Fatal("mutated caller fee")
+		}
+	}
+}
+func TestInitialPaymentFeeValidationDoesNotPrepareInvalidRequests(t *testing.T) {
+	r := fixture(t, "credit")
+	r.Credit.InitialPayment = &ipp.InitialPaymentTerms{Amount: "5"}
+	target := Target[string]{Context: protocolrpc.DeploymentContext{ChainID: 8453, ProtocolAddress: common.HexToAddress(r.Credit.ProtocolAddress)}, PrepareCreateCredit: func(_ context.Context, _ sdk.CreateCreditPreparation) (string, error) {
+		t.Fatal("prepared invalid fee")
+		return "", nil
+	}}
+	for _, fee := range []*credit.Fee{{Amount: nil}, {Amount: big.NewInt(-1)}, {Amount: big.NewInt(1)}, {Recipient: common.HexToAddress("0x1111111111111111111111111111111111111111"), Amount: big.NewInt(0)}, {Recipient: common.HexToAddress("0x1111111111111111111111111111111111111111"), Amount: new(big.Int).Sub(new(big.Int).Lsh(big.NewInt(1), 126), big.NewInt(5))}} {
+		_, err := PrepareRequest(context.Background(), r, target, Options{InitialPaymentFee: fee, Now: func() time.Time { return time.Date(2026, 11, 17, 8, 3, 0, 0, time.UTC) }})
+		if err == nil {
+			t.Fatal("invalid local fee accepted")
+		}
+	}
+	r.Credit.InitialPayment = nil
+	if _, err := PrepareRequest(context.Background(), r, target, Options{InitialPaymentFee: &credit.Fee{Amount: big.NewInt(0)}, Now: func() time.Time { return time.Date(2026, 11, 17, 8, 3, 0, 0, time.UTC) }}); err == nil {
+		t.Fatal("fee accepted without an initial payment")
 	}
 }

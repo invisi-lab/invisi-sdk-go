@@ -66,8 +66,9 @@ func TestTypeScriptParity(t *testing.T) {
 		t.Fatal(err)
 	}
 	var fixtures struct {
-		AvailableDefaults map[string]any
-		Vectors           []struct {
+		AvailableDefaults       map[string]any
+		AvailableDefaultsByKind map[string]map[string]any
+		Vectors                 []struct {
 			Query  Shape
 			Result map[string]any
 		}
@@ -89,6 +90,11 @@ func TestTypeScriptParity(t *testing.T) {
 			t.Fatal(err)
 		}
 		expected := map[string]any{}
+		if defaults := fixtures.AvailableDefaultsByKind[v.Query["kind"].(string)]; defaults != nil {
+			for key, value := range defaults {
+				expected[key] = value
+			}
+		}
 		if v.Result["available"] == true {
 			for key, value := range fixtures.AvailableDefaults {
 				expected[key] = value

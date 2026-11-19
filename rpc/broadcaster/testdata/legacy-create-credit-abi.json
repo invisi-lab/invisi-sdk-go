@@ -1,0 +1,79 @@
+[
+  {
+    "type": "function",
+    "name": "createCredit",
+    "inputs": [
+      {
+        "name": "",
+        "type": "bytes",
+        "internalType": "bytes"
+      },
+      {
+        "name": "p",
+        "type": "tuple",
+        "internalType": "struct IInvisiCore.CreateCreditParams",
+        "components": [
+          {
+            "name": "token",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "owner",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "revocationShard",
+            "type": "uint64",
+            "internalType": "uint64"
+          },
+          {
+            "name": "revocationSlot",
+            "type": "uint16",
+            "internalType": "uint16"
+          },
+          {
+            "name": "creditCommitment",
+            "type": "bytes32",
+            "internalType": "bytes32"
+          },
+          {
+            "name": "deadline",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "feeRecipient",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "feeAmount",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ]
+      },
+      {
+        "name": "",
+        "type": "tuple[]",
+        "internalType": "struct IInvisiCore.Delivery[]",
+        "components": [
+          {
+            "name": "ciphertext",
+            "type": "bytes",
+            "internalType": "bytes"
+          },
+          {
+            "name": "clue",
+            "type": "bytes",
+            "internalType": "bytes"
+          }
+        ]
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  }
+]

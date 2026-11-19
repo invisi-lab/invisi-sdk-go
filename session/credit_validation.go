@@ -79,7 +79,9 @@ func (s *WalletSession) validateCreditIntentWithProvider(ctx context.Context, in
 	case intent.Create != nil:
 		p := intent.Create
 		owner = p.Owner
-		if p.FeeAmount != nil {
+		if p.HasInitialPayment != nil && *p.HasInitialPayment {
+			fee.Set(p.TotalAmount)
+		} else if p.FeeAmount != nil {
 			fee.Set(p.FeeAmount)
 		}
 		next, err := contract.CreditAllocation(opts, p.Owner, p.Token)
