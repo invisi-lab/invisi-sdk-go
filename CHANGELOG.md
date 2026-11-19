@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.3.1
+
+- Accept unified CreditDraw events in indexed Credit RPC responses, including post-debit state deliveries.
+- Preserve canonical block, range, membership, duplicate and ciphertext checks; restore automatic IPP Credit reconciliation.
+
 ## 1.3.0
 
 - Support optional owner-only Credit initial payments, post-debit Credit state, merchant net Notes, gross funding checks and UTC-period validation.

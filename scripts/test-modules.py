@@ -6,7 +6,7 @@ MODULES = ['primitives', 'protocol', 'prover', 'rpc', '.', 'session', 'ipp', 'ex
 with tempfile.TemporaryDirectory(prefix='invisi-module-workspace-') as tmp:
     work = pathlib.Path(tmp) / 'go.work'
     paths = [(ROOT / m).resolve() for m in MODULES]
-    work.write_text('go 1.26.1\nuse (\n' + ''.join((str(p) + '\n' for p in paths)) + ')\nreplace (\n' + ''.join(('github.com/invisi-labs/invisi-sdk-go' + ('/' + m if m != '.' else '') + ' v1.3.0 => ' + str(p) + '\n' for m, p in zip(MODULES, paths))) + ')\n')
+    work.write_text('go 1.26.1\nuse (\n' + ''.join((str(p) + '\n' for p in paths)) + ')\nreplace (\n' + ''.join(('github.com/invisi-labs/invisi-sdk-go' + ('/' + m if m != '.' else '') + ' v1.3.1 => ' + str(p) + '\n' for m, p in zip(MODULES, paths))) + ')\n')
     env = {**os.environ, 'GOWORK': str(work)}
     subprocess.run(['python3', str(ROOT / 'scripts/check-module-boundaries.py')], env=env, check=True)
     for module, path in zip(MODULES, paths):
