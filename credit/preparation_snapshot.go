@@ -48,6 +48,7 @@ func (p CreatePreparation) Clone() CreatePreparation {
 	if p.InitialPayment != nil {
 		v := *p.InitialPayment
 		v.Amount = snapshotAmount(v.Amount)
+		v.NetAmount = snapshotAmount(v.NetAmount)
 		v.Payload = snapshotPayload(v.Payload)
 		p.InitialPayment = &v
 	}

@@ -84,6 +84,40 @@ func reprice(i Intent, recipient common.Address, amount *big.Int) (Intent, error
 		next.Create.FeeRecipient = recipient
 		next.Create.FeeAmount = fee
 		if next.Create.HasInitialPayment != nil && *next.Create.HasInitialPayment {
+			if next.InitialPaymentNetAmount != nil {
+				if next.InitialPaymentCreationDelivery == nil {
+					return Intent{}, fmt.Errorf("original creation state required for net repricing")
+				}
+				total := new(big.Int).Add(next.InitialPaymentNetAmount, fee)
+				if total.BitLen() > 126 {
+					return Intent{}, fmt.Errorf("initial payment gross exceeds uint126")
+				}
+				original := *next.InitialPaymentCreationDelivery
+				debit := primitives.BigIntToElement(total)
+				usage, e := original.State.drawUsage(debit, next.Context.Timestamp)
+				if e != nil {
+					return Intent{}, e
+				}
+				if !original.State.Unlimited {
+					if original.State.AvailableCredit.Cmp(&debit) < 0 {
+						return Intent{}, fmt.Errorf("initial payment exceeds available credit")
+					}
+					original.State.AvailableCredit.Sub(&original.State.AvailableCredit, &debit)
+				}
+				original.State.Usage = usage
+				ds, e := Seal(original)
+				if e != nil {
+					return Intent{}, e
+				}
+				next.CreatedState = &original.State
+				commitment, e := original.State.Commitment()
+				if e != nil {
+					return Intent{}, e
+				}
+				next.Create.CreditCommitment = common.Hash(commitment.Bytes())
+				next.Create.TotalAmount = total
+				copy(next.Deliveries, ds)
+			}
 			if fee.Cmp(next.Create.TotalAmount) >= 0 || next.OutputNote == nil || next.NoteRecipientKeys == nil {
 				return Intent{}, fmt.Errorf("initial payment fee consumes Note or recipient keys missing")
 			}

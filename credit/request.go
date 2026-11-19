@@ -17,6 +17,8 @@ type Context struct {
 	Timestamp    uint64
 }
 type CreateParams struct {
+	// CreationABI defaults to current; legacy must be explicitly selected.
+	CreationABI       string `json:",omitempty"`
 	HasInitialPayment *bool
 	TotalAmount       *big.Int
 	NoteCommitment    common.Hash

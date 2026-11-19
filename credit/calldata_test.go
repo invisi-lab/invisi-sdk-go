@@ -51,8 +51,8 @@ func TestLifecycleCalldataUsesCurrentSignatures(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(a.Methods) != 6 {
-		t.Fatal("unexpected Credit lifecycle method count", len(a.Methods))
+	if common.Bytes2Hex(a.Methods["createCredit"].ID) != "00b6fa56" {
+		t.Fatal("default ABI uses legacy selector")
 	}
 	for _, name := range []string{"createCredit", "creditDraw", "updateCredit", "revokeCredit", "creditAllocation", "creditRevocationBitmap"} {
 		if _, ok := a.Methods[name]; !ok {

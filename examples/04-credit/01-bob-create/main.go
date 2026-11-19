@@ -36,6 +36,7 @@ func main() {
 	available := flag.Int64("available-credit", 400, "initial finite credit in token base units")
 	unlimited := flag.Bool("unlimited", false, "unlimited mode requires available-credit zero")
 	initialPayment := flag.Int64("initial-payment", 0, "optional gross initial debit; pays the spender a private Note")
+	creationABI := flag.String("creation-abi", "initial-payment", "creation ABI: initial-payment (current) or explicit legacy")
 	flag.Parse()
 
 	publicWallet, err := sdk.WalletFromAddress(*address)
@@ -124,6 +125,7 @@ func main() {
 	}
 	operation, err := creditSession.PrepareCreate(ctx, *operationID, credit.CreatePreparation{
 		InitialPayment: initial,
+		CreationABI:    *creationABI,
 		TokenAddress:   token, Spender: *spenderAddress, Expiry: head.Time + 7*86400,
 		AvailableCredit: big.NewInt(*available), Unlimited: *unlimited,
 		SingleLimit: primitives.ElementFromUint64(100), DailyLimit: primitives.ElementFromUint64(1000), MonthlyLimit: primitives.ElementFromUint64(10000),

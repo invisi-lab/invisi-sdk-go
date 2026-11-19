@@ -18,12 +18,14 @@ type Fee struct {
 }
 type InitialPayment struct {
 	// Amount is the gross debit including the actual fee. The merchant receives Amount minus Fee.
-	Amount  *big.Int
-	Payload []byte
+	Amount *big.Int
+	// NetAmount optionally pins the merchant amount across fee quotations.
+	NetAmount *big.Int
+	Payload   []byte
 }
 type CreatePreparation struct {
 	InitialPayment *InitialPayment
-	// CreationABI may be legacy (default) or initial-payment.
+	// CreationABI may be initial-payment (default) or explicitly legacy.
 	CreationABI                           string
 	TokenAddress                          common.Address
 	Spender                               string
@@ -177,8 +179,14 @@ func (b PreparationBuilder) Create(ctx context.Context, p CreatePreparation) (*P
 	var ordinary *primitives.Note
 	var noteKeys *primitives.ReceivingKeys
 	var total *big.Int
+	initialState := state
 	if p.InitialPayment != nil {
 		total = p.InitialPayment.Amount
+		if net := p.InitialPayment.NetAmount; net != nil {
+			if net.Sign() <= 0 || total == nil || total.Cmp(new(big.Int).Add(net, f)) != 0 {
+				return nil, fmt.Errorf("initial payment gross must equal net plus fee")
+			}
+		}
 		if total == nil || total.Sign() <= 0 || total.BitLen() > 126 || total.Cmp(f) <= 0 {
 			return nil, fmt.Errorf("initial payment must leave a positive Note")
 		}
@@ -229,11 +237,14 @@ func (b PreparationBuilder) Create(ctx context.Context, p CreatePreparation) (*P
 			return nil, e
 		}
 		ds = append(ds, nd)
-		return prepare(Intent{Version: 2, Context: c, Create: &params, Deliveries: ds, CreatedState: &state, OutputNote: ordinary, NoteRecipientKeys: noteKeys, OutputIdentity: identity, InitialPaymentInitialAvailableCredit: amount})
+		return prepare(Intent{Version: 2, Context: c, Create: &params, Deliveries: ds, CreatedState: &state, OutputNote: ordinary, NoteRecipientKeys: noteKeys, OutputIdentity: identity, InitialPaymentInitialAvailableCredit: amount, InitialPaymentNetAmount: p.InitialPayment.NetAmount, InitialPaymentCreationDelivery: &DeliveryState{State: initialState, OwnerReceivingKeys: d.OwnerReceivingKeys, SpenderReceivingKeys: d.SpenderReceivingKeys}})
 	}
-	if p.CreationABI == "initial-payment" {
+	if p.CreationABI != "legacy" {
 		no := false
 		params.HasInitialPayment = &no
+	}
+	if p.CreationABI == "legacy" {
+		return PrepareCreateLegacy(c, params, ds, state)
 	}
 	return PrepareCreate(c, params, ds, state)
 }

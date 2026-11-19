@@ -89,7 +89,8 @@ func PrepareRequest[T any](ctx context.Context, value *ipp.Request, target Targe
 	expiry, _ := time.Parse("2006-01-02T15:04:05Z", c.ExpiresAt)
 	preparation := sdk.CreateCreditPreparation{TokenAddress: token, Spender: c.Spender, CreditSharedKey: key, AvailableCredit: amount, Unlimited: c.Unlimited, SingleLimit: primitives.BigIntToElement(single), DailyLimit: primitives.BigIntToElement(daily), MonthlyLimit: primitives.BigIntToElement(monthly), Expiry: uint64(expiry.Unix()), Deadline: deadline, CreationABI: options.CreationABI}
 	if c.InitialPayment != nil {
-		gross, _ := new(big.Int).SetString(c.InitialPayment.Amount, 10)
+		net, _ := new(big.Int).SetString(c.InitialPayment.Amount, 10)
+		gross := new(big.Int).Set(net)
 		if fee := options.InitialPaymentFee; fee != nil {
 			if fee.Amount == nil || fee.Amount.Sign() < 0 || (fee.Amount.Sign() == 0) != (fee.Recipient == (common.Address{})) {
 				return zero, &ipp.Error{Code: "execution_not_allowed"}
@@ -100,7 +101,7 @@ func PrepareRequest[T any](ctx context.Context, value *ipp.Request, target Targe
 		if gross.Sign() <= 0 || gross.BitLen() > 126 {
 			return zero, &ipp.Error{Code: "execution_not_allowed"}
 		}
-		preparation.InitialPayment = &credit.InitialPayment{Amount: gross}
+		preparation.InitialPayment = &credit.InitialPayment{Amount: gross, NetAmount: net}
 	}
 	return target.PrepareCreateCredit(ctx, preparation)
 }

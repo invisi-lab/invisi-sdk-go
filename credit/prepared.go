@@ -18,6 +18,8 @@ import (
 
 type Intent struct {
 	InitialPaymentInitialAvailableCredit *big.Int
+	InitialPaymentNetAmount              *big.Int
+	InitialPaymentCreationDelivery       *DeliveryState
 	Version                              int
 	Context                              Context
 	Create                               *CreateParams
@@ -89,6 +91,35 @@ func prepare(i Intent) (*Prepared, error) {
 	if err != nil {
 		return nil, err
 	}
+	if frozen.InitialPaymentNetAmount != nil {
+		if frozen.Create == nil || frozen.Create.HasInitialPayment == nil || !*frozen.Create.HasInitialPayment || frozen.InitialPaymentNetAmount.Sign() <= 0 || frozen.InitialPaymentCreationDelivery == nil || frozen.Create.TotalAmount == nil || frozen.Create.TotalAmount.Cmp(new(big.Int).Add(frozen.InitialPaymentNetAmount, snapshotFeeAmount(frozen.Create.FeeAmount))) != 0 {
+			return nil, fmt.Errorf("invalid pinned initial payment net")
+		}
+		original := frozen.InitialPaymentCreationDelivery.State
+		if frozen.InitialPaymentInitialAvailableCredit == nil || primitives.ElementToBigInt(original.AvailableCredit).Cmp(frozen.InitialPaymentInitialAvailableCredit) != 0 || original.Usage != (Usage{}) {
+			return nil, fmt.Errorf("invalid initial payment creation principal or usage")
+		}
+		debit := primitives.BigIntToElement(frozen.Create.TotalAmount)
+		usage, e := original.drawUsage(debit, frozen.Context.Timestamp)
+		if e != nil {
+			return nil, e
+		}
+		if !original.Unlimited {
+			if original.AvailableCredit.Cmp(&debit) < 0 {
+				return nil, fmt.Errorf("initial payment exceeds available credit")
+			}
+			original.AvailableCredit.Sub(&original.AvailableCredit, &debit)
+		}
+		original.Usage = usage
+		commitment, e := original.Commitment()
+		if e != nil || common.Hash(commitment.Bytes()) != frozen.Create.CreditCommitment || frozen.CreatedState == nil || frozen.OutputNote == nil || primitives.ElementToBigInt(frozen.OutputNote.Amount).Cmp(frozen.InitialPaymentNetAmount) != 0 {
+			return nil, fmt.Errorf("initial payment creation state differs from frozen debit")
+		}
+		createdCommitment, e := frozen.CreatedState.Commitment()
+		if e != nil || createdCommitment != commitment {
+			return nil, fmt.Errorf("initial payment post-debit state differs from frozen commitment")
+		}
+	}
 	if _, _, err = frozen.statement(); err != nil {
 		return nil, err
 	}
@@ -106,7 +137,23 @@ func prepare(i Intent) (*Prepared, error) {
 	}
 	return (&Prepared{intent: frozen}).bindBroadcasterQuote(), nil
 }
+
+// PrepareCreate uses the current deployment ABI, including for pure creation.
 func PrepareCreate(c Context, p CreateParams, ds []protocol.Delivery, state State) (*Prepared, error) {
+	if p.HasInitialPayment == nil {
+		no := false
+		p.HasInitialPayment = &no
+	}
+	return prepare(Intent{Version: 2, Context: c, Create: &p, Deliveries: ds, CreatedState: &state})
+}
+
+// PrepareCreateLegacy explicitly selects the historical pure creation ABI.
+func PrepareCreateLegacy(c Context, p CreateParams, ds []protocol.Delivery, state State) (*Prepared, error) {
+	if p.HasInitialPayment != nil && *p.HasInitialPayment {
+		return nil, fmt.Errorf("legacy creation cannot have initial payment")
+	}
+	p.HasInitialPayment = nil
+	p.CreationABI = "legacy"
 	return prepare(Intent{Version: 2, Context: c, Create: &p, Deliveries: ds, CreatedState: &state})
 }
 func PrepareUpdate(c Context, p UpdateParams, ds []protocol.Delivery, input LocatedState, change Change) (*Prepared, error) {
@@ -490,4 +537,11 @@ func PrepareCreateInitialPayment(c Context, p CreateParams, ds []protocol.Delive
 		return nil, err
 	}
 	return prepare(Intent{Version: 2, Context: c, Create: &p, Deliveries: ds, CreatedState: &state, OutputNote: &output, OutputIdentity: identity, NoteRecipientKeys: keys, InitialPaymentInitialAvailableCredit: initialAvailableCredit})
+}
+
+func snapshotFeeAmount(v *big.Int) *big.Int {
+	if v == nil {
+		return new(big.Int)
+	}
+	return new(big.Int).Set(v)
 }

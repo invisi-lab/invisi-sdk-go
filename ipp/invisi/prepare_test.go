@@ -91,7 +91,7 @@ func TestInitialPaymentPreparesGrossDebitWithoutChangingFrozenNet(t *testing.T) 
 			expected = 6
 		}
 		target := Target[string]{Context: protocolrpc.DeploymentContext{ChainID: 8453, ProtocolAddress: common.HexToAddress(r.Credit.ProtocolAddress)}, PrepareCreateCredit: func(_ context.Context, p sdk.CreateCreditPreparation) (string, error) {
-			if p.InitialPayment == nil || p.InitialPayment.Amount.Cmp(big.NewInt(expected)) != 0 {
+			if p.InitialPayment == nil || p.InitialPayment.Amount.Cmp(big.NewInt(expected)) != 0 || p.InitialPayment.NetAmount == nil || p.InitialPayment.NetAmount.Cmp(big.NewInt(5)) != 0 {
 				t.Fatal("initial gross debit was lost")
 			}
 			if p.Spender != r.Credit.Spender || p.CreationABI != "initial-payment" {

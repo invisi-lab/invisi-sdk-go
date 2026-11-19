@@ -20,9 +20,10 @@ var abiJSON string
 //go:embed data/current-abi.json
 var currentABIJSON string
 
-func ContractABI() (abi.ABI, error) { return abi.JSON(strings.NewReader(abiJSON)) }
+func ContractABI() (abi.ABI, error)       { return abi.JSON(strings.NewReader(currentABIJSON)) }
+func LegacyContractABI() (abi.ABI, error) { return abi.JSON(strings.NewReader(abiJSON)) }
 func pack(name string, args ...any) ([]byte, error) {
-	a, err := ContractABI()
+	a, err := LegacyContractABI()
 	if err != nil {
 		return nil, err
 	}
@@ -121,8 +122,28 @@ func encodeProof(proof []byte) ([]byte, error) {
 }
 
 func packCreate(p CreateParams, proof []byte, deliveries []protocol.Delivery) ([]byte, error) {
+	if p.CreationABI == "legacy" {
+		if p.HasInitialPayment != nil && *p.HasInitialPayment {
+			return nil, fmt.Errorf("legacy creation cannot have initial payment")
+		}
+		// Keep the historical tuple codec independent from metadata fields.
+		old := struct {
+			Token, Owner     common.Address
+			RevocationShard  uint64
+			RevocationSlot   uint16
+			CreditCommitment common.Hash
+			Deadline         *big.Int
+			FeeRecipient     common.Address
+			FeeAmount        *big.Int
+		}{p.Token, p.Owner, p.RevocationShard, p.RevocationSlot, p.CreditCommitment, p.Deadline, p.FeeRecipient, p.FeeAmount}
+		return pack("createCredit", proof, old, deliveries)
+	}
+	if p.CreationABI != "" && p.CreationABI != "initial-payment" {
+		return nil, fmt.Errorf("unsupported creation ABI")
+	}
 	if p.HasInitialPayment == nil {
-		return pack("createCredit", proof, p, deliveries)
+		no := false
+		p.HasInitialPayment = &no
 	}
 	a, err := abi.JSON(strings.NewReader(currentABIJSON))
 	if err != nil {
