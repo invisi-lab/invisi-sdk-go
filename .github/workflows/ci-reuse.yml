@@ -1,0 +1,31 @@
+name: Find verified commit
+on:
+  workflow_call:
+    inputs:
+      ref:
+        required: true
+        type: string
+      branches:
+        required: true
+        type: string
+    outputs:
+      verified:
+        value: ${{ jobs.lookup.outputs.verified }}
+permissions:
+  contents: read
+  actions: read
+jobs:
+  lookup:
+    runs-on: ubuntu-latest
+    outputs:
+      verified: ${{ steps.check.outputs.verified }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ inputs.ref }}
+          persist-credentials: false
+      - id: check
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REUSE_BRANCHES: ${{ inputs.branches }}
+        run: python3 scripts/check-ci-reuse.py "$(git rev-parse HEAD)" "$REUSE_BRANCHES" >> "$GITHUB_OUTPUT"
