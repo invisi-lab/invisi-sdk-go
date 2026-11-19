@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.3.0
+
+- Support optional owner-only Credit initial payments, post-debit Credit state, merchant net Notes, gross funding checks and UTC-period validation.
+- Align contract bindings, unified Note operation events and CreditDraw/CreditStateTransition discovery and recovery with the redeployed Core contracts.
+- Recompute operation IDs and validate physical insertions and aggregate membership against shared real-receipt fixtures.
+- Add independently pinned lazy resources and witness metadata for the 18-input combined circuit without bundling large assets.
+- Refresh measured Gas models and TS parity vectors; expose uncovered paths explicitly.
+- Extend IPP initial-payment terms and receipts; remove the obsolete Invisi action field.
+- Prepare the complete SDK module cohort at 1.3.0; no registry publication or contract deployment is performed.
+
 ## 1.2.6
 
 - Move all Go module paths and public imports to `github.com/invisi-labs/invisi-sdk-go`. Consumers must update imports together; existing release tags remain unchanged.
