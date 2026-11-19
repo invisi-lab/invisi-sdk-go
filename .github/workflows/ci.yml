@@ -35,6 +35,8 @@ jobs:
           cache-dependency-path: '**/go.sum'
       - name: Test CI reuse safety
         run: python3 scripts/test_ci_reuse.py
+      - name: Test release validation
+        run: python3 scripts/test_release_checks.py
       - name: Test versioned release notes
         run: python3 scripts/test_release_notes.py
       - name: Check module boundaries and tests
@@ -57,7 +59,7 @@ jobs:
           go-version-file: go.mod
           cache-dependency-path: '**/go.sum'
       - name: Verify tagged module archives
-        run: python3 scripts/check-packages.py
+        run: python3 scripts/check-packages.py --tag "$GITHUB_REF_NAME"
       - name: Render complete release notes
         run: python3 scripts/release-notes.py "$GITHUB_REF_NAME" --output "$RUNNER_TEMP/release-notes.md"
       - name: Publish GitHub release

@@ -1,9 +1,15 @@
 #!/usr/bin/env python3
 """Test unpublished module archives through an isolated local Go proxy/cache."""
-import json, os, pathlib, shutil, subprocess, tempfile, zipfile
+import argparse, json, os, pathlib, shutil, subprocess, tempfile, zipfile
+from release_checks import cache_links, validate_tagged_release
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 PREFIX = 'github.com/invisi-labs/invisi-sdk-go'
-VERSION = 'v1.2.6'
+parser = argparse.ArgumentParser(description=__doc__)
+parser.add_argument('--tag', help='Verify all actual remote module tags before archive checks')
+options = parser.parse_args()
+VERSION = options.tag or 'v1.2.6'
+if options.tag:
+    validate_tagged_release(ROOT, VERSION)
 subprocess.run(['python3', str(ROOT / 'scripts/release-notes.py'), VERSION], check=True, stdout=subprocess.DEVNULL)
 MODULES = [('primitives', ROOT / 'primitives'), ('protocol', ROOT / 'protocol'), ('prover', ROOT / 'prover'), ('rpc', ROOT / 'rpc'), ('', ROOT), ('session', ROOT / 'session'), ('ipp', ROOT / 'ipp')]
 work = pathlib.Path(tempfile.mkdtemp(prefix='invisi-go-package-check-'))
@@ -13,16 +19,6 @@ cache.mkdir()
 print('Package evidence ' + str(work), flush=True)
 existing = pathlib.Path(subprocess.check_output(['go', 'env', 'GOMODCACHE'], text=True).strip())
 
-def cache_links(src, dst):
-    dst.mkdir(parents=True, exist_ok=True)
-    for p in src.iterdir():
-        if p.name == 'cache' or p.name.startswith('invisi-sdk-go'):
-            continue
-        target = dst / p.name
-        if '@' in p.name:
-            target.symlink_to(p, target_is_directory=p.is_dir())
-        elif p.is_dir():
-            cache_links(p, target)
 cache_links(existing, cache)
 
 def download_links(src, dst, relative=''):
