@@ -48,7 +48,7 @@ jobs:
   release:
     name: Publish Go release notes
     needs: [previous, modules]
-    if: always() && startsWith(github.ref, 'refs/tags/v') && needs.previous.result == 'success' && (needs.modules.result == 'success' || (needs.modules.result == 'skipped' && needs.previous.outputs.verified == 'true'))
+    if: ${{ !cancelled() && startsWith(github.ref, 'refs/tags/v') && needs.previous.result == 'success' && (needs.modules.result == 'success' || (needs.modules.result == 'skipped' && needs.previous.outputs.verified == 'true')) }}
     runs-on: ubuntu-latest
     permissions:
       contents: write
