@@ -103,7 +103,7 @@ func parseCreditState(raw json.RawMessage) (IndexedCreditState, error) {
 		return o, e
 	}
 	switch m.Kind {
-	case "CreditCreated", "CreditStateTransition", "CreditUpdated":
+	case "CreditCreated", "CreditDraw", "CreditStateTransition", "CreditUpdated":
 	default:
 		return o, errors.New("invalid Credit state event")
 	}

@@ -179,6 +179,25 @@ func TestCreditTransactionPreservesDeliveriesAndPrecision(t *testing.T) {
 	}
 }
 
+func TestCreditDrawTransactionPreservesDeliveriesAndPrecision(t *testing.T) {
+	client, scope, hash := transactionClient(t, func(v map[string]any) {
+		state := map[string]any{"block": v["indexedHead"], "treeId": 1, "leafIndex": 0, "commitment": common.HexToHash("3"), "token": common.HexToAddress("22"), "transactionHash": v["transactionHash"], "logIndex": 1, "kind": "CreditDraw", "deliveries": []any{map[string]any{"ciphertext": "0x81", "clue": "0x" + repeatZero(68)}, map[string]any{"ciphertext": "0x8101", "clue": "0x" + repeatZero(68)}}}
+		v["states"] = []any{state, state}
+		event := map[string]any{"block": v["indexedHead"], "transactionHash": v["transactionHash"], "name": "CreditDraw", "logIndex": 2, "data": map[string]any{"amount": "12345678901234567890"}}
+		v["transitions"] = []any{event, event}
+	}, false)
+	result, e := client.GetTransactionCreditUpdates(t.Context(), scope, hash)
+	if e != nil {
+		t.Fatal(e)
+	}
+	if len(result.States) != 1 || len(result.States[0].Deliveries) != 2 || len(result.Transitions) != 1 {
+		t.Fatal(result)
+	}
+	if string(result.Transitions[0].Data) != `{"amount":"12345678901234567890"}` {
+		t.Fatal("precision lost")
+	}
+}
+
 type transactionReorgProvider struct {
 	testProvider
 	reads int

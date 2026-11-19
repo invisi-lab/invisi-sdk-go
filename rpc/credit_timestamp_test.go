@@ -36,7 +36,7 @@ func TestUpdatesAuthenticateTransitionBlockTimestamp(t *testing.T) {
 			if corrupt.Load() {
 				claimed.Timestamp++
 			}
-			result = []any{map[string]any{"transactionHash": common.HexToHash("0x1234"), "logIndex": 1, "block": claimed, "name": "CreditStateTransition", "data": map[string]any{}}}
+			result = []any{map[string]any{"transactionHash": common.HexToHash("0x1234"), "logIndex": 1, "block": claimed, "name": "CreditDraw", "data": map[string]any{}}}
 		}
 		json.NewEncoder(w).Encode(map[string]any{"jsonrpc": "2.0", "id": request.ID, "result": result})
 	}))
