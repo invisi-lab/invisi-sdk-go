@@ -14,7 +14,7 @@ Contract bindings follow the current `invisi-core` compiler artifacts: `InvisiCo
 
 ## Seven independently versioned modules
 
-All seven modules target **1.3.0**. Applications normally import the SDK's `sdk` package; backend services can depend only on the pure Protocol module and its Primitives dependency.
+All eight modules target **1.3.1**. Applications normally import the SDK's `sdk` package; backend services can depend only on the pure Protocol module and its Primitives dependency.
 
 | Module | Responsibility | Internal dependencies |
 | --- | --- | --- |
@@ -24,6 +24,7 @@ All seven modules target **1.3.0**. Applications normally import the SDK's `sdk`
 | `prover` | Private witnesses, authenticated proving assets, native proof generation and verification | primitives, protocol |
 | `rpc` | Protocol RPC, Broadcaster and Provenance clients, deployment checks and generated network contract bindings | primitives, protocol |
 | `session` | Note/Credit inventory, reservations, journals, encrypted storage and operation recovery | SDK and its public protocol/prover/client types |
+| `paymentrouter` | Optional native ETH Payment Router preparation, V3/0x quotes, calldata and simulation | SDK; protocol; geth |
 | `ipp` | Independent IPP protocol types, HTTP client and merchant helpers; Invisi transaction preparation through `ipp/invisi` | primitives; SDK for the Invisi adapter |
 
 Module paths use `github.com/invisi-labs/invisi-sdk-go/<name>`; the SDK uses the repository-root module path. Nested module release tags are `<name>/v1.3.0`; the root SDK tag is `v1.3.0`. The examples are a separate development module, not a public release package. No `core`, `runtime` or `protocolkit` compatibility module is retained.
@@ -187,7 +188,7 @@ Independent Provenance keeps source recognition separate from protocol spendabil
 
 ## Module checks
 
-`python3 scripts/test-modules.py` creates a temporary workspace and runs boundary checks, race tests, vet and builds for all seven modules plus the private examples. `python3 scripts/check-packages.py` constructs isolated local-proxy archives and tests them without the workspace or sibling checkouts; unpublished versions never enter the global module cache. GitHub CI runs both commands. Native Noir/BB integration tests are opt-in and require explicit local tool paths.
+`python3 scripts/test-modules.py` creates a temporary workspace and runs boundary checks, race tests, vet and builds for all eight modules plus the private examples. `python3 scripts/check-packages.py` constructs isolated local-proxy archives and tests them without the workspace or sibling checkouts; unpublished versions never enter the global module cache. GitHub CI runs both commands. Native Noir/BB integration tests are opt-in and require explicit local tool paths.
 
 The modules are prepared at 1.2.5; no remote tags are created by these checks. Before standalone consumer builds can resolve the new version from GitHub, publish the required module tags in dependency order and refresh dependency checksums.
 
@@ -242,3 +243,7 @@ Core operations do not require the Provenance catalog; Provenance operations do 
 **Release prerequisite:** these split catalogs have been built and verified locally but are not claimed published. Publish each producer's authenticated CI artifact before releasing SDKs with these new defaults. Until then, provision matching local catalogs or select legacy mode explicitly. No production pins are fetched from an untrusted URL or inferred from a failed download.
 
 `native.ResourceOptions` accepts `LegacyCombined: true` for historical compatibility. Use `Directory`/`Sources` for Core and `ProvenanceDirectory`/`ProvenanceSources` for Provenance. Cache, HTTP-client and offline settings are shared. `PrefetchResources` defaults to Core; `PrefetchProvenanceResources` preloads only Provenance.
+
+### Optional Payment Router
+
+See [paymentrouter/README.md](paymentrouter/README.md) for detached native ETH funding, exact-output V3 and registry-verified 0x. The host retains wallet/proof lifecycle and all transaction submission. The core SDK does not import this optional module.

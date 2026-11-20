@@ -11,7 +11,7 @@ VERSION = options.tag or 'v1.3.1'
 if options.tag:
     validate_tagged_release(ROOT, VERSION)
 subprocess.run(['python3', str(ROOT / 'scripts/release-notes.py'), VERSION], check=True, stdout=subprocess.DEVNULL)
-MODULES = [('primitives', ROOT / 'primitives'), ('protocol', ROOT / 'protocol'), ('prover', ROOT / 'prover'), ('rpc', ROOT / 'rpc'), ('', ROOT), ('session', ROOT / 'session'), ('ipp', ROOT / 'ipp')]
+MODULES = [('primitives', ROOT / 'primitives'), ('protocol', ROOT / 'protocol'), ('prover', ROOT / 'prover'), ('rpc', ROOT / 'rpc'), ('', ROOT), ('session', ROOT / 'session'), ('ipp', ROOT / 'ipp'), ('paymentrouter', ROOT / 'paymentrouter')]
 work = pathlib.Path(tempfile.mkdtemp(prefix='invisi-go-package-check-'))
 proxy = work / 'proxy'
 cache = work / 'modcache'

@@ -4,7 +4,7 @@ import re
 import subprocess
 
 PREFIX = 'github.com/invisi-labs/invisi-sdk-go'
-MODULE_NAMES = ['primitives', 'protocol', 'prover', 'rpc', '', 'session', 'ipp']
+MODULE_NAMES = ['primitives', 'protocol', 'prover', 'rpc', '', 'session', 'ipp', 'paymentrouter']
 
 
 def cache_links(src, dst):
@@ -24,7 +24,7 @@ def cache_links(src, dst):
 def validate_manifests(manifests, version):
     expected = {PREFIX + ('/' + name if name else '') for name in MODULE_NAMES}
     if set(manifests) != expected:
-        raise ValueError('Release must include all seven Go modules')
+        raise ValueError('Release must include all eight Go modules')
     for name, manifest in manifests.items():
         if manifest['Module']['Path'] != name:
             raise ValueError(f'Module identity mismatch: {name}')
@@ -66,4 +66,4 @@ def validate_tagged_release(root, version):
         patterns.extend([ref, ref + '^{}'])
     output = subprocess.check_output(['git', 'ls-remote', '--tags', 'origin', *patterns], cwd=root, text=True)
     validate_tag_refs(output, version, commit)
-    print(f'All seven remote module tags match {version} at {commit}', flush=True)
+    print(f'All eight remote module tags match {version} at {commit}', flush=True)

@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- Add optional paymentrouter module with authenticated deployment snapshots, Router-funded SDK preparation, exact-output Uniswap V3 and native 0x quote adapters, canonical calldata, and full-call simulation. Include cross-language vectors and opt-in local compiled-contract execution tests.
+
 ## 1.3.1
 
 - Accept unified CreditDraw events in indexed Credit RPC responses, including post-debit state deliveries.

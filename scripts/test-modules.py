@@ -2,7 +2,7 @@
 """Run the public modules and private examples in an isolated local workspace."""
 import os, pathlib, subprocess, tempfile
 ROOT = pathlib.Path(__file__).resolve().parents[1]
-MODULES = ['primitives', 'protocol', 'prover', 'rpc', '.', 'session', 'ipp', 'examples']
+MODULES = ['primitives', 'protocol', 'prover', 'rpc', '.', 'session', 'ipp', 'paymentrouter', 'examples']
 with tempfile.TemporaryDirectory(prefix='invisi-module-workspace-') as tmp:
     work = pathlib.Path(tmp) / 'go.work'
     paths = [(ROOT / m).resolve() for m in MODULES]
