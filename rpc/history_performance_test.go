@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"math/big"
 	"net/http"
 	"net/http/httptest"
@@ -156,34 +155,6 @@ func TestTrustedProviderBatchedHeaders(t *testing.T) {
 					t.Fatal("mutable/invalid block allowed")
 				}
 			}
-		})
-	}
-}
-
-func BenchmarkTrustedHistoryHeaders(b *testing.B) {
-	for _, batched := range []bool{false, true} {
-		b.Run(fmt.Sprintf("batch=%t", batched), func(b *testing.B) {
-			p, calls := batchHeaderFixture(b, "ok", time.Millisecond)
-			numbers := make([]*big.Int, 256)
-			for i := range numbers {
-				numbers[i] = big.NewInt(int64(i + 1))
-			}
-			b.ResetTimer()
-			for range b.N {
-				if batched {
-					if _, err := p.HeadersByNumber(context.Background(), numbers); err != nil {
-						b.Fatal(err)
-					}
-				} else {
-					for _, n := range numbers {
-						if _, err := p.HeaderByNumber(context.Background(), n); err != nil {
-							b.Fatal(err)
-						}
-					}
-				}
-			}
-			b.StopTimer()
-			b.ReportMetric(float64(calls.Load())/float64(b.N), "http/page")
 		})
 	}
 }
