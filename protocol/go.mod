@@ -5,7 +5,7 @@ go 1.26.1
 require (
 	github.com/consensys/gnark-crypto v0.19.2
 	github.com/ethereum/go-ethereum v1.17.2
-	github.com/invisi-labs/invisi-sdk-go/primitives v1.3.1
+	github.com/invisi-labs/invisi-sdk-go/primitives v1.3.2
 )
 
 require (

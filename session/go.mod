@@ -5,11 +5,11 @@ go 1.26.1
 require (
 	github.com/consensys/gnark-crypto v0.19.2
 	github.com/ethereum/go-ethereum v1.17.2
-	github.com/invisi-labs/invisi-sdk-go v1.3.1
-	github.com/invisi-labs/invisi-sdk-go/primitives v1.3.1
-	github.com/invisi-labs/invisi-sdk-go/protocol v1.3.1
-	github.com/invisi-labs/invisi-sdk-go/prover v1.3.1
-	github.com/invisi-labs/invisi-sdk-go/rpc v1.3.1
+	github.com/invisi-labs/invisi-sdk-go v1.3.2
+	github.com/invisi-labs/invisi-sdk-go/primitives v1.3.2
+	github.com/invisi-labs/invisi-sdk-go/protocol v1.3.2
+	github.com/invisi-labs/invisi-sdk-go/prover v1.3.2
+	github.com/invisi-labs/invisi-sdk-go/rpc v1.3.2
 	modernc.org/sqlite v1.61.0
 )
 

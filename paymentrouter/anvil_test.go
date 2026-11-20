@@ -6,6 +6,7 @@ import (
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
+	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"math/big"
 	"os"
@@ -86,8 +87,39 @@ func TestCompiledContractsAnvil(t *testing.T) {
 		t.Fatal("transaction was not mined")
 		return hash
 	}
+	assertResiduals := func(t *testing.T, settler common.Address) {
+		t.Helper()
+		rb, e := rpc.BalanceAt(ctx, d.RouterAddress, nil)
+		if e != nil || rb.Sign() != 0 {
+			t.Fatal("residual Router ETH", e)
+		}
+		spenders := []common.Address{d.CoreAddress, d.UniswapRouterAddress}
+		if d.ZeroEx != nil {
+			spenders = append(spenders, d.ZeroEx.AllowanceHolderAddress)
+		}
+		if settler != (common.Address{}) {
+			spenders = append(spenders, settler)
+		}
+		for _, token := range []common.Address{f.TokenOut, d.WETHAddress} {
+			if read(token, "balanceOf", d.RouterAddress).Sign() != 0 {
+				t.Fatal("residual Router tokens")
+			}
+			for _, spender := range spenders {
+				if read(token, "allowance", d.RouterAddress, spender).Sign() != 0 {
+					t.Fatal("residual Router approvals")
+				}
+			}
+		}
+	}
+	coreArgs, e := coreMethod.Inputs.Unpack(f.CorePayment.call().Data[4:])
+	if e != nil {
+		t.Fatal(e)
+	}
+	proofHash := crypto.Keccak256Hash(coreArgs[0].([]byte))
+
 	for i, q := range f.Quotes {
 		t.Run(string(q.Channel)+string(rune('0'+i)), func(t *testing.T) {
+			assertResiduals(t, q.SettlerAddress)
 			before := read(f.TokenOut, "balanceOf", d.CoreAddress)
 			balance, e := rpc.BalanceAt(ctx, f.Player, nil)
 			if e != nil {
@@ -123,27 +155,18 @@ func TestCompiledContractsAnvil(t *testing.T) {
 			if actual.Cmp(number(f.Expected.ETHSpent)) != 0 {
 				t.Fatal("sender ETH accounting", actual)
 			}
-			rb, e := rpc.BalanceAt(ctx, d.RouterAddress, nil)
-			if e != nil || rb.Sign() != 0 {
-				t.Fatal("residual Router ETH")
-			}
-			for _, token := range []common.Address{f.TokenOut, d.WETHAddress} {
-				if read(token, "balanceOf", d.RouterAddress).Sign() != 0 {
-					t.Fatal("residual router tokens")
-				}
-				for _, spender := range []common.Address{d.CoreAddress, d.UniswapRouterAddress} {
-					if read(token, "allowance", d.RouterAddress, spender).Sign() != 0 {
-						t.Fatal("residual approvals")
-					}
-				}
-			}
+			assertResiduals(t, q.SettlerAddress)
 			found := false
 			event := ZeroExPaymentRouterABI().Events["Payment"]
 			for _, log := range receipt.Logs {
 				if log.Address == d.RouterAddress && len(log.Topics) > 0 && log.Topics[0] == event.ID {
+
+					if len(log.Topics) != 4 || log.Topics[1] != common.BytesToHash(f.Player.Bytes()) || log.Topics[2] != common.BytesToHash(f.TokenOut.Bytes()) || log.Topics[3] != common.BytesToHash(f.RefundRecipient.Bytes()) {
+						t.Fatal("Payment indexed fields mismatch")
+					}
 					found = true
 					args, e := event.Inputs.NonIndexed().Unpack(log.Data)
-					if e != nil || args[0].(*big.Int).Cmp(number(f.Expected.FundingAmount)) != 0 || args[1].(*big.Int).Cmp(sim.ETHSpent) != 0 || args[2].(*big.Int).Cmp(sim.ETHRefunded) != 0 {
+					if e != nil || args[0].(*big.Int).Cmp(number(f.Expected.FundingAmount)) != 0 || args[1].(*big.Int).Cmp(sim.ETHSpent) != 0 || args[2].(*big.Int).Cmp(sim.ETHRefunded) != 0 || common.Hash(args[3].([32]byte)) != proofHash {
 						t.Fatal("Payment event mismatch", e)
 					}
 				}
@@ -166,6 +189,7 @@ func TestCompiledContractsAnvil(t *testing.T) {
 			if read(f.TokenOut, "balanceOf", d.CoreAddress).Cmp(after) != 0 {
 				t.Fatal("failure changed core custody")
 			}
+			assertResiduals(t, q.SettlerAddress)
 			data, _ = config.Pack("configure", false, false)
 			send(d.CoreAddress, data, bi(0))
 		})

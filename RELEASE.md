@@ -7,3 +7,5 @@ Push checks run on `develop` and `main`; pull requests targeting either branch r
 Tagged releases validate the canonical version, every internal dependency pin, and all eight actual remote Git tags (including annotated tags) against the checked-out commit before checking archives. A missing dependency cache is treated as a cold start; external dependencies can be downloaded into the isolated cache.
 
 Release jobs require `!cancelled()` as well as successful verification. Cancelling a workflow therefore also cancels publication work; completed registry writes remain immutable.
+
+The current release cohort is **v1.3.2**: root SDK plus primitives, protocol, prover, rpc, session, ipp, and paymentrouter. Every internal module requirement uses the same version; optional modules publish only after their SDK and protocol dependencies.

@@ -21,12 +21,42 @@ import (
 	"testing"
 )
 
-type preparationProvider struct{ *chain }
+type preparationProvider struct {
+	*chain
+	offline      *bool
+	fundingReads *int
+}
+
+func (p preparationProvider) ChainID(ctx context.Context) (*big.Int, error) {
+	if *p.offline {
+		return nil, fmt.Errorf("provider offline")
+	}
+	return p.chain.ChainID(ctx)
+}
+func (p preparationProvider) HeaderByNumber(ctx context.Context, n *big.Int) (*types.Header, error) {
+	if *p.offline {
+		return nil, fmt.Errorf("provider offline")
+	}
+	return p.chain.HeaderByNumber(ctx, n)
+}
+func (p preparationProvider) CodeAt(ctx context.Context, a common.Address, n *big.Int) ([]byte, error) {
+	if *p.offline {
+		return nil, fmt.Errorf("provider offline")
+	}
+	return p.chain.CodeAt(ctx, a, n)
+}
 
 func (preparationProvider) TransactionReceipt(context.Context, common.Hash) (*types.Receipt, error) {
 	return nil, fmt.Errorf("no receipt")
 }
 func (p preparationProvider) CallContract(ctx context.Context, m ethereum.CallMsg, n *big.Int) ([]byte, error) {
+	if *p.offline {
+		return nil, fmt.Errorf("provider offline: detached export must not read the chain")
+	}
+	if len(m.Data) >= 4 && (string(m.Data[:4]) == string(crypto.Keccak256([]byte("balanceOf(address)"))[:4]) || string(m.Data[:4]) == string(crypto.Keccak256([]byte("allowance(address,address)"))[:4])) {
+		*p.fundingReads++
+		return make([]byte, 32), nil // Router starts unfunded and has no core allowance.
+	}
 	if *m.To == addr(1) {
 		a, _ := protocol.ProtocolABI()
 		method, e := a.MethodById(m.Data[:4])
@@ -87,7 +117,17 @@ func TestActualSDKPreparationAndProofLifecycle(t *testing.T) {
 	if e != nil {
 		t.Fatal(e)
 	}
-	invisi := sdk.NewInvisi(sdk.InvisiOptions{Provider: preparationProvider{chain: rpc}, ProtocolRPC: membership, Prover: proofBackend{}})
+	offline, fundingReads := false, 0
+	provider := preparationProvider{chain: rpc, offline: &offline, fundingReads: &fundingReads}
+	for _, sig := range []string{"balanceOf(address)", "allowance(address,address)"} {
+		data := append(append([]byte(nil), crypto.Keccak256([]byte(sig))[:4]...), make([]byte, 64)...)
+		raw, e := provider.CallContract(ctx, ethereum.CallMsg{To: &[]common.Address{addr(2)}[0], Data: data}, nil)
+		if e != nil || new(big.Int).SetBytes(raw).Sign() != 0 {
+			t.Fatal("fixture Router must have zero funds and allowances", e)
+		}
+	}
+	fundingReads = 0
+	invisi := sdk.NewInvisi(sdk.InvisiOptions{Provider: provider, ProtocolRPC: membership, Prover: proofBackend{}})
 	c, _ := NewClient(deployment(), rpc)
 	outputs := []sdk.NoteOutput{}
 	for i, n := range []int64{3, 5} {
@@ -112,9 +152,14 @@ func TestActualSDKPreparationAndProofLifecycle(t *testing.T) {
 	if e != nil {
 		t.Fatal(e)
 	}
+	offline = true
 	call, e := ready.ExportTransaction(ctx)
 	if e != nil {
 		t.Fatal(e)
+	}
+	offline = false
+	if fundingReads != 0 {
+		t.Fatal("detached Router preparation/proving/export must not require live funds or approvals")
 	}
 	_, r, e := InspectCorePayment(call, deployment(), bi(1000))
 	if e != nil {
