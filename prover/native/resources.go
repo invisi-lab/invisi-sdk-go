@@ -25,11 +25,15 @@ import (
 // Sources overrides the default release URL and permits ordered mirrors; every source
 // is authenticated using the SDK's fixed index pin. Offline disables all HTTP requests.
 type ResourceOptions struct {
-	Directory  string
-	CacheDir   string
-	Sources    []string
-	Offline    bool
-	HTTPClient *http.Client
+	// LegacyCombined explicitly selects historical combined catalogs; never a fallback.
+	LegacyCombined      bool
+	ProvenanceDirectory string
+	ProvenanceSources   []string
+	Directory           string
+	CacheDir            string
+	Sources             []string
+	Offline             bool
+	HTTPClient          *http.Client
 }
 type resourceFile struct {
 	SHA256 string `json:"sha256"`
@@ -120,7 +124,7 @@ func newResourceLoader(options ResourceOptions, pin string) (*resourceLoader, er
 		options.CacheDir = filepath.Join(base, "invisi", "prover-assets")
 	}
 	if options.Sources == nil {
-		options.Sources = []string{"https://assets.invisipay.fi/prover/sets/" + pin + "/", "https://github.com/invisi-labs/invisi-core/releases/download/prover-assets-" + pin + "/"}
+		options.Sources = []string{"https://assets.invisipay.fi/prover/sets/" + pin + "/", "https://github.com/invisi-labs/" + resourceRepository(pin) + "/releases/download/prover-assets-" + pin + "/"}
 	}
 	options.Sources = append([]string(nil), options.Sources...)
 	for _, source := range options.Sources {
@@ -282,34 +286,112 @@ const ResourceIndexSHA256 = resourceIndexSHA256
 // the complete snapshot. Local directory/cache hits are verified and reused; missing
 // files are downloaded into CacheDir unless Offline is enabled.
 func PrefetchResources(ctx context.Context, options ResourceOptions, logicalPaths []string) error {
-	loader, err := newResourceLoader(options, resourceIndexSHA256)
-	if err != nil {
-		return err
-	}
 	if len(logicalPaths) == 0 {
-		return loader.prefetch(ctx, logicalPaths)
-	}
-	var initial, regular []string
-	for _, name := range logicalPaths {
-		if strings.HasPrefix(name, "circuits/create_credit_initial_payment.") {
-			initial = append(initial, name)
-		} else {
-			regular = append(regular, name)
-		}
-	}
-	if len(regular) > 0 {
-		if err = loader.prefetch(ctx, regular); err != nil {
-			return err
-		}
-	}
-	if len(initial) > 0 {
-		other, e := newResourceLoader(options, InitialPaymentResourceIndexSHA256)
+		loader, e := newResourceLoader(options, coreResourcePin(options))
 		if e != nil {
 			return e
 		}
-		return other.prefetch(ctx, initial)
+		return loader.prefetch(ctx, nil)
+	}
+	type group struct {
+		pin        string
+		names      []string
+		provenance bool
+	}
+	groups := map[string]*group{}
+	for _, name := range logicalPaths {
+		pin := coreResourcePin(options)
+		provenance := strings.HasPrefix(name, "provenance/")
+		if provenance {
+			pin = provenanceResourcePin(options)
+		} else if strings.HasPrefix(name, "circuits/create_credit_initial_payment.") {
+			pin = circuitResourcePin("create_credit_initial_payment", options)
+		}
+		key := pin
+		if provenance {
+			key = "provenance/" + key
+		}
+		if groups[key] == nil {
+			groups[key] = &group{pin: pin, provenance: provenance}
+		}
+		groups[key].names = append(groups[key].names, name)
+	}
+	for _, g := range groups {
+		selected := options
+		if g.provenance {
+			selected = provenanceOptions(options)
+		}
+		loader, e := newResourceLoader(selected, g.pin)
+		if e != nil {
+			return e
+		}
+		if e = loader.prefetch(ctx, g.names); e != nil {
+			return e
+		}
 	}
 	return nil
+}
+
+// PrefetchProvenanceResources prepares only Source assets, without Core or proving runtimes.
+func PrefetchProvenanceResources(ctx context.Context, options ResourceOptions) error {
+	loader, e := newProvenanceResourceLoader(options)
+	if e != nil {
+		return e
+	}
+	index, e := loader.index(ctx)
+	if e != nil {
+		return e
+	}
+	var names []string
+	for name := range index.Files {
+		if strings.HasPrefix(name, "provenance/") {
+			names = append(names, name)
+		}
+	}
+	if len(names) == 0 {
+		return errors.New("Provenance resources absent from pinned release")
+	}
+	return loader.prefetch(ctx, names)
+}
+
+func coreResourcePin(options ResourceOptions) string {
+	if options.LegacyCombined {
+		return LegacyResourceIndexSHA256
+	}
+	return resourceIndexSHA256
+}
+func provenanceResourcePin(options ResourceOptions) string {
+	if options.LegacyCombined {
+		return LegacyResourceIndexSHA256
+	}
+	return ProvenanceResourceIndexSHA256
+}
+func circuitResourcePin(name string, options ResourceOptions) string {
+	if options.LegacyCombined && name == "create_credit_initial_payment" {
+		return InitialPaymentResourceIndexSHA256
+	}
+	return coreResourcePin(options)
+}
+func resourceRepository(pin string) string {
+	if pin == ProvenanceResourceIndexSHA256 {
+		return "invisi-periphery"
+	}
+	return "invisi-core"
+}
+func provenanceOptions(options ResourceOptions) ResourceOptions {
+	selected := options
+	if options.ProvenanceDirectory != "" {
+		selected.Directory = options.ProvenanceDirectory
+	}
+	if options.ProvenanceSources != nil {
+		selected.Sources = options.ProvenanceSources
+	} else if !options.LegacyCombined {
+		selected.Sources = nil
+	}
+	return selected
+}
+func newProvenanceResourceLoader(options ResourceOptions) (*resourceLoader, error) {
+	return newResourceLoader(provenanceOptions(options), provenanceResourcePin(options))
 }
 
 func (l *resourceLoader) prefetch(ctx context.Context, logicalPaths []string) error {

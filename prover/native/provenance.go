@@ -20,6 +20,10 @@ func (p *NativeProver) GetProvenanceCapability() (source.ManifestIdentity, sourc
 	if err != nil {
 		return source.ManifestIdentity{}, nil, err
 	}
+	loader, err := p.provenanceResourceLoader()
+	if err != nil {
+		return source.ManifestIdentity{}, nil, err
+	}
 	load := func(ctx context.Context, capacity int) (source.LocalAssets, error) {
 		var artifactPath, keyPath string
 		for _, entry := range identity.Manifest.Circuits {
@@ -30,18 +34,18 @@ func (p *NativeProver) GetProvenanceCapability() (source.ManifestIdentity, sourc
 		if artifactPath == "" {
 			return source.LocalAssets{}, fmt.Errorf("unsupported provenance capacity %d", capacity)
 		}
-		manifest, e := p.resources.read(ctx, "provenance/manifest.json")
+		manifest, e := loader.read(ctx, "provenance/manifest.json")
 		if e != nil {
 			return source.LocalAssets{}, e
 		}
 		if _, e = source.AuthenticateManifest(manifest, pin); e != nil {
 			return source.LocalAssets{}, e
 		}
-		artifact, e := p.resources.read(ctx, "provenance/"+artifactPath)
+		artifact, e := loader.read(ctx, "provenance/"+artifactPath)
 		if e != nil {
 			return source.LocalAssets{}, e
 		}
-		key, e := p.resources.read(ctx, "provenance/"+keyPath)
+		key, e := loader.read(ctx, "provenance/"+keyPath)
 		if e != nil {
 			return source.LocalAssets{}, e
 		}
@@ -62,4 +66,9 @@ func (p *NativeProver) GetProvenanceCapability() (source.ManifestIdentity, sourc
 		return p.options.WitnessExecutor.Execute(ctx, artifact, local)
 	}, LoadAssets: func(capacity int) (source.LocalAssets, error) { return load(context.Background(), capacity) }}
 	return identity, backend, nil
+}
+
+func (p *NativeProver) provenanceResourceLoader() (*resourceLoader, error) {
+	p.provenanceOnce.Do(func() { p.provenanceResources, p.provenanceError = newProvenanceResourceLoader(p.options.Resources) })
+	return p.provenanceResources, p.provenanceError
 }

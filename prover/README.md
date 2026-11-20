@@ -34,9 +34,9 @@ a two-minute deadline. Canceling a caller returns promptly; shared downloads con
 for other active callers and are aborted when their final caller cancels. An optional `HTTPClient` allows
 custom transport configuration. No private witness data enters resource requests.
 
-For air-gapped use, copy an authenticated combined Core + Periphery resource output directory to
+For air-gapped use, copy an authenticated Core-only resource output directory to
 `Directory`, then enable `Offline`. Generate new tiny metadata with
-`scripts/sync-reference.py --proving-only --resource-dir COMBINED_OUTPUT` after explicitly composing pinned Core and Periphery outputs with Periphery's `scripts/combine-prover-assets.mjs`. A reviewed new release can explicitly set
+`scripts/sync-reference.py --proving-only --resource-dir CORE_OUTPUT` after building Core's independent resource catalog. A reviewed new release can explicitly set
 `--index-sha256`; synchronization validates all resources before writing metadata.
 Set `INVISI_PROVER_RESOURCE_DIR` to run the full local release authentication tests.
 
@@ -55,3 +55,5 @@ the complete pinned snapshot without invoking Noir or BB. Pass logical resource
 paths to prepare only a subset. `native.ResourceIndexSHA256` exposes the SDK's
 fixed index identity for build reports. Existing directory/cache files are verified
 and reused; missing resources download into `CacheDir` unless offline mode is set.
+
+Provenance uses its own catalog and pin. Set `ResourceOptions.ProvenanceDirectory` or `ProvenanceSources` independently, then call `PrefetchProvenanceResources`. `scripts/sync-provenance.py PERIPHERY_CHECKOUT --resource-dir PROVENANCE_OUTPUT` exports only the authenticated Provenance assets. `LegacyCombined: true` explicitly retains the old combined catalogs; Core initial-payment uses its historical separate pin only in this mode. Missing new catalogs do not trigger a downgrade. Split resources must be published before SDK release.

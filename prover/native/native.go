@@ -14,6 +14,7 @@ import (
 	"path/filepath"
 	"regexp"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/invisi-labs/invisi-sdk-go/prover"
@@ -33,8 +34,11 @@ type NativeOptions struct {
 	Resources       ResourceOptions
 }
 type NativeProver struct {
-	options   NativeOptions
-	resources *resourceLoader
+	options             NativeOptions
+	resources           *resourceLoader
+	provenanceOnce      sync.Once
+	provenanceResources *resourceLoader
+	provenanceError     error
 }
 
 func NewNativeProver(options NativeOptions) (*NativeProver, error) {
@@ -59,7 +63,13 @@ func NewNativeProver(options NativeOptions) (*NativeProver, error) {
 	if options.WitnessExecutor == nil {
 		options.WitnessExecutor = noirWitnessExecutor{binary: options.NoirBinary, timeout: options.Timeout}
 	}
-	loader, err := newResourceLoader(options.Resources, resourceIndexSHA256)
+	if options.Resources.Sources != nil {
+		options.Resources.Sources = append([]string{}, options.Resources.Sources...)
+	}
+	if options.Resources.ProvenanceSources != nil {
+		options.Resources.ProvenanceSources = append([]string{}, options.Resources.ProvenanceSources...)
+	}
+	loader, err := newResourceLoader(options.Resources, coreResourcePin(options.Resources))
 	if err != nil {
 		return nil, err
 	}
@@ -109,7 +119,7 @@ func (p *NativeProver) assets(ctx context.Context, statement prover.ProofStateme
 		return nil, nil, errors.New("untrusted circuit metadata")
 	}
 	loader := p.resources
-	if statement.CircuitName == "create_credit_initial_payment" {
+	if p.options.Resources.LegacyCombined && statement.CircuitName == "create_credit_initial_payment" {
 		loader, e = newResourceLoader(p.options.Resources, InitialPaymentResourceIndexSHA256)
 		if e != nil {
 			return nil, nil, e
