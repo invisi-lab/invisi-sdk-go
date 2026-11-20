@@ -34,10 +34,9 @@ a two-minute deadline. Canceling a caller returns promptly; shared downloads con
 for other active callers and are aborted when their final caller cancels. An optional `HTTPClient` allows
 custom transport configuration. No private witness data enters resource requests.
 
-For air-gapped use, copy an authenticated Core resource output directory to
+For air-gapped use, copy an authenticated combined Core + Periphery resource output directory to
 `Directory`, then enable `Offline`. Generate new tiny metadata with
-`scripts/sync-reference.py --proving-only --resource-dir CORE_OUTPUT` after building
-Core's `scripts/prover-assets.mjs`. A reviewed new release can explicitly set
+`scripts/sync-reference.py --proving-only --resource-dir COMBINED_OUTPUT` after explicitly composing pinned Core and Periphery outputs with Periphery's `scripts/combine-prover-assets.mjs`. A reviewed new release can explicitly set
 `--index-sha256`; synchronization validates all resources before writing metadata.
 Set `INVISI_PROVER_RESOURCE_DIR` to run the full local release authentication tests.
 
