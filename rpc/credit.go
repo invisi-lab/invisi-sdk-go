@@ -70,8 +70,12 @@ func (c *ProtocolRpcClient) parseTransitions(ctx context.Context, rows []json.Ra
 	return out, nil
 }
 func (c *ProtocolRpcClient) GetCreditTransitions(ctx context.Context, scope DeploymentContext, r ProtocolUpdateRange) (ProtocolCreditUpdates, error) {
+	return c.getCreditTransitionsWithStatus(ctx, scope, r, nil)
+}
+
+func (c *ProtocolRpcClient) getCreditTransitionsWithStatus(ctx context.Context, scope DeploymentContext, r ProtocolUpdateRange, verified *ProtocolDataStatus) (ProtocolCreditUpdates, error) {
 	var out ProtocolCreditUpdates
-	b, raw, e := c.updatePage(ctx, scope, r, "invisi_getCreditTransitions")
+	b, raw, e := c.updatePageWithStatus(ctx, scope, r, "invisi_getCreditTransitions", verified)
 	if e != nil {
 		return out, e
 	}

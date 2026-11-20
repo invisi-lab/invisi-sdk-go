@@ -347,6 +347,41 @@ func TestRefreshKeepsAuthenticatedChildPayloadAndDropsUnknownRecoveredPayload(t 
 					t.Fatal("parent consumption lost")
 				}
 			}
+
+			// Simulate a previously unresolved historical parent being delivered
+			// after the draw page was already scanned. Replay must recover both
+			// roles from the authenticated transition, without decrypting it again.
+			if e = session.options.Store.Update(ctx, session.scope, func(v *WalletState) error {
+				for _, role := range []credit.Role{credit.Owner, credit.Spender} {
+					delete(v.PostpaidCredit.Grants, creditsession.GrantKey(leaf, role))
+				}
+				scheduleCreditReplay(&v.Scan, 10, 10)
+				return nil
+			}); e != nil {
+				t.Fatal(e)
+			}
+			var replayed []BlockRange
+			if e = session.replayCredits(ctx, block, 1, ScanOptions{OnProgress: func(p HistoryProgress) {
+				replayed = append(replayed, p.Range)
+			}}, &RefreshResult{}); e != nil {
+				t.Fatal("late parent recovery", e)
+			}
+			if len(replayed) != 1 || replayed[0] != (BlockRange{10, 10}) {
+				t.Fatal("late parent replayed before creation", replayed)
+			}
+			wallet, e = session.options.Store.ReadSnapshot(ctx, session.scope)
+			if e != nil {
+				t.Fatal(e)
+			}
+			for _, role := range []credit.Role{credit.Owner, credit.Spender} {
+				child, ok := wallet.PostpaidCredit.Grants[creditsession.GrantKey(leaf, role)]
+				if !ok || child.Delivery.State.AvailableCredit != primitives.ElementFromUint64(393) || len(child.Delivery.State.Payload) != 0 {
+					t.Fatal("late parent successor recovery failed")
+				}
+				if !wallet.PostpaidCredit.Grants[creditsession.GrantKey(common.Hash(oldLeaf.Bytes()), role)].Consumed {
+					t.Fatal("replay lost parent consumption")
+				}
+			}
 		})
 	}
 }

@@ -65,12 +65,16 @@ func (p *TrustedProvider) read(ctx context.Context, r trustedRequest) (trustedRe
 	if e != nil {
 		return out, e
 	}
+	return out, p.validateResponse(out)
+}
+
+func (p *TrustedProvider) validateResponse(out trustedResponse) error {
 	want, _ := json.Marshal(p.deployment)
 	got, _ := json.Marshal(out.Deployment)
 	if out.APIVersion != "v1" || out.ProtocolVersion != "1" || !bytes.Equal(want, got) {
-		return out, errors.New("trusted chain state deployment or version mismatch")
+		return errors.New("trusted chain state deployment or version mismatch")
 	}
-	return out, nil
+	return nil
 }
 func trustedBlock(n *big.Int) (string, error) {
 	if n == nil {

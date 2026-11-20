@@ -1,0 +1,77 @@
+{
+  "endpoint": "https://rpc.invisipay.fi/v1/chains/97",
+  "kind": "read-only original-header comparison",
+  "methodology": "Alternating original groups of eight individual requests and bounded JSON-RPC batches of twenty. Every response authenticated; full parent chain checked; fresh canonical anchor at end. Does not measure full wallet sync or collection.",
+  "runs": [
+    {
+      "anchor": "0x1db3a4a1f87b9cdf7d2dd7c0a1fb831837c2418115cab1a753aaca51c57b243a",
+      "batch": false,
+      "blocks": 256,
+      "elapsedMs": 11794.026,
+      "fromBlock": 143821381,
+      "httpRequests": 257,
+      "run": 1,
+      "toBlock": 143821636,
+      "validated": true
+    },
+    {
+      "anchor": "0x1db3a4a1f87b9cdf7d2dd7c0a1fb831837c2418115cab1a753aaca51c57b243a",
+      "batch": true,
+      "blocks": 256,
+      "elapsedMs": 5738.448,
+      "fromBlock": 143821381,
+      "httpRequests": 14,
+      "run": 1,
+      "toBlock": 143821636,
+      "validated": true
+    },
+    {
+      "anchor": "0x1db3a4a1f87b9cdf7d2dd7c0a1fb831837c2418115cab1a753aaca51c57b243a",
+      "batch": false,
+      "blocks": 256,
+      "elapsedMs": 12035.764,
+      "fromBlock": 143821381,
+      "httpRequests": 257,
+      "run": 2,
+      "toBlock": 143821636,
+      "validated": true
+    },
+    {
+      "anchor": "0x1db3a4a1f87b9cdf7d2dd7c0a1fb831837c2418115cab1a753aaca51c57b243a",
+      "batch": true,
+      "blocks": 256,
+      "elapsedMs": 4860.449,
+      "fromBlock": 143821381,
+      "httpRequests": 14,
+      "run": 2,
+      "toBlock": 143821636,
+      "validated": true
+    },
+    {
+      "anchor": "0x1db3a4a1f87b9cdf7d2dd7c0a1fb831837c2418115cab1a753aaca51c57b243a",
+      "batch": false,
+      "blocks": 256,
+      "elapsedMs": 13665.965,
+      "fromBlock": 143821381,
+      "httpRequests": 257,
+      "run": 3,
+      "toBlock": 143821636,
+      "validated": true
+    },
+    {
+      "anchor": "0x1db3a4a1f87b9cdf7d2dd7c0a1fb831837c2418115cab1a753aaca51c57b243a",
+      "batch": true,
+      "blocks": 256,
+      "elapsedMs": 4217.778,
+      "fromBlock": 143821381,
+      "httpRequests": 14,
+      "run": 3,
+      "toBlock": 143821636,
+      "validated": true
+    }
+  ],
+  "medianMs": {
+    "individual": 12035.764,
+    "batch": 4860.449
+  }
+}

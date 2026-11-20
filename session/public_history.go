@@ -355,42 +355,30 @@ func (h *PublicHistory) page(ctx context.Context, q BlockRange, offline bool) (P
 		return PublicPage{}, errors.New("public page must contain 1..256 blocks")
 	}
 	p := PublicPage{Range: q}
-	for offset, count := uint64(0), q.ToBlock-q.FromBlock+1; offset < count; {
-		size := min(uint64(8), count-offset)
-		headers := make([]*types.Header, size)
-		errs := make([]error, size)
-		var reads sync.WaitGroup
-		for i := range headers {
-			reads.Add(1)
-			go func(i int) {
-				defer reads.Done()
-				headers[i], errs[i] = h.options.Provider.HeaderByNumber(ctx, new(big.Int).SetUint64(q.FromBlock+offset+uint64(i)))
-			}(i)
-		}
-		reads.Wait()
-		for i, head := range headers {
-			if errs[i] != nil {
-				return p, errs[i]
-			}
-			n := q.FromBlock + offset + uint64(i)
-			if head == nil || head.Number == nil || !head.Number.IsUint64() || head.Number.Uint64() != n {
-				return p, errors.New("invalid public header")
-			}
-			b := protocolrpc.CanonicalBlock{Number: n, Hash: head.Hash(), ParentHash: head.ParentHash, Timestamp: head.Time}
-			if len(p.Headers) > 0 && b.ParentHash != p.Headers[len(p.Headers)-1].Hash {
-				return p, errors.New("public header chain mismatch")
-			}
-			p.Headers = append(p.Headers, b)
-			p.Block = b
-		}
-		offset += size
-	}
-	query := protocolrpc.ProtocolUpdateRange{FromBlock: q.FromBlock, ToBlock: q.ToBlock}
-	ns, e := h.options.ProtocolRPC.GetNoteUpdates(ctx, h.options.Protocol.Context(), query)
+	// Keep the complete original headers for receipt decoding as well as the
+	// normalized parent chain. Batch-capable providers retain their own full
+	// header/deployment validation; arbitrary providers use bounded reads.
+	originalHeaders, e := publicPageHeaders(ctx, h.options.Provider, q)
 	if e != nil {
 		return p, e
 	}
-	cs, e := h.options.ProtocolRPC.GetCreditTransitions(ctx, h.options.Protocol.Context(), query)
+	if len(originalHeaders) != int(q.ToBlock-q.FromBlock+1) {
+		return p, errors.New("incomplete public headers")
+	}
+	for i, head := range originalHeaders {
+		n := q.FromBlock + uint64(i)
+		if head == nil || head.Number == nil || !head.Number.IsUint64() || head.Number.Uint64() != n {
+			return p, errors.New("invalid public header")
+		}
+		b := protocolrpc.CanonicalBlock{Number: n, Hash: head.Hash(), ParentHash: head.ParentHash, Timestamp: head.Time}
+		if len(p.Headers) > 0 && b.ParentHash != p.Headers[len(p.Headers)-1].Hash {
+			return p, errors.New("public header chain mismatch")
+		}
+		p.Headers = append(p.Headers, b)
+		p.Block = b
+	}
+	query := protocolrpc.ProtocolUpdateRange{FromBlock: q.FromBlock, ToBlock: q.ToBlock}
+	ns, cs, e := h.options.ProtocolRPC.GetHistoryUpdates(ctx, h.options.Protocol.Context(), query)
 	if e != nil {
 		return p, e
 	}
@@ -421,10 +409,7 @@ func (h *PublicHistory) page(ctx context.Context, q BlockRange, offline bool) (P
 		if r.BlockHash != b.Hash {
 			return p, errors.New("public receipt not canonical")
 		}
-		head, e := h.options.Provider.HeaderByNumber(ctx, r.BlockNumber)
-		if e != nil {
-			return p, e
-		}
+		head := originalHeaders[r.BlockNumber.Uint64()-q.FromBlock]
 		logs := []types.Log{}
 		for _, l := range r.Logs {
 			if l == nil {

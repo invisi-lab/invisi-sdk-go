@@ -10,6 +10,10 @@ import (
 )
 
 func (c *ProtocolRpcClient) updatePage(ctx context.Context, d DeploymentContext, r ProtocolUpdateRange, method string) (CanonicalBlock, json.RawMessage, error) {
+	return c.updatePageWithStatus(ctx, d, r, method, nil)
+}
+
+func (c *ProtocolRpcClient) updatePageWithStatus(ctx context.Context, d DeploymentContext, r ProtocolUpdateRange, method string, verified *ProtocolDataStatus) (CanonicalBlock, json.RawMessage, error) {
 	deployment, e := c.context(d)
 	if e != nil {
 		return CanonicalBlock{}, nil, e
@@ -17,9 +21,14 @@ func (c *ProtocolRpcClient) updatePage(ctx context.Context, d DeploymentContext,
 	if r.FromBlock < deployment.Protocol.FromBlock || r.ToBlock < r.FromBlock || r.ToBlock-r.FromBlock >= MaxUpdateBlocks || r.ToBlock > 1<<53-1 {
 		return CanonicalBlock{}, nil, errors.New("updates require at most 10000 deployment blocks")
 	}
-	status, e := c.readStatus(ctx, d, false)
-	if e != nil {
-		return CanonicalBlock{}, nil, e
+	var status ProtocolDataStatus
+	if verified != nil {
+		status = *verified
+	} else {
+		status, e = c.readStatus(ctx, d, false)
+		if e != nil {
+			return CanonicalBlock{}, nil, e
+		}
 	}
 	if status.IndexedHead == nil || status.IndexedHead.Number < r.ToBlock {
 		return CanonicalBlock{}, nil, errors.New("Protocol RPC is behind requested range")
@@ -110,8 +119,12 @@ func parseRows[T indexedLeaf](ctx context.Context, c *ProtocolRpcClient, block C
 	return out, nil
 }
 func (c *ProtocolRpcClient) GetNoteUpdates(ctx context.Context, d DeploymentContext, r ProtocolUpdateRange) (ProtocolNoteUpdates, error) {
+	return c.getNoteUpdatesWithStatus(ctx, d, r, nil)
+}
+
+func (c *ProtocolRpcClient) getNoteUpdatesWithStatus(ctx context.Context, d DeploymentContext, r ProtocolUpdateRange, verified *ProtocolDataStatus) (ProtocolNoteUpdates, error) {
 	var out ProtocolNoteUpdates
-	block, raw, e := c.updatePage(ctx, d, r, "invisi_getNoteUpdates")
+	block, raw, e := c.updatePageWithStatus(ctx, d, r, "invisi_getNoteUpdates", verified)
 	if e != nil {
 		return out, e
 	}

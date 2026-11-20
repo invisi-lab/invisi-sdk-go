@@ -103,11 +103,7 @@ func (s *WalletSession) RetryUnresolved(ctx context.Context, d wallet.DeliveryDe
 			if next.Scan.IndexedHead != nil && next.Scan.IndexedHead.Number > target {
 				target = next.Scan.IndexedHead.Number
 			}
-			if target > next.Scan.CreditReplayTarget {
-				next.Scan.CreditReplayTarget = target
-			}
-			next.Scan.CreditReplayRevision++
-			next.Scan.CreditReplayCursor = 0
+			scheduleCreditReplay(&next.Scan, u.Transaction.Receipt.BlockNumber.Uint64(), target)
 		}
 		if e = s.commitPrivateBatch(ctx, next.Scan.Generation, before.Revision, next); e != nil {
 			return resolved, e

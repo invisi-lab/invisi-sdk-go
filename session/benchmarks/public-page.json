@@ -1,0 +1,16 @@
+{
+  "baselineNsPerOp": [
+    86321764,
+    86292389,
+    84752139
+  ],
+  "optimizedNsPerOp": [
+    54370375,
+    53662806,
+    51736430
+  ],
+  "methodology": "Three repeated benchmark samples per version; each sample averages three actual cold PublicHistory.Page operations. HTTP transport delay 1ms, no transactions or finality field in fixture.",
+  "baselineCommit": "10c200c",
+  "baselineHttpPerPage": 267,
+  "optimizedHttpPerPage": 23
+}

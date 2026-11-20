@@ -21,8 +21,23 @@ func (s *WalletSession) checkKnownState(ctx context.Context, v *WalletState, b p
 		return e
 	}
 	opts := &bind.CallOpts{Context: ctx, BlockNumber: new(big.Int).SetUint64(b.Number)}
+	cache := scanCache(ctx)
+	spent := func(nf common.Hash) (bool, error) {
+		key := spentCheckKey{Block: b, Nullifier: nf}
+		if cache != nil {
+			if value, ok := cache.spent[key]; ok {
+				return value, nil
+			}
+		}
+		value, err := c.IsNullifierSpent(opts, nf)
+		if err == nil && cache != nil {
+			cache.trim()
+			cache.spent[key] = value
+		}
+		return value, err
+	}
 	for key, n := range v.Notes {
-		n.Spent, e = c.IsNullifierSpent(opts, n.Nullifier)
+		n.Spent, e = spent(n.Nullifier)
 		if e != nil {
 			return e
 		}
@@ -32,7 +47,7 @@ func (s *WalletSession) checkKnownState(ctx context.Context, v *WalletState, b p
 	}
 	bitmaps := map[string]*big.Int{}
 	for key, g := range v.PostpaidCredit.Grants {
-		g.Consumed, e = c.IsNullifierSpent(opts, g.Nullifier)
+		g.Consumed, e = spent(g.Nullifier)
 		if e != nil {
 			return e
 		}
@@ -43,6 +58,9 @@ func (s *WalletSession) checkKnownState(ctx context.Context, v *WalletState, b p
 		slot := primitives.ElementToBigInt(state.RevocationSlot).Uint64()
 		k := fmt.Sprintf("%s:%s:%d:%d", owner, token, shard, slot/256)
 		bits := bitmaps[k]
+		if bits == nil && cache != nil {
+			bits = cache.bitmaps[bitmapCheckKey{Block: b, Namespace: k}]
+		}
 		if bits == nil {
 			bits, e = c.CreditRevocationBitmap(opts, owner, token, shard, uint8(slot/256))
 			if e != nil {
@@ -52,6 +70,10 @@ func (s *WalletSession) checkKnownState(ctx context.Context, v *WalletState, b p
 				return errors.New("invalid revocation bitmap")
 			}
 			bitmaps[k] = bits
+			if cache != nil {
+				cache.trim()
+				cache.bitmaps[bitmapCheckKey{Block: b, Namespace: k}] = new(big.Int).Set(bits)
+			}
 		}
 		g.Revoked = bits.Bit(int(slot%256)) == 1
 		v.PostpaidCredit.Grants[key] = g
@@ -64,6 +86,9 @@ func (s *WalletSession) checkKnownState(ctx context.Context, v *WalletState, b p
 	return nil
 }
 func (s *WalletSession) RefreshState(ctx context.Context) error {
+	// A final live refresh must recapture all consumption/revocation reads in its
+	// preparation snapshot and must not reuse the discovery scan's state cache.
+	ctx = context.WithValue(ctx, scanStateCacheKey{}, (*scanStateCache)(nil))
 	head, e := s.options.Provider.HeaderByNumber(ctx, nil)
 	if e != nil {
 		return e
@@ -136,6 +161,9 @@ func (s *WalletSession) replayCredits(ctx context.Context, target protocolrpc.Ca
 		return nil
 	}
 	from := s.protocol.Deployment().Protocol.FromBlock
+	if state.Scan.CreditReplayFrom > from {
+		from = state.Scan.CreditReplayFrom
+	}
 	if state.Scan.CreditReplayCursor >= from {
 		from = state.Scan.CreditReplayCursor + 1
 	}
@@ -150,6 +178,19 @@ func (s *WalletSession) replayCredits(ctx context.Context, target protocolrpc.Ca
 		if e != nil {
 			return e
 		}
+		if o.SkipStateRefresh {
+			checkpointed, err := s.checkpointEmptyCreditReplay(ctx, page, required, revision, end)
+			if err != nil {
+				return err
+			}
+			if checkpointed {
+				if o.OnProgress != nil {
+					o.OnProgress(HistoryProgress{"committed", "credit-recovery", q, target})
+				}
+				from = end + 1
+				continue
+			}
+		}
 		before, e := s.options.Store.ReadSnapshot(ctx, s.scope)
 		if e != nil {
 			return e
@@ -161,11 +202,17 @@ func (s *WalletSession) replayCredits(ctx context.Context, target protocolrpc.Ca
 		if e != nil {
 			return e
 		}
+		filter, e := contracts.NewInvisiCoreFilterer(s.scope.ProtocolAddress, nil)
+		if e != nil {
+			return e
+		}
+		// Index both roles and extend it while recovering successors. A later
+		// transition in the same transaction/page can spend a recovered child.
+		parents := make(map[common.Hash][]creditsession.StoredState, len(next.PostpaidCredit.Grants))
+		for _, previous := range next.PostpaidCredit.Grants {
+			parents[previous.Nullifier] = append(parents[previous.Nullifier], previous)
+		}
 		for _, tx := range page.Transactions {
-			filter, e := contracts.NewInvisiCoreFilterer(s.scope.ProtocolAddress, nil)
-			if e != nil {
-				return e
-			}
 			for _, log := range tx.Receipt.Logs {
 				if log == nil || log.Address != s.scope.ProtocolAddress {
 					continue
@@ -174,11 +221,8 @@ func (s *WalletSession) replayCredits(ctx context.Context, target protocolrpc.Ca
 				if e != nil {
 					continue
 				}
-				for _, previous := range next.PostpaidCredit.Grants {
-					for j, nf := range draw.State.Nullifiers {
-						if previous.Nullifier != common.Hash(nf) {
-							continue
-						}
+				for j, nf := range draw.State.Nullifiers {
+					for _, previous := range parents[common.Hash(nf)] {
 						commitment := common.Hash(draw.State.CreditCommitments[j])
 						key := creditsession.GrantKey(commitment, previous.Role)
 						if _, ok := next.PostpaidCredit.Grants[key]; ok {
@@ -205,6 +249,7 @@ func (s *WalletSession) replayCredits(ctx context.Context, target protocolrpc.Ca
 						child.Revoked = false
 						child.ReservedBy = ""
 						next.PostpaidCredit.Grants[key] = child
+						parents[child.Nullifier] = append(parents[child.Nullifier], child)
 						result.AddedCredits++
 					}
 				}
@@ -214,6 +259,7 @@ func (s *WalletSession) replayCredits(ctx context.Context, target protocolrpc.Ca
 		if end == required && next.Scan.CreditReplayRevision == revision {
 			next.Scan.CreditReplayTarget = 0
 			next.Scan.CreditReplayCursor = 0
+			next.Scan.CreditReplayFrom = 0
 		}
 		if !o.SkipStateRefresh {
 			head := next.Scan.ChainHead

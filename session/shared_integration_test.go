@@ -31,7 +31,7 @@ func (p historyChain) HeaderByNumber(_ context.Context, n *big.Int) (*types.Head
 	}
 	return h, nil
 }
-func sharedEmptyFixture(t *testing.T) (*WalletSession, *atomic.Int32) {
+func sharedEmptyFixture(t testing.TB) (*WalletSession, *atomic.Int32) {
 	t.Helper()
 	s, _, _ := testSession(t)
 	base := s.options.Provider.(sessionProvider)

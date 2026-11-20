@@ -21,7 +21,10 @@ type PrivateScanState struct {
 	RecoveryBoundary                                             uint64
 	ChainHead, IndexedHead                                       *protocolrpc.CanonicalBlock
 	CreditReplayTarget, CreditReplayCursor, CreditReplayRevision uint64
-	Unresolved                                                   map[string]UnresolvedDelivery
+	// CreditReplayFrom is the oldest newly discovered owned state or relevant transition.
+	// Zero preserves the conservative deployment-wide obligation of older snapshots.
+	CreditReplayFrom uint64
+	Unresolved       map[string]UnresolvedDelivery
 }
 type UnresolvedDelivery struct {
 	Method      wallet.Method
@@ -94,8 +97,11 @@ func (s *WalletSession) historyTarget(ctx context.Context, o ScanOptions) (proto
 	if e != nil {
 		return target, nil, e
 	}
-	if h == nil || h.Number == nil {
+	if h == nil || h.Number == nil || !h.Number.IsUint64() {
 		return target, nil, errors.New("invalid chain head")
+	}
+	if h.Number.Uint64() < target.Number {
+		return target, nil, errors.New("chain observation precedes history target")
 	}
 	head := &protocolrpc.CanonicalBlock{Number: h.Number.Uint64(), Hash: h.Hash(), ParentHash: h.ParentHash, Timestamp: h.Time}
 	e = s.publicHistory.options.Store.Update(ctx, s.publicHistory.key, func(v *PublicHistoryState) error {
@@ -196,6 +202,7 @@ type stagedPublicPage struct {
 }
 
 func (s *WalletSession) scanHistory(ctx context.Context, d wallet.DeliveryDecryptor, o ScanOptions, staged ...*stagedPublicPage) (RefreshResult, error) {
+	ctx = withScanStateCache(ctx)
 	var result RefreshResult
 	if d == nil {
 		return result, errors.New("App delivery decryptor required")
@@ -407,6 +414,7 @@ func (s *WalletSession) scanHistory(ctx context.Context, d wallet.DeliveryDecryp
 				old, ok := next.PostpaidCredit.Grants[k]
 				if !ok {
 					result.AddedCredits++
+					scheduleCreditReplay(&next.Scan, tx.Receipt.BlockNumber.Uint64(), target.Number)
 				}
 				c.ReservedBy = old.ReservedBy
 				next.PostpaidCredit.Grants[k] = c
@@ -424,18 +432,11 @@ func (s *WalletSession) scanHistory(ctx context.Context, d wallet.DeliveryDecryp
 		if next.Scan.RecoveryBoundary == 0 {
 			next.Scan.RecoveryBoundary = q.FromBlock
 		}
-		creditWork := false
-		for _, tx := range page.Transactions {
-			if len(tx.Batch.CreditStates) > 0 || len(tx.Batch.CreditNullifiers) > 0 {
-				creditWork = true
-			}
-		}
-		if creditWork {
-			if next.Scan.CreditReplayTarget < target.Number {
-				next.Scan.CreditReplayTarget = target.Number
-			}
-			next.Scan.CreditReplayRevision++
-			next.Scan.CreditReplayCursor = 0
+		// New owned states above schedule replay through the frozen target, including
+		// descendants in newer pages that were scanned before this parent. Without
+		// ciphertext, a transition is relevant only when its parent nullifier is ours.
+		if creditReplayRelevant(next, page) {
+			scheduleCreditReplay(&next.Scan, q.FromBlock, target.Number)
 		}
 		next.ObservedThrough = &target
 		next.DiscoveryThrough = nil

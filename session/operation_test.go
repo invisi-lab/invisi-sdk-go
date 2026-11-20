@@ -115,7 +115,7 @@ func (p *testProver) Verify(context.Context, prover.ProofBundle, prover.ProofSta
 	return true, nil
 }
 
-func testSession(t *testing.T, timestamps ...uint64) (*WalletSession, common.Address, *testProver) {
+func testSession(t testing.TB, timestamps ...uint64) (*WalletSession, common.Address, *testProver) {
 	timestamp := uint64(100)
 	if len(timestamps) > 0 {
 		timestamp = timestamps[0]
