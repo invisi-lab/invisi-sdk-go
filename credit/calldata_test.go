@@ -2,9 +2,11 @@ package credit
 
 import (
 	"bytes"
+	"encoding/json"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/signer/core/apitypes"
+	"github.com/invisi-labs/invisi-sdk-go/protocol/contracts"
 	"math/big"
 	"testing"
 )
@@ -47,6 +49,13 @@ func TestRevokeHasNoProofAndBindsOriginalNamespace(t *testing.T) {
 }
 
 func TestLifecycleCalldataUsesCurrentSignatures(t *testing.T) {
+	var compact bytes.Buffer
+	if err := json.Compact(&compact, []byte(currentABIJSON)); err != nil {
+		t.Fatal(err)
+	}
+	if compact.String() != contracts.InvisiCoreABI {
+		t.Fatal("current Credit ABI differs from public Core ABI; run go generate ./protocol/contracts")
+	}
 	a, err := ContractABI()
 	if err != nil {
 		t.Fatal(err)

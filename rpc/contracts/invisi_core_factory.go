@@ -211,12 +211,12 @@ func (_InvisiCoreFactory *InvisiCoreFactoryCallerSession) VERSION() (*big.Int, e
 	return _InvisiCoreFactory.Contract.VERSION(&_InvisiCoreFactory.CallOpts)
 }
 
-// ComputeInstanceAddress is a free data retrieval call binding the contract method 0x716a840a.
+// ComputeInstanceAddress is a free data retrieval call binding the contract method 0x51dfabc3.
 //
-// Solidity: function computeInstanceAddress(bytes creationCode, bytes32 salt, address initialOwner_, address emergencyAdmin_, address screener_, address addressRegistry_) view returns(address instance)
-func (_InvisiCoreFactory *InvisiCoreFactoryCaller) ComputeInstanceAddress(opts *bind.CallOpts, creationCode []byte, salt [32]byte, initialOwner_ common.Address, emergencyAdmin_ common.Address, screener_ common.Address, addressRegistry_ common.Address) (common.Address, error) {
+// Solidity: function computeInstanceAddress(bytes creationCode, bytes32 salt, address initialOwner_, address emergencyAdmin_, address addressRegistry_) view returns(address instance)
+func (_InvisiCoreFactory *InvisiCoreFactoryCaller) ComputeInstanceAddress(opts *bind.CallOpts, creationCode []byte, salt [32]byte, initialOwner_ common.Address, emergencyAdmin_ common.Address, addressRegistry_ common.Address) (common.Address, error) {
 	var out []interface{}
-	err := _InvisiCoreFactory.contract.Call(opts, &out, "computeInstanceAddress", creationCode, salt, initialOwner_, emergencyAdmin_, screener_, addressRegistry_)
+	err := _InvisiCoreFactory.contract.Call(opts, &out, "computeInstanceAddress", creationCode, salt, initialOwner_, emergencyAdmin_, addressRegistry_)
 
 	if err != nil {
 		return *new(common.Address), err
@@ -228,18 +228,18 @@ func (_InvisiCoreFactory *InvisiCoreFactoryCaller) ComputeInstanceAddress(opts *
 
 }
 
-// ComputeInstanceAddress is a free data retrieval call binding the contract method 0x716a840a.
+// ComputeInstanceAddress is a free data retrieval call binding the contract method 0x51dfabc3.
 //
-// Solidity: function computeInstanceAddress(bytes creationCode, bytes32 salt, address initialOwner_, address emergencyAdmin_, address screener_, address addressRegistry_) view returns(address instance)
-func (_InvisiCoreFactory *InvisiCoreFactorySession) ComputeInstanceAddress(creationCode []byte, salt [32]byte, initialOwner_ common.Address, emergencyAdmin_ common.Address, screener_ common.Address, addressRegistry_ common.Address) (common.Address, error) {
-	return _InvisiCoreFactory.Contract.ComputeInstanceAddress(&_InvisiCoreFactory.CallOpts, creationCode, salt, initialOwner_, emergencyAdmin_, screener_, addressRegistry_)
+// Solidity: function computeInstanceAddress(bytes creationCode, bytes32 salt, address initialOwner_, address emergencyAdmin_, address addressRegistry_) view returns(address instance)
+func (_InvisiCoreFactory *InvisiCoreFactorySession) ComputeInstanceAddress(creationCode []byte, salt [32]byte, initialOwner_ common.Address, emergencyAdmin_ common.Address, addressRegistry_ common.Address) (common.Address, error) {
+	return _InvisiCoreFactory.Contract.ComputeInstanceAddress(&_InvisiCoreFactory.CallOpts, creationCode, salt, initialOwner_, emergencyAdmin_, addressRegistry_)
 }
 
-// ComputeInstanceAddress is a free data retrieval call binding the contract method 0x716a840a.
+// ComputeInstanceAddress is a free data retrieval call binding the contract method 0x51dfabc3.
 //
-// Solidity: function computeInstanceAddress(bytes creationCode, bytes32 salt, address initialOwner_, address emergencyAdmin_, address screener_, address addressRegistry_) view returns(address instance)
-func (_InvisiCoreFactory *InvisiCoreFactoryCallerSession) ComputeInstanceAddress(creationCode []byte, salt [32]byte, initialOwner_ common.Address, emergencyAdmin_ common.Address, screener_ common.Address, addressRegistry_ common.Address) (common.Address, error) {
-	return _InvisiCoreFactory.Contract.ComputeInstanceAddress(&_InvisiCoreFactory.CallOpts, creationCode, salt, initialOwner_, emergencyAdmin_, screener_, addressRegistry_)
+// Solidity: function computeInstanceAddress(bytes creationCode, bytes32 salt, address initialOwner_, address emergencyAdmin_, address addressRegistry_) view returns(address instance)
+func (_InvisiCoreFactory *InvisiCoreFactoryCallerSession) ComputeInstanceAddress(creationCode []byte, salt [32]byte, initialOwner_ common.Address, emergencyAdmin_ common.Address, addressRegistry_ common.Address) (common.Address, error) {
+	return _InvisiCoreFactory.Contract.ComputeInstanceAddress(&_InvisiCoreFactory.CallOpts, creationCode, salt, initialOwner_, emergencyAdmin_, addressRegistry_)
 }
 
 // CreationCodeHash is a free data retrieval call binding the contract method 0x47191163.
@@ -511,25 +511,25 @@ func (_InvisiCoreFactory *InvisiCoreFactoryTransactorSession) AcceptOwnership() 
 	return _InvisiCoreFactory.Contract.AcceptOwnership(&_InvisiCoreFactory.TransactOpts)
 }
 
-// Deploy is a paid mutator transaction binding the contract method 0x64aa77a2.
+// Deploy is a paid mutator transaction binding the contract method 0x72eff647.
 //
-// Solidity: function deploy(bytes creationCode, bytes32 salt, address initialOwner_, address emergencyAdmin_, address screener_, address addressRegistry_) returns(address instance)
-func (_InvisiCoreFactory *InvisiCoreFactoryTransactor) Deploy(opts *bind.TransactOpts, creationCode []byte, salt [32]byte, initialOwner_ common.Address, emergencyAdmin_ common.Address, screener_ common.Address, addressRegistry_ common.Address) (*types.Transaction, error) {
-	return _InvisiCoreFactory.contract.Transact(opts, "deploy", creationCode, salt, initialOwner_, emergencyAdmin_, screener_, addressRegistry_)
+// Solidity: function deploy(bytes creationCode, bytes32 salt, address initialOwner_, address emergencyAdmin_, address addressRegistry_) returns(address instance)
+func (_InvisiCoreFactory *InvisiCoreFactoryTransactor) Deploy(opts *bind.TransactOpts, creationCode []byte, salt [32]byte, initialOwner_ common.Address, emergencyAdmin_ common.Address, addressRegistry_ common.Address) (*types.Transaction, error) {
+	return _InvisiCoreFactory.contract.Transact(opts, "deploy", creationCode, salt, initialOwner_, emergencyAdmin_, addressRegistry_)
 }
 
-// Deploy is a paid mutator transaction binding the contract method 0x64aa77a2.
+// Deploy is a paid mutator transaction binding the contract method 0x72eff647.
 //
-// Solidity: function deploy(bytes creationCode, bytes32 salt, address initialOwner_, address emergencyAdmin_, address screener_, address addressRegistry_) returns(address instance)
-func (_InvisiCoreFactory *InvisiCoreFactorySession) Deploy(creationCode []byte, salt [32]byte, initialOwner_ common.Address, emergencyAdmin_ common.Address, screener_ common.Address, addressRegistry_ common.Address) (*types.Transaction, error) {
-	return _InvisiCoreFactory.Contract.Deploy(&_InvisiCoreFactory.TransactOpts, creationCode, salt, initialOwner_, emergencyAdmin_, screener_, addressRegistry_)
+// Solidity: function deploy(bytes creationCode, bytes32 salt, address initialOwner_, address emergencyAdmin_, address addressRegistry_) returns(address instance)
+func (_InvisiCoreFactory *InvisiCoreFactorySession) Deploy(creationCode []byte, salt [32]byte, initialOwner_ common.Address, emergencyAdmin_ common.Address, addressRegistry_ common.Address) (*types.Transaction, error) {
+	return _InvisiCoreFactory.Contract.Deploy(&_InvisiCoreFactory.TransactOpts, creationCode, salt, initialOwner_, emergencyAdmin_, addressRegistry_)
 }
 
-// Deploy is a paid mutator transaction binding the contract method 0x64aa77a2.
+// Deploy is a paid mutator transaction binding the contract method 0x72eff647.
 //
-// Solidity: function deploy(bytes creationCode, bytes32 salt, address initialOwner_, address emergencyAdmin_, address screener_, address addressRegistry_) returns(address instance)
-func (_InvisiCoreFactory *InvisiCoreFactoryTransactorSession) Deploy(creationCode []byte, salt [32]byte, initialOwner_ common.Address, emergencyAdmin_ common.Address, screener_ common.Address, addressRegistry_ common.Address) (*types.Transaction, error) {
-	return _InvisiCoreFactory.Contract.Deploy(&_InvisiCoreFactory.TransactOpts, creationCode, salt, initialOwner_, emergencyAdmin_, screener_, addressRegistry_)
+// Solidity: function deploy(bytes creationCode, bytes32 salt, address initialOwner_, address emergencyAdmin_, address addressRegistry_) returns(address instance)
+func (_InvisiCoreFactory *InvisiCoreFactoryTransactorSession) Deploy(creationCode []byte, salt [32]byte, initialOwner_ common.Address, emergencyAdmin_ common.Address, addressRegistry_ common.Address) (*types.Transaction, error) {
+	return _InvisiCoreFactory.Contract.Deploy(&_InvisiCoreFactory.TransactOpts, creationCode, salt, initialOwner_, emergencyAdmin_, addressRegistry_)
 }
 
 // EmergencyPauseInstance is a paid mutator transaction binding the contract method 0xf2d5de51.

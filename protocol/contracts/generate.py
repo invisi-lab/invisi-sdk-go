@@ -24,6 +24,8 @@ with tempfile.TemporaryDirectory(prefix='invisi-bindings-') as tmp:
             raise ValueError('invalid compiler ABI')
         abipath = HERE / 'abi' / f'{name}.abi.json'
         abipath.write_text(json.dumps(abi, indent=2) + '\n')
+        if name == 'InvisiCore':
+            (SDK / 'credit/data/current-abi.json').write_text(json.dumps(abi) + '\n')
         raw = pathlib.Path(tmp) / (stem + '.go')
         subprocess.run([abigen, '--abi', str(abipath), '--pkg', 'contracts', '--type', name, '--out', str(raw)], check=True)
         s = raw.read_text()

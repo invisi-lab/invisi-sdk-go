@@ -6,6 +6,7 @@ import (
 	"os"
 	"testing"
 
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/invisi-labs/invisi-sdk-go/protocol/contracts"
 )
 
@@ -168,14 +169,39 @@ func TestFinalRegistryAndFactoryABIContract(t *testing.T) {
 	if _, ok := protocol.Methods["setAddressRegistry"]; ok {
 		t.Fatal("protocol registry must be immutable")
 	}
+	if len(protocol.Constructor.Inputs) != 2 || protocol.Constructor.Inputs[0].Name != "params" || protocol.Constructor.Inputs[1].Name != "_addressRegistry" {
+		t.Fatal("Core constructor must take instance parameters and address registry")
+	}
+	registryAddress := common.HexToAddress("0x1234")
+	params := contracts.InstanceParams{Factory: common.HexToAddress("0x11"), InitialOwner: common.HexToAddress("0x22"), GlobalEmergency: common.HexToAddress("0x33"), EmergencyAdmin: common.HexToAddress("0x44"), VerifierRouter: common.HexToAddress("0x55")}
+	constructor, err := protocol.Pack("", params, registryAddress)
+	if err != nil {
+		t.Fatal(err)
+	}
+	decoded, err := protocol.Constructor.Inputs.Unpack(constructor)
+	if err != nil || len(decoded) != 2 || decoded[1] != registryAddress {
+		t.Fatalf("constructor registry did not round trip: %v", err)
+	}
 	factory, err := contracts.InvisiCoreFactoryMetaData.GetAbi()
 	if err != nil {
 		t.Fatal(err)
 	}
 	for _, name := range []string{"deploy", "computeInstanceAddress"} {
 		method, ok := factory.Methods[name]
-		if !ok || len(method.Inputs) != 6 || method.Inputs[5].Type.String() != "address" || method.Inputs[5].Name != "addressRegistry_" {
-			t.Fatalf("%s must append address registry as its sixth argument", name)
+		if !ok || len(method.Inputs) != 5 || method.Inputs[4].Type.String() != "address" || method.Inputs[4].Name != "addressRegistry_" {
+			t.Fatalf("%s must take address registry as its fifth argument", name)
+		}
+		data, err := factory.Pack(name, []byte{0x60, 0x00}, [32]byte{1}, params.InitialOwner, params.EmergencyAdmin, registryAddress)
+		if err != nil {
+			t.Fatal(err)
+		}
+		selectors := map[string]string{"deploy": "72eff647", "computeInstanceAddress": "51dfabc3"}
+		if common.Bytes2Hex(data[:4]) != selectors[name] {
+			t.Fatalf("unexpected %s selector: %x", name, data[:4])
+		}
+		args, err := method.Inputs.Unpack(data[4:])
+		if err != nil || len(args) != 5 || args[4] != registryAddress {
+			t.Fatalf("%s registry did not round trip: %v", name, err)
 		}
 	}
 }
