@@ -47,6 +47,8 @@ type Prepared struct {
 	revokeSignature             []byte
 	submission                  Submission
 	request                     *broadcaster.Submission
+	submissionAttempt           uint64
+	submissionRefusal           *broadcaster.SubmissionRefusedError
 }
 
 func (p *Prepared) String() string   { return "PreparedCredit([redacted])" }
@@ -310,6 +312,9 @@ func (p *Prepared) WithRevocationSignature(ctx context.Context, signature []byte
 func (p *Prepared) Calldata(caller common.Address) ([]byte, error) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
+	if p.submissionRefusal != nil {
+		return nil, p.submissionRefusal
+	}
 	i := p.intent
 	if i.Revoke != nil {
 		return i.Revoke.Calldata(i.Context, p.revokeSignature, caller)
@@ -517,7 +522,7 @@ func (p *Prepared) CheckTimestamp(timestamp uint64) error {
 		return fmt.Errorf("Credit operation required")
 	}
 	if deadline == nil || new(big.Int).SetUint64(timestamp).Cmp(deadline) > 0 {
-		return fmt.Errorf("Credit operation expired")
+		return ErrCreditExecutionExpired
 	}
 	return nil
 }

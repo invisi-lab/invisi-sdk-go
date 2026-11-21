@@ -2,6 +2,7 @@ package session
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -60,8 +61,26 @@ func (o *Operation) submitViaBroadcaster(ctx context.Context, client *broadcaste
 		if client == nil || binding == nil || binding.Configuration != client.Configuration() {
 			return broadcaster.Status{}, fmt.Errorf("use the originally selected broadcaster")
 		}
+		if record.TerminalAcknowledgement != nil {
+			return o.finishTerminalBroadcaster(ctx, *record.TerminalAcknowledgement)
+		}
 		if record.BroadcasterRequestID != "" {
-			return client.Status(ctx, record.BroadcasterRequestID)
+			status, e := client.Status(ctx, record.BroadcasterRequestID)
+			if e != nil {
+				return status, e
+			}
+			if status.TransactionHash != "" {
+				e = o.update(ctx, func(r *Journal) error {
+					hash := common.HexToHash(status.TransactionHash)
+					if r.TransactionHash != (common.Hash{}) && r.TransactionHash != hash {
+						return fmt.Errorf("conflicting Credit submission hash")
+					}
+					r.TransactionHash = hash
+					return nil
+				})
+				return status, e
+			}
+			return o.finishTerminalBroadcaster(ctx, status)
 		}
 		request := record.BroadcasterRequest
 		if request == nil {
@@ -86,7 +105,10 @@ func (o *Operation) submitViaBroadcaster(ctx context.Context, client *broadcaste
 			}
 			return nil
 		})
-		return status, e
+		if e != nil {
+			return status, e
+		}
+		return o.finishTerminalBroadcaster(ctx, status)
 	}
 	if err := o.validateSubmission(ctx); err != nil {
 		return broadcaster.Status{}, err
@@ -118,6 +140,25 @@ func (o *Operation) submitViaBroadcaster(ctx context.Context, client *broadcaste
 		return broadcaster.Status{}, err
 	}
 	status, err := client.SubmitPrepared(ctx, request)
+	var refusal *broadcaster.SubmissionRefusedError
+	if errors.As(err, &refusal) {
+		// This is the first transport attempt. A refusal on the replay branch
+		// above cannot establish what happened to an earlier unknown attempt.
+		rollbackErr := o.update(context.WithoutCancel(ctx), func(r *Journal) error {
+			if r.TransactionHash != (common.Hash{}) || r.BroadcasterRequestID != "" {
+				return fmt.Errorf("Credit submission changed before refusal persistence")
+			}
+			r.Externalized = false
+			r.BroadcasterRequest = nil
+			r.Calldata = nil
+			r.SubmissionRefusal = refusal.Reason
+			r.Status = "ready"
+			return nil
+		})
+		if rollbackErr != nil {
+			return status, errors.Join(err, rollbackErr)
+		}
+	}
 	if err == nil {
 		hash := common.HexToHash(status.TransactionHash)
 		persistErr := o.update(ctx, func(record *Journal) error {
@@ -134,7 +175,10 @@ func (o *Operation) submitViaBroadcaster(ctx context.Context, client *broadcaste
 			return status, persistErr
 		}
 	}
-	return status, err
+	if err != nil {
+		return status, err
+	}
+	return o.finishTerminalBroadcaster(ctx, status)
 }
 func (o *Operation) ExportSigningRequest(ctx context.Context) (primitives.SigningRequest, error) {
 	o.mu.Lock()
@@ -263,4 +307,69 @@ func (o *Operation) cancelViaBroadcaster(ctx context.Context, client *broadcaste
 		return nil
 	})
 	return result, err
+}
+
+// finishTerminalBroadcaster retains the public acknowledgement before any
+// canonical read. Provider/storage failures leave reservations fenced for retry.
+// The operation mutex is held by submitViaBroadcaster.
+func (o *Operation) finishTerminalBroadcaster(ctx context.Context, status broadcaster.Status) (broadcaster.Status, error) {
+	if status.TransactionHash != "" || status.State != "rejected" && status.State != "expired" && status.State != "cancelled" {
+		return status, nil
+	}
+	snapshot, err := o.session.store.ReadSnapshot(ctx)
+	if err != nil {
+		return status, err
+	}
+	record := snapshot.Operations[o.id]
+	if record.TransactionHash != (common.Hash{}) {
+		return status, fmt.Errorf("terminal Credit submission has transaction hash; reconcile canonically")
+	}
+	if record.TerminalAcknowledgement != nil && record.Status == status.State {
+		return status, nil
+	}
+	if err = o.update(context.WithoutCancel(ctx), func(r *Journal) error {
+		if r.TransactionHash != (common.Hash{}) || r.BroadcasterRequestID != status.ID {
+			return fmt.Errorf("Credit terminal acknowledgement changed")
+		}
+		r.TerminalAcknowledgement = &status
+		return nil
+	}); err != nil {
+		return status, err
+	}
+	if o.session.checkCancellation == nil {
+		return status, fmt.Errorf("canonical Credit cancellation checker required")
+	}
+	if err = o.session.checkCancellation(ctx, record.Intent); err != nil {
+		return status, err
+	}
+	err = o.session.store.Update(ctx, func(state *State) error {
+		r, ok := state.Operations[o.id]
+		if !ok || r.WorkerID != o.worker || r.TransactionHash != (common.Hash{}) || r.TerminalAcknowledgement == nil || r.TerminalAcknowledgement.State != status.State {
+			return fmt.Errorf("Credit terminal journal changed")
+		}
+		for _, input := range r.Intent.Inputs {
+			commitment, e := input.State.Commitment()
+			if e != nil {
+				return e
+			}
+			role := credit.Spender
+			if r.Intent.Update != nil {
+				role = credit.Owner
+			}
+			g, ok := state.Grants[GrantKey(common.Hash(commitment.Bytes()), role)]
+			if !ok || g.ReservedBy != o.id || g.Consumed || g.GrantStatus != 1 {
+				return fmt.Errorf("terminal Credit input unavailable")
+			}
+		}
+		for key, g := range state.Grants {
+			if g.ReservedBy == o.id {
+				g.ReservedBy = ""
+				state.Grants[key] = g
+			}
+		}
+		r.Status = status.State
+		state.Operations[o.id] = r
+		return nil
+	})
+	return status, err
 }

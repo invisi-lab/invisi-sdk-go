@@ -4,8 +4,10 @@ import (
 	"context"
 	"crypto/rand"
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"github.com/invisi-labs/invisi-sdk-go/rpc/broadcaster"
+	"strconv"
 	"sync"
 	"time"
 
@@ -248,7 +250,7 @@ func (o *Operation) check(ctx context.Context) error {
 	if !ok || record.WorkerID != o.worker {
 		return fmt.Errorf("Credit operation lease changed")
 	}
-	if record.Status == "failed" || record.Status == "confirmed" || record.Status == "reverted" || record.Status == "cancelled" {
+	if record.Status == "failed" || record.Status == "confirmed" || record.Status == "reverted" || record.Status == "cancelled" || record.Status == "expired" || record.Status == "rejected" {
 		return fmt.Errorf("Credit operation is terminal")
 	}
 	return nil
@@ -345,6 +347,28 @@ func (o *Operation) Abandon(ctx context.Context) error {
 	if err := o.check(ctx); err != nil {
 		return err
 	}
+	// Locally generated calldata remains protected until its frozen statement
+	// expires on chain. A Broadcaster quote expiry alone does not invalidate
+	// previously exported Core calldata. Externalized or retained identities require
+	// reconciliation, even when their old quote or authorization expires.
+	snapshot, err := o.session.store.ReadSnapshot(ctx)
+	if err != nil {
+		return err
+	}
+	before := snapshot.Operations[o.id]
+	stale := false
+	if !before.Externalized && before.TransactionHash == (common.Hash{}) && before.BroadcasterRequestID == "" && before.BroadcasterRequest == nil && len(before.Calldata) > 0 {
+		if !stale && o.session.chainTimestamp != nil {
+			now, e := o.session.chainTimestamp(ctx)
+			if e != nil {
+				return e
+			}
+			if now > 0 {
+				e = o.prepared.CheckTimestamp(now)
+				stale = errors.Is(e, credit.ErrCreditExecutionExpired) || errors.Is(e, credit.ErrCreditPeriodChanged)
+			}
+		}
+	}
 	return o.session.store.Update(ctx, func(state *State) error {
 		record, ok := state.Operations[o.id]
 		if !ok || record.WorkerID != o.worker {
@@ -353,7 +377,7 @@ func (o *Operation) Abandon(ctx context.Context) error {
 		if record.Status != "prepared" && record.Status != "proved" && record.Status != "ready" {
 			return fmt.Errorf("Credit operation is not locally abandonable")
 		}
-		if record.Externalized || len(record.Calldata) > 0 || record.TransactionHash != (common.Hash{}) {
+		if record.Externalized || len(record.Calldata) > 0 && !stale || record.TransactionHash != (common.Hash{}) || record.BroadcasterRequestID != "" || record.BroadcasterRequest != nil {
 			return fmt.Errorf("externalized Credit operation requires canonical reconciliation")
 		}
 		record.Status = "failed"
@@ -400,9 +424,6 @@ func (o *Operation) checkFresh(ctx context.Context) error {
 	if err := o.check(ctx); err != nil {
 		return err
 	}
-	if o.session.validate == nil {
-		return nil
-	}
 	state, err := o.session.store.ReadSnapshot(ctx)
 	if err != nil {
 		return err
@@ -410,6 +431,12 @@ func (o *Operation) checkFresh(ctx context.Context) error {
 	record, ok := state.Operations[o.id]
 	if !ok || record.WorkerID != o.worker {
 		return fmt.Errorf("Credit operation lease changed")
+	}
+	if record.SubmissionRefusal != "" {
+		return &broadcaster.SubmissionRefusedError{Code: map[string]int{"CREDIT_PERIOD_CHANGED": -32024, "INSUFFICIENT_EXECUTION_SLACK": -32025, "CREDIT_PERIOD_ENDING": -32026}[record.SubmissionRefusal], Reason: record.SubmissionRefusal}
+	}
+	if o.session.validate == nil {
+		return nil
 	}
 	if record.SubmissionValidation == "required" {
 		if record.Preparation == nil {
@@ -451,6 +478,14 @@ func (o *Operation) validateSubmission(ctx context.Context) error {
 	record := state.Operations[o.id]
 	if record.Externalized {
 		return nil
+	}
+	if record.SubmissionRefusal != "" {
+		return &broadcaster.SubmissionRefusedError{Code: map[string]int{"CREDIT_PERIOD_CHANGED": -32024, "INSUFFICIENT_EXECUTION_SLACK": -32025, "CREDIT_PERIOD_ENDING": -32026}[record.SubmissionRefusal], Reason: record.SubmissionRefusal}
+	}
+	if b := record.Intent.Broadcaster; b != nil {
+		if deadline, e := strconv.ParseUint(b.Quote.Quote.Deadline, 10, 64); e == nil && deadline < uint64(time.Now().Unix()) {
+			return credit.ErrCreditExecutionExpired
+		}
 	}
 	if record.SubmissionValidation == "required" && record.Preparation == nil {
 		return fmt.Errorf("cached Credit preparation evidence missing")

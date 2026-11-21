@@ -38,18 +38,20 @@ type PreparationEvidence struct {
 }
 
 type Journal struct {
-	Preparation           *PreparationEvidence `json:",omitempty"`
-	SubmissionValidation  string               `json:",omitempty"`
-	RevocationSignature   []byte               `json:",omitempty"`
-	ID, WorkerID, Status  string
-	Intent                credit.Intent
-	Proof                 *prover.ProofBundle
-	Calldata              []byte
-	TransactionHash       common.Hash
-	Externalized          bool
-	BroadcasterRequestID  string
-	BroadcasterRequest    *broadcaster.Submission
-	CancellationConfirmed bool
+	Preparation             *PreparationEvidence `json:",omitempty"`
+	SubmissionValidation    string               `json:",omitempty"`
+	RevocationSignature     []byte               `json:",omitempty"`
+	ID, WorkerID, Status    string
+	Intent                  credit.Intent
+	Proof                   *prover.ProofBundle
+	Calldata                []byte
+	TransactionHash         common.Hash
+	Externalized            bool
+	BroadcasterRequestID    string
+	BroadcasterRequest      *broadcaster.Submission
+	CancellationConfirmed   bool
+	TerminalAcknowledgement *broadcaster.Status `json:",omitempty"`
+	SubmissionRefusal       string              `json:",omitempty"`
 }
 type State struct {
 	Version    int

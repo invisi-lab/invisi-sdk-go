@@ -2,6 +2,7 @@ package credit
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"github.com/invisi-labs/invisi-sdk-go/protocol/settlement"
 	"math/big"
@@ -390,6 +391,9 @@ func (p *Prepared) ExportBroadcasterSubmission(client *broadcaster.Client) ([]by
 	if err != nil {
 		return nil, broadcaster.SignedQuote{}, err
 	}
+	if deadline, e := strconv.ParseUint(quote.Quote.Deadline, 10, 64); e == nil && deadline < uint64(time.Now().Unix()) {
+		return nil, broadcaster.SignedQuote{}, ErrCreditExecutionExpired
+	}
 	if err = broadcaster.VerifyQuote(quote, *quote.Context, data, uint64(time.Now().Unix())); err != nil {
 		return nil, broadcaster.SignedQuote{}, err
 	}
@@ -397,6 +401,11 @@ func (p *Prepared) ExportBroadcasterSubmission(client *broadcaster.Client) ([]by
 }
 func (p *Prepared) submitViaBroadcaster(ctx context.Context, client *broadcaster.Client) (broadcaster.Status, error) {
 	p.mu.Lock()
+	if p.submissionRefusal != nil {
+		err := p.submissionRefusal
+		p.mu.Unlock()
+		return broadcaster.Status{}, err
+	}
 	known := p.submission
 	request := p.request
 	binding := p.intent.Broadcaster
@@ -445,11 +454,39 @@ func (p *Prepared) submitViaBroadcaster(ctx context.Context, client *broadcaster
 		}
 	}
 	p.mu.Lock()
+	// Another caller may have submitted while this caller prepared locally.
+	// Reuse its exact public request and never overwrite an accepted identity.
+	if p.submissionRefusal != nil {
+		err := p.submissionRefusal
+		p.mu.Unlock()
+		return broadcaster.Status{}, err
+	}
+	known = p.submission
+	if known.RequestID != "" {
+		p.mu.Unlock()
+		return client.Status(ctx, known.RequestID)
+	}
+	if p.request != nil {
+		request = p.request
+	}
+	firstAttempt := p.submission.State == ""
+	p.submissionAttempt++
+	attempt := p.submissionAttempt
 	p.request = request
-	p.submission = Submission{RequestID: known.RequestID, State: "uncertain"}
+	p.submission.State = "uncertain"
 	p.mu.Unlock()
 	status, err := client.SubmitPrepared(ctx, *request)
 	if err != nil {
+		var refusal *broadcaster.SubmissionRefusedError
+		if firstAttempt && errors.As(err, &refusal) {
+			p.mu.Lock()
+			if p.submissionAttempt == attempt && p.submission.RequestID == "" && p.submission.TransactionHash == "" {
+				p.request = nil
+				p.submissionRefusal = refusal
+				p.submission = Submission{}
+			}
+			p.mu.Unlock()
+		}
 		return status, err
 	}
 	if known.RequestID != "" && known.RequestID != status.ID {

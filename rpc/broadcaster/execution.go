@@ -104,7 +104,7 @@ func (c *Client) SubmitPrepared(ctx context.Context, p Submission) (Status, erro
 	var out Status
 	e := c.call(ctx, "broadcaster_submitTransaction", p, &out)
 	if e != nil {
-		return out, e
+		return out, submissionRefusal(e)
 	}
 	return out, checkStatus(out, "")
 }

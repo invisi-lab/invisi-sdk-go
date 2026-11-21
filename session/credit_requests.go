@@ -87,7 +87,8 @@ func (s *WalletSession) buildCreditRequestWithRuntime(ctx context.Context, r *tr
 				return credit.PreparationInput{}, err
 			}
 			g, ok := state.PostpaidCredit.Grants[creditsession.GrantKey(commitment, role)]
-			if !ok || g.Consumed || g.GrantStatus != 1 || g.ReservedBy != "" {
+			reservation := creditsession.PreparationReservation(ctx)
+			if !ok || g.Consumed || g.GrantStatus != 1 || (g.ReservedBy != "" && (reservation == "" || g.ReservedBy != reservation)) {
 				return credit.PreparationInput{}, fmt.Errorf("confirmed unspent Credit role unavailable")
 			}
 			n := g.Delivery.State

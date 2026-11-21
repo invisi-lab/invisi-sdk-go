@@ -392,3 +392,107 @@ func TestCreditScheduleRejectsDeadlineDelayAndWindowViolations(t *testing.T) {
 		})
 	}
 }
+
+func TestDetachedRefusalCannotClearConcurrentUnknownAttempt(t *testing.T) {
+	ctx := context.Background()
+	state, _ := fixture(t)
+	c := Context{ProtocolContext: state.ProtocolContext, TokenAddress: common.BigToAddress(big.NewInt(34)), Timestamp: 2000000000}
+	p, e := PrepareRevoke(c, RevokeParams{Token: c.TokenAddress, Owner: common.BigToAddress(big.NewInt(44)), GrantID: big.NewInt(1), Deadline: big.NewInt(2000000300)})
+	if e != nil {
+		t.Fatal(e)
+	}
+	key, _ := crypto.ToECDSA(common.LeftPadBytes([]byte{9}, 32))
+	base := creditBroadcaster(t, c, key, common.HexToAddress("1234"))
+	if e = base.Quote(ctx, p, BroadcasterQuoteOptions{MaxFeeAmount: big.NewInt(2)}); e != nil {
+		t.Fatal(e)
+	}
+	if e = p.WithRevocationSignature(ctx, make([]byte, 65), func(context.Context, common.Address, apitypes.TypedData, []byte) (bool, error) { return true, nil }); e != nil {
+		t.Fatal(e)
+	}
+	submits := 0
+	var client *broadcaster.Client
+	transport := creditRoundTrip(func(r *http.Request) (*http.Response, error) {
+		var req struct {
+			ID     uint64
+			Method string
+		}
+		json.NewDecoder(r.Body).Decode(&req)
+		var envelope map[string]any
+		if req.Method == "broadcaster_getStatus" {
+			envelope = map[string]any{"jsonrpc": "2.0", "id": req.ID, "result": map[string]any{"apiVersion": "v1", "protocolVersion": "1", "chainId": primitives.ElementToBigInt(c.ChainID).String(), "protocol": common.BigToAddress(primitives.ElementToBigInt(c.ProtocolAddress)), "sender": base.Configuration().QuoteSigner, "feeRecipient": base.Configuration().FeeRecipient}}
+		} else {
+			submits++
+			if submits == 2 {
+				return nil, context.DeadlineExceeded
+			}
+			if _, e := client.Submit(ctx, p); e == nil {
+				t.Fatal("nested transport did not fail")
+			}
+			envelope = map[string]any{"jsonrpc": "2.0", "id": req.ID, "error": map[string]any{"code": -32024, "message": "CREDIT_PERIOD_CHANGED: refused"}}
+		}
+		raw, _ := json.Marshal(envelope)
+		return &http.Response{StatusCode: 200, Header: make(http.Header), Body: io.NopCloser(strings.NewReader(string(raw)))}, nil
+	})
+	client, e = broadcaster.NewClient(base.Configuration(), broadcaster.Options{HTTPClient: &http.Client{Transport: transport}})
+	if e != nil {
+		t.Fatal(e)
+	}
+	if _, e = client.Submit(ctx, p); e == nil {
+		t.Fatal("expected refusal")
+	}
+	if submits != 2 || p.Submission().State != "uncertain" || p.request == nil {
+		t.Fatal("earlier refusal erased concurrent unknown send")
+	}
+}
+
+func TestDetachedFirstRefusalBlocksOldPayloadUntilDiscarded(t *testing.T) {
+	for _, code := range []int{-32024, -32025, -32026} {
+		t.Run(strconv.Itoa(code), func(t *testing.T) {
+			ctx := context.Background()
+			state, _ := fixture(t)
+			c := Context{ProtocolContext: state.ProtocolContext, TokenAddress: common.BigToAddress(big.NewInt(34)), Timestamp: 2000000000}
+			p, e := PrepareRevoke(c, RevokeParams{Token: c.TokenAddress, Owner: common.BigToAddress(big.NewInt(44)), GrantID: big.NewInt(1), Deadline: big.NewInt(2000000300)})
+			if e != nil {
+				t.Fatal(e)
+			}
+			key, _ := crypto.ToECDSA(common.LeftPadBytes([]byte{9}, 32))
+			base := creditBroadcaster(t, c, key, common.HexToAddress("1234"))
+			if e = base.Quote(ctx, p, BroadcasterQuoteOptions{MaxFeeAmount: big.NewInt(2)}); e != nil {
+				t.Fatal(e)
+			}
+			if e = p.WithRevocationSignature(ctx, make([]byte, 65), func(context.Context, common.Address, apitypes.TypedData, []byte) (bool, error) { return true, nil }); e != nil {
+				t.Fatal(e)
+			}
+			submits := 0
+			transport := creditRoundTrip(func(r *http.Request) (*http.Response, error) {
+				var req struct {
+					ID     uint64
+					Method string
+				}
+				json.NewDecoder(r.Body).Decode(&req)
+				envelope := map[string]any{"jsonrpc": "2.0", "id": req.ID}
+				if req.Method == "broadcaster_getStatus" {
+					envelope["result"] = map[string]any{"apiVersion": "v1", "protocolVersion": "1", "chainId": primitives.ElementToBigInt(c.ChainID).String(), "protocol": common.BigToAddress(primitives.ElementToBigInt(c.ProtocolAddress)), "sender": base.Configuration().QuoteSigner, "feeRecipient": base.Configuration().FeeRecipient}
+				} else {
+					submits++
+					envelope["error"] = map[string]any{"code": code, "message": map[int]string{-32024: "CREDIT_PERIOD_CHANGED", -32025: "INSUFFICIENT_EXECUTION_SLACK", -32026: "CREDIT_PERIOD_ENDING"}[code] + ": refused"}
+				}
+				raw, _ := json.Marshal(envelope)
+				return &http.Response{StatusCode: 200, Header: make(http.Header), Body: io.NopCloser(strings.NewReader(string(raw)))}, nil
+			})
+			client, e := broadcaster.NewClient(base.Configuration(), broadcaster.Options{HTTPClient: &http.Client{Transport: transport}})
+			if e != nil {
+				t.Fatal(e)
+			}
+			if _, e = client.Submit(ctx, p); e == nil {
+				t.Fatal("expected refusal")
+			}
+			if _, e = client.Submit(ctx, p); e == nil || submits != 1 {
+				t.Fatal("refused payload resent", e, submits)
+			}
+			if _, e = p.Calldata(common.Address{}); e == nil {
+				t.Fatal("refused payload exported")
+			}
+		})
+	}
+}

@@ -201,3 +201,131 @@ func TestCreditCancellationPersistsAcknowledgementBeforeCanonicalRelease(t *test
 		t.Fatal("cancelled operation reused released inputs")
 	}
 }
+
+func TestTerminalCreditStatusPersistsBeforeCanonicalReleaseAndResumesOffline(t *testing.T) {
+	for _, terminal := range []string{"rejected", "expired", "cancelled"} {
+		t.Run(terminal, func(t *testing.T) {
+			ctx := context.Background()
+			store := NewMemoryStore()
+			checks, calls := 0, 0
+			managed, _ := New(Options{Store: store, CheckCancellation: func(context.Context, credit.Intent) error {
+				checks++
+				if checks == 1 {
+					return fmt.Errorf("canonical provider unavailable")
+				}
+				return nil
+			}})
+			p, g := testPlan(t)
+			if err := managed.Track(ctx, g); err != nil {
+				t.Fatal(err)
+			}
+			op, err := managed.Prepare(ctx, "terminal", p)
+			if err != nil {
+				t.Fatal(err)
+			}
+			server := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				calls++
+				var req struct {
+					ID     uint64
+					Method string
+				}
+				json.NewDecoder(r.Body).Decode(&req)
+				if req.Method != "broadcaster_getTransactionStatus" {
+					t.Errorf("old request resent: %s", req.Method)
+				}
+				json.NewEncoder(w).Encode(map[string]any{"jsonrpc": "2.0", "id": req.ID, "result": broadcaster.Status{ID: "terminal-id", State: terminal}})
+			}))
+			defer server.Close()
+			client, err := broadcaster.NewClient(broadcaster.Configuration{Endpoint: server.URL, QuoteSigner: common.HexToAddress("11"), FeeRecipient: common.HexToAddress("22")}, broadcaster.Options{HTTPClient: server.Client()})
+			if err != nil {
+				t.Fatal(err)
+			}
+			if err = store.Update(ctx, func(s *State) error {
+				j := s.Operations[op.id]
+				j.Externalized = true
+				j.Status = "uncertain"
+				j.BroadcasterRequestID = "terminal-id"
+				j.Intent.Broadcaster = &credit.BroadcasterBinding{Configuration: client.Configuration(), Quote: broadcaster.SignedQuote{Quote: broadcaster.Quote{Execution: "direct"}}}
+				s.Operations[op.id] = j
+				return nil
+			}); err != nil {
+				t.Fatal(err)
+			}
+			if _, err = client.Submit(ctx, op); err == nil {
+				t.Fatal("released without canonical check")
+			}
+			snapshot, _ := store.ReadSnapshot(ctx)
+			j := snapshot.Operations[op.id]
+			if j.TerminalAcknowledgement == nil || snapshot.Grants[g.key()].ReservedBy != op.id || j.Status == terminal {
+				t.Fatal("ack missing or released early")
+			}
+			server.Close()
+			resumed, err := managed.Resume(ctx, op.id, nil)
+			if err != nil {
+				t.Fatal(err)
+			}
+			status, err := client.Submit(ctx, resumed)
+			if err != nil || status.State != terminal {
+				t.Fatal(status, err)
+			}
+			snapshot, _ = store.ReadSnapshot(ctx)
+			if snapshot.Operations[op.id].Status != terminal || snapshot.Grants[g.key()].ReservedBy != "" || calls != 1 || checks != 2 {
+				t.Fatal("terminal cleanup failed")
+			}
+			if _, err = client.Submit(ctx, resumed); err != nil || calls != 1 || checks != 2 {
+				t.Fatal("terminal replay not idempotent", err)
+			}
+			if _, err = resumed.ExportSigningRequest(ctx); err == nil {
+				t.Fatal("terminal operation reused released input")
+			}
+		})
+	}
+}
+
+func TestTerminalCreditStatusWithHashNeverReleasesReservation(t *testing.T) {
+	ctx := context.Background()
+	store := NewMemoryStore()
+	checks := 0
+	managed, err := New(Options{Store: store, CheckCancellation: func(context.Context, credit.Intent) error { checks++; return nil }})
+	if err != nil {
+		t.Fatal(err)
+	}
+	p, g := testPlan(t)
+	if err = managed.Track(ctx, g); err != nil {
+		t.Fatal(err)
+	}
+	op, err := managed.Prepare(ctx, "hashed-terminal", p)
+	if err != nil {
+		t.Fatal(err)
+	}
+	hash := common.HexToHash("1234")
+	server := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var req struct{ ID uint64 }
+		json.NewDecoder(r.Body).Decode(&req)
+		json.NewEncoder(w).Encode(map[string]any{"jsonrpc": "2.0", "id": req.ID, "result": broadcaster.Status{ID: "known", State: "rejected", TransactionHash: hash.Hex()}})
+	}))
+	defer server.Close()
+	client, err := broadcaster.NewClient(broadcaster.Configuration{Endpoint: server.URL, QuoteSigner: common.HexToAddress("11"), FeeRecipient: common.HexToAddress("22")}, broadcaster.Options{HTTPClient: server.Client()})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err = store.Update(ctx, func(s *State) error {
+		r := s.Operations[op.id]
+		r.Externalized = true
+		r.Status = "uncertain"
+		r.BroadcasterRequestID = "known"
+		r.Intent.Broadcaster = &credit.BroadcasterBinding{Configuration: client.Configuration(), Quote: broadcaster.SignedQuote{Quote: broadcaster.Quote{Execution: "direct"}}}
+		s.Operations[op.id] = r
+		return nil
+	}); err != nil {
+		t.Fatal(err)
+	}
+	if _, err = client.Submit(ctx, op); err != nil {
+		t.Fatal(err)
+	}
+	state, _ := store.ReadSnapshot(ctx)
+	r := state.Operations[op.id]
+	if checks != 0 || r.TransactionHash != hash || r.TerminalAcknowledgement != nil || r.Status != "uncertain" || state.Grants[g.key()].ReservedBy != op.id {
+		t.Fatal("hashed terminal status released before canonical reconciliation")
+	}
+}
