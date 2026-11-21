@@ -54,21 +54,34 @@ The flow authenticates the chain/protocol and registry endpoint, reads live sche
 
 The [compiling Router workflows](../../paymentrouter/workflow_example_test.go)
 show self-submitted ERC20, relayed ERC20 and EIP-7702 sponsored native payments.
-They receive a host-proved Core call and explicit wallet callbacks; running
+The direct recipe receives a proved Core call. Relay recipes receive an
+empty-proof Core draft, a proving callback and explicit wallet callbacks;
 `go test ./...` in `paymentrouter` compiles them without contacting a service.
 The [Router guide](../../paymentrouter/README.md) covers preparation, allowance,
 optional ERC-2612, arbitrary native/ERC20 V3/0x routes and same-token/wrap paths.
 
-Router relay uses `EstimateRouterQuote`, `GetRouterQuote` and
-`SubmitRouterTransaction`, with embedded Core calldata plus the complete signed
-outer envelope. Build a real proof and obtain player authorization before
-estimation/quotation. Rebuilding fees or routes requires signing again and a
-new quote. The Core output includes the fee in its token; the outer transaction
-carries zero principal. These workflows support direct execution only; they do
-not use the ordinary managed quote-before-proof, scheduling or aggregation flow.
-Pure public Router funding needs no Provenance source proof; leave sidecars
-empty even when the quote reports `provenanceRequired` service policy. The Go
-Router submit helper intentionally omits the sidecar argument.
+Router relay exports `prepared.ExportRouterDraft(ctx)`, builds with
+`BuildPaymentDraft` / `BuildSponsoredDraft`, converges the bounded Core-token fee
+with `EstimateRouterQuote`, then calls `GetRouterQuote` before proof or wallet
+signatures. After quotation, prove, rebuild the actual Core hash, sign the actual
+Router/account payment and delegation, and call `SubmitRouterTransaction` with
+the same signed quote. Both phases supply their own exact embedded Core data.
+Proof/signature completion preserves `payment-router-intent-v1` identity;
+fee, route, nonce, deadline or other business changes require a new quote.
+Final submission validates authorization and simulates the actual outer call.
+The Core output includes the fee in its token and outer value is zero.
+
+`prepared.EstimateRouterGas` / `EstimateRouterGas` return conservative local
+`payment-router-gas-v1` previews with source `model`, not receipt-calibrated swap
+measurements. Opaque 0x is unavailable without an independent trusted gas budget;
+the Broadcaster derives it from operator policy, never client gas hints. Router
+quotes use dynamic network fee pricing with an operational gas maximum and
+signed fee/gas caps; ordinary Core cap-based pricing remains unchanged.
+
+Router workflows support direct execution and use dedicated Router quote methods;
+scheduling and aggregation are unavailable. Pure public Router funding needs no
+Provenance source proof; leave sidecars empty even when the quote reports
+`provenanceRequired` service policy. The Go Router submit helper omits sidecars.
 
 ## Contributing
 

@@ -2,9 +2,11 @@
 
 ## Unreleased (planned v1.3.3)
 
-- Document the four PaymentRouter modes and envelope-bound Broadcaster workflow, with compiling host-signing examples and explicit proof-before-quote requirements.
+- Add quote-before-proof Router drafts, prepared Core draft export and local `payment-router-gas-v1` previews with source `model`. Opaque 0x requires an independently trusted route gas budget; Broadcaster policy never trusts client gas hints.
+- Introduce `payment-router-intent-v1` semantic quotes: completing proof and wallet signatures preserves quote identity while business fields remain bound. Final submission checks actual hashes/authorizations and simulates the final outer call. Keep `EnvelopeHash` as the raw identity helper.
+- Update all four-mode Router guides and compiling host recipes to finalize the formal quote before proving/signing. Router dynamic network-fee pricing uses an operational gas maximum and signed caps; ordinary Core cap-based pricing and Core/circuit/contract interfaces remain unchanged.
 
-- Add canonical PaymentRouter/account ABI codecs, four-mode payment construction and validation, native/ERC20 V3 and AllowanceHolder routes, approval/permit and explicit EIP-7702 signing helpers, full outer simulation and envelope-bound Broadcaster RPC methods. Preserve historical native-only APIs. Shared calldata/signature/envelope vectors cover cross-language parity; published versions remain 1.3.2.
+- Add canonical PaymentRouter/account ABI codecs, four-mode payment construction and validation, native/ERC20 V3 and AllowanceHolder routes, approval/permit and explicit EIP-7702 signing helpers, full outer simulation and dedicated Broadcaster RPC methods. Preserve historical native-only APIs. Shared calldata/signature/envelope vectors cover cross-language parity; published versions remain 1.3.2.
 
 - Read consecutive trusted historical headers through validated 256-block RPC ranges, falling back to live batches only when the server explicitly reports an unsupported method or unavailable stored history. Preserve fresh canonical and finality fences.
 

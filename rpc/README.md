@@ -58,23 +58,47 @@ operation's private state or bypass its authorization/persistence checks.
 For Router payments use `EstimateRouterQuote(ctx, coreData, envelope)`,
 `GetRouterQuote(ctx, coreData, envelope, trust)` and
 `SubmitRouterTransaction(ctx, coreData, envelope, signedQuote)`.
-`coreData` is the exact embedded Core `transact` calldata; `RouterEnvelope`
-contains `to`, complete `data`, `value: "0"` and optional `authorizationList`.
-These use the existing JSON-RPC methods with an optional `router` field;
-submission sends `quote` and `signature` separately. The quote binds
-`payment-router-envelope-v1`, including the ordered signed authorization list,
-and requires direct execution. Ordinary Core quote verification does not apply.
+`coreData` must exactly match the Core `transact` calldata embedded in that
+phase's `RouterEnvelope`. The envelope contains `to`, canonical `data`,
+`value: "0"` and optional ordered `authorizationList`. The existing JSON-RPC
+methods take an optional `router` field; submission sends `quote` and `signature`
+separately. New Router quotes use `requestHashFormat: "payment-router-intent-v1"`
+and direct execution. Ordinary Core quote verification does not apply.
 
-ERC20 relay targets the enabled Router with a signed `payTokenFor` intent;
-native relay targets the delegated player with signed `executeNativePayment`
+Prepare the Core business request and fee, export `prepared.ExportRouterDraft(ctx)`,
+then call `BuildPaymentDraft` and, for native sponsorship, `BuildSponsoredDraft`.
+`EstimateRouterQuote` and the formal `GetRouterQuote` accept empty proof and wallet
+signature fields. Complete fee/route convergence before the formal quote. Native
+drafts still bind the player, enabled/pinned account implementation, account and
+Router nonces, deadlines, and any EIP-7702 chain/delegate/EOA nonce metadata.
+
+After quotation, prove the same Core business request, rebuild its actual Core
+request hash, sign the final Router/account payment and delegation, and rebuild
+the final envelope. `RouterIntentHash` excludes proof and wallet signature bytes
+while binding all business fields and authorization order/metadata. `EnvelopeHash`
+remains the raw full-envelope identity helper. Proof/signature completion preserves
+the semantic quote identity; fee, route, nonce, deadline or other business changes
+require a new quote. Each phase must provide its own exact embedded Core calldata.
+
+ERC20 submission targets the enabled Router with signed `payTokenFor`; native
+submission targets the delegated player with signed `executeNativePayment`
 wrapping `payNative`. The player's balance supplies principal; the relayer pays
-gas and supplies zero outer value. Native installation carries an EIP-7702
-authorization; an existing approved delegation can omit it.
+gas with zero outer value. Installation carries a signed EIP-7702 authorization;
+an existing approved delegation can omit it. The service validates the actual
+proof-dependent hashes, wallet authorization and live state, then estimates and
+simulates the complete final outer call at submission within the signed caps.
+Draft quotation does not require that executable-call simulation.
 
-Router estimates and quotes simulate the full executable outer call, requiring
-the real proof, player authorization, allowance/permit and balance **before**
-quotation. A fee/route change requires rebuilding, signing again and requoting.
-Fees are denominated only in the Core output token and included in exact output.
+`EstimateRouterGas` and `prepared.EstimateRouterGas` expose
+`payment-router-gas-v1`, source `model`, as conservative engineering allowances
+above the Core preview. These are not receipt-calibrated swap measurements. Opaque
+0x returns `zeroex-route-gas-unavailable` without a trusted independent route gas
+budget; the service uses operator policy and never trusts a client gas hint.
+Router pricing uses current network fees and an operational maximum gas cap;
+`maxGas` is a signed execution bound. Ordinary Core cap-based pricing policy and
+Core/circuit/contract interfaces remain unchanged.
+
+Fees are denominated in the Core output token and included in exact output.
 Scheduling/aggregation are unsupported. Pure public Router funding has no
 private sources/nullifiers and needs no Provenance source proofs: keep
 `proofSidecars` empty under enabled evaluation even when `provenanceRequired`

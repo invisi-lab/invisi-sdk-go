@@ -14,7 +14,7 @@ go run ./examples/03-hidden-amount/03-notes-with-change \
 
 `OWNER_PRIVATE_KEY` must match the selected Note/Credit owner or spender; `PAYER_PRIVATE_KEY` must match the public ERC20 payer. Aggregate uses `SECOND_OWNER_PRIVATE_KEY` for its second owner. The SDK independently verifies attached signatures against each frozen statement. Direct-owner registration, withdrawal and revocation examples export calldata for a transaction sent by that owner.
 
-Router integrations use a separate lifecycle: see the [four-mode Router guide](../paymentrouter/README.md) and [compiling host workflows](../paymentrouter/workflow_example_test.go). Provide a real proved Core payment and player authorization before Router quotation; the ordinary quote-before-proof sequence does not apply.
+Router integrations use a separate lifecycle: see the [four-mode Router guide](../paymentrouter/README.md) and [compiling host workflows](../paymentrouter/workflow_example_test.go). Export the empty-proof Core draft with `prepared.ExportRouterDraft(ctx)`, build the unsigned Router/account envelope, and obtain the formal semantic quote before proving and wallet signing. Complete proof and signatures against unchanged business fields, then submit the final envelope with its original quote.
 
 ## App delivery decryption
 
