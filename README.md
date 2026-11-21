@@ -247,7 +247,7 @@ Core (Transact/Credit, including initial-payment) and Provenance use separate im
 
 Core operations do not require the Provenance catalog; Provenance operations do not load Core. Missing or corrupt split resources fail without a legacy downgrade. Historical catalogs remain available through explicit legacy configuration.
 
-**Release prerequisite:** these split catalogs have been built and verified locally but are not claimed published. Publish each producer's authenticated CI artifact before releasing SDKs with these new defaults. Until then, provision matching local catalogs or select legacy mode explicitly. No production pins are fetched from an untrusted URL or inferred from a failed download.
+**Release resources:** the reviewed Core and Provenance catalogs have been published through their producer releases and their public objects authenticated before SDK release. Offline deployments must provision matching catalogs. No production pins are fetched from an untrusted URL or inferred from a failed download.
 
 `native.ResourceOptions` accepts `LegacyCombined: true` for historical compatibility. Use `Directory`/`Sources` for Core and `ProvenanceDirectory`/`ProvenanceSources` for Provenance. Cache, HTTP-client and offline settings are shared. `PrefetchResources` defaults to Core; `PrefetchProvenanceResources` preloads only Provenance.
 
