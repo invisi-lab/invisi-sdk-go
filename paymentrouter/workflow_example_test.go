@@ -6,6 +6,7 @@ import (
 	"math/big"
 
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/signer/core/apitypes"
 	"github.com/invisi-labs/invisi-sdk-go/paymentrouter"
 	"github.com/invisi-labs/invisi-sdk-go/protocol"
@@ -17,7 +18,8 @@ import (
 // authorization yParity stays 0/1.
 // These host integration recipes have no Output directive. go test compiles
 // them without calling a provider, wallet or Broadcaster. core must be a real
-// independently verified proof exported after PreparePayment(...).Prove(ctx).
+// independently verified proof for direct calls. Relay recipes obtain a formal
+// quote on ExportRouterDraft(ctx) before invoking their prove/sign callbacks.
 func ExampleClient_BuildPayment() {
 	build := func(ctx context.Context, client *paymentrouter.Client,
 		core protocol.TransactionCall, payer, input common.Address,
@@ -133,46 +135,92 @@ func ExampleClient_BuildPayment_relayedToken() {
 }
 
 func ExampleClient_BuildSponsoredPayment() {
-	build := func(ctx context.Context, client *paymentrouter.Client,
+	relay := func(ctx context.Context, client *paymentrouter.Client,
+		service *broadcaster.Client, trust broadcaster.Trust,
 		inner paymentrouter.PaymentOptions, policy paymentrouter.SponsoredPaymentOptions,
-		routerCodeHash common.Hash,
+		routerCodeHash common.Hash, maxFee *big.Int,
+		prove func(context.Context) (protocol.TransactionCall, error),
 		sign func(context.Context, apitypes.TypedData) ([]byte, error),
-	) (paymentrouter.RouterEnvelope, error) {
-		// Host reads account action nonce into policy.Payment.Nonce, pins runtime
-		// hashes and sets policy.Player to inner.Payer. AuthorizationList contains
-		// an explicitly wallet-signed SignDelegation authorization if installation
-		// is needed; omit it for an existing approved delegation. EOA authorization
-		// nonce and account action nonce are independent of the Router nonce.
-		inner.Mode = paymentrouter.SponsoredNative
-		call, err := client.BuildPayment(ctx, inner)
+		authorize func(context.Context, []types.SetCodeAuthorization) ([]types.SetCodeAuthorization, error),
+	) (broadcaster.Status, error) {
+		var status broadcaster.Status
+		// inner.Core is prepared.ExportRouterDraft(ctx), with finalized fee/output
+		// fields. Host reads account action nonce into policy.Payment.Nonce and pins
+		// the implementation/runtime hashes. For installation, AuthorizationList
+		// contains unsigned chain/delegate/EOA nonce metadata; omit it for an existing
+		// approved delegation. EOA and account action nonces are independent.
+		inner.Mode, inner.Signature = paymentrouter.SponsoredNative, nil
+		policy.Player = inner.Payer
+		call, err := client.BuildPaymentDraft(ctx, inner)
 		if err != nil {
-			return paymentrouter.RouterEnvelope{}, err
+			return status, err
 		}
+		decoded, err := paymentrouter.DecodeRouterCall(call.Data)
+		if err != nil {
+			return status, err
+		}
+		inner.Nonce = decoded.Intent.Nonce // Preserve the quoted Router nonce.
 		policy.Payment.RouterCalldata = call.Data
 		policy.Payment.Value = call.Value // Player supplies this inner native cap.
 		policy.Payment.Relayer = inner.Relayer
 		policy.Payment.Deadline = inner.Deadline
+		policy.Payment.Signature = nil
+		draft, err := client.BuildSponsoredDraft(ctx, policy)
+		if err != nil {
+			return status, err
+		}
+		fee, err := service.EstimateRouterQuote(ctx, inner.Core.Data, draft)
+		if err != nil {
+			return status, err
+		}
+		if err = checkRouterFee(inner.Core, fee, maxFee); err != nil {
+			return status, err
+		}
+		quote, err := service.GetRouterQuote(ctx, inner.Core.Data, draft, trust)
+		if err != nil {
+			return status, err
+		}
+
+		// Only after the signed quote: prove the same business request, rebuild its
+		// actual Core hash, and obtain wallet signatures for the final account call.
+		inner.Core, err = prove(ctx)
+		if err != nil {
+			return status, err
+		}
+		call, err = client.BuildPayment(ctx, inner)
+		if err != nil {
+			return status, err
+		}
+		policy.Payment.RouterCalldata = call.Data
 		d := client.Deployment()
 		typed, err := paymentrouter.NativePaymentTypedData(d.ChainID, policy.Player,
 			policy.Implementation, d.RouterAddress, routerCodeHash, policy.Payment)
 		if err != nil {
-			return paymentrouter.RouterEnvelope{}, err
+			return status, err
 		}
 		policy.Payment.Signature, err = sign(ctx, typed)
 		if err != nil {
-			return paymentrouter.RouterEnvelope{}, err
+			return status, err
+		}
+		if len(policy.AuthorizationList) > 0 {
+			// Explicit wallet approval signs the already quoted delegation metadata.
+			policy.AuthorizationList, err = authorize(ctx, policy.AuthorizationList)
+			if err != nil {
+				return status, err
+			}
 		}
 		env, err := client.BuildSponsoredPayment(ctx, policy)
 		if err != nil {
-			return env, err
+			return status, err
 		}
-		_, err = client.SimulateEnvelope(ctx, env, inner.Relayer, policy)
-		// env.Value is "0". Use core.Data and this exact envelope with the Router
-		// estimate/quote/submit methods as above. Fee or route changes require a new
-		// proof/account signature/quote; never broadcast fixture proofs.
-		return env, err
+		if _, err = client.SimulateEnvelope(ctx, env, inner.Relayer, policy); err != nil {
+			return status, err
+		}
+		// Persist actual Core data, final zero-value envelope and the original quote.
+		// Submission verifies their semantic identity before sending to the service.
+		return service.SubmitRouterTransaction(ctx, inner.Core.Data, env, quote)
 	}
-	_ = build
+	_ = relay
 }
 
 // Check the host-selected fee before requesting the final signed quote.
@@ -190,7 +238,7 @@ func checkRouterFee(core protocol.TransactionCall, fee broadcaster.Fee, maxFee *
 		return fmt.Errorf("Core fee or required fee exceeds host cap")
 	}
 	if intent.FeeRecipient != fee.FeeRecipient || intent.FeeAmount.Cmp(amount) < 0 {
-		return fmt.Errorf("rebuild Core fee, prove and sign again before quoting")
+		return fmt.Errorf("rebuild the unsigned Core fee and Router draft before quoting")
 	}
 	return nil
 }
