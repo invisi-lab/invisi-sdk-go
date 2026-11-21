@@ -14,7 +14,7 @@ go run ./examples/03-hidden-amount/03-notes-with-change \
 
 `OWNER_PRIVATE_KEY` must match the selected Note/Credit owner or spender; `PAYER_PRIVATE_KEY` must match the public ERC20 payer. Aggregate uses `SECOND_OWNER_PRIVATE_KEY` for its second owner. The SDK independently verifies attached signatures against each frozen statement. Direct-owner registration, withdrawal and revocation examples export calldata for a transaction sent by that owner.
 
-Router integrations use a separate lifecycle: see the [four-mode Router guide](../paymentrouter/README.md) and [compiling host workflows](../paymentrouter/workflow_example_test.go). Export the empty-proof Core draft with `prepared.ExportRouterDraft(ctx)`, build the unsigned Router/account envelope, and obtain the formal semantic quote before proving and wallet signing. Complete proof and signatures against unchanged business fields, then submit the final envelope with its original quote.
+Router integrations use a separate lifecycle: see the [native Router examples](08-payment-router/README.md), [Source recognition and private-spend examples](09-provenance/README.md), the [four-mode Router guide](../paymentrouter/README.md) and [compiling host workflows](../paymentrouter/workflow_example_test.go). Export the empty-proof Core draft with `prepared.ExportRouterDraft(ctx)`, build the unsigned Router/account envelope, and obtain the formal semantic quote before proving and wallet signing. Complete proof and signatures against unchanged business fields, then submit the final envelope with its original quote.
 
 ## App delivery decryption
 
@@ -32,7 +32,9 @@ Replace `shared.AppDeliveryDecryptor` in [shared/decryptor.go](shared/decryptor.
 | `04-credit` | Managed postpaid create/draw/update/revoke, role-bound discovery and reservations. |
 | `05-wallet-session` | Encrypted inventory restore, persistent shared public cache, scan/funds status, paginated history, transfer and Note/Credit operation recovery. |
 | `06-disclosure` | Authenticated Note/Credit opening and memo disclosure; output is sensitive application data. |
-| `07-broadcaster` | Ordinary relay delivery, independent Source submission, encrypted recovery, scheduled cancellation and links to compiling Router workflows. |
+| `07-broadcaster` | Ordinary relay delivery, independent Source submission, encrypted recovery and scheduled cancellation. |
+| `08-payment-router` | Self ERC20/native, relayed ERC20, EIP-7702 sponsored native, V3 and 0x routes with explicit host capabilities. |
+| `09-provenance` | Guarded Router output recognition queries and recognized private Note spending with real Core and Source proofs. |
 
 Most examples log unsigned calldata. Submit through an ordinary geth transaction signer and retain the operation ID/hash for canonical reconciliation. The examples in [07-broadcaster](07-broadcaster/README.md) demonstrate actual sending; its scheduled Shield cancellation example runs its submit-and-cancel flow directly when invoked. Public ERC20 allowance and transaction gas remain separate from private-spending authorization.
 
