@@ -2,6 +2,8 @@
 
 ## Unreleased (planned v1.3.3)
 
+- Document the four PaymentRouter modes and envelope-bound Broadcaster workflow, with compiling host-signing examples and explicit proof-before-quote requirements.
+
 - Add canonical PaymentRouter/account ABI codecs, four-mode payment construction and validation, native/ERC20 V3 and AllowanceHolder routes, approval/permit and explicit EIP-7702 signing helpers, full outer simulation and envelope-bound Broadcaster RPC methods. Preserve historical native-only APIs. Shared calldata/signature/envelope vectors cover cross-language parity; published versions remain 1.3.2.
 
 - Read consecutive trusted historical headers through validated 256-block RPC ranges, falling back to live batches only when the server explicitly reports an unsupported method or unavailable stored history. Preserve fresh canonical and finality fences.

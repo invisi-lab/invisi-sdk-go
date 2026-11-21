@@ -1,22 +1,59 @@
 # Payment Router
 
-Canonical API (Periphery `ffd81f4`) supports DirectNative, DirectToken, RelayedToken and SponsoredNative. `PaymentRouterABI()` and `PaymentRouterAccountABI()` expose the complete contract interfaces. Existing `Quote`, `BuildPaymentTransaction`, `SimulatePayment`, `LegacyPaymentRouterABI` and `ZeroExPaymentRouterABI` remain explicit legacy native-only APIs.
+The unreleased canonical API (planned v1.3.3; published module versions remain v1.3.2) supports arbitrary native/ERC20 input through exact-output Uniswap V3 or validated 0x routes. `PaymentRouterABI()` and `PaymentRouterAccountABI()` expose the canonical contract interfaces. The optional module never signs or sends automatically; the host owns deployment trust, proof generation, wallet decisions and submission.
 
-Use `PreparePayment` to produce an unchanged Core proof with the Router as funding payer. Export its Core call, then use `QuoteRoute` with `QuoteParameters.TokenIn` (zero for native), `AmountOut` including the Core token fee, an input cap and deadline. V3 routes start at that input token; ERC20 0x routes accept only the configured AllowanceHolder and current registry Settler. For same-token input or native-to-WETH, set `Route{Channel: ChannelNone}` without requesting a swap.
+| Mode | Builder / entry point | Principal and gas |
+| --- | --- | --- |
+| `DirectNative` | `BuildPayment` / `payNative` | Player sends native input cap as transaction value and pays gas. |
+| `DirectToken` | `BuildPayment` / `payToken` | Player supplies ERC20 and pays gas; value is zero. |
+| `RelayedToken` | `BuildPayment` / `payTokenFor` | Player supplies ERC20 and signs the intent; fixed relayer pays gas; value is zero. |
+| `SponsoredNative` | `BuildPayment`, then `BuildSponsoredPayment` / account `executeNativePayment` wrapping `payNative` | Player account supplies native principal; fixed relayer pays gas; outer value is zero. |
 
-`BuildPayment(ctx, PaymentOptions{Core: coreCall, Mode: DirectToken, Payer: player, TokenIn: token, AmountInMaximum: budget, RefundRecipient: player, Deadline: deadline, Route: route})` reads the current Router nonce and binds the original Core proof, request and route. The builder returns a detached unsigned transaction. Native modes supply value equal to the cap; token modes supply zero. `ValidatePayment` rechecks deployment, nonce, route, sender and value; `SimulateCanonicalPayment` calls and estimates the complete Router transaction.
+## Prepare, route and authorize
 
-For token relay, first build with `Mode: RelayedToken`, a fixed `Relayer` and an empty signature. Decode the call with `DecodeRouterCall`, obtain `IntentTypedData`, and have the wallet sign it. Rebuild with the signature; `ValidatePayment` and simulation require a valid EOA or ERC1271 authorization. `ApprovalTransaction` builds an ERC20 approval to the Router. For ERC-2612 tokens, use the explicitly supplied token name/version/nonce with `PermitTypedData`, then `PermitFromSignature`; permit support is never assumed for WETH. `SignTypedData` is available for applications that explicitly own a local key. No helper sends transactions automatically.
+Create a `Client` with an explicitly trusted `Deployment` and a `Provider` (`GethProvider` adapts an existing geth client). Deployment checks pin chain, Router dependencies, code and registry state to a canonical block. `PreparePayment` prepares a Core `transact` with the Router as caller-authorized funding payer, empty private inputs, no withdrawal and at least two positive Note outputs. Use the SDK's configured prover, then export the proved Core call. Keep its proof and request unchanged when wrapping it.
 
-For native sponsorship, build the inner SponsoredNative payment, sign `NativePaymentTypedData`, and call `BuildSponsoredPayment` with the player, pinned account implementation/code hash, account action and optional signed EIP-7702 authorization. `SignDelegation` signs only an explicitly selected implementation and EOA authorization nonce. Router nonce, account action nonce and EOA authorization nonce are independent. The provider must expose `StorageAt` and `NonceAt` when installing delegation; `GethProvider` does so. Persistent account storage is checked even when delegation was previously removed. Existing incompatible wallet implementations are rejected. Call `SimulateEnvelope(ctx, envelope, relayer, sponsoredOptions)` to validate the policy and simulate/estimate the actual zero-value outer type-4 transaction, including authorizationList. Wallet/chain delegation support and user approval remain host responsibilities.
+The exact output is the Core funding amount: output Notes **plus the Core-token fee**. For example, 100 USDT in Notes plus a 0.2 USDT Broadcaster fee requires 100.2 USDT from the Router. There is no separate input-token fee. Broadcaster token support and pricing concern this Core output token; the input token needs no separate price listing.
 
-Relay RPC methods live in `rpc/broadcaster`: `EstimateRouterQuote`, `GetRouterQuote` and `SubmitRouterTransaction` send the original embedded Core data plus `router` envelope. The signed quote binds `payment-router-envelope-v1` and the entire outer target, calldata, zero value and authorization list. Only direct execution is supported; schedules, aggregation and provenance sidecars are rejected for this path. Requote after changing any signed field.
+For a swap, call `QuoteRoute` with `QuoteParameters{TokenIn: input, TokenOut: coreToken, AmountOut: fundingAmount, MaxInput: budget, Deadline: deadline}`. Zero `TokenIn` means native currency. V3 routes use that ERC20 input (WETH for native) and encode the exact-output path in reverse. ERC20 0x routes require the configured AllowanceHolder wrapping the current registry Settler; native 0x routes use the validated native envelope. Liquidity action bytes remain opaque, so structural validation requires full execution simulation before sending. For same-token ERC20 or native-to-WETH wrapping, use `Route{Channel: ChannelNone}` without a swap quote. Canonical builders support WETH output; legacy native builders do not.
 
-Golden fixtures cover all four canonical selectors, exact Core/request/route hashes, intent/account signatures and envelopes with and without signed delegation. Structural 0x validation does not certify embedded liquidity actions; full simulation is required. Live API and interactive wallet acceptance remain environment-dependent.
+`BuildPayment(ctx, PaymentOptions{Core: coreCall, Mode: DirectToken, Payer: player, TokenIn: input, AmountInMaximum: budget, RefundRecipient: player, Deadline: deadline, Route: route})` reads the Router nonce and binds the exact Core proof/request and route. Use the returned quote's `MaxInput` and `Deadline` when building a quoted route. Native modes produce an inner call with value equal to that cap; token modes produce zero value. `ValidatePayment` rechecks deployment, nonce, route, sender and value. `SimulateCanonicalPayment` simulates and estimates the complete direct Router call. The host signs and sends a self-submitted call only after successful preflight.
+
+Approve the **Router** to pull ERC20 input with `ApprovalTransaction`, and wait for the host-submitted approval to be mined before simulation. For ERC-2612 tokens, explicitly supply the token's name, version and current permit nonce to `PermitTypedData`, sign with the wallet, then attach `PermitFromSignature`. Permit support is optional and never assumed for WETH. A permit nonce is separate from payment nonces.
+
+For `RelayedToken`, fix `Relayer` to the selected Broadcaster's EVM sender. Build with an empty signature, decode with `DecodeRouterCall`, obtain `IntentTypedData`, ask the wallet to sign, and rebuild with `PaymentOptions.Signature`. Empty signatures are for signing preparation only; validation and executable relay estimates require valid EOA or ERC-1271 authorization. `SignTypedData` is available when the host explicitly owns a local key.
+
+For `SponsoredNative`, build the inner payment, sign `NativePaymentTypedData`, then use `BuildSponsoredPayment` with the player, pinned account implementation/code hash, signed `AccountPayment` and optional signed EIP-7702 authorization. The player EOA balance supplies principal. `SignDelegation` requires an explicit wallet decision and the current EOA authorization nonce. The Router nonce, account action nonce, payer EOA nonce used by EIP-7702 authorization, and Broadcaster sender transaction nonce are independent counters. Coordinate the authorization with other pending payer EOA transactions because they use the same EOA nonce. Delegation persists even if execution reverts; removal/reinstallation does not reset account action storage. Foreign wallet implementations are rejected. The provider must implement `StorageAt` and `NonceAt` when installing delegation; `GethProvider` does. Wallet, chain and RPC EIP-7702 support remain host responsibilities. `SimulateEnvelope(ctx, envelope, relayer, sponsoredOptions)` validates the pinned policy and simulates/estimates the complete outer call, including the signed authorization list. An existing delegation can omit the list; installing it requires the outer type-4 transaction. Outer value is always `"0"`.
+
+## Broadcaster Router workflow
+
+Use the dedicated `rpc/broadcaster` methods `EstimateRouterQuote`, `GetRouterQuote` and `SubmitRouterTransaction`. Ordinary `Quote` / `EstimateQuote` / `GetQuote` / `SubmitTransaction` use the ordinary Core lifecycle and request-hash format; they cannot authenticate a Router envelope.
+
+The wire methods remain `broadcaster_estimateQuote`, `broadcaster_getQuote` and `broadcaster_submitTransaction`, with one object in the JSON-RPC `params` array:
+
+```json
+{
+  "data": "0x<exact embedded Core transact calldata>",
+  "router": {
+    "to": "0x<Router for token relay; player for native relay>",
+    "data": "0x<complete signed Router/account calldata>",
+    "value": "0",
+    "authorizationList": []
+  }
+}
+```
+
+Abbreviated hex values are placeholders. Submission additionally sends the returned `quote` and its `signature` as separate top-level fields. Authorization entries use standard Ethereum RPC `chainId`, `address`, `nonce`, `yParity`, `r`, `s` hex quantities. `data` must exactly match the Core call embedded in `router.data`.
+
+Unlike ordinary Core fee convergence before authorization/proving, **Router estimation and quotation require a complete executable payment first**: real Core proof, player signature, allowance/permit, balance and any delegation authorization. Both estimate and quote simulate the complete outer transaction. Start with a host-selected bounded fee, prepare/prove, route, sign and simulate, then estimate. Enforce the host fee cap against both the actual Core fee and the estimated requirement. Retain an already authorized higher Core fee when it covers the requirement. If that fee is insufficient, rebuild the Core fee, prove again, rebuild and sign the payment, and obtain a new quote. Route, budget, fee or authorization changes also require signing again and requoting; the service never increases the user's signed fee. `GetRouterQuote` verifies the quote against `Trust` and `SubmitRouterTransaction` rechecks the same frozen envelope before transport.
+
+Quotes use `execution: "direct"` and `requestHashFormat: "payment-router-envelope-v1"`. The request hash binds chain, Core, outer target, zero value, calldata hash and ordered authorization-list hash (`EnvelopeHash`); the empty list hashes as an empty ABI array. Scheduling and aggregation are unavailable. Canonical Router requests have pure public funding with no private sources/nullifiers, so Provenance requires no source proofs and `proofSidecars` must remain empty under enabled evaluation. A quote's `provenanceRequired` flag describes service policy; it does not imply a private source proof is needed for this shape. The Go Router submit helper intentionally has no sidecar argument. The ordinary Core hash verifier cannot verify Router quotes. Retain the exact accepted request and returned opaque submission ID for recovery.
+
+See the [compiling host-integration examples](workflow_example_test.go) for self-submitted ERC20, relayed ERC20 and sponsored native workflows. They accept a real host-proved Core call and wallet callbacks; `go test` compiles them without executing RPC calls or broadcasting fixture proofs. Golden fixtures separately cover canonical calldata, hashes, signatures and authorization envelopes; they do not certify live DEX or wallet compatibility.
 
 ## Legacy native-only integration
 
-The optional module `github.com/invisi-labs/invisi-sdk-go/paymentrouter` retains these historical native-only helpers for existing deployments. The core SDK has no dependency on this module.
+The optional module `github.com/invisi-labs/invisi-sdk-go/paymentrouter` retains `Quote`, `BuildPaymentTransaction`, `SimulatePayment`, `LegacyPaymentRouterABI` and `ZeroExPaymentRouterABI` as historical native-only APIs for existing deployments. The core SDK has no dependency on this module.
 
 Create a `Client` with an explicit trusted `Deployment` and a `Provider`. `GethProvider{Client: existingEthclient}` adapts geth RPC and pins both `eth_call` and `eth_estimateGas` to the selected block. RPC servers must support block-tagged gas estimation. Deployment checks authenticate chain ID, Router getters, dependency code and an optional Router runtime code hash; 0x additionally authenticates registry `ownerOf(2)` and Settler code. Code, getters, quotes and simulation use the same canonical block and reject observed reorgs.
 
@@ -55,7 +92,7 @@ For 0x, inject `ZeroExQuoteTransport` into `NewZeroExAdapter`, or construct an e
 
 Mutable financial inputs are copied before provider/transport callbacks. Returned Go values are detached copies and can be modified by the caller; subsequent builders revalidate them. Context cancellation is propagated throughout.
 
-`PaymentRouterABI()` and `ZeroExPaymentRouterABI()` return fresh public ABI snapshots. `EncodeV3ExactOutputPath`, `ValidateV3Path`, `ValidateZeroExPayload`, and `InspectCorePayment` are available independently.
+`LegacyPaymentRouterABI()` and `ZeroExPaymentRouterABI()` return fresh legacy public ABI snapshots. `PaymentRouterABI()` exposes the canonical four-mode interface. `EncodeV3ExactOutputPath`, `ValidateV3Path`, `ValidateZeroExPayload`, and `InspectCorePayment` are available independently.
 
 ## Verification
 

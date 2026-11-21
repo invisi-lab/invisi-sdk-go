@@ -1,6 +1,6 @@
 # Broadcaster and independent Source delivery
 
-These flat walkthroughs use managed Note transfers. Broadcaster flows use `relay.Quote(ctx, operation, options)`, `relay.Submit(ctx, operation)` and `relay.Cancel(ctx, operation)` on the selected client; the same API accepts detached Note/Credit preparations and managed Session handles. Configure public deployment, wallet, recipient and token through flags. Replace the App decryptor placeholder before discovery. EIP-712 authorization uses ordinary geth signing; `OWNER_PRIVATE_KEY` must match the Note owner.
+The four runnable walkthroughs below use ordinary Core managed Note transfers. Broadcaster flows use `relay.Quote(ctx, operation, options)`, `relay.Submit(ctx, operation)` and `relay.Cancel(ctx, operation)` on the selected client; the same API accepts detached Note/Credit preparations and managed Session handles. Configure public deployment, wallet, recipient and token through flags. Replace the App decryptor placeholder before discovery. EIP-712 authorization uses ordinary geth signing; `OWNER_PRIVATE_KEY` must match the Note owner.
 
 | Example | Flow |
 | --- | --- |
@@ -49,6 +49,26 @@ go run ./examples/07-broadcaster/04-scheduled-cancel \
 ```
 
 The flow authenticates the chain/protocol and registry endpoint, reads live scheduling capabilities, and covers the execution window plus minimum slack in the Note authorization deadline. The SDK stores the random secret, signed quote and frozen request before sending. The submission ID is opaque and allocated by the server. A lost response is recovered by explicitly replaying the same frozen submission before status or cancellation calls. An acknowledged cancellation is durably recorded before canonical refresh, so a refresh outage preserves input reservations and can be reconciled after reconnecting without another relay response. Source receives its ordinary evaluations and no scheduling fields.
+
+## PaymentRouter relay examples
+
+The [compiling Router workflows](../../paymentrouter/workflow_example_test.go)
+show self-submitted ERC20, relayed ERC20 and EIP-7702 sponsored native payments.
+They receive a host-proved Core call and explicit wallet callbacks; running
+`go test ./...` in `paymentrouter` compiles them without contacting a service.
+The [Router guide](../../paymentrouter/README.md) covers preparation, allowance,
+optional ERC-2612, arbitrary native/ERC20 V3/0x routes and same-token/wrap paths.
+
+Router relay uses `EstimateRouterQuote`, `GetRouterQuote` and
+`SubmitRouterTransaction`, with embedded Core calldata plus the complete signed
+outer envelope. Build a real proof and obtain player authorization before
+estimation/quotation. Rebuilding fees or routes requires signing again and a
+new quote. The Core output includes the fee in its token; the outer transaction
+carries zero principal. These workflows support direct execution only; they do
+not use the ordinary managed quote-before-proof, scheduling or aggregation flow.
+Pure public Router funding needs no Provenance source proof; leave sidecars
+empty even when the quote reports `provenanceRequired` service policy. The Go
+Router submit helper intentionally omits the sidecar argument.
 
 ## Contributing
 

@@ -37,7 +37,7 @@ The server migration uses fresh index format 3 and snapshot format 2 with explic
 
 Verification: from the repository root, run `python3 scripts/test-modules.py` to check every module and the examples.
 
-### High-level broadcaster quoting
+### Ordinary Core broadcaster quoting
 
 `client.Quote(ctx, preparedOrSession, broadcaster.QuoteOptions{MaxFeeAmount: limit})`
 asks the operation's bound SDK lifecycle to converge and authenticate the fee,
@@ -52,6 +52,35 @@ handles are rejected before networking. The capability is excluded from JSON,
 never serialized into a journal, and is rebound when restoring an operation.
 Custom capabilities can run only their own callback; they do not expose another
 operation's private state or bypass its authorization/persistence checks.
+
+### PaymentRouter relay quoting
+
+For Router payments use `EstimateRouterQuote(ctx, coreData, envelope)`,
+`GetRouterQuote(ctx, coreData, envelope, trust)` and
+`SubmitRouterTransaction(ctx, coreData, envelope, signedQuote)`.
+`coreData` is the exact embedded Core `transact` calldata; `RouterEnvelope`
+contains `to`, complete `data`, `value: "0"` and optional `authorizationList`.
+These use the existing JSON-RPC methods with an optional `router` field;
+submission sends `quote` and `signature` separately. The quote binds
+`payment-router-envelope-v1`, including the ordered signed authorization list,
+and requires direct execution. Ordinary Core quote verification does not apply.
+
+ERC20 relay targets the enabled Router with a signed `payTokenFor` intent;
+native relay targets the delegated player with signed `executeNativePayment`
+wrapping `payNative`. The player's balance supplies principal; the relayer pays
+gas and supplies zero outer value. Native installation carries an EIP-7702
+authorization; an existing approved delegation can omit it.
+
+Router estimates and quotes simulate the full executable outer call, requiring
+the real proof, player authorization, allowance/permit and balance **before**
+quotation. A fee/route change requires rebuilding, signing again and requoting.
+Fees are denominated only in the Core output token and included in exact output.
+Scheduling/aggregation are unsupported. Pure public Router funding has no
+private sources/nullifiers and needs no Provenance source proofs: keep
+`proofSidecars` empty under enabled evaluation even when `provenanceRequired`
+reports enabled service policy. The Go helper intentionally omits sidecars. See the
+[Router guide](../paymentrouter/README.md) and
+[compiling workflows](../paymentrouter/workflow_example_test.go).
 
 ### Explicitly trusted chain provider
 
