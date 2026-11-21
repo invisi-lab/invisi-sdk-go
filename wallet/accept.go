@@ -119,7 +119,7 @@ func Accept(q Request, r Response, viewingPublicKey string) (any, error) {
 		}
 		minimum, version := 160, byte(1)
 		if q.Method == DecryptCredit {
-			minimum, version = 485, 0x82
+			minimum, version = 491, 0x84
 		}
 		if len(envelope) < minimum || len(envelope) > 4096 || envelope[0] != version {
 			return nil, errors.New("invalid wallet delivery envelope")

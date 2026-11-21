@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"math/big"
-	"strconv"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/invisi-labs/invisi-sdk-go/primitives"
@@ -93,14 +92,9 @@ func (c *ProtocolRpcClient) getCreditTransitionsWithStatus(ctx context.Context, 
 	return ProtocolCreditUpdates{b, events}, nil
 }
 
-type IndexedCreditAllocation struct {
-	Block CanonicalBlock
-	Shard uint64
-	Slot  uint16
-}
-type IndexedCreditRevocationBitmap struct {
+type IndexedCreditStatus struct {
 	Block  CanonicalBlock
-	Bitmap *big.Int
+	Status uint8
 }
 
 func (c *ProtocolRpcClient) queryBlock(ctx context.Context, scope DeploymentContext, block CanonicalBlock) error {
@@ -113,71 +107,35 @@ func (c *ProtocolRpcClient) queryBlock(ctx context.Context, scope DeploymentCont
 	_, e := c.canonical(ctx, block)
 	return e
 }
-func (c *ProtocolRpcClient) GetCreditAllocation(ctx context.Context, scope DeploymentContext, owner, token common.Address, block CanonicalBlock) (IndexedCreditAllocation, error) {
-	var out IndexedCreditAllocation
-	if owner == (common.Address{}) || token == (common.Address{}) {
-		return out, errors.New("nonzero owner and token required")
+func (c *ProtocolRpcClient) GetCreditStatus(ctx context.Context, scope DeploymentContext, owner, token common.Address, grantID *big.Int, block CanonicalBlock) (IndexedCreditStatus, error) {
+	var out IndexedCreditStatus
+	if owner == (common.Address{}) || token == (common.Address{}) || grantID == nil || grantID.Sign() <= 0 || grantID.BitLen() > 128 {
+		return out, errors.New("invalid grant identity")
 	}
-	if e := c.queryBlock(ctx, scope, block); e != nil {
-		return out, e
-	}
-	var raw json.RawMessage
-	if e := c.call(ctx, scope.ChainID, "invisi_getCreditAllocation", []any{owner, token, block.Number}, &raw); e != nil {
-		return out, e
-	}
-	m, e := wireObject(raw)
-	if e != nil {
-		return out, e
-	}
-	b, e := wireBlock(m["block"])
-	if e != nil || b != block {
-		return out, errors.New("RPC grant block mismatch")
-	}
-	shard, e := wireUint(m["shard"], 64)
-	if e != nil || shard == 0 {
-		return out, errors.New("invalid grant shard")
-	}
-	slot, e := wireUint(m["slot"], 16)
-	if e != nil {
-		return out, e
-	}
-	if _, e = c.canonical(ctx, block); e != nil {
-		return out, e
-	}
-	return IndexedCreditAllocation{b, shard, uint16(slot)}, nil
-}
-func (c *ProtocolRpcClient) GetCreditRevocationBitmap(ctx context.Context, scope DeploymentContext, owner, token common.Address, shard uint64, word uint8, block CanonicalBlock) (IndexedCreditRevocationBitmap, error) {
-	var out IndexedCreditRevocationBitmap
-	if owner == (common.Address{}) || token == (common.Address{}) || shard == 0 {
-		return out, errors.New("invalid grant location")
-	}
-	if e := c.queryBlock(ctx, scope, block); e != nil {
-		return out, e
+	id := new(big.Int).Set(grantID)
+	if err := c.queryBlock(ctx, scope, block); err != nil {
+		return out, err
 	}
 	var raw json.RawMessage
-	if e := c.call(ctx, scope.ChainID, "invisi_getCreditRevocationBitmap", []any{owner, token, strconv.FormatUint(shard, 10), word, block.Number}, &raw); e != nil {
-		return out, e
+	if err := c.call(ctx, scope.ChainID, "invisi_getCreditStatus", []any{owner, token, id.String(), block.Number}, &raw); err != nil {
+		return out, err
 	}
-	m, e := wireObject(raw)
-	if e != nil {
-		return out, e
+	m, err := wireObject(raw)
+	if err != nil {
+		return out, err
 	}
-	b, e := wireBlock(m["block"])
-	if e != nil || b != block {
+	b, err := wireBlock(m["block"])
+	if err != nil || b != block {
 		return out, errors.New("RPC grant block mismatch")
 	}
-	var decimal string
-	if json.Unmarshal(m["bitmap"], &decimal) != nil {
-		return out, errors.New("invalid bitmap")
+	var status *uint8
+	if err = json.Unmarshal(m["status"], &status); err != nil || status == nil || *status > 2 {
+		return out, errors.New("invalid Credit status")
 	}
-	bits, ok := new(big.Int).SetString(decimal, 10)
-	if !ok || bits.Sign() < 0 || bits.BitLen() > 256 || bits.String() != decimal {
-		return out, errors.New("invalid bitmap")
+	if _, err = c.canonical(ctx, block); err != nil {
+		return out, err
 	}
-	if _, e = c.canonical(ctx, block); e != nil {
-		return out, e
-	}
-	return IndexedCreditRevocationBitmap{b, bits}, nil
+	return IndexedCreditStatus{Block: b, Status: *status}, nil
 }
 func (c *ProtocolRpcClient) consumed(ctx context.Context, scope DeploymentContext, nf common.Hash, block CanonicalBlock, credit bool) (bool, error) {
 	if nf == (common.Hash{}) {

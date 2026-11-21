@@ -10,12 +10,16 @@ var routerGasProfileJSON []byte
 var routerGasProfile = func() struct {
 	ModeOverhead                                                                               [4]uint64
 	V3Base, V3PerHop, Permit, Authorization, RouteByte, MaxHops, MaxRouteBytes, MaxSafeInteger uint64
-} { var p struct {
-	ModeOverhead                                                                               [4]uint64
-	V3Base, V3PerHop, Permit, Authorization, RouteByte, MaxHops, MaxRouteBytes, MaxSafeInteger uint64
-}; if e := json.Unmarshal(routerGasProfileJSON, &p); e != nil {
-	panic(e)
-}; return p }()
+} {
+	var p struct {
+		ModeOverhead                                                                               [4]uint64
+		V3Base, V3PerHop, Permit, Authorization, RouteByte, MaxHops, MaxRouteBytes, MaxSafeInteger uint64
+	}
+	if e := json.Unmarshal(routerGasProfileJSON, &p); e != nil {
+		panic(e)
+	}
+	return p
+}()
 
 // RouterGasInput contains model quantities, never RPC receipt measurements.
 // ZeroExGasUnits must come from trusted independent route policy.

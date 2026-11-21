@@ -304,6 +304,37 @@ func (_InvisiCoreFactory *InvisiCoreFactoryCallerSession) GetInstanceAddress(sal
 	return _InvisiCoreFactory.Contract.GetInstanceAddress(&_InvisiCoreFactory.CallOpts, salt)
 }
 
+// GlobalCircuitPaused is a free data retrieval call binding the contract method 0x1fc0e910.
+//
+// Solidity: function globalCircuitPaused() view returns(bool)
+func (_InvisiCoreFactory *InvisiCoreFactoryCaller) GlobalCircuitPaused(opts *bind.CallOpts) (bool, error) {
+	var out []interface{}
+	err := _InvisiCoreFactory.contract.Call(opts, &out, "globalCircuitPaused")
+
+	if err != nil {
+		return *new(bool), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(bool)).(*bool)
+
+	return out0, err
+
+}
+
+// GlobalCircuitPaused is a free data retrieval call binding the contract method 0x1fc0e910.
+//
+// Solidity: function globalCircuitPaused() view returns(bool)
+func (_InvisiCoreFactory *InvisiCoreFactorySession) GlobalCircuitPaused() (bool, error) {
+	return _InvisiCoreFactory.Contract.GlobalCircuitPaused(&_InvisiCoreFactory.CallOpts)
+}
+
+// GlobalCircuitPaused is a free data retrieval call binding the contract method 0x1fc0e910.
+//
+// Solidity: function globalCircuitPaused() view returns(bool)
+func (_InvisiCoreFactory *InvisiCoreFactoryCallerSession) GlobalCircuitPaused() (bool, error) {
+	return _InvisiCoreFactory.Contract.GlobalCircuitPaused(&_InvisiCoreFactory.CallOpts)
+}
+
 // GlobalEmergency is a free data retrieval call binding the contract method 0x5befabc2.
 //
 // Solidity: function globalEmergency() view returns(address)
@@ -532,88 +563,46 @@ func (_InvisiCoreFactory *InvisiCoreFactoryTransactorSession) Deploy(creationCod
 	return _InvisiCoreFactory.Contract.Deploy(&_InvisiCoreFactory.TransactOpts, creationCode, salt, initialOwner_, emergencyAdmin_, addressRegistry_)
 }
 
-// EmergencyPauseInstance is a paid mutator transaction binding the contract method 0xf2d5de51.
+// EmergencyPauseAll is a paid mutator transaction binding the contract method 0x0775ef0f.
 //
-// Solidity: function emergencyPauseInstance(address instance) returns()
-func (_InvisiCoreFactory *InvisiCoreFactoryTransactor) EmergencyPauseInstance(opts *bind.TransactOpts, instance common.Address) (*types.Transaction, error) {
-	return _InvisiCoreFactory.contract.Transact(opts, "emergencyPauseInstance", instance)
+// Solidity: function emergencyPauseAll() returns()
+func (_InvisiCoreFactory *InvisiCoreFactoryTransactor) EmergencyPauseAll(opts *bind.TransactOpts) (*types.Transaction, error) {
+	return _InvisiCoreFactory.contract.Transact(opts, "emergencyPauseAll")
 }
 
-// EmergencyPauseInstance is a paid mutator transaction binding the contract method 0xf2d5de51.
+// EmergencyPauseAll is a paid mutator transaction binding the contract method 0x0775ef0f.
 //
-// Solidity: function emergencyPauseInstance(address instance) returns()
-func (_InvisiCoreFactory *InvisiCoreFactorySession) EmergencyPauseInstance(instance common.Address) (*types.Transaction, error) {
-	return _InvisiCoreFactory.Contract.EmergencyPauseInstance(&_InvisiCoreFactory.TransactOpts, instance)
+// Solidity: function emergencyPauseAll() returns()
+func (_InvisiCoreFactory *InvisiCoreFactorySession) EmergencyPauseAll() (*types.Transaction, error) {
+	return _InvisiCoreFactory.Contract.EmergencyPauseAll(&_InvisiCoreFactory.TransactOpts)
 }
 
-// EmergencyPauseInstance is a paid mutator transaction binding the contract method 0xf2d5de51.
+// EmergencyPauseAll is a paid mutator transaction binding the contract method 0x0775ef0f.
 //
-// Solidity: function emergencyPauseInstance(address instance) returns()
-func (_InvisiCoreFactory *InvisiCoreFactoryTransactorSession) EmergencyPauseInstance(instance common.Address) (*types.Transaction, error) {
-	return _InvisiCoreFactory.Contract.EmergencyPauseInstance(&_InvisiCoreFactory.TransactOpts, instance)
+// Solidity: function emergencyPauseAll() returns()
+func (_InvisiCoreFactory *InvisiCoreFactoryTransactorSession) EmergencyPauseAll() (*types.Transaction, error) {
+	return _InvisiCoreFactory.Contract.EmergencyPauseAll(&_InvisiCoreFactory.TransactOpts)
 }
 
-// EmergencyPauseRange is a paid mutator transaction binding the contract method 0xc7d0f69b.
+// EmergencyUnpauseAll is a paid mutator transaction binding the contract method 0x81b35353.
 //
-// Solidity: function emergencyPauseRange(uint256 start, uint256 end) returns()
-func (_InvisiCoreFactory *InvisiCoreFactoryTransactor) EmergencyPauseRange(opts *bind.TransactOpts, start *big.Int, end *big.Int) (*types.Transaction, error) {
-	return _InvisiCoreFactory.contract.Transact(opts, "emergencyPauseRange", start, end)
+// Solidity: function emergencyUnpauseAll() returns()
+func (_InvisiCoreFactory *InvisiCoreFactoryTransactor) EmergencyUnpauseAll(opts *bind.TransactOpts) (*types.Transaction, error) {
+	return _InvisiCoreFactory.contract.Transact(opts, "emergencyUnpauseAll")
 }
 
-// EmergencyPauseRange is a paid mutator transaction binding the contract method 0xc7d0f69b.
+// EmergencyUnpauseAll is a paid mutator transaction binding the contract method 0x81b35353.
 //
-// Solidity: function emergencyPauseRange(uint256 start, uint256 end) returns()
-func (_InvisiCoreFactory *InvisiCoreFactorySession) EmergencyPauseRange(start *big.Int, end *big.Int) (*types.Transaction, error) {
-	return _InvisiCoreFactory.Contract.EmergencyPauseRange(&_InvisiCoreFactory.TransactOpts, start, end)
+// Solidity: function emergencyUnpauseAll() returns()
+func (_InvisiCoreFactory *InvisiCoreFactorySession) EmergencyUnpauseAll() (*types.Transaction, error) {
+	return _InvisiCoreFactory.Contract.EmergencyUnpauseAll(&_InvisiCoreFactory.TransactOpts)
 }
 
-// EmergencyPauseRange is a paid mutator transaction binding the contract method 0xc7d0f69b.
+// EmergencyUnpauseAll is a paid mutator transaction binding the contract method 0x81b35353.
 //
-// Solidity: function emergencyPauseRange(uint256 start, uint256 end) returns()
-func (_InvisiCoreFactory *InvisiCoreFactoryTransactorSession) EmergencyPauseRange(start *big.Int, end *big.Int) (*types.Transaction, error) {
-	return _InvisiCoreFactory.Contract.EmergencyPauseRange(&_InvisiCoreFactory.TransactOpts, start, end)
-}
-
-// EmergencyUnpauseInstance is a paid mutator transaction binding the contract method 0x3dba177e.
-//
-// Solidity: function emergencyUnpauseInstance(address instance) returns()
-func (_InvisiCoreFactory *InvisiCoreFactoryTransactor) EmergencyUnpauseInstance(opts *bind.TransactOpts, instance common.Address) (*types.Transaction, error) {
-	return _InvisiCoreFactory.contract.Transact(opts, "emergencyUnpauseInstance", instance)
-}
-
-// EmergencyUnpauseInstance is a paid mutator transaction binding the contract method 0x3dba177e.
-//
-// Solidity: function emergencyUnpauseInstance(address instance) returns()
-func (_InvisiCoreFactory *InvisiCoreFactorySession) EmergencyUnpauseInstance(instance common.Address) (*types.Transaction, error) {
-	return _InvisiCoreFactory.Contract.EmergencyUnpauseInstance(&_InvisiCoreFactory.TransactOpts, instance)
-}
-
-// EmergencyUnpauseInstance is a paid mutator transaction binding the contract method 0x3dba177e.
-//
-// Solidity: function emergencyUnpauseInstance(address instance) returns()
-func (_InvisiCoreFactory *InvisiCoreFactoryTransactorSession) EmergencyUnpauseInstance(instance common.Address) (*types.Transaction, error) {
-	return _InvisiCoreFactory.Contract.EmergencyUnpauseInstance(&_InvisiCoreFactory.TransactOpts, instance)
-}
-
-// EmergencyUnpauseRange is a paid mutator transaction binding the contract method 0x64412fa1.
-//
-// Solidity: function emergencyUnpauseRange(uint256 start, uint256 end) returns()
-func (_InvisiCoreFactory *InvisiCoreFactoryTransactor) EmergencyUnpauseRange(opts *bind.TransactOpts, start *big.Int, end *big.Int) (*types.Transaction, error) {
-	return _InvisiCoreFactory.contract.Transact(opts, "emergencyUnpauseRange", start, end)
-}
-
-// EmergencyUnpauseRange is a paid mutator transaction binding the contract method 0x64412fa1.
-//
-// Solidity: function emergencyUnpauseRange(uint256 start, uint256 end) returns()
-func (_InvisiCoreFactory *InvisiCoreFactorySession) EmergencyUnpauseRange(start *big.Int, end *big.Int) (*types.Transaction, error) {
-	return _InvisiCoreFactory.Contract.EmergencyUnpauseRange(&_InvisiCoreFactory.TransactOpts, start, end)
-}
-
-// EmergencyUnpauseRange is a paid mutator transaction binding the contract method 0x64412fa1.
-//
-// Solidity: function emergencyUnpauseRange(uint256 start, uint256 end) returns()
-func (_InvisiCoreFactory *InvisiCoreFactoryTransactorSession) EmergencyUnpauseRange(start *big.Int, end *big.Int) (*types.Transaction, error) {
-	return _InvisiCoreFactory.Contract.EmergencyUnpauseRange(&_InvisiCoreFactory.TransactOpts, start, end)
+// Solidity: function emergencyUnpauseAll() returns()
+func (_InvisiCoreFactory *InvisiCoreFactoryTransactorSession) EmergencyUnpauseAll() (*types.Transaction, error) {
+	return _InvisiCoreFactory.Contract.EmergencyUnpauseAll(&_InvisiCoreFactory.TransactOpts)
 }
 
 // RenounceOwnership is a paid mutator transaction binding the contract method 0x715018a6.
@@ -658,9 +647,9 @@ func (_InvisiCoreFactory *InvisiCoreFactoryTransactorSession) TransferOwnership(
 	return _InvisiCoreFactory.Contract.TransferOwnership(&_InvisiCoreFactory.TransactOpts, newOwner)
 }
 
-// InvisiCoreFactoryEmergencyPauseInstanceIterator is returned from FilterEmergencyPauseInstance and is used to iterate over the raw logs and unpacked data for EmergencyPauseInstance events raised by the InvisiCoreFactory contract.
-type InvisiCoreFactoryEmergencyPauseInstanceIterator struct {
-	Event *InvisiCoreFactoryEmergencyPauseInstance // Event containing the contract specifics and raw log
+// InvisiCoreFactoryGlobalCircuitPauseUpdatedIterator is returned from FilterGlobalCircuitPauseUpdated and is used to iterate over the raw logs and unpacked data for GlobalCircuitPauseUpdated events raised by the InvisiCoreFactory contract.
+type InvisiCoreFactoryGlobalCircuitPauseUpdatedIterator struct {
+	Event *InvisiCoreFactoryGlobalCircuitPauseUpdated // Event containing the contract specifics and raw log
 
 	contract *bind.BoundContract // Generic contract to use for unpacking event data
 	event    string              // Event name to use for unpacking event data
@@ -674,7 +663,7 @@ type InvisiCoreFactoryEmergencyPauseInstanceIterator struct {
 // Next advances the iterator to the subsequent event, returning whether there
 // are any more events found. In case of a retrieval or parsing error, false is
 // returned and Error() can be queried for the exact failure.
-func (it *InvisiCoreFactoryEmergencyPauseInstanceIterator) Next() bool {
+func (it *InvisiCoreFactoryGlobalCircuitPauseUpdatedIterator) Next() bool {
 	// If the iterator failed, stop iterating
 	if it.fail != nil {
 		return false
@@ -683,7 +672,7 @@ func (it *InvisiCoreFactoryEmergencyPauseInstanceIterator) Next() bool {
 	if it.done {
 		select {
 		case log := <-it.logs:
-			it.Event = new(InvisiCoreFactoryEmergencyPauseInstance)
+			it.Event = new(InvisiCoreFactoryGlobalCircuitPauseUpdated)
 			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
 				it.fail = err
 				return false
@@ -698,7 +687,7 @@ func (it *InvisiCoreFactoryEmergencyPauseInstanceIterator) Next() bool {
 	// Iterator still in progress, wait for either a data or an error event
 	select {
 	case log := <-it.logs:
-		it.Event = new(InvisiCoreFactoryEmergencyPauseInstance)
+		it.Event = new(InvisiCoreFactoryGlobalCircuitPauseUpdated)
 		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
 			it.fail = err
 			return false
@@ -714,51 +703,41 @@ func (it *InvisiCoreFactoryEmergencyPauseInstanceIterator) Next() bool {
 }
 
 // Error returns any retrieval or parsing error occurred during filtering.
-func (it *InvisiCoreFactoryEmergencyPauseInstanceIterator) Error() error {
+func (it *InvisiCoreFactoryGlobalCircuitPauseUpdatedIterator) Error() error {
 	return it.fail
 }
 
 // Close terminates the iteration process, releasing any pending underlying
 // resources.
-func (it *InvisiCoreFactoryEmergencyPauseInstanceIterator) Close() error {
+func (it *InvisiCoreFactoryGlobalCircuitPauseUpdatedIterator) Close() error {
 	it.sub.Unsubscribe()
 	return nil
 }
 
-// InvisiCoreFactoryEmergencyPauseInstance represents a EmergencyPauseInstance event raised by the InvisiCoreFactory contract.
-type InvisiCoreFactoryEmergencyPauseInstance struct {
-	Instance common.Address
-	Raw      types.Log // Blockchain specific contextual infos
+// InvisiCoreFactoryGlobalCircuitPauseUpdated represents a GlobalCircuitPauseUpdated event raised by the InvisiCoreFactory contract.
+type InvisiCoreFactoryGlobalCircuitPauseUpdated struct {
+	Paused bool
+	Raw    types.Log // Blockchain specific contextual infos
 }
 
-// FilterEmergencyPauseInstance is a free log retrieval operation binding the contract event 0x24b92279accff6ed4dff2406bf1a1425ea9047c24b5393bfe017b1273782038f.
+// FilterGlobalCircuitPauseUpdated is a free log retrieval operation binding the contract event 0x93ecc0ea27206b0c3355cf773d9d3c68e15f40f01f46ae038e8717da4a232ca9.
 //
-// Solidity: event EmergencyPauseInstance(address indexed instance)
-func (_InvisiCoreFactory *InvisiCoreFactoryFilterer) FilterEmergencyPauseInstance(opts *bind.FilterOpts, instance []common.Address) (*InvisiCoreFactoryEmergencyPauseInstanceIterator, error) {
+// Solidity: event GlobalCircuitPauseUpdated(bool paused)
+func (_InvisiCoreFactory *InvisiCoreFactoryFilterer) FilterGlobalCircuitPauseUpdated(opts *bind.FilterOpts) (*InvisiCoreFactoryGlobalCircuitPauseUpdatedIterator, error) {
 
-	var instanceRule []interface{}
-	for _, instanceItem := range instance {
-		instanceRule = append(instanceRule, instanceItem)
-	}
-
-	logs, sub, err := _InvisiCoreFactory.contract.FilterLogs(opts, "EmergencyPauseInstance", instanceRule)
+	logs, sub, err := _InvisiCoreFactory.contract.FilterLogs(opts, "GlobalCircuitPauseUpdated")
 	if err != nil {
 		return nil, err
 	}
-	return &InvisiCoreFactoryEmergencyPauseInstanceIterator{contract: _InvisiCoreFactory.contract, event: "EmergencyPauseInstance", logs: logs, sub: sub}, nil
+	return &InvisiCoreFactoryGlobalCircuitPauseUpdatedIterator{contract: _InvisiCoreFactory.contract, event: "GlobalCircuitPauseUpdated", logs: logs, sub: sub}, nil
 }
 
-// WatchEmergencyPauseInstance is a free log subscription operation binding the contract event 0x24b92279accff6ed4dff2406bf1a1425ea9047c24b5393bfe017b1273782038f.
+// WatchGlobalCircuitPauseUpdated is a free log subscription operation binding the contract event 0x93ecc0ea27206b0c3355cf773d9d3c68e15f40f01f46ae038e8717da4a232ca9.
 //
-// Solidity: event EmergencyPauseInstance(address indexed instance)
-func (_InvisiCoreFactory *InvisiCoreFactoryFilterer) WatchEmergencyPauseInstance(opts *bind.WatchOpts, sink chan<- *InvisiCoreFactoryEmergencyPauseInstance, instance []common.Address) (event.Subscription, error) {
+// Solidity: event GlobalCircuitPauseUpdated(bool paused)
+func (_InvisiCoreFactory *InvisiCoreFactoryFilterer) WatchGlobalCircuitPauseUpdated(opts *bind.WatchOpts, sink chan<- *InvisiCoreFactoryGlobalCircuitPauseUpdated) (event.Subscription, error) {
 
-	var instanceRule []interface{}
-	for _, instanceItem := range instance {
-		instanceRule = append(instanceRule, instanceItem)
-	}
-
-	logs, sub, err := _InvisiCoreFactory.contract.WatchLogs(opts, "EmergencyPauseInstance", instanceRule)
+	logs, sub, err := _InvisiCoreFactory.contract.WatchLogs(opts, "GlobalCircuitPauseUpdated")
 	if err != nil {
 		return nil, err
 	}
@@ -768,8 +747,8 @@ func (_InvisiCoreFactory *InvisiCoreFactoryFilterer) WatchEmergencyPauseInstance
 			select {
 			case log := <-logs:
 				// New log arrived, parse the event and forward to the user
-				event := new(InvisiCoreFactoryEmergencyPauseInstance)
-				if err := _InvisiCoreFactory.contract.UnpackLog(event, "EmergencyPauseInstance", log); err != nil {
+				event := new(InvisiCoreFactoryGlobalCircuitPauseUpdated)
+				if err := _InvisiCoreFactory.contract.UnpackLog(event, "GlobalCircuitPauseUpdated", log); err != nil {
 					return err
 				}
 				event.Raw = log
@@ -790,426 +769,12 @@ func (_InvisiCoreFactory *InvisiCoreFactoryFilterer) WatchEmergencyPauseInstance
 	}), nil
 }
 
-// ParseEmergencyPauseInstance is a log parse operation binding the contract event 0x24b92279accff6ed4dff2406bf1a1425ea9047c24b5393bfe017b1273782038f.
+// ParseGlobalCircuitPauseUpdated is a log parse operation binding the contract event 0x93ecc0ea27206b0c3355cf773d9d3c68e15f40f01f46ae038e8717da4a232ca9.
 //
-// Solidity: event EmergencyPauseInstance(address indexed instance)
-func (_InvisiCoreFactory *InvisiCoreFactoryFilterer) ParseEmergencyPauseInstance(log types.Log) (*InvisiCoreFactoryEmergencyPauseInstance, error) {
-	event := new(InvisiCoreFactoryEmergencyPauseInstance)
-	if err := _InvisiCoreFactory.contract.UnpackLog(event, "EmergencyPauseInstance", log); err != nil {
-		return nil, err
-	}
-	event.Raw = log
-	return event, nil
-}
-
-// InvisiCoreFactoryEmergencyPauseRangeIterator is returned from FilterEmergencyPauseRange and is used to iterate over the raw logs and unpacked data for EmergencyPauseRange events raised by the InvisiCoreFactory contract.
-type InvisiCoreFactoryEmergencyPauseRangeIterator struct {
-	Event *InvisiCoreFactoryEmergencyPauseRange // Event containing the contract specifics and raw log
-
-	contract *bind.BoundContract // Generic contract to use for unpacking event data
-	event    string              // Event name to use for unpacking event data
-
-	logs chan types.Log        // Log channel receiving the found contract events
-	sub  ethereum.Subscription // Subscription for errors, completion and termination
-	done bool                  // Whether the subscription completed delivering logs
-	fail error                 // Occurred error to stop iteration
-}
-
-// Next advances the iterator to the subsequent event, returning whether there
-// are any more events found. In case of a retrieval or parsing error, false is
-// returned and Error() can be queried for the exact failure.
-func (it *InvisiCoreFactoryEmergencyPauseRangeIterator) Next() bool {
-	// If the iterator failed, stop iterating
-	if it.fail != nil {
-		return false
-	}
-	// If the iterator completed, deliver directly whatever's available
-	if it.done {
-		select {
-		case log := <-it.logs:
-			it.Event = new(InvisiCoreFactoryEmergencyPauseRange)
-			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
-				it.fail = err
-				return false
-			}
-			it.Event.Raw = log
-			return true
-
-		default:
-			return false
-		}
-	}
-	// Iterator still in progress, wait for either a data or an error event
-	select {
-	case log := <-it.logs:
-		it.Event = new(InvisiCoreFactoryEmergencyPauseRange)
-		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
-			it.fail = err
-			return false
-		}
-		it.Event.Raw = log
-		return true
-
-	case err := <-it.sub.Err():
-		it.done = true
-		it.fail = err
-		return it.Next()
-	}
-}
-
-// Error returns any retrieval or parsing error occurred during filtering.
-func (it *InvisiCoreFactoryEmergencyPauseRangeIterator) Error() error {
-	return it.fail
-}
-
-// Close terminates the iteration process, releasing any pending underlying
-// resources.
-func (it *InvisiCoreFactoryEmergencyPauseRangeIterator) Close() error {
-	it.sub.Unsubscribe()
-	return nil
-}
-
-// InvisiCoreFactoryEmergencyPauseRange represents a EmergencyPauseRange event raised by the InvisiCoreFactory contract.
-type InvisiCoreFactoryEmergencyPauseRange struct {
-	Start *big.Int
-	End   *big.Int
-	Raw   types.Log // Blockchain specific contextual infos
-}
-
-// FilterEmergencyPauseRange is a free log retrieval operation binding the contract event 0xd18e4026cc47782e9c90504841b795c9bf9b836bb5a0d76a8619dd12cc44be70.
-//
-// Solidity: event EmergencyPauseRange(uint256 start, uint256 end)
-func (_InvisiCoreFactory *InvisiCoreFactoryFilterer) FilterEmergencyPauseRange(opts *bind.FilterOpts) (*InvisiCoreFactoryEmergencyPauseRangeIterator, error) {
-
-	logs, sub, err := _InvisiCoreFactory.contract.FilterLogs(opts, "EmergencyPauseRange")
-	if err != nil {
-		return nil, err
-	}
-	return &InvisiCoreFactoryEmergencyPauseRangeIterator{contract: _InvisiCoreFactory.contract, event: "EmergencyPauseRange", logs: logs, sub: sub}, nil
-}
-
-// WatchEmergencyPauseRange is a free log subscription operation binding the contract event 0xd18e4026cc47782e9c90504841b795c9bf9b836bb5a0d76a8619dd12cc44be70.
-//
-// Solidity: event EmergencyPauseRange(uint256 start, uint256 end)
-func (_InvisiCoreFactory *InvisiCoreFactoryFilterer) WatchEmergencyPauseRange(opts *bind.WatchOpts, sink chan<- *InvisiCoreFactoryEmergencyPauseRange) (event.Subscription, error) {
-
-	logs, sub, err := _InvisiCoreFactory.contract.WatchLogs(opts, "EmergencyPauseRange")
-	if err != nil {
-		return nil, err
-	}
-	return event.NewSubscription(func(quit <-chan struct{}) error {
-		defer sub.Unsubscribe()
-		for {
-			select {
-			case log := <-logs:
-				// New log arrived, parse the event and forward to the user
-				event := new(InvisiCoreFactoryEmergencyPauseRange)
-				if err := _InvisiCoreFactory.contract.UnpackLog(event, "EmergencyPauseRange", log); err != nil {
-					return err
-				}
-				event.Raw = log
-
-				select {
-				case sink <- event:
-				case err := <-sub.Err():
-					return err
-				case <-quit:
-					return nil
-				}
-			case err := <-sub.Err():
-				return err
-			case <-quit:
-				return nil
-			}
-		}
-	}), nil
-}
-
-// ParseEmergencyPauseRange is a log parse operation binding the contract event 0xd18e4026cc47782e9c90504841b795c9bf9b836bb5a0d76a8619dd12cc44be70.
-//
-// Solidity: event EmergencyPauseRange(uint256 start, uint256 end)
-func (_InvisiCoreFactory *InvisiCoreFactoryFilterer) ParseEmergencyPauseRange(log types.Log) (*InvisiCoreFactoryEmergencyPauseRange, error) {
-	event := new(InvisiCoreFactoryEmergencyPauseRange)
-	if err := _InvisiCoreFactory.contract.UnpackLog(event, "EmergencyPauseRange", log); err != nil {
-		return nil, err
-	}
-	event.Raw = log
-	return event, nil
-}
-
-// InvisiCoreFactoryEmergencyUnpauseInstanceIterator is returned from FilterEmergencyUnpauseInstance and is used to iterate over the raw logs and unpacked data for EmergencyUnpauseInstance events raised by the InvisiCoreFactory contract.
-type InvisiCoreFactoryEmergencyUnpauseInstanceIterator struct {
-	Event *InvisiCoreFactoryEmergencyUnpauseInstance // Event containing the contract specifics and raw log
-
-	contract *bind.BoundContract // Generic contract to use for unpacking event data
-	event    string              // Event name to use for unpacking event data
-
-	logs chan types.Log        // Log channel receiving the found contract events
-	sub  ethereum.Subscription // Subscription for errors, completion and termination
-	done bool                  // Whether the subscription completed delivering logs
-	fail error                 // Occurred error to stop iteration
-}
-
-// Next advances the iterator to the subsequent event, returning whether there
-// are any more events found. In case of a retrieval or parsing error, false is
-// returned and Error() can be queried for the exact failure.
-func (it *InvisiCoreFactoryEmergencyUnpauseInstanceIterator) Next() bool {
-	// If the iterator failed, stop iterating
-	if it.fail != nil {
-		return false
-	}
-	// If the iterator completed, deliver directly whatever's available
-	if it.done {
-		select {
-		case log := <-it.logs:
-			it.Event = new(InvisiCoreFactoryEmergencyUnpauseInstance)
-			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
-				it.fail = err
-				return false
-			}
-			it.Event.Raw = log
-			return true
-
-		default:
-			return false
-		}
-	}
-	// Iterator still in progress, wait for either a data or an error event
-	select {
-	case log := <-it.logs:
-		it.Event = new(InvisiCoreFactoryEmergencyUnpauseInstance)
-		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
-			it.fail = err
-			return false
-		}
-		it.Event.Raw = log
-		return true
-
-	case err := <-it.sub.Err():
-		it.done = true
-		it.fail = err
-		return it.Next()
-	}
-}
-
-// Error returns any retrieval or parsing error occurred during filtering.
-func (it *InvisiCoreFactoryEmergencyUnpauseInstanceIterator) Error() error {
-	return it.fail
-}
-
-// Close terminates the iteration process, releasing any pending underlying
-// resources.
-func (it *InvisiCoreFactoryEmergencyUnpauseInstanceIterator) Close() error {
-	it.sub.Unsubscribe()
-	return nil
-}
-
-// InvisiCoreFactoryEmergencyUnpauseInstance represents a EmergencyUnpauseInstance event raised by the InvisiCoreFactory contract.
-type InvisiCoreFactoryEmergencyUnpauseInstance struct {
-	Instance common.Address
-	Raw      types.Log // Blockchain specific contextual infos
-}
-
-// FilterEmergencyUnpauseInstance is a free log retrieval operation binding the contract event 0x515ef1b4563c5cfe000fbd897a1bf4191a51507c6fd4fbe8a3a1b0ce7e402e21.
-//
-// Solidity: event EmergencyUnpauseInstance(address indexed instance)
-func (_InvisiCoreFactory *InvisiCoreFactoryFilterer) FilterEmergencyUnpauseInstance(opts *bind.FilterOpts, instance []common.Address) (*InvisiCoreFactoryEmergencyUnpauseInstanceIterator, error) {
-
-	var instanceRule []interface{}
-	for _, instanceItem := range instance {
-		instanceRule = append(instanceRule, instanceItem)
-	}
-
-	logs, sub, err := _InvisiCoreFactory.contract.FilterLogs(opts, "EmergencyUnpauseInstance", instanceRule)
-	if err != nil {
-		return nil, err
-	}
-	return &InvisiCoreFactoryEmergencyUnpauseInstanceIterator{contract: _InvisiCoreFactory.contract, event: "EmergencyUnpauseInstance", logs: logs, sub: sub}, nil
-}
-
-// WatchEmergencyUnpauseInstance is a free log subscription operation binding the contract event 0x515ef1b4563c5cfe000fbd897a1bf4191a51507c6fd4fbe8a3a1b0ce7e402e21.
-//
-// Solidity: event EmergencyUnpauseInstance(address indexed instance)
-func (_InvisiCoreFactory *InvisiCoreFactoryFilterer) WatchEmergencyUnpauseInstance(opts *bind.WatchOpts, sink chan<- *InvisiCoreFactoryEmergencyUnpauseInstance, instance []common.Address) (event.Subscription, error) {
-
-	var instanceRule []interface{}
-	for _, instanceItem := range instance {
-		instanceRule = append(instanceRule, instanceItem)
-	}
-
-	logs, sub, err := _InvisiCoreFactory.contract.WatchLogs(opts, "EmergencyUnpauseInstance", instanceRule)
-	if err != nil {
-		return nil, err
-	}
-	return event.NewSubscription(func(quit <-chan struct{}) error {
-		defer sub.Unsubscribe()
-		for {
-			select {
-			case log := <-logs:
-				// New log arrived, parse the event and forward to the user
-				event := new(InvisiCoreFactoryEmergencyUnpauseInstance)
-				if err := _InvisiCoreFactory.contract.UnpackLog(event, "EmergencyUnpauseInstance", log); err != nil {
-					return err
-				}
-				event.Raw = log
-
-				select {
-				case sink <- event:
-				case err := <-sub.Err():
-					return err
-				case <-quit:
-					return nil
-				}
-			case err := <-sub.Err():
-				return err
-			case <-quit:
-				return nil
-			}
-		}
-	}), nil
-}
-
-// ParseEmergencyUnpauseInstance is a log parse operation binding the contract event 0x515ef1b4563c5cfe000fbd897a1bf4191a51507c6fd4fbe8a3a1b0ce7e402e21.
-//
-// Solidity: event EmergencyUnpauseInstance(address indexed instance)
-func (_InvisiCoreFactory *InvisiCoreFactoryFilterer) ParseEmergencyUnpauseInstance(log types.Log) (*InvisiCoreFactoryEmergencyUnpauseInstance, error) {
-	event := new(InvisiCoreFactoryEmergencyUnpauseInstance)
-	if err := _InvisiCoreFactory.contract.UnpackLog(event, "EmergencyUnpauseInstance", log); err != nil {
-		return nil, err
-	}
-	event.Raw = log
-	return event, nil
-}
-
-// InvisiCoreFactoryEmergencyUnpauseRangeIterator is returned from FilterEmergencyUnpauseRange and is used to iterate over the raw logs and unpacked data for EmergencyUnpauseRange events raised by the InvisiCoreFactory contract.
-type InvisiCoreFactoryEmergencyUnpauseRangeIterator struct {
-	Event *InvisiCoreFactoryEmergencyUnpauseRange // Event containing the contract specifics and raw log
-
-	contract *bind.BoundContract // Generic contract to use for unpacking event data
-	event    string              // Event name to use for unpacking event data
-
-	logs chan types.Log        // Log channel receiving the found contract events
-	sub  ethereum.Subscription // Subscription for errors, completion and termination
-	done bool                  // Whether the subscription completed delivering logs
-	fail error                 // Occurred error to stop iteration
-}
-
-// Next advances the iterator to the subsequent event, returning whether there
-// are any more events found. In case of a retrieval or parsing error, false is
-// returned and Error() can be queried for the exact failure.
-func (it *InvisiCoreFactoryEmergencyUnpauseRangeIterator) Next() bool {
-	// If the iterator failed, stop iterating
-	if it.fail != nil {
-		return false
-	}
-	// If the iterator completed, deliver directly whatever's available
-	if it.done {
-		select {
-		case log := <-it.logs:
-			it.Event = new(InvisiCoreFactoryEmergencyUnpauseRange)
-			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
-				it.fail = err
-				return false
-			}
-			it.Event.Raw = log
-			return true
-
-		default:
-			return false
-		}
-	}
-	// Iterator still in progress, wait for either a data or an error event
-	select {
-	case log := <-it.logs:
-		it.Event = new(InvisiCoreFactoryEmergencyUnpauseRange)
-		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
-			it.fail = err
-			return false
-		}
-		it.Event.Raw = log
-		return true
-
-	case err := <-it.sub.Err():
-		it.done = true
-		it.fail = err
-		return it.Next()
-	}
-}
-
-// Error returns any retrieval or parsing error occurred during filtering.
-func (it *InvisiCoreFactoryEmergencyUnpauseRangeIterator) Error() error {
-	return it.fail
-}
-
-// Close terminates the iteration process, releasing any pending underlying
-// resources.
-func (it *InvisiCoreFactoryEmergencyUnpauseRangeIterator) Close() error {
-	it.sub.Unsubscribe()
-	return nil
-}
-
-// InvisiCoreFactoryEmergencyUnpauseRange represents a EmergencyUnpauseRange event raised by the InvisiCoreFactory contract.
-type InvisiCoreFactoryEmergencyUnpauseRange struct {
-	Start *big.Int
-	End   *big.Int
-	Raw   types.Log // Blockchain specific contextual infos
-}
-
-// FilterEmergencyUnpauseRange is a free log retrieval operation binding the contract event 0xe1137af9d2e3b90b122226a33ada87fc87a62da822a8774db7beb4e77b8741be.
-//
-// Solidity: event EmergencyUnpauseRange(uint256 start, uint256 end)
-func (_InvisiCoreFactory *InvisiCoreFactoryFilterer) FilterEmergencyUnpauseRange(opts *bind.FilterOpts) (*InvisiCoreFactoryEmergencyUnpauseRangeIterator, error) {
-
-	logs, sub, err := _InvisiCoreFactory.contract.FilterLogs(opts, "EmergencyUnpauseRange")
-	if err != nil {
-		return nil, err
-	}
-	return &InvisiCoreFactoryEmergencyUnpauseRangeIterator{contract: _InvisiCoreFactory.contract, event: "EmergencyUnpauseRange", logs: logs, sub: sub}, nil
-}
-
-// WatchEmergencyUnpauseRange is a free log subscription operation binding the contract event 0xe1137af9d2e3b90b122226a33ada87fc87a62da822a8774db7beb4e77b8741be.
-//
-// Solidity: event EmergencyUnpauseRange(uint256 start, uint256 end)
-func (_InvisiCoreFactory *InvisiCoreFactoryFilterer) WatchEmergencyUnpauseRange(opts *bind.WatchOpts, sink chan<- *InvisiCoreFactoryEmergencyUnpauseRange) (event.Subscription, error) {
-
-	logs, sub, err := _InvisiCoreFactory.contract.WatchLogs(opts, "EmergencyUnpauseRange")
-	if err != nil {
-		return nil, err
-	}
-	return event.NewSubscription(func(quit <-chan struct{}) error {
-		defer sub.Unsubscribe()
-		for {
-			select {
-			case log := <-logs:
-				// New log arrived, parse the event and forward to the user
-				event := new(InvisiCoreFactoryEmergencyUnpauseRange)
-				if err := _InvisiCoreFactory.contract.UnpackLog(event, "EmergencyUnpauseRange", log); err != nil {
-					return err
-				}
-				event.Raw = log
-
-				select {
-				case sink <- event:
-				case err := <-sub.Err():
-					return err
-				case <-quit:
-					return nil
-				}
-			case err := <-sub.Err():
-				return err
-			case <-quit:
-				return nil
-			}
-		}
-	}), nil
-}
-
-// ParseEmergencyUnpauseRange is a log parse operation binding the contract event 0xe1137af9d2e3b90b122226a33ada87fc87a62da822a8774db7beb4e77b8741be.
-//
-// Solidity: event EmergencyUnpauseRange(uint256 start, uint256 end)
-func (_InvisiCoreFactory *InvisiCoreFactoryFilterer) ParseEmergencyUnpauseRange(log types.Log) (*InvisiCoreFactoryEmergencyUnpauseRange, error) {
-	event := new(InvisiCoreFactoryEmergencyUnpauseRange)
-	if err := _InvisiCoreFactory.contract.UnpackLog(event, "EmergencyUnpauseRange", log); err != nil {
+// Solidity: event GlobalCircuitPauseUpdated(bool paused)
+func (_InvisiCoreFactory *InvisiCoreFactoryFilterer) ParseGlobalCircuitPauseUpdated(log types.Log) (*InvisiCoreFactoryGlobalCircuitPauseUpdated, error) {
+	event := new(InvisiCoreFactoryGlobalCircuitPauseUpdated)
+	if err := _InvisiCoreFactory.contract.UnpackLog(event, "GlobalCircuitPauseUpdated", log); err != nil {
 		return nil, err
 	}
 	event.Raw = log

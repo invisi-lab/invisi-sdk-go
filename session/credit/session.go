@@ -55,6 +55,9 @@ func New(options Options) (*Session, error) {
 	return &Session{checkCancellation: options.CheckCancellation, wrapPreparation: options.WrapPreparation, build: options.Build, checkPreparation: options.CheckPreparation, validatePreparation: options.ValidatePreparation, store: options.Store, owner: options.OwnerAddress, context: pinned, validate: options.Validate, prepare: options.Prepare, verifyRevocation: options.VerifyRevocation}, nil
 }
 func validateStored(s StoredState) error {
+	if s.GrantStatus > 2 || s.Revoked != (s.GrantStatus == 2) {
+		return fmt.Errorf("invalid stored Credit status")
+	}
 	if s.Role != credit.Owner && s.Role != credit.Spender || s.TreeID == 0 {
 		return fmt.Errorf("invalid stored Credit role or tree")
 	}
@@ -76,7 +79,8 @@ func validateStored(s StoredState) error {
 }
 
 // Track imports a grant whose delivery and canonical membership the caller has authenticated.
-// Preparation still checks the current consumed/revoked status through the composed wallet session.
+// Status defaults to unknown; selection requires an authenticated active status.
+// Preparation still checks current authority through the composed wallet session.
 func (s *Session) Track(ctx context.Context, record StoredState) error {
 	identity := record.Delivery.State.OwnerWalletIdentity
 	if record.Role == credit.Spender {
@@ -102,8 +106,9 @@ func (s *Session) Track(ctx context.Context, record StoredState) error {
 			}
 			record.ReservedBy = old.ReservedBy
 			record.Consumed = record.Consumed || old.Consumed
-			record.Revoked = record.Revoked || old.Revoked
+			record = record.MergeGrantStatus(old)
 		}
+		record = record.MergeGrantStatusFrom(state.Grants)
 		state.Grants[record.key()] = record
 		return nil
 	})
@@ -198,7 +203,7 @@ func (s *Session) Prepare(ctx context.Context, id string, prepared *credit.Prepa
 			}
 			key := StoredState{Commitment: hash, Role: role}.key()
 			record, ok := state.Grants[key]
-			if !ok || record.Consumed || record.Revoked || record.ReservedBy != "" {
+			if !ok || record.Consumed || record.GrantStatus != 1 || record.ReservedBy != "" {
 				return fmt.Errorf("available Credit input not found")
 			}
 			if err = validateStored(record); err != nil {

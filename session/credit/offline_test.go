@@ -58,7 +58,7 @@ func TestCachedRevokeCalldataRemainsOffline(t *testing.T) {
 	_, grant := testPlan(t)
 	state := grant.Delivery.State
 	c := credit.Context{ProtocolContext: state.ProtocolContext, TokenAddress: common.BigToAddress(primitives.ElementToBigInt(state.TokenAddress)), Timestamp: 2000000000}
-	p, e := credit.PrepareRevoke(c, credit.RevokeParams{Token: c.TokenAddress, Owner: common.BigToAddress(primitives.ElementToBigInt(state.OwnerWalletIdentity)), Shard: 1, Deadline: big.NewInt(2000000300)})
+	p, e := credit.PrepareRevoke(c, credit.RevokeParams{Token: c.TokenAddress, Owner: common.BigToAddress(primitives.ElementToBigInt(state.OwnerWalletIdentity)), GrantID: big.NewInt(1), Deadline: big.NewInt(2000000300)})
 	if e != nil {
 		t.Fatal(e)
 	}

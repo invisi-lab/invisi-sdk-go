@@ -1,7 +1,7 @@
 {
   "method": "transact",
   "generatedBy": "independent ethers canonical Protocol ABI reference; SDK parity asserted separately",
-  "artifactSha256": "52614b5df9359e46ecba73e2f1ba150e3010dc222a2a11229e5b00d9e99e68fe",
+  "artifactSha256": "1fb38d28d9125b56b34bb7be696248e9d709362dc08b56bb7f757f2e3fe4931d",
   "privateKey": "0x0000000000000000000000000000000000000000000000000000000000000007",
   "trust": {
     "chainId": "56",

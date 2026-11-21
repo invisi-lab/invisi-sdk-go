@@ -46,7 +46,7 @@ func unsignedIntent(i Intent) ([]byte, error) {
 	case i.Revoke != nil:
 		p := *i.Revoke
 		fee, _ := normalizeFee(p.FeeRecipient, p.FeeAmount)
-		return pack("revokeCredit", p.Token, p.Owner, p.Shard, p.Slot, p.Deadline, p.FeeRecipient, fee, []byte{})
+		return pack("revokeCredit", p.Token, p.Owner, p.GrantID, p.Deadline, p.FeeRecipient, fee, []byte{})
 	}
 	return nil, fmt.Errorf("Credit operation required")
 }

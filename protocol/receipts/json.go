@@ -52,6 +52,9 @@ func eventJSON(value any) any {
 			}
 			name := field.Name
 			name = strings.ToLower(name[:1]) + name[1:]
+			if field.Name == "GrantID" {
+				name = "grantId"
+			}
 			out[name] = eventJSON(v.Field(i).Interface())
 		}
 		return out

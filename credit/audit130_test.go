@@ -21,7 +21,7 @@ func TestAudit130DefaultCreateSelector(t *testing.T) {
 	if e != nil {
 		t.Fatal(e)
 	}
-	if encodinghex.EncodeToString(data[:4]) != "00b6fa56" {
+	if encodinghex.EncodeToString(data[:4]) != "4aa2aed8" {
 		t.Fatalf("default selector %x", data[:4])
 	}
 }
@@ -78,18 +78,14 @@ func TestAudit130LowCreateDefaultsCurrentAndExplicitLegacy(t *testing.T) {
 	if e != nil {
 		t.Fatal(e)
 	}
-	if common.Bytes2Hex(data[:4]) != "00b6fa56" {
+	if common.Bytes2Hex(data[:4]) != "4aa2aed8" {
 		t.Fatalf("low default selector %x", data[:4])
 	}
 	params.CreationABI = "legacy"
-	data, e = params.Calldata(i.Context, []byte{1}, i.Deliveries)
-	if e != nil {
-		t.Fatal(e)
+	if _, e = params.Calldata(i.Context, []byte{1}, i.Deliveries); e == nil {
+		t.Fatal("historical ABI accepted current Credit identity")
 	}
-	legacy, _ := LegacyContractABI()
-	if common.Bytes2Hex(data[:4]) != common.Bytes2Hex(legacy.Methods["createCredit"].ID) {
-		t.Fatalf("legacy selector %x", data[:4])
-	}
+
 }
 func TestAudit130NetInvariantRejectsTamperedRecovery(t *testing.T) {
 	b, s, _ := requestBuilder(t)

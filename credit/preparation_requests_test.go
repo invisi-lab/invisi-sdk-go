@@ -38,7 +38,7 @@ func requestBuilder(t *testing.T) (PreparationBuilder, State, map[string]any) {
 			}
 			return primitives.ReceivingAddress{OwnerAddress: identity, ViewingPublicKey: k.ViewingPublicKey, ClueKey: k.ClueKey}, nil
 		},
-		Allocation: func(context.Context, Context) (uint64, uint16, error) { return 1, 2, nil },
+		Status: func(context.Context, Context, common.Address, *big.Int) (uint8, error) { return 0, nil },
 		Input: func(_ context.Context, _ Context, _ common.Hash, _ Role) (PreparationInput, error) {
 			return PreparationInput{Located: LocatedState{State: s, TreeID: 1}, Delivery: DeliveryState{State: s, OwnerReceivingKeys: owner, SpenderReceivingKeys: spender}, Source: protocol.InputSource{TreeId: big.NewInt(1), MerkleRoot: common.HexToHash("0x1")}}, nil
 		},
@@ -111,12 +111,12 @@ func TestRequestDrawPayloadOverrideAndGrossFee(t *testing.T) {
 func TestRequestRevokeNeedsOnlyOriginalReference(t *testing.T) {
 	b, s, _ := requestBuilder(t)
 	b.Input = nil
-	p, err := b.Revoke(context.Background(), RevokePreparation{TokenAddress: common.BigToAddress(primitives.ElementToBigInt(s.TokenAddress)), Shard: 1, Slot: 2})
+	p, err := b.Revoke(context.Background(), RevokePreparation{TokenAddress: common.BigToAddress(primitives.ElementToBigInt(s.TokenAddress)), GrantID: big.NewInt(1)})
 	if err != nil {
 		t.Fatal(err)
 	}
 	i, _ := p.ExportIntent()
-	if i.Revoke.Shard != 1 || len(i.Inputs) != 0 {
+	if i.Revoke.GrantID.Cmp(big.NewInt(1)) != 0 || len(i.Inputs) != 0 {
 		t.Fatal("revocation invented a spend")
 	}
 }
@@ -212,7 +212,7 @@ func TestCreateInitialPaymentBuildsPostDebitGrantAndSpenderNote(t *testing.T) {
 		t.Fatal("incorrect initial debit, merchant amount, recipient or deliveries")
 	}
 	request, e := prepared.AuthorizationRequest()
-	if e != nil || request.Operation != primitives.WalletCreateCreditInitialPayment || len(request.Words) != 16 {
+	if e != nil || request.Operation != primitives.WalletCreateCreditInitialPayment || len(request.Words) != 15 {
 		t.Fatal(request, e)
 	}
 	if e = prepared.CheckTimestamp(2000000000 + 86400); e == nil {

@@ -130,13 +130,7 @@ func Decode(data []byte) (request *Request, err error) {
 		request.Funding = *abi.ConvertType(values[3], new(Funding)).(*Funding)
 	case "createCredit":
 		request.Proof = values[0].([]byte)
-		request.LegacyCreation = len(method.Inputs[1].Type.TupleElems) == 8
-		if request.LegacyCreation {
-			old := *abi.ConvertType(values[1], new(legacyCreateCreditParams)).(*legacyCreateCreditParams)
-			request.Creation = CreateCreditParams{Token: old.Token, Owner: old.Owner, RevocationShard: old.RevocationShard, RevocationSlot: old.RevocationSlot, CreditCommitment: old.CreditCommitment, Deadline: old.Deadline, FeeRecipient: old.FeeRecipient, FeeAmount: old.FeeAmount, TotalAmount: new(big.Int)}
-		} else {
-			request.Creation = *abi.ConvertType(values[1], new(CreateCreditParams)).(*CreateCreditParams)
-		}
+		request.Creation = *abi.ConvertType(values[1], new(CreateCreditParams)).(*CreateCreditParams)
 		request.Deliveries = *abi.ConvertType(values[2], new([]Delivery)).(*[]Delivery)
 	case "creditDraw":
 		request.Proof = values[0].([]byte)
@@ -147,7 +141,7 @@ func Decode(data []byte) (request *Request, err error) {
 		request.Update = *abi.ConvertType(values[1], new(UpdateCreditParams)).(*UpdateCreditParams)
 		request.Deliveries = *abi.ConvertType(values[2], new([]Delivery)).(*[]Delivery)
 	case "revokeCredit":
-		request.Revocation = RevokeCreditParams{Token: values[0].(common.Address), Owner: values[1].(common.Address), Shard: values[2].(uint64), Slot: values[3].(uint16), Deadline: values[4].(*big.Int), FeeRecipient: values[5].(common.Address), FeeAmount: values[6].(*big.Int), Signature: values[7].([]byte)}
+		request.Revocation = RevokeCreditParams{Token: values[0].(common.Address), Owner: values[1].(common.Address), GrantID: values[2].(*big.Int), Deadline: values[3].(*big.Int), FeeRecipient: values[4].(common.Address), FeeAmount: values[5].(*big.Int), Signature: values[6].([]byte)}
 	}
 	canonical, e := Encode(request)
 	if e != nil || !bytes.Equal(data, canonical) {
@@ -195,23 +189,21 @@ func Encode(r *Request) (encoded []byte, err error) {
 	case "shield":
 		return contractABI.Pack("shield", r.Shield, r.ShieldOutputs, r.Deliveries, r.Funding)
 	case "createCredit":
-		for name, method := range contractABI.Methods {
-			if method.RawName == "createCredit" && (len(method.Inputs[1].Type.TupleElems) == 8) == r.LegacyCreation {
-				p := r.Creation
-				if p.TotalAmount == nil {
-					p.TotalAmount = new(big.Int)
-				}
-				return contractABI.Pack(name, r.Proof, p, r.Deliveries)
-			}
+		if r.LegacyCreation {
+			return nil, ErrCalldata
 		}
-		return nil, ErrCalldata
+		p := r.Creation
+		if p.TotalAmount == nil {
+			p.TotalAmount = new(big.Int)
+		}
+		return contractABI.Pack("createCredit", r.Proof, p, r.Deliveries)
 	case "creditDraw":
 		return contractABI.Pack("creditDraw", r.Proof, r.Draw, r.Deliveries)
 	case "updateCredit":
 		return contractABI.Pack("updateCredit", r.Proof, r.Update, r.Deliveries)
 	case "revokeCredit":
 		p := r.Revocation
-		return contractABI.Pack("revokeCredit", p.Token, p.Owner, p.Shard, p.Slot, p.Deadline, p.FeeRecipient, p.FeeAmount, p.Signature)
+		return contractABI.Pack("revokeCredit", p.Token, p.Owner, p.GrantID, p.Deadline, p.FeeRecipient, p.FeeAmount, p.Signature)
 	}
 	return nil, ErrCalldata
 }
@@ -304,14 +296,4 @@ func DecodeSingle(data []byte) (*Request, error) {
 		return nil, ErrCalldata
 	}
 	return r, nil
-}
-
-type legacyCreateCreditParams struct {
-	Token, Owner     common.Address
-	RevocationShard  uint64
-	RevocationSlot   uint16
-	CreditCommitment [32]byte
-	Deadline         *big.Int
-	FeeRecipient     common.Address
-	FeeAmount        *big.Int
 }

@@ -14,13 +14,13 @@ import (
 
 func testPlan(t *testing.T) (*credit.Prepared, StoredState) {
 	t.Helper()
-	s := credit.State{AvailableCredit: primitives.ElementFromUint64(400), ProtocolContext: primitives.ProtocolContext{ChainID: primitives.ElementFromUint64(1), ProtocolAddress: primitives.ElementFromUint64(17)}, TokenAddress: primitives.ElementFromUint64(34), SpenderWalletIdentity: primitives.ElementFromUint64(33), OwnerWalletIdentity: primitives.ElementFromUint64(44), RevocationShard: primitives.ElementFromUint64(1), Nonce: primitives.ElementFromUint64(1), Expiry: primitives.ElementFromUint64(2100000000), CreditSharedKey: primitives.ElementFromUint64(2)}
+	s := credit.State{AvailableCredit: primitives.ElementFromUint64(400), ProtocolContext: primitives.ProtocolContext{ChainID: primitives.ElementFromUint64(1), ProtocolAddress: primitives.ElementFromUint64(17)}, TokenAddress: primitives.ElementFromUint64(34), SpenderWalletIdentity: primitives.ElementFromUint64(33), OwnerWalletIdentity: primitives.ElementFromUint64(44), GrantID: primitives.ElementFromUint64(1), Nonce: primitives.ElementFromUint64(1), Expiry: primitives.ElementFromUint64(2100000000), CreditSharedKey: primitives.ElementFromUint64(2)}
 	transition, err := s.Draw(primitives.ElementFromUint64(7), 2000000000)
 	if err != nil {
 		t.Fatal(err)
 	}
 	c := credit.Context{ProtocolContext: s.ProtocolContext, TokenAddress: common.BigToAddress(big.NewInt(34)), Timestamp: 2000000000}
-	p := credit.DrawParams{Token: c.TokenAddress, Sources: []protocol.InputSource{{TreeId: big.NewInt(1), MerkleRoot: common.HexToHash("0x01")}}, Payers: []credit.Payer{{Payer: common.BigToAddress(big.NewInt(44)), Amount: big.NewInt(7)}}, GrantRefs: []credit.GrantRef{{PayerIndex: big.NewInt(0), Shard: 1}}, Nullifiers: []common.Hash{common.Hash(transition.Nullifier.Bytes())}, CreditCommitments: []common.Hash{common.Hash(transition.StateCommitment.Bytes())}, RecoveryAmounts: []common.Hash{common.Hash(transition.RecoveryAmount.Bytes())}, NoteCommitment: common.HexToHash("0x02"), TotalAmount: big.NewInt(7), Deadline: big.NewInt(2000000300)}
+	p := credit.DrawParams{Token: c.TokenAddress, Sources: []protocol.InputSource{{TreeId: big.NewInt(1), MerkleRoot: common.HexToHash("0x01")}}, Payers: []credit.Payer{{Payer: common.BigToAddress(big.NewInt(44)), Amount: big.NewInt(7)}}, GrantRefs: []credit.GrantRef{{PayerIndex: big.NewInt(0), GrantID: big.NewInt(1)}}, Nullifiers: []common.Hash{common.Hash(transition.Nullifier.Bytes())}, CreditCommitments: []common.Hash{common.Hash(transition.StateCommitment.Bytes())}, RecoveryAmounts: []common.Hash{common.Hash(transition.RecoveryAmount.Bytes())}, NoteCommitment: common.HexToHash("0x02"), TotalAmount: big.NewInt(7), Deadline: big.NewInt(2000000300)}
 	clue := make([]byte, 68)
 	clue[64] = 24
 	ds := []protocol.Delivery{{Ciphertext: []byte{0x82}, Clue: clue}, {Ciphertext: []byte{0x82}, Clue: clue}, {}}
@@ -31,7 +31,7 @@ func testPlan(t *testing.T) (*credit.Prepared, StoredState) {
 	wallet, _ := primitives.DeriveWallet(common.LeftPadBytes([]byte{1}, 32))
 	keys := primitives.ReceivingKeys{ViewingPublicKey: wallet.ViewingPublicKey, ClueKey: wallet.ClueKey}
 	commitment, _ := s.Commitment()
-	return prepared, StoredState{Delivery: credit.DeliveryState{State: s, OwnerReceivingKeys: keys, SpenderReceivingKeys: keys}, Commitment: common.Hash(commitment.Bytes()), Nullifier: common.Hash(transition.Nullifier.Bytes()), TreeID: 1, Role: credit.Spender}
+	return prepared, StoredState{GrantStatus: 1, Delivery: credit.DeliveryState{State: s, OwnerReceivingKeys: keys, SpenderReceivingKeys: keys}, Commitment: common.Hash(commitment.Bytes()), Nullifier: common.Hash(transition.Nullifier.Bytes()), TreeID: 1, Role: credit.Spender}
 }
 func TestAtomicReservationsAndExternalization(t *testing.T) {
 	ctx := context.Background()
@@ -96,7 +96,7 @@ func TestRevocationJournalSurvivesUncertainSubmitAndResume(t *testing.T) {
 	}
 	state := grant.Delivery.State
 	c := credit.Context{ProtocolContext: state.ProtocolContext, TokenAddress: common.BigToAddress(primitives.ElementToBigInt(state.TokenAddress)), Timestamp: 2000000000}
-	p := credit.RevokeParams{Token: c.TokenAddress, Owner: common.BigToAddress(primitives.ElementToBigInt(state.OwnerWalletIdentity)), Shard: 1, Slot: 0, Deadline: big.NewInt(2000000300)}
+	p := credit.RevokeParams{Token: c.TokenAddress, Owner: common.BigToAddress(primitives.ElementToBigInt(state.OwnerWalletIdentity)), GrantID: big.NewInt(1), Deadline: big.NewInt(2000000300)}
 	prepared, err := credit.PrepareRevoke(c, p)
 	if err != nil {
 		t.Fatal(err)
@@ -124,7 +124,7 @@ func TestRevocationJournalSurvivesUncertainSubmitAndResume(t *testing.T) {
 		t.Fatal("old worker retained lease after resume")
 	}
 	reconciler := reconcileFunc(func(context.Context, credit.Intent, []byte, common.Hash) (*Outcome, error) {
-		return &Outcome{TransactionHash: hash, Calldata: data, BlockHash: common.HexToHash("0xbeef"), Success: true, RevokedOwner: p.Owner, RevokedToken: p.Token, RevokedShard: 1}, nil
+		return &Outcome{TransactionHash: hash, Calldata: data, BlockHash: common.HexToHash("0xbeef"), Success: true, RevokedOwner: p.Owner, RevokedToken: p.Token, RevokedGrantID: big.NewInt(1)}, nil
 	})
 	if err = resumed.Reconcile(ctx, reconciler); err != nil {
 		t.Fatal(err)
@@ -190,7 +190,7 @@ func TestUpdateJournalPreservesDeltaAndResumesWithoutReapplying(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	p := credit.UpdateParams{Token: original.Context.TokenAddress, Owner: common.BigToAddress(primitives.ElementToBigInt(current.OwnerWalletIdentity)), Source: original.Draw.Sources[0], Nullifier: common.Hash(next.Nullifier.Bytes()), CreditCommitment: common.Hash(next.StateCommitment.Bytes()), RevocationShard: 1, Deadline: big.NewInt(2000000300)}
+	p := credit.UpdateParams{Token: original.Context.TokenAddress, Owner: common.BigToAddress(primitives.ElementToBigInt(current.OwnerWalletIdentity)), Source: original.Draw.Sources[0], Nullifier: common.Hash(next.Nullifier.Bytes()), CreditCommitment: common.Hash(next.StateCommitment.Bytes()), GrantID: big.NewInt(1), Deadline: big.NewInt(2000000300)}
 	prepared, err := credit.PrepareUpdate(original.Context, p, original.Deliveries[:2], credit.LocatedState{State: current, TreeID: 1}, change)
 	if err != nil {
 		t.Fatal(err)
@@ -299,7 +299,7 @@ func TestUpdatePayloadPatchSurvivesJournalAndResume(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			p := credit.UpdateParams{Token: i.Context.TokenAddress, Owner: common.BigToAddress(primitives.ElementToBigInt(current.OwnerWalletIdentity)), Source: i.Draw.Sources[0], Nullifier: common.Hash(next.Nullifier.Bytes()), CreditCommitment: common.Hash(next.StateCommitment.Bytes()), RevocationShard: 1, Deadline: big.NewInt(2000000300)}
+			p := credit.UpdateParams{Token: i.Context.TokenAddress, Owner: common.BigToAddress(primitives.ElementToBigInt(current.OwnerWalletIdentity)), Source: i.Draw.Sources[0], Nullifier: common.Hash(next.Nullifier.Bytes()), CreditCommitment: common.Hash(next.StateCommitment.Bytes()), GrantID: big.NewInt(1), Deadline: big.NewInt(2000000300)}
 			prepared, err := credit.PrepareUpdate(i.Context, p, i.Deliveries[:2], credit.LocatedState{State: current, TreeID: 1}, change)
 			if err != nil {
 				t.Fatal(err)

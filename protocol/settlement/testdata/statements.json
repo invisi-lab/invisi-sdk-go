@@ -1,6 +1,6 @@
 {
   "generatedBy": "independent ethers ABI + EIP712 encoder",
-  "artifactSha256": "8b7553e999583258b73f1ed121fdbc157cebf42121e5f4608a658c8a19c1f0bd",
+  "artifactSha256": "1fb38d28d9125b56b34bb7be696248e9d709362dc08b56bb7f757f2e3fe4931d",
   "chainId": "56",
   "protocol": "0x1111111111111111111111111111111111111111",
   "vectors": [

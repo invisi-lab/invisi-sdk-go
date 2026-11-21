@@ -21,6 +21,8 @@ type StoredState struct {
 	LeafIndex             uint16
 	Role                  credit.Role
 	Consumed, Revoked     bool
+	GrantStatus           uint8
+	GrantStatusBlock      *protocolrpc.CanonicalBlock `json:",omitempty"`
 	ReservedBy            string
 }
 

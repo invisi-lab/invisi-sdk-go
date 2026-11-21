@@ -62,8 +62,8 @@ func makeWitness(private map[string]any, names []string, inputs []common.Hash) (
 	return prover.NewLocalWitness(private)
 }
 
-var createNames = []string{"chain_id", "protocol_address", "token_address", "owner_address", "revocation_shard", "revocation_slot", "credit_commitment", "deadline", "delivery_hash_high", "delivery_hash_low", "fee_recipient", "fee_amount", "auth_digest_high", "auth_digest_low"}
-var updateNames = []string{"chain_id", "protocol_address", "token_address", "owner_address", "input_tree_id", "merkle_root", "nullifier", "credit_commitment", "revocation_shard", "revocation_slot", "deadline", "delivery_hash_high", "delivery_hash_low", "fee_recipient", "fee_amount", "auth_digest_high", "auth_digest_low"}
+var createNames = []string{"chain_id", "protocol_address", "token_address", "owner_address", "grant_id", "credit_commitment", "deadline", "delivery_hash_high", "delivery_hash_low", "fee_recipient", "fee_amount", "auth_digest_high", "auth_digest_low"}
+var updateNames = []string{"chain_id", "protocol_address", "token_address", "owner_address", "input_tree_id", "merkle_root", "nullifier", "credit_commitment", "grant_id", "deadline", "delivery_hash_high", "delivery_hash_low", "fee_recipient", "fee_amount", "auth_digest_high", "auth_digest_low"}
 
 func (p CreateParams) Witness(c Context, deliveries []protocol.Delivery, state State, auth Authority) (*prover.LocalWitness, error) {
 	return p.createWitness(c, deliveries, state, auth, nil, nil)
@@ -77,7 +77,7 @@ func (p CreateParams) createWitness(c Context, deliveries []protocol.Delivery, s
 	if err != nil {
 		return nil, err
 	}
-	if state.ProtocolContext != c.ProtocolContext || primitives.ElementToBigInt(state.TokenAddress).Cmp(c.TokenAddress.Big()) != 0 || primitives.ElementToBigInt(state.OwnerWalletIdentity).Cmp(p.Owner.Big()) != 0 || primitives.ElementToBigInt(state.RevocationShard).Uint64() != p.RevocationShard || primitives.ElementToBigInt(state.RevocationSlot).Uint64() != uint64(p.RevocationSlot) || common.Hash(commitment.Bytes()) != p.CreditCommitment {
+	if state.ProtocolContext != c.ProtocolContext || primitives.ElementToBigInt(state.TokenAddress).Cmp(c.TokenAddress.Big()) != 0 || primitives.ElementToBigInt(state.OwnerWalletIdentity).Cmp(p.Owner.Big()) != 0 || primitives.ElementToBigInt(state.GrantID).Cmp(p.GrantID) != 0 || common.Hash(commitment.Bytes()) != p.CreditCommitment {
 		return nil, fmt.Errorf("created Credit opening mismatch")
 	}
 	initial := p.HasInitialPayment != nil && *p.HasInitialPayment
@@ -142,7 +142,7 @@ func (p CreateParams) createWitness(c Context, deliveries []protocol.Delivery, s
 	if initial {
 		private["available_credit"] = initialAvailable.String()
 		private["output_nonce"] = output.Nonce.String()
-		names := append([]string(nil), createNames[:12]...)
+		names := append([]string(nil), createNames[:11]...)
 		names = append(names, "note_commitment", "total_amount", "current_day", "current_month", "auth_digest_high", "auth_digest_low")
 		return makeWitness(private, names, inputs)
 	}
@@ -194,7 +194,7 @@ func (p UpdateParams) Witness(c Context, deliveries []protocol.Delivery, input L
 		return nil, err
 	}
 	s := input.State
-	if s.ProtocolContext != c.ProtocolContext || primitives.ElementToBigInt(s.TokenAddress).Cmp(p.Token.Big()) != 0 || primitives.ElementToBigInt(s.OwnerWalletIdentity).Cmp(p.Owner.Big()) != 0 || primitives.ElementToBigInt(s.RevocationShard).Uint64() != p.RevocationShard || primitives.ElementToBigInt(s.RevocationSlot).Uint64() != uint64(p.RevocationSlot) {
+	if s.ProtocolContext != c.ProtocolContext || primitives.ElementToBigInt(s.TokenAddress).Cmp(p.Token.Big()) != 0 || primitives.ElementToBigInt(s.OwnerWalletIdentity).Cmp(p.Owner.Big()) != 0 || primitives.ElementToBigInt(s.GrantID).Cmp(p.GrantID) != 0 {
 		return nil, fmt.Errorf("updated grant namespace mismatch")
 	}
 	next, err := s.Update(change, p.Deadline.Uint64())
@@ -286,7 +286,7 @@ func (p DrawParams) Witness(c Context, deliveries []protocol.Delivery, credits [
 			return nil, fmt.Errorf("Credit source missing")
 		}
 		pi := int(p.GrantRefs[i].PayerIndex.Uint64())
-		if primitives.ElementToBigInt(s.OwnerWalletIdentity).Cmp(p.Payers[pi].Payer.Big()) != 0 || primitives.ElementToBigInt(s.RevocationShard).Uint64() != p.GrantRefs[i].Shard || primitives.ElementToBigInt(s.RevocationSlot).Uint64() != uint64(p.GrantRefs[i].Slot) {
+		if primitives.ElementToBigInt(s.OwnerWalletIdentity).Cmp(p.Payers[pi].Payer.Big()) != 0 || primitives.ElementToBigInt(s.GrantID).Cmp(p.GrantRefs[i].GrantID) != 0 {
 			return nil, fmt.Errorf("Credit payer or namespace mismatch")
 		}
 		root, err := input.root()
@@ -351,7 +351,7 @@ func (p DrawParams) Witness(c Context, deliveries []protocol.Delivery, credits [
 		private[name] = inputs[i].Big().String()
 	}
 	at := 6
-	for _, name := range []string{"tree_ids", "roots", "payer_addresses", "payer_amounts", "grant_payer_indices", "grant_shards", "grant_slots", "nullifiers", "state_commitments", "recovery_amounts"} {
+	for _, name := range []string{"tree_ids", "roots", "payer_addresses", "payer_amounts", "grant_payer_indices", "grant_ids", "nullifiers", "state_commitments", "recovery_amounts"} {
 		row := make([]string, capacity)
 		for i := range row {
 			row[i] = inputs[at+i].Big().String()

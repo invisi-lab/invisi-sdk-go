@@ -12,8 +12,7 @@
       "input": {
         "spenderWalletIdentity": "33",
         "ownerWalletIdentity": "44",
-        "revocationShard": "1",
-        "revocationSlot": "0",
+        "grantId": "1",
         "nonce": "55",
         "expiry": "2100000000",
         "creditSharedKey": "66",
@@ -32,13 +31,12 @@
         "increaseAvailableCredit": "5"
       },
       "result": {
-        "nullifier": "0x219907acd2318802a8c146eb4257d1d7a0e9d0965c74b0a90ae22c0b051d0a14",
+        "nullifier": "0x2fbf2def52cf62d2f6ca51ab3e89552450571cae46c966a6fe35bdf856cf843d",
         "state": {
           "spenderWalletIdentity": "33",
           "ownerWalletIdentity": "44",
-          "revocationShard": "1",
-          "revocationSlot": "0",
-          "nonce": "17932453181871433649236925965441411985936947573574467426829461023111489730351",
+          "grantId": "1",
+          "nonce": "4951394183929035227610695659983720684629224936364735877034513123701824450548",
           "expiry": "2100000000",
           "creditSharedKey": "66",
           "singleLimit": "100",
@@ -52,7 +50,7 @@
           "totalSpent": "0",
           "unlimited": false
         },
-        "stateCommitment": "0x04fa76acf44bff9c43e08fa4abf346aed773925246bfa85e960b17c5dad21a49"
+        "stateCommitment": "0x292ad55ecef66f43806b20912524f676f4a4e6eef22057d7ef5e9d71bf4b31cb"
       }
     },
     {
@@ -61,8 +59,7 @@
       "input": {
         "spenderWalletIdentity": "33",
         "ownerWalletIdentity": "44",
-        "revocationShard": "1",
-        "revocationSlot": "0",
+        "grantId": "1",
         "nonce": "55",
         "expiry": "2100000000",
         "creditSharedKey": "66",
@@ -81,13 +78,12 @@
         "decreaseAvailableCredit": "5"
       },
       "result": {
-        "nullifier": "0x219907acd2318802a8c146eb4257d1d7a0e9d0965c74b0a90ae22c0b051d0a14",
+        "nullifier": "0x2fbf2def52cf62d2f6ca51ab3e89552450571cae46c966a6fe35bdf856cf843d",
         "state": {
           "spenderWalletIdentity": "33",
           "ownerWalletIdentity": "44",
-          "revocationShard": "1",
-          "revocationSlot": "0",
-          "nonce": "17932453181871433649236925965441411985936947573574467426829461023111489730351",
+          "grantId": "1",
+          "nonce": "4951394183929035227610695659983720684629224936364735877034513123701824450548",
           "expiry": "2100000000",
           "creditSharedKey": "66",
           "singleLimit": "100",
@@ -101,7 +97,7 @@
           "totalSpent": "0",
           "unlimited": false
         },
-        "stateCommitment": "0x020ecffbe48d781dd6154b30fd29d0cec34df60700a73a1db722d3ece37440b1"
+        "stateCommitment": "0x14d9726c5c39c9ac2bd429d22ff57be6d36d907f2f261d0faae14ddc45799b68"
       }
     },
     {
@@ -110,8 +106,7 @@
       "input": {
         "spenderWalletIdentity": "33",
         "ownerWalletIdentity": "44",
-        "revocationShard": "1",
-        "revocationSlot": "0",
+        "grantId": "1",
         "nonce": "55",
         "expiry": "2100000000",
         "creditSharedKey": "66",
@@ -130,13 +125,12 @@
         "unlimited": true
       },
       "result": {
-        "nullifier": "0x219907acd2318802a8c146eb4257d1d7a0e9d0965c74b0a90ae22c0b051d0a14",
+        "nullifier": "0x2fbf2def52cf62d2f6ca51ab3e89552450571cae46c966a6fe35bdf856cf843d",
         "state": {
           "spenderWalletIdentity": "33",
           "ownerWalletIdentity": "44",
-          "revocationShard": "1",
-          "revocationSlot": "0",
-          "nonce": "17932453181871433649236925965441411985936947573574467426829461023111489730351",
+          "grantId": "1",
+          "nonce": "4951394183929035227610695659983720684629224936364735877034513123701824450548",
           "expiry": "2100000000",
           "creditSharedKey": "66",
           "singleLimit": "100",
@@ -150,7 +144,7 @@
           "totalSpent": "0",
           "unlimited": true
         },
-        "stateCommitment": "0x266f05b47ac0d7a0d60f0f2fcc4cd3b829e09ad17ee36115b2ffafd960a86200"
+        "stateCommitment": "0x2c35ec82e415e1a280da0ba0802acf83f18237445743e8076896df6e1b1fd557"
       }
     },
     {
@@ -159,8 +153,7 @@
       "input": {
         "spenderWalletIdentity": "33",
         "ownerWalletIdentity": "44",
-        "revocationShard": "1",
-        "revocationSlot": "0",
+        "grantId": "1",
         "nonce": "55",
         "expiry": "2100000000",
         "creditSharedKey": "66",
@@ -180,13 +173,12 @@
         "increaseAvailableCredit": "7"
       },
       "result": {
-        "nullifier": "0x0df21dfd832e86a24f79b2a6d4d4c115429cb66853f41cb9418870a41b86a7a7",
+        "nullifier": "0x2f49c9890f40921989216b44157b6081f58763160bc5543c2be6d32d024c8497",
         "state": {
           "spenderWalletIdentity": "33",
           "ownerWalletIdentity": "44",
-          "revocationShard": "1",
-          "revocationSlot": "0",
-          "nonce": "13533620932338018266444362341709114188396825682203714221325001388571745376448",
+          "grantId": "1",
+          "nonce": "11364629254190191893375710145933409666421345518652894671910411883290316578081",
           "expiry": "2100000000",
           "creditSharedKey": "66",
           "singleLimit": "100",
@@ -200,7 +192,7 @@
           "totalSpent": "0",
           "unlimited": false
         },
-        "stateCommitment": "0x2451cf459d633b2cfdb3cf4fca7aa20640b0a89e3ea92609125f65c6cf10320f"
+        "stateCommitment": "0x2638ae5773f6b6315625760e1bb61ad8d66835d36186568d725e47c2bdea199e"
       }
     },
     {
@@ -209,8 +201,7 @@
       "input": {
         "spenderWalletIdentity": "33",
         "ownerWalletIdentity": "44",
-        "revocationShard": "1",
-        "revocationSlot": "0",
+        "grantId": "1",
         "nonce": "55",
         "expiry": "2100000000",
         "creditSharedKey": "66",
@@ -229,13 +220,12 @@
         "unlimited": false
       },
       "result": {
-        "nullifier": "0x0df21dfd832e86a24f79b2a6d4d4c115429cb66853f41cb9418870a41b86a7a7",
+        "nullifier": "0x2f49c9890f40921989216b44157b6081f58763160bc5543c2be6d32d024c8497",
         "state": {
           "spenderWalletIdentity": "33",
           "ownerWalletIdentity": "44",
-          "revocationShard": "1",
-          "revocationSlot": "0",
-          "nonce": "13533620932338018266444362341709114188396825682203714221325001388571745376448",
+          "grantId": "1",
+          "nonce": "11364629254190191893375710145933409666421345518652894671910411883290316578081",
           "expiry": "2100000000",
           "creditSharedKey": "66",
           "singleLimit": "100",
@@ -249,7 +239,7 @@
           "totalSpent": "0",
           "unlimited": false
         },
-        "stateCommitment": "0x1ef76c2128519136f14e736531362b231ef699e6f658c24a751cea2a83e40db1"
+        "stateCommitment": "0x0841fb11f060540b8d6ea1e6d6d6b7c4b0c20bbce47c5e5df3eb9045ae70f5b4"
       }
     },
     {
@@ -258,8 +248,7 @@
       "input": {
         "spenderWalletIdentity": "33",
         "ownerWalletIdentity": "44",
-        "revocationShard": "1",
-        "revocationSlot": "0",
+        "grantId": "1",
         "nonce": "55",
         "expiry": "2100000000",
         "creditSharedKey": "66",
@@ -276,13 +265,12 @@
       },
       "changes": {},
       "result": {
-        "nullifier": "0x219907acd2318802a8c146eb4257d1d7a0e9d0965c74b0a90ae22c0b051d0a14",
+        "nullifier": "0x2fbf2def52cf62d2f6ca51ab3e89552450571cae46c966a6fe35bdf856cf843d",
         "state": {
           "spenderWalletIdentity": "33",
           "ownerWalletIdentity": "44",
-          "revocationShard": "1",
-          "revocationSlot": "0",
-          "nonce": "17932453181871433649236925965441411985936947573574467426829461023111489730351",
+          "grantId": "1",
+          "nonce": "4951394183929035227610695659983720684629224936364735877034513123701824450548",
           "expiry": "2100000000",
           "creditSharedKey": "66",
           "singleLimit": "100",
@@ -296,7 +284,7 @@
           "totalSpent": "0",
           "unlimited": false
         },
-        "stateCommitment": "0x192e98a8492fa7350109a3f99a8874abb07de46e3dd8eca9d7ea201361041745"
+        "stateCommitment": "0x0650871b4a4f13d64e2ba7086ea3c025a95b2e62fad42965f4bfd831483c37e0"
       }
     },
     {
@@ -305,9 +293,8 @@
       "input": {
         "spenderWalletIdentity": "33",
         "ownerWalletIdentity": "44",
-        "revocationShard": "1",
-        "revocationSlot": "0",
-        "nonce": "17932453181871433649236925965441411985936947573574467426829461023111489730351",
+        "grantId": "1",
+        "nonce": "4951394183929035227610695659983720684629224936364735877034513123701824450548",
         "expiry": "2100000000",
         "creditSharedKey": "66",
         "singleLimit": "100",
@@ -325,13 +312,12 @@
         "increaseAvailableCredit": "5"
       },
       "result": {
-        "nullifier": "0x026cb87286f215976824c4130c4e744710d4224f2b4c3f5bf2a6b4fd27831609",
+        "nullifier": "0x187c8a82cbeee0dd4fd70bcb8228f2b6987ad4b9bc1f59b52bfbea4313866983",
         "state": {
           "spenderWalletIdentity": "33",
           "ownerWalletIdentity": "44",
-          "revocationShard": "1",
-          "revocationSlot": "0",
-          "nonce": "14435548199496895653314562983197056376141557251104240575924232807298162958103",
+          "grantId": "1",
+          "nonce": "20115028025005360094171704714858995066274652046950304992786402748367811476446",
           "expiry": "2100000000",
           "creditSharedKey": "66",
           "singleLimit": "100",
@@ -345,7 +331,7 @@
           "totalSpent": "7",
           "unlimited": false
         },
-        "stateCommitment": "0x1ea064d7340ea76870c9db5de4b8d4abdc37faa5f85d2bc75354419d12b17973"
+        "stateCommitment": "0x2454107c7b9eef0872417c7a2a4c0fbbb8b9b4b2258c5a65ac38fca214d53261"
       }
     },
     {
@@ -354,8 +340,7 @@
       "input": {
         "spenderWalletIdentity": "33",
         "ownerWalletIdentity": "44",
-        "revocationShard": "1",
-        "revocationSlot": "0",
+        "grantId": "1",
         "nonce": "55",
         "expiry": "2100000000",
         "creditSharedKey": "66",
@@ -372,13 +357,12 @@
       },
       "debit": "7",
       "result": {
-        "nullifier": "0x0df21dfd832e86a24f79b2a6d4d4c115429cb66853f41cb9418870a41b86a7a7",
+        "nullifier": "0x2f49c9890f40921989216b44157b6081f58763160bc5543c2be6d32d024c8497",
         "state": {
           "spenderWalletIdentity": "33",
           "ownerWalletIdentity": "44",
-          "revocationShard": "1",
-          "revocationSlot": "0",
-          "nonce": "13533620932338018266444362341709114188396825682203714221325001388571745376448",
+          "grantId": "1",
+          "nonce": "11364629254190191893375710145933409666421345518652894671910411883290316578081",
           "expiry": "2100000000",
           "creditSharedKey": "66",
           "singleLimit": "100",
@@ -392,8 +376,8 @@
           "totalSpent": "7",
           "unlimited": true
         },
-        "stateCommitment": "0x10c5c9f1af67eb2b7cb7679739fb1072958ddb29b22ec8c5251272244a391138",
-        "recoveryAmount": "0x2198e1aaff291530cb194cd722d7c27f8d4ba527ff3fd48039ee562bbb54909d"
+        "stateCommitment": "0x042a8941abb0e54434803dc4f308b1899264fa67e39afc4e0403da8064ba8b74",
+        "recoveryAmount": "0x1524b0adbf7195986d3c58144eada1108312ec3f9b1ce030a122fe5a9d4e306b"
       }
     }
   ]

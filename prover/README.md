@@ -56,7 +56,7 @@ paths to prepare only a subset. `native.ResourceIndexSHA256` exposes the SDK's
 fixed index identity for build reports. Existing directory/cache files are verified
 and reused; missing resources download into `CacheDir` unless offline mode is set.
 
-Provenance uses its own catalog and pin. Set `ResourceOptions.ProvenanceDirectory` or `ProvenanceSources` independently, then call `PrefetchProvenanceResources`. `scripts/sync-provenance.py PERIPHERY_CHECKOUT --resource-dir PROVENANCE_OUTPUT` exports only the authenticated Provenance assets. `LegacyCombined: true` explicitly retains the old combined catalogs; Core initial-payment uses its historical separate pin only in this mode. Missing new catalogs do not trigger a downgrade. Split resources must be published before SDK release.
+Provenance uses its own catalog and pin. Set `ResourceOptions.ProvenanceDirectory` or `ProvenanceSources` independently, then call `PrefetchProvenanceResources`. `scripts/sync-provenance.py PERIPHERY_CHECKOUT --resource-dir PROVENANCE_OUTPUT` exports only the authenticated Provenance assets. `LegacyCombined: true` explicitly retains the old combined catalogs; current grant-ID Credit statements are rejected in this mode, including initial-payment. Missing new catalogs do not trigger a downgrade. The current reviewed Core pin is `85a5d1dffe40fc965ab4345a28b632f463c3ad861c44d5845850fbc7447fd8f6` (Credit manifest 8 / format 9). Local authenticated catalogs are sufficient for proving; publishing those resources is a separate release action.
 
 Recursive aggregation loads binary verification keys only when `Aggregate` needs
 its witness: one capacity for dedicated routes, C1 through C5 for mixed routes.

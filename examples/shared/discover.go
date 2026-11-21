@@ -82,7 +82,7 @@ func CreditCandidates(ctx context.Context, provider sdk.Provider, client *sdk.Pr
 	}
 	result := []CreditCandidate{}
 	for _, record := range state.PostpaidCredit.Grants {
-		if record.Role != selected || record.ReservedBy != "" || record.Consumed || record.Revoked || primitives.ElementToBigInt(record.Delivery.State.Expiry).Uint64() <= state.DiscoveryThrough.Timestamp || record.Delivery.State.TokenAddress != primitives.BigIntToElement(token.Big()) {
+		if record.Role != selected || record.ReservedBy != "" || record.Consumed || record.GrantStatus != 1 || primitives.ElementToBigInt(record.Delivery.State.Expiry).Uint64() <= state.DiscoveryThrough.Timestamp || record.Delivery.State.TokenAddress != primitives.BigIntToElement(token.Big()) {
 			continue
 		}
 		membership, err := client.WithProvider(provider).GetMembership(ctx, pool.Context(), rpc.MembershipInput{TreeID: record.TreeID, LeafIndex: uint32(record.LeafIndex), Commitment: record.Commitment}, *state.DiscoveryThrough)

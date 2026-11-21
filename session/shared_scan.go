@@ -417,6 +417,8 @@ func (s *WalletSession) scanHistory(ctx context.Context, d wallet.DeliveryDecryp
 					scheduleCreditReplay(&next.Scan, tx.Receipt.BlockNumber.Uint64(), target.Number)
 				}
 				c.ReservedBy = old.ReservedBy
+				c = c.MergeGrantStatusFrom(next.PostpaidCredit.Grants)
+				c.Consumed = c.Consumed || old.Consumed
 				next.PostpaidCredit.Grants[k] = c
 			}
 		}

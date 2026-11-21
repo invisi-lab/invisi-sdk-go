@@ -147,14 +147,9 @@ func PrepareCreate(c Context, p CreateParams, ds []protocol.Delivery, state Stat
 	return prepare(Intent{Version: 2, Context: c, Create: &p, Deliveries: ds, CreatedState: &state})
 }
 
-// PrepareCreateLegacy explicitly selects the historical pure creation ABI.
+// PrepareCreateLegacy rejects historical encodings for the current grant-ID model.
 func PrepareCreateLegacy(c Context, p CreateParams, ds []protocol.Delivery, state State) (*Prepared, error) {
-	if p.HasInitialPayment != nil && *p.HasInitialPayment {
-		return nil, fmt.Errorf("legacy creation cannot have initial payment")
-	}
-	p.HasInitialPayment = nil
-	p.CreationABI = "legacy"
-	return prepare(Intent{Version: 2, Context: c, Create: &p, Deliveries: ds, CreatedState: &state})
+	return nil, fmt.Errorf("historical creation ABI cannot encode current grant ID")
 }
 func PrepareUpdate(c Context, p UpdateParams, ds []protocol.Delivery, input LocatedState, change Change) (*Prepared, error) {
 	return prepare(Intent{Version: 2, Context: c, Update: &p, Deliveries: ds, Inputs: []LocatedState{input}, UpdateChange: &change})

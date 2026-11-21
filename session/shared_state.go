@@ -45,7 +45,7 @@ func (s *WalletSession) checkKnownState(ctx context.Context, v *WalletState, b p
 		n.CheckedThrough = &checked
 		v.Notes[key] = n
 	}
-	bitmaps := map[string]*big.Int{}
+	statuses := map[string]uint8{}
 	for key, g := range v.PostpaidCredit.Grants {
 		g.Consumed, e = spent(g.Nullifier)
 		if e != nil {
@@ -54,28 +54,32 @@ func (s *WalletSession) checkKnownState(ctx context.Context, v *WalletState, b p
 		state := g.Delivery.State
 		owner := common.BigToAddress(primitives.ElementToBigInt(state.OwnerWalletIdentity))
 		token := common.BigToAddress(primitives.ElementToBigInt(state.TokenAddress))
-		shard := primitives.ElementToBigInt(state.RevocationShard).Uint64()
-		slot := primitives.ElementToBigInt(state.RevocationSlot).Uint64()
-		k := fmt.Sprintf("%s:%s:%d:%d", owner, token, shard, slot/256)
-		bits := bitmaps[k]
-		if bits == nil && cache != nil {
-			bits = cache.bitmaps[bitmapCheckKey{Block: b, Namespace: k}]
+		id := primitives.ElementToBigInt(state.GrantID)
+		namespace := fmt.Sprintf("%s:%s:%s", owner, token, id)
+		status, ok := statuses[namespace]
+		cacheKey := statusCheckKey{Block: b, Namespace: namespace}
+		if !ok && cache != nil {
+			status, ok = cache.statuses[cacheKey]
 		}
-		if bits == nil {
-			bits, e = c.CreditRevocationBitmap(opts, owner, token, shard, uint8(slot/256))
+		if !ok {
+			status, e = c.CreditStatusValue(opts, owner, token, id)
 			if e != nil {
 				return e
 			}
-			if bits == nil || bits.Sign() < 0 || bits.BitLen() > 256 {
-				return errors.New("invalid revocation bitmap")
+			if status > 2 {
+				return errors.New("invalid Credit status")
 			}
-			bitmaps[k] = bits
+			statuses[namespace] = status
 			if cache != nil {
 				cache.trim()
-				cache.bitmaps[bitmapCheckKey{Block: b, Namespace: k}] = new(big.Int).Set(bits)
+				cache.statuses[cacheKey] = status
 			}
 		}
-		g.Revoked = bits.Bit(int(slot%256)) == 1
+		previousStatus := g
+		if e = g.SetGrantStatus(status, &b); e != nil {
+			return e
+		}
+		g = g.MergeGrantStatus(previousStatus)
 		v.PostpaidCredit.Grants[key] = g
 	}
 	if e = s.canonical(ctx, b); e != nil {
@@ -246,7 +250,9 @@ func (s *WalletSession) replayCredits(ctx context.Context, target protocolrpc.Ca
 						child.TreeID = draw.OutputTreeId.Uint64()
 						child.LeafIndex = uint16(draw.CreditLeafIndices[j])
 						child.Consumed = false
-						child.Revoked = false
+						statusBlock := protocolrpc.CanonicalBlock{Number: tx.Header.Number.Uint64(), Hash: tx.Header.Hash(), ParentHash: tx.Header.ParentHash, Timestamp: tx.Header.Time}
+						_ = child.SetGrantStatus(1, &statusBlock)
+						child = child.MergeGrantStatusFrom(next.PostpaidCredit.Grants)
 						child.ReservedBy = ""
 						next.PostpaidCredit.Grants[key] = child
 						parents[child.Nullifier] = append(parents[child.Nullifier], child)

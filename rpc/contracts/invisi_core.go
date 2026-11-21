@@ -473,57 +473,12 @@ func (_InvisiCore *InvisiCoreCallerSession) CircuitPaused() (bool, error) {
 	return _InvisiCore.Contract.CircuitPaused(&_InvisiCore.CallOpts)
 }
 
-// CreditAllocation is a free data retrieval call binding the contract method 0x70a7588f.
+// CreditStatus is a free data retrieval call binding the contract method 0x1dadbb55.
 //
-// Solidity: function creditAllocation(address owner, address token) view returns(uint64 shard, uint16 slot)
-func (_InvisiCore *InvisiCoreCaller) CreditAllocation(opts *bind.CallOpts, owner common.Address, token common.Address) (struct {
-	Shard uint64
-	Slot  uint16
-}, error) {
+// Solidity: function creditStatus(address owner, address token, uint128 grantId) view returns(uint256)
+func (_InvisiCore *InvisiCoreCaller) CreditStatus(opts *bind.CallOpts, owner common.Address, token common.Address, grantId *big.Int) (*big.Int, error) {
 	var out []interface{}
-	err := _InvisiCore.contract.Call(opts, &out, "creditAllocation", owner, token)
-
-	outstruct := new(struct {
-		Shard uint64
-		Slot  uint16
-	})
-	if err != nil {
-		return *outstruct, err
-	}
-
-	outstruct.Shard = *abi.ConvertType(out[0], new(uint64)).(*uint64)
-	outstruct.Slot = *abi.ConvertType(out[1], new(uint16)).(*uint16)
-
-	return *outstruct, err
-
-}
-
-// CreditAllocation is a free data retrieval call binding the contract method 0x70a7588f.
-//
-// Solidity: function creditAllocation(address owner, address token) view returns(uint64 shard, uint16 slot)
-func (_InvisiCore *InvisiCoreSession) CreditAllocation(owner common.Address, token common.Address) (struct {
-	Shard uint64
-	Slot  uint16
-}, error) {
-	return _InvisiCore.Contract.CreditAllocation(&_InvisiCore.CallOpts, owner, token)
-}
-
-// CreditAllocation is a free data retrieval call binding the contract method 0x70a7588f.
-//
-// Solidity: function creditAllocation(address owner, address token) view returns(uint64 shard, uint16 slot)
-func (_InvisiCore *InvisiCoreCallerSession) CreditAllocation(owner common.Address, token common.Address) (struct {
-	Shard uint64
-	Slot  uint16
-}, error) {
-	return _InvisiCore.Contract.CreditAllocation(&_InvisiCore.CallOpts, owner, token)
-}
-
-// CreditRevocationBitmap is a free data retrieval call binding the contract method 0xc91ae210.
-//
-// Solidity: function creditRevocationBitmap(address owner, address token, uint64 shard, uint8 word) view returns(uint256)
-func (_InvisiCore *InvisiCoreCaller) CreditRevocationBitmap(opts *bind.CallOpts, owner common.Address, token common.Address, shard uint64, word uint8) (*big.Int, error) {
-	var out []interface{}
-	err := _InvisiCore.contract.Call(opts, &out, "creditRevocationBitmap", owner, token, shard, word)
+	err := _InvisiCore.contract.Call(opts, &out, "creditStatus", owner, token, grantId)
 
 	if err != nil {
 		return *new(*big.Int), err
@@ -535,18 +490,18 @@ func (_InvisiCore *InvisiCoreCaller) CreditRevocationBitmap(opts *bind.CallOpts,
 
 }
 
-// CreditRevocationBitmap is a free data retrieval call binding the contract method 0xc91ae210.
+// CreditStatus is a free data retrieval call binding the contract method 0x1dadbb55.
 //
-// Solidity: function creditRevocationBitmap(address owner, address token, uint64 shard, uint8 word) view returns(uint256)
-func (_InvisiCore *InvisiCoreSession) CreditRevocationBitmap(owner common.Address, token common.Address, shard uint64, word uint8) (*big.Int, error) {
-	return _InvisiCore.Contract.CreditRevocationBitmap(&_InvisiCore.CallOpts, owner, token, shard, word)
+// Solidity: function creditStatus(address owner, address token, uint128 grantId) view returns(uint256)
+func (_InvisiCore *InvisiCoreSession) CreditStatus(owner common.Address, token common.Address, grantId *big.Int) (*big.Int, error) {
+	return _InvisiCore.Contract.CreditStatus(&_InvisiCore.CallOpts, owner, token, grantId)
 }
 
-// CreditRevocationBitmap is a free data retrieval call binding the contract method 0xc91ae210.
+// CreditStatus is a free data retrieval call binding the contract method 0x1dadbb55.
 //
-// Solidity: function creditRevocationBitmap(address owner, address token, uint64 shard, uint8 word) view returns(uint256)
-func (_InvisiCore *InvisiCoreCallerSession) CreditRevocationBitmap(owner common.Address, token common.Address, shard uint64, word uint8) (*big.Int, error) {
-	return _InvisiCore.Contract.CreditRevocationBitmap(&_InvisiCore.CallOpts, owner, token, shard, word)
+// Solidity: function creditStatus(address owner, address token, uint128 grantId) view returns(uint256)
+func (_InvisiCore *InvisiCoreCallerSession) CreditStatus(owner common.Address, token common.Address, grantId *big.Int) (*big.Int, error) {
+	return _InvisiCore.Contract.CreditStatus(&_InvisiCore.CallOpts, owner, token, grantId)
 }
 
 // Eip712Domain is a free data retrieval call binding the contract method 0x84b0196e.
@@ -803,6 +758,37 @@ func (_InvisiCore *InvisiCoreSession) GlobalEmergency() (common.Address, error) 
 // Solidity: function globalEmergency() view returns(address)
 func (_InvisiCore *InvisiCoreCallerSession) GlobalEmergency() (common.Address, error) {
 	return _InvisiCore.Contract.GlobalEmergency(&_InvisiCore.CallOpts)
+}
+
+// InstanceCircuitPaused is a free data retrieval call binding the contract method 0xbcdf9e1a.
+//
+// Solidity: function instanceCircuitPaused() view returns(bool)
+func (_InvisiCore *InvisiCoreCaller) InstanceCircuitPaused(opts *bind.CallOpts) (bool, error) {
+	var out []interface{}
+	err := _InvisiCore.contract.Call(opts, &out, "instanceCircuitPaused")
+
+	if err != nil {
+		return *new(bool), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(bool)).(*bool)
+
+	return out0, err
+
+}
+
+// InstanceCircuitPaused is a free data retrieval call binding the contract method 0xbcdf9e1a.
+//
+// Solidity: function instanceCircuitPaused() view returns(bool)
+func (_InvisiCore *InvisiCoreSession) InstanceCircuitPaused() (bool, error) {
+	return _InvisiCore.Contract.InstanceCircuitPaused(&_InvisiCore.CallOpts)
+}
+
+// InstanceCircuitPaused is a free data retrieval call binding the contract method 0xbcdf9e1a.
+//
+// Solidity: function instanceCircuitPaused() view returns(bool)
+func (_InvisiCore *InvisiCoreCallerSession) InstanceCircuitPaused() (bool, error) {
+	return _InvisiCore.Contract.InstanceCircuitPaused(&_InvisiCore.CallOpts)
 }
 
 // IsCommitmentRegistered is a free data retrieval call binding the contract method 0x620b5305.
@@ -1105,44 +1091,44 @@ func (_InvisiCore *InvisiCoreTransactorSession) AcceptOwnership() (*types.Transa
 	return _InvisiCore.Contract.AcceptOwnership(&_InvisiCore.TransactOpts)
 }
 
-// CreateCredit is a paid mutator transaction binding the contract method 0x00b6fa56.
+// CreateCredit is a paid mutator transaction binding the contract method 0x4aa2aed8.
 //
-// Solidity: function createCredit(bytes , (address,address,uint64,uint16,bytes32,uint256,address,uint256,bool,uint256,bytes32) p, (bytes,bytes)[] ) returns()
+// Solidity: function createCredit(bytes , (address,address,uint128,bytes32,uint256,address,uint256,bool,uint256,bytes32) p, (bytes,bytes)[] ) returns()
 func (_InvisiCore *InvisiCoreTransactor) CreateCredit(opts *bind.TransactOpts, arg0 []byte, p IInvisiCoreCreateCreditParams, arg2 []IInvisiCoreDelivery) (*types.Transaction, error) {
 	return _InvisiCore.contract.Transact(opts, "createCredit", arg0, p, arg2)
 }
 
-// CreateCredit is a paid mutator transaction binding the contract method 0x00b6fa56.
+// CreateCredit is a paid mutator transaction binding the contract method 0x4aa2aed8.
 //
-// Solidity: function createCredit(bytes , (address,address,uint64,uint16,bytes32,uint256,address,uint256,bool,uint256,bytes32) p, (bytes,bytes)[] ) returns()
+// Solidity: function createCredit(bytes , (address,address,uint128,bytes32,uint256,address,uint256,bool,uint256,bytes32) p, (bytes,bytes)[] ) returns()
 func (_InvisiCore *InvisiCoreSession) CreateCredit(arg0 []byte, p IInvisiCoreCreateCreditParams, arg2 []IInvisiCoreDelivery) (*types.Transaction, error) {
 	return _InvisiCore.Contract.CreateCredit(&_InvisiCore.TransactOpts, arg0, p, arg2)
 }
 
-// CreateCredit is a paid mutator transaction binding the contract method 0x00b6fa56.
+// CreateCredit is a paid mutator transaction binding the contract method 0x4aa2aed8.
 //
-// Solidity: function createCredit(bytes , (address,address,uint64,uint16,bytes32,uint256,address,uint256,bool,uint256,bytes32) p, (bytes,bytes)[] ) returns()
+// Solidity: function createCredit(bytes , (address,address,uint128,bytes32,uint256,address,uint256,bool,uint256,bytes32) p, (bytes,bytes)[] ) returns()
 func (_InvisiCore *InvisiCoreTransactorSession) CreateCredit(arg0 []byte, p IInvisiCoreCreateCreditParams, arg2 []IInvisiCoreDelivery) (*types.Transaction, error) {
 	return _InvisiCore.Contract.CreateCredit(&_InvisiCore.TransactOpts, arg0, p, arg2)
 }
 
-// CreditDraw is a paid mutator transaction binding the contract method 0xa288961c.
+// CreditDraw is a paid mutator transaction binding the contract method 0xa28f6594.
 //
-// Solidity: function creditDraw(bytes , (address,(uint256,bytes32)[],(address,uint256)[],(uint256,uint64,uint16)[],bytes32[],bytes32[],bytes32[],bytes32,uint256,uint256,address,uint256) p, (bytes,bytes)[] ) returns()
+// Solidity: function creditDraw(bytes , (address,(uint256,bytes32)[],(address,uint256)[],(uint256,uint128)[],bytes32[],bytes32[],bytes32[],bytes32,uint256,uint256,address,uint256) p, (bytes,bytes)[] ) returns()
 func (_InvisiCore *InvisiCoreTransactor) CreditDraw(opts *bind.TransactOpts, arg0 []byte, p IInvisiCoreCreditDrawParams, arg2 []IInvisiCoreDelivery) (*types.Transaction, error) {
 	return _InvisiCore.contract.Transact(opts, "creditDraw", arg0, p, arg2)
 }
 
-// CreditDraw is a paid mutator transaction binding the contract method 0xa288961c.
+// CreditDraw is a paid mutator transaction binding the contract method 0xa28f6594.
 //
-// Solidity: function creditDraw(bytes , (address,(uint256,bytes32)[],(address,uint256)[],(uint256,uint64,uint16)[],bytes32[],bytes32[],bytes32[],bytes32,uint256,uint256,address,uint256) p, (bytes,bytes)[] ) returns()
+// Solidity: function creditDraw(bytes , (address,(uint256,bytes32)[],(address,uint256)[],(uint256,uint128)[],bytes32[],bytes32[],bytes32[],bytes32,uint256,uint256,address,uint256) p, (bytes,bytes)[] ) returns()
 func (_InvisiCore *InvisiCoreSession) CreditDraw(arg0 []byte, p IInvisiCoreCreditDrawParams, arg2 []IInvisiCoreDelivery) (*types.Transaction, error) {
 	return _InvisiCore.Contract.CreditDraw(&_InvisiCore.TransactOpts, arg0, p, arg2)
 }
 
-// CreditDraw is a paid mutator transaction binding the contract method 0xa288961c.
+// CreditDraw is a paid mutator transaction binding the contract method 0xa28f6594.
 //
-// Solidity: function creditDraw(bytes , (address,(uint256,bytes32)[],(address,uint256)[],(uint256,uint64,uint16)[],bytes32[],bytes32[],bytes32[],bytes32,uint256,uint256,address,uint256) p, (bytes,bytes)[] ) returns()
+// Solidity: function creditDraw(bytes , (address,(uint256,bytes32)[],(address,uint256)[],(uint256,uint128)[],bytes32[],bytes32[],bytes32[],bytes32,uint256,uint256,address,uint256) p, (bytes,bytes)[] ) returns()
 func (_InvisiCore *InvisiCoreTransactorSession) CreditDraw(arg0 []byte, p IInvisiCoreCreditDrawParams, arg2 []IInvisiCoreDelivery) (*types.Transaction, error) {
 	return _InvisiCore.Contract.CreditDraw(&_InvisiCore.TransactOpts, arg0, p, arg2)
 }
@@ -1231,25 +1217,25 @@ func (_InvisiCore *InvisiCoreTransactorSession) RenounceOwnership() (*types.Tran
 	return _InvisiCore.Contract.RenounceOwnership(&_InvisiCore.TransactOpts)
 }
 
-// RevokeCredit is a paid mutator transaction binding the contract method 0x400b3547.
+// RevokeCredit is a paid mutator transaction binding the contract method 0x78145727.
 //
-// Solidity: function revokeCredit(address token, address owner, uint64 shard, uint16 slot, uint256 deadline, address feeRecipient, uint256 feeAmount, bytes signature) returns()
-func (_InvisiCore *InvisiCoreTransactor) RevokeCredit(opts *bind.TransactOpts, token common.Address, owner common.Address, shard uint64, slot uint16, deadline *big.Int, feeRecipient common.Address, feeAmount *big.Int, signature []byte) (*types.Transaction, error) {
-	return _InvisiCore.contract.Transact(opts, "revokeCredit", token, owner, shard, slot, deadline, feeRecipient, feeAmount, signature)
+// Solidity: function revokeCredit(address token, address owner, uint128 grantId, uint256 deadline, address feeRecipient, uint256 feeAmount, bytes signature) returns()
+func (_InvisiCore *InvisiCoreTransactor) RevokeCredit(opts *bind.TransactOpts, token common.Address, owner common.Address, grantId *big.Int, deadline *big.Int, feeRecipient common.Address, feeAmount *big.Int, signature []byte) (*types.Transaction, error) {
+	return _InvisiCore.contract.Transact(opts, "revokeCredit", token, owner, grantId, deadline, feeRecipient, feeAmount, signature)
 }
 
-// RevokeCredit is a paid mutator transaction binding the contract method 0x400b3547.
+// RevokeCredit is a paid mutator transaction binding the contract method 0x78145727.
 //
-// Solidity: function revokeCredit(address token, address owner, uint64 shard, uint16 slot, uint256 deadline, address feeRecipient, uint256 feeAmount, bytes signature) returns()
-func (_InvisiCore *InvisiCoreSession) RevokeCredit(token common.Address, owner common.Address, shard uint64, slot uint16, deadline *big.Int, feeRecipient common.Address, feeAmount *big.Int, signature []byte) (*types.Transaction, error) {
-	return _InvisiCore.Contract.RevokeCredit(&_InvisiCore.TransactOpts, token, owner, shard, slot, deadline, feeRecipient, feeAmount, signature)
+// Solidity: function revokeCredit(address token, address owner, uint128 grantId, uint256 deadline, address feeRecipient, uint256 feeAmount, bytes signature) returns()
+func (_InvisiCore *InvisiCoreSession) RevokeCredit(token common.Address, owner common.Address, grantId *big.Int, deadline *big.Int, feeRecipient common.Address, feeAmount *big.Int, signature []byte) (*types.Transaction, error) {
+	return _InvisiCore.Contract.RevokeCredit(&_InvisiCore.TransactOpts, token, owner, grantId, deadline, feeRecipient, feeAmount, signature)
 }
 
-// RevokeCredit is a paid mutator transaction binding the contract method 0x400b3547.
+// RevokeCredit is a paid mutator transaction binding the contract method 0x78145727.
 //
-// Solidity: function revokeCredit(address token, address owner, uint64 shard, uint16 slot, uint256 deadline, address feeRecipient, uint256 feeAmount, bytes signature) returns()
-func (_InvisiCore *InvisiCoreTransactorSession) RevokeCredit(token common.Address, owner common.Address, shard uint64, slot uint16, deadline *big.Int, feeRecipient common.Address, feeAmount *big.Int, signature []byte) (*types.Transaction, error) {
-	return _InvisiCore.Contract.RevokeCredit(&_InvisiCore.TransactOpts, token, owner, shard, slot, deadline, feeRecipient, feeAmount, signature)
+// Solidity: function revokeCredit(address token, address owner, uint128 grantId, uint256 deadline, address feeRecipient, uint256 feeAmount, bytes signature) returns()
+func (_InvisiCore *InvisiCoreTransactorSession) RevokeCredit(token common.Address, owner common.Address, grantId *big.Int, deadline *big.Int, feeRecipient common.Address, feeAmount *big.Int, signature []byte) (*types.Transaction, error) {
+	return _InvisiCore.Contract.RevokeCredit(&_InvisiCore.TransactOpts, token, owner, grantId, deadline, feeRecipient, feeAmount, signature)
 }
 
 // Shield is a paid mutator transaction binding the contract method 0xae897f6a.
@@ -1378,23 +1364,23 @@ func (_InvisiCore *InvisiCoreTransactorSession) UnpauseCircuit() (*types.Transac
 	return _InvisiCore.Contract.UnpauseCircuit(&_InvisiCore.TransactOpts)
 }
 
-// UpdateCredit is a paid mutator transaction binding the contract method 0x2dab44e5.
+// UpdateCredit is a paid mutator transaction binding the contract method 0xc8ffbcbb.
 //
-// Solidity: function updateCredit(bytes , (address,address,(uint256,bytes32),bytes32,bytes32,uint64,uint16,uint256,address,uint256) p, (bytes,bytes)[] ) returns()
+// Solidity: function updateCredit(bytes , (address,address,(uint256,bytes32),bytes32,bytes32,uint128,uint256,address,uint256) p, (bytes,bytes)[] ) returns()
 func (_InvisiCore *InvisiCoreTransactor) UpdateCredit(opts *bind.TransactOpts, arg0 []byte, p IInvisiCoreUpdateCreditParams, arg2 []IInvisiCoreDelivery) (*types.Transaction, error) {
 	return _InvisiCore.contract.Transact(opts, "updateCredit", arg0, p, arg2)
 }
 
-// UpdateCredit is a paid mutator transaction binding the contract method 0x2dab44e5.
+// UpdateCredit is a paid mutator transaction binding the contract method 0xc8ffbcbb.
 //
-// Solidity: function updateCredit(bytes , (address,address,(uint256,bytes32),bytes32,bytes32,uint64,uint16,uint256,address,uint256) p, (bytes,bytes)[] ) returns()
+// Solidity: function updateCredit(bytes , (address,address,(uint256,bytes32),bytes32,bytes32,uint128,uint256,address,uint256) p, (bytes,bytes)[] ) returns()
 func (_InvisiCore *InvisiCoreSession) UpdateCredit(arg0 []byte, p IInvisiCoreUpdateCreditParams, arg2 []IInvisiCoreDelivery) (*types.Transaction, error) {
 	return _InvisiCore.Contract.UpdateCredit(&_InvisiCore.TransactOpts, arg0, p, arg2)
 }
 
-// UpdateCredit is a paid mutator transaction binding the contract method 0x2dab44e5.
+// UpdateCredit is a paid mutator transaction binding the contract method 0xc8ffbcbb.
 //
-// Solidity: function updateCredit(bytes , (address,address,(uint256,bytes32),bytes32,bytes32,uint64,uint16,uint256,address,uint256) p, (bytes,bytes)[] ) returns()
+// Solidity: function updateCredit(bytes , (address,address,(uint256,bytes32),bytes32,bytes32,uint128,uint256,address,uint256) p, (bytes,bytes)[] ) returns()
 func (_InvisiCore *InvisiCoreTransactorSession) UpdateCredit(arg0 []byte, p IInvisiCoreUpdateCreditParams, arg2 []IInvisiCoreDelivery) (*types.Transaction, error) {
 	return _InvisiCore.Contract.UpdateCredit(&_InvisiCore.TransactOpts, arg0, p, arg2)
 }
@@ -2080,8 +2066,7 @@ type InvisiCoreCreditCreated struct {
 	Token            common.Address
 	Owner            common.Address
 	OutputTreeId     *big.Int
-	RevocationShard  uint64
-	RevocationSlot   uint16
+	GrantId          *big.Int
 	CreditCommitment [32]byte
 	LeafIndex        uint32
 	Deliveries       []IInvisiCoreDelivery
@@ -2091,9 +2076,9 @@ type InvisiCoreCreditCreated struct {
 	Raw              types.Log // Blockchain specific contextual infos
 }
 
-// FilterCreditCreated is a free log retrieval operation binding the contract event 0x3ff78f0284d33ce5183bc7c13bbedfddbf90722c4b3d90a5b8e59da9bbd70565.
+// FilterCreditCreated is a free log retrieval operation binding the contract event 0x36bde929d19ac9442803c1e805b2610f98e3eae09a87c4465ce65b7efeebe5fb.
 //
-// Solidity: event CreditCreated(address indexed token, address indexed owner, uint256 indexed outputTreeId, uint64 revocationShard, uint16 revocationSlot, bytes32 creditCommitment, uint32 leafIndex, (bytes,bytes)[] deliveries, uint256 deadline, address feeRecipient, uint256 feeAmount)
+// Solidity: event CreditCreated(address indexed token, address indexed owner, uint256 indexed outputTreeId, uint128 grantId, bytes32 creditCommitment, uint32 leafIndex, (bytes,bytes)[] deliveries, uint256 deadline, address feeRecipient, uint256 feeAmount)
 func (_InvisiCore *InvisiCoreFilterer) FilterCreditCreated(opts *bind.FilterOpts, token []common.Address, owner []common.Address, outputTreeId []*big.Int) (*InvisiCoreCreditCreatedIterator, error) {
 
 	var tokenRule []interface{}
@@ -2116,9 +2101,9 @@ func (_InvisiCore *InvisiCoreFilterer) FilterCreditCreated(opts *bind.FilterOpts
 	return &InvisiCoreCreditCreatedIterator{contract: _InvisiCore.contract, event: "CreditCreated", logs: logs, sub: sub}, nil
 }
 
-// WatchCreditCreated is a free log subscription operation binding the contract event 0x3ff78f0284d33ce5183bc7c13bbedfddbf90722c4b3d90a5b8e59da9bbd70565.
+// WatchCreditCreated is a free log subscription operation binding the contract event 0x36bde929d19ac9442803c1e805b2610f98e3eae09a87c4465ce65b7efeebe5fb.
 //
-// Solidity: event CreditCreated(address indexed token, address indexed owner, uint256 indexed outputTreeId, uint64 revocationShard, uint16 revocationSlot, bytes32 creditCommitment, uint32 leafIndex, (bytes,bytes)[] deliveries, uint256 deadline, address feeRecipient, uint256 feeAmount)
+// Solidity: event CreditCreated(address indexed token, address indexed owner, uint256 indexed outputTreeId, uint128 grantId, bytes32 creditCommitment, uint32 leafIndex, (bytes,bytes)[] deliveries, uint256 deadline, address feeRecipient, uint256 feeAmount)
 func (_InvisiCore *InvisiCoreFilterer) WatchCreditCreated(opts *bind.WatchOpts, sink chan<- *InvisiCoreCreditCreated, token []common.Address, owner []common.Address, outputTreeId []*big.Int) (event.Subscription, error) {
 
 	var tokenRule []interface{}
@@ -2166,9 +2151,9 @@ func (_InvisiCore *InvisiCoreFilterer) WatchCreditCreated(opts *bind.WatchOpts, 
 	}), nil
 }
 
-// ParseCreditCreated is a log parse operation binding the contract event 0x3ff78f0284d33ce5183bc7c13bbedfddbf90722c4b3d90a5b8e59da9bbd70565.
+// ParseCreditCreated is a log parse operation binding the contract event 0x36bde929d19ac9442803c1e805b2610f98e3eae09a87c4465ce65b7efeebe5fb.
 //
-// Solidity: event CreditCreated(address indexed token, address indexed owner, uint256 indexed outputTreeId, uint64 revocationShard, uint16 revocationSlot, bytes32 creditCommitment, uint32 leafIndex, (bytes,bytes)[] deliveries, uint256 deadline, address feeRecipient, uint256 feeAmount)
+// Solidity: event CreditCreated(address indexed token, address indexed owner, uint256 indexed outputTreeId, uint128 grantId, bytes32 creditCommitment, uint32 leafIndex, (bytes,bytes)[] deliveries, uint256 deadline, address feeRecipient, uint256 feeAmount)
 func (_InvisiCore *InvisiCoreFilterer) ParseCreditCreated(log types.Log) (*InvisiCoreCreditCreated, error) {
 	event := new(InvisiCoreCreditCreated)
 	if err := _InvisiCore.contract.UnpackLog(event, "CreditCreated", log); err != nil {
@@ -2417,17 +2402,16 @@ func (it *InvisiCoreCreditRevokedIterator) Close() error {
 type InvisiCoreCreditRevoked struct {
 	Owner        common.Address
 	Token        common.Address
-	Shard        uint64
-	Slot         uint16
+	GrantId      *big.Int
 	FeeRecipient common.Address
 	FeeAmount    *big.Int
 	Raw          types.Log // Blockchain specific contextual infos
 }
 
-// FilterCreditRevoked is a free log retrieval operation binding the contract event 0x417df449bda975b802268d8343b7ebb855bdc3f24c8b5c75d8772f56642c9710.
+// FilterCreditRevoked is a free log retrieval operation binding the contract event 0x90a3beab92b6605275710ce10d97108866aac6fe02d38ff1e61d0f8d40bc6ba2.
 //
-// Solidity: event CreditRevoked(address indexed owner, address indexed token, uint64 indexed shard, uint16 slot, address feeRecipient, uint256 feeAmount)
-func (_InvisiCore *InvisiCoreFilterer) FilterCreditRevoked(opts *bind.FilterOpts, owner []common.Address, token []common.Address, shard []uint64) (*InvisiCoreCreditRevokedIterator, error) {
+// Solidity: event CreditRevoked(address indexed owner, address indexed token, uint128 indexed grantId, address feeRecipient, uint256 feeAmount)
+func (_InvisiCore *InvisiCoreFilterer) FilterCreditRevoked(opts *bind.FilterOpts, owner []common.Address, token []common.Address, grantId []*big.Int) (*InvisiCoreCreditRevokedIterator, error) {
 
 	var ownerRule []interface{}
 	for _, ownerItem := range owner {
@@ -2437,22 +2421,22 @@ func (_InvisiCore *InvisiCoreFilterer) FilterCreditRevoked(opts *bind.FilterOpts
 	for _, tokenItem := range token {
 		tokenRule = append(tokenRule, tokenItem)
 	}
-	var shardRule []interface{}
-	for _, shardItem := range shard {
-		shardRule = append(shardRule, shardItem)
+	var grantIdRule []interface{}
+	for _, grantIdItem := range grantId {
+		grantIdRule = append(grantIdRule, grantIdItem)
 	}
 
-	logs, sub, err := _InvisiCore.contract.FilterLogs(opts, "CreditRevoked", ownerRule, tokenRule, shardRule)
+	logs, sub, err := _InvisiCore.contract.FilterLogs(opts, "CreditRevoked", ownerRule, tokenRule, grantIdRule)
 	if err != nil {
 		return nil, err
 	}
 	return &InvisiCoreCreditRevokedIterator{contract: _InvisiCore.contract, event: "CreditRevoked", logs: logs, sub: sub}, nil
 }
 
-// WatchCreditRevoked is a free log subscription operation binding the contract event 0x417df449bda975b802268d8343b7ebb855bdc3f24c8b5c75d8772f56642c9710.
+// WatchCreditRevoked is a free log subscription operation binding the contract event 0x90a3beab92b6605275710ce10d97108866aac6fe02d38ff1e61d0f8d40bc6ba2.
 //
-// Solidity: event CreditRevoked(address indexed owner, address indexed token, uint64 indexed shard, uint16 slot, address feeRecipient, uint256 feeAmount)
-func (_InvisiCore *InvisiCoreFilterer) WatchCreditRevoked(opts *bind.WatchOpts, sink chan<- *InvisiCoreCreditRevoked, owner []common.Address, token []common.Address, shard []uint64) (event.Subscription, error) {
+// Solidity: event CreditRevoked(address indexed owner, address indexed token, uint128 indexed grantId, address feeRecipient, uint256 feeAmount)
+func (_InvisiCore *InvisiCoreFilterer) WatchCreditRevoked(opts *bind.WatchOpts, sink chan<- *InvisiCoreCreditRevoked, owner []common.Address, token []common.Address, grantId []*big.Int) (event.Subscription, error) {
 
 	var ownerRule []interface{}
 	for _, ownerItem := range owner {
@@ -2462,12 +2446,12 @@ func (_InvisiCore *InvisiCoreFilterer) WatchCreditRevoked(opts *bind.WatchOpts, 
 	for _, tokenItem := range token {
 		tokenRule = append(tokenRule, tokenItem)
 	}
-	var shardRule []interface{}
-	for _, shardItem := range shard {
-		shardRule = append(shardRule, shardItem)
+	var grantIdRule []interface{}
+	for _, grantIdItem := range grantId {
+		grantIdRule = append(grantIdRule, grantIdItem)
 	}
 
-	logs, sub, err := _InvisiCore.contract.WatchLogs(opts, "CreditRevoked", ownerRule, tokenRule, shardRule)
+	logs, sub, err := _InvisiCore.contract.WatchLogs(opts, "CreditRevoked", ownerRule, tokenRule, grantIdRule)
 	if err != nil {
 		return nil, err
 	}
@@ -2499,9 +2483,9 @@ func (_InvisiCore *InvisiCoreFilterer) WatchCreditRevoked(opts *bind.WatchOpts, 
 	}), nil
 }
 
-// ParseCreditRevoked is a log parse operation binding the contract event 0x417df449bda975b802268d8343b7ebb855bdc3f24c8b5c75d8772f56642c9710.
+// ParseCreditRevoked is a log parse operation binding the contract event 0x90a3beab92b6605275710ce10d97108866aac6fe02d38ff1e61d0f8d40bc6ba2.
 //
-// Solidity: event CreditRevoked(address indexed owner, address indexed token, uint64 indexed shard, uint16 slot, address feeRecipient, uint256 feeAmount)
+// Solidity: event CreditRevoked(address indexed owner, address indexed token, uint128 indexed grantId, address feeRecipient, uint256 feeAmount)
 func (_InvisiCore *InvisiCoreFilterer) ParseCreditRevoked(log types.Log) (*InvisiCoreCreditRevoked, error) {
 	event := new(InvisiCoreCreditRevoked)
 	if err := _InvisiCore.contract.UnpackLog(event, "CreditRevoked", log); err != nil {
@@ -2588,9 +2572,9 @@ type InvisiCoreCreditStateTransition struct {
 	Raw               types.Log // Blockchain specific contextual infos
 }
 
-// FilterCreditStateTransition is a free log retrieval operation binding the contract event 0xbe23d3cefc9b903825f494f1a83f2cbc4a1c489078f8ee40565d0244a4535125.
+// FilterCreditStateTransition is a free log retrieval operation binding the contract event 0xddfbd53f525d78d9767174b6a64bf2b6e3d5b396e440ccaf51401688b0fdf790.
 //
-// Solidity: event CreditStateTransition(uint256 indexed outputTreeId, bytes32 indexed noteCommitment, ((uint256,bytes32)[],(address,uint256)[],(uint256,uint64,uint16)[],bytes32[],bytes32[],bytes32[]) state, uint32[] creditLeafIndices, (bytes,bytes)[] creditDeliveries)
+// Solidity: event CreditStateTransition(uint256 indexed outputTreeId, bytes32 indexed noteCommitment, ((uint256,bytes32)[],(address,uint256)[],(uint256,uint128)[],bytes32[],bytes32[],bytes32[]) state, uint32[] creditLeafIndices, (bytes,bytes)[] creditDeliveries)
 func (_InvisiCore *InvisiCoreFilterer) FilterCreditStateTransition(opts *bind.FilterOpts, outputTreeId []*big.Int, noteCommitment [][32]byte) (*InvisiCoreCreditStateTransitionIterator, error) {
 
 	var outputTreeIdRule []interface{}
@@ -2609,9 +2593,9 @@ func (_InvisiCore *InvisiCoreFilterer) FilterCreditStateTransition(opts *bind.Fi
 	return &InvisiCoreCreditStateTransitionIterator{contract: _InvisiCore.contract, event: "CreditStateTransition", logs: logs, sub: sub}, nil
 }
 
-// WatchCreditStateTransition is a free log subscription operation binding the contract event 0xbe23d3cefc9b903825f494f1a83f2cbc4a1c489078f8ee40565d0244a4535125.
+// WatchCreditStateTransition is a free log subscription operation binding the contract event 0xddfbd53f525d78d9767174b6a64bf2b6e3d5b396e440ccaf51401688b0fdf790.
 //
-// Solidity: event CreditStateTransition(uint256 indexed outputTreeId, bytes32 indexed noteCommitment, ((uint256,bytes32)[],(address,uint256)[],(uint256,uint64,uint16)[],bytes32[],bytes32[],bytes32[]) state, uint32[] creditLeafIndices, (bytes,bytes)[] creditDeliveries)
+// Solidity: event CreditStateTransition(uint256 indexed outputTreeId, bytes32 indexed noteCommitment, ((uint256,bytes32)[],(address,uint256)[],(uint256,uint128)[],bytes32[],bytes32[],bytes32[]) state, uint32[] creditLeafIndices, (bytes,bytes)[] creditDeliveries)
 func (_InvisiCore *InvisiCoreFilterer) WatchCreditStateTransition(opts *bind.WatchOpts, sink chan<- *InvisiCoreCreditStateTransition, outputTreeId []*big.Int, noteCommitment [][32]byte) (event.Subscription, error) {
 
 	var outputTreeIdRule []interface{}
@@ -2655,9 +2639,9 @@ func (_InvisiCore *InvisiCoreFilterer) WatchCreditStateTransition(opts *bind.Wat
 	}), nil
 }
 
-// ParseCreditStateTransition is a log parse operation binding the contract event 0xbe23d3cefc9b903825f494f1a83f2cbc4a1c489078f8ee40565d0244a4535125.
+// ParseCreditStateTransition is a log parse operation binding the contract event 0xddfbd53f525d78d9767174b6a64bf2b6e3d5b396e440ccaf51401688b0fdf790.
 //
-// Solidity: event CreditStateTransition(uint256 indexed outputTreeId, bytes32 indexed noteCommitment, ((uint256,bytes32)[],(address,uint256)[],(uint256,uint64,uint16)[],bytes32[],bytes32[],bytes32[]) state, uint32[] creditLeafIndices, (bytes,bytes)[] creditDeliveries)
+// Solidity: event CreditStateTransition(uint256 indexed outputTreeId, bytes32 indexed noteCommitment, ((uint256,bytes32)[],(address,uint256)[],(uint256,uint128)[],bytes32[],bytes32[],bytes32[]) state, uint32[] creditLeafIndices, (bytes,bytes)[] creditDeliveries)
 func (_InvisiCore *InvisiCoreFilterer) ParseCreditStateTransition(log types.Log) (*InvisiCoreCreditStateTransition, error) {
 	event := new(InvisiCoreCreditStateTransition)
 	if err := _InvisiCore.contract.UnpackLog(event, "CreditStateTransition", log); err != nil {
@@ -2744,9 +2728,9 @@ type InvisiCoreCreditUpdated struct {
 	Raw          types.Log // Blockchain specific contextual infos
 }
 
-// FilterCreditUpdated is a free log retrieval operation binding the contract event 0x4a3fdcaf61cef0446996557873d07793a373211d25c66949a80fe711b29b8d15.
+// FilterCreditUpdated is a free log retrieval operation binding the contract event 0xd3ad00e6e6ac1302b14dacc0a83efababfeed1472b315de9ff3a2ef8a0d146eb.
 //
-// Solidity: event CreditUpdated(address indexed owner, uint256 indexed outputTreeId, (address,address,(uint256,bytes32),bytes32,bytes32,uint64,uint16,uint256,address,uint256) params, uint32 leafIndex, (bytes,bytes)[] deliveries)
+// Solidity: event CreditUpdated(address indexed owner, uint256 indexed outputTreeId, (address,address,(uint256,bytes32),bytes32,bytes32,uint128,uint256,address,uint256) params, uint32 leafIndex, (bytes,bytes)[] deliveries)
 func (_InvisiCore *InvisiCoreFilterer) FilterCreditUpdated(opts *bind.FilterOpts, owner []common.Address, outputTreeId []*big.Int) (*InvisiCoreCreditUpdatedIterator, error) {
 
 	var ownerRule []interface{}
@@ -2765,9 +2749,9 @@ func (_InvisiCore *InvisiCoreFilterer) FilterCreditUpdated(opts *bind.FilterOpts
 	return &InvisiCoreCreditUpdatedIterator{contract: _InvisiCore.contract, event: "CreditUpdated", logs: logs, sub: sub}, nil
 }
 
-// WatchCreditUpdated is a free log subscription operation binding the contract event 0x4a3fdcaf61cef0446996557873d07793a373211d25c66949a80fe711b29b8d15.
+// WatchCreditUpdated is a free log subscription operation binding the contract event 0xd3ad00e6e6ac1302b14dacc0a83efababfeed1472b315de9ff3a2ef8a0d146eb.
 //
-// Solidity: event CreditUpdated(address indexed owner, uint256 indexed outputTreeId, (address,address,(uint256,bytes32),bytes32,bytes32,uint64,uint16,uint256,address,uint256) params, uint32 leafIndex, (bytes,bytes)[] deliveries)
+// Solidity: event CreditUpdated(address indexed owner, uint256 indexed outputTreeId, (address,address,(uint256,bytes32),bytes32,bytes32,uint128,uint256,address,uint256) params, uint32 leafIndex, (bytes,bytes)[] deliveries)
 func (_InvisiCore *InvisiCoreFilterer) WatchCreditUpdated(opts *bind.WatchOpts, sink chan<- *InvisiCoreCreditUpdated, owner []common.Address, outputTreeId []*big.Int) (event.Subscription, error) {
 
 	var ownerRule []interface{}
@@ -2811,9 +2795,9 @@ func (_InvisiCore *InvisiCoreFilterer) WatchCreditUpdated(opts *bind.WatchOpts, 
 	}), nil
 }
 
-// ParseCreditUpdated is a log parse operation binding the contract event 0x4a3fdcaf61cef0446996557873d07793a373211d25c66949a80fe711b29b8d15.
+// ParseCreditUpdated is a log parse operation binding the contract event 0xd3ad00e6e6ac1302b14dacc0a83efababfeed1472b315de9ff3a2ef8a0d146eb.
 //
-// Solidity: event CreditUpdated(address indexed owner, uint256 indexed outputTreeId, (address,address,(uint256,bytes32),bytes32,bytes32,uint64,uint16,uint256,address,uint256) params, uint32 leafIndex, (bytes,bytes)[] deliveries)
+// Solidity: event CreditUpdated(address indexed owner, uint256 indexed outputTreeId, (address,address,(uint256,bytes32),bytes32,bytes32,uint128,uint256,address,uint256) params, uint32 leafIndex, (bytes,bytes)[] deliveries)
 func (_InvisiCore *InvisiCoreFilterer) ParseCreditUpdated(log types.Log) (*InvisiCoreCreditUpdated, error) {
 	event := new(InvisiCoreCreditUpdated)
 	if err := _InvisiCore.contract.UnpackLog(event, "CreditUpdated", log); err != nil {

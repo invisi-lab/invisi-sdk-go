@@ -50,7 +50,7 @@ func TestIPPNoFeeThenBroadcasterQuotePreservesFrozenNet(t *testing.T) {
 		Resolve: func(_ context.Context, a string) (primitives.ReceivingAddress, error) {
 			return primitives.ResolveAddress(a, nil)
 		},
-		Allocation: func(context.Context, credit.Context) (uint64, uint16, error) { return 1, 0, nil },
+		Status: func(context.Context, credit.Context, common.Address, *big.Int) (uint8, error) { return 0, nil },
 	}
 	key, _ := ethcrypto.ToECDSA(common.LeftPadBytes([]byte{7}, 32))
 	recipient := common.HexToAddress("44")

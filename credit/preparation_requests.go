@@ -25,13 +25,15 @@ type InitialPayment struct {
 }
 type CreatePreparation struct {
 	InitialPayment *InitialPayment
-	// CreationABI may be initial-payment (default) or explicitly legacy.
+	// CreationABI defaults to initial-payment; historical creation is rejected.
 	CreationABI                           string
 	TokenAddress                          common.Address
 	Spender                               string
 	SingleLimit, DailyLimit, MonthlyLimit fr.Element
 	Expiry                                uint64
 	AvailableCredit                       *big.Int
+	// GrantID optionally selects a positive uint128 ID; nil generates one with crypto/rand.
+	GrantID *big.Int `abi:"grantId"`
 	// CreditSharedKey is an optional canonical nonzero BN254 scalar; nil generates a fresh key.
 	CreditSharedKey *big.Int
 	Unlimited       bool
@@ -62,8 +64,7 @@ type DrawPreparation struct {
 type RevokePreparation struct {
 	TokenAddress common.Address
 	Owner        common.Address
-	Shard        uint64
-	Slot         uint16
+	GrantID      *big.Int `abi:"grantId"`
 	Deadline     uint64
 	Fee          *Fee
 }
@@ -76,11 +77,11 @@ type PreparationInput struct {
 
 // PreparationBuilder resolves current or pinned facts; authorization stays with the application.
 type PreparationBuilder struct {
-	Frame      func(context.Context, common.Address, uint64) (Context, uint64, error)
-	Resolve    func(context.Context, string) (primitives.ReceivingAddress, error)
-	Owner      func() (string, error)
-	Allocation func(context.Context, Context) (uint64, uint16, error)
-	Input      func(context.Context, Context, common.Hash, Role) (PreparationInput, error)
+	Frame   func(context.Context, common.Address, uint64) (Context, uint64, error)
+	Resolve func(context.Context, string) (primitives.ReceivingAddress, error)
+	Owner   func() (string, error)
+	Status  func(context.Context, Context, common.Address, *big.Int) (uint8, error)
+	Input   func(context.Context, Context, common.Hash, Role) (PreparationInput, error)
 }
 
 func requestFee(f *Fee) (common.Address, *big.Int, error) {
@@ -122,8 +123,8 @@ func (b PreparationBuilder) Create(ctx context.Context, p CreatePreparation) (*P
 	if p.CreationABI != "" && p.CreationABI != "legacy" && p.CreationABI != "initial-payment" {
 		return nil, fmt.Errorf("unsupported creation ABI")
 	}
-	if p.InitialPayment != nil && p.CreationABI == "legacy" {
-		return nil, fmt.Errorf("initial payment requires current creation ABI")
+	if p.CreationABI == "legacy" {
+		return nil, fmt.Errorf("historical creation ABI cannot encode current grant ID")
 	}
 	c, deadline, err := b.Frame(ctx, p.TokenAddress, p.Deadline)
 	if err != nil {
@@ -148,10 +149,27 @@ func (b PreparationBuilder) Create(ctx context.Context, p CreatePreparation) (*P
 	if err != nil {
 		return nil, err
 	}
-	shard, slot, err := b.Allocation(ctx, c)
+	id := snapshotAmount(p.GrantID)
+	if id == nil {
+		id, err = GenerateGrantID()
+		if err != nil {
+			return nil, err
+		}
+	}
+	if !ValidGrantID(id) {
+		return nil, fmt.Errorf("grant ID must be positive uint128")
+	}
+	if b.Status == nil {
+		return nil, fmt.Errorf("canonical Credit status reader required")
+	}
+	status, err := b.Status(ctx, c, common.BigToAddress(primitives.ElementToBigInt(owner.OwnerAddress)), id)
 	if err != nil {
 		return nil, err
 	}
+	if status != 0 {
+		return nil, fmt.Errorf("Credit grant ID already used or disabled")
+	}
+
 	var key fr.Element
 	if p.CreditSharedKey != nil {
 		if p.CreditSharedKey.Sign() <= 0 || p.CreditSharedKey.Cmp(fr.Modulus()) >= 0 {
@@ -175,7 +193,7 @@ func (b PreparationBuilder) Create(ctx context.Context, p CreatePreparation) (*P
 	if amount.Sign() < 0 || amount.BitLen() > 128 {
 		return nil, fmt.Errorf("available credit must be uint128")
 	}
-	state := State{ProtocolContext: c.ProtocolContext, Policy: Policy{SingleLimit: p.SingleLimit, DailyLimit: p.DailyLimit, MonthlyLimit: p.MonthlyLimit}, TokenAddress: primitives.BigIntToElement(p.TokenAddress.Big()), OwnerWalletIdentity: owner.OwnerAddress, SpenderWalletIdentity: spender.OwnerAddress, RevocationShard: primitives.ElementFromUint64(shard), RevocationSlot: primitives.ElementFromUint64(uint64(slot)), Nonce: nonce, Expiry: primitives.ElementFromUint64(p.Expiry), CreditSharedKey: key, AvailableCredit: primitives.BigIntToElement(amount), Unlimited: p.Unlimited, Payload: append([]byte(nil), p.Payload...)}
+	state := State{ProtocolContext: c.ProtocolContext, Policy: Policy{SingleLimit: p.SingleLimit, DailyLimit: p.DailyLimit, MonthlyLimit: p.MonthlyLimit}, TokenAddress: primitives.BigIntToElement(p.TokenAddress.Big()), OwnerWalletIdentity: owner.OwnerAddress, SpenderWalletIdentity: spender.OwnerAddress, GrantID: primitives.BigIntToElement(id), Nonce: nonce, Expiry: primitives.ElementFromUint64(p.Expiry), CreditSharedKey: key, AvailableCredit: primitives.BigIntToElement(amount), Unlimited: p.Unlimited, Payload: append([]byte(nil), p.Payload...)}
 	var ordinary *primitives.Note
 	var noteKeys *primitives.ReceivingKeys
 	var total *big.Int
@@ -218,7 +236,7 @@ func (b PreparationBuilder) Create(ctx context.Context, p CreatePreparation) (*P
 	if err != nil {
 		return nil, err
 	}
-	params := CreateParams{Token: p.TokenAddress, Owner: common.BigToAddress(primitives.ElementToBigInt(owner.OwnerAddress)), RevocationShard: shard, RevocationSlot: slot, CreditCommitment: common.Hash(commitment.Bytes()), Deadline: new(big.Int).SetUint64(deadline), FeeRecipient: r, FeeAmount: f}
+	params := CreateParams{Token: p.TokenAddress, Owner: common.BigToAddress(primitives.ElementToBigInt(owner.OwnerAddress)), GrantID: id, CreditCommitment: common.Hash(commitment.Bytes()), Deadline: new(big.Int).SetUint64(deadline), FeeRecipient: r, FeeAmount: f}
 	if ordinary != nil {
 		yes := true
 		params.HasInitialPayment = &yes
@@ -274,15 +292,11 @@ func (b PreparationBuilder) Update(ctx context.Context, p UpdatePreparation) (*P
 		return nil, err
 	}
 	s := input.Located.State
-	return PrepareUpdate(c, UpdateParams{Token: p.TokenAddress, Owner: common.BigToAddress(primitives.ElementToBigInt(s.OwnerWalletIdentity)), Source: input.Source, Nullifier: common.Hash(next.Nullifier.Bytes()), CreditCommitment: common.Hash(next.StateCommitment.Bytes()), RevocationShard: primitives.ElementToBigInt(s.RevocationShard).Uint64(), RevocationSlot: uint16(primitives.ElementToBigInt(s.RevocationSlot).Uint64()), Deadline: new(big.Int).SetUint64(deadline), FeeRecipient: r, FeeAmount: f}, ds, input.Located, change)
+	return PrepareUpdate(c, UpdateParams{Token: p.TokenAddress, Owner: common.BigToAddress(primitives.ElementToBigInt(s.OwnerWalletIdentity)), Source: input.Source, Nullifier: common.Hash(next.Nullifier.Bytes()), CreditCommitment: common.Hash(next.StateCommitment.Bytes()), GrantID: primitives.ElementToBigInt(s.GrantID), Deadline: new(big.Int).SetUint64(deadline), FeeRecipient: r, FeeAmount: f}, ds, input.Located, change)
 }
 func (b PreparationBuilder) Revoke(ctx context.Context, p RevokePreparation) (*Prepared, error) {
 	p = p.Clone()
 	c, deadline, err := b.Frame(ctx, p.TokenAddress, p.Deadline)
-	if err != nil {
-		return nil, err
-	}
-	r, f, err := requestFee(p.Fee)
 	if err != nil {
 		return nil, err
 	}
@@ -298,7 +312,27 @@ func (b PreparationBuilder) Revoke(ctx context.Context, p RevokePreparation) (*P
 		}
 		owner = common.BigToAddress(primitives.ElementToBigInt(recipient.OwnerAddress))
 	}
-	return PrepareRevoke(c, RevokeParams{Token: p.TokenAddress, Owner: owner, Shard: p.Shard, Slot: p.Slot, Deadline: new(big.Int).SetUint64(deadline), FeeRecipient: r, FeeAmount: f})
+	if !ValidGrantID(p.GrantID) {
+		return nil, fmt.Errorf("grant ID must be positive uint128")
+	}
+	if b.Status == nil {
+		return nil, fmt.Errorf("canonical Credit status reader required")
+	}
+	status, err := b.Status(ctx, c, owner, p.GrantID)
+	if err != nil {
+		return nil, err
+	}
+	if status == 2 {
+		return nil, fmt.Errorf("Credit grant already disabled")
+	}
+	if status > 2 {
+		return nil, fmt.Errorf("invalid Credit grant status")
+	}
+	r, f, err := requestFee(p.Fee)
+	if err != nil {
+		return nil, err
+	}
+	return PrepareRevoke(c, RevokeParams{Token: p.TokenAddress, Owner: owner, GrantID: p.GrantID, Deadline: new(big.Int).SetUint64(deadline), FeeRecipient: r, FeeAmount: f})
 }
 func (b PreparationBuilder) Draw(ctx context.Context, p DrawPreparation) (*Prepared, error) {
 	p = p.Clone()
@@ -346,10 +380,10 @@ func (b PreparationBuilder) Draw(ctx context.Context, p DrawPreparation) (*Prepa
 		if cmp := a.OwnerWalletIdentity.Cmp(&z.OwnerWalletIdentity); cmp != 0 {
 			return cmp < 0
 		}
-		if cmp := a.RevocationShard.Cmp(&z.RevocationShard); cmp != 0 {
+		if cmp := a.GrantID.Cmp(&z.GrantID); cmp != 0 {
 			return cmp < 0
 		}
-		return a.RevocationSlot.Cmp(&z.RevocationSlot) < 0
+		return false
 	})
 	params := DrawParams{Token: p.TokenAddress, TotalAmount: total, Deadline: new(big.Int).SetUint64(deadline), FeeRecipient: r, FeeAmount: f}
 	inputs := []LocatedState{}
@@ -364,7 +398,7 @@ func (b PreparationBuilder) Draw(ctx context.Context, p DrawPreparation) (*Prepa
 			index++
 		}
 		params.Payers[index].Amount.Add(params.Payers[index].Amount, primitives.ElementToBigInt(m.input.Located.Debit))
-		params.GrantRefs = append(params.GrantRefs, GrantRef{PayerIndex: big.NewInt(int64(index)), Shard: primitives.ElementToBigInt(s.RevocationShard).Uint64(), Slot: uint16(primitives.ElementToBigInt(s.RevocationSlot).Uint64())})
+		params.GrantRefs = append(params.GrantRefs, GrantRef{PayerIndex: big.NewInt(int64(index)), GrantID: primitives.ElementToBigInt(s.GrantID)})
 		params.Nullifiers = append(params.Nullifiers, common.Hash(m.next.Nullifier.Bytes()))
 		params.CreditCommitments = append(params.CreditCommitments, common.Hash(m.next.StateCommitment.Bytes()))
 		params.RecoveryAmounts = append(params.RecoveryAmounts, common.Hash(m.next.RecoveryAmount.Bytes()))

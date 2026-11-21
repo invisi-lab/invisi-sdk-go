@@ -61,7 +61,7 @@ func TestInvisiCoreKeyMethods(t *testing.T) {
 		t.Fatalf("failed to parse ABI: %v", err)
 	}
 
-	required := []string{"shield", "transact", "createCredit", "creditDraw", "updateCredit", "revokeCredit", "creditAllocation", "creditRevocationBitmap", "activeNoteTreeId", "getNoteTreeRoot", "getNoteTreeNextLeafIndex", "isCommitmentRegistered", "isNullifierSpent"}
+	required := []string{"shield", "transact", "createCredit", "creditDraw", "updateCredit", "revokeCredit", "creditStatus", "activeNoteTreeId", "getNoteTreeRoot", "getNoteTreeNextLeafIndex", "isCommitmentRegistered", "isNullifierSpent"}
 	for _, name := range required {
 		if _, ok := parsed.Methods[name]; !ok {
 			t.Errorf("InvisiCore ABI missing method: %s", name)

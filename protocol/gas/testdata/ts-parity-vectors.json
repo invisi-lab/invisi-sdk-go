@@ -1,5 +1,5 @@
 {
-  "tsCommit": "af65cf9",
+  "tsCommit": "e90b761",
   "vectors": [
     {
       "query": {
@@ -3659,10 +3659,24 @@
         "fee": false
       },
       "result": {
-        "gasUnits": "1569036",
+        "gasUnits": "1569276",
         "statistic": "median",
         "sampleCount": 3,
-        "referenceId": "receipt-211"
+        "sourceSha256": "1bde16dc5bdedd32023c0d0ff749856f7626cbcb53b4d5c08f7b5040ad0988bd",
+        "referenceId": "initial-payment-receipt-v1",
+        "document": "scripts/benchmark-credit-initial-payment-gas.mjs",
+        "conditions": "Anvil31337, Prague, Solidity0.8.38 optimizer200, real verifier, first allocation, fresh tree, funded owner and allowance",
+        "assumptions": [
+          "Pre-signing local fee preview; not an RPC simulation or transaction gas limit.",
+          "Token behavior, storage warmth, tree cursor and rollover can change actual gas.",
+          "Additional source trees, authorization and delivery bytes use explicit benchmark-calibrated allowances.",
+          "Measured against the recorded working-tree source hash before commit."
+        ],
+        "releaseIdentity": {
+          "creditManifestVersion": 7,
+          "creditFormatVersion": 8,
+          "creditManifestSha256": "535ec60473248b57c6d86125c2f2380ccfa5eb390256d9384f9d4cb98cc9471d"
+        }
       }
     },
     {
@@ -3671,10 +3685,24 @@
         "fee": true
       },
       "result": {
-        "gasUnits": "1632694",
+        "gasUnits": "1632766",
         "statistic": "median",
         "sampleCount": 3,
-        "referenceId": "receipt-212"
+        "sourceSha256": "1bde16dc5bdedd32023c0d0ff749856f7626cbcb53b4d5c08f7b5040ad0988bd",
+        "referenceId": "initial-payment-receipt-v1",
+        "document": "scripts/benchmark-credit-initial-payment-gas.mjs",
+        "conditions": "Anvil31337, Prague, Solidity0.8.38 optimizer200, real verifier, first allocation, fresh tree, funded owner and allowance",
+        "assumptions": [
+          "Pre-signing local fee preview; not an RPC simulation or transaction gas limit.",
+          "Token behavior, storage warmth, tree cursor and rollover can change actual gas.",
+          "Additional source trees, authorization and delivery bytes use explicit benchmark-calibrated allowances.",
+          "Measured against the recorded working-tree source hash before commit."
+        ],
+        "releaseIdentity": {
+          "creditManifestVersion": 7,
+          "creditFormatVersion": 8,
+          "creditManifestSha256": "535ec60473248b57c6d86125c2f2380ccfa5eb390256d9384f9d4cb98cc9471d"
+        }
       }
     },
     {
@@ -3705,8 +3733,7 @@
       "query": {
         "kind": "revoke-credit",
         "fee": false,
-        "authorization": "direct",
-        "bitmapWord": "empty"
+        "authorization": "direct"
       },
       "result": {
         "gasUnits": "60794",
@@ -3719,8 +3746,7 @@
       "query": {
         "kind": "revoke-credit",
         "fee": false,
-        "authorization": "eoa",
-        "bitmapWord": "empty"
+        "authorization": "eoa"
       },
       "result": {
         "gasUnits": "66528",
@@ -3733,8 +3759,7 @@
       "query": {
         "kind": "revoke-credit",
         "fee": true,
-        "authorization": "direct",
-        "bitmapWord": "empty"
+        "authorization": "direct"
       },
       "result": {
         "gasUnits": "109768",
@@ -3747,8 +3772,7 @@
       "query": {
         "kind": "revoke-credit",
         "fee": true,
-        "authorization": "eoa",
-        "bitmapWord": "empty"
+        "authorization": "eoa"
       },
       "result": {
         "gasUnits": "115526",
@@ -28219,7 +28243,6 @@
       "query": {
         "kind": "revoke-credit",
         "authorization": "direct",
-        "bitmapWord": "empty",
         "feeEnabled": false
       },
       "result": {
@@ -28233,7 +28256,6 @@
       "query": {
         "kind": "revoke-credit",
         "authorization": "direct",
-        "bitmapWord": "empty",
         "feeEnabled": true
       },
       "result": {
@@ -28247,35 +28269,32 @@
       "query": {
         "kind": "revoke-credit",
         "authorization": "direct",
-        "bitmapWord": "nonempty",
         "feeEnabled": false
       },
       "result": {
         "gasUnits": "60794",
-        "statistic": "estimate",
-        "sampleCount": 0,
-        "referenceId": "revoke-credit-benchmark-estimate-v1"
+        "statistic": "median",
+        "sampleCount": 3,
+        "referenceId": "receipt-215"
       }
     },
     {
       "query": {
         "kind": "revoke-credit",
         "authorization": "direct",
-        "bitmapWord": "nonempty",
         "feeEnabled": true
       },
       "result": {
         "gasUnits": "109768",
-        "statistic": "estimate",
-        "sampleCount": 0,
-        "referenceId": "revoke-credit-benchmark-estimate-v1"
+        "statistic": "median",
+        "sampleCount": 3,
+        "referenceId": "receipt-217"
       }
     },
     {
       "query": {
         "kind": "revoke-credit",
         "authorization": "eoa",
-        "bitmapWord": "empty",
         "feeEnabled": false
       },
       "result": {
@@ -28289,7 +28308,6 @@
       "query": {
         "kind": "revoke-credit",
         "authorization": "eoa",
-        "bitmapWord": "empty",
         "feeEnabled": true
       },
       "result": {
@@ -28303,35 +28321,32 @@
       "query": {
         "kind": "revoke-credit",
         "authorization": "eoa",
-        "bitmapWord": "nonempty",
         "feeEnabled": false
       },
       "result": {
         "gasUnits": "66528",
-        "statistic": "estimate",
-        "sampleCount": 0,
-        "referenceId": "revoke-credit-benchmark-estimate-v1"
+        "statistic": "median",
+        "sampleCount": 3,
+        "referenceId": "receipt-216"
       }
     },
     {
       "query": {
         "kind": "revoke-credit",
         "authorization": "eoa",
-        "bitmapWord": "nonempty",
         "feeEnabled": true
       },
       "result": {
         "gasUnits": "115526",
-        "statistic": "estimate",
-        "sampleCount": 0,
-        "referenceId": "revoke-credit-benchmark-estimate-v1"
+        "statistic": "median",
+        "sampleCount": 3,
+        "referenceId": "receipt-218"
       }
     },
     {
       "query": {
         "kind": "revoke-credit",
         "authorization": "erc1271",
-        "bitmapWord": "empty",
         "feeEnabled": false
       },
       "result": {
@@ -28345,7 +28360,6 @@
       "query": {
         "kind": "revoke-credit",
         "authorization": "erc1271",
-        "bitmapWord": "empty",
         "feeEnabled": true
       },
       "result": {
@@ -28359,7 +28373,6 @@
       "query": {
         "kind": "revoke-credit",
         "authorization": "erc1271",
-        "bitmapWord": "nonempty",
         "feeEnabled": false
       },
       "result": {
@@ -28373,7 +28386,6 @@
       "query": {
         "kind": "revoke-credit",
         "authorization": "erc1271",
-        "bitmapWord": "nonempty",
         "feeEnabled": true
       },
       "result": {
@@ -28387,7 +28399,6 @@
       "query": {
         "kind": "revoke-credit",
         "authorization": "unknown",
-        "bitmapWord": "empty",
         "feeEnabled": false
       },
       "result": {
@@ -28401,7 +28412,6 @@
       "query": {
         "kind": "revoke-credit",
         "authorization": "unknown",
-        "bitmapWord": "empty",
         "feeEnabled": true
       },
       "result": {
@@ -28415,7 +28425,6 @@
       "query": {
         "kind": "revoke-credit",
         "authorization": "unknown",
-        "bitmapWord": "nonempty",
         "feeEnabled": false
       },
       "result": {
@@ -28429,7 +28438,6 @@
       "query": {
         "kind": "revoke-credit",
         "authorization": "unknown",
-        "bitmapWord": "nonempty",
         "feeEnabled": true
       },
       "result": {
@@ -28565,7 +28573,7 @@
         "clueBytes": 100
       },
       "result": {
-        "gasUnits": "2719696",
+        "gasUnits": "2717008",
         "statistic": "estimate",
         "sampleCount": 0,
         "referenceId": "draw-credit-benchmark-estimate-v1"
@@ -28577,10 +28585,24 @@
         "extraDeliveryBytes": 1000
       },
       "result": {
-        "gasUnits": "1601036",
+        "gasUnits": "1601276",
         "statistic": "estimate",
         "sampleCount": 0,
-        "referenceId": "create-credit-benchmark-estimate-v1"
+        "sourceSha256": "1bde16dc5bdedd32023c0d0ff749856f7626cbcb53b4d5c08f7b5040ad0988bd",
+        "referenceId": "initial-payment-receipt-v1",
+        "document": "scripts/benchmark-credit-initial-payment-gas.mjs",
+        "conditions": "Anvil31337, Prague, Solidity0.8.38 optimizer200, real verifier, first allocation, fresh tree, funded owner and allowance",
+        "assumptions": [
+          "Pre-signing local fee preview; not an RPC simulation or transaction gas limit.",
+          "Token behavior, storage warmth, tree cursor and rollover can change actual gas.",
+          "Additional source trees, authorization and delivery bytes use explicit benchmark-calibrated allowances.",
+          "Measured against the recorded working-tree source hash before commit."
+        ],
+        "releaseIdentity": {
+          "creditManifestVersion": 7,
+          "creditFormatVersion": 8,
+          "creditManifestSha256": "535ec60473248b57c6d86125c2f2380ccfa5eb390256d9384f9d4cb98cc9471d"
+        }
       }
     },
     {
@@ -28590,10 +28612,24 @@
         "fundingSignature": true
       },
       "result": {
-        "gasUnits": "1679036",
-        "statistic": "estimate",
-        "sampleCount": 0,
-        "referenceId": "create-credit-benchmark-estimate-v1"
+        "gasUnits": "1569276",
+        "statistic": "median",
+        "sampleCount": 3,
+        "sourceSha256": "1bde16dc5bdedd32023c0d0ff749856f7626cbcb53b4d5c08f7b5040ad0988bd",
+        "referenceId": "initial-payment-receipt-v1",
+        "document": "scripts/benchmark-credit-initial-payment-gas.mjs",
+        "conditions": "Anvil31337, Prague, Solidity0.8.38 optimizer200, real verifier, first allocation, fresh tree, funded owner and allowance",
+        "assumptions": [
+          "Pre-signing local fee preview; not an RPC simulation or transaction gas limit.",
+          "Token behavior, storage warmth, tree cursor and rollover can change actual gas.",
+          "Additional source trees, authorization and delivery bytes use explicit benchmark-calibrated allowances.",
+          "Measured against the recorded working-tree source hash before commit."
+        ],
+        "releaseIdentity": {
+          "creditManifestVersion": 7,
+          "creditFormatVersion": 8,
+          "creditManifestSha256": "535ec60473248b57c6d86125c2f2380ccfa5eb390256d9384f9d4cb98cc9471d"
+        }
       }
     },
     {
@@ -28604,10 +28640,24 @@
         "clueBytes": 100
       },
       "result": {
-        "gasUnits": "1578444",
+        "gasUnits": "1578300",
         "statistic": "estimate",
         "sampleCount": 0,
-        "referenceId": "create-credit-benchmark-estimate-v1"
+        "sourceSha256": "1bde16dc5bdedd32023c0d0ff749856f7626cbcb53b4d5c08f7b5040ad0988bd",
+        "referenceId": "initial-payment-receipt-v1",
+        "document": "scripts/benchmark-credit-initial-payment-gas.mjs",
+        "conditions": "Anvil31337, Prague, Solidity0.8.38 optimizer200, real verifier, first allocation, fresh tree, funded owner and allowance",
+        "assumptions": [
+          "Pre-signing local fee preview; not an RPC simulation or transaction gas limit.",
+          "Token behavior, storage warmth, tree cursor and rollover can change actual gas.",
+          "Additional source trees, authorization and delivery bytes use explicit benchmark-calibrated allowances.",
+          "Measured against the recorded working-tree source hash before commit."
+        ],
+        "releaseIdentity": {
+          "creditManifestVersion": 7,
+          "creditFormatVersion": 8,
+          "creditManifestSha256": "535ec60473248b57c6d86125c2f2380ccfa5eb390256d9384f9d4cb98cc9471d"
+        }
       }
     },
     {
@@ -28643,7 +28693,7 @@
         "clueBytes": 100
       },
       "result": {
-        "gasUnits": "1557323",
+        "gasUnits": "1556939",
         "statistic": "estimate",
         "sampleCount": 0,
         "referenceId": "update-credit-benchmark-estimate-v1"
@@ -28789,5 +28839,7 @@
         "Additional source trees, authorization and delivery bytes use explicit benchmark-calibrated allowances."
       ]
     }
-  }
+  },
+  "tsEstimatorSourceSha256": "55df189c6197302a665e2114b34f2c26fb841f53cffaf67fc089756e3e7f589b",
+  "generatedBy": "Current TypeScript develop working tree; historical gas measurement provenance retained"
 }

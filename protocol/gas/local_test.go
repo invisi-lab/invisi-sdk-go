@@ -41,7 +41,7 @@ func TestInitialPaymentMeasuredGas(t *testing.T) {
 		fee   bool
 		units uint64
 	}{{"create-credit", false, 1569276}, {"create-credit", true, 1632766}, {"create-credit-initial-payment", false, 1677215}, {"create-credit-initial-payment", true, 1701560}} {
-		q := Shape{"kind": tc.kind, "creationAbi": "initial-payment", "feeEnabled": tc.fee}
+		q := Shape{"kind": tc.kind, "feeEnabled": tc.fee}
 		r, e := EstimateGasChecked(q)
 		if e != nil || !r.Available || *r.GasUnits != tc.units || r.SampleCount != 3 || r.ReleaseIdentity["creditManifestVersion"] != 7 {
 			t.Fatal(q, r, e)
@@ -51,5 +51,24 @@ func TestInitialPaymentMeasuredGas(t *testing.T) {
 		if e != nil || *r.GasUnits != tc.units+32 || r.SampleCount != 0 {
 			t.Fatal(q, r, e)
 		}
+	}
+}
+
+func TestRetiredGrantStorageGasFieldsRejected(t *testing.T) {
+	for _, shape := range []Shape{{"kind": "create-credit", "creationAbi": "legacy"}, {"kind": "revoke-credit", "bitmapWord": "empty"}} {
+		if _, err := EstimateGasChecked(shape); err == nil {
+			t.Fatalf("accepted retired gas field: %v", shape)
+		}
+	}
+	base, err := EstimateGasChecked(Shape{"kind": "create-credit", "creditCiphertextBytes": 491})
+	if err != nil {
+		t.Fatal(err)
+	}
+	extra, err := EstimateGasChecked(Shape{"kind": "create-credit", "creditCiphertextBytes": 492})
+	if err != nil || *extra.GasUnits != *base.GasUnits+64 {
+		t.Fatalf("wrong current Credit envelope baseline: %v", err)
+	}
+	if base.ReleaseIdentity["creditManifestVersion"] != 7 {
+		t.Fatal("historical measurement provenance overwritten")
 	}
 }

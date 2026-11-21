@@ -15,11 +15,11 @@ type State struct {
 	primitives.ProtocolContext
 	Policy
 	Usage
-	TokenAddress, SpenderWalletIdentity, OwnerWalletIdentity        fr.Element
-	RevocationShard, RevocationSlot, Nonce, Expiry, CreditSharedKey fr.Element
-	AvailableCredit                                                 fr.Element
-	Unlimited                                                       bool
-	Payload                                                         []byte
+	TokenAddress, SpenderWalletIdentity, OwnerWalletIdentity fr.Element
+	GrantID, Nonce, Expiry, CreditSharedKey                  fr.Element
+	AvailableCredit                                          fr.Element
+	Unlimited                                                bool
+	Payload                                                  []byte
 }
 type Change struct {
 	Payload                                          []byte
@@ -94,7 +94,7 @@ func (s State) Validate() error {
 	}{
 		{s.ChainID, 64, "chain ID", false}, {s.ProtocolAddress, 160, "protocol", false}, {s.TokenAddress, 160, "token", false},
 		{s.SpenderWalletIdentity, 160, "spender", true}, {s.OwnerWalletIdentity, 160, "owner", true},
-		{s.RevocationShard, 64, "revocation shard", true}, {s.RevocationSlot, 16, "revocation slot", false}, {s.Expiry, 64, "expiry", true}} {
+		{s.GrantID, 128, "grant ID", true}, {s.Expiry, 64, "expiry", true}} {
 		if err := uintField(x.v, x.bits, x.name); err != nil {
 			return err
 		}
@@ -139,7 +139,7 @@ func (s State) Commitment() (fr.Element, error) {
 	if err != nil {
 		return fr.Element{}, err
 	}
-	fields := []fr.Element{primitives.ElementFromUint64(5), s.ChainID, s.ProtocolAddress, s.SpenderWalletIdentity, s.OwnerWalletIdentity, s.TokenAddress, s.RevocationShard, s.RevocationSlot, s.Nonce, s.Expiry, key}
+	fields := []fr.Element{primitives.ElementFromUint64(5), s.ChainID, s.ProtocolAddress, s.SpenderWalletIdentity, s.OwnerWalletIdentity, s.TokenAddress, s.GrantID, s.Nonce, s.Expiry, key}
 	fields = append(fields, s.Policy.Fields()...)
 	fields = append(fields, s.AvailableCredit, boolField(s.Unlimited))
 	fields = append(fields, s.Usage.Fields()...)

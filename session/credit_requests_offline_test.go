@@ -2,6 +2,9 @@ package session
 
 import (
 	"context"
+	"github.com/ethereum/go-ethereum"
+	transaction "github.com/invisi-labs/invisi-sdk-go/internal/transaction"
+	"github.com/invisi-labs/invisi-sdk-go/rpc/contracts"
 	"math/big"
 	"testing"
 
@@ -45,7 +48,7 @@ func TestManagedCreditRequestsUseSnapshotOffline(t *testing.T) {
 				if kind == "draw" {
 					role = credit.Spender
 				}
-				if err = managed.Track(ctx, creditsession.StoredState{Delivery: credit.DeliveryState{State: current, OwnerReceivingKeys: keys, SpenderReceivingKeys: keys}, Commitment: common.Hash(leaf.Bytes()), Nullifier: common.Hash(nf.Bytes()), TreeID: 2, Role: role}); err != nil {
+				if err = managed.Track(ctx, creditsession.StoredState{GrantStatus: 1, Delivery: credit.DeliveryState{State: current, OwnerReceivingKeys: keys, SpenderReceivingKeys: keys}, Commitment: common.Hash(leaf.Bytes()), Nullifier: common.Hash(nf.Bytes()), TreeID: 2, Role: role}); err != nil {
 					t.Fatal(err)
 				}
 			}
@@ -55,6 +58,19 @@ func TestManagedCreditRequestsUseSnapshotOffline(t *testing.T) {
 			state, err := wallet.options.Store.ReadSnapshot(ctx, wallet.scope)
 			if err != nil {
 				t.Fatal(err)
+			}
+			if kind == "create" {
+				abi, _ := contracts.InvisiCoreMetaData.GetAbi()
+				data, e := abi.Pack("creditStatus", wallet.scope.OwnerAddress, token, big.NewInt(2))
+				if e != nil {
+					t.Fatal(e)
+				}
+				msg := ethereum.CallMsg{To: &wallet.scope.ProtocolAddress, Data: data}
+				raw, e := transport.CallContract(ctx, msg, new(big.Int).SetUint64(state.PreparationSnapshot.Block.Number))
+				if e != nil {
+					t.Fatal(e)
+				}
+				state.PreparationSnapshot.Calls[transaction.SnapshotCallKey(msg)] = raw
 			}
 			codec, err := NewEncryptedWalletCodec(make([]byte, 32))
 			if err != nil {
@@ -96,13 +112,13 @@ func TestManagedCreditRequestsUseSnapshotOffline(t *testing.T) {
 			var op *creditsession.Operation
 			switch kind {
 			case "create":
-				op, err = managed.PrepareCreate(ctx, kind, credit.CreatePreparation{TokenAddress: token, Spender: address, AvailableCredit: big.NewInt(400), Expiry: 2100000000, Deadline: 2000000300})
+				op, err = managed.PrepareCreate(ctx, kind, credit.CreatePreparation{GrantID: big.NewInt(2), TokenAddress: token, Spender: address, AvailableCredit: big.NewInt(400), Expiry: 2100000000, Deadline: 2000000300})
 			case "update":
 				op, err = managed.PrepareUpdate(ctx, kind, credit.UpdatePreparation{TokenAddress: token, Credit: common.Hash(leaf.Bytes()), UpdatePatch: credit.UpdatePatch{IncreaseAvailableCredit: primitives.ElementFromUint64(5)}, Deadline: 2000000300})
 			case "draw":
 				op, err = managed.PrepareDraw(ctx, kind, credit.DrawPreparation{TokenAddress: token, Credits: []credit.DrawMember{{Credit: common.Hash(leaf.Bytes()), Amount: big.NewInt(7)}}, Deadline: 2000000300})
 			case "revoke":
-				op, err = managed.PrepareRevoke(ctx, kind, credit.RevokePreparation{TokenAddress: token, Shard: 1, Deadline: 2000000300})
+				op, err = managed.PrepareRevoke(ctx, kind, credit.RevokePreparation{TokenAddress: token, GrantID: big.NewInt(1), Deadline: 2000000300})
 			}
 			if err != nil {
 				t.Fatal(err)

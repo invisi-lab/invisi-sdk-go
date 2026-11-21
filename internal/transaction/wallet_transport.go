@@ -63,7 +63,7 @@ func decryptCreditForOwner(ctx context.Context, owner common.Address, viewingPub
 	if err := ctx.Err(); err != nil {
 		return credit.DeliveryState{}, err
 	}
-	if err := wallet.ValidateDeliveryEnvelope(envelope, 0x82); err != nil {
+	if err := wallet.ValidateDeliveryEnvelope(envelope, 0x84); err != nil {
 		return credit.DeliveryState{}, err
 	}
 	if role != credit.Owner && role != credit.Spender {

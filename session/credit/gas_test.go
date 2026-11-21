@@ -13,7 +13,7 @@ func TestManagedCreditEstimateLeavesJournalUnchanged(t *testing.T) {
 	ctx := context.Background()
 	original, _ := testPlan(t)
 	intent, _ := original.ExportIntent()
-	prepared, err := credit.PrepareRevoke(intent.Context, credit.RevokeParams{Token: intent.Context.TokenAddress, Owner: common.HexToAddress("0x2c"), Shard: 1, Deadline: big.NewInt(2000000300)})
+	prepared, err := credit.PrepareRevoke(intent.Context, credit.RevokeParams{Token: intent.Context.TokenAddress, Owner: common.HexToAddress("0x2c"), GrantID: big.NewInt(1), Deadline: big.NewInt(2000000300)})
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -34,12 +34,12 @@ func TestInitialPaymentStatementGolden(t *testing.T) {
 	}
 	yes := true
 	c := Context{ProtocolContext: primitives.ProtocolContext{ChainID: primitives.ElementFromUint64(1), ProtocolAddress: primitives.BigIntToElement(common.HexToAddress("0x1111111111111111111111111111111111111111").Big())}, TokenAddress: common.HexToAddress("0x2222222222222222222222222222222222222222"), Timestamp: 2000000000}
-	p := CreateParams{Token: c.TokenAddress, Owner: common.HexToAddress("0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf"), RevocationShard: 1, CreditCommitment: common.HexToHash("0x1d8f4fe1b37a592a185db11788b2e9b68f77106c6a09a54b079e39e119bd48e9"), Deadline: big.NewInt(2000000100), FeeRecipient: common.HexToAddress("0x4444444444444444444444444444444444444444"), FeeAmount: big.NewInt(1), HasInitialPayment: &yes, TotalAmount: big.NewInt(7), NoteCommitment: common.HexToHash("0x1e8da2ed5930db94d005d57f5e832ee14da4a5dedf06ec72a3805840460098d6")}
+	p := CreateParams{Token: c.TokenAddress, Owner: common.HexToAddress("0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf"), GrantID: big.NewInt(1001), CreditCommitment: common.HexToHash("0x2811632fd911a3dbaf8c1b9931efeabe365824361f690568240aa31d088227b7"), Deadline: big.NewInt(2000000100), FeeRecipient: common.HexToAddress("0x4444444444444444444444444444444444444444"), FeeAmount: big.NewInt(1), HasInitialPayment: &yes, TotalAmount: big.NewInt(7), NoteCommitment: common.HexToHash("0x1e8da2ed5930db94d005d57f5e832ee14da4a5dedf06ec72a3805840460098d6")}
 	inputs, _, err := p.Statement(c, ds)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(inputs) != 18 {
+	if len(inputs) != 17 {
 		t.Fatalf("width %d", len(inputs))
 	}
 	for i := range inputs {
@@ -84,7 +84,7 @@ func TestInitialPaymentWitnessGolden(t *testing.T) {
 		return primitives.BigIntToElement(n)
 	}
 	c := Context{ProtocolContext: primitives.ProtocolContext{ChainID: field("chain_id"), ProtocolAddress: field("protocol_address")}, TokenAddress: common.BigToAddress(primitives.ElementToBigInt(field("token_address"))), Timestamp: 2000000000}
-	s := State{ProtocolContext: c.ProtocolContext, TokenAddress: field("token_address"), OwnerWalletIdentity: field("owner_address"), SpenderWalletIdentity: field("spender_wallet_identity"), RevocationShard: field("revocation_shard"), RevocationSlot: field("revocation_slot"), Nonce: field("credit_nonce"), Expiry: field("expiry"), CreditSharedKey: field("credit_shared_key"), AvailableCredit: field("available_credit")}
+	s := State{ProtocolContext: c.ProtocolContext, TokenAddress: field("token_address"), OwnerWalletIdentity: field("owner_address"), SpenderWalletIdentity: field("spender_wallet_identity"), GrantID: field("grant_id"), Nonce: field("credit_nonce"), Expiry: field("expiry"), CreditSharedKey: field("credit_shared_key"), AvailableCredit: field("available_credit")}
 	var limits []string
 	if e := json.Unmarshal(f.Witness["limits"], &limits); e != nil {
 		t.Fatal(e)
@@ -101,7 +101,7 @@ func TestInitialPaymentWitnessGolden(t *testing.T) {
 	}
 	s.AvailableCredit.Sub(&s.AvailableCredit, &debit)
 	yes := true
-	p := CreateParams{Token: c.TokenAddress, Owner: common.BigToAddress(primitives.ElementToBigInt(s.OwnerWalletIdentity)), RevocationShard: 1, CreditCommitment: f.PublicInputs[6], Deadline: big.NewInt(2000000100), FeeRecipient: common.BigToAddress(f.PublicInputs[10].Big()), FeeAmount: big.NewInt(1), HasInitialPayment: &yes, TotalAmount: big.NewInt(7), NoteCommitment: f.PublicInputs[12]}
+	p := CreateParams{Token: c.TokenAddress, Owner: common.BigToAddress(primitives.ElementToBigInt(s.OwnerWalletIdentity)), GrantID: big.NewInt(1001), CreditCommitment: f.PublicInputs[5], Deadline: big.NewInt(2000000100), FeeRecipient: common.BigToAddress(f.PublicInputs[9].Big()), FeeAmount: big.NewInt(1), HasInitialPayment: &yes, TotalAmount: big.NewInt(7), NoteCommitment: f.PublicInputs[11]}
 	output := primitives.Note{ProtocolContext: c.ProtocolContext, TokenAddress: s.TokenAddress, OwnerAddress: s.SpenderWalletIdentity, Nonce: field("output_nonce"), Amount: primitives.ElementFromUint64(6)}
 	auth := Authority{PublicKey: []byte{4}}
 	for _, name := range []string{"public_key_x", "public_key_y", "signature"} {

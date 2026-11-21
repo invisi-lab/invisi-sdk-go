@@ -30,8 +30,7 @@ func main() {
 	operationID := flag.String("operation-id", "credit-example-1", "unique durable operation ID")
 
 	tokenText := flag.String("token", "0x2222222222222222222222222222222222222222", "token contract")
-	shard := flag.Uint64("shard", 1, "original revocation shard")
-	slot := flag.Uint("slot", 0, "original revocation slot")
+	grantIDText := flag.String("grant-id", "1", "original positive uint128 grant ID")
 	flag.Parse()
 
 	publicWallet, err := sdk.WalletFromAddress(*address)
@@ -103,14 +102,15 @@ func main() {
 	}
 
 	token := common.HexToAddress(*tokenText)
-	if *slot > 65535 {
-		log.Fatal("slot exceeds uint16")
+	id, err := credit.ParseGrantID(*grantIDText)
+	if err != nil {
+		log.Fatal(err)
 	}
 	creditSession, err := managed.Credit()
 	if err != nil {
 		log.Fatal(err)
 	}
-	operation, err := creditSession.PrepareRevoke(ctx, *operationID, credit.RevokePreparation{TokenAddress: token, Shard: *shard, Slot: uint16(*slot)})
+	operation, err := creditSession.PrepareRevoke(ctx, *operationID, credit.RevokePreparation{TokenAddress: token, GrantID: id})
 	if err != nil {
 		log.Fatal(err)
 	}

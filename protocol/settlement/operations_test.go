@@ -3,6 +3,7 @@ package settlement
 import (
 	"bytes"
 	"encoding/json"
+	"math/big"
 	"os"
 	"testing"
 
@@ -102,7 +103,7 @@ func TestOperationPublicFieldsAndLockProjection(t *testing.T) {
 			case "createCredit":
 				r.Creation.CreditCommitment[0] ^= 1
 			case "creditDraw":
-				r.Draw.GrantRefs[0].Slot++
+				r.Draw.GrantRefs[0].GrantID.Add(r.Draw.GrantRefs[0].GrantID, big.NewInt(1))
 			case "updateCredit":
 				r.Update.Owner[0] ^= 1
 			case "revokeCredit":

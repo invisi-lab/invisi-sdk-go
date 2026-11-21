@@ -48,7 +48,7 @@ func TestSplitCapabilityResources(t *testing.T) {
 	if e != nil {
 		t.Fatal(e)
 	}
-	if core.pin != "36f58bac1a0f70c6f8422b47f7cc35a30416a20f8a0f30038d23db0832e2bc93" {
+	if core.pin != "85a5d1dffe40fc965ab4345a28b632f463c3ad861c44d5845850fbc7447fd8f6" {
 		t.Fatal(core.pin)
 	}
 	if _, e = core.read(context.Background(), "circuits/transact_user_slots2.evm.vk"); e != nil {

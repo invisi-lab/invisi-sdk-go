@@ -26,6 +26,8 @@ managed, err := session.Connect(ctx, session.Options{
 
 `pending, err := managed.Refresh(ctx, options)` stages a bounded public page without advancing private inventory. `pending.Decrypt(ctx, appDecryptor)` invokes the explicitly supplied `sdk.DeliveryDecryptor` and commits each validated account batch with its coverage. SDK validation binds plaintext to owner, token, deployment, commitment and Credit receiving keys. Concurrent application, stale pending revisions and reuse after success reject. See shared history below for ambiguity, resumption and current-state checks.
 
+Stored Credit records and history expose `GrantStatus`: 0 is unknown, 1 is active, and 2 is permanently disabled. `Revoked` means status 2 only. Unknown records remain visible but cannot be selected or newly reserved for draw/update. Canonical status observations retain their block; replaying older receipts preserves later scoped observations and permanent disables across successor commitments.
+
 Authorization exports `operation.ExportWalletAuthorization(ctx)`, accepts an ordinary geth EIP-712 signature through `WithWalletSignature`, then proves. Public funding and revocation have their own frozen typed-data requests. Refresh unseen deliveries before Credit reconciliation; already authenticated stored openings can be reused.
 
 `session.NewMemoryWalletStore` is explicitly ephemeral. For persistence, import `session/sqlite`, provide an application-owned database, and construct `session.NewEncryptedWalletCodec` with an application-owned encryption key. Back up the database and key separately. Failed local work never advances the store revision.
@@ -108,11 +110,11 @@ SQLite keeps an instance-local authenticated decode cache (512 records, 8 MiB we
 
 ### Synchronized preparation and offline export
 
-A successful online `Refresh`/`ScanHistory` state refresh retains preparation evidence in the existing encrypted wallet metadata. It includes the real canonical header, deployment binding, owned Note/Credit paths, consumption observations, revocation words, funding nonce and grant allocation. Paths and root checks already authenticated by normal sync are reused; incremental refresh checks root acceptance before reusing older paths. Public history keeps only a bounded transient copy of authenticated public paths, without private openings or a new persistent public schema.
+A successful online `Refresh`/`ScanHistory` state refresh retains preparation evidence in the existing encrypted wallet metadata. It includes the real canonical header, deployment binding, owned Note/Credit paths, consumption observations, per-owner/token/grant-ID status observations and funding nonce. Paths and root checks already authenticated by normal sync are reused; incremental refresh checks root acceptance before reusing older paths. Public history keeps only a bounded transient copy of authenticated public paths, without private openings or a new persistent public schema.
 
-Keep using `PrepareTransfer`, `PrepareShield` and `Credit().Prepare` as before. Cached facts are selected automatically; a missing fact retries the existing online path. Reopening a session with the same encrypted store and pinned Protocol supports offline preparation, EOA authorization, local proving and calldata export. Unknown tokens/payers and contract-wallet authorization may still require online data or verification. Canonical anchor timestamps stay historical; construction deadlines use the current local time when later than that anchor.
+Keep using `PrepareTransfer`, `PrepareShield` and `Credit().Prepare` as before. Cached facts are selected automatically; a missing fact retries the existing online path. Reopening a session with the same encrypted store and pinned Protocol supports offline preparation, EOA authorization, local proving and calldata export. Offline creation needs a preselected grant ID and its exact captured status-0 observation; a snapshot cannot establish absence for fresh random IDs. Unknown tokens/payers and contract-wallet authorization may still require online data or verification. Canonical anchor timestamps stay historical; construction deadlines use the current local time when later than that anchor.
 
-A cached operation exposes `SubmissionValidation: "required"`. Exported calldata is not permission to submit: call `operation.ValidateSubmission(ctx)` immediately before a host sends it. Credit operations expose the same method. Session-managed sending and first Broadcaster submission perform the live check automatically. These checks validate deployment and canonical state, accepted roots, consumed inputs, deadlines, funding nonce/signature, Credit allocation/revocation and any payer balance/Protocol allowance. They never treat a historical snapshot as current spending authority. A quote still requires the selected Broadcaster's online service.
+A cached operation exposes `SubmissionValidation: "required"`. Exported calldata is not permission to submit: call `operation.ValidateSubmission(ctx)` immediately before a host sends it. Credit operations expose the same method. Session-managed sending and first Broadcaster submission perform the live check automatically. These checks validate deployment and canonical state, accepted roots, consumed inputs, deadlines, funding nonce/signature, scoped Credit status and any payer balance/Protocol allowance. They never treat a historical snapshot as current spending authority. A quote still requires the selected Broadcaster's online service.
 
 ### Scheduled broadcaster submissions
 
@@ -149,7 +151,7 @@ Low-level callers can use `broadcaster.NewCancelToken()`,
 `CancelTransaction(ctx, id, token)`. Store the secret before sending the transaction, and
 retain it when a transport error leaves admission uncertain.
 
-Credit scheduling supports create, update, draw and revoke. Low-level `credit/session.Options.CheckCancellation` must check anchored canonical consumption, revocation and allocation independently of expired authorization or payer allowance; `WalletSession.Credit()` supplies that checker. An acknowledged cancellation retains reservations until this check succeeds.
+Credit scheduling supports create, update, draw and revoke. Low-level `credit/session.Options.CheckCancellation` must check anchored canonical consumption and scoped grant status independently of expired authorization or payer allowance; `WalletSession.Credit()` supplies that checker. An acknowledged cancellation retains reservations until this check succeeds.
 
 ## Contributing
 

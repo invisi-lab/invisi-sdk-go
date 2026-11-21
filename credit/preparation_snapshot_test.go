@@ -52,7 +52,7 @@ func TestPreparationSnapshotsRequestsBeforeFrameReads(t *testing.T) {
 				case "draw":
 					p, err = builder.Draw(context.Background(), DrawPreparation{TokenAddress: token, Credits: members, Recipient: "owner", Payload: payload, Fee: fee})
 				case "revoke":
-					p, err = builder.Revoke(context.Background(), RevokePreparation{TokenAddress: token, Shard: 1, Fee: fee})
+					p, err = builder.Revoke(context.Background(), RevokePreparation{TokenAddress: token, GrantID: big.NewInt(1), Fee: fee})
 				}
 				done <- result{p, err}
 			}()

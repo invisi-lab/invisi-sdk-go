@@ -136,6 +136,10 @@ func (r creditReconciler) Reconcile(ctx context.Context, intent credit.Intent, d
 							old.TreeID = draw.OutputTreeId.Uint64()
 							old.LeafIndex = uint16(draw.CreditLeafIndices[i])
 							old.Consumed = false
+							previousStatus := old
+							statusBlock := protocolrpc.CanonicalBlock{Number: receipt.BlockNumber.Uint64(), Hash: receipt.BlockHash}
+							_ = old.SetGrantStatus(1, &statusBlock)
+							old = old.MergeGrantStatus(previousStatus)
 							old.ReservedBy = ""
 							outcome.Successors = append(outcome.Successors, old)
 							seen[key] = true
@@ -155,11 +159,10 @@ func (r creditReconciler) Reconcile(ctx context.Context, intent credit.Intent, d
 					continue
 				}
 				event, e := filter.ParseCreditRevoked(*log)
-				if e == nil && event.Owner == intent.Revoke.Owner && event.Token == intent.Revoke.Token && event.Shard == intent.Revoke.Shard && event.Slot == intent.Revoke.Slot {
+				if e == nil && event.Owner == intent.Revoke.Owner && event.Token == intent.Revoke.Token && event.GrantId.Cmp(intent.Revoke.GrantID) == 0 {
 					outcome.RevokedOwner = event.Owner
 					outcome.RevokedToken = event.Token
-					outcome.RevokedShard = event.Shard
-					outcome.RevokedSlot = event.Slot
+					outcome.RevokedGrantID = event.GrantId
 					found = true
 				}
 			}

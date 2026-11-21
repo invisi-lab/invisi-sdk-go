@@ -57,7 +57,7 @@ func TestCreditCreationHasNoCashNoteInputsAndKeepsOwnerFeeMetadata(t *testing.T)
 	d, log := fixture(t)
 	tx := common.HexToHash("1")
 	ins := log("CommitmentsInserted", 1, tx, []any{big.NewInt(1)}, uint32(0), [][32]byte{{1}})
-	created := log("CreditCreated", 2, tx, []any{common.Address{}, common.Address{}, big.NewInt(1)}, uint64(1), uint16(0), [32]byte{1}, uint32(0), []delivery{{[]byte{1}, nil}, {[]byte{2}, nil}}, big.NewInt(99), common.HexToAddress("44"), big.NewInt(7))
+	created := log("CreditCreated", 2, tx, []any{common.Address{}, common.Address{}, big.NewInt(1)}, big.NewInt(1), [32]byte{1}, uint32(0), []delivery{{[]byte{1}, nil}, {[]byte{2}, nil}}, big.NewInt(99), common.HexToAddress("44"), big.NewInt(7))
 	b, err := d.Decode(Block{}, []types.Log{ins, created})
 	if err != nil {
 		t.Fatal(err)
@@ -74,8 +74,7 @@ type payerTuple struct {
 }
 type refTuple struct {
 	PayerIndex *big.Int
-	Shard      uint64
-	Slot       uint16
+	GrantID    *big.Int `abi:"grantId"`
 }
 type currentDrawTuple struct {
 	Token             common.Address
@@ -97,8 +96,7 @@ type updateTuple struct {
 	Source           sourceTuple
 	Nullifier        [32]byte
 	CreditCommitment [32]byte
-	RevocationShard  uint64
-	RevocationSlot   uint16
+	GrantID          *big.Int `abi:"grantId"`
 	Deadline         *big.Int
 	FeeRecipient     common.Address
 	FeeAmount        *big.Int
@@ -108,7 +106,7 @@ func TestCreditDrawAndUpdateHaveDistinctStateAndNoteProjections(t *testing.T) {
 	d, log := fixture(t)
 	tx := common.HexToHash("1")
 	token := common.HexToAddress("2")
-	p := currentDrawTuple{Token: token, Sources: []sourceTuple{{big.NewInt(1), [32]byte{9}}}, Payers: []payerTuple{{common.HexToAddress("1"), big.NewInt(3)}, {common.HexToAddress("2"), big.NewInt(4)}}, GrantRefs: []refTuple{{big.NewInt(0), 1, 0}, {big.NewInt(1), 1, 0}}, Nullifiers: [][32]byte{{1}, {2}}, CreditCommitments: [][32]byte{{3}, {4}}, RecoveryAmounts: [][32]byte{{5}, {6}}, NoteCommitment: [32]byte{7}, TotalAmount: big.NewInt(7), Deadline: big.NewInt(99), FeeRecipient: common.HexToAddress("44"), FeeAmount: big.NewInt(1)}
+	p := currentDrawTuple{Token: token, Sources: []sourceTuple{{big.NewInt(1), [32]byte{9}}}, Payers: []payerTuple{{common.HexToAddress("1"), big.NewInt(3)}, {common.HexToAddress("2"), big.NewInt(4)}}, GrantRefs: []refTuple{{big.NewInt(0), big.NewInt(1)}, {big.NewInt(1), big.NewInt(1)}}, Nullifiers: [][32]byte{{1}, {2}}, CreditCommitments: [][32]byte{{3}, {4}}, RecoveryAmounts: [][32]byte{{5}, {6}}, NoteCommitment: [32]byte{7}, TotalAmount: big.NewInt(7), Deadline: big.NewInt(99), FeeRecipient: common.HexToAddress("44"), FeeAmount: big.NewInt(1)}
 	ins := log("CommitmentsInserted", 1, tx, []any{big.NewInt(1)}, uint32(0), [][32]byte{{3}, {4}, {7}})
 	state := struct {
 		Sources                                        []sourceTuple
@@ -132,10 +130,10 @@ func TestCreditDrawAndUpdateHaveDistinctStateAndNoteProjections(t *testing.T) {
 	if _, e = d.Decode(Block{}, []types.Log{ins, transition, bad}); e == nil {
 		t.Fatal("accepted unmatched Note result")
 	}
-	up := updateTuple{Token: token, Owner: common.HexToAddress("1"), Source: sourceTuple{big.NewInt(1), [32]byte{9}}, Nullifier: [32]byte{8}, CreditCommitment: [32]byte{9}, RevocationShard: 1, Deadline: big.NewInt(99), FeeRecipient: common.HexToAddress("44"), FeeAmount: big.NewInt(2)}
+	up := updateTuple{Token: token, Owner: common.HexToAddress("1"), Source: sourceTuple{big.NewInt(1), [32]byte{9}}, Nullifier: [32]byte{8}, CreditCommitment: [32]byte{9}, GrantID: big.NewInt(1), Deadline: big.NewInt(99), FeeRecipient: common.HexToAddress("44"), FeeAmount: big.NewInt(2)}
 	ins = log("CommitmentsInserted", 1, tx, []any{big.NewInt(1)}, uint32(3), [][32]byte{{9}})
 	updated := log("CreditUpdated", 2, tx, []any{up.Owner, big.NewInt(1)}, up, uint32(3), []delivery{{[]byte{1}, nil}, {[]byte{2}, nil}})
-	revoked := log("CreditRevoked", 3, tx, []any{up.Owner, token, uint64(1)}, uint16(0), common.HexToAddress("44"), big.NewInt(3))
+	revoked := log("CreditRevoked", 3, tx, []any{up.Owner, token, big.NewInt(1)}, common.HexToAddress("44"), big.NewInt(3))
 	b, e = d.Decode(Block{}, []types.Log{ins, updated, revoked})
 	if e != nil {
 		t.Fatal(e)

@@ -20,12 +20,12 @@ func TestBenchmarkAllCreditKindsBeforeProof(t *testing.T) {
 	source := protocol.InputSource{TreeId: big.NewInt(1), MerkleRoot: common.HexToHash("0x01")}
 	clue := make([]byte, 68)
 	clue[64] = 24
-	ds := []protocol.Delivery{{Ciphertext: make([]byte, 485), Clue: clue}, {Ciphertext: make([]byte, 485), Clue: clue}}
+	ds := []protocol.Delivery{{Ciphertext: make([]byte, 491), Clue: clue}, {Ciphertext: make([]byte, 491), Clue: clue}}
 	cases := map[string]Intent{
-		"create": {Context: c, Create: &CreateParams{Token: c.TokenAddress, Owner: owner, RevocationShard: 1, CreditCommitment: common.Hash(commitment.Bytes()), Deadline: deadline}, Deliveries: ds},
-		"update": {Context: c, Update: &UpdateParams{Token: c.TokenAddress, Owner: owner, Source: source, Nullifier: common.Hash(drawn.Nullifier.Bytes()), CreditCommitment: common.Hash(drawn.StateCommitment.Bytes()), RevocationShard: 1, Deadline: deadline}, Deliveries: ds},
-		"draw":   {Context: c, Draw: &DrawParams{Token: c.TokenAddress, Sources: []protocol.InputSource{source}, Payers: []Payer{{Payer: owner, Amount: big.NewInt(7)}}, GrantRefs: []GrantRef{{PayerIndex: big.NewInt(0), Shard: 1}}, Nullifiers: []common.Hash{common.Hash(drawn.Nullifier.Bytes())}, CreditCommitments: []common.Hash{common.Hash(drawn.StateCommitment.Bytes())}, RecoveryAmounts: []common.Hash{common.Hash(drawn.RecoveryAmount.Bytes())}, NoteCommitment: common.HexToHash("0x02"), TotalAmount: big.NewInt(7), Deadline: deadline}, Deliveries: append(append([]protocol.Delivery{}, ds...), protocol.Delivery{Ciphertext: make([]byte, 160), Clue: clue})},
-		"revoke": {Context: c, Revoke: &RevokeParams{Token: c.TokenAddress, Owner: owner, Shard: 1, Deadline: deadline}},
+		"create": {Context: c, Create: &CreateParams{Token: c.TokenAddress, Owner: owner, GrantID: big.NewInt(1), CreditCommitment: common.Hash(commitment.Bytes()), Deadline: deadline}, Deliveries: ds},
+		"update": {Context: c, Update: &UpdateParams{Token: c.TokenAddress, Owner: owner, Source: source, Nullifier: common.Hash(drawn.Nullifier.Bytes()), CreditCommitment: common.Hash(drawn.StateCommitment.Bytes()), GrantID: big.NewInt(1), Deadline: deadline}, Deliveries: ds},
+		"draw":   {Context: c, Draw: &DrawParams{Token: c.TokenAddress, Sources: []protocol.InputSource{source}, Payers: []Payer{{Payer: owner, Amount: big.NewInt(7)}}, GrantRefs: []GrantRef{{PayerIndex: big.NewInt(0), GrantID: big.NewInt(1)}}, Nullifiers: []common.Hash{common.Hash(drawn.Nullifier.Bytes())}, CreditCommitments: []common.Hash{common.Hash(drawn.StateCommitment.Bytes())}, RecoveryAmounts: []common.Hash{common.Hash(drawn.RecoveryAmount.Bytes())}, NoteCommitment: common.HexToHash("0x02"), TotalAmount: big.NewInt(7), Deadline: deadline}, Deliveries: append(append([]protocol.Delivery{}, ds...), protocol.Delivery{Ciphertext: make([]byte, 160), Clue: clue})},
+		"revoke": {Context: c, Revoke: &RevokeParams{Token: c.TokenAddress, Owner: owner, GrantID: big.NewInt(1), Deadline: deadline}},
 	}
 	for name, intent := range cases {
 		t.Run(name, func(t *testing.T) {
@@ -57,7 +57,7 @@ func TestGroupedDrawEstimatesRolePayloadAndSourceCounts(t *testing.T) {
 	draw := &DrawParams{Nullifiers: make([]common.Hash, n), CreditCommitments: make([]common.Hash, n), Payers: make([]Payer, 3), Sources: make([]protocol.InputSource, 2), FeeAmount: big.NewInt(1)}
 	ds := make([]protocol.Delivery, 2*n+1)
 	for i := range ds {
-		size := 485
+		size := 491
 		if i == 2*n {
 			size = 260
 		}

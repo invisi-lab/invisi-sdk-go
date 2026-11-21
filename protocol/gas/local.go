@@ -87,8 +87,13 @@ func EstimateGas(shape Shape) EstimateResult {
 // EstimateGasChecked 对合法直接执行形状返回本地收据或校准模型，不发起 RPC。
 func EstimateGasChecked(query Shape) (EstimateResult, error) {
 	unavailable := EstimateResult{Source: "benchmark", Reason: "shape-not-covered"}
+	for _, key := range []string{"creationAbi", "bitmapWord"} {
+		if _, ok := query[key]; ok {
+			return unavailable, fmt.Errorf("retired gas shape field: %s", key)
+		}
+	}
 	kind, _ := query["kind"].(string)
-	if kind == "create-credit-initial-payment" || kind == "create-credit" && query["creationAbi"] == "initial-payment" {
+	if kind == "create-credit-initial-payment" || kind == "create-credit" {
 		return estimateInitialPayment(query)
 	}
 	switch kind {
@@ -215,18 +220,14 @@ func EstimateGasChecked(query Shape) (EstimateResult, error) {
 		if authorization == nil {
 			authorization = "unknown"
 		}
-		bitmap := q["bitmapWord"]
-		if bitmap == nil {
-			bitmap = "empty"
-		}
-		shape["authorization"], shape["bitmapWord"] = authorization, bitmap
+		shape["authorization"] = authorization
 	}
 	rowIndex := measuredRow(shape)
 	if rowIndex >= 0 && kind != "transact" && kind != "draw-credit" {
 		gas = float64(measured.Rows[rowIndex].GasUnits)
 	} else if rowIndex < 0 && kind == "revoke-credit" {
-		auth, bitmap := shape["authorization"], shape["bitmapWord"]
-		if (auth != "direct" && auth != "eoa" && auth != "erc1271" && auth != "unknown") || (bitmap != "empty" && bitmap != "nonempty") {
+		auth := shape["authorization"]
+		if auth != "direct" && auth != "eoa" && auth != "erc1271" && auth != "unknown" {
 			return unavailable, fmt.Errorf("unsupported credit authorization shape")
 		}
 		fallback := "eoa"
@@ -260,7 +261,7 @@ func EstimateGasChecked(query Shape) (EstimateResult, error) {
 	if e != nil {
 		return unavailable, e
 	}
-	creditBytes, e := count("creditCiphertextBytes", 485)
+	creditBytes, e := count("creditCiphertextBytes", 491)
 	if e != nil {
 		return unavailable, e
 	}
@@ -268,7 +269,7 @@ func EstimateGasChecked(query Shape) (EstimateResult, error) {
 	if e != nil {
 		return unavailable, e
 	}
-	extra := float64(extraBytes)*32 + float64(noteDeliveries)*float64(max(0, noteBytes-160))*32 + float64(creditDeliveries)*float64(max(0, creditBytes-485))*32 + float64(noteDeliveries+creditDeliveries)*float64(max(0, clueBytes-68))*32
+	extra := float64(extraBytes)*32 + float64(noteDeliveries)*float64(max(0, noteBytes-160))*32 + float64(creditDeliveries)*float64(max(0, creditBytes-491))*32 + float64(noteDeliveries+creditDeliveries)*float64(max(0, clueBytes-68))*32
 	if flag("permit", false) {
 		extra += 70000
 	}
@@ -384,7 +385,7 @@ func estimateInitialPayment(q Shape) (EstimateResult, error) {
 	for _, d := range []struct {
 		name    string
 		base, n int
-	}{{"creditCiphertextBytes", 485, 2}, {"noteCiphertextBytes", 160, 1}, {"clueBytes", 68, 3}} {
+	}{{"creditCiphertextBytes", 491, 2}, {"noteCiphertextBytes", 160, 1}, {"clueBytes", 68, 3}} {
 		n := d.n
 		if q["kind"] == "create-credit" {
 			if d.name == "noteCiphertextBytes" {

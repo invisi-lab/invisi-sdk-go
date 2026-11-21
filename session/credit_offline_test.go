@@ -2,12 +2,15 @@ package session
 
 import (
 	"context"
+	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/invisi-labs/invisi-sdk-go/credit"
+	transaction "github.com/invisi-labs/invisi-sdk-go/internal/transaction"
 	"github.com/invisi-labs/invisi-sdk-go/primitives"
 	"github.com/invisi-labs/invisi-sdk-go/protocol"
 	"github.com/invisi-labs/invisi-sdk-go/prover"
+	"github.com/invisi-labs/invisi-sdk-go/rpc/contracts"
 	"github.com/invisi-labs/invisi-sdk-go/sdk"
 	creditsession "github.com/invisi-labs/invisi-sdk-go/session/credit"
 	"math/big"
@@ -54,7 +57,7 @@ func TestManagedAllCreditPreparationsUseSnapshotOffline(t *testing.T) {
 				if kind == "draw" {
 					role = credit.Spender
 				}
-				if err = managed.Track(ctx, creditsession.StoredState{Delivery: credit.DeliveryState{State: current, OwnerReceivingKeys: keys, SpenderReceivingKeys: keys}, Commitment: common.Hash(leaf.Bytes()), Nullifier: common.Hash(nf.Bytes()), TreeID: 2, Role: role}); err != nil {
+				if err = managed.Track(ctx, creditsession.StoredState{GrantStatus: 1, Delivery: credit.DeliveryState{State: current, OwnerReceivingKeys: keys, SpenderReceivingKeys: keys}, Commitment: common.Hash(leaf.Bytes()), Nullifier: common.Hash(nf.Bytes()), TreeID: 2, Role: role}); err != nil {
 					t.Fatal(err)
 				}
 			}
@@ -64,6 +67,19 @@ func TestManagedAllCreditPreparationsUseSnapshotOffline(t *testing.T) {
 			state, err := wallet.options.Store.ReadSnapshot(ctx, wallet.scope)
 			if err != nil {
 				t.Fatal(err)
+			}
+			if kind == "create" {
+				abi, _ := contracts.InvisiCoreMetaData.GetAbi()
+				data, e := abi.Pack("creditStatus", wallet.scope.OwnerAddress, token, big.NewInt(2))
+				if e != nil {
+					t.Fatal(e)
+				}
+				msg := ethereum.CallMsg{To: &wallet.scope.ProtocolAddress, Data: data}
+				raw, e := transport.CallContract(ctx, msg, new(big.Int).SetUint64(state.PreparationSnapshot.Block.Number))
+				if e != nil {
+					t.Fatal(e)
+				}
+				state.PreparationSnapshot.Calls[transaction.SnapshotCallKey(msg)] = raw
 			}
 			codec, err := NewEncryptedWalletCodec(make([]byte, 32))
 			if err != nil {
@@ -104,13 +120,13 @@ func TestManagedAllCreditPreparationsUseSnapshotOffline(t *testing.T) {
 			switch kind {
 			case "create":
 				created := current
-				created.RevocationSlot = primitives.ElementFromUint64(1)
+				created.GrantID = primitives.ElementFromUint64(2)
 				commitment, _ := created.Commitment()
-				prepared, err = credit.PrepareCreate(c, credit.CreateParams{Token: token, Owner: wallet.wallet.OwnerAddress(), RevocationShard: 1, RevocationSlot: 1, CreditCommitment: common.Hash(commitment.Bytes()), Deadline: big.NewInt(2000000300)}, deliveries, created)
+				prepared, err = credit.PrepareCreate(c, credit.CreateParams{Token: token, Owner: wallet.wallet.OwnerAddress(), GrantID: big.NewInt(2), CreditCommitment: common.Hash(commitment.Bytes()), Deadline: big.NewInt(2000000300)}, deliveries, created)
 			case "update":
 				change := credit.Change{Policy: current.Policy, Expiry: current.Expiry, IncreaseAvailableCredit: primitives.ElementFromUint64(5)}
 				next, _ := current.Update(change, 2000000300)
-				prepared, err = credit.PrepareUpdate(c, credit.UpdateParams{Token: token, Owner: wallet.wallet.OwnerAddress(), Source: source, Nullifier: common.Hash(next.Nullifier.Bytes()), CreditCommitment: common.Hash(next.StateCommitment.Bytes()), RevocationShard: 1, Deadline: big.NewInt(2000000300)}, deliveries, located, change)
+				prepared, err = credit.PrepareUpdate(c, credit.UpdateParams{Token: token, Owner: wallet.wallet.OwnerAddress(), Source: source, Nullifier: common.Hash(next.Nullifier.Bytes()), CreditCommitment: common.Hash(next.StateCommitment.Bytes()), GrantID: big.NewInt(1), Deadline: big.NewInt(2000000300)}, deliveries, located, change)
 			case "draw":
 				debit := primitives.ElementFromUint64(7)
 				next, _ := current.Draw(debit, c.Timestamp)
@@ -118,9 +134,9 @@ func TestManagedAllCreditPreparationsUseSnapshotOffline(t *testing.T) {
 				output, _ := primitives.ComputeNoteCommitment(c.ChainID, c.ProtocolAddress, identity, current.TokenAddress, debit)
 				drawInput := located
 				drawInput.Debit = debit
-				prepared, err = credit.PrepareDraw(c, credit.DrawParams{Token: token, Sources: []protocol.InputSource{source}, Payers: []credit.Payer{{Payer: wallet.wallet.OwnerAddress(), Amount: big.NewInt(7)}}, GrantRefs: []credit.GrantRef{{PayerIndex: big.NewInt(0), Shard: 1}}, Nullifiers: []common.Hash{common.Hash(next.Nullifier.Bytes())}, CreditCommitments: []common.Hash{common.Hash(next.StateCommitment.Bytes())}, RecoveryAmounts: []common.Hash{common.Hash(next.RecoveryAmount.Bytes())}, NoteCommitment: common.Hash(output.Bytes()), TotalAmount: big.NewInt(7), Deadline: big.NewInt(2000000300)}, append(deliveries, protocol.Delivery{}), []credit.LocatedState{drawInput}, identity)
+				prepared, err = credit.PrepareDraw(c, credit.DrawParams{Token: token, Sources: []protocol.InputSource{source}, Payers: []credit.Payer{{Payer: wallet.wallet.OwnerAddress(), Amount: big.NewInt(7)}}, GrantRefs: []credit.GrantRef{{PayerIndex: big.NewInt(0), GrantID: big.NewInt(1)}}, Nullifiers: []common.Hash{common.Hash(next.Nullifier.Bytes())}, CreditCommitments: []common.Hash{common.Hash(next.StateCommitment.Bytes())}, RecoveryAmounts: []common.Hash{common.Hash(next.RecoveryAmount.Bytes())}, NoteCommitment: common.Hash(output.Bytes()), TotalAmount: big.NewInt(7), Deadline: big.NewInt(2000000300)}, append(deliveries, protocol.Delivery{}), []credit.LocatedState{drawInput}, identity)
 			case "revoke":
-				prepared, err = credit.PrepareRevoke(c, credit.RevokeParams{Token: token, Owner: wallet.wallet.OwnerAddress(), Shard: 1, Deadline: big.NewInt(2000000300)})
+				prepared, err = credit.PrepareRevoke(c, credit.RevokeParams{Token: token, Owner: wallet.wallet.OwnerAddress(), GrantID: big.NewInt(1), Deadline: big.NewInt(2000000300)})
 			}
 			if err != nil {
 				t.Fatal(err)

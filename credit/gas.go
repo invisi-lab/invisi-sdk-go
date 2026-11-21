@@ -21,7 +21,6 @@ func (p *Prepared) EstimateGas() (protocol.GasEstimate, error) {
 		creditDeliveries = 2
 		shape = gas.Shape{"kind": "create-credit", "feeEnabled": positive(p.intent.Create.FeeAmount)}
 		if p.intent.Create.HasInitialPayment != nil {
-			shape["creationAbi"] = "initial-payment"
 			if *p.intent.Create.HasInitialPayment {
 				shape["kind"] = "create-credit-initial-payment"
 			}
@@ -44,7 +43,7 @@ func (p *Prepared) EstimateGas() (protocol.GasEstimate, error) {
 	for i, delivery := range p.intent.Deliveries {
 		baseline := 160
 		if i < creditDeliveries {
-			baseline = 485
+			baseline = 491
 		}
 		extra += max(0, len(delivery.Ciphertext)-baseline) + max(0, len(delivery.Clue)-68)
 	}

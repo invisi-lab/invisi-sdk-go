@@ -86,9 +86,9 @@ func TestCurrentCanonicalSixMethodVectors(t *testing.T) {
 				}
 				if row.Method == "revokeCredit" {
 					if dimension == "FeeAmount" {
-						args[6] = new(big.Int).Add(args[6].(*big.Int), big.NewInt(1))
+						args[5] = new(big.Int).Add(args[5].(*big.Int), big.NewInt(1))
 					} else {
-						args[5] = common.HexToAddress("0x9999")
+						args[4] = common.HexToAddress("0x9999")
 					}
 				} else {
 					index := 1

@@ -28,7 +28,8 @@ with tempfile.TemporaryDirectory(prefix='invisi-bindings-') as tmp:
             (SDK / 'credit/data/current-abi.json').write_text(json.dumps(abi) + '\n')
         raw = pathlib.Path(tmp) / (stem + '.go')
         subprocess.run([abigen, '--abi', str(abipath), '--pkg', 'contracts', '--type', name, '--out', str(raw)], check=True)
-        s = raw.read_text()
+        s = raw.read_text().replace("GrantId", "GrantID")
+        s = re.sub(r"^(\s*GrantID\s+\*big.Int)\s*$", r'\1 `abi:"grantId"`', s, flags=re.M)
         marker = re.search('^var ' + name + 'MetaData = &bind.MetaData\\{', s, re.M)
         if not marker:
             raise ValueError('unsupported abigen metadata')
@@ -41,6 +42,10 @@ with tempfile.TemporaryDirectory(prefix='invisi-bindings-') as tmp:
             s = s.replace(declaration, 'type ' + typename + ' = protocolcontracts.' + typename)
         s = s.replace('import (', 'import (\nprotocolcontracts "github.com/invisi-labs/invisi-sdk-go/protocol/contracts"', 1)
         s = re.sub('var ' + name + 'MetaData = &bind.MetaData\\{.*?\\n\\}', f'var {name}MetaData = &bind.MetaData{{ABI:protocolcontracts.{name}MetaData.ABI}}', s, count=1, flags=re.S)
+        # Indexed event fields must keep abigen's exact Go casing: abi tags are
+        # resolved separately against nonindexed fields before ParseTopics.
+        for event_type in ('InvisiCoreCreditCreated', 'InvisiCoreCreditRevoked'):
+            s = re.sub(r'(type '+event_type+r' struct \{.*?\n\})', lambda m: m[1].replace('GrantID', 'GrantId').replace(' `abi:"grantId"`', ''), s, flags=re.S)
         (network / (stem + '.go')).write_text(s)
 formatter = shutil.which('goimports') or str(pathlib.Path.home() / 'go/bin/goimports')
 subprocess.run([formatter, '-w', *[str(HERE / (stem + '.go')) for stem in names.values()], *[str(network / (stem + '.go')) for stem in names.values()]], check=True)

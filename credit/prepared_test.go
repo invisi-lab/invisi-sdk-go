@@ -19,7 +19,7 @@ func TestPreparedCreateFreezesStateAndRequiresProof(t *testing.T) {
 	s.OwnerWalletIdentity = primitives.BigIntToElement(owner.Big())
 	commitment, _ := s.Commitment()
 	c := Context{ProtocolContext: s.ProtocolContext, TokenAddress: common.BigToAddress(big.NewInt(34)), Timestamp: 2000000000}
-	p := CreateParams{Token: c.TokenAddress, Owner: owner, RevocationShard: 1, CreditCommitment: common.Hash(commitment.Bytes()), Deadline: big.NewInt(2000000300)}
+	p := CreateParams{Token: c.TokenAddress, Owner: owner, GrantID: big.NewInt(1), CreditCommitment: common.Hash(commitment.Bytes()), Deadline: big.NewInt(2000000300)}
 	d := f["delivery"].(map[string]any)
 	clue := make([]byte, 68)
 	clue[64] = 24
@@ -49,13 +49,13 @@ func TestDrawToNoteFreezesOrdinaryOutputForFeeQuotation(t *testing.T) {
 	s, _ := fixture(t)
 	c := Context{ProtocolContext: s.ProtocolContext, TokenAddress: common.BigToAddress(big.NewInt(34)), Timestamp: 2000000000}
 	transition, _ := s.Draw(primitives.ElementFromUint64(7), c.Timestamp)
-	p := DrawParams{Token: c.TokenAddress, Sources: []protocol.InputSource{{TreeId: big.NewInt(1), MerkleRoot: common.HexToHash("0x01")}}, Payers: []Payer{{Payer: common.BigToAddress(big.NewInt(44)), Amount: big.NewInt(7)}}, GrantRefs: []GrantRef{{PayerIndex: big.NewInt(0), Shard: 1}}, Nullifiers: []common.Hash{common.Hash(transition.Nullifier.Bytes())}, CreditCommitments: []common.Hash{common.Hash(transition.StateCommitment.Bytes())}, RecoveryAmounts: []common.Hash{common.Hash(transition.RecoveryAmount.Bytes())}, TotalAmount: big.NewInt(7), Deadline: big.NewInt(2000000300)}
+	p := DrawParams{Token: c.TokenAddress, Sources: []protocol.InputSource{{TreeId: big.NewInt(1), MerkleRoot: common.HexToHash("0x01")}}, Payers: []Payer{{Payer: common.BigToAddress(big.NewInt(44)), Amount: big.NewInt(7)}}, GrantRefs: []GrantRef{{PayerIndex: big.NewInt(0), GrantID: big.NewInt(1)}}, Nullifiers: []common.Hash{common.Hash(transition.Nullifier.Bytes())}, CreditCommitments: []common.Hash{common.Hash(transition.StateCommitment.Bytes())}, RecoveryAmounts: []common.Hash{common.Hash(transition.RecoveryAmount.Bytes())}, TotalAmount: big.NewInt(7), Deadline: big.NewInt(2000000300)}
 	receiver, _ := primitives.DeriveWallet(common.LeftPadBytes([]byte{99}, 32))
 	keys := &primitives.ReceivingKeys{ViewingPublicKey: receiver.ViewingPublicKey, ClueKey: receiver.ClueKey}
 	note := primitives.Note{ProtocolContext: s.ProtocolContext, OwnerAddress: receiver.OwnerAddress, TokenAddress: s.TokenAddress, Amount: primitives.ElementFromUint64(7), Nonce: primitives.ElementFromUint64(100), Payload: []byte("invoice")}
 	clue := make([]byte, 68)
 	clue[64] = 24
-	ds := []protocol.Delivery{{Ciphertext: []byte{0x82}, Clue: clue}, {Ciphertext: []byte{0x82}, Clue: clue}}
+	ds := []protocol.Delivery{{Ciphertext: []byte{0x84}, Clue: clue}, {Ciphertext: []byte{0x84}, Clue: clue}}
 	prepared, err := PrepareDrawToNote(c, p, ds, []LocatedState{{State: s, TreeID: 1, Debit: primitives.ElementFromUint64(7)}}, note, keys)
 	if err != nil {
 		t.Fatal(err)

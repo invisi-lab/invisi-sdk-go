@@ -59,7 +59,7 @@ func restoreCreditReservations(state *creditsession.State) error {
 			}
 			commitment := common.Hash(c.Bytes())
 			for key, grant := range state.Grants {
-				if grant.Commitment != commitment || grant.Consumed {
+				if grant.Commitment != commitment || grant.Consumed || grant.GrantStatus != 1 {
 					continue
 				}
 				if grant.ReservedBy != "" && grant.ReservedBy != id {

@@ -71,7 +71,7 @@ func validOptions(v any, m any) bool {
 func validReceipt(v any, m any) bool {
 	extra := ""
 	if m == "credit" {
-		extra = "creditId creditStatus owner revocationShard revocationSlot verificationBlock expiresAt"
+		extra = "creditId creditStatus owner grantId verificationBlock expiresAt"
 	}
 	optional := ""
 	if m == "credit" {
@@ -82,7 +82,7 @@ func validReceipt(v any, m any) bool {
 		return false
 	}
 	if m == "credit" {
-		if !text(r["creditId"]) || (r["creditStatus"] != "active" && !(r["creditStatus"] == "depleted" && r["initialPayment"] != nil)) || !hex(r["owner"], 20, true) || !integer(r["revocationShard"], 64, false) || !number(r["revocationSlot"], 65535) || !timestamp(r["expiresAt"]) {
+		if !text(r["creditId"]) || (r["creditStatus"] != "active" && !(r["creditStatus"] == "depleted" && r["initialPayment"] != nil)) || !hex(r["owner"], 20, true) || !integer(r["grantId"], 128, true) || !timestamp(r["expiresAt"]) {
 			return false
 		}
 		if initial, ok := r["initialPayment"]; ok {
@@ -303,7 +303,7 @@ func ParseCredential(data []byte, r *Request) (*Credential, error) {
 	extra := ""
 	kind := "note"
 	if c["mode"] == "credit" {
-		extra = "owner revocationShard revocationSlot"
+		extra = "owner grantId"
 		kind = "credit_created"
 	}
 	p, e := object(c["proof"], "type transactionHash commitment", extra)
@@ -313,10 +313,7 @@ func ParseCredential(data []byte, r *Request) (*Credential, error) {
 	if x, ok := p["owner"]; ok && !hex(x, 20, true) {
 		return nil, invalid()
 	}
-	if x, ok := p["revocationShard"]; ok && !integer(x, 64, false) {
-		return nil, invalid()
-	}
-	if x, ok := p["revocationSlot"]; ok && !number(x, 65535) {
+	if x, ok := p["grantId"]; ok && !integer(x, 128, true) {
 		return nil, invalid()
 	}
 	out, e := decodeTyped[Credential](c)

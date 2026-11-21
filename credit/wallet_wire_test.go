@@ -24,7 +24,7 @@ func TestCreditPreparedWalletWireAuthorization(t *testing.T) {
 	clue := make([]byte, 68)
 	clue[64] = 24
 	deliveries := []protocol.Delivery{{Ciphertext: bytesHex(t, d["ownerCiphertext"].(string)), Clue: clue}, {Ciphertext: bytesHex(t, d["spenderCiphertext"].(string)), Clue: clue}}
-	p, err := PrepareCreate(c, CreateParams{Token: c.TokenAddress, Owner: owner, RevocationShard: 1, CreditCommitment: common.Hash(commitment.Bytes()), Deadline: big.NewInt(2000000300)}, deliveries, s)
+	p, err := PrepareCreate(c, CreateParams{Token: c.TokenAddress, Owner: owner, GrantID: big.NewInt(1), CreditCommitment: common.Hash(commitment.Bytes()), Deadline: big.NewInt(2000000300)}, deliveries, s)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -42,7 +42,7 @@ func TestCreditPreparedWalletWireAuthorization(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	draw, err := PrepareDraw(c, DrawParams{Token: c.TokenAddress, Sources: []protocol.InputSource{{TreeId: big.NewInt(1), MerkleRoot: root}}, Payers: []Payer{{Payer: owner, Amount: big.NewInt(7)}}, GrantRefs: []GrantRef{{PayerIndex: big.NewInt(0), Shard: 1}}, Nullifiers: []common.Hash{common.Hash(drawn.Nullifier.Bytes())}, CreditCommitments: []common.Hash{common.Hash(drawn.StateCommitment.Bytes())}, RecoveryAmounts: []common.Hash{common.Hash(drawn.RecoveryAmount.Bytes())}, NoteCommitment: common.Hash(noteCommitment.Bytes()), TotalAmount: big.NewInt(7), Deadline: big.NewInt(2000000300)}, append(deliveries, protocol.Delivery{}), []LocatedState{input}, identity)
+	draw, err := PrepareDraw(c, DrawParams{Token: c.TokenAddress, Sources: []protocol.InputSource{{TreeId: big.NewInt(1), MerkleRoot: root}}, Payers: []Payer{{Payer: owner, Amount: big.NewInt(7)}}, GrantRefs: []GrantRef{{PayerIndex: big.NewInt(0), GrantID: big.NewInt(1)}}, Nullifiers: []common.Hash{common.Hash(drawn.Nullifier.Bytes())}, CreditCommitments: []common.Hash{common.Hash(drawn.StateCommitment.Bytes())}, RecoveryAmounts: []common.Hash{common.Hash(drawn.RecoveryAmount.Bytes())}, NoteCommitment: common.Hash(noteCommitment.Bytes()), TotalAmount: big.NewInt(7), Deadline: big.NewInt(2000000300)}, append(deliveries, protocol.Delivery{}), []LocatedState{input}, identity)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -51,7 +51,7 @@ func TestCreditPreparedWalletWireAuthorization(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	update, err := PrepareUpdate(c, UpdateParams{Token: c.TokenAddress, Owner: owner, Source: protocol.InputSource{TreeId: big.NewInt(1), MerkleRoot: root}, Nullifier: common.Hash(updated.Nullifier.Bytes()), CreditCommitment: common.Hash(updated.StateCommitment.Bytes()), RevocationShard: 1, Deadline: big.NewInt(2000000300)}, deliveries, input, change)
+	update, err := PrepareUpdate(c, UpdateParams{Token: c.TokenAddress, Owner: owner, Source: protocol.InputSource{TreeId: big.NewInt(1), MerkleRoot: root}, Nullifier: common.Hash(updated.Nullifier.Bytes()), CreditCommitment: common.Hash(updated.StateCommitment.Bytes()), GrantID: big.NewInt(1), Deadline: big.NewInt(2000000300)}, deliveries, input, change)
 	if err != nil {
 		t.Fatal(err)
 	}

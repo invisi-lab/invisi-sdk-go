@@ -24,14 +24,17 @@ func (p creditValidationProvider) CallContract(ctx context.Context, message ethe
 	if len(message.Data) >= 4 {
 		if method, e := a.MethodById(message.Data[:4]); e == nil {
 			switch method.RawName {
-			case "creditAllocation":
-				return method.Outputs.Pack(uint64(1), uint16(1))
-			case "creditRevocationBitmap":
-				bits := new(big.Int)
-				if p.revoked {
-					bits.SetUint64(1)
+			case "creditStatus":
+				args, _ := method.Inputs.Unpack(message.Data[4:])
+				id := args[2].(*big.Int)
+				status := big.NewInt(0)
+				if id.Cmp(big.NewInt(1)) == 0 {
+					status = big.NewInt(1)
 				}
-				return method.Outputs.Pack(bits)
+				if p.revoked {
+					status = big.NewInt(2)
+				}
+				return method.Outputs.Pack(status)
 			}
 		}
 	}
@@ -60,7 +63,7 @@ func TestManagedRevocationUsesOriginalReferenceAndCurrentFeeAllowance(t *testing
 	base := wallet.options.Provider.(sessionProvider)
 	wallet.options.Provider = creditValidationProvider{sessionProvider: base}
 	c := credit.Context{ProtocolContext: wallet.coreContext(), TokenAddress: token, Timestamp: base.head.Time}
-	p := credit.RevokeParams{Token: token, Owner: wallet.wallet.OwnerAddress(), Shard: 1, Slot: 0, Deadline: new(big.Int).SetUint64(base.head.Time + 300), FeeRecipient: common.HexToAddress("0x1234"), FeeAmount: big.NewInt(1)}
+	p := credit.RevokeParams{Token: token, Owner: wallet.wallet.OwnerAddress(), GrantID: big.NewInt(1), Deadline: new(big.Int).SetUint64(base.head.Time + 300), FeeRecipient: common.HexToAddress("0x1234"), FeeAmount: big.NewInt(1)}
 	prepared, err := credit.PrepareRevoke(c, p)
 	if err != nil {
 		t.Fatal(err)
@@ -88,8 +91,8 @@ func TestManagedRevocationUsesOriginalReferenceAndCurrentFeeAllowance(t *testing
 	if err != nil {
 		t.Fatal(err)
 	}
-	allocation, err := contract.CreditAllocation(&bind.CallOpts{Context: ctx}, p.Owner, p.Token)
-	if err != nil || allocation.Shard != 1 {
+	status, err := contract.CreditStatusValue(&bind.CallOpts{Context: ctx}, p.Owner, p.Token, p.GrantID)
+	if err != nil || status != 1 {
 		t.Fatal(err)
 	}
 	wallet.options.Provider = creditValidationProvider{sessionProvider: base}
@@ -109,7 +112,7 @@ func TestCreditCancellationIgnoresExpiredAuthorizationButChecksRevocation(t *tes
 	base := s.options.Provider.(sessionProvider)
 	s.options.Provider = creditValidationProvider{sessionProvider: base, allowance: big.NewInt(0)}
 	c := credit.Context{ProtocolContext: s.coreContext(), TokenAddress: token, Timestamp: 1}
-	prepared, err := credit.PrepareRevoke(c, credit.RevokeParams{Token: token, Owner: s.wallet.OwnerAddress(), Shard: 1, Slot: 0, Deadline: big.NewInt(2), FeeRecipient: common.HexToAddress("0x1234"), FeeAmount: big.NewInt(1)})
+	prepared, err := credit.PrepareRevoke(c, credit.RevokeParams{Token: token, Owner: s.wallet.OwnerAddress(), GrantID: big.NewInt(1), Deadline: big.NewInt(2), FeeRecipient: common.HexToAddress("0x1234"), FeeAmount: big.NewInt(1)})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -132,7 +135,7 @@ func TestInitialPaymentValidationRequiresGrossOwnerFunds(t *testing.T) {
 	yes := true
 	clue := make([]byte, 68)
 	clue[64] = 24
-	intent := credit.Intent{Version: 2, Context: credit.Context{ProtocolContext: s.coreContext(), TokenAddress: token, Timestamp: base.head.Time}, Create: &credit.CreateParams{Token: token, Owner: s.wallet.OwnerAddress(), RevocationShard: 1, RevocationSlot: 1, CreditCommitment: common.HexToHash("1"), Deadline: new(big.Int).SetUint64(base.head.Time + 300), FeeRecipient: common.HexToAddress("44"), FeeAmount: big.NewInt(1), HasInitialPayment: &yes, TotalAmount: big.NewInt(7), NoteCommitment: common.HexToHash("2")}, Deliveries: []protocol.Delivery{{Ciphertext: []byte{1}, Clue: clue}, {Ciphertext: []byte{2}, Clue: clue}, {Ciphertext: []byte{3}, Clue: clue}}}
+	intent := credit.Intent{Version: 2, Context: credit.Context{ProtocolContext: s.coreContext(), TokenAddress: token, Timestamp: base.head.Time}, Create: &credit.CreateParams{Token: token, Owner: s.wallet.OwnerAddress(), GrantID: big.NewInt(2), CreditCommitment: common.HexToHash("1"), Deadline: new(big.Int).SetUint64(base.head.Time + 300), FeeRecipient: common.HexToAddress("44"), FeeAmount: big.NewInt(1), HasInitialPayment: &yes, TotalAmount: big.NewInt(7), NoteCommitment: common.HexToHash("2")}, Deliveries: []protocol.Delivery{{Ciphertext: []byte{1}, Clue: clue}, {Ciphertext: []byte{2}, Clue: clue}, {Ciphertext: []byte{3}, Clue: clue}}}
 	for _, tc := range []struct {
 		name               string
 		balance, allowance *big.Int

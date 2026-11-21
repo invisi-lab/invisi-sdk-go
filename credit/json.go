@@ -58,7 +58,7 @@ func (p *Policy) UnmarshalJSON(raw []byte) error {
 	return nil
 }
 func (s State) MarshalJSON() ([]byte, error) {
-	values := map[string]string{"chainId": s.ChainID.String(), "protocolAddress": s.ProtocolAddress.String(), "tokenAddress": s.TokenAddress.String(), "spenderWalletIdentity": s.SpenderWalletIdentity.String(), "ownerWalletIdentity": s.OwnerWalletIdentity.String(), "revocationShard": s.RevocationShard.String(), "revocationSlot": s.RevocationSlot.String(), "nonce": s.Nonce.String(), "expiry": s.Expiry.String(), "creditSharedKey": s.CreditSharedKey.String(), "availableCredit": s.AvailableCredit.String()}
+	values := map[string]string{"chainId": s.ChainID.String(), "protocolAddress": s.ProtocolAddress.String(), "tokenAddress": s.TokenAddress.String(), "spenderWalletIdentity": s.SpenderWalletIdentity.String(), "ownerWalletIdentity": s.OwnerWalletIdentity.String(), "grantId": s.GrantID.String(), "nonce": s.Nonce.String(), "expiry": s.Expiry.String(), "creditSharedKey": s.CreditSharedKey.String(), "availableCredit": s.AvailableCredit.String()}
 	for i, k := range []string{"singleLimit", "dailyLimit", "monthlyLimit"} {
 		values[k] = s.Policy.Fields()[i].String()
 	}
@@ -85,11 +85,11 @@ func (s *State) UnmarshalJSON(raw []byte) error {
 	if envelope.Version != 2 || envelope.Unlimited == nil {
 		return fmt.Errorf("unsupported Credit state schema")
 	}
-	v, err := parseFields(envelope.Fields, "chainId", "protocolAddress", "tokenAddress", "spenderWalletIdentity", "ownerWalletIdentity", "revocationShard", "revocationSlot", "nonce", "expiry", "creditSharedKey", "singleLimit", "dailyLimit", "monthlyLimit", "availableCredit", "lastDay", "dailySpent", "lastMonth", "monthlySpent", "totalSpent")
+	v, err := parseFields(envelope.Fields, "chainId", "protocolAddress", "tokenAddress", "spenderWalletIdentity", "ownerWalletIdentity", "grantId", "nonce", "expiry", "creditSharedKey", "singleLimit", "dailyLimit", "monthlyLimit", "availableCredit", "lastDay", "dailySpent", "lastMonth", "monthlySpent", "totalSpent")
 	if err != nil {
 		return err
 	}
-	next := State{ProtocolContext: primitives.ProtocolContext{ChainID: v["chainId"], ProtocolAddress: v["protocolAddress"]}, TokenAddress: v["tokenAddress"], SpenderWalletIdentity: v["spenderWalletIdentity"], OwnerWalletIdentity: v["ownerWalletIdentity"], RevocationShard: v["revocationShard"], RevocationSlot: v["revocationSlot"], Nonce: v["nonce"], Expiry: v["expiry"], CreditSharedKey: v["creditSharedKey"], Policy: Policy{v["singleLimit"], v["dailyLimit"], v["monthlyLimit"]}, AvailableCredit: v["availableCredit"], Unlimited: *envelope.Unlimited, Usage: Usage{v["lastDay"], v["dailySpent"], v["lastMonth"], v["monthlySpent"], v["totalSpent"]}, Payload: append([]byte(nil), envelope.Payload...)}
+	next := State{ProtocolContext: primitives.ProtocolContext{ChainID: v["chainId"], ProtocolAddress: v["protocolAddress"]}, TokenAddress: v["tokenAddress"], SpenderWalletIdentity: v["spenderWalletIdentity"], OwnerWalletIdentity: v["ownerWalletIdentity"], GrantID: v["grantId"], Nonce: v["nonce"], Expiry: v["expiry"], CreditSharedKey: v["creditSharedKey"], Policy: Policy{v["singleLimit"], v["dailyLimit"], v["monthlyLimit"]}, AvailableCredit: v["availableCredit"], Unlimited: *envelope.Unlimited, Usage: Usage{v["lastDay"], v["dailySpent"], v["lastMonth"], v["monthlySpent"], v["totalSpent"]}, Payload: append([]byte(nil), envelope.Payload...)}
 	if err = next.Validate(); err != nil {
 		return err
 	}

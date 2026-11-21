@@ -111,7 +111,7 @@ func main() {
 	}
 	members := []credit.DrawMember{}
 	for _, g := range inventory.PostpaidCredit.Grants {
-		if g.Role == credit.Spender && !g.Consumed && !g.Revoked && g.ReservedBy == "" && common.BigToAddress(primitives.ElementToBigInt(g.Delivery.State.TokenAddress)) == token {
+		if g.Role == credit.Spender && !g.Consumed && g.GrantStatus == 1 && g.ReservedBy == "" && common.BigToAddress(primitives.ElementToBigInt(g.Delivery.State.TokenAddress)) == token {
 			members = append(members, credit.DrawMember{Credit: g.Commitment, Amount: big.NewInt(7)})
 		}
 	}

@@ -22,7 +22,7 @@ func TestCreateWitnessAuthenticatesOwnerAndZeroUsage(t *testing.T) {
 	owner := crypto.PubkeyToAddress(private.PublicKey)
 	s.OwnerWalletIdentity = primitives.BigIntToElement(owner.Big())
 	c, _ := s.Commitment()
-	p := CreateParams{Token: common.BigToAddress(big.NewInt(34)), Owner: owner, RevocationShard: 1, CreditCommitment: common.HexToHash(hex(c)), Deadline: big.NewInt(2000000300)}
+	p := CreateParams{Token: common.BigToAddress(big.NewInt(34)), Owner: owner, GrantID: big.NewInt(1), CreditCommitment: common.HexToHash(hex(c)), Deadline: big.NewInt(2000000300)}
 	ctx := Context{ProtocolContext: s.ProtocolContext, TokenAddress: p.Token, Timestamp: 2000000000}
 	d := f["delivery"].(map[string]any)
 	clue := make([]byte, 68)
@@ -46,7 +46,7 @@ func TestCreateWitnessAuthenticatesOwnerAndZeroUsage(t *testing.T) {
 		t.Fatal(err)
 	}
 	if err = witness.WithInputs(func(m map[string]any) error {
-		if len(m) != 24 {
+		if len(m) != 23 {
 			t.Fatalf("witness fields %d", len(m))
 		}
 		if m["spender_wallet_identity"] != "33" {
@@ -98,7 +98,7 @@ func TestDrawAndUpdateWitnessBindMembershipAndOrdinaryNote(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	draw := DrawParams{Token: c.TokenAddress, Sources: []protocol.InputSource{source}, Payers: []Payer{{Payer: owner, Amount: big.NewInt(7)}}, GrantRefs: []GrantRef{{PayerIndex: big.NewInt(0), Shard: 1}}, Nullifiers: []common.Hash{common.Hash(transition.Nullifier.Bytes())}, CreditCommitments: []common.Hash{common.Hash(transition.StateCommitment.Bytes())}, RecoveryAmounts: []common.Hash{common.Hash(transition.RecoveryAmount.Bytes())}, NoteCommitment: common.Hash(out.Bytes()), TotalAmount: big.NewInt(7), Deadline: deadline}
+	draw := DrawParams{Token: c.TokenAddress, Sources: []protocol.InputSource{source}, Payers: []Payer{{Payer: owner, Amount: big.NewInt(7)}}, GrantRefs: []GrantRef{{PayerIndex: big.NewInt(0), GrantID: big.NewInt(1)}}, Nullifiers: []common.Hash{common.Hash(transition.Nullifier.Bytes())}, CreditCommitments: []common.Hash{common.Hash(transition.StateCommitment.Bytes())}, RecoveryAmounts: []common.Hash{common.Hash(transition.RecoveryAmount.Bytes())}, NoteCommitment: common.Hash(out.Bytes()), TotalAmount: big.NewInt(7), Deadline: deadline}
 	dds := append(ds, protocol.Delivery{})
 	_, typed, err := draw.Statement(c, dds)
 	if err != nil {
@@ -135,7 +135,7 @@ func TestDrawAndUpdateWitnessBindMembershipAndOrdinaryNote(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	p := UpdateParams{Token: c.TokenAddress, Owner: owner, Source: source, Nullifier: common.Hash(updated.Nullifier.Bytes()), CreditCommitment: common.Hash(updated.StateCommitment.Bytes()), RevocationShard: 1, Deadline: deadline}
+	p := UpdateParams{Token: c.TokenAddress, Owner: owner, Source: source, Nullifier: common.Hash(updated.Nullifier.Bytes()), CreditCommitment: common.Hash(updated.StateCommitment.Bytes()), GrantID: big.NewInt(1), Deadline: deadline}
 	_, typed, err = p.Statement(c, ds)
 	if err != nil {
 		t.Fatal(err)

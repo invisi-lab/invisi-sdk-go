@@ -77,19 +77,21 @@ Managed Note operations use `session.Connect`, reservations and durable journals
 
 ## Postpaid Credit
 
-`credit.State` is authority to debit an owner's wallet, not a prepaid token balance. It keeps owner/spender identities, token, the original revocation shard/slot, nonce, expiry, a grant-scoped shared key, four limits and five usage fields. It has no payout, refund, remainder balance or Note funding fields.
+`credit.State` is authority to debit an owner's wallet, not a prepaid token balance. It keeps owner/spender identities, token, a positive uint128 grant ID, nonce, expiry, a grant-scoped shared key, three limits, available credit, unlimited mode and five usage fields. It has no payout, refund, remainder balance or Note funding fields.
 
 - `PrepareCreate` registers private authority without depositing principal or spending Notes.
 - `PrepareDraw` consumes N grant states, groups sorted owner payer receipts, creates N successor states and one ordinary Note for any recipient identity.
 - `PrepareDrawToNote` additionally freezes that Note opening and public receiving keys, so fee quotation can preserve owner/nonce/payload while rebuilding its net amount and envelope.
 - `PrepareUpdate` changes policy/expiry while preserving usage and immutable grant identity/namespace.
-- `PrepareRevoke` uses the original owner/token/shard/slot reference. It needs no latest merchant state and no ZK proof.
+- `PrepareRevoke` uses the original owner/token/grant ID reference. It needs no latest merchant state and no ZK proof.
 
 The shared Note Tree is a storage/membership primitive. A Credit state remains a distinct business model from an ordinary spendable Note.
 
 Policy limits are single/day/month; zero disables only that check. State carries uint128 `AvailableCredit` and an independent `Unlimited` flag. Finite zero is exhausted; a finite draw subtracts gross debit. Unlimited grants keep zero balance and still accumulate daily/monthly/total usage. Draw and recovery use canonical chain time. State recovery authenticates the masked **gross debit**, deterministic next nonce and successor commitment; unknown child payload is not copied from the parent.
 
-`credit.DeliveryState` retains both receiving-key snapshots. Current Credit envelopes use `0x82`; older financial models/envelopes are rejected. `Payload` is opaque authenticated application data outside commitments. `credit.MemoV1` is an optional memo codec independent of the envelope version.
+`CreatePreparation.GrantID` accepts an explicit `*big.Int` in `1..2^128-1`; otherwise creation selects one with cryptographic randomness before encryption or proving. The ID and shared key stay frozen through quotes, retries and snapshot fallback. Grant identity is scoped by chain, Core, owner and token, and survives update, draw and recovery unchanged. `CreditStatus` returns 0 (unknown), 1 (active), or 2 (permanently disabled). Create requires 0; update/draw require 1; revoke accepts 0 or 1 and needs no private grant. Managed submission rechecks canonical status. Offline creation requires an exact captured status-0 observation for the preselected ID; a snapshot cannot establish absence for a newly generated ID.
+
+`credit.DeliveryState` retains both receiving-key snapshots. Current Credit envelopes use `0x84` (minimum 491 bytes); older financial models/envelopes are rejected. `Payload` is opaque authenticated application data outside commitments. `credit.MemoV1` is an optional memo codec independent of the envelope version.
 
 ### Authorization, fees and proving
 
@@ -121,7 +123,7 @@ Quotes bind chain, Protocol, token, registered signer, fee recipient/amount, dea
 
 ## Managed grant state and recovery
 
-`walletSession.Credit()` composes `session/credit` with the same encrypted WalletStore. Note and grant inventories/journals remain separate. Both roles of one physical grant reserve together. Current allocation, bitmap, consumed nullifiers, registered historical roots, UTC draw window and ERC20 gross/fee allowance are checked through the session's pinned provider.
+`walletSession.Credit()` composes `session/credit` with the same encrypted WalletStore. Note and grant inventories/journals remain separate. Both roles of one physical grant reserve together. Current scoped grant status, consumed nullifiers, registered historical roots, UTC draw window and ERC20 gross/fee allowance are checked through the session's pinned provider.
 
 The managed flow provides `Prepare`, explicit EIP-712 authorization, `Prove`, `Calldata`, paid broadcaster submission, `Cancel`, `Resume` and canonical `Reconcile`. Externalization and exact calldata are committed before submission; transport failures retain reservations. Resume replaces the old worker lease and independently verifies saved proofs. A canonical reverted transaction can release reservations; an unconfirmed operator result cannot.
 
@@ -131,9 +133,9 @@ Use `walletSession.CreditReconciler("latest")` to bind the actual transaction de
 
 ## Typed Protocol RPC and receiving
 
-Note methods are `GetNote`, `GetNoteUpdates`, `GetTransactionNoteUpdates` and `IsNoteSpent`. Credit methods are `GetCreditState`, `GetCreditTransitions`, `GetTransactionCreditUpdates`, `IsCreditConsumed`, `GetCreditAllocation` and `GetCreditRevocationBitmap`.
+Note methods are `GetNote`, `GetNoteUpdates`, `GetTransactionNoteUpdates` and `IsNoteSpent`. Credit methods are `GetCreditState`, `GetCreditTransitions`, `GetTransactionCreditUpdates`, `IsCreditConsumed`, `GetCreditStatus`.
 
-One indexed CreditState is one physical leaf with two opaque role deliveries. Credit records never pass through the Note APIs. Public grant references/bitmap are distinct from private spender, terms and usage. Index availability (`not_found`, `pending_index`, `indexed`) is separate from chain receipt success/reversion.
+One indexed CreditState is one physical leaf with two opaque role deliveries. Credit records never pass through the Note APIs. Public grant identifiers/statuses are distinct from private spender, terms and usage. Index availability (`not_found`, `pending_index`, `indexed`) is separate from chain receipt success/reversion.
 
 RPC candidates are authenticated against canonical receipts, insertion positions, membership and chain state before becoming spendable inventory. FMD is a filter, not proof of completeness or payment. Discovery coverage is separate from blocks merely observed during reconciliation. A reorganization needs an explicit reset refresh.
 
@@ -151,7 +153,7 @@ IPN contains no viewing/spending key, ciphertext, payload or membership path. Ex
 
 `prepared.EstimateGas()` returns `(GasEstimate, error)` before authorization or proof, on Note and managed operations and all four Credit operations. It reads only the prepared structure and embedded benchmarks: no provider, calldata export, store write or submission is involved.
 
-All valid direct shapes return `Source: "benchmark"`, `Available: true` and positive `*uint64 GasUnits`: Shield1–10 outputs, all canonical transact shapes through190 total slots (funding/withdrawal/fee included), Credit create/update/revoke and draw1–80 with any payer grouping. `Statistic` is `median` for a measured shape or `estimate` for receipt-calibrated estimation. `ProtocolCommit` and `SourceSHA256` identify the same data as TS; payload, extra source trees, Permit and funding signatures use the same allowances. Unknown revocation callers use a conservative contract-wallet allowance; estimating never queries a provider. Recursive aggregate outer previews remain explicitly unavailable.
+Gas data retains its recorded historical source and manifest provenance; current grant-ID layouts have not been remeasured by this SDK synchronization. All valid direct shapes return `Source: "benchmark"`, `Available: true` and positive `*uint64 GasUnits`: Shield1–10 outputs, all canonical transact shapes through190 total slots (funding/withdrawal/fee included), Credit create/update/revoke and draw1–80 with any payer grouping. `Statistic` is `median` for a measured shape or `estimate` for receipt-calibrated estimation. `ProtocolCommit` and `SourceSHA256` identify the same data as TS; payload, extra source trees, Permit and funding signatures use the same allowances. Unknown revocation callers use a conservative contract-wallet allowance; estimating never queries a provider. Recursive aggregate outer previews remain explicitly unavailable.
 
 ```go
 estimate, err := prepared.EstimateGas()
@@ -174,7 +176,7 @@ python3 scripts/test-sync-reference.py
 
 Native integration tests additionally use `BB_BINARY_PATH` and `NOIR_EXECUTE_PATH`. The backend checks exact Noir/BB versions and authenticated artifact/VK identity, does not automatically download tools and never uploads witnesses.
 
-Maintainers regenerate bindings with `cd protocol && INVISI_PROTOCOL_ROOT=/path/to/invisi-core go generate ./contracts`. `python3 scripts/sync-reference.py --proving-only` authenticates the current 28 daily Note circuits, 34 aggregate outers and 15 direct Credit routes, with recursive certificates for C1..C10. User manifest4/format7, aggregate receipts10 and Credit manifest7/format8 have separate identities.
+Maintainers regenerate bindings with `cd protocol && INVISI_PROTOCOL_ROOT=/path/to/invisi-core go generate ./contracts`. `python3 scripts/sync-reference.py --proving-only` authenticates the current 28 daily Note circuits, 34 aggregate outers and 15 direct Credit routes, with recursive certificates for C1..C10. User manifest4/format7, aggregate receipts10 and Credit manifest8/format9 have separate identities.
 
 `State.Update(Change, deadline)` applies mutually exclusive uint128 increase/decrease deltas to the authenticated input balance. `Change.Unlimited == nil` preserves the mode; entering unlimited clears the balance and requires zero deltas, and leaving unlimited starts at zero plus this increase. Update preserves historical usage. Owner-pulled create/update/revoke fees do not consume available credit. `PrepareUpdate` freezes the original change; quotes never apply the delta again. An explicit new preparation applies that change to the latest accepted state; an externalized journal always resumes its original calldata.
 
@@ -236,7 +238,7 @@ The combined circuit uses the same independent Core resource set as other Core c
 
 ## Independent proving resource sets
 
-Core (Transact/Credit, including initial-payment) and Provenance use separate immutable catalogs. The default Core index is `36f58bac1a0f70c6f8422b47f7cc35a30416a20f8a0f30038d23db0832e2bc93`; the Provenance index is `8d5a3e60e3e5cbe315150511207d7aff67f4e2924148d396b67d82017ecd1f1c`. Public objects retain their existing bytes and logical names. Downloads use `/prover/sets/<index-hash>/`, and verified objects share the same content-addressed cache.
+Core (Transact/Credit, including initial-payment) and Provenance use separate immutable catalogs. The default Core index is `85a5d1dffe40fc965ab4345a28b632f463c3ad861c44d5845850fbc7447fd8f6`; the Provenance index is `8d5a3e60e3e5cbe315150511207d7aff67f4e2924148d396b67d82017ecd1f1c`. Credit objects use the current grant-ID identity; unchanged Note and Provenance objects retain their authenticated identities. Downloads use `/prover/sets/<index-hash>/`, and verified objects share the same content-addressed cache.
 
 Core operations do not require the Provenance catalog; Provenance operations do not load Core. Missing or corrupt split resources fail without a legacy downgrade. Historical catalogs remain available through explicit legacy configuration.
 

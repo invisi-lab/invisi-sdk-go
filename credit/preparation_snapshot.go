@@ -53,6 +53,7 @@ func (p CreatePreparation) Clone() CreatePreparation {
 		p.InitialPayment = &v
 	}
 	p.AvailableCredit = snapshotAmount(p.AvailableCredit)
+	p.GrantID = snapshotAmount(p.GrantID)
 	p.CreditSharedKey = snapshotAmount(p.CreditSharedKey)
 	p.Payload = snapshotPayload(p.Payload)
 	p.Fee = p.Fee.clone()
@@ -77,4 +78,8 @@ func (p DrawPreparation) Clone() DrawPreparation {
 	}
 	return p
 }
-func (p RevokePreparation) Clone() RevokePreparation { p.Fee = p.Fee.clone(); return p }
+func (p RevokePreparation) Clone() RevokePreparation {
+	p.GrantID = snapshotAmount(p.GrantID)
+	p.Fee = p.Fee.clone()
+	return p
+}

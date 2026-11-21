@@ -245,7 +245,7 @@ func (o *Operation) cancelViaBroadcaster(ctx context.Context, client *broadcaste
 				role = credit.Owner
 			}
 			g, ok := state.Grants[GrantKey(common.Hash(commitment.Bytes()), role)]
-			if !ok || g.ReservedBy != o.id || g.Consumed || g.Revoked {
+			if !ok || g.ReservedBy != o.id || g.Consumed || g.GrantStatus != 1 {
 				return fmt.Errorf("cancelled Credit input unavailable")
 			}
 		}

@@ -87,8 +87,8 @@ func TestScanStateCacheKeepsRevocationChecksAndSeparatesBlocks(t *testing.T) {
 	if provider.calls != 3 {
 		t.Fatalf("expected Note+Credit consumption and revocation bitmap, got %d", provider.calls)
 	}
-	if state.PostpaidCredit.Grants["grant"].Revoked || state.PostpaidCredit.Grants["grant"].Consumed {
-		t.Fatal("cached check altered grant state")
+	if state.PostpaidCredit.Grants["grant"].Revoked || state.PostpaidCredit.Grants["grant"].GrantStatus != 0 || state.PostpaidCredit.Grants["grant"].Consumed {
+		t.Fatal("unknown Credit status must not become active")
 	}
 	if err = s.checkKnownState(withScanStateCache(ctx), &state, block); err != nil {
 		t.Fatal(err)

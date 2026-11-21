@@ -15,7 +15,7 @@ import (
 	"github.com/invisi-labs/invisi-sdk-go/primitives"
 )
 
-const deliveryDomain = "Invisi.CreditDelivery.v2"
+const deliveryDomain = "Invisi.CreditDelivery.v4.GrantId.Uint128"
 
 type Role byte
 
@@ -129,8 +129,7 @@ func encodeDelivery(d DeliveryState) []byte {
 	s := d.State
 	out := put(nil, s.SpenderWalletIdentity, 32)
 	out = put(out, s.OwnerWalletIdentity, 32)
-	out = put(out, s.RevocationShard, 8)
-	out = put(out, s.RevocationSlot, 2)
+	out = put(out, s.GrantID, 16)
 	out = put(out, s.Nonce, 32)
 	out = put(out, s.Expiry, 8)
 	out = put(out, s.CreditSharedKey, 32)
@@ -162,7 +161,7 @@ func Encrypt(d DeliveryState, c DeliveryContext, role Role) ([]byte, error) {
 		return nil, err
 	}
 	keys, _ := roleKey(d, role)
-	if len(d.State.Payload) > 4096-485 {
+	if len(d.State.Payload) > 4096-491 {
 		return nil, fmt.Errorf("Credit envelope exceeds resource bound")
 	}
 	private, err := ethcrypto.GenerateKey()
@@ -171,7 +170,7 @@ func Encrypt(d DeliveryState, c DeliveryContext, role Role) ([]byte, error) {
 	}
 	raw := ethcrypto.FromECDSA(private)
 	defer clear(raw)
-	header := append([]byte{0x82}, ethcrypto.CompressPubkey(&private.PublicKey)...)
+	header := append([]byte{0x84}, ethcrypto.CompressPubkey(&private.PublicKey)...)
 	entropy := make([]byte, 28)
 	if _, err = rand.Read(entropy); err != nil {
 		return nil, err
@@ -189,7 +188,7 @@ func Decrypt(private, envelope []byte, c DeliveryContext, role Role) (DeliverySt
 	if role != Owner && role != Spender {
 		return DeliveryState{}, fmt.Errorf("invalid Credit delivery role")
 	}
-	if len(envelope) < 485 || len(envelope) > 4096 || envelope[0] != 0x82 {
+	if len(envelope) < 491 || len(envelope) > 4096 || envelope[0] != 0x84 {
 		return DeliveryState{}, fmt.Errorf("unsupported Credit envelope")
 	}
 	recipient, err := primitives.ViewingPublicKey(private)
@@ -211,15 +210,15 @@ func Decrypt(private, envelope []byte, c DeliveryContext, role Role) (DeliverySt
 // DecodeDeliveryPlaintext verifies native wallet output independently of the executor.
 func DecodeDeliveryPlaintext(plain []byte, c DeliveryContext, role Role, recipient []byte) (DeliveryState, error) {
 	var err error
-	if len(plain) < 407 || int(binary.BigEndian.Uint16(plain[405:407])) != len(plain)-407 {
+	if len(plain) < 413 || int(binary.BigEndian.Uint16(plain[411:413])) != len(plain)-413 {
 		return DeliveryState{}, fmt.Errorf("invalid Credit plaintext length")
 	}
-	s := State{ProtocolContext: c.ProtocolContext, TokenAddress: c.TokenAddress, Payload: append([]byte(nil), plain[407:]...)}
-	fields := []*fr.Element{&s.SpenderWalletIdentity, &s.OwnerWalletIdentity, &s.RevocationShard, &s.RevocationSlot, &s.Nonce, &s.Expiry, &s.CreditSharedKey, &s.SingleLimit, &s.DailyLimit, &s.MonthlyLimit, &s.AvailableCredit, &s.LastDay, &s.DailySpent, &s.LastMonth, &s.MonthlySpent, &s.TotalSpent}
-	sizes := []int{32, 32, 8, 2, 32, 8, 32, 16, 16, 16, 16, 8, 16, 8, 16, 16}
+	s := State{ProtocolContext: c.ProtocolContext, TokenAddress: c.TokenAddress, Payload: append([]byte(nil), plain[413:]...)}
+	fields := []*fr.Element{&s.SpenderWalletIdentity, &s.OwnerWalletIdentity, &s.GrantID, &s.Nonce, &s.Expiry, &s.CreditSharedKey, &s.SingleLimit, &s.DailyLimit, &s.MonthlyLimit, &s.AvailableCredit, &s.LastDay, &s.DailySpent, &s.LastMonth, &s.MonthlySpent, &s.TotalSpent}
+	sizes := []int{32, 32, 16, 32, 8, 32, 16, 16, 16, 16, 8, 16, 8, 16, 16}
 	at := 0
 	for i, target := range fields {
-		if i == 11 {
+		if i == 10 {
 			if plain[at] > 1 {
 				return DeliveryState{}, fmt.Errorf("invalid unlimited flag")
 			}

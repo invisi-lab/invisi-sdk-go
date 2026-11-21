@@ -14,12 +14,12 @@ import (
 func TestRevokeHasNoProofAndBindsOriginalNamespace(t *testing.T) {
 	s, _ := fixture(t)
 	ctx := Context{ProtocolContext: s.ProtocolContext, TokenAddress: common.BigToAddress(big.NewInt(34)), Timestamp: 2000000000}
-	p := RevokeParams{Token: ctx.TokenAddress, Owner: common.BigToAddress(big.NewInt(44)), Shard: 1, Slot: 0, Deadline: big.NewInt(2000000300)}
+	p := RevokeParams{Token: ctx.TokenAddress, Owner: common.BigToAddress(big.NewInt(44)), GrantID: big.NewInt(1), Deadline: big.NewInt(2000000300)}
 	data, err := p.Calldata(ctx, nil, p.Owner)
 	if err != nil {
 		t.Fatal(err)
 	}
-	id := crypto.Keccak256([]byte("revokeCredit(address,address,uint64,uint16,uint256,address,uint256,bytes)"))[:4]
+	id := crypto.Keccak256([]byte("revokeCredit(address,address,uint128,uint256,address,uint256,bytes)"))[:4]
 	if !bytes.Equal(data[:4], id) {
 		t.Fatal("wrong revoke ABI")
 	}
@@ -34,7 +34,7 @@ func TestRevokeHasNoProofAndBindsOriginalNamespace(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	p.Slot = 1
+	p.GrantID = big.NewInt(2)
 	request, err = p.TypedData(ctx)
 	if err != nil {
 		t.Fatal(err)
@@ -60,10 +60,10 @@ func TestLifecycleCalldataUsesCurrentSignatures(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if common.Bytes2Hex(a.Methods["createCredit"].ID) != "00b6fa56" {
+	if common.Bytes2Hex(a.Methods["createCredit"].ID) != "4aa2aed8" {
 		t.Fatal("default ABI uses legacy selector")
 	}
-	for _, name := range []string{"createCredit", "creditDraw", "updateCredit", "revokeCredit", "creditAllocation", "creditRevocationBitmap"} {
+	for _, name := range []string{"createCredit", "creditDraw", "updateCredit", "revokeCredit", "creditStatus"} {
 		if _, ok := a.Methods[name]; !ok {
 			t.Fatalf("missing %s", name)
 		}

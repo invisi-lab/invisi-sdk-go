@@ -23,7 +23,7 @@ var currentABIJSON string
 func ContractABI() (abi.ABI, error)       { return abi.JSON(strings.NewReader(currentABIJSON)) }
 func LegacyContractABI() (abi.ABI, error) { return abi.JSON(strings.NewReader(abiJSON)) }
 func pack(name string, args ...any) ([]byte, error) {
-	a, err := LegacyContractABI()
+	a, err := ContractABI()
 	if err != nil {
 		return nil, err
 	}
@@ -65,8 +65,7 @@ func (p DrawParams) Calldata(c Context, proof []byte, deliveries []protocol.Deli
 
 type RevokeParams struct {
 	Token, Owner common.Address
-	Shard        uint64
-	Slot         uint16
+	GrantID      *big.Int `abi:"grantId"`
 	Deadline     *big.Int
 	FeeRecipient common.Address
 	FeeAmount    *big.Int
@@ -79,7 +78,7 @@ func (p RevokeParams) validate(c Context) error {
 	if err := c.validate(p.Token, p.Deadline); err != nil {
 		return err
 	}
-	if p.Owner == (common.Address{}) || p.Shard == 0 {
+	if p.Owner == (common.Address{}) || !ValidGrantID(p.GrantID) {
 		return fmt.Errorf("invalid Credit owner or revocation namespace")
 	}
 	return nil
@@ -90,11 +89,11 @@ func (p RevokeParams) TypedData(c Context) (apitypes.TypedData, error) {
 	}
 	fee, _ := normalizeFee(p.FeeRecipient, p.FeeAmount)
 	chain := ethmath.HexOrDecimal256(*primitives.ElementToBigInt(c.ChainID))
-	return apitypes.TypedData{Types: apitypes.Types{"EIP712Domain": {{Name: "name", Type: "string"}, {Name: "version", Type: "string"}, {Name: "chainId", Type: "uint256"}, {Name: "verifyingContract", Type: "address"}}, "RevokeCredit": {{Name: "token", Type: "address"}, {Name: "owner", Type: "address"}, {Name: "shard", Type: "uint64"}, {Name: "slot", Type: "uint16"}, {Name: "deadline", Type: "uint256"}, {Name: "feeRecipient", Type: "address"}, {Name: "feeAmount", Type: "uint256"}}}, PrimaryType: "RevokeCredit", Domain: apitypes.TypedDataDomain{Name: "InvisibleProtocol", Version: "1", ChainId: &chain, VerifyingContract: common.BigToAddress(primitives.ElementToBigInt(c.ProtocolAddress)).Hex()}, Message: apitypes.TypedDataMessage{"token": p.Token.Hex(), "owner": p.Owner.Hex(), "shard": new(big.Int).SetUint64(p.Shard).String(), "slot": new(big.Int).SetUint64(uint64(p.Slot)).String(), "deadline": p.Deadline.String(), "feeRecipient": p.FeeRecipient.Hex(), "feeAmount": fee.String()}}, nil
+	return apitypes.TypedData{Types: apitypes.Types{"EIP712Domain": {{Name: "name", Type: "string"}, {Name: "version", Type: "string"}, {Name: "chainId", Type: "uint256"}, {Name: "verifyingContract", Type: "address"}}, "RevokeCredit": {{Name: "token", Type: "address"}, {Name: "owner", Type: "address"}, {Name: "grantId", Type: "uint128"}, {Name: "deadline", Type: "uint256"}, {Name: "feeRecipient", Type: "address"}, {Name: "feeAmount", Type: "uint256"}}}, PrimaryType: "RevokeCredit", Domain: apitypes.TypedDataDomain{Name: "InvisibleProtocol", Version: "1", ChainId: &chain, VerifyingContract: common.BigToAddress(primitives.ElementToBigInt(c.ProtocolAddress)).Hex()}, Message: apitypes.TypedDataMessage{"token": p.Token.Hex(), "owner": p.Owner.Hex(), "grantId": p.GrantID.String(), "deadline": p.Deadline.String(), "feeRecipient": p.FeeRecipient.Hex(), "feeAmount": fee.String()}}, nil
 }
 
 // Calldata permits a direct owner call or an externally supplied EOA/ERC-1271 authorization.
-// Contract settlement authenticates signatures and the current bitmap; no ZK state is required.
+// Contract settlement authenticates signatures and the current grant status; no ZK state is required.
 func (p RevokeParams) Calldata(c Context, signature []byte, caller common.Address) ([]byte, error) {
 	if err := p.validate(c); err != nil {
 		return nil, err
@@ -103,7 +102,7 @@ func (p RevokeParams) Calldata(c Context, signature []byte, caller common.Addres
 		return nil, fmt.Errorf("direct revocation requires owner caller")
 	}
 	fee, _ := normalizeFee(p.FeeRecipient, p.FeeAmount)
-	return pack("revokeCredit", p.Token, p.Owner, p.Shard, p.Slot, p.Deadline, p.FeeRecipient, fee, signature)
+	return pack("revokeCredit", p.Token, p.Owner, p.GrantID, p.Deadline, p.FeeRecipient, fee, signature)
 }
 
 func encodeProof(proof []byte) ([]byte, error) {
@@ -123,20 +122,7 @@ func encodeProof(proof []byte) ([]byte, error) {
 
 func packCreate(p CreateParams, proof []byte, deliveries []protocol.Delivery) ([]byte, error) {
 	if p.CreationABI == "legacy" {
-		if p.HasInitialPayment != nil && *p.HasInitialPayment {
-			return nil, fmt.Errorf("legacy creation cannot have initial payment")
-		}
-		// Keep the historical tuple codec independent from metadata fields.
-		old := struct {
-			Token, Owner     common.Address
-			RevocationShard  uint64
-			RevocationSlot   uint16
-			CreditCommitment common.Hash
-			Deadline         *big.Int
-			FeeRecipient     common.Address
-			FeeAmount        *big.Int
-		}{p.Token, p.Owner, p.RevocationShard, p.RevocationSlot, p.CreditCommitment, p.Deadline, p.FeeRecipient, p.FeeAmount}
-		return pack("createCredit", proof, old, deliveries)
+		return nil, fmt.Errorf("historical creation ABI cannot encode current grant ID")
 	}
 	if p.CreationABI != "" && p.CreationABI != "initial-payment" {
 		return nil, fmt.Errorf("unsupported creation ABI")
@@ -155,8 +141,7 @@ func packCreate(p CreateParams, proof []byte, deliveries []protocol.Delivery) ([
 	}
 	args := struct {
 		Token, Owner      common.Address
-		RevocationShard   uint64
-		RevocationSlot    uint16
+		GrantID           *big.Int `abi:"grantId"`
 		CreditCommitment  common.Hash
 		Deadline          *big.Int
 		FeeRecipient      common.Address
@@ -164,6 +149,6 @@ func packCreate(p CreateParams, proof []byte, deliveries []protocol.Delivery) ([
 		HasInitialPayment bool
 		TotalAmount       *big.Int
 		NoteCommitment    common.Hash
-	}{p.Token, p.Owner, p.RevocationShard, p.RevocationSlot, p.CreditCommitment, p.Deadline, p.FeeRecipient, p.FeeAmount, *p.HasInitialPayment, total, p.NoteCommitment}
+	}{p.Token, p.Owner, p.GrantID, p.CreditCommitment, p.Deadline, p.FeeRecipient, p.FeeAmount, *p.HasInitialPayment, total, p.NoteCommitment}
 	return a.Pack("createCredit", proof, args, deliveries)
 }

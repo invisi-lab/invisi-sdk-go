@@ -210,7 +210,7 @@ func WalletAuthorizationTypedData(request WalletAuthorizationRequest) (apitypes.
 	}
 	operationVersion := ".v1"
 	if request.Operation != WalletTransact {
-		operationVersion = ".v4"
+		operationVersion = ".GrantId.Uint128.v1"
 	}
 	chainID := ethmath.HexOrDecimal256(*chain)
 	return apitypes.TypedData{Types: apitypes.Types{

@@ -84,12 +84,12 @@ func (s *WalletSession) validateCreditIntentWithProvider(ctx context.Context, in
 		} else if p.FeeAmount != nil {
 			fee.Set(p.FeeAmount)
 		}
-		next, err := contract.CreditAllocation(opts, p.Owner, p.Token)
+		status, err := contract.CreditStatusValue(opts, p.Owner, p.Token, p.GrantID)
 		if err != nil {
 			return err
 		}
-		if next.Shard != p.RevocationShard || next.Slot != p.RevocationSlot {
-			return errors.New("Credit allocation changed; prepare again")
+		if status != 0 {
+			return errors.New("Credit grant ID already used or disabled")
 		}
 	case intent.Update != nil:
 		p := intent.Update
@@ -138,108 +138,10 @@ func (s *WalletSession) validateCreditIntentWithProvider(ctx context.Context, in
 	if err != nil {
 		return err
 	}
-	allocations := map[common.Address]*big.Int{}
-	bitmaps := map[string]*big.Int{}
-	type grantReference struct {
-		owner common.Address
-		shard uint64
-		slot  uint16
+	if err = checkCreditStatuses(ctx, contract, opts, token, intent); err != nil {
+		return err
 	}
-	refs := []grantReference{}
-	if p := intent.Update; p != nil {
-		refs = append(refs, grantReference{p.Owner, p.RevocationShard, p.RevocationSlot})
-	}
-	if p := intent.Revoke; p != nil {
-		refs = append(refs, grantReference{p.Owner, p.Shard, p.Slot})
-	}
-	if p := intent.Draw; p != nil {
-		for _, ref := range p.GrantRefs {
-			refs = append(refs, grantReference{p.Payers[ref.PayerIndex.Uint64()].Payer, ref.Shard, ref.Slot})
-		}
-	}
-	owners := []common.Address{}
-	words := []grantReference{}
-	ownerSeen := map[common.Address]bool{}
-	wordSeen := map[string]bool{}
-	for _, ref := range refs {
-		if ref.shard == 0 {
-			return errors.New("zero grant shard")
-		}
-		if !ownerSeen[ref.owner] {
-			ownerSeen[ref.owner] = true
-			owners = append(owners, ref.owner)
-		}
-		key := fmt.Sprintf("%s:%d:%d", ref.owner.Hex(), ref.shard, uint8(ref.slot/256))
-		if !wordSeen[key] {
-			wordSeen[key] = true
-			words = append(words, ref)
-		}
-	}
-	values, e := transaction.MapPreparation(ctx, len(owners)+len(words), func(ctx context.Context, i int) (*big.Int, error) {
-		callOpts := &bind.CallOpts{Context: ctx, BlockNumber: head.Number}
-		if i < len(owners) {
-			next, e := contract.CreditAllocation(callOpts, owners[i], token)
-			if e != nil {
-				return nil, e
-			}
-			if next.Shard == 0 {
-				return nil, errors.New("invalid current grant allocation")
-			}
-			count := new(big.Int).SetUint64(next.Shard - 1)
-			count.Mul(count, big.NewInt(65536))
-			count.Add(count, new(big.Int).SetUint64(uint64(next.Slot)))
-			return count, nil
-		}
-		ref := words[i-len(owners)]
-		return contract.CreditRevocationBitmap(callOpts, ref.owner, token, ref.shard, uint8(ref.slot/256))
-	})
-	if e != nil {
-		return e
-	}
-	for i, owner := range owners {
-		allocations[owner] = values[i]
-	}
-	for i, ref := range words {
-		bitmaps[fmt.Sprintf("%s:%d:%d", ref.owner.Hex(), ref.shard, uint8(ref.slot/256))] = values[len(owners)+i]
-	}
-	checkGrant := func(owner common.Address, shard uint64, slot uint16) error {
-		if shard == 0 {
-			return errors.New("zero grant shard")
-		}
-		count := allocations[owner]
-		index := new(big.Int).SetUint64(shard - 1)
-		index.Mul(index, big.NewInt(65536))
-		index.Add(index, new(big.Int).SetUint64(uint64(slot)))
-		if index.Cmp(count) >= 0 {
-			return errors.New("grant reference is not allocated")
-		}
-		word := uint8(slot / 256)
-		key := fmt.Sprintf("%s:%d:%d", owner.Hex(), shard, word)
-		bits := bitmaps[key]
-		if bits.Bit(int(slot%256)) != 0 {
-			return errors.New("Credit authority was revoked")
-		}
-		return nil
-	}
-	if intent.Update != nil {
-		p := intent.Update
-		if err = checkGrant(p.Owner, p.RevocationShard, p.RevocationSlot); err != nil {
-			return err
-		}
-	}
-	if intent.Revoke != nil {
-		p := intent.Revoke
-		if err = checkGrant(p.Owner, p.Shard, p.Slot); err != nil {
-			return err
-		}
-	}
-	if intent.Draw != nil {
-		for _, ref := range intent.Draw.GrantRefs {
-			if err = checkGrant(intent.Draw.Payers[ref.PayerIndex.Uint64()].Payer, ref.Shard, ref.Slot); err != nil {
-				return err
-			}
-		}
-	}
+
 	if historical {
 		return nil
 	}
@@ -385,12 +287,12 @@ func (s *WalletSession) checkCreditCancellation(ctx context.Context, intent cred
 	switch {
 	case intent.Create != nil:
 		p := intent.Create
-		next, err := contract.CreditAllocation(opts, p.Owner, p.Token)
+		status, err := contract.CreditStatusValue(opts, p.Owner, p.Token, p.GrantID)
 		if err != nil {
 			return err
 		}
-		if next.Shard != p.RevocationShard || next.Slot != p.RevocationSlot {
-			return errors.New("Credit allocation changed; prepare again")
+		if status != 0 {
+			return errors.New("Credit grant ID already used or disabled")
 		}
 	case intent.Update != nil:
 	case intent.Draw != nil:
@@ -416,114 +318,64 @@ func (s *WalletSession) checkCreditCancellation(ctx context.Context, intent cred
 	if err != nil {
 		return err
 	}
-	allocations := map[common.Address]*big.Int{}
-	bitmaps := map[string]*big.Int{}
-	type grantReference struct {
-		owner common.Address
-		shard uint64
-		slot  uint16
+	if err = checkCreditStatuses(ctx, contract, opts, token, intent); err != nil {
+		return err
 	}
-	refs := []grantReference{}
-	if p := intent.Update; p != nil {
-		refs = append(refs, grantReference{p.Owner, p.RevocationShard, p.RevocationSlot})
-	}
-	if p := intent.Revoke; p != nil {
-		refs = append(refs, grantReference{p.Owner, p.Shard, p.Slot})
-	}
-	if p := intent.Draw; p != nil {
-		for _, ref := range p.GrantRefs {
-			refs = append(refs, grantReference{p.Payers[ref.PayerIndex.Uint64()].Payer, ref.Shard, ref.Slot})
-		}
-	}
-	owners := []common.Address{}
-	words := []grantReference{}
-	ownerSeen := map[common.Address]bool{}
-	wordSeen := map[string]bool{}
-	for _, ref := range refs {
-		if ref.shard == 0 {
-			return errors.New("zero grant shard")
-		}
-		if !ownerSeen[ref.owner] {
-			ownerSeen[ref.owner] = true
-			owners = append(owners, ref.owner)
-		}
-		key := fmt.Sprintf("%s:%d:%d", ref.owner.Hex(), ref.shard, uint8(ref.slot/256))
-		if !wordSeen[key] {
-			wordSeen[key] = true
-			words = append(words, ref)
-		}
-	}
-	values, e := transaction.MapPreparation(ctx, len(owners)+len(words), func(ctx context.Context, i int) (*big.Int, error) {
-		callOpts := &bind.CallOpts{Context: ctx, BlockNumber: head.Number}
-		if i < len(owners) {
-			next, e := contract.CreditAllocation(callOpts, owners[i], token)
-			if e != nil {
-				return nil, e
-			}
-			if next.Shard == 0 {
-				return nil, errors.New("invalid current grant allocation")
-			}
-			count := new(big.Int).SetUint64(next.Shard - 1)
-			count.Mul(count, big.NewInt(65536))
-			count.Add(count, new(big.Int).SetUint64(uint64(next.Slot)))
-			return count, nil
-		}
-		ref := words[i-len(owners)]
-		return contract.CreditRevocationBitmap(callOpts, ref.owner, token, ref.shard, uint8(ref.slot/256))
-	})
-	if e != nil {
-		return e
-	}
-	for i, owner := range owners {
-		allocations[owner] = values[i]
-	}
-	for i, ref := range words {
-		bitmaps[fmt.Sprintf("%s:%d:%d", ref.owner.Hex(), ref.shard, uint8(ref.slot/256))] = values[len(owners)+i]
-	}
-	checkGrant := func(owner common.Address, shard uint64, slot uint16) error {
-		if shard == 0 {
-			return errors.New("zero grant shard")
-		}
-		count := allocations[owner]
-		index := new(big.Int).SetUint64(shard - 1)
-		index.Mul(index, big.NewInt(65536))
-		index.Add(index, new(big.Int).SetUint64(uint64(slot)))
-		if index.Cmp(count) >= 0 {
-			return errors.New("grant reference is not allocated")
-		}
-		word := uint8(slot / 256)
-		key := fmt.Sprintf("%s:%d:%d", owner.Hex(), shard, word)
-		bits := bitmaps[key]
-		if bits.Bit(int(slot%256)) != 0 {
-			return errors.New("Credit authority was revoked")
-		}
-		return nil
-	}
-	if intent.Update != nil {
-		p := intent.Update
-		if err = checkGrant(p.Owner, p.RevocationShard, p.RevocationSlot); err != nil {
-			return err
-		}
-	}
-	if intent.Revoke != nil {
-		p := intent.Revoke
-		if err = checkGrant(p.Owner, p.Shard, p.Slot); err != nil {
-			return err
-		}
-	}
-	if intent.Draw != nil {
-		for _, ref := range intent.Draw.GrantRefs {
-			if err = checkGrant(intent.Draw.Payers[ref.PayerIndex.Uint64()].Payer, ref.Shard, ref.Slot); err != nil {
-				return err
-			}
-		}
-	}
+
 	canonical, err := provider.HeaderByNumber(ctx, head.Number)
 	if err != nil {
 		return err
 	}
 	if canonical == nil || canonical.Hash() != head.Hash() {
 		return errors.New("Credit validation block changed")
+	}
+	return nil
+}
+
+// checkCreditStatuses binds each check to the canonical numeric block in opts.
+func checkCreditStatuses(ctx context.Context, contract *contracts.InvisiCoreCaller, opts *bind.CallOpts, token common.Address, intent credit.Intent) error {
+	type reference struct {
+		owner  common.Address
+		id     *big.Int
+		revoke bool
+	}
+	refs := []reference{}
+	if p := intent.Update; p != nil {
+		refs = append(refs, reference{p.Owner, p.GrantID, false})
+	}
+	if p := intent.Revoke; p != nil {
+		refs = append(refs, reference{p.Owner, p.GrantID, true})
+	}
+	if p := intent.Draw; p != nil {
+		for _, ref := range p.GrantRefs {
+			refs = append(refs, reference{p.Payers[ref.PayerIndex.Uint64()].Payer, ref.GrantID, false})
+		}
+	}
+	statuses := map[string]uint8{}
+	for _, ref := range refs {
+		if !credit.ValidGrantID(ref.id) {
+			return errors.New("invalid Credit grant ID")
+		}
+		key := fmt.Sprintf("%s:%s:%s", ref.owner, token, ref.id)
+		status, ok := statuses[key]
+		if !ok {
+			var err error
+			status, err = contract.CreditStatusValue(opts, ref.owner, token, ref.id)
+			if err != nil {
+				return err
+			}
+			if status > 2 {
+				return errors.New("invalid Credit status")
+			}
+			statuses[key] = status
+		}
+		if ref.revoke {
+			if status == 2 {
+				return errors.New("Credit grant already disabled")
+			}
+		} else if status != 1 {
+			return errors.New("Credit grant is not active")
+		}
 	}
 	return nil
 }

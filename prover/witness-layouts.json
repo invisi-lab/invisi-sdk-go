@@ -4234,11 +4234,11 @@
     ]
   },
   "create_credit": {
-    "artifactSha256": "c388b176eb23dc6bc2539da1ae0b3464afa73398eddd5ad3714c0ff94663bf2e",
+    "artifactSha256": "7c05e18eed39d437fe3f89334839ec96b1d20fca496cb97342aa020230b0e06e",
     "keys": {
-      "evm": "61d83881c2d481cb449e1c77e2e8ba8b4d04079aa618532ce1cb24398f39bd13"
+      "evm": "bf9afec9f69441d004f5e0772412376fdba5973fce6bf4ff5ba15cd557097c3f"
     },
-    "publicInputCount": 14,
+    "publicInputCount": 13,
     "public": [
       {
         "name": "chain_id",
@@ -4261,12 +4261,7 @@
         "array": false
       },
       {
-        "name": "revocation_shard",
-        "count": 1,
-        "array": false
-      },
-      {
-        "name": "revocation_slot",
+        "name": "grant_id",
         "count": 1,
         "array": false
       },
@@ -4325,11 +4320,11 @@
     ]
   },
   "credit_draw_slots1": {
-    "artifactSha256": "b700bbb1472310a46c78410aebb91642512266da27892eaba2c7fce97f9955c0",
+    "artifactSha256": "ed43b8067f0ccc02cc7571dec3f5e60a6597cf7f9da32a18030a6629d49e3a6f",
     "keys": {
-      "evm": "15fcfee759347510fd9d99a80920474efa0aa1c950b97c1f083097533b87fe15"
+      "evm": "8ffe5cbf29fbc15f51b5db4d207bce198c343d9d5eefc0b782f97a27b7c13b85"
     },
-    "publicInputCount": 27,
+    "publicInputCount": 26,
     "public": [
       {
         "name": "chain_id",
@@ -4387,12 +4382,7 @@
         "array": true
       },
       {
-        "name": "grant_shards",
-        "count": 1,
-        "array": true
-      },
-      {
-        "name": "grant_slots",
+        "name": "grant_ids",
         "count": 1,
         "array": true
       },
@@ -4487,11 +4477,11 @@
     ]
   },
   "credit_draw_slots2": {
-    "artifactSha256": "b5488cc95a1315f453381d04d4657edac4fa817a64b426ba6470fc60acc59196",
+    "artifactSha256": "2ecee5f5af76e6812839095e81b6395c99576722b37155f329c33b6ef7e34801",
     "keys": {
-      "evm": "cdf66fffb47d80635ecd64926129ce03fbecd722f6505fa805ed134ce79ce021"
+      "evm": "5db2e3ecf104b643209a73db7eebd80ecd3cf85506f724bf7585e6f4e38174da"
     },
-    "publicInputCount": 37,
+    "publicInputCount": 35,
     "public": [
       {
         "name": "chain_id",
@@ -4549,12 +4539,7 @@
         "array": true
       },
       {
-        "name": "grant_shards",
-        "count": 2,
-        "array": true
-      },
-      {
-        "name": "grant_slots",
+        "name": "grant_ids",
         "count": 2,
         "array": true
       },
@@ -4649,11 +4634,11 @@
     ]
   },
   "credit_draw_slots3": {
-    "artifactSha256": "8de790ee3aad1d680f2fe27208769f1edd4e1744b4e3058375a14c4d980a8287",
+    "artifactSha256": "a2d334c8e3f7616d01432a814cd150a5785e674e5e0e580894ddf70d3b6f375a",
     "keys": {
-      "evm": "48f7d68591dca71ab40759ab2966054ed8e52652f9aad1363c7c5d8bbdf0a4e9"
+      "evm": "73b99b0a6423181acffed9054d6e7025cb9009fe6e55872dfe1bb002df42204a"
     },
-    "publicInputCount": 47,
+    "publicInputCount": 44,
     "public": [
       {
         "name": "chain_id",
@@ -4711,12 +4696,7 @@
         "array": true
       },
       {
-        "name": "grant_shards",
-        "count": 3,
-        "array": true
-      },
-      {
-        "name": "grant_slots",
+        "name": "grant_ids",
         "count": 3,
         "array": true
       },
@@ -4811,11 +4791,11 @@
     ]
   },
   "credit_draw_slots4": {
-    "artifactSha256": "8b19f7b174d56bef8b2d2fa1bda0be4f7d63531c44190aa5cd77c4951bed1a42",
+    "artifactSha256": "06ec5cd888b4a663378023102910b0f3bd237ae5c3d2c746960d00edadb7095a",
     "keys": {
-      "evm": "e0c867da35cb5b5efb82e97ce0681c469cd7f49981a56e0bb6a772079ee6fb8b"
+      "evm": "15a39b855ba4ef48369d1d19072f325453d358f7d57627fa8d457c366d5eca37"
     },
-    "publicInputCount": 57,
+    "publicInputCount": 53,
     "public": [
       {
         "name": "chain_id",
@@ -4873,12 +4853,7 @@
         "array": true
       },
       {
-        "name": "grant_shards",
-        "count": 4,
-        "array": true
-      },
-      {
-        "name": "grant_slots",
+        "name": "grant_ids",
         "count": 4,
         "array": true
       },
@@ -4973,11 +4948,11 @@
     ]
   },
   "credit_draw_slots5": {
-    "artifactSha256": "dd37ce70319eed4c292a76774d68f1040d03df95697842a1def78b7fdd4b75af",
+    "artifactSha256": "0a3c622b66a9606ababd9bb6e0d5e806caf6284f6bdd456fadd2f15088393593",
     "keys": {
-      "evm": "a91742641014e910ce6ac5872c183c3f13896674f506b5b83ee864a4107da9dc"
+      "evm": "ad5e9b9eacdf0e717b186e3cbab60862e6c4eb9a23c796a8064f5766816b98cc"
     },
-    "publicInputCount": 67,
+    "publicInputCount": 62,
     "public": [
       {
         "name": "chain_id",
@@ -5035,12 +5010,7 @@
         "array": true
       },
       {
-        "name": "grant_shards",
-        "count": 5,
-        "array": true
-      },
-      {
-        "name": "grant_slots",
+        "name": "grant_ids",
         "count": 5,
         "array": true
       },
@@ -5135,11 +5105,11 @@
     ]
   },
   "credit_draw_slots10": {
-    "artifactSha256": "24ad5a62fc6d7b608f52934a6cc463f63baea1a7c564587bd1acfd077b187524",
+    "artifactSha256": "0b7d3d791844d67ab67e47f156979894ce5edfe1259a5460b1a61e8e4733a645",
     "keys": {
-      "evm": "9f214e607a437025b66898b77572c0e6ca0ac1e6270519ccb9be54ee203044a5"
+      "evm": "564091186b95f054973c4f209d2f96a45337bc1d5e8874b147a097c4d99814d8"
     },
-    "publicInputCount": 117,
+    "publicInputCount": 107,
     "public": [
       {
         "name": "chain_id",
@@ -5197,12 +5167,7 @@
         "array": true
       },
       {
-        "name": "grant_shards",
-        "count": 10,
-        "array": true
-      },
-      {
-        "name": "grant_slots",
+        "name": "grant_ids",
         "count": 10,
         "array": true
       },
@@ -5297,11 +5262,11 @@
     ]
   },
   "credit_draw_slots20": {
-    "artifactSha256": "3491412abfa06cb62673299fd466c94014dd8c4b2778e1f4d513a2da63879e28",
+    "artifactSha256": "bb015088aa2c63fe9fe4144489f6dca6a6fce5b3d24f8c2c062cf1f007e0b3a9",
     "keys": {
-      "evm": "55d68a6d497d61415a396a8095812b0d69032c1c413f4f6beda59b6bb286e9de"
+      "evm": "9e009f0d13ddb3786dc4bae5fa97011c0b45a7b064b9fa9ae7a9b9230552f689"
     },
-    "publicInputCount": 217,
+    "publicInputCount": 197,
     "public": [
       {
         "name": "chain_id",
@@ -5359,12 +5324,7 @@
         "array": true
       },
       {
-        "name": "grant_shards",
-        "count": 20,
-        "array": true
-      },
-      {
-        "name": "grant_slots",
+        "name": "grant_ids",
         "count": 20,
         "array": true
       },
@@ -5459,11 +5419,11 @@
     ]
   },
   "credit_draw_slots30": {
-    "artifactSha256": "5fdeac9350afc1b34904bdb6dc85063d0dd6f728c85d2c25ccef1f2d06e99e0e",
+    "artifactSha256": "0f8c7f2cb67ddff631b3ad696855cadd2d977eb6cbe9ff6a0ea2a829bde5e4b1",
     "keys": {
-      "evm": "51d8c65b69cb9ec0246b6e6d22e049759b62b542da49c1940a876a5793815e6e"
+      "evm": "3477a47fc0770a75c537c104e54210f50e7a59fe986ed77bd285d44a8a71c4a0"
     },
-    "publicInputCount": 317,
+    "publicInputCount": 287,
     "public": [
       {
         "name": "chain_id",
@@ -5521,12 +5481,7 @@
         "array": true
       },
       {
-        "name": "grant_shards",
-        "count": 30,
-        "array": true
-      },
-      {
-        "name": "grant_slots",
+        "name": "grant_ids",
         "count": 30,
         "array": true
       },
@@ -5621,11 +5576,11 @@
     ]
   },
   "credit_draw_slots40": {
-    "artifactSha256": "1abac6d221e7803f26fa5d8508217373609ac54c48d6b36cc288cae5617924cb",
+    "artifactSha256": "86b89e0395db33939f7de5ac20239b86ebfba6740ad49a5a271b9c4402e69950",
     "keys": {
-      "evm": "7800e1618ea7e32d2b7f4b10209ca51731fea7bbfd039e3eb7ee68dfd680c739"
+      "evm": "f01be027cd0bac21fa61e893e41771cede5ecae8ea0187c30520fdb677b2151b"
     },
-    "publicInputCount": 417,
+    "publicInputCount": 377,
     "public": [
       {
         "name": "chain_id",
@@ -5683,12 +5638,7 @@
         "array": true
       },
       {
-        "name": "grant_shards",
-        "count": 40,
-        "array": true
-      },
-      {
-        "name": "grant_slots",
+        "name": "grant_ids",
         "count": 40,
         "array": true
       },
@@ -5783,11 +5733,11 @@
     ]
   },
   "credit_draw_slots50": {
-    "artifactSha256": "9d1d4ae9af3cb04c32ea9837a27b713ae65fd13afc2ac7dad4031ee4395cb9a1",
+    "artifactSha256": "8159114d4aa90492b5e878de646b59d99a65e2fdc44cd6813f9154b91c33321a",
     "keys": {
-      "evm": "d098fa18d9310801aa03f7612ddcfa5494647c3b3d4a8410c4c28d121157a2d8"
+      "evm": "58cf8b02b46d74ec4378deb8e6d05926436cf9a66df58fbae04cf529196ee52c"
     },
-    "publicInputCount": 517,
+    "publicInputCount": 467,
     "public": [
       {
         "name": "chain_id",
@@ -5845,12 +5795,7 @@
         "array": true
       },
       {
-        "name": "grant_shards",
-        "count": 50,
-        "array": true
-      },
-      {
-        "name": "grant_slots",
+        "name": "grant_ids",
         "count": 50,
         "array": true
       },
@@ -5945,11 +5890,11 @@
     ]
   },
   "credit_draw_slots60": {
-    "artifactSha256": "4e19054b8e5768062635c157ed102c5821c85ed8021fee0741ee0017f0797c6c",
+    "artifactSha256": "9b9ddbfa4008afd6882c972bfa2cd8ff7d2db90cfade0e5c42ff1a7271ba16ac",
     "keys": {
-      "evm": "4bf2b115d65a96211e7498e56dd3e8a08c43edeaec33f6821bd4de8fc915afc7"
+      "evm": "c8940c87d99bcd4908a846b274585ad3c3008f6c35b46eee461ee0ef11102a5b"
     },
-    "publicInputCount": 617,
+    "publicInputCount": 557,
     "public": [
       {
         "name": "chain_id",
@@ -6007,12 +5952,7 @@
         "array": true
       },
       {
-        "name": "grant_shards",
-        "count": 60,
-        "array": true
-      },
-      {
-        "name": "grant_slots",
+        "name": "grant_ids",
         "count": 60,
         "array": true
       },
@@ -6107,11 +6047,11 @@
     ]
   },
   "credit_draw_slots70": {
-    "artifactSha256": "9a43c21f801744d31145651101a6fa4287dc3e0778c8cb1dbd5d3d5f1cbb8b71",
+    "artifactSha256": "dfeeab8fea70b44ddc6893a3db19c65d4b7e52277e13dd96b900588de73899c3",
     "keys": {
-      "evm": "fa61d5982830b1120fcc260124b2725c7f348a06c24404bde06cf5954f2d0381"
+      "evm": "ceada0ea353c67c922b1aa436ab81769739bb31d05e20e7e3ae986387d7db7f2"
     },
-    "publicInputCount": 717,
+    "publicInputCount": 647,
     "public": [
       {
         "name": "chain_id",
@@ -6169,12 +6109,7 @@
         "array": true
       },
       {
-        "name": "grant_shards",
-        "count": 70,
-        "array": true
-      },
-      {
-        "name": "grant_slots",
+        "name": "grant_ids",
         "count": 70,
         "array": true
       },
@@ -6269,11 +6204,11 @@
     ]
   },
   "credit_draw_slots80": {
-    "artifactSha256": "123ea52a3b459fd1b8d5075a3ea634a7e90a1efd561f4cba0ede4aa50f137a70",
+    "artifactSha256": "f710025ccb11bd2f20b4405e319dc3da422cb41b3cf3ff4e3072110bc2aa50f1",
     "keys": {
-      "evm": "2796833f0e04658fee386eb603791fd9b15f5462a1f43a942948a80cb7bcec86"
+      "evm": "bb635f933a8aad82be74f11235f5fc44722d8e9539656e51e8aebf1b52411f86"
     },
-    "publicInputCount": 817,
+    "publicInputCount": 737,
     "public": [
       {
         "name": "chain_id",
@@ -6331,12 +6266,7 @@
         "array": true
       },
       {
-        "name": "grant_shards",
-        "count": 80,
-        "array": true
-      },
-      {
-        "name": "grant_slots",
+        "name": "grant_ids",
         "count": 80,
         "array": true
       },
@@ -6431,11 +6361,11 @@
     ]
   },
   "credit_update": {
-    "artifactSha256": "7180fc8d51b87163a2cb71ed99a5e86965bf02e8391088b7e3e2aa159c9ece93",
+    "artifactSha256": "de4278cd7582be7aa04538b2e0763997c332f452019196de3738339b61ec2f06",
     "keys": {
-      "evm": "d5acb3d6db615d9728180efeb87254aa443545770ae1541c2dec684a762c1847"
+      "evm": "05297adb5e050fe29602f03ad4d1c427f654a7dc5ed24ee58c1e8a831ddbf9f2"
     },
-    "publicInputCount": 17,
+    "publicInputCount": 16,
     "public": [
       {
         "name": "chain_id",
@@ -6478,12 +6408,7 @@
         "array": false
       },
       {
-        "name": "revocation_shard",
-        "count": 1,
-        "array": false
-      },
-      {
-        "name": "revocation_slot",
+        "name": "grant_id",
         "count": 1,
         "array": false
       },
@@ -6545,11 +6470,11 @@
     ]
   },
   "create_credit_initial_payment": {
-    "artifactSha256": "915a60c94da9852648a9df075f6f466f797a76dbca14980f6aa68d5a1be2f7d6",
+    "artifactSha256": "0de53ef043ae92d68d6bedee37c564eb4237cad02ae2526eb752725b86876ef4",
     "keys": {
-      "evm": "7ca4a0e6a4c0bd555eaf084ef769972fef99f94b73dbb60909078c0d1c78b3b0"
+      "evm": "caa506da6352376efb6a2d439de3f5278d33f4e491140747335e764795097097"
     },
-    "publicInputCount": 18,
+    "publicInputCount": 17,
     "public": [
       {
         "name": "chain_id",
@@ -6572,12 +6497,7 @@
         "array": false
       },
       {
-        "name": "revocation_shard",
-        "count": 1,
-        "array": false
-      },
-      {
-        "name": "revocation_slot",
+        "name": "grant_id",
         "count": 1,
         "array": false
       },

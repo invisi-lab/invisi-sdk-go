@@ -172,7 +172,7 @@ func IsTerminalRecord(r WalletRecord, pinCredits bool) bool {
 		if json.Unmarshal(r.Value, &c) != nil {
 			return false
 		}
-		return (c.Consumed || c.Revoked) && c.ReservedBy == ""
+		return (c.Consumed || c.GrantStatus == 2) && c.ReservedBy == ""
 	case "operations":
 		var o OperationRecord
 		if json.Unmarshal(r.Value, &o) != nil {

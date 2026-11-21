@@ -39,8 +39,7 @@ type Output struct {
 }
 type GrantRef struct {
 	PayerIndex string `json:"payerIndex"`
-	Shard      string `json:"shard"`
-	Slot       string `json:"slot"`
+	GrantID    string `json:"grantId"`
 }
 type FundingReceipt struct {
 	Payer        common.Address `json:"payer"`

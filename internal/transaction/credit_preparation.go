@@ -72,13 +72,19 @@ func (i *Invisi) creditBuilder(ctx context.Context, identity TransactionIdentity
 			block = b
 			return credit.Context{ProtocolContext: r.CoreContext(), TokenAddress: token, Timestamp: c.Now.Uint64()}, d, nil
 		},
-		Allocation: func(ctx context.Context, c credit.Context) (uint64, uint16, error) {
+		Status: func(ctx context.Context, c credit.Context, owner common.Address, id *big.Int) (uint8, error) {
 			caller, err := contracts.NewInvisiCoreCaller(r.Scope.ProtocolAddress, r.Options.Provider)
 			if err != nil {
-				return 0, 0, err
+				return 0, err
 			}
-			a, err := caller.CreditAllocation(&bind.CallOpts{Context: ctx, BlockNumber: new(big.Int).SetUint64(block.Number)}, identity.Wallet.ownerAddress, c.TokenAddress)
-			return a.Shard, a.Slot, err
+			status, err := caller.CreditStatusValue(&bind.CallOpts{Context: ctx, BlockNumber: new(big.Int).SetUint64(block.Number)}, owner, c.TokenAddress, id)
+			if err != nil {
+				return 0, err
+			}
+			if err = r.Canonical(ctx, block); err != nil {
+				return 0, err
+			}
+			return status, nil
 		},
 		Input: func(ctx context.Context, c credit.Context, h common.Hash, role credit.Role) (credit.PreparationInput, error) {
 			g, ok := grants[h]
@@ -102,12 +108,12 @@ func (i *Invisi) creditBuilder(ctx context.Context, identity TransactionIdentity
 				return credit.PreparationInput{}, err
 			}
 			opts := &bind.CallOpts{Context: ctx, BlockNumber: new(big.Int).SetUint64(block.Number)}
-			bitmap, err := caller.CreditRevocationBitmap(opts, common.BigToAddress(primitives.ElementToBigInt(s.OwnerWalletIdentity)), c.TokenAddress, primitives.ElementToBigInt(s.RevocationShard).Uint64(), uint8(primitives.ElementToBigInt(s.RevocationSlot).Uint64()/256))
+			status, err := caller.CreditStatusValue(opts, common.BigToAddress(primitives.ElementToBigInt(s.OwnerWalletIdentity)), c.TokenAddress, primitives.ElementToBigInt(s.GrantID))
 			if err != nil {
 				return credit.PreparationInput{}, err
 			}
-			if bitmap.Bit(int(primitives.ElementToBigInt(s.RevocationSlot).Uint64()%256)) != 0 {
-				return credit.PreparationInput{}, errors.New("Credit grant is revoked")
+			if status != 1 {
+				return credit.PreparationInput{}, errors.New("Credit grant is not active")
 			}
 			nf, err := s.Nullifier()
 			if err != nil {
@@ -141,6 +147,9 @@ func (i *Invisi) creditBuilder(ctx context.Context, identity TransactionIdentity
 				return credit.PreparationInput{}, fmt.Errorf("Credit membership depth mismatch")
 			}
 			copy(located.Path[:], m.Path)
+			if err = r.Canonical(ctx, block); err != nil {
+				return credit.PreparationInput{}, err
+			}
 			return credit.PreparationInput{Located: located, Delivery: g.Delivery, Source: protocol.InputSource{TreeId: new(big.Int).SetUint64(g.TreeID), MerkleRoot: m.Root}}, nil
 		},
 	}, nil

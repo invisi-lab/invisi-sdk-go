@@ -180,7 +180,7 @@ func TestEverySupportedIntentCanonicalHash(t *testing.T) {
 			args[0] = []byte{1, 2, 3}
 		}
 		if m.RawName == "revokeCredit" {
-			args[7] = []byte{4, 5}
+			args[6] = []byte{4, 5}
 		}
 		if m.RawName == "transact" {
 			v := reflect.ValueOf(args[1])

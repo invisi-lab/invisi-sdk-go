@@ -111,6 +111,9 @@ func (p *NativeProver) version(ctx context.Context) error {
 	return nil
 }
 func (p *NativeProver) assets(ctx context.Context, statement prover.ProofStatement) ([]byte, []byte, error) {
+	if p.options.Resources.LegacyCombined && (strings.HasPrefix(statement.CircuitName, "create_credit") || strings.HasPrefix(statement.CircuitName, "credit_") || statement.CircuitName == "update_credit") {
+		return nil, nil, errors.New("historical catalog cannot prove current Credit identity")
+	}
 	expected, e := prover.Statement(statement.CircuitName, statement.Target, statement.ExpectedPublicInputs)
 	if e != nil {
 		return nil, nil, e
@@ -119,12 +122,6 @@ func (p *NativeProver) assets(ctx context.Context, statement prover.ProofStateme
 		return nil, nil, errors.New("untrusted circuit metadata")
 	}
 	loader := p.resources
-	if p.options.Resources.LegacyCombined && statement.CircuitName == "create_credit_initial_payment" {
-		loader, e = newResourceLoader(p.options.Resources, InitialPaymentResourceIndexSHA256)
-		if e != nil {
-			return nil, nil, e
-		}
-	}
 	artifact, e := loader.read(ctx, "circuits/"+statement.CircuitName+".json")
 	if e != nil {
 		return nil, nil, e

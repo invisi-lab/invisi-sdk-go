@@ -130,7 +130,7 @@ func (s *WalletSession) readPublicTransaction(ctx context.Context, tx PublicTran
 				if e != nil {
 					return nil, nil, nil, e
 				}
-				credits = append(credits, creditsession.StoredState{Delivery: state, Commitment: output.Commitment, Nullifier: common.Hash(nf.Bytes()), TreeID: output.TreeID, LeafIndex: uint16(output.LeafIndex), Role: role})
+				credits = append(credits, creditsession.StoredState{GrantStatus: 1, GrantStatusBlock: &protocolrpc.CanonicalBlock{Number: output.Block.Number, Hash: output.Block.Hash, ParentHash: output.Block.ParentHash, Timestamp: output.Block.Timestamp}, Delivery: state, Commitment: output.Commitment, Nullifier: common.Hash(nf.Bytes()), TreeID: output.TreeID, LeafIndex: uint16(output.LeafIndex), Role: role})
 			}
 		}
 	}

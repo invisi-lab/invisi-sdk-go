@@ -33,7 +33,8 @@ func TestCurrentCreditNativeLifecycle(t *testing.T) {
 	owner, spender := crypto.PubkeyToAddress(ownerKey.PublicKey), crypto.PubkeyToAddress(spenderKey.PublicKey)
 	ownerWallet, _ := primitives.DeriveWallet(crypto.FromECDSA(ownerKey))
 	spenderWallet, _ := primitives.DeriveWallet(crypto.FromECDSA(spenderKey))
-	state := State{AvailableCredit: primitives.ElementFromUint64(400), ProtocolContext: primitives.ProtocolContext{ChainID: primitives.ElementFromUint64(31337), ProtocolAddress: primitives.ElementFromUint64(17)}, TokenAddress: primitives.ElementFromUint64(34), SpenderWalletIdentity: primitives.BigIntToElement(spender.Big()), OwnerWalletIdentity: primitives.BigIntToElement(owner.Big()), RevocationShard: primitives.ElementFromUint64(1), Nonce: primitives.ElementFromUint64(55), Expiry: primitives.ElementFromUint64(2100000000), CreditSharedKey: primitives.ElementFromUint64(66), Policy: Policy{SingleLimit: primitives.ElementFromUint64(100), DailyLimit: primitives.ElementFromUint64(200), MonthlyLimit: primitives.ElementFromUint64(300)}}
+	maxGrantID := new(big.Int).Sub(new(big.Int).Lsh(big.NewInt(1), 128), big.NewInt(1))
+	state := State{AvailableCredit: primitives.ElementFromUint64(400), ProtocolContext: primitives.ProtocolContext{ChainID: primitives.ElementFromUint64(31337), ProtocolAddress: primitives.ElementFromUint64(17)}, TokenAddress: primitives.ElementFromUint64(34), SpenderWalletIdentity: primitives.BigIntToElement(spender.Big()), OwnerWalletIdentity: primitives.BigIntToElement(owner.Big()), GrantID: primitives.BigIntToElement(maxGrantID), Nonce: primitives.ElementFromUint64(55), Expiry: primitives.ElementFromUint64(2100000000), CreditSharedKey: primitives.ElementFromUint64(66), Policy: Policy{SingleLimit: primitives.ElementFromUint64(100), DailyLimit: primitives.ElementFromUint64(200), MonthlyLimit: primitives.ElementFromUint64(300)}}
 	c := Context{ProtocolContext: state.ProtocolContext, TokenAddress: common.BigToAddress(big.NewInt(34)), Timestamp: 2000000000}
 	deadline := big.NewInt(2000000300)
 	collector := common.HexToAddress("0x1234")
@@ -104,11 +105,31 @@ func TestCurrentCreditNativeLifecycle(t *testing.T) {
 		})
 	}
 	commitment, _ := state.Commitment()
-	created, e := PrepareCreate(c, CreateParams{Token: c.TokenAddress, Owner: owner, RevocationShard: 1, CreditCommitment: common.Hash(commitment.Bytes()), Deadline: deadline, FeeRecipient: collector, FeeAmount: fee}, deliveries(state), state)
+	created, e := PrepareCreate(c, CreateParams{Token: c.TokenAddress, Owner: owner, GrantID: maxGrantID, CreditCommitment: common.Hash(commitment.Bytes()), Deadline: deadline, FeeRecipient: collector, FeeAmount: fee}, deliveries(state), state)
 	if e != nil {
 		t.Fatal(e)
 	}
 	prove("create", created, ownerKey)
+	builder := PreparationBuilder{
+		Frame: func(context.Context, common.Address, uint64) (Context, uint64, error) {
+			return c, deadline.Uint64(), nil
+		},
+		Owner: func() (string, error) { return "owner", nil },
+		Resolve: func(_ context.Context, address string) (primitives.ReceivingAddress, error) {
+			w := ownerWallet
+			if address == "spender" {
+				w = spenderWallet
+			}
+			return primitives.ReceivingAddress{OwnerAddress: w.OwnerAddress, ViewingPublicKey: w.ViewingPublicKey, ClueKey: w.ClueKey}, nil
+		},
+		Status: func(context.Context, Context, common.Address, *big.Int) (uint8, error) { return 0, nil },
+	}
+	initial, e := builder.Create(ctx, CreatePreparation{TokenAddress: c.TokenAddress, Spender: "spender", GrantID: new(big.Int).Sub(maxGrantID, big.NewInt(1)), Expiry: 2100000000, AvailableCredit: big.NewInt(400), SingleLimit: state.SingleLimit, DailyLimit: state.DailyLimit, MonthlyLimit: state.MonthlyLimit, InitialPayment: &InitialPayment{Amount: big.NewInt(7), NetAmount: big.NewInt(6)}, Fee: &Fee{Recipient: collector, Amount: fee}})
+	if e != nil {
+		t.Fatal(e)
+	}
+	prove("create-initial-payment", initial, ownerKey)
+
 	debit := primitives.ElementFromUint64(7)
 	drawn, e := state.Draw(debit, c.Timestamp)
 	if e != nil {
@@ -130,7 +151,7 @@ func TestCurrentCreditNativeLifecycle(t *testing.T) {
 	if e != nil {
 		t.Fatal(e)
 	}
-	drawParams := DrawParams{Token: c.TokenAddress, Sources: []protocol.InputSource{{TreeId: big.NewInt(1), MerkleRoot: root}}, Payers: []Payer{{Payer: owner, Amount: big.NewInt(7)}}, GrantRefs: []GrantRef{{PayerIndex: big.NewInt(0), Shard: 1}}, Nullifiers: []common.Hash{common.Hash(drawn.Nullifier.Bytes())}, CreditCommitments: []common.Hash{common.Hash(drawn.StateCommitment.Bytes())}, RecoveryAmounts: []common.Hash{common.Hash(drawn.RecoveryAmount.Bytes())}, NoteCommitment: common.Hash(noteCommitment.Bytes()), TotalAmount: big.NewInt(7), Deadline: deadline, FeeRecipient: collector, FeeAmount: fee}
+	drawParams := DrawParams{Token: c.TokenAddress, Sources: []protocol.InputSource{{TreeId: big.NewInt(1), MerkleRoot: root}}, Payers: []Payer{{Payer: owner, Amount: big.NewInt(7)}}, GrantRefs: []GrantRef{{PayerIndex: big.NewInt(0), GrantID: maxGrantID}}, Nullifiers: []common.Hash{common.Hash(drawn.Nullifier.Bytes())}, CreditCommitments: []common.Hash{common.Hash(drawn.StateCommitment.Bytes())}, RecoveryAmounts: []common.Hash{common.Hash(drawn.RecoveryAmount.Bytes())}, NoteCommitment: common.Hash(noteCommitment.Bytes()), TotalAmount: big.NewInt(7), Deadline: deadline, FeeRecipient: collector, FeeAmount: fee}
 	draw, e := PrepareDraw(c, drawParams, append(deliveries(drawn.State), protocol.Delivery{}), []LocatedState{input}, outputIdentity)
 	if e != nil {
 		t.Fatal(e)
@@ -147,7 +168,7 @@ func TestCurrentCreditNativeLifecycle(t *testing.T) {
 	if e != nil {
 		t.Fatal(e)
 	}
-	update, e := PrepareUpdate(c, UpdateParams{Token: c.TokenAddress, Owner: owner, Source: protocol.InputSource{TreeId: big.NewInt(1), MerkleRoot: updateRoot}, Nullifier: common.Hash(updated.Nullifier.Bytes()), CreditCommitment: common.Hash(updated.StateCommitment.Bytes()), RevocationShard: 1, Deadline: deadline, FeeRecipient: collector, FeeAmount: fee}, deliveries(updated.State), updateInput, updateChange)
+	update, e := PrepareUpdate(c, UpdateParams{Token: c.TokenAddress, Owner: owner, Source: protocol.InputSource{TreeId: big.NewInt(1), MerkleRoot: updateRoot}, Nullifier: common.Hash(updated.Nullifier.Bytes()), CreditCommitment: common.Hash(updated.StateCommitment.Bytes()), GrantID: maxGrantID, Deadline: deadline, FeeRecipient: collector, FeeAmount: fee}, deliveries(updated.State), updateInput, updateChange)
 	if e != nil {
 		t.Fatal(e)
 	}
@@ -163,7 +184,7 @@ func TestCurrentRevocationBroadcasterWithoutZK(t *testing.T) {
 	owner := crypto.PubkeyToAddress(ownerKey.PublicKey)
 	c := Context{ProtocolContext: s.ProtocolContext, TokenAddress: common.BigToAddress(big.NewInt(34)), Timestamp: 2000000000}
 	collector := common.HexToAddress("0x1234")
-	p, err := PrepareRevoke(c, RevokeParams{Token: c.TokenAddress, Owner: owner, Shard: 1, Slot: 0, Deadline: big.NewInt(2000000300)})
+	p, err := PrepareRevoke(c, RevokeParams{Token: c.TokenAddress, Owner: owner, GrantID: big.NewInt(1), Deadline: big.NewInt(2000000300)})
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"os"
+	"strings"
 
 	"testing"
 
@@ -62,5 +63,26 @@ func TestPrefetchCombinedCircuitOffline(t *testing.T) {
 	}
 	if e := PrefetchResources(context.Background(), ResourceOptions{Directory: directory, CacheDir: t.TempDir(), Offline: true}, []string{"circuits/create_credit_initial_payment.json", "circuits/create_credit_initial_payment.evm.vk"}); e != nil {
 		t.Fatal(e)
+	}
+}
+
+func TestHistoricalCatalogRejectsCurrentCreditStatements(t *testing.T) {
+	backend, err := NewNativeProver(NativeOptions{Resources: ResourceOptions{LegacyCombined: true, CacheDir: t.TempDir(), Offline: true}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	checked := 0
+	for _, fixture := range currentFixtures(t) {
+		if !strings.Contains(fixture.Name, "credit") {
+			continue
+		}
+		request := fixtureRequest(t, fixture)
+		if _, _, err = backend.assets(context.Background(), request.ProofStatement); err == nil || !strings.Contains(err.Error(), "historical catalog") {
+			t.Fatalf("%s accepted historical Credit assets: %v", fixture.Name, err)
+		}
+		checked++
+	}
+	if checked != 4 {
+		t.Fatalf("expected four Credit statement families, got %d", checked)
 	}
 }

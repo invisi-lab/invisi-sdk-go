@@ -67,7 +67,7 @@ func TestProofBundleUsesTypeScriptExchangeFormat(t *testing.T) {
 }
 
 func TestProofBundleRejectsMismatchedBackendVersion(t *testing.T) {
-	statement, err := Statement("credit_update", "evm", make([]common.Hash, 17))
+	statement, err := Statement("credit_update", "evm", make([]common.Hash, 16))
 	if err != nil {
 		t.Fatal(err)
 	}

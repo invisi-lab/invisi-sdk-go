@@ -19,6 +19,27 @@ import (
 
 func (s *WalletSession) buildCreditRequest(ctx context.Context, request any) (result *credit.Prepared, failure error) {
 	defer func() { failure = transaction.WrapPreparation("prepareCredit", failure) }()
+	if p, ok := request.(credit.CreatePreparation); ok {
+		p = p.Clone()
+		var err error
+		if p.GrantID == nil {
+			p.GrantID, err = credit.GenerateGrantID()
+			if err != nil {
+				return nil, err
+			}
+		}
+		if !credit.ValidGrantID(p.GrantID) {
+			return nil, fmt.Errorf("invalid grant ID")
+		}
+		if p.CreditSharedKey == nil {
+			key, e := credit.GenerateSharedKey()
+			if e != nil {
+				return nil, e
+			}
+			p.CreditSharedKey = primitives.ElementToBigInt(key)
+		}
+		request = p
+	}
 	r, err := s.preparationRuntime(ctx)
 	if err != nil {
 		return nil, err
@@ -46,13 +67,19 @@ func (s *WalletSession) buildCreditRequestWithRuntime(ctx context.Context, r *tr
 			block = b
 			return credit.Context{ProtocolContext: s.coreContext(), TokenAddress: token, Timestamp: c.Now.Uint64()}, d, err
 		},
-		Allocation: func(ctx context.Context, c credit.Context) (uint64, uint16, error) {
+		Status: func(ctx context.Context, c credit.Context, owner common.Address, id *big.Int) (uint8, error) {
 			caller, err := contracts.NewInvisiCoreCaller(s.scope.ProtocolAddress, r.Options.Provider)
 			if err != nil {
-				return 0, 0, err
+				return 0, err
 			}
-			allocation, err := caller.CreditAllocation(&bind.CallOpts{Context: ctx, BlockNumber: new(big.Int).SetUint64(block.Number)}, s.scope.OwnerAddress, c.TokenAddress)
-			return allocation.Shard, allocation.Slot, err
+			status, err := caller.CreditStatusValue(&bind.CallOpts{Context: ctx, BlockNumber: new(big.Int).SetUint64(block.Number)}, owner, c.TokenAddress, id)
+			if err != nil {
+				return 0, err
+			}
+			if err = r.Canonical(ctx, block); err != nil {
+				return 0, err
+			}
+			return status, nil
 		},
 		Input: func(ctx context.Context, c credit.Context, commitment common.Hash, role credit.Role) (credit.PreparationInput, error) {
 			state, err := s.fencedSnapshot(ctx)
@@ -60,7 +87,7 @@ func (s *WalletSession) buildCreditRequestWithRuntime(ctx context.Context, r *tr
 				return credit.PreparationInput{}, err
 			}
 			g, ok := state.PostpaidCredit.Grants[creditsession.GrantKey(commitment, role)]
-			if !ok || g.Consumed || g.Revoked || g.ReservedBy != "" {
+			if !ok || g.Consumed || g.GrantStatus != 1 || g.ReservedBy != "" {
 				return credit.PreparationInput{}, fmt.Errorf("confirmed unspent Credit role unavailable")
 			}
 			n := g.Delivery.State

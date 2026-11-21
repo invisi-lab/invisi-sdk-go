@@ -166,7 +166,7 @@ func validateParams(q Request) error {
 		}
 		minimum, version := 160, byte(1)
 		if q.Method == DecryptCredit {
-			minimum, version = 485, 0x82
+			minimum, version = 491, 0x84
 			if p.Context.Role != "owner" && p.Context.Role != "spender" {
 				return errors.New("invalid credit role")
 			}

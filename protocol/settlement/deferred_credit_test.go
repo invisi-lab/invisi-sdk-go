@@ -14,10 +14,10 @@ func TestDeferredCreditRoundTripAndUnsignedIntent(t *testing.T) {
 	token := common.HexToAddress("0x2222222222222222222222222222222222222222")
 	owner := common.HexToAddress("0x3333333333333333333333333333333333333333")
 	requests := []*Request{
-		{Method: "createCredit", Proof: []byte{1}, Creation: CreateCreditParams{Token: token, Owner: owner, RevocationShard: 1, CreditCommitment: [32]byte{1}, Deadline: deadline}},
-		{Method: "creditDraw", Proof: []byte{1}, Draw: CreditDrawParams{Token: token, Payers: []CreditPayer{{owner, big.NewInt(7)}}, GrantRefs: []CreditGrantRef{{zero, 1, 0}}, Nullifiers: [][32]byte{{2}}, CreditCommitments: [][32]byte{{3}}, RecoveryAmounts: [][32]byte{{4}}, NoteCommitment: [32]byte{5}, TotalAmount: big.NewInt(7), Deadline: deadline}},
-		{Method: "updateCredit", Proof: []byte{1}, Update: UpdateCreditParams{Token: token, Owner: owner, Source: InputSource{big.NewInt(1), [32]byte{6}}, Nullifier: [32]byte{2}, CreditCommitment: [32]byte{8}, RevocationShard: 1, Deadline: deadline}},
-		{Method: "revokeCredit", Revocation: RevokeCreditParams{Token: token, Owner: owner, Shard: 1, Deadline: deadline, Signature: []byte{1}}},
+		{Method: "createCredit", Proof: []byte{1}, Creation: CreateCreditParams{Token: token, Owner: owner, GrantID: big.NewInt(1), CreditCommitment: [32]byte{1}, Deadline: deadline}},
+		{Method: "creditDraw", Proof: []byte{1}, Draw: CreditDrawParams{Token: token, Payers: []CreditPayer{{owner, big.NewInt(7)}}, GrantRefs: []CreditGrantRef{{zero, big.NewInt(1)}}, Nullifiers: [][32]byte{{2}}, CreditCommitments: [][32]byte{{3}}, RecoveryAmounts: [][32]byte{{4}}, NoteCommitment: [32]byte{5}, TotalAmount: big.NewInt(7), Deadline: deadline}},
+		{Method: "updateCredit", Proof: []byte{1}, Update: UpdateCreditParams{Token: token, Owner: owner, Source: InputSource{big.NewInt(1), [32]byte{6}}, Nullifier: [32]byte{2}, CreditCommitment: [32]byte{8}, GrantID: big.NewInt(1), Deadline: deadline}},
+		{Method: "revokeCredit", Revocation: RevokeCreditParams{Token: token, Owner: owner, GrantID: big.NewInt(1), Deadline: deadline, Signature: []byte{1}}},
 	}
 	for _, r := range requests {
 		r.Creation.FeeAmount = zero
@@ -53,13 +53,13 @@ func TestDeferredCreditRoundTripAndUnsignedIntent(t *testing.T) {
 			}
 			switch decoded.Method {
 			case "createCredit":
-				decoded.Creation.RevocationSlot++
+				decoded.Creation.GrantID.Add(decoded.Creation.GrantID, big.NewInt(1))
 			case "creditDraw":
-				decoded.Draw.GrantRefs[0].Slot++
+				decoded.Draw.GrantRefs[0].GrantID.Add(decoded.Draw.GrantRefs[0].GrantID, big.NewInt(1))
 			case "updateCredit":
-				decoded.Update.RevocationSlot++
+				decoded.Update.GrantID.Add(decoded.Update.GrantID, big.NewInt(1))
 			case "revokeCredit":
-				decoded.Revocation.Slot++
+				decoded.Revocation.GrantID.Add(decoded.Revocation.GrantID, big.NewInt(1))
 			}
 			changed, e := Hash(decoded)
 			if e != nil || changed == hash {

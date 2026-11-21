@@ -135,29 +135,28 @@ type InitialPaymentReceipt struct {
 	FeeRecipient   string `json:"feeRecipient"`
 }
 type Receipt struct {
-	InitialPayment    *InitialPaymentReceipt `json:"initialPayment,omitempty"`
-	Network           string                 `json:"network"`
-	ProtocolAddress   string                 `json:"protocolAddress"`
-	TransactionHash   string                 `json:"transactionHash"`
-	Commitment        string                 `json:"commitment"`
-	BlockNumber       string                 `json:"blockNumber"`
-	BlockHash         string                 `json:"blockHash"`
-	CompletedAt       string                 `json:"completedAt"`
-	CreditID          string                 `json:"creditId,omitempty"`
-	CreditStatus      string                 `json:"creditStatus,omitempty"`
-	Owner             string                 `json:"owner,omitempty"`
-	RevocationShard   string                 `json:"revocationShard,omitempty"`
-	RevocationSlot    *uint16                `json:"revocationSlot,omitempty"`
-	VerificationBlock *VerificationBlock     `json:"verificationBlock,omitempty"`
-	ExpiresAt         string                 `json:"expiresAt,omitempty"`
+	InitialPayment  *InitialPaymentReceipt `json:"initialPayment,omitempty"`
+	Network         string                 `json:"network"`
+	ProtocolAddress string                 `json:"protocolAddress"`
+	TransactionHash string                 `json:"transactionHash"`
+	Commitment      string                 `json:"commitment"`
+	BlockNumber     string                 `json:"blockNumber"`
+	BlockHash       string                 `json:"blockHash"`
+	CompletedAt     string                 `json:"completedAt"`
+	CreditID        string                 `json:"creditId,omitempty"`
+	CreditStatus    string                 `json:"creditStatus,omitempty"`
+	Owner           string                 `json:"owner,omitempty"`
+	GrantID         string                 `json:"grantId,omitempty"`
+
+	VerificationBlock *VerificationBlock `json:"verificationBlock,omitempty"`
+	ExpiresAt         string             `json:"expiresAt,omitempty"`
 }
 type Proof struct {
-	Type            string  `json:"type"`
-	TransactionHash string  `json:"transactionHash"`
-	Commitment      string  `json:"commitment"`
-	Owner           string  `json:"owner,omitempty"`
-	RevocationShard string  `json:"revocationShard,omitempty"`
-	RevocationSlot  *uint16 `json:"revocationSlot,omitempty"`
+	Type            string `json:"type"`
+	TransactionHash string `json:"transactionHash"`
+	Commitment      string `json:"commitment"`
+	Owner           string `json:"owner,omitempty"`
+	GrantID         string `json:"grantId,omitempty"`
 }
 type Credential struct {
 	IPPVersion int    `json:"ippVersion"`

@@ -27,7 +27,7 @@ func TestDetachedCreditRequestsBuildWithoutManagedStore(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if i.CreatedState == nil || len(i.Deliveries) != 2 || i.Create.RevocationShard != 1 || i.Create.RevocationSlot != 1 {
+	if i.CreatedState == nil || len(i.Deliveries) != 2 || !credit.ValidGrantID(i.Create.GrantID) {
 		t.Fatal("detached request omitted allocation/opening/deliveries")
 	}
 	_, err = invisi.PrepareUpdateCredit(ctx, sdk.ExplicitUpdateCreditPreparation{TransactionIdentity: identity, UpdatePreparation: credit.UpdatePreparation{TokenAddress: token, Credit: i.Create.CreditCommitment}})
@@ -35,7 +35,7 @@ func TestDetachedCreditRequestsBuildWithoutManagedStore(t *testing.T) {
 	if !errors.As(err, &invisiError) || invisiError.Code != sdk.PreparationFailed {
 		t.Fatal("missing detached input did not use stable preparation error", err)
 	}
-	if _, err = invisi.PrepareRevokeCredit(ctx, sdk.ExplicitRevokeCreditPreparation{TransactionIdentity: identity, RevokePreparation: credit.RevokePreparation{TokenAddress: token, Shard: 1, Slot: 1}}); err != nil {
+	if _, err = invisi.PrepareRevokeCredit(ctx, sdk.ExplicitRevokeCreditPreparation{TransactionIdentity: identity, RevokePreparation: credit.RevokePreparation{TokenAddress: token, GrantID: big.NewInt(1)}}); err != nil {
 		t.Fatal(err)
 	}
 	current := syncGrantState()

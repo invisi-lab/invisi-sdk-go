@@ -14,7 +14,7 @@ import (
 
 func TestIndependentBusinessMethodSurface(t *testing.T) {
 	typ := reflect.TypeOf((*ProtocolRpcClient)(nil))
-	for _, name := range []string{"GetNoteUpdates", "GetCreditTransitions", "GetTransactionNoteUpdates", "GetTransactionCreditUpdates", "GetNote", "GetCreditState", "IsNoteSpent", "IsCreditConsumed", "GetCreditAllocation", "GetCreditRevocationBitmap"} {
+	for _, name := range []string{"GetNoteUpdates", "GetCreditTransitions", "GetTransactionNoteUpdates", "GetTransactionCreditUpdates", "GetNote", "GetCreditState", "IsNoteSpent", "IsCreditConsumed", "GetCreditStatus"} {
 		if _, ok := typ.MethodByName(name); !ok {
 			t.Errorf("missing typed method %s", name)
 		}
@@ -22,12 +22,13 @@ func TestIndependentBusinessMethodSurface(t *testing.T) {
 
 }
 
-func TestGrantQueriesPreserveUint64ShardAndUint256Bitmap(t *testing.T) {
+func TestGrantQueriesPreserveUint128IDAndValidateStatus(t *testing.T) {
 	provider := testProvider{&types.Header{Number: big.NewInt(10), Time: 123}}
 	block := CanonicalBlock{Number: 10, Hash: provider.header.Hash(), ParentHash: provider.header.ParentHash, Timestamp: 123}
 	dep := ProtocolDeployment{ChainID: "31337", Protocol: ContractDeployment{common.HexToAddress("11"), crypto.Keccak256Hash([]byte{1}), 1}}
 	owner, token := common.HexToAddress("22"), common.HexToAddress("33")
-	bad := false
+	var observation any = 2
+	omitStatus := false
 	seen := map[string][]json.RawMessage{}
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		var req struct {
@@ -41,14 +42,11 @@ func TestGrantQueriesPreserveUint64ShardAndUint256Bitmap(t *testing.T) {
 		switch req.Method {
 		case "invisi_getStatus":
 			result = map[string]any{"apiVersion": "v1", "protocolVersion": "1", "deployment": dep, "indexedHead": block}
-		case "invisi_getCreditAllocation":
-			result = map[string]any{"block": block, "shard": "18446744073709551615", "slot": 65535}
-		case "invisi_getCreditRevocationBitmap":
-			bits := new(big.Int).Lsh(big.NewInt(1), 255).String()
-			if bad {
-				bits = "01"
+		case "invisi_getCreditStatus":
+			result = map[string]any{"block": block, "status": observation}
+			if omitStatus {
+				result = map[string]any{"block": block}
 			}
-			result = map[string]any{"block": block, "bitmap": bits}
 		case "invisi_isNoteSpent", "invisi_isCreditConsumed":
 			result = true
 		default:
@@ -60,16 +58,13 @@ func TestGrantQueriesPreserveUint64ShardAndUint256Bitmap(t *testing.T) {
 	client, _ := NewProtocolRpcClient(server.URL+"/v1", ClientOptions{Deployment: &dep})
 	client = client.WithProvider(provider)
 	scope := DeploymentContext{31337, dep.Protocol.Address}
-	allocation, e := client.GetCreditAllocation(t.Context(), scope, owner, token, block)
-	if e != nil || allocation.Shard != ^uint64(0) || allocation.Slot != 65535 {
-		t.Fatal(allocation, e)
+	id := new(big.Int).Sub(new(big.Int).Lsh(big.NewInt(1), 128), big.NewInt(1))
+	status, e := client.GetCreditStatus(t.Context(), scope, owner, token, id, block)
+	if e != nil || status.Status != 2 {
+		t.Fatal(status, e)
 	}
-	bitmap, e := client.GetCreditRevocationBitmap(t.Context(), scope, owner, token, ^uint64(0), 255, block)
-	if e != nil || bitmap.Bitmap.Bit(255) != 1 {
-		t.Fatal(bitmap, e)
-	}
-	if string(seen["invisi_getCreditRevocationBitmap"][2]) != `"18446744073709551615"` {
-		t.Fatal("shard precision lost")
+	if string(seen["invisi_getCreditStatus"][2]) != `"340282366920938463463374607431768211455"` {
+		t.Fatal("grant ID precision lost")
 	}
 	if spent, e := client.IsNoteSpent(t.Context(), scope, common.HexToHash("1"), block); e != nil || !spent {
 		t.Fatal(spent, e)
@@ -77,10 +72,18 @@ func TestGrantQueriesPreserveUint64ShardAndUint256Bitmap(t *testing.T) {
 	if used, e := client.IsCreditConsumed(t.Context(), scope, common.HexToHash("2"), block); e != nil || !used {
 		t.Fatal(used, e)
 	}
-	bad = true
-	if _, e = client.GetCreditRevocationBitmap(t.Context(), scope, owner, token, 1, 0, block); e == nil {
-		t.Fatal("noncanonical bitmap accepted")
+	for _, invalid := range []any{nil, 3, true, "0", -1, json.Number("0.0")} {
+		observation = invalid
+		if _, e = client.GetCreditStatus(t.Context(), scope, owner, token, id, block); e == nil {
+			t.Fatalf("malformed status accepted: %#v", invalid)
+		}
 	}
+	observation = 0
+	omitStatus = true
+	if _, e = client.GetCreditStatus(t.Context(), scope, owner, token, id, block); e == nil {
+		t.Fatal("missing status treated as unknown")
+	}
+
 }
 
 func TestCreditTransactionAvailabilityAndInvalidTransitions(t *testing.T) {

@@ -25,7 +25,7 @@ import (
 )
 
 func syncGrantState() credit.State {
-	return credit.State{AvailableCredit: primitives.ElementFromUint64(400), ProtocolContext: primitives.ProtocolContext{ChainID: primitives.ElementFromUint64(31337), ProtocolAddress: primitives.ElementFromUint64(17)}, TokenAddress: primitives.ElementFromUint64(34), OwnerWalletIdentity: primitives.ElementFromUint64(1), SpenderWalletIdentity: primitives.ElementFromUint64(2), RevocationShard: primitives.ElementFromUint64(1), Nonce: primitives.ElementFromUint64(3), Expiry: primitives.ElementFromUint64(2000000000), CreditSharedKey: primitives.ElementFromUint64(4)}
+	return credit.State{AvailableCredit: primitives.ElementFromUint64(400), ProtocolContext: primitives.ProtocolContext{ChainID: primitives.ElementFromUint64(31337), ProtocolAddress: primitives.ElementFromUint64(17)}, TokenAddress: primitives.ElementFromUint64(34), OwnerWalletIdentity: primitives.ElementFromUint64(1), SpenderWalletIdentity: primitives.ElementFromUint64(2), GrantID: primitives.ElementFromUint64(1), Nonce: primitives.ElementFromUint64(3), Expiry: primitives.ElementFromUint64(2000000000), CreditSharedKey: primitives.ElementFromUint64(4)}
 }
 func TestRefreshRestoresUnresolvedCreditReservationsForBothRoles(t *testing.T) {
 	grant := syncGrantState()
@@ -36,7 +36,7 @@ func TestRefreshRestoresUnresolvedCreditReservationsForBothRoles(t *testing.T) {
 	hash := common.Hash(commitment.Bytes())
 	state := creditsession.EmptyState()
 	for _, role := range []credit.Role{credit.Owner, credit.Spender} {
-		state.Grants[creditsession.GrantKey(hash, role)] = creditsession.StoredState{Commitment: hash, Role: role}
+		state.Grants[creditsession.GrantKey(hash, role)] = creditsession.StoredState{GrantStatus: 1, Commitment: hash, Role: role}
 	}
 	state.Operations["pending"] = creditsession.Journal{ID: "pending", Externalized: true, Status: "broadcast", Intent: credit.Intent{Inputs: []credit.LocatedState{{State: grant}}}}
 	if e = restoreCreditReservations(&state); e != nil {
@@ -107,7 +107,7 @@ func TestCanonicalCreditCreationReceiptProducesStatesAndNoCashNotes(t *testing.T
 		return &types.Log{Address: session.scope.ProtocolAddress, Index: index, TxHash: tx, BlockNumber: 10, BlockHash: original.head.Hash(), Topics: topics, Data: data}
 	}
 	insertion := log("CommitmentsInserted", 1, []any{big.NewInt(2)}, uint32(0), [][32]byte{leaf})
-	created := log("CreditCreated", 2, []any{token, session.wallet.OwnerAddress(), big.NewInt(2)}, uint64(1), uint16(0), [32]byte(leaf), uint32(0), envelopes, big.NewInt(int64(original.head.Time+100)), common.Address{}, big.NewInt(0))
+	created := log("CreditCreated", 2, []any{token, session.wallet.OwnerAddress(), big.NewInt(2)}, big.NewInt(1), [32]byte(leaf), uint32(0), envelopes, big.NewInt(int64(original.head.Time+100)), common.Address{}, big.NewInt(0))
 	receipt := &types.Receipt{TxHash: tx, Status: types.ReceiptStatusSuccessful, BlockNumber: big.NewInt(10), BlockHash: original.head.Hash(), Logs: []*types.Log{insertion, created}}
 	provider := receiptProvider{original, receipt}
 	session.options.Provider = provider
@@ -139,6 +139,9 @@ func (p creditDrawSyncProvider) CallContract(ctx context.Context, msg ethereum.C
 		return nil, e
 	}
 	method, e := a.MethodById(msg.Data[:4])
+	if e == nil && method.RawName == "creditStatus" {
+		return method.Outputs.Pack(big.NewInt(1))
+	}
 	if e == nil && method.RawName == "isNullifierSpent" {
 		values, e := method.Inputs.Unpack(msg.Data[4:])
 		if e != nil {
@@ -176,7 +179,7 @@ func TestRefreshKeepsAuthenticatedChildPayloadAndDropsUnknownRecoveredPayload(t 
 			}
 			if e = session.options.Store.Update(ctx, session.scope, func(wallet *WalletState) error {
 				for _, role := range []credit.Role{credit.Owner, credit.Spender} {
-					wallet.PostpaidCredit.Grants[creditsession.GrantKey(common.Hash(oldLeaf.Bytes()), role)] = creditsession.StoredState{Delivery: parent, Commitment: common.Hash(oldLeaf.Bytes()), Nullifier: common.Hash(oldNF.Bytes()), TreeID: 1, Role: role}
+					wallet.PostpaidCredit.Grants[creditsession.GrantKey(common.Hash(oldLeaf.Bytes()), role)] = creditsession.StoredState{GrantStatus: 1, Delivery: parent, Commitment: common.Hash(oldLeaf.Bytes()), Nullifier: common.Hash(oldNF.Bytes()), TreeID: 1, Role: role}
 				}
 				return nil
 			}); e != nil {
@@ -227,7 +230,7 @@ func TestRefreshKeepsAuthenticatedChildPayloadAndDropsUnknownRecoveredPayload(t 
 			}
 			leaf := common.Hash(draw.StateCommitment.Bytes())
 			nf := common.Hash(draw.Nullifier.Bytes())
-			params := contracts.IInvisiCoreCreditDrawParams{Token: token, Sources: []contracts.IInvisiCoreInputSource{{TreeId: big.NewInt(1), MerkleRoot: [32]byte{9}}}, Payers: []contracts.IInvisiCoreCreditPayer{{Payer: session.wallet.OwnerAddress(), Amount: big.NewInt(7)}}, GrantRefs: []contracts.IInvisiCoreCreditGrantRef{{PayerIndex: big.NewInt(0), Shard: 1, Slot: 0}}, Nullifiers: [][32]byte{nf}, CreditCommitments: [][32]byte{leaf}, RecoveryAmounts: [][32]byte{draw.RecoveryAmount.Bytes()}, NoteCommitment: note, TotalAmount: big.NewInt(7), Deadline: new(big.Int).SetUint64(base.head.Time + 100), FeeAmount: big.NewInt(0)}
+			params := contracts.IInvisiCoreCreditDrawParams{Token: token, Sources: []contracts.IInvisiCoreInputSource{{TreeId: big.NewInt(1), MerkleRoot: [32]byte{9}}}, Payers: []contracts.IInvisiCoreCreditPayer{{Payer: session.wallet.OwnerAddress(), Amount: big.NewInt(7)}}, GrantRefs: []contracts.IInvisiCoreCreditGrantRef{{PayerIndex: big.NewInt(0), GrantID: big.NewInt(1)}}, Nullifiers: [][32]byte{nf}, CreditCommitments: [][32]byte{leaf}, RecoveryAmounts: [][32]byte{draw.RecoveryAmount.Bytes()}, NoteCommitment: note, TotalAmount: big.NewInt(7), Deadline: new(big.Int).SetUint64(base.head.Time + 100), FeeAmount: big.NewInt(0)}
 			insertion := pack("CommitmentsInserted", 1, []any{big.NewInt(2)}, uint32(0), [][32]byte{leaf, note})
 			transition := pack("CreditStateTransition", 2, []any{big.NewInt(2), params.NoteCommitment}, contracts.IInvisiCoreCreditDrawState{Sources: params.Sources, Payers: params.Payers, GrantRefs: params.GrantRefs, Nullifiers: params.Nullifiers, CreditCommitments: params.CreditCommitments, RecoveryAmounts: params.RecoveryAmounts}, []uint32{0}, deliveries[:2])
 			event := pack("CreditDraw", 3, []any{token, big.NewInt(2), params.NoteCommitment}, uint32(1), params.TotalAmount, params.Deadline, params.FeeRecipient, params.FeeAmount, deliveries[2])
@@ -334,7 +337,7 @@ func TestRefreshKeepsAuthenticatedChildPayloadAndDropsUnknownRecoveredPayload(t 
 			}
 			for _, role := range []credit.Role{credit.Owner, credit.Spender} {
 				got := wallet.PostpaidCredit.Grants[creditsession.GrantKey(leaf, role)]
-				if primitives.ElementToBigInt(got.Delivery.State.TotalSpent).Uint64() != 7 || got.Delivery.State.AvailableCredit != primitives.ElementFromUint64(393) {
+				if got.GrantStatus != 1 || got.Revoked || primitives.ElementToBigInt(got.Delivery.State.TotalSpent).Uint64() != 7 || got.Delivery.State.AvailableCredit != primitives.ElementFromUint64(393) {
 					t.Fatal("recovered usage lost")
 				}
 				if corrupt && len(got.Delivery.State.Payload) != 0 {
@@ -352,8 +355,20 @@ func TestRefreshKeepsAuthenticatedChildPayloadAndDropsUnknownRecoveredPayload(t 
 			// after the draw page was already scanned. Replay must recover both
 			// roles from the authenticated transition, without decrypting it again.
 			if e = session.options.Store.Update(ctx, session.scope, func(v *WalletState) error {
+				// A later canonical observation disabled this grant. Replaying
+				// the older draw must carry that status into its recovered child.
+				later := types.CopyHeader(base.head)
+				later.Number = new(big.Int).Add(base.head.Number, big.NewInt(1))
+				later.ParentHash = base.head.Hash()
+				observed := protocolrpc.CanonicalBlock{Number: later.Number.Uint64(), Hash: later.Hash(), ParentHash: later.ParentHash, Timestamp: later.Time}
+				v.CheckedThrough = &observed
+				v.Scan.ChainHead = &observed
 				for _, role := range []credit.Role{credit.Owner, credit.Spender} {
 					delete(v.PostpaidCredit.Grants, creditsession.GrantKey(leaf, role))
+					key := creditsession.GrantKey(common.Hash(oldLeaf.Bytes()), role)
+					parent := v.PostpaidCredit.Grants[key]
+					_ = parent.SetGrantStatus(2, &observed)
+					v.PostpaidCredit.Grants[key] = parent
 				}
 				scheduleCreditReplay(&v.Scan, 10, 10)
 				return nil
@@ -361,7 +376,7 @@ func TestRefreshKeepsAuthenticatedChildPayloadAndDropsUnknownRecoveredPayload(t 
 				t.Fatal(e)
 			}
 			var replayed []BlockRange
-			if e = session.replayCredits(ctx, block, 1, ScanOptions{OnProgress: func(p HistoryProgress) {
+			if e = session.replayCredits(ctx, block, 1, ScanOptions{SkipStateRefresh: true, OnProgress: func(p HistoryProgress) {
 				replayed = append(replayed, p.Range)
 			}}, &RefreshResult{}); e != nil {
 				t.Fatal("late parent recovery", e)
@@ -375,7 +390,7 @@ func TestRefreshKeepsAuthenticatedChildPayloadAndDropsUnknownRecoveredPayload(t 
 			}
 			for _, role := range []credit.Role{credit.Owner, credit.Spender} {
 				child, ok := wallet.PostpaidCredit.Grants[creditsession.GrantKey(leaf, role)]
-				if !ok || child.Delivery.State.AvailableCredit != primitives.ElementFromUint64(393) || len(child.Delivery.State.Payload) != 0 {
+				if !ok || (!child.Revoked || child.GrantStatus != 2) || wallet.CheckedThrough.Number <= block.Number || child.Delivery.State.AvailableCredit != primitives.ElementFromUint64(393) || len(child.Delivery.State.Payload) != 0 {
 					t.Fatal("late parent successor recovery failed")
 				}
 				if !wallet.PostpaidCredit.Grants[creditsession.GrantKey(common.Hash(oldLeaf.Bytes()), role)].Consumed {

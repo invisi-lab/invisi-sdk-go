@@ -61,7 +61,7 @@ func TestInitialPaymentCreditRequestFreezesOnlyNetAmount(t *testing.T) {
 	}
 }
 func initialReceiptMap() map[string]any {
-	return map[string]any{"network": "eip155:8453", "protocolAddress": protocolAddress, "transactionHash": hash, "commitment": hash, "blockNumber": "20", "blockHash": hash, "completedAt": "2026-11-17T08:03:00Z", "creditId": "credit_001", "creditStatus": "depleted", "owner": address, "revocationShard": "1", "revocationSlot": json.Number("0"), "verificationBlock": map[string]any{"number": "20", "hash": hash, "timestamp": "2026-11-17T08:03:00Z"}, "expiresAt": "2027-11-17T08:03:00Z", "initialPayment": map[string]any{"noteCommitment": "0x0202020202020202020202020202020202020202020202020202020202020202", "grossAmount": "6", "netAmount": "5", "feeAmount": "1", "feeRecipient": address}}
+	return map[string]any{"network": "eip155:8453", "protocolAddress": protocolAddress, "transactionHash": hash, "commitment": hash, "blockNumber": "20", "blockHash": hash, "completedAt": "2026-11-17T08:03:00Z", "creditId": "credit_001", "creditStatus": "depleted", "owner": address, "grantId": "1", "verificationBlock": map[string]any{"number": "20", "hash": hash, "timestamp": "2026-11-17T08:03:00Z"}, "expiresAt": "2027-11-17T08:03:00Z", "initialPayment": map[string]any{"noteCommitment": "0x0202020202020202020202020202020202020202020202020202020202020202", "grossAmount": "6", "netAmount": "5", "feeAmount": "1", "feeRecipient": address}}
 }
 func TestInitialPaymentReceiptChecksGrossNetFeeAndDepleted(t *testing.T) {
 	if !validReceipt(initialReceiptMap(), "credit") {
@@ -122,5 +122,24 @@ func TestInitialPaymentMatchesFrozenSessionAndReceiptByValue(t *testing.T) {
 	}
 	if AssertReceiptMatchesRequest(receipt, r) == nil {
 		t.Fatal("unexpected initial payment accepted")
+	}
+}
+
+func TestCreditReceiptGrantIDPositiveUint128(t *testing.T) {
+	for _, id := range []string{"0", "01", "-1", "340282366920938463463374607431768211456"} {
+		receipt := initialReceiptMap()
+		receipt["grantId"] = id
+		if validReceipt(receipt, "credit") {
+			t.Fatalf("accepted invalid grant ID %q", id)
+		}
+	}
+	receipt := initialReceiptMap()
+	receipt["grantId"] = "340282366920938463463374607431768211455"
+	if !validReceipt(receipt, "credit") {
+		t.Fatal("rejected maximum uint128 grant ID")
+	}
+	receipt["revocationSlot"] = json.Number("0")
+	if validReceipt(receipt, "credit") {
+		t.Fatal("accepted historical slot field")
 	}
 }

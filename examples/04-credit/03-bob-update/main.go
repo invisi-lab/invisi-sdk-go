@@ -112,7 +112,7 @@ func main() {
 	}
 	var selected common.Hash
 	for _, g := range inventory.PostpaidCredit.Grants {
-		if g.Role == credit.Owner && !g.Consumed && !g.Revoked && g.ReservedBy == "" && common.BigToAddress(primitives.ElementToBigInt(g.Delivery.State.TokenAddress)) == token {
+		if g.Role == credit.Owner && !g.Consumed && g.GrantStatus == 1 && g.ReservedBy == "" && common.BigToAddress(primitives.ElementToBigInt(g.Delivery.State.TokenAddress)) == token {
 			selected = g.Commitment
 			break
 		}

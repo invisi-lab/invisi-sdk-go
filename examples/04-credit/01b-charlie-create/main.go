@@ -128,7 +128,7 @@ func main() {
 		log.Fatal(err)
 	}
 	created := state.PostpaidCredit.Operations[*operationID].Intent.Create
-	log.Printf("Retain original revocation reference: owner=%s token=%s shard=%d slot=%d", created.Owner, created.Token, created.RevocationShard, created.RevocationSlot)
+	log.Printf("Retain original revocation reference: owner=%s token=%s grantId=%s", created.Owner, created.Token, created.GrantID)
 
 	// Export the owner/spender request only after the managed Credit session validates current chain state.
 	authorization, err := operation.ExportSigningRequest(ctx)

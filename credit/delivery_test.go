@@ -36,7 +36,7 @@ func TestCanonicalDeferredDelivery(t *testing.T) {
 		context := DeliveryContext{ProtocolContext: s.ProtocolContext, TokenAddress: s.TokenAddress, Commitment: commitment, RecipientIdentity: owner}
 		cipher := bytesHex(t, d[name+"Ciphertext"].(string))
 		private := bytesHex(t, d[name+"PrivateKey"].(string))
-		if len(cipher) != 485 || cipher[0] != 0x82 {
+		if len(cipher) != 491 || cipher[0] != 0x84 {
 			t.Fatal("wrong canonical size")
 		}
 		got, e := Decrypt(private, cipher, context, role)
@@ -78,16 +78,16 @@ func TestQuotaEnvelopeBoundsAndStrictBoolean(t *testing.T) {
 	}
 	c := DeliveryContext{ProtocolContext: s.ProtocolContext, TokenAddress: s.TokenAddress, Commitment: commitment, RecipientIdentity: s.OwnerWalletIdentity}
 	private := bytesHex(t, material["ownerPrivateKey"].(string))
-	for _, size := range []int{0, 3611, 3612} {
+	for _, size := range []int{0, 3605, 3606} {
 		d.State.Payload = make([]byte, size)
 		envelope, err := Encrypt(d, c, Owner)
-		if size == 3612 {
+		if size == 3606 {
 			if err == nil {
 				t.Fatal("accepted oversized quota envelope")
 			}
 			continue
 		}
-		if err != nil || len(envelope) != 485+size {
+		if err != nil || len(envelope) != 491+size {
 			t.Fatal("incorrect quota envelope bound", len(envelope), err)
 		}
 		opened, err := Decrypt(private, envelope, c, Owner)
@@ -102,17 +102,17 @@ func TestQuotaEnvelopeBoundsAndStrictBoolean(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	header := append([]byte{0x82}, crypto.CompressPubkey(&key.PublicKey)...)
+	header := append([]byte{0x84}, crypto.CompressPubkey(&key.PublicKey)...)
 	header = append(header, make([]byte, 28)...)
 	aead, err := encryption(ephemeral, d.OwnerReceivingKeys.ViewingPublicKey, d.OwnerReceivingKeys.ViewingPublicKey, header)
 	if err != nil {
 		t.Fatal(err)
 	}
 	plain := encodeDelivery(d)
-	if len(plain) != 407 {
+	if len(plain) != 413 {
 		t.Fatal("incorrect fixed plaintext size", len(plain))
 	}
-	plain[210] = 2
+	plain[216] = 2
 	envelope := aead.Seal(header, header[50:62], plain, aad(c, header, Owner))
 	if _, err = Decrypt(private, envelope, c, Owner); err == nil {
 		t.Fatal("accepted nonboolean quota flag in authenticated envelope")

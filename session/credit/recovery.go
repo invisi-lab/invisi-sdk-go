@@ -6,6 +6,8 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	protocolrpc "github.com/invisi-labs/invisi-sdk-go/rpc"
+	"math/big"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
@@ -103,8 +105,7 @@ type Outcome struct {
 	Success                    bool
 	Successors                 []StoredState
 	RevokedOwner, RevokedToken common.Address
-	RevokedShard               uint64
-	RevokedSlot                uint16
+	RevokedGrantID             *big.Int
 }
 
 // Reconciler authenticates canonical chain receipts, exact calldata and successor event positions.
@@ -170,17 +171,23 @@ func (o *Operation) Reconcile(ctx context.Context, reconciler Reconciler) error 
 		if outcome.Success {
 			for _, successor := range outcome.Successors {
 				successor.ReservedBy = ""
+				if successor.GrantStatusBlock == nil && successor.GrantStatus != 2 {
+					block := protocolrpc.CanonicalBlock{Number: outcome.BlockNumber, Hash: outcome.BlockHash}
+					_ = successor.SetGrantStatus(1, &block)
+				}
+				successor = successor.MergeGrantStatusFrom(state.Grants)
 				state.Grants[successor.key()] = successor
 			}
 			if intent.Revoke != nil {
 				p := intent.Revoke
-				if outcome.RevokedOwner != p.Owner || outcome.RevokedToken != p.Token || outcome.RevokedShard != p.Shard || outcome.RevokedSlot != p.Slot {
+				if outcome.RevokedOwner != p.Owner || outcome.RevokedToken != p.Token || outcome.RevokedGrantID == nil || outcome.RevokedGrantID.Cmp(p.GrantID) != 0 {
 					return fmt.Errorf("Credit revocation event namespace mismatch")
 				}
 				for k, grant := range state.Grants {
 					s := grant.Delivery.State
-					if common.BigToAddress(primitives.ElementToBigInt(s.OwnerWalletIdentity)) == p.Owner && common.BigToAddress(primitives.ElementToBigInt(s.TokenAddress)) == p.Token && primitives.ElementToBigInt(s.RevocationShard).Uint64() == p.Shard && primitives.ElementToBigInt(s.RevocationSlot).Uint64() == uint64(p.Slot) {
-						grant.Revoked = true
+					if common.BigToAddress(primitives.ElementToBigInt(s.OwnerWalletIdentity)) == p.Owner && common.BigToAddress(primitives.ElementToBigInt(s.TokenAddress)) == p.Token && primitives.ElementToBigInt(s.GrantID).Cmp(p.GrantID) == 0 {
+						block := protocolrpc.CanonicalBlock{Number: outcome.BlockNumber, Hash: outcome.BlockHash}
+						_ = grant.SetGrantStatus(2, &block)
 						state.Grants[k] = grant
 					}
 				}

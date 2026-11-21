@@ -17,14 +17,13 @@ type Context struct {
 	Timestamp    uint64
 }
 type CreateParams struct {
-	// CreationABI defaults to current; legacy must be explicitly selected.
+	// CreationABI defaults to current; historical creation is rejected.
 	CreationABI       string `json:",omitempty"`
 	HasInitialPayment *bool
 	TotalAmount       *big.Int
 	NoteCommitment    common.Hash
 	Token, Owner      common.Address
-	RevocationShard   uint64
-	RevocationSlot    uint16
+	GrantID           *big.Int `abi:"grantId"`
 	CreditCommitment  common.Hash
 	Deadline          *big.Int
 	FeeRecipient      common.Address
@@ -34,8 +33,7 @@ type UpdateParams struct {
 	Token, Owner                common.Address
 	Source                      protocol.InputSource
 	Nullifier, CreditCommitment common.Hash
-	RevocationShard             uint64
-	RevocationSlot              uint16
+	GrantID                     *big.Int `abi:"grantId"`
 	Deadline                    *big.Int
 	FeeRecipient                common.Address
 	FeeAmount                   *big.Int
@@ -46,8 +44,7 @@ type Payer struct {
 }
 type GrantRef struct {
 	PayerIndex *big.Int
-	Shard      uint64
-	Slot       uint16
+	GrantID    *big.Int `abi:"grantId"`
 }
 type DrawParams struct {
 	Token                                          common.Address
@@ -161,8 +158,8 @@ func (p CreateParams) Statement(c Context, deliveries []protocol.Delivery) ([]co
 	if err := c.validate(p.Token, p.Deadline); err != nil {
 		return nil, apitypes.TypedData{}, err
 	}
-	if p.Owner == (common.Address{}) || p.RevocationShard == 0 {
-		return nil, apitypes.TypedData{}, fmt.Errorf("invalid Credit owner or allocation")
+	if p.Owner == (common.Address{}) || !ValidGrantID(p.GrantID) {
+		return nil, apitypes.TypedData{}, fmt.Errorf("invalid Credit owner or grant ID")
 	}
 	if err := fieldHash(p.CreditCommitment, true); err != nil {
 		return nil, apitypes.TypedData{}, err
@@ -188,7 +185,7 @@ func (p CreateParams) Statement(c Context, deliveries []protocol.Delivery) ([]co
 		return nil, apitypes.TypedData{}, err
 	}
 	high, low := split(h)
-	words := append(contextWords(c), p.Owner.Big(), new(big.Int).SetUint64(p.RevocationShard), new(big.Int).SetUint64(uint64(p.RevocationSlot)), p.CreditCommitment.Big(), p.Deadline, high, low)
+	words := append(contextWords(c), p.Owner.Big(), p.GrantID, p.CreditCommitment.Big(), p.Deadline, high, low)
 	words = append(words, p.FeeRecipient.Big(), fee)
 	if initial {
 		periods := Periods(c.Timestamp)
@@ -205,8 +202,8 @@ func (p UpdateParams) Statement(c Context, deliveries []protocol.Delivery) ([]co
 	if err := c.validate(p.Token, p.Deadline); err != nil {
 		return nil, apitypes.TypedData{}, err
 	}
-	if p.Owner == (common.Address{}) || p.RevocationShard == 0 || p.Source.TreeId == nil || p.Source.TreeId.Sign() <= 0 || !p.Source.TreeId.IsUint64() {
-		return nil, apitypes.TypedData{}, fmt.Errorf("invalid Credit owner, allocation or tree")
+	if p.Owner == (common.Address{}) || !ValidGrantID(p.GrantID) || p.Source.TreeId == nil || p.Source.TreeId.Sign() <= 0 || !p.Source.TreeId.IsUint64() {
+		return nil, apitypes.TypedData{}, fmt.Errorf("invalid Credit owner, grant ID or tree")
 	}
 	for _, h := range []common.Hash{p.Source.MerkleRoot, p.Nullifier, p.CreditCommitment} {
 		if err := fieldHash(h, true); err != nil {
@@ -218,7 +215,7 @@ func (p UpdateParams) Statement(c Context, deliveries []protocol.Delivery) ([]co
 		return nil, apitypes.TypedData{}, err
 	}
 	high, low := split(h)
-	words := append(contextWords(c), p.Owner.Big(), p.Source.TreeId, common.Hash(p.Source.MerkleRoot).Big(), p.Nullifier.Big(), p.CreditCommitment.Big(), new(big.Int).SetUint64(p.RevocationShard), new(big.Int).SetUint64(uint64(p.RevocationSlot)), p.Deadline, high, low)
+	words := append(contextWords(c), p.Owner.Big(), p.Source.TreeId, common.Hash(p.Source.MerkleRoot).Big(), p.Nullifier.Big(), p.CreditCommitment.Big(), p.GrantID, p.Deadline, high, low)
 	words = append(words, p.FeeRecipient.Big(), fee)
 	return authorize(c, "UpdateCredit", 1, words)
 }
@@ -282,13 +279,13 @@ func (p DrawParams) Statement(c Context, deliveries []protocol.Delivery) ([]comm
 		return nil, apitypes.TypedData{}, fmt.Errorf("payer receipts do not equal total")
 	}
 	for i, r := range p.GrantRefs {
-		if r.PayerIndex == nil || r.PayerIndex.Sign() < 0 || !r.PayerIndex.IsUint64() || r.PayerIndex.Uint64() >= uint64(len(p.Payers)) || r.Shard == 0 {
+		if r.PayerIndex == nil || r.PayerIndex.Sign() < 0 || !r.PayerIndex.IsUint64() || r.PayerIndex.Uint64() >= uint64(len(p.Payers)) || !ValidGrantID(r.GrantID) {
 			return nil, apitypes.TypedData{}, fmt.Errorf("invalid grant reference")
 		}
 		if i > 0 {
 			before := p.GrantRefs[i-1]
 			cmp := r.PayerIndex.Cmp(before.PayerIndex)
-			if cmp < 0 || cmp == 0 && (r.Shard < before.Shard || r.Shard == before.Shard && r.Slot <= before.Slot) {
+			if cmp < 0 || cmp == 0 && (r.GrantID.Cmp(before.GrantID) <= 0) {
 				return nil, apitypes.TypedData{}, fmt.Errorf("grant references must be sorted distinct")
 			}
 		}
@@ -299,7 +296,7 @@ func (p DrawParams) Statement(c Context, deliveries []protocol.Delivery) ([]comm
 	}
 	high, low := split(h)
 	words := append(contextWords(c), big.NewInt(int64(n)), big.NewInt(int64(len(sources))), big.NewInt(int64(len(p.Payers))))
-	arrays := make([][]*big.Int, 10)
+	arrays := make([][]*big.Int, 9)
 	for _, s := range sources {
 		arrays[0] = append(arrays[0], s.TreeId)
 		arrays[1] = append(arrays[1], common.Hash(s.MerkleRoot).Big())
@@ -310,11 +307,10 @@ func (p DrawParams) Statement(c Context, deliveries []protocol.Delivery) ([]comm
 	}
 	for i, r := range p.GrantRefs {
 		arrays[4] = append(arrays[4], r.PayerIndex)
-		arrays[5] = append(arrays[5], new(big.Int).SetUint64(r.Shard))
-		arrays[6] = append(arrays[6], new(big.Int).SetUint64(uint64(r.Slot)))
-		arrays[7] = append(arrays[7], p.Nullifiers[i].Big())
-		arrays[8] = append(arrays[8], p.CreditCommitments[i].Big())
-		arrays[9] = append(arrays[9], p.RecoveryAmounts[i].Big())
+		arrays[5] = append(arrays[5], r.GrantID)
+		arrays[6] = append(arrays[6], p.Nullifiers[i].Big())
+		arrays[7] = append(arrays[7], p.CreditCommitments[i].Big())
+		arrays[8] = append(arrays[8], p.RecoveryAmounts[i].Big())
 	}
 	for _, a := range arrays {
 		for i := 0; i < capacity; i++ {

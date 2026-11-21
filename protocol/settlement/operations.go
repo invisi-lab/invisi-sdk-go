@@ -22,8 +22,7 @@ type ShieldOutput struct {
 type CreateCreditParams struct {
 	Token             common.Address
 	Owner             common.Address
-	RevocationShard   uint64
-	RevocationSlot    uint16
+	GrantID           *big.Int `abi:"grantId"`
 	CreditCommitment  [32]byte
 	Deadline          *big.Int
 	FeeRecipient      common.Address
@@ -38,8 +37,7 @@ type CreditPayer struct {
 }
 type CreditGrantRef struct {
 	PayerIndex *big.Int
-	Shard      uint64
-	Slot       uint16
+	GrantID    *big.Int `abi:"grantId"`
 }
 type CreditDrawParams struct {
 	Token             common.Address
@@ -61,8 +59,7 @@ type UpdateCreditParams struct {
 	Source           InputSource
 	Nullifier        [32]byte
 	CreditCommitment [32]byte
-	RevocationShard  uint64
-	RevocationSlot   uint16
+	GrantID          *big.Int `abi:"grantId"`
 	Deadline         *big.Int
 	FeeRecipient     common.Address
 	FeeAmount        *big.Int
@@ -70,8 +67,7 @@ type UpdateCreditParams struct {
 type RevokeCreditParams struct {
 	Token        common.Address
 	Owner        common.Address
-	Shard        uint64
-	Slot         uint16
+	GrantID      *big.Int `abi:"grantId"`
 	Deadline     *big.Int
 	Signature    []byte
 	FeeRecipient common.Address
@@ -134,26 +130,23 @@ func (r *Request) HasFunding() bool { return r.Method == "transact" || r.Method 
 // Grant reservations prevent duplicate pending create/revoke calls that have no nullifier or funding nonce.
 func (r *Request) PublicReservations() []common.Hash {
 	var owner common.Address
-	var shard uint64
-	var slot uint16
+	var grantID *big.Int
 	switch r.Method {
 	case "createCredit":
 		owner = r.Creation.Owner
-		shard = r.Creation.RevocationShard
-		slot = r.Creation.RevocationSlot
+		grantID = r.Creation.GrantID
 	case "revokeCredit":
 		owner = r.Revocation.Owner
-		shard = r.Revocation.Shard
-		slot = r.Revocation.Slot
+		grantID = r.Revocation.GrantID
 	default:
 		return nil
 	}
 	args := abi.Arguments{}
-	for _, kind := range []string{"string", "string", "address", "address", "uint64", "uint16"} {
+	for _, kind := range []string{"string", "string", "address", "address", "uint128"} {
 		typ, _ := abi.NewType(kind, "", nil)
 		args = append(args, abi.Argument{Type: typ})
 	}
-	encoded, err := args.Pack("InvisiBroadcasterGrantReservationV1", r.Method, r.Statement().Token, owner, shard, slot)
+	encoded, err := args.Pack("InvisiBroadcasterGrantReservationV1", r.Method, r.Statement().Token, owner, grantID)
 	if err != nil {
 		panic(err)
 	}

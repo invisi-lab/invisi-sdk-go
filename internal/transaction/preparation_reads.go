@@ -106,7 +106,7 @@ func (p *preparationProvider) CodeAt(ctx context.Context, a common.Address, n *b
 
 var preparationSelectors = func() map[string]bool {
 	result := map[string]bool{}
-	for _, signature := range []string{"VERSION()", "addressRegistry()", "rootHistory(uint256,bytes32)", "isNullifierSpent(bytes32)", "nonces(address)", "creditAllocation(address,address)", "creditRevocationBitmap(address,address,uint64,uint8)"} {
+	for _, signature := range []string{"VERSION()", "addressRegistry()", "rootHistory(uint256,bytes32)", "isNullifierSpent(bytes32)", "nonces(address)", "creditStatus(address,address,uint128)"} {
 		result[string(crypto.Keccak256([]byte(signature))[:4])] = true
 	}
 	return result

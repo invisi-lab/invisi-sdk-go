@@ -189,14 +189,9 @@
             "internalType": "address"
           },
           {
-            "name": "revocationShard",
-            "type": "uint64",
-            "internalType": "uint64"
-          },
-          {
-            "name": "revocationSlot",
-            "type": "uint16",
-            "internalType": "uint16"
+            "name": "grantId",
+            "type": "uint128",
+            "internalType": "uint128"
           },
           {
             "name": "creditCommitment",
@@ -255,35 +250,6 @@
     ],
     "outputs": [],
     "stateMutability": "nonpayable"
-  },
-  {
-    "type": "function",
-    "name": "creditAllocation",
-    "inputs": [
-      {
-        "name": "owner",
-        "type": "address",
-        "internalType": "address"
-      },
-      {
-        "name": "token",
-        "type": "address",
-        "internalType": "address"
-      }
-    ],
-    "outputs": [
-      {
-        "name": "shard",
-        "type": "uint64",
-        "internalType": "uint64"
-      },
-      {
-        "name": "slot",
-        "type": "uint16",
-        "internalType": "uint16"
-      }
-    ],
-    "stateMutability": "view"
   },
   {
     "type": "function",
@@ -349,14 +315,9 @@
                 "internalType": "uint256"
               },
               {
-                "name": "shard",
-                "type": "uint64",
-                "internalType": "uint64"
-              },
-              {
-                "name": "slot",
-                "type": "uint16",
-                "internalType": "uint16"
+                "name": "grantId",
+                "type": "uint128",
+                "internalType": "uint128"
               }
             ]
           },
@@ -425,7 +386,7 @@
   },
   {
     "type": "function",
-    "name": "creditRevocationBitmap",
+    "name": "creditStatus",
     "inputs": [
       {
         "name": "owner",
@@ -438,14 +399,9 @@
         "internalType": "address"
       },
       {
-        "name": "shard",
-        "type": "uint64",
-        "internalType": "uint64"
-      },
-      {
-        "name": "word",
-        "type": "uint8",
-        "internalType": "uint8"
+        "name": "grantId",
+        "type": "uint128",
+        "internalType": "uint128"
       }
     ],
     "outputs": [
@@ -586,6 +542,19 @@
         "name": "",
         "type": "address",
         "internalType": "address"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "instanceCircuitPaused",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "bool",
+        "internalType": "bool"
       }
     ],
     "stateMutability": "view"
@@ -748,14 +717,9 @@
         "internalType": "address"
       },
       {
-        "name": "shard",
-        "type": "uint64",
-        "internalType": "uint64"
-      },
-      {
-        "name": "slot",
-        "type": "uint16",
-        "internalType": "uint16"
+        "name": "grantId",
+        "type": "uint128",
+        "internalType": "uint128"
       },
       {
         "name": "deadline",
@@ -1337,14 +1301,9 @@
             "internalType": "bytes32"
           },
           {
-            "name": "revocationShard",
-            "type": "uint64",
-            "internalType": "uint64"
-          },
-          {
-            "name": "revocationSlot",
-            "type": "uint16",
-            "internalType": "uint16"
+            "name": "grantId",
+            "type": "uint128",
+            "internalType": "uint128"
           },
           {
             "name": "deadline",
@@ -1532,16 +1491,10 @@
         "internalType": "uint256"
       },
       {
-        "name": "revocationShard",
-        "type": "uint64",
+        "name": "grantId",
+        "type": "uint128",
         "indexed": false,
-        "internalType": "uint64"
-      },
-      {
-        "name": "revocationSlot",
-        "type": "uint16",
-        "indexed": false,
-        "internalType": "uint16"
+        "internalType": "uint128"
       },
       {
         "name": "creditCommitment",
@@ -1684,16 +1637,10 @@
         "internalType": "address"
       },
       {
-        "name": "shard",
-        "type": "uint64",
+        "name": "grantId",
+        "type": "uint128",
         "indexed": true,
-        "internalType": "uint64"
-      },
-      {
-        "name": "slot",
-        "type": "uint16",
-        "indexed": false,
-        "internalType": "uint16"
+        "internalType": "uint128"
       },
       {
         "name": "feeRecipient",
@@ -1777,14 +1724,9 @@
                 "internalType": "uint256"
               },
               {
-                "name": "shard",
-                "type": "uint64",
-                "internalType": "uint64"
-              },
-              {
-                "name": "slot",
-                "type": "uint16",
-                "internalType": "uint16"
+                "name": "grantId",
+                "type": "uint128",
+                "internalType": "uint128"
               }
             ]
           },
@@ -1892,14 +1834,9 @@
             "internalType": "bytes32"
           },
           {
-            "name": "revocationShard",
-            "type": "uint64",
-            "internalType": "uint64"
-          },
-          {
-            "name": "revocationSlot",
-            "type": "uint16",
-            "internalType": "uint16"
+            "name": "grantId",
+            "type": "uint128",
+            "internalType": "uint128"
           },
           {
             "name": "deadline",

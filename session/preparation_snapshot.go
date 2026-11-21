@@ -102,7 +102,7 @@ func newPreparationSnapshot(s *WalletSession, v WalletState, b protocolrpc.Canon
 	return &transaction.PreparationSnapshot{Version: 1, Scope: s.scope, Deployment: s.protocol.Deployment(), Block: b, Generation: v.Scan.Generation, ObservedThrough: v.ObservedThrough, CheckedThrough: &b, Headers: map[uint64]*types.Header{b.Number: types.CopyHeader(h)}, Code: map[common.Address][]byte{}, Calls: map[string][]byte{}, Memberships: map[common.Hash]protocolrpc.Membership{}}
 }
 
-// Consumption and bitmap reads are captured by the state refresh itself. Only missing immutable paths are fetched.
+// Consumption and grant-status reads are captured by the state refresh itself. Only missing immutable paths are fetched.
 func (s *WalletSession) finishPreparationSnapshot(ctx context.Context, before *WalletState, r *transaction.SnapshotRecorder) error {
 	snap := r.Snapshot
 	b := snap.Block
@@ -142,7 +142,7 @@ func (s *WalletSession) finishPreparationSnapshot(ctx context.Context, before *W
 		tokens[token] = true
 	}
 	for _, g := range before.PostpaidCredit.Grants {
-		if g.Consumed || g.Revoked {
+		if g.Consumed || g.GrantStatus != 1 {
 			continue
 		}
 		n := g.Delivery.State
@@ -177,11 +177,6 @@ func (s *WalletSession) finishPreparationSnapshot(ctx context.Context, before *W
 			owners[token] = map[common.Address]bool{}
 		}
 		owners[token][s.scope.OwnerAddress] = true
-		for owner := range owners[token] {
-			if _, e = caller.CreditAllocation(opts, owner, token); e != nil {
-				return e
-			}
-		}
 	}
 	// The highest leaf must choose the root first: an older root cannot include newer leaves.
 	sort.Slice(assets, func(i, j int) bool {

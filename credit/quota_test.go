@@ -91,8 +91,8 @@ func TestUpdateChangeSurvivesPersistenceAndRepricing(t *testing.T) {
 	}
 	clue := make([]byte, 68)
 	clue[64] = 24
-	deliveries := []protocol.Delivery{{Ciphertext: make([]byte, 485), Clue: clue}, {Ciphertext: make([]byte, 485), Clue: clue}}
-	params := UpdateParams{Token: c.TokenAddress, Owner: common.BigToAddress(primitives.ElementToBigInt(s.OwnerWalletIdentity)), Source: protocol.InputSource{TreeId: big.NewInt(1), MerkleRoot: common.HexToHash("1")}, Nullifier: common.Hash(transition.Nullifier.Bytes()), CreditCommitment: common.Hash(transition.StateCommitment.Bytes()), RevocationShard: 1, Deadline: big.NewInt(2000000300)}
+	deliveries := []protocol.Delivery{{Ciphertext: make([]byte, 491), Clue: clue}, {Ciphertext: make([]byte, 491), Clue: clue}}
+	params := UpdateParams{Token: c.TokenAddress, Owner: common.BigToAddress(primitives.ElementToBigInt(s.OwnerWalletIdentity)), Source: protocol.InputSource{TreeId: big.NewInt(1), MerkleRoot: common.HexToHash("1")}, Nullifier: common.Hash(transition.Nullifier.Bytes()), CreditCommitment: common.Hash(transition.StateCommitment.Bytes()), GrantID: big.NewInt(1), Deadline: big.NewInt(2000000300)}
 	prepared, err := PrepareUpdate(c, params, deliveries, LocatedState{State: s, TreeID: 1}, change)
 	if err != nil {
 		t.Fatal(err)
