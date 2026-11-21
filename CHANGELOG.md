@@ -1,6 +1,10 @@
 # Changelog
 
-## Unreleased (planned v1.3.3)
+## 1.3.3
+
+- Release all eight Go modules together at v1.3.3, with the Core resource catalog pinned to `85a5d1dffe40fc965ab4345a28b632f463c3ad861c44d5845850fbc7447fd8f6` (Core commit `4940be21de91689b59ba1a2fe46945f767c3a34c`) and the independent Provenance catalog pinned to `8d5a3e60e3e5cbe315150511207d7aff67f4e2924148d396b67d82017ecd1f1c` (Periphery commit `33ba458ea11e07da282c21b8a2b091a0be1ebd01`). Preserve historical combined and initial-payment resource identities.
+- Synchronize uint128 Credit grant identifiers, validate UTC periods before submission, and recover unsent Credit draws and terminal relay jobs.
+- Batch wallet evidence and refresh inventory on demand while retaining private anchor fences.
 
 - Load recursive verification keys lazily from authenticated public binary resources instead of embedding complete field payloads. Native aggregation preserves the backend's resource policy; custom backends can implement `VerificationKeyLoader` or provide an explicit fallback through `AggregatorOptions`. Retain canonical field, SHA256, Poseidon2 commitment, member and outer proof verification.
 
@@ -8,12 +12,12 @@
 - Introduce `payment-router-intent-v1` semantic quotes: completing proof and wallet signatures preserves quote identity while business fields remain bound. Final submission checks actual hashes/authorizations and simulates the final outer call. Keep `EnvelopeHash` as the raw identity helper.
 - Update all four-mode Router guides and compiling host recipes to finalize the formal quote before proving/signing. Router dynamic network-fee pricing uses an operational gas maximum and signed caps; ordinary Core cap-based pricing and Core/circuit/contract interfaces remain unchanged.
 
-- Add canonical PaymentRouter/account ABI codecs, four-mode payment construction and validation, native/ERC20 V3 and AllowanceHolder routes, approval/permit and explicit EIP-7702 signing helpers, full outer simulation and dedicated Broadcaster RPC methods. Preserve historical native-only APIs. Shared calldata/signature/envelope vectors cover cross-language parity; published versions remain 1.3.2.
+- Add canonical PaymentRouter/account ABI codecs, four-mode payment construction and validation, native/ERC20 V3 and AllowanceHolder routes, approval/permit and explicit EIP-7702 signing helpers, full outer simulation and dedicated Broadcaster RPC methods. Preserve historical native-only APIs. Shared calldata/signature/envelope vectors cover cross-language parity.
 
 - Read consecutive trusted historical headers through validated 256-block RPC ranges, falling back to live batches only when the server explicitly reports an unsupported method or unavailable stored history. Preserve fresh canonical and finality fences.
 
 - Refresh Core and Factory ABI snapshots and generated RPC bindings after removal of address screening; Core construction now takes instance parameters and registry, and Factory deployment and prediction take five arguments.
-- Keep the current Credit ABI snapshot generated alongside public bindings. Published module requirements remain at v1.3.2.
+- Keep the current Credit ABI snapshot generated alongside public bindings.
 
 ## 1.3.2
 

@@ -1,6 +1,6 @@
 # Payment Router
 
-The unreleased canonical API (planned v1.3.3; published module versions remain v1.3.2) supports arbitrary native/ERC20 input through exact-output Uniswap V3 or validated 0x routes. `PaymentRouterABI()` and `PaymentRouterAccountABI()` expose the canonical contract interfaces. The optional module never signs or sends automatically; the host owns deployment trust, proof generation, wallet decisions and submission.
+The canonical API in v1.3.3 supports arbitrary native/ERC20 input through exact-output Uniswap V3 or validated 0x routes. `PaymentRouterABI()` and `PaymentRouterAccountABI()` expose the canonical contract interfaces. The optional module never signs or sends automatically; the host owns deployment trust, proof generation, wallet decisions and submission.
 
 | Mode | Builder / entry point | Principal and gas |
 | --- | --- | --- |

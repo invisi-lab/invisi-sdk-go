@@ -7,7 +7,7 @@ PREFIX = 'github.com/invisi-labs/invisi-sdk-go'
 parser = argparse.ArgumentParser(description=__doc__)
 parser.add_argument('--tag', help='Verify all actual remote module tags before archive checks')
 options = parser.parse_args()
-VERSION = options.tag or 'v1.3.2'
+VERSION = options.tag or 'v1.3.3'
 if options.tag:
     validate_tagged_release(ROOT, VERSION)
 subprocess.run(['python3', str(ROOT / 'scripts/release-notes.py'), VERSION], check=True, stdout=subprocess.DEVNULL)

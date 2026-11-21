@@ -3,10 +3,10 @@
 Go client for the current Invisi Protocol. Requires Go 1.26.1 or newer.
 
 ```sh
-go get github.com/invisi-labs/invisi-sdk-go@v1.3.2
+go get github.com/invisi-labs/invisi-sdk-go@v1.3.3
 ```
 
-Release target: **1.3.2**. Module versions are repository tags; preparing this source does not create `v1.3.2` or publish a release. The `go 1.26.1` directive remains the toolchain requirement. The SDK remains in the v1 series. Source synchronization does not publish a new module version or upgrade deployed contracts.
+Release target: **1.3.3**. Module versions are repository tags; preparing this source does not create `v1.3.3` or publish a release. The `go 1.26.1` directive remains the toolchain requirement. The SDK remains in the v1 series. Source synchronization does not publish a new module version or upgrade deployed contracts.
 
 ## Core contract bindings
 
@@ -14,7 +14,7 @@ Contract bindings follow the current `invisi-core` compiler artifacts: `InvisiCo
 
 ## Eight independently versioned modules
 
-All eight modules target **1.3.2**. Applications normally import the SDK's `sdk` package; backend services can depend only on the pure Protocol module and its Primitives dependency.
+All eight modules target **1.3.3**. Applications normally import the SDK's `sdk` package; backend services can depend only on the pure Protocol module and its Primitives dependency.
 
 | Module | Responsibility | Internal dependencies |
 | --- | --- | --- |
@@ -27,7 +27,7 @@ All eight modules target **1.3.2**. Applications normally import the SDK's `sdk`
 | `paymentrouter` | Optional four-mode native/ERC20 PaymentRouter, V3/0x routing, authorization and relay envelopes | SDK; protocol; geth |
 | `ipp` | Independent IPP protocol types, HTTP client and merchant helpers; Invisi transaction preparation through `ipp/invisi` | primitives; SDK for the Invisi adapter |
 
-Module paths use `github.com/invisi-labs/invisi-sdk-go/<name>`; the SDK uses the repository-root module path. Nested module release tags are `<name>/v1.3.2`; the root SDK tag is `v1.3.2`. The examples are a separate development module, not a public release package. No `core`, `runtime` or `protocolkit` compatibility module is retained.
+Module paths use `github.com/invisi-labs/invisi-sdk-go/<name>`; the SDK uses the repository-root module path. Nested module release tags are `<name>/v1.3.3`; the root SDK tag is `v1.3.3`. The examples are a separate development module, not a public release package. No `core`, `runtime` or `protocolkit` compatibility module is retained.
 
 Pure ABI/types are in `protocol/contracts`; network-bound geth clients are in `rpc/contracts`. Maintainers regenerate both from the same compiler ABIs with `go generate ./contracts` in the Protocol module. `session/credit` owns managed Credit state. `protocol/gas` owns receipt-calibrated local estimates, while final transaction simulation belongs to the application and deployment/operator pricing remains outside the pure module.
 
@@ -197,7 +197,7 @@ Independent Provenance keeps source recognition separate from protocol spendabil
 
 `python3 scripts/test-modules.py` creates a temporary workspace and runs boundary checks, race tests, vet and builds for all eight modules plus the private examples. `python3 scripts/check-packages.py` constructs isolated local-proxy archives and tests them without the workspace or sibling checkouts; unpublished versions never enter the global module cache. GitHub CI runs both commands. Native Noir/BB integration tests are opt-in and require explicit local tool paths.
 
-Workspace modules currently declare v1.3.2; no remote tags are created by these checks. Before standalone consumer builds can resolve the new version from GitHub, publish the required module tags in dependency order and refresh dependency checksums.
+Workspace modules currently declare v1.3.3; no remote tags are created by these checks. Before standalone consumer builds can resolve the new version from GitHub, publish the required module tags in dependency order and refresh dependency checksums.
 
 Managed `SendTransaction` requires a positive caller-supplied gas limit in the signer or `TransactionOptions.GasLimit`; it never triggers geth automatic gas simulation. Applications choose the submission budget.
 
@@ -253,7 +253,7 @@ Core operations do not require the Provenance catalog; Provenance operations do 
 
 ### Optional Payment Router
 
-The canonical four-mode API is unreleased (planned v1.3.3); published versions remain v1.3.2. See [paymentrouter/README.md](paymentrouter/README.md) for self-submitted native/ERC20 and relayed ERC20/EIP-7702 native payments, exact-output V3/0x and same-token/wrap routes. The exact output includes the Core-token fee. Router relay uses `EstimateRouterQuote`, `GetRouterQuote` and `SubmitRouterTransaction` with each phase’s exact embedded Core data and zero-value outer envelope. Export `prepared.ExportRouterDraft(ctx)`, build with `BuildPaymentDraft` / `BuildSponsoredDraft`, and finalize the semantic quote before proving and wallet signing. `EstimateRouterGas` previews conservative local Router allowances above the prepared Core estimate. Quotes use `payment-router-intent-v1`. Proof and wallet signature changes retain `RouterIntentHash`; fee, route, nonce or deadline changes require a new quote. Final submission validates and simulates the actual signed envelope. See [compiling workflows](paymentrouter/workflow_example_test.go). The host owns wallet/proof lifecycle and submission; the core SDK does not import this optional module. The preview source is `model`, not receipt-calibrated swap measurements; opaque 0x is unavailable without an independent trusted route budget. The service uses operator policy rather than client hints and prices Router quotes from current network fees under an operational gas maximum and signed caps. Ordinary Core cap-based pricing and Core/circuit interfaces remain unchanged. Historical native-only helpers remain explicitly available.
+The canonical four-mode API is included in v1.3.3. See [paymentrouter/README.md](paymentrouter/README.md) for self-submitted native/ERC20 and relayed ERC20/EIP-7702 native payments, exact-output V3/0x and same-token/wrap routes. The exact output includes the Core-token fee. Router relay uses `EstimateRouterQuote`, `GetRouterQuote` and `SubmitRouterTransaction` with each phase’s exact embedded Core data and zero-value outer envelope. Export `prepared.ExportRouterDraft(ctx)`, build with `BuildPaymentDraft` / `BuildSponsoredDraft`, and finalize the semantic quote before proving and wallet signing. `EstimateRouterGas` previews conservative local Router allowances above the prepared Core estimate. Quotes use `payment-router-intent-v1`. Proof and wallet signature changes retain `RouterIntentHash`; fee, route, nonce or deadline changes require a new quote. Final submission validates and simulates the actual signed envelope. See [compiling workflows](paymentrouter/workflow_example_test.go). The host owns wallet/proof lifecycle and submission; the core SDK does not import this optional module. The preview source is `model`, not receipt-calibrated swap measurements; opaque 0x is unavailable without an independent trusted route budget. The service uses operator policy rather than client hints and prices Router quotes from current network fees under an operational gas maximum and signed caps. Ordinary Core cap-based pricing and Core/circuit interfaces remain unchanged. Historical native-only helpers remain explicitly available.
 
 
 For Credit submission paths, a first transport attempt is known not to have been sent only when the structured Broadcaster RPC error matches both its numeric code and machine reason: `-32024/CREDIT_PERIOD_CHANGED`, `-32025/INSUFFICIENT_EXECUTION_SLACK`, or `-32026/CREDIT_PERIOD_ENDING`. Managed journals persist that local refusal state; detached callers retain their handle and own durable recovery storage. The refused handle blocks an unchanged SDK submission. Refresh or safely abandon the known-unsent operation, obtain a fresh quote, and authorize/prove a new statement. When rebuilding creation with an initial payment, preserve its originally selected grant ID; choosing a different ID creates a separate authorization. Ordinary transport failures, malformed or mismatched errors, and a refusal received after an earlier uncertain attempt retain the exact original request and reservations. A missing transaction hash alone never permits rebuilding.
