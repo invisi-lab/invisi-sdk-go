@@ -57,6 +57,18 @@ geth `crypto.Sign` returns recovery parity 0 or 1; normalize that final byte
 before attaching it. ERC-1271 signatures follow the contract wallet's format.
 EIP-7702 authorization `yParity` remains 0 or 1 and must not be changed to 27/28.
 
+For recovery, persist the literal submission body (`data`, `router`, `quote`,
+`signature`) before sending and retain the returned opaque ID. Use
+`service.Status(ctx, id)` to query a known submission. `SubmitRouterTransaction`
+requires a currently valid quote with its verified `Context`; that context is
+not serialized into JSON. Restoring a still-valid quote requires re-verifying it
+with trusted configuration before restoring its context. If the acknowledgement
+was lost and the frozen quote has expired, the host can resend the exact saved
+JSON-RPC submission body to retrieve the server's existing record. The SDK helper
+does not bypass expiry checks for that recovery path. Do not rebuild or sign a
+new payment merely to discover the original outcome; preserve the original
+body and reconcile uncertain sends.
+
 ## Legacy native-only integration
 
 The optional module `github.com/invisi-labs/invisi-sdk-go/paymentrouter` retains `Quote`, `BuildPaymentTransaction`, `SimulatePayment`, `LegacyPaymentRouterABI` and `ZeroExPaymentRouterABI` as historical native-only APIs for existing deployments. The core SDK has no dependency on this module.
