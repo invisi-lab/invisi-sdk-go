@@ -10,6 +10,7 @@ Module version: `1.2.0`. See the [SDK repository](https://github.com/invisi-labs
 
 | Method | Response |
 | --- | --- |
+| `GetMemberships(ctx, scope, inputs, block)` | Ordered, fully verified paths; up to 256 inputs sharing status/finality and one root per tree |
 | `GetNoteUpdates(ctx, scope, range)` | `ProtocolNoteUpdates{Block, Notes}` |
 | `GetCreditTransitions(ctx, scope, range)` | `ProtocolCreditUpdates{Block, Transitions}` |
 | `GetNote(ctx, scope, commitment, block)` | `*NoteLookup{Output, Membership}` or nil |

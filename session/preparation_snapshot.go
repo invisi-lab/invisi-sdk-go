@@ -106,9 +106,6 @@ func newPreparationSnapshot(s *WalletSession, v WalletState, b protocolrpc.Canon
 func (s *WalletSession) finishPreparationSnapshot(ctx context.Context, before *WalletState, r *transaction.SnapshotRecorder) error {
 	snap := r.Snapshot
 	b := snap.Block
-	if e := s.protocol.ValidateDeployment(ctx, r); e != nil {
-		return e
-	}
 	for _, point := range []*protocolrpc.CanonicalBlock{before.ObservedThrough, before.CheckedThrough} {
 		if point != nil {
 			h, e := r.HeaderByNumber(ctx, new(big.Int).SetUint64(point.Number))
@@ -186,67 +183,6 @@ func (s *WalletSession) finishPreparationSnapshot(ctx context.Context, before *W
 		return assets[i].index > assets[j].index
 	})
 	roots := map[uint64]common.Hash{}
-	var mu sync.Mutex
-	work := func(ctx context.Context, i int) error {
-		a := assets[i]
-		m, ok := s.publicHistory.preparationCapture.get(a.commitment)
-		if !ok && before.PreparationSnapshot != nil {
-			m, ok = before.PreparationSnapshot.Memberships[a.commitment]
-		}
-		mu.Lock()
-		root, pinned := roots[a.tree]
-		mu.Unlock()
-		if ok && m.TreeID == a.tree && m.LeafIndex == a.index && (!pinned || root == m.Root) {
-			if m.Block == b {
-				ok = true
-			} else {
-				known, e := caller.RootHistory(&bind.CallOpts{Context: ctx, BlockNumber: opts.BlockNumber}, new(big.Int).SetUint64(a.tree), m.Root)
-				if e != nil {
-					return e
-				}
-				ok = known
-			}
-		} else {
-			ok = false
-		}
-		if !ok {
-			input := protocolrpc.MembershipInput{TreeID: a.tree, LeafIndex: a.index, Commitment: a.commitment}
-			if pinned {
-				input.Root = &root
-			}
-			var e error
-			m, e = s.rpc.GetMembership(ctx, s.protocol.Context(), input, b)
-			if e != nil {
-				return e
-			}
-
-		}
-		abi, _ := protocol.ProtocolABI()
-		method := abi.Methods["rootHistory"]
-		data, e := abi.Pack("rootHistory", new(big.Int).SetUint64(a.tree), m.Root)
-		if e != nil {
-			return e
-		}
-		value, e := method.Outputs.Pack(true)
-		if e != nil {
-			return e
-		}
-		r.RecordCall(ethereum.CallMsg{To: &s.scope.ProtocolAddress, Data: data}, value)
-		if pinned && m.Root != root {
-			return errors.New("cached membership root conflict")
-		}
-		m.Block = b
-		local := *snap
-		local.Memberships = map[common.Hash]protocolrpc.Membership{a.commitment: m}
-		if _, e := local.Membership(protocolrpc.MembershipInput{TreeID: a.tree, LeafIndex: a.index, Commitment: a.commitment}, b); e != nil {
-			return e
-		}
-		mu.Lock()
-		snap.Memberships[a.commitment] = m
-		roots[a.tree] = m.Root
-		mu.Unlock()
-		return nil
-	}
 	first := map[uint64]int{}
 	leaders, rest := []int{}, []int{}
 	for i, a := range assets {
@@ -258,19 +194,79 @@ func (s *WalletSession) finishPreparationSnapshot(ctx context.Context, before *W
 		}
 	}
 	for _, batch := range [][]int{leaders, rest} {
-		if _, e := transaction.MapPreparation(ctx, len(batch), func(ctx context.Context, j int) (struct{}, error) { return struct{}{}, work(ctx, batch[j]) }); e != nil {
+		cached, e := transaction.MapPreparation(ctx, len(batch), func(ctx context.Context, j int) (*protocolrpc.Membership, error) {
+			a := assets[batch[j]]
+			m, ok := s.publicHistory.preparationCapture.get(a.commitment)
+			if !ok && before.PreparationSnapshot != nil {
+				m, ok = before.PreparationSnapshot.Memberships[a.commitment]
+			}
+			root, pinned := roots[a.tree]
+			if !ok || m.TreeID != a.tree || m.LeafIndex != a.index || (pinned && m.Root != root) {
+				return nil, nil
+			}
+			known, e := caller.RootHistory(&bind.CallOpts{Context: ctx, BlockNumber: opts.BlockNumber}, new(big.Int).SetUint64(a.tree), m.Root)
+			if e != nil {
+				return nil, e
+			}
+			if !known {
+				return nil, nil
+			}
+			m.Block = b
+			return &m, nil
+		})
+		if e != nil {
 			return e
 		}
-	}
-	if _, e = r.ChainID(ctx); e != nil {
-		return e
-	}
-	h, e := s.options.Provider.HeaderByNumber(ctx, new(big.Int).SetUint64(b.Number))
-	if e != nil {
-		return e
-	}
-	if h == nil || h.Hash() != b.Hash {
-		return errors.New("preparation canonical anchor changed")
+		missing, positions := []protocolrpc.MembershipInput{}, []int{}
+		for j, index := range batch {
+			if cached[j] != nil {
+				continue
+			}
+			a := assets[index]
+			q := protocolrpc.MembershipInput{TreeID: a.tree, LeafIndex: a.index, Commitment: a.commitment}
+			if root, ok := roots[a.tree]; ok {
+				copy := root
+				q.Root = &copy
+			}
+			missing = append(missing, q)
+			positions = append(positions, j)
+		}
+		for offset := 0; offset < len(missing); offset += protocolrpc.MaxMembershipBatch {
+			end := min(offset+protocolrpc.MaxMembershipBatch, len(missing))
+			found, e := s.rpc.GetMemberships(ctx, s.protocol.Context(), missing[offset:end], b)
+			if e != nil {
+				return e
+			}
+			for j, m := range found {
+				copy := m
+				cached[positions[offset+j]] = &copy
+			}
+		}
+		for j, index := range batch {
+			a := assets[index]
+			m := *cached[j]
+			if root, pinned := roots[a.tree]; pinned && m.Root != root {
+				return errors.New("cached membership root conflict")
+			}
+			abi, _ := protocol.ProtocolABI()
+			method := abi.Methods["rootHistory"]
+			data, e := abi.Pack("rootHistory", new(big.Int).SetUint64(a.tree), m.Root)
+			if e != nil {
+				return e
+			}
+			value, e := method.Outputs.Pack(true)
+			if e != nil {
+				return e
+			}
+			r.RecordCall(ethereum.CallMsg{To: &s.scope.ProtocolAddress, Data: data}, value)
+			local := *snap
+			local.Memberships = map[common.Hash]protocolrpc.Membership{a.commitment: m}
+			if _, e := local.Membership(protocolrpc.MembershipInput{TreeID: a.tree, LeafIndex: a.index, Commitment: a.commitment}, b); e != nil {
+				return e
+			}
+			snap.Memberships[a.commitment] = m
+			roots[a.tree] = m.Root
+		}
 	}
 	snap.ObservedThrough = before.ObservedThrough
 	snap.CheckedThrough = before.CheckedThrough

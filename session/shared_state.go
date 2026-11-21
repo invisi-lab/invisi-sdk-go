@@ -15,6 +15,8 @@ import (
 	"math/big"
 )
 
+// Known state is captured at one numeric block/hash. Workers only return values;
+// the caller merges them after every read and the canonical fence succeed.
 func (s *WalletSession) checkKnownState(ctx context.Context, v *WalletState, b protocolrpc.CanonicalBlock) error {
 	c, e := contracts.NewInvisiCoreCaller(s.scope.ProtocolAddress, s.options.Provider)
 	if e != nil {
@@ -22,74 +24,129 @@ func (s *WalletSession) checkKnownState(ctx context.Context, v *WalletState, b p
 	}
 	opts := &bind.CallOpts{Context: ctx, BlockNumber: new(big.Int).SetUint64(b.Number)}
 	cache := scanCache(ctx)
-	spent := func(nf common.Hash) (bool, error) {
-		key := spentCheckKey{Block: b, Nullifier: nf}
-		if cache != nil {
-			if value, ok := cache.spent[key]; ok {
-				return value, nil
-			}
-		}
-		value, err := c.IsNullifierSpent(opts, nf)
-		if err == nil && cache != nil {
-			cache.trim()
-			cache.spent[key] = value
-		}
-		return value, err
+	type statusInput struct {
+		owner, token common.Address
+		grantID      *big.Int
 	}
-	for key, n := range v.Notes {
-		n.Spent, e = spent(n.Nullifier)
-		if e != nil {
-			return e
-		}
-		checked := b
-		n.CheckedThrough = &checked
-		v.Notes[key] = n
+	statuses := map[string]statusInput{}
+	grantKeys := map[string]string{}
+	nullifiers := map[common.Hash]bool{}
+	for _, n := range v.Notes {
+		nullifiers[n.Nullifier] = true
 	}
-	statuses := map[string]uint8{}
 	for key, g := range v.PostpaidCredit.Grants {
-		g.Consumed, e = spent(g.Nullifier)
-		if e != nil {
-			return e
-		}
+		nullifiers[g.Nullifier] = true
 		state := g.Delivery.State
 		owner := common.BigToAddress(primitives.ElementToBigInt(state.OwnerWalletIdentity))
 		token := common.BigToAddress(primitives.ElementToBigInt(state.TokenAddress))
 		id := primitives.ElementToBigInt(state.GrantID)
-		namespace := fmt.Sprintf("%s:%s:%s", owner, token, id)
-		status, ok := statuses[namespace]
-		cacheKey := statusCheckKey{Block: b, Namespace: namespace}
-		if !ok && cache != nil {
-			status, ok = cache.statuses[cacheKey]
+		ns := fmt.Sprintf("%s:%s:%s", owner, token, id)
+		statuses[ns] = statusInput{owner, token, id}
+		grantKeys[key] = ns
+	}
+	type read struct {
+		nf common.Hash
+		ns string
+	}
+	type value struct {
+		spent  bool
+		status uint8
+	}
+	jobs := []read{}
+	spent := map[common.Hash]bool{}
+	statusValues := map[string]uint8{}
+	for nf := range nullifiers {
+		if cache != nil {
+			if v, ok := cache.spent[spentCheckKey{Block: b, Nullifier: nf}]; ok {
+				spent[nf] = v
+				continue
+			}
 		}
-		if !ok {
-			status, e = c.CreditStatusValue(opts, owner, token, id)
-			if e != nil {
-				return e
+		jobs = append(jobs, read{nf: nf})
+	}
+	for ns := range statuses {
+		if cache != nil {
+			if v, ok := cache.statuses[statusCheckKey{Block: b, Namespace: ns}]; ok {
+				statusValues[ns] = v
+				continue
 			}
-			if status > 2 {
-				return errors.New("invalid Credit status")
-			}
-			statuses[namespace] = status
+		}
+		jobs = append(jobs, read{ns: ns})
+	}
+	values, e := transaction.MapPreparation(ctx, len(jobs), func(ctx context.Context, i int) (value, error) {
+		job := jobs[i]
+		local := *opts
+		local.Context = ctx
+		if job.ns == "" {
+			v, e := c.IsNullifierSpent(&local, job.nf)
+			return value{spent: v}, e
+		}
+		q := statuses[job.ns]
+		v, e := c.CreditStatusValue(&local, q.owner, q.token, q.grantID)
+		if e != nil {
+			return value{}, e
+		}
+		if v > 2 {
+			return value{}, errors.New("invalid Credit status")
+		}
+		return value{status: v}, nil
+	})
+	if e != nil {
+		return e
+	}
+	if e = s.canonical(ctx, b); e != nil {
+		return e
+	}
+	if e = ctx.Err(); e != nil {
+		return e
+	}
+	for i, job := range jobs {
+		if job.ns == "" {
+			spent[job.nf] = values[i].spent
 			if cache != nil {
 				cache.trim()
-				cache.statuses[cacheKey] = status
+				cache.spent[spentCheckKey{Block: b, Nullifier: job.nf}] = values[i].spent
+			}
+		} else {
+			statusValues[job.ns] = values[i].status
+			if cache != nil {
+				cache.trim()
+				cache.statuses[statusCheckKey{Block: b, Namespace: job.ns}] = values[i].status
 			}
 		}
+	}
+	for key, n := range v.Notes {
+		n.Spent = spent[n.Nullifier]
+		checked := b
+		n.CheckedThrough = &checked
+		v.Notes[key] = n
+	}
+	for key, g := range v.PostpaidCredit.Grants {
+		g.Consumed = spent[g.Nullifier]
 		previousStatus := g
-		if e = g.SetGrantStatus(status, &b); e != nil {
+		if e = g.SetGrantStatus(statusValues[grantKeys[key]], &b); e != nil {
 			return e
 		}
 		g = g.MergeGrantStatus(previousStatus)
 		v.PostpaidCredit.Grants[key] = g
 	}
-	if e = s.canonical(ctx, b); e != nil {
-		return e
-	}
 	v.CheckedThrough = &b
 	v.Scan.ChainHead = &b
 	return nil
 }
+
+// StateRefreshOptions keeps inventory refresh separate from optional transaction
+// material preloading. The zero value preserves offline-preparation support.
+type StateRefreshOptions struct{ InventoryOnly bool }
+
 func (s *WalletSession) RefreshState(ctx context.Context) error {
+	return s.RefreshStateWithOptions(ctx, StateRefreshOptions{})
+}
+
+// RefreshStateWithOptions optionally omits transaction-material preloading while
+// preserving the same live state, deployment and recovery checks.
+func (s *WalletSession) RefreshStateWithOptions(ctx context.Context, options StateRefreshOptions) error {
+	inventoryOnly := options.InventoryOnly
 	// A final live refresh must recapture all consumption/revocation reads in its
 	// preparation snapshot and must not reuse the discovery scan's state cache.
 	ctx = context.WithValue(ctx, scanStateCacheKey{}, (*scanStateCache)(nil))
@@ -120,11 +177,26 @@ func (s *WalletSession) RefreshState(ctx context.Context) error {
 	recorder := transaction.NewSnapshotRecorder(s.options.Provider, snap)
 	captured := *s
 	captured.options.Provider = recorder
+	if e = s.protocol.ValidateDeployment(ctx, recorder); e != nil {
+		return e
+	}
 	if e = captured.checkKnownState(ctx, &before, b); e != nil {
 		return e
 	}
-	if e = s.finishPreparationSnapshot(ctx, &before, recorder); e != nil {
+	if inventoryOnly {
+		before.PreparationSnapshot = nil
+	} else if e = s.finishPreparationSnapshot(ctx, &before, recorder); e != nil {
 		return e
+	}
+	if _, e = recorder.ChainID(ctx); e != nil {
+		return e
+	}
+	current, e := s.options.Provider.HeaderByNumber(ctx, new(big.Int).SetUint64(b.Number))
+	if e != nil {
+		return e
+	}
+	if current == nil || current.Hash() != b.Hash {
+		return errors.New("state refresh canonical anchor changed")
 	}
 	if e = s.commitPrivateBatch(ctx, before.Scan.Generation, before.Revision, before); e != nil {
 		return e

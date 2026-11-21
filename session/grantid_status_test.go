@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"math/big"
+	"sync"
 	"testing"
 
 	"github.com/ethereum/go-ethereum"
@@ -18,6 +19,7 @@ import (
 
 type scopedGrantStatusProvider struct {
 	sdk.Provider
+	mu       sync.Mutex
 	statuses map[string]uint8
 	seen     map[string]bool
 	block    uint64
@@ -42,7 +44,9 @@ func (p *scopedGrantStatusProvider) CallContract(ctx context.Context, msg ethere
 			if !ok {
 				return nil, fmt.Errorf("unexpected status namespace %s", key)
 			}
+			p.mu.Lock()
 			p.seen[key] = true
+			p.mu.Unlock()
 			return method.Outputs.Pack(new(big.Int).SetUint64(uint64(value)))
 		}
 	}

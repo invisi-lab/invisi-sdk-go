@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"math/big"
+	"sync"
 	"testing"
 
 	"github.com/ethereum/go-ethereum"
@@ -16,16 +17,20 @@ import (
 
 type countingStateProvider struct {
 	sdk.Provider
+	mu       sync.Mutex
 	calls    int
 	failOnce bool
 }
 
 func (p *countingStateProvider) CallContract(ctx context.Context, m ethereum.CallMsg, n *big.Int) ([]byte, error) {
+	p.mu.Lock()
 	p.calls++
 	if p.failOnce {
 		p.failOnce = false
+		p.mu.Unlock()
 		return nil, errors.New("temporary provider failure")
 	}
+	p.mu.Unlock()
 	return p.Provider.CallContract(ctx, m, n)
 }
 

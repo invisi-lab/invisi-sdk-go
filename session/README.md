@@ -38,6 +38,18 @@ All packages belong to the existing Go module and share its version. No compatib
 
 ## Collecting known Notes
 
+`managed.RefreshState(ctx)` retains its default transaction preparation snapshot.
+Hosts that only need current inventory can use
+`managed.RefreshStateWithOptions(ctx, session.StateRefreshOptions{InventoryOnly: true})`.
+This still checks the deployment, every known Note/Credit nullifier, Credit
+revocation, canonical anchors and pending operations, but does not preload
+memberships, token code, nonce or allocation for unrelated transactions. It
+discards any older preparation snapshot; subsequent preparation reads the
+selected inputs online. Live state reads are limited to four workers at one
+numeric block and merged only after all reads and canonical/identity checks
+succeed. Root acceptance is checked again during every online refresh, including
+paths retained at the same block. Submission validation remains required.
+
 `managed.ImportNotes(ctx, []sdk.NoteInput{...})` authenticates locally held openings against the session owner, deployment, commitment, canonical membership and consumption state. It preserves spent flags and reservations, and does not claim that undiscovered history has been scanned.
 
 `managed.PrepareCollection(ctx, token, recipient, commitments, session.CollectionOptions{Deadline: deadline})` reserves exactly those available Notes and prepares their full sum as one withdrawal without change or public funding. The options argument is optional; set an absolute Unix deadline long enough for local proving when using large circuit capacities. The selected inputs and deadline remain frozen across persistence and recovery.

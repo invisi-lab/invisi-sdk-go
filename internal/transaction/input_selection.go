@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"math/big"
+	"sort"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
@@ -65,6 +66,58 @@ func (s *Runtime) SelectInputs(ctx context.Context, token common.Address, amount
 	}
 	if sum.Cmp(amount) < 0 || (len(selected) > 0 && len(inputs) != len(selected)) {
 		return nil, nil, errors.New("insufficient available known notes")
+	}
+	if s.Snapshot == nil {
+		contract, err := contracts.NewInvisiCoreCaller(s.Scope.ProtocolAddress, s.Options.Provider)
+		if err != nil {
+			return nil, nil, err
+		}
+		if _, err = MapPreparation(ctx, len(inputs), func(ctx context.Context, i int) (struct{}, error) {
+			used, e := contract.IsNullifierSpent(&bind.CallOpts{Context: ctx, BlockNumber: new(big.Int).SetUint64(block.Number)}, inputs[i].Nullifier)
+			if e != nil {
+				return struct{}{}, e
+			}
+			if used {
+				return struct{}{}, errors.New("stored note was consumed; refresh wallet")
+			}
+			return struct{}{}, nil
+		}); err != nil {
+			return nil, nil, err
+		}
+		order := make([]int, len(inputs))
+		for i := range order {
+			order[i] = i
+		}
+		sort.Slice(order, func(i, j int) bool {
+			a, b := inputs[order[i]], inputs[order[j]]
+			if a.TreeID != b.TreeID {
+				return a.TreeID < b.TreeID
+			}
+			return a.LeafIndex > b.LeafIndex
+		})
+		memberships = make([]protocolrpc.Membership, len(inputs))
+		roots := map[uint64]common.Hash{}
+		for offset := 0; offset < len(order); offset += protocolrpc.MaxMembershipBatch {
+			end := min(offset+protocolrpc.MaxMembershipBatch, len(order))
+			requests := make([]protocolrpc.MembershipInput, end-offset)
+			for j, index := range order[offset:end] {
+				n := inputs[index]
+				requests[j] = protocolrpc.MembershipInput{TreeID: n.TreeID, LeafIndex: n.LeafIndex, Commitment: n.Commitment}
+				if root, ok := roots[n.TreeID]; ok {
+					r := root
+					requests[j].Root = &r
+				}
+			}
+			verified, e := s.RPC.GetMemberships(ctx, s.Protocol.Context(), requests, block)
+			if e != nil {
+				return nil, nil, e
+			}
+			for j, m := range verified {
+				memberships[order[offset+j]] = m
+				roots[m.TreeID] = m.Root
+			}
+		}
+		return inputs, memberships, nil
 	}
 	// Pin one indexed root per tree before concurrent paths are requested.
 	first := map[uint64]int{}

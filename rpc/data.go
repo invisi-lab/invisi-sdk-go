@@ -4,15 +4,11 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"math/big"
-	"sort"
 
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
-
-	"github.com/invisi-labs/invisi-sdk-go/primitives"
 )
 
 const MaxUpdateBlocks uint64 = 10000
@@ -108,94 +104,12 @@ func (c *ProtocolRpcClient) knownRoot(ctx context.Context, context DeploymentCon
 	}
 	return out[31] == 1, nil
 }
-func (c *ProtocolRpcClient) GetMembership(ctx context.Context, context DeploymentContext, input MembershipInput, block CanonicalBlock) (Membership, error) {
-	var result Membership
-	d, e := c.context(context)
-	if e != nil {
-		return result, e
+
+// GetMembership verifies one path with the same fences as a membership batch.
+func (c *ProtocolRpcClient) GetMembership(ctx context.Context, scope DeploymentContext, input MembershipInput, block CanonicalBlock) (Membership, error) {
+	values, err := c.GetMemberships(ctx, scope, []MembershipInput{input}, block)
+	if err != nil {
+		return Membership{}, err
 	}
-	if input.TreeID == 0 || input.TreeID > 1<<53-1 || input.LeafIndex >= 1<<primitives.TreeDepth {
-		return result, errors.New("invalid membership position")
-	}
-	leaf, e := primitives.HexToElement(input.Commitment.Hex())
-	if e != nil {
-		return result, e
-	}
-	if _, e = c.GetStatus(ctx, context); e != nil {
-		return result, e
-	}
-	if _, e = c.canonical(ctx, block); e != nil {
-		return result, e
-	}
-	var roots []rootAnchor
-	if e = c.call(ctx, context.ChainID, "invisi_getRoots", []any{input.TreeID}, &roots); e != nil {
-		return result, e
-	}
-	sort.Slice(roots, func(i, j int) bool {
-		if roots[i].Block.Number == roots[j].Block.Number {
-			return roots[i].LeafCount > roots[j].LeafCount
-		}
-		return roots[i].Block.Number > roots[j].Block.Number
-	})
-	var selected *rootAnchor
-	for i := range roots {
-		r := &roots[i]
-		if r.TreeID != input.TreeID || r.LeafCount > 1<<primitives.TreeDepth {
-			return result, errors.New("invalid root metadata")
-		}
-		if r.Block.Number > block.Number || r.Block.Number < d.Protocol.FromBlock || r.LeafCount <= input.LeafIndex || (input.Root != nil && r.Root != *input.Root) {
-			continue
-		}
-		if _, e = primitives.HexToElement(r.Root.Hex()); e != nil {
-			return result, e
-		}
-		if _, e = c.canonical(ctx, r.Block); e != nil {
-			return result, e
-		}
-		known, e := c.knownRoot(ctx, context, input.TreeID, r.Root, block)
-		if e != nil {
-			return result, e
-		}
-		if known {
-			selected = r
-			break
-		}
-	}
-	if selected == nil {
-		return result, errors.New("no chain-known indexed membership root")
-	}
-	var response struct {
-		Anchor     rootAnchor    `json:"anchor"`
-		LeafIndex  uint32        `json:"leafIndex"`
-		Commitment common.Hash   `json:"commitment"`
-		Path       []common.Hash `json:"siblings"`
-	}
-	if e = c.call(ctx, context.ChainID, "invisi_getMembership", []any{input.TreeID, input.LeafIndex, selected.Root}, &response); e != nil {
-		return result, e
-	}
-	if response.Anchor != *selected || response.LeafIndex != input.LeafIndex || response.Commitment != input.Commitment || len(response.Path) != primitives.TreeDepth {
-		return result, errors.New("RPC membership binding mismatch")
-	}
-	current := leaf
-	for level, sibling := range response.Path {
-		s, e := primitives.HexToElement(sibling.Hex())
-		if e != nil {
-			return result, e
-		}
-		if input.LeafIndex>>level&1 == 0 {
-			current, e = primitives.Poseidon2Hash(current, s)
-		} else {
-			current, e = primitives.Poseidon2Hash(s, current)
-		}
-		if e != nil {
-			return result, e
-		}
-	}
-	if common.Hash(current.Bytes()) != selected.Root {
-		return result, fmt.Errorf("invalid Merkle path")
-	}
-	if _, e = c.canonical(ctx, block); e != nil {
-		return result, e
-	}
-	return Membership{input.TreeID, input.LeafIndex, input.Commitment, selected.Root, append([]common.Hash(nil), response.Path...), block}, nil
+	return values[0], nil
 }
