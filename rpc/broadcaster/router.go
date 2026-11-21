@@ -74,7 +74,8 @@ func routerHashArgs(args abi.Arguments, v ...any) (common.Hash, error) {
 	return crypto.Keccak256Hash(b), nil
 }
 
-const RouterRequestHashFormat = "payment-router-envelope-v1"
+const LegacyRouterRequestHashFormat = "payment-router-envelope-v1"
+const RouterRequestHashFormat = "payment-router-intent-v1"
 
 func VerifyRouterQuote(s SignedQuote, t Trust, data []byte, env RouterEnvelope, now uint64) error {
 	if s.RequestHashFormat != RouterRequestHashFormat || s.Quote.Execution != "direct" || s.Quote.Schedule != nil {
@@ -91,7 +92,7 @@ func VerifyRouterQuote(s SignedQuote, t Trust, data []byte, env RouterEnvelope, 
 	if deadline.Cmp(limit) > 0 {
 		return fmt.Errorf("Router quote outlives payment authorization")
 	}
-	h, e := EnvelopeHash(t.ChainID, t.Protocol, env)
+	h, e := RouterIntentHash(t.ChainID, t.Protocol, env)
 	if e != nil {
 		return e
 	}
@@ -127,7 +128,7 @@ func (c *Client) EstimateRouterQuote(ctx context.Context, data []byte, env Route
 }
 func (c *Client) GetRouterQuote(ctx context.Context, data []byte, env RouterEnvelope, trust Trust) (SignedQuote, error) {
 	var s SignedQuote
-	if _, e := EnvelopeHash(trust.ChainID, trust.Protocol, env); e != nil {
+	if _, e := RouterIntentHash(trust.ChainID, trust.Protocol, env); e != nil {
 		return s, e
 	}
 	if e := c.call(ctx, "broadcaster_getQuote", map[string]any{"data": hexutil.Encode(data), "router": env}, &s); e != nil {
@@ -148,6 +149,9 @@ func (c *Client) SubmitRouterTransaction(ctx context.Context, data []byte, env R
 	var out Status
 	if s.Context == nil {
 		return out, fmt.Errorf("missing verified quote context")
+	}
+	if e := ValidateRouterSubmission(data, env); e != nil {
+		return out, e
 	}
 	trust := *s.Context
 	trust.Signer = c.configuration.QuoteSigner

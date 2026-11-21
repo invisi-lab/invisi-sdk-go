@@ -1,0 +1,230 @@
+[
+  {
+    "input": {
+      "coreGasUnits": 100000,
+      "mode": 0,
+      "channel": 0,
+      "hopCount": 0,
+      "routeBytes": 0,
+      "permit": false,
+      "authorizationCount": 0
+    },
+    "output": {
+      "available": true,
+      "source": "model",
+      "modelId": "payment-router-gas-v1",
+      "gasUnits": 170000,
+      "breakdown": {
+        "core": 100000,
+        "router": 70000,
+        "swap": 0,
+        "permit": 0,
+        "authorization": 0,
+        "routeCalldata": 0
+      }
+    }
+  },
+  {
+    "input": {
+      "coreGasUnits": 100000,
+      "mode": 1,
+      "channel": 0,
+      "hopCount": 0,
+      "routeBytes": 0,
+      "permit": true,
+      "authorizationCount": 0
+    },
+    "output": {
+      "available": true,
+      "source": "model",
+      "modelId": "payment-router-gas-v1",
+      "gasUnits": 235000,
+      "breakdown": {
+        "core": 100000,
+        "router": 85000,
+        "swap": 0,
+        "permit": 50000,
+        "authorization": 0,
+        "routeCalldata": 0
+      }
+    }
+  },
+  {
+    "input": {
+      "coreGasUnits": 100000,
+      "mode": 2,
+      "channel": 1,
+      "hopCount": 1,
+      "routeBytes": 43,
+      "permit": false,
+      "authorizationCount": 0
+    },
+    "output": {
+      "available": true,
+      "source": "model",
+      "modelId": "payment-router-gas-v1",
+      "gasUnits": 335688,
+      "breakdown": {
+        "core": 100000,
+        "router": 115000,
+        "swap": 120000,
+        "permit": 0,
+        "authorization": 0,
+        "routeCalldata": 688
+      }
+    }
+  },
+  {
+    "input": {
+      "coreGasUnits": 100000,
+      "mode": 3,
+      "channel": 1,
+      "hopCount": 8,
+      "routeBytes": 204,
+      "permit": false,
+      "authorizationCount": 1
+    },
+    "output": {
+      "available": true,
+      "source": "model",
+      "modelId": "payment-router-gas-v1",
+      "gasUnits": 903264,
+      "breakdown": {
+        "core": 100000,
+        "router": 130000,
+        "swap": 645000,
+        "permit": 0,
+        "authorization": 25000,
+        "routeCalldata": 3264
+      }
+    }
+  },
+  {
+    "input": {
+      "coreGasUnits": 100000,
+      "mode": 2,
+      "channel": 2,
+      "hopCount": 0,
+      "routeBytes": 128,
+      "permit": false,
+      "authorizationCount": 0
+    },
+    "output": {
+      "available": false,
+      "source": "model",
+      "modelId": "payment-router-gas-v1",
+      "reason": "zeroex-route-gas-unavailable"
+    }
+  },
+  {
+    "input": {
+      "coreGasUnits": 100000,
+      "mode": 3,
+      "channel": 2,
+      "hopCount": 0,
+      "routeBytes": 128,
+      "permit": false,
+      "authorizationCount": 1,
+      "zeroExGasUnits": 250000
+    },
+    "output": {
+      "available": true,
+      "source": "model",
+      "modelId": "payment-router-gas-v1",
+      "gasUnits": 507048,
+      "breakdown": {
+        "core": 100000,
+        "router": 130000,
+        "swap": 250000,
+        "permit": 0,
+        "authorization": 25000,
+        "routeCalldata": 2048
+      }
+    }
+  },
+  {
+    "input": {
+      "coreGasUnits": 9007199254740991,
+      "mode": 0,
+      "channel": 0,
+      "hopCount": 0,
+      "routeBytes": 0,
+      "permit": false,
+      "authorizationCount": 0
+    },
+    "output": {
+      "available": false,
+      "source": "model",
+      "modelId": "payment-router-gas-v1",
+      "reason": "router-gas-overflow"
+    }
+  },
+  {
+    "input": {
+      "coreGasUnits": 100000,
+      "mode": 2,
+      "channel": 1,
+      "hopCount": 9,
+      "routeBytes": 0,
+      "permit": false,
+      "authorizationCount": 0
+    },
+    "output": {
+      "available": false,
+      "source": "model",
+      "modelId": "payment-router-gas-v1",
+      "reason": "invalid-router-gas-input"
+    }
+  },
+  {
+    "input": {
+      "coreGasUnits": 100000,
+      "mode": 1,
+      "channel": 0,
+      "hopCount": 0,
+      "routeBytes": 0,
+      "permit": false,
+      "authorizationCount": 1
+    },
+    "output": {
+      "available": false,
+      "source": "model",
+      "modelId": "payment-router-gas-v1",
+      "reason": "invalid-router-gas-input"
+    }
+  },
+  {
+    "input": {
+      "coreGasUnits": 100000,
+      "mode": 0,
+      "channel": 0,
+      "hopCount": 0,
+      "routeBytes": 1,
+      "permit": false,
+      "authorizationCount": 0
+    },
+    "output": {
+      "available": false,
+      "source": "model",
+      "modelId": "payment-router-gas-v1",
+      "reason": "invalid-router-gas-input"
+    }
+  },
+  {
+    "input": {
+      "coreGasUnits": 100000,
+      "mode": 2,
+      "channel": 1,
+      "hopCount": 1,
+      "routeBytes": 131073,
+      "permit": false,
+      "authorizationCount": 0
+    },
+    "output": {
+      "available": false,
+      "source": "model",
+      "modelId": "payment-router-gas-v1",
+      "reason": "invalid-router-gas-input"
+    }
+  }
+]

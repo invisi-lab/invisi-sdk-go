@@ -1,6 +1,7 @@
 package transaction
 
 import (
+	"github.com/invisi-labs/invisi-sdk-go/rpc/broadcaster"
 	"math/big"
 
 	"github.com/invisi-labs/invisi-sdk-go/protocol"
@@ -39,4 +40,18 @@ func EstimatePlanGasChecked(p Plan) (protocol.GasEstimate, error) {
 	shape["permit"] = positive(p.Funding.Permit.Deadline)
 	shape["fundingSignature"] = p.FundingMode == "signature"
 	return gas.EstimateGasChecked(shape)
+}
+
+// EstimateRouterGas adds the local Router model to this prepared Core preview.
+// Caller-supplied CoreGasUnits is replaced by the prepared transaction estimate.
+func (p *PreparedTransaction) EstimateRouterGas(input broadcaster.RouterGasInput) (broadcaster.RouterGasResult, error) {
+	core, e := p.EstimateGas()
+	if e != nil {
+		return broadcaster.RouterGasResult{}, e
+	}
+	if !core.Available || core.GasUnits == nil {
+		return broadcaster.RouterGasResult{Source: "model", ModelID: broadcaster.RouterGasModelID, Reason: "core-gas-unavailable"}, nil
+	}
+	input.CoreGasUnits = *core.GasUnits
+	return broadcaster.EstimateRouterGas(input), nil
 }

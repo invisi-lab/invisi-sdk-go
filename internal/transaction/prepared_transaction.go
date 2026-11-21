@@ -156,3 +156,23 @@ func (p *PreparedTransaction) ExportAggregateMember(ctx context.Context) (Operat
 	}
 	return p.operation.ExportAggregateMember(ctx)
 }
+
+// ExportRouterDraft exports a public-funded Core draft without invoking a prover.
+// Finalize fee/outputs first: proving retains these exact business fields.
+func (p *PreparedTransaction) ExportRouterDraft(ctx context.Context) (TransactionCall, error) {
+	p.lifecycle.mu.Lock()
+	defer p.lifecycle.mu.Unlock()
+	if e := p.current(ctx); e != nil {
+		return TransactionCall{}, e
+	}
+	o := p.operation
+	if o.Plan.Kind != "transact" || o.Plan.Target == "noir-recursive" || len(o.Plan.Params.Sources) != 0 || len(o.Plan.Params.Nullifiers) != 0 || o.Plan.Funding.Amount == nil || o.Plan.Funding.Amount.Sign() <= 0 {
+		return TransactionCall{}, errors.New("public-funded EVM transact draft required")
+	}
+	caller := o.Plan.Funding.Payer
+	call, e := protocol.BuildTransactCalldata(protocol.BuildTransactCalldataParams{Context: o.Plan.Context, Proof: []byte{}, Params: o.Plan.Params, Deliveries: o.Deliveries(), Funding: o.Plan.Funding, Caller: &caller})
+	if e != nil {
+		return TransactionCall{}, e
+	}
+	return TransactionCall{To: o.Plan.Context.ProtocolAddress, Data: call.Data, Value: new(big.Int)}, nil
+}

@@ -25,6 +25,14 @@ func methodFor(mode uint8) string {
 	return ""
 }
 func ValidateIntent(p DecodedPayment, d Deployment, now, expectedNonce *big.Int) error {
+	return validateIntentPhase(p, d, now, expectedNonce, false)
+}
+
+// ValidateDraftIntent checks every business field and current hash while allowing an empty proof.
+func ValidateDraftIntent(p DecodedPayment, d Deployment, now, expectedNonce *big.Int) error {
+	return validateIntentPhase(p, d, now, expectedNonce, true)
+}
+func validateIntentPhase(p DecodedPayment, d Deployment, now, expectedNonce *big.Int, draft bool) error {
 	i := p.Intent
 	if e := uintCheck(i.AmountInMaximum, 256, true, "budget"); e != nil {
 		return e
@@ -58,7 +66,7 @@ func ValidateIntent(p DecodedPayment, d Deployment, now, expectedNonce *big.Int)
 	if e != nil {
 		return e
 	}
-	if _, _, e = inspectCorePayment(call, d, now, true); e != nil {
+	if _, _, e = inspectCorePaymentPhase(call, d, now, true, draft); e != nil {
 		return e
 	}
 	h, e := HashCoreRequest(p.Proof, p.Request)

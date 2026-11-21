@@ -66,15 +66,37 @@ func ExampleClient_BuildPayment_relayedToken() {
 	relay := func(ctx context.Context, client *paymentrouter.Client,
 		service *broadcaster.Client, trust broadcaster.Trust,
 		opts paymentrouter.PaymentOptions, maxFee *big.Int,
+		prove func(context.Context) (protocol.TransactionCall, error),
 		sign func(context.Context, apitypes.TypedData) ([]byte, error), submit bool,
 	) (broadcaster.SignedQuote, broadcaster.Status, error) {
 		var quote broadcaster.SignedQuote
 		var status broadcaster.Status
-		// opts contains real proved Core calldata, bounded Core-token fee and route.
-		// Relayer is the authenticated Broadcaster EVM sender. Allowance is already
-		// mined, or opts.Permit carries a signed permit. No unsigned placeholder.
+		// opts.Core is prepared.ExportRouterDraft(ctx), with finalized bounded fee
+		// and route. prove must retain its exact Core business fields.
+		// Relayer is the authenticated Broadcaster EVM sender.
 		opts.Mode, opts.Signature = paymentrouter.RelayedToken, nil
-		unsigned, err := client.BuildPayment(ctx, opts)
+		unsigned, err := client.BuildPaymentDraft(ctx, opts)
+		if err != nil {
+			return quote, status, err
+		}
+		draftEnv := paymentrouter.RouterEnvelope{To: unsigned.To, Data: unsigned.Data, Value: "0"}
+		fee, err := service.EstimateRouterQuote(ctx, opts.Core.Data, draftEnv)
+		if err != nil {
+			return quote, status, err
+		}
+		if err = checkRouterFee(opts.Core, fee, maxFee); err != nil {
+			return quote, status, err
+		}
+		quote, err = service.GetRouterQuote(ctx, opts.Core.Data, draftEnv, trust)
+		if err != nil {
+			return quote, status, err
+		}
+		// Only after the formal quote: produce the proof and sign its actual hash.
+		opts.Core, err = prove(ctx)
+		if err != nil {
+			return quote, status, err
+		}
+		unsigned, err = client.BuildPayment(ctx, opts)
 		if err != nil {
 			return quote, status, err
 		}
@@ -100,16 +122,8 @@ func ExampleClient_BuildPayment_relayedToken() {
 		if _, err = client.SimulateEnvelope(ctx, env, opts.Relayer); err != nil {
 			return quote, status, err
 		}
-		fee, err := service.EstimateRouterQuote(ctx, opts.Core.Data, env)
-		if err != nil {
-			return quote, status, err
-		}
-		if err = checkRouterFee(opts.Core, fee, maxFee); err != nil {
-			return quote, status, err // Host rebuilds Core, proves and signs again.
-		}
-		quote, err = service.GetRouterQuote(ctx, opts.Core.Data, env, trust)
-		if err != nil || !submit {
-			return quote, status, err
+		if !submit {
+			return quote, status, nil
 		}
 		// Host persists core, env and quote before this explicit submission.
 		status, err = service.SubmitRouterTransaction(ctx, opts.Core.Data, env, quote)

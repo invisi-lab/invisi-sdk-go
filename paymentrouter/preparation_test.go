@@ -148,6 +148,21 @@ func TestActualSDKPreparationAndProofLifecycle(t *testing.T) {
 	if preview.InputCount != 0 || preview.FundingPayer != addr(3) || preview.FundingAmount.Cmp(bi(10)) != 0 || preview.FeeAmount.Cmp(bi(2)) != 0 {
 		t.Fatal("wrong SDK funding preview", preview)
 	}
+	draft, e := prepared.ExportRouterDraft(ctx)
+	if e != nil {
+		t.Fatal(e)
+	}
+	proof, draftReq, e := inspectCorePaymentPhase(draft, deployment(), bi(1000), true, true)
+	if e != nil || len(proof) != 0 || draftReq.Params.FeeAmount.Cmp(bi(2)) != 0 {
+		t.Fatal("draft changed business fields", e)
+	}
+	if _, _, e = InspectCorePayment(draft, deployment(), bi(1000)); e == nil {
+		t.Fatal("draft accepted as proved payment")
+	}
+	model, e := prepared.EstimateRouterGas(RouterGasInput{Mode: RelayedToken})
+	if e != nil || !model.Available || model.Source != "model" {
+		t.Fatal(model, e)
+	}
 	ready, e := prepared.Prove(ctx)
 	if e != nil {
 		t.Fatal(e)

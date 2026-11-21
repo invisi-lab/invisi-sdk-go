@@ -184,6 +184,9 @@ func InspectCorePayment(call protocol.TransactionCall, d Deployment, now *big.In
 	return inspectCorePayment(call, d, now, false)
 }
 func inspectCorePayment(call protocol.TransactionCall, d Deployment, now *big.Int, allowWETH bool) ([]byte, protocol.TransactRequest, error) {
+	return inspectCorePaymentPhase(call, d, now, allowWETH, false)
+}
+func inspectCorePaymentPhase(call protocol.TransactionCall, d Deployment, now *big.Int, allowWETH, draft bool) ([]byte, protocol.TransactRequest, error) {
 	var r protocol.TransactRequest
 	fail := func(s string) ([]byte, protocol.TransactRequest, error) { return nil, r, fmt.Errorf("%s", s) }
 	if call.To != d.CoreAddress || call.Value == nil || call.Value.Sign() != 0 {
@@ -192,12 +195,12 @@ func inspectCorePayment(call protocol.TransactionCall, d Deployment, now *big.In
 	if len(call.Data) < 4 || string(call.Data[:4]) != string(coreMethod.ID) {
 		return fail("invalid core transact selector")
 	}
-	a, e := coreMethod.Inputs.Unpack(call.Data[4:])
+	a, e := strictArgs(coreMethod, call.Data)
 	if e != nil {
 		return nil, r, e
 	}
 	proof := a[0].([]byte)
-	if len(proof) == 0 {
+	if len(proof) == 0 && !draft {
 		return fail("core proof is required")
 	}
 	r = *abi.ConvertType(a[1], new(protocol.TransactRequest)).(*protocol.TransactRequest)

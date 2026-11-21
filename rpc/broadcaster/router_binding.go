@@ -108,7 +108,7 @@ func relayDeadline(data []byte, env RouterEnvelope) (*big.Int, error) {
 		if i.Mode != 3 || i.Payer != env.To || i.TokenIn != (common.Address{}) || accountValue.Cmp(i.AmountInMaximum) != 0 || accountRelayer != i.Relayer {
 			return nil, fmt.Errorf("invalid native relay bindings")
 		}
-	} else if i.Mode != 2 || i.TokenIn == (common.Address{}) || len(args[5].([]byte)) == 0 {
+	} else if i.Mode != 2 || i.TokenIn == (common.Address{}) {
 		return nil, fmt.Errorf("invalid token relay bindings")
 	}
 	if i.Payer == (common.Address{}) || i.Relayer == (common.Address{}) {

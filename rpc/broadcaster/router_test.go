@@ -75,7 +75,7 @@ func TestRouterQuoteBindsOuterAndSubmitWire(t *testing.T) {
 		t.Fatal(err)
 	}
 	s.Quote.FeeAmount = decoded.FeeAmount.String()
-	h, e := EnvelopeHash(trust.ChainID, trust.Protocol, env)
+	h, e := RouterIntentHash(trust.ChainID, trust.Protocol, env)
 	if e != nil {
 		t.Fatal(e)
 	}
@@ -97,6 +97,25 @@ func TestRouterQuoteBindsOuterAndSubmitWire(t *testing.T) {
 	s.Context = &trust
 	if e = VerifyRouterQuote(s, trust, data, env, 0); e != nil {
 		t.Fatal(e)
+	}
+	draft, e := NormalizeRouterEnvelope(env)
+	if e != nil {
+		t.Fatal(e)
+	}
+	draftArgs, e := unpackRelay("payTokenFor", draft.Data)
+	if e != nil {
+		t.Fatal(e)
+	}
+	draftBody, e := core.Inputs.Pack(draftArgs[0], draftArgs[1])
+	if e != nil {
+		t.Fatal(e)
+	}
+	draftCore := append(append([]byte(nil), core.ID...), draftBody...)
+	if e = VerifyRouterQuote(s, trust, draftCore, draft, 0); e != nil {
+		t.Fatal("preproof quote rejected", e)
+	}
+	if e = VerifyRouterQuote(s, trust, data, draft, 0); e == nil {
+		t.Fatal("cross-phase Core data accepted")
 	}
 	s.ProvenanceRequired = true
 	if e = VerifyRouterQuote(s, trust, data, env, 0); e != nil {

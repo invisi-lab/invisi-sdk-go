@@ -101,12 +101,20 @@ func (c *Client) QuoteRoute(ctx context.Context, a QuoteAdapter, p QuoteParamete
 // BuildPayment returns canonical calldata for all four modes. SponsoredNative
 // returns the inner Router call; wrap it with BuildSponsoredPayment before relay.
 func (c *Client) BuildPayment(ctx context.Context, o PaymentOptions) (protocol.TransactionCall, error) {
+	return c.buildPaymentPhase(ctx, o, false)
+}
+
+// BuildPaymentDraft builds the quote envelope before proving or wallet signing.
+func (c *Client) BuildPaymentDraft(ctx context.Context, o PaymentOptions) (protocol.TransactionCall, error) {
+	return c.buildPaymentPhase(ctx, o, true)
+}
+func (c *Client) buildPaymentPhase(ctx context.Context, o PaymentOptions, draft bool) (protocol.TransactionCall, error) {
 	var empty protocol.TransactionCall
 	f, e := frame(ctx, c.provider, c.deployment, o.Route.Channel == ChannelZeroEx)
 	if e != nil {
 		return empty, e
 	}
-	proof, req, e := inspectCorePayment(o.Core, c.deployment, f.Now, true)
+	proof, req, e := inspectCorePaymentPhase(o.Core, c.deployment, f.Now, true, draft)
 	if e != nil {
 		return empty, e
 	}
@@ -126,13 +134,13 @@ func (c *Client) BuildPayment(ctx context.Context, o PaymentOptions) (protocol.T
 		return empty, e
 	}
 	p := DecodedPayment{Method: methodFor(o.Mode), Proof: proof, Request: req, Intent: Intent{Payer: o.Payer, TokenIn: o.TokenIn, AmountInMaximum: o.AmountInMaximum, RefundRecipient: o.RefundRecipient, Relayer: o.Relayer, Nonce: nonce, Deadline: o.Deadline, CoreRequestHash: ch, RouteHash: rh, Mode: o.Mode}, Route: o.Route, Permit: o.Permit, Signature: o.Signature}
-	if e = ValidateIntent(p, c.deployment, f.Now, nonce); e != nil {
+	if e = validateIntentPhase(p, c.deployment, f.Now, nonce, draft); e != nil {
 		return empty, e
 	}
 	if e = ValidateRoute(p, c.deployment, f.Now, f.SettlerAddress); e != nil {
 		return empty, e
 	}
-	if o.Mode == RelayedToken && len(o.Signature) != 0 {
+	if !draft && o.Mode == RelayedToken && len(o.Signature) != 0 {
 		h, e := HashIntent(c.deployment.ChainID, c.deployment.RouterAddress, p.Intent)
 		if e != nil {
 			return empty, e
@@ -337,6 +345,14 @@ type SponsoredPaymentOptions struct {
 // BuildSponsoredPayment validates pinned implementation, installed or explicitly
 // supplied delegation, both action nonces and the account authorization.
 func (c *Client) BuildSponsoredPayment(ctx context.Context, o SponsoredPaymentOptions) (RouterEnvelope, error) {
+	return c.buildSponsoredPhase(ctx, o, false)
+}
+
+// BuildSponsoredDraft validates pinned dependencies and live nonces without recovering unsigned wallet authorizations.
+func (c *Client) BuildSponsoredDraft(ctx context.Context, o SponsoredPaymentOptions) (RouterEnvelope, error) {
+	return c.buildSponsoredPhase(ctx, o, true)
+}
+func (c *Client) buildSponsoredPhase(ctx context.Context, o SponsoredPaymentOptions, draft bool) (RouterEnvelope, error) {
 	var env RouterEnvelope
 	p, e := DecodeRouterCall(o.Payment.RouterCalldata)
 	if e != nil {
@@ -345,12 +361,26 @@ func (c *Client) BuildSponsoredPayment(ctx context.Context, o SponsoredPaymentOp
 	if p.Intent.Mode != SponsoredNative || p.Intent.Payer != o.Player || o.Payment.Value == nil || o.Payment.Value.Cmp(p.Intent.AmountInMaximum) != 0 || o.Payment.Relayer != p.Intent.Relayer {
 		return env, fmt.Errorf("account and Router payment bindings mismatch")
 	}
-	if e = c.ValidatePayment(ctx, protocol.TransactionCall{To: c.deployment.RouterAddress, Data: o.Payment.RouterCalldata, Value: o.Payment.Value}, o.Player); e != nil {
-		return env, e
+	if !draft {
+		if e = c.ValidatePayment(ctx, protocol.TransactionCall{To: c.deployment.RouterAddress, Data: o.Payment.RouterCalldata, Value: o.Payment.Value}, o.Player); e != nil {
+			return env, e
+		}
 	}
 	f, e := frame(ctx, c.provider, c.deployment, p.Route.Channel == ChannelZeroEx)
 	if e != nil {
 		return env, e
+	}
+	if draft {
+		n, err := c.routerNonce(ctx, o.Player, f)
+		if err != nil {
+			return env, err
+		}
+		if err = ValidateDraftIntent(p, c.deployment, f.Now, n); err != nil {
+			return env, err
+		}
+		if err = ValidateRoute(p, c.deployment, f.Now, f.SettlerAddress); err != nil {
+			return env, err
+		}
 	}
 	if !nonzero(o.Implementation) || o.ImplementationCodeHash == (common.Hash{}) {
 		return env, fmt.Errorf("pinned account implementation and code hash required")
@@ -410,7 +440,11 @@ func (c *Client) BuildSponsoredPayment(ctx context.Context, o SponsoredPaymentOp
 	}
 	if len(o.AuthorizationList) == 1 {
 		a := o.AuthorizationList[0]
-		authority, e := a.Authority()
+		authority := o.Player
+		var e error
+		if !draft {
+			authority, e = a.Authority()
+		}
 		if e != nil {
 			return env, e
 		}
@@ -460,8 +494,10 @@ func (c *Client) BuildSponsoredPayment(ctx context.Context, o SponsoredPaymentOp
 	if e != nil {
 		return env, e
 	}
-	if e = VerifySignature(h, o.Payment.Signature, o.Player); e != nil {
-		return env, e
+	if !draft {
+		if e = VerifySignature(h, o.Payment.Signature, o.Player); e != nil {
+			return env, e
+		}
 	}
 	b, e := EncodeAccountCall(o.Payment)
 	if e != nil {
