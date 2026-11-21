@@ -124,7 +124,7 @@ func TestTrustedProviderBatchedHeaders(t *testing.T) {
 			p, calls := batchHeaderFixture(t, mode, 0)
 			numbers := make([]*big.Int, 45)
 			for i := range numbers {
-				numbers[i] = big.NewInt(int64(i + 1))
+				numbers[i] = big.NewInt(int64(i*2 + 1))
 			}
 			headers, err := p.HeadersByNumber(context.Background(), numbers)
 			if mode != "ok" {

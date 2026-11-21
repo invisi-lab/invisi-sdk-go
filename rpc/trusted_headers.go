@@ -10,7 +10,8 @@ import (
 	"github.com/ethereum/go-ethereum/core/types"
 )
 
-// HeadersByNumber reads immutable numeric headers in bounded JSON-RPC batches.
+// HeadersByNumber reads consecutive immutable numeric headers through indexed
+// historical ranges, with live batched reads for explicitly unavailable history.
 // Every response has the same deployment, full-header hash and number checks as
 // HeaderByNumber. No result is cached; callers must still fence page commits
 // with a fresh canonical anchor. Mutable tags are deliberately not supported.
@@ -25,6 +26,25 @@ func (p *TrustedProvider) HeadersByNumber(ctx context.Context, numbers []*big.In
 			return nil, err
 		}
 		params[i] = []any{trustedRequest{Kind: "header", Block: block}}
+	}
+	if len(numbers) > 0 {
+		consecutive := true
+		for i := 1; i < len(numbers); i++ {
+			if numbers[i].Uint64() != numbers[i-1].Uint64()+1 {
+				consecutive = false
+				break
+			}
+		}
+		if consecutive {
+			headers, err := p.historicalHeaders(ctx, numbers)
+			if err == nil {
+				return headers, nil
+			}
+			var remote *ProtocolRpcError
+			if !errors.As(err, &remote) || (remote.Code != -32601 && remote.Code != -32004) {
+				return nil, err
+			}
+		}
 	}
 	headers := make([]*types.Header, 0, len(numbers))
 	for start := 0; start < len(params); start += maxBatchCalls {

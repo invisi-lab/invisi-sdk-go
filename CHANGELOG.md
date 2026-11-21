@@ -2,6 +2,8 @@
 
 ## Unreleased (planned v1.3.3)
 
+- Read consecutive trusted historical headers through validated 256-block RPC ranges, falling back to live batches only when the server explicitly reports an unsupported method or unavailable stored history. Preserve fresh canonical and finality fences.
+
 - Refresh Core and Factory ABI snapshots and generated RPC bindings after removal of address screening; Core construction now takes instance parameters and registry, and Factory deployment and prediction take five arguments.
 - Keep the current Credit ABI snapshot generated alongside public bindings. Published module requirements remain at v1.3.2.
 
