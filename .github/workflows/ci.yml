@@ -39,6 +39,8 @@ jobs:
         run: python3 scripts/test_release_checks.py
       - name: Test versioned release notes
         run: python3 scripts/test_release_notes.py
+      - name: Test authenticated proving metadata synchronization
+        run: python3 scripts/test-sync-reference.py
       - name: Check module boundaries and tests
         run: python3 scripts/test-modules.py
       - name: Verify isolated module archives

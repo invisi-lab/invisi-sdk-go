@@ -57,3 +57,20 @@ fixed index identity for build reports. Existing directory/cache files are verif
 and reused; missing resources download into `CacheDir` unless offline mode is set.
 
 Provenance uses its own catalog and pin. Set `ResourceOptions.ProvenanceDirectory` or `ProvenanceSources` independently, then call `PrefetchProvenanceResources`. `scripts/sync-provenance.py PERIPHERY_CHECKOUT --resource-dir PROVENANCE_OUTPUT` exports only the authenticated Provenance assets. `LegacyCombined: true` explicitly retains the old combined catalogs; Core initial-payment uses its historical separate pin only in this mode. Missing new catalogs do not trigger a downgrade. Split resources must be published before SDK release.
+
+Recursive aggregation loads binary verification keys only when `Aggregate` needs
+its witness: one capacity for dedicated routes, C1 through C5 for mixed routes.
+The SDK embeds only `keyHash` and `innerVkCommitment` trust pins. Every load checks
+the pinned SHA256 identity, exactly 115 canonical BN254 words, and the Poseidon2
+commitment over domain `0x494e564953495f5245435552534956455f564b31`, the words and
+`keyHash`. Member verification and outer proof verification remain mandatory.
+
+`Prover` is unchanged. Native backends implement the optional
+`VerificationKeyLoader` capability using their selected `NativeOptions.Resources`
+directory, cache, mirrors and offline policy. Backend loaders take precedence.
+A custom backend without that capability can pass
+`NewAggregator(backend, AggregatorOptions{VerificationKeyLoader: loader})`.
+Without either loader, aggregation fails clearly when it needs a key; it never
+silently selects network resources. Constructing an aggregator performs no key
+I/O. Decoded key fields are not cached; native resource cache hits are
+re-authenticated on every operation, so offline prefetch remains supported.

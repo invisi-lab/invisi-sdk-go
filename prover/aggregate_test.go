@@ -6,6 +6,8 @@ import (
 	"encoding/hex"
 	"fmt"
 	"math/big"
+	"slices"
+	"strings"
 	"testing"
 
 	"github.com/invisi-labs/invisi-sdk-go/primitives"
@@ -137,5 +139,70 @@ func TestAggregateSnapshotsAndRejectsDuplicatesWrongAuthAndUnsupportedRoutes(t *
 	}
 	if backend.calls != 1 {
 		t.Fatal("proving started before validation")
+	}
+}
+
+func (b *aggregateBackend) LoadVerificationKey(ctx context.Context, name, target string, options Options) ([]byte, error) {
+	return (fixtureKeyLoader{}).LoadVerificationKey(ctx, name, target, options)
+}
+
+type trackingAggregateBackend struct {
+	aggregateBackend
+	loaded        []string
+	verifications int
+	reject        bool
+}
+
+func (b *trackingAggregateBackend) LoadVerificationKey(ctx context.Context, name, target string, opt Options) ([]byte, error) {
+	b.loaded = append(b.loaded, name)
+	return (fixtureKeyLoader{}).LoadVerificationKey(ctx, name, target, opt)
+}
+func (b *trackingAggregateBackend) Verify(context.Context, ProofBundle, ProofStatement, Options) (bool, error) {
+	b.verifications++
+	return !b.reject, nil
+}
+func TestAggregateLoadsOnlyRequiredRecursiveKeys(t *testing.T) {
+	for _, test := range []struct {
+		name       string
+		capacities []int
+		want       []string
+	}{
+		{"dedicated", []int{7, 7}, []string{"transact_user_slots7"}},
+		{"mixed", []int{2, 5}, []string{"transact_user_slots1", "transact_user_slots2", "transact_user_slots3", "transact_user_slots4", "transact_user_slots5"}},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			backend := &trackingAggregateBackend{}
+			a, err := NewAggregator(backend)
+			if err != nil {
+				t.Fatal(err)
+			}
+			members := []AggregateMember{}
+			for i, c := range test.capacities {
+				members = append(members, aggregateMember(t, c, 1000+100*i, 34+i))
+			}
+			if _, err = a.Aggregate(context.Background(), members); err != nil {
+				t.Fatal(err)
+			}
+			if !slices.Equal(backend.loaded, test.want) {
+				t.Fatalf("loaded %v; want %v", backend.loaded, test.want)
+			}
+			if backend.verifications != len(members)+1 || backend.calls != 1 {
+				t.Fatal("member or outer proof verification skipped")
+			}
+		})
+	}
+}
+func TestAggregateRejectsInvalidMemberBeforeLoadingKeysOrProving(t *testing.T) {
+	backend := &trackingAggregateBackend{reject: true}
+	a, err := NewAggregator(backend)
+	if err != nil {
+		t.Fatal(err)
+	}
+	_, err = a.Aggregate(context.Background(), []AggregateMember{aggregateMember(t, 1, 1000, 34)})
+	if err == nil || !strings.Contains(err.Error(), "member verification failed") {
+		t.Fatal(err)
+	}
+	if len(backend.loaded) != 0 || backend.calls != 0 || backend.verifications != 1 {
+		t.Fatalf("invalid member reached witness assembly/proving: %+v", backend)
 	}
 }

@@ -3,7 +3,6 @@ package prover
 import (
 	"context"
 	_ "embed"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"math/big"
@@ -20,13 +19,26 @@ type AggregateMember struct {
 	Bundle    ProofBundle
 	Statement ProofStatement
 }
-type Aggregator struct{ backend Prover }
 
-func NewAggregator(backend Prover) (*Aggregator, error) {
+// AggregatorOptions supplies a fallback for custom backends without a loader.
+type AggregatorOptions struct{ VerificationKeyLoader VerificationKeyLoader }
+type Aggregator struct {
+	backend   Prover
+	keyLoader VerificationKeyLoader
+}
+
+func NewAggregator(backend Prover, options ...AggregatorOptions) (*Aggregator, error) {
 	if backend == nil {
 		return nil, errors.New("local prover required")
 	}
-	return &Aggregator{backend}, nil
+	if len(options) > 1 {
+		return nil, errors.New("expected at most one aggregator option")
+	}
+	loader, _ := backend.(VerificationKeyLoader)
+	if loader == nil && len(options) == 1 {
+		loader = options[0].VerificationKeyLoader
+	}
+	return &Aggregator{backend: backend, keyLoader: loader}, nil
 }
 func CloneStatement(statement ProofStatement) ProofStatement {
 	statement.ExpectedPublicInputs = append([]common.Hash(nil), statement.ExpectedPublicInputs...)
@@ -54,14 +66,6 @@ func (a *Aggregator) Aggregate(ctx context.Context, members []AggregateMember, o
 		frozen[i] = AggregateMember{Bundle: CloneBundle(member.Bundle), Statement: CloneStatement(member.Statement)}
 	}
 	members = frozen
-	var keys map[string]struct {
-		VerificationKeyFields []string    `json:"verificationKeyFields"`
-		KeyHash               string      `json:"keyHash"`
-		InnerVKCommitment     common.Hash `json:"innerVkCommitment"`
-	}
-	if e := json.Unmarshal(recursiveKeyJSON, &keys); e != nil {
-		return result, e
-	}
 	proofs, statements := [][]string{}, [][]string{}
 	capacities := []int{}
 	seenN, seenO := map[common.Hash]bool{}, map[common.Hash]bool{}
@@ -137,17 +141,17 @@ func (a *Aggregator) Aggregate(ctx context.Context, members []AggregateMember, o
 	values := map[string]any{"proofs": proofs, "statements": statements}
 	name := fmt.Sprintf("transact_aggregate_%d_%d", capacities[0], len(members))
 	if dedicated {
-		key := keys[fmt.Sprint(capacities[0])]
-		if len(key.VerificationKeyFields) != 115 {
-			return result, errors.New("missing trusted recursive key")
+		key, err := LoadRecursiveVerificationKey(ctx, fmt.Sprintf("transact_user_slots%d", capacities[0]), a.keyLoader, opt)
+		if err != nil {
+			return result, err
 		}
 		for _, member := range members {
 			words = append(words, member.Bundle.PublicInputs...)
 		}
-		words = append(words, key.InnerVKCommitment)
-		values["verification_key"] = key.VerificationKeyFields
-		values["key_hash"] = key.KeyHash
-		values["inner_vk_commitment"] = key.InnerVKCommitment.Hex()
+		words = append(words, key.Commitment)
+		values["verification_key"] = key.Fields
+		values["key_hash"] = key.Hash
+		values["inner_vk_commitment"] = key.Commitment.Hex()
 	} else {
 		name = fmt.Sprintf("transact_aggregate_mixed_1_5_%d", len(members))
 		tags := []string{}
@@ -167,14 +171,14 @@ func (a *Aggregator) Aggregate(ctx context.Context, members []AggregateMember, o
 		}
 		allKeys, hashes, pins := [][]string{}, []string{}, []string{}
 		for c := 1; c <= 5; c++ {
-			key := keys[fmt.Sprint(c)]
-			if len(key.VerificationKeyFields) != 115 {
-				return result, errors.New("missing trusted mixed recursive key")
+			key, err := LoadRecursiveVerificationKey(ctx, fmt.Sprintf("transact_user_slots%d", c), a.keyLoader, opt)
+			if err != nil {
+				return result, err
 			}
-			allKeys = append(allKeys, key.VerificationKeyFields)
-			hashes = append(hashes, key.KeyHash)
-			pins = append(pins, key.InnerVKCommitment.Hex())
-			words = append(words, key.InnerVKCommitment)
+			allKeys = append(allKeys, key.Fields)
+			hashes = append(hashes, key.Hash)
+			pins = append(pins, key.Commitment.Hex())
+			words = append(words, key.Commitment)
 		}
 		values["statements"] = statements
 		values["capacities"] = tags

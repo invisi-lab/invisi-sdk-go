@@ -2,6 +2,8 @@
 
 ## Unreleased (planned v1.3.3)
 
+- Load recursive verification keys lazily from authenticated public binary resources instead of embedding complete field payloads. Native aggregation preserves the backend's resource policy; custom backends can implement `VerificationKeyLoader` or provide an explicit fallback through `AggregatorOptions`. Retain canonical field, SHA256, Poseidon2 commitment, member and outer proof verification.
+
 - Add quote-before-proof Router drafts, prepared Core draft export and local `payment-router-gas-v1` previews with source `model`. Opaque 0x requires an independently trusted route gas budget; Broadcaster policy never trusts client gas hints.
 - Introduce `payment-router-intent-v1` semantic quotes: completing proof and wallet signatures preserves quote identity while business fields remain bound. Final submission checks actual hashes/authorizations and simulates the final outer call. Keep `EnvelopeHash` as the raw identity helper.
 - Update all four-mode Router guides and compiling host recipes to finalize the formal quote before proving/signing. Router dynamic network-fee pricing uses an operational gas maximum and signed caps; ordinary Core cap-based pricing and Core/circuit/contract interfaces remain unchanged.

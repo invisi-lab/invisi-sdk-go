@@ -18,6 +18,16 @@ p.add_argument('--legacy-combined', action='store_true', help='Read an explicitl
 a = p.parse_args()
 def require(ok, message):
     if not ok: raise ValueError(message)
+def recursive_metadata(binary,vk,commitment):
+    modulus=21888242871839275222246405745257275088548364400416034343698204186575808495617
+    require(len(binary)==115*32 and len(vk['vk'])==115,'recursive VK width mismatch')
+    words=[int.from_bytes(binary[i:i+32],'big') for i in range(0,len(binary),32)]
+    require(all(word<modulus for word in words),'noncanonical recursive VK field')
+    require(all(isinstance(word,str) and re.fullmatch(r'0x[0-9a-fA-F]{64}',word) for word in vk['vk']),'noncanonical recursive VK JSON field')
+    require(words==[int(word,16) for word in vk['vk']],'recursive VK binary/JSON mismatch')
+    require(isinstance(vk['hash'],str) and re.fullmatch(r'0x[0-9a-fA-F]{64}',vk['hash']) and int(vk['hash'],16)<modulus,'noncanonical recursive key hash')
+    require(re.fullmatch(r'0x[0-9a-fA-F]{64}',commitment) and int(commitment,16)<modulus,'noncanonical recursive key commitment')
+    return {'keyHash':vk['hash'],'innerVkCommitment':commitment}
 def digest(data): return hashlib.sha256(data).hexdigest()
 def compact(value): return json.dumps(value, separators=(',', ':'), ensure_ascii=False).encode()
 def safe_read(base, name):
@@ -75,7 +85,8 @@ for family, version, fmt in [('transact',4,7),('credit',7,8)]:
             keys[key['target']]=key['vkSha256']
             if key['target']=='noir-recursive':
                 vkraw=safe_read(a.core_root,key['vkJson']);require(digest(vkraw)==key['vkJsonSha256'],'VK JSON identity mismatch');vk=json.loads(vkraw)
-                recursive[str(entry['capacity'])]={'verificationKeyFields':vk['vk'],'keyHash':vk['hash'],'innerVkCommitment':key['innerVkCommitment']}
+                binary=asset('circuits/'+name+'.'+key['target']+'.vk')
+                recursive[str(entry['capacity'])]=recursive_metadata(binary,vk,key['innerVkCommitment'])
         params=compiled['abi']['parameters']
         def width(typ):
             if typ['kind']=='array':return typ['length']*width(typ['type'])

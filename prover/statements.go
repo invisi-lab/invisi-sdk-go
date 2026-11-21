@@ -47,3 +47,12 @@ func Statement(name, target string, inputs []common.Hash) (ProofStatement, error
 }
 
 func newBigString(hash common.Hash) string { return hash.Big().String() }
+
+// VerificationKeySHA256 returns the pinned binary key identity without requiring a public statement.
+func VerificationKeySHA256(name, target string) (string, error) {
+	schema, ok := layouts()[name]
+	if !ok || schema.Keys[target] == "" {
+		return "", errors.New("unsupported circuit or target")
+	}
+	return schema.Keys[target], nil
+}

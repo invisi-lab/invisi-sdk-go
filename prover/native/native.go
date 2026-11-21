@@ -287,3 +287,27 @@ func (p *NativeProver) Prove(ctx context.Context, request prover.ProvingRequest,
 	progress("complete")
 	return bundle, nil
 }
+
+// LoadVerificationKey loads only a key using this backend's authenticated resource policy.
+func (p *NativeProver) LoadVerificationKey(ctx context.Context, name, target string, options prover.Options) ([]byte, error) {
+	digest, err := prover.VerificationKeySHA256(name, target)
+	if err != nil {
+		return nil, err
+	}
+	loader := p.resources
+	if p.options.Resources.LegacyCombined && name == "create_credit_initial_payment" {
+		loader, err = newResourceLoader(p.options.Resources, InitialPaymentResourceIndexSHA256)
+		if err != nil {
+			return nil, err
+		}
+	}
+	key, err := loader.read(ctx, "circuits/"+name+"."+target+".vk")
+	if err != nil {
+		return nil, err
+	}
+	sum := sha256.Sum256(key)
+	if hex.EncodeToString(sum[:]) != digest {
+		return nil, errors.New("verification key checksum mismatch")
+	}
+	return append([]byte(nil), key...), nil
+}
