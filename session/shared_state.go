@@ -173,6 +173,21 @@ func (s *WalletSession) RefreshStateWithOptions(ctx context.Context, options Sta
 	if before.Invalidated {
 		return errors.New("wallet requires reset scan")
 	}
+	priorAnchors := []protocolrpc.CanonicalBlock{}
+	if inventoryOnly {
+		for _, point := range []*protocolrpc.CanonicalBlock{before.ObservedThrough, before.CheckedThrough} {
+			if point == nil {
+				continue
+			}
+			duplicate := false
+			for _, known := range priorAnchors {
+				duplicate = duplicate || known == *point
+			}
+			if !duplicate {
+				priorAnchors = append(priorAnchors, *point)
+			}
+		}
+	}
 	snap := newPreparationSnapshot(s, before, b, head)
 	recorder := transaction.NewSnapshotRecorder(s.options.Provider, snap)
 	captured := *s
@@ -187,6 +202,20 @@ func (s *WalletSession) RefreshStateWithOptions(ctx context.Context, options Sta
 		before.PreparationSnapshot = nil
 	} else if e = s.finishPreparationSnapshot(ctx, &before, recorder); e != nil {
 		return e
+	}
+	// Retain the private-anchor fences formerly supplied by empty imports and
+	// full prewarming. Public coverage was checked after b was captured, so its
+	// exact anchors can share that evidence with the final b fence below.
+	for _, point := range priorAnchors {
+		verified := point == b
+		for _, coverage := range public.Coverage {
+			verified = verified || point == coverage.Block
+		}
+		if !verified {
+			if e = s.canonical(ctx, point); e != nil {
+				return e
+			}
+		}
 	}
 	if _, e = recorder.ChainID(ctx); e != nil {
 		return e

@@ -14,6 +14,7 @@ import (
 
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/invisi-labs/invisi-sdk-go/credit"
 	"github.com/invisi-labs/invisi-sdk-go/primitives"
 	"github.com/invisi-labs/invisi-sdk-go/protocol"
@@ -209,6 +210,75 @@ func TestInventoryOnlyRejectsIdentityChangeAtFinalFence(t *testing.T) {
 	after, _ := s.options.Store.ReadSnapshot(ctx, s.scope)
 	if after.Revision != before.Revision {
 		t.Fatal("failed identity fence changed inventory")
+	}
+}
+
+func TestInventoryOnlyRetainsPrivateObservationFenceOutsidePublicCoverage(t *testing.T) {
+	s, _, _ := testSession(t)
+	ctx := context.Background()
+	base := s.options.Provider.(sessionProvider)
+	orphan := fixtureHeader(9, base.head.Time)
+	orphan.Extra = []byte{99}
+	point := protocolrpc.CanonicalBlock{Number: 9, Hash: orphan.Hash(), ParentHash: orphan.ParentHash, Timestamp: orphan.Time}
+	if err := s.options.Store.Update(ctx, s.scope, func(v *WalletState) error { v.ObservedThrough = &point; return nil }); err != nil {
+		t.Fatal(err)
+	}
+	before, _ := s.options.Store.ReadSnapshot(ctx, s.scope)
+	if err := s.RefreshStateWithOptions(ctx, StateRefreshOptions{InventoryOnly: true}); err == nil {
+		t.Fatal("orphaned private observation outside public coverage accepted")
+	}
+	after, _ := s.options.Store.ReadSnapshot(ctx, s.scope)
+	if after.Revision != before.Revision {
+		t.Fatal("failed observation fence committed partial state")
+	}
+}
+
+type privateAnchorReorgProvider struct {
+	sdk.Provider
+	changed atomic.Bool
+}
+
+func (p *privateAnchorReorgProvider) CallContract(ctx context.Context, msg ethereum.CallMsg, block *big.Int) ([]byte, error) {
+	abi, _ := protocol.ProtocolABI()
+	if method, err := abi.MethodById(msg.Data[:4]); err == nil && method.RawName == "isNullifierSpent" {
+		p.changed.Store(true)
+	}
+	return p.Provider.CallContract(ctx, msg, block)
+}
+
+func (p *privateAnchorReorgProvider) HeaderByNumber(ctx context.Context, number *big.Int) (*types.Header, error) {
+	h, err := p.Provider.HeaderByNumber(ctx, number)
+	if err == nil && h != nil && h.Number.Uint64() == 9 && p.changed.Load() {
+		copy := *h
+		copy.Extra = []byte{99}
+		return &copy, nil
+	}
+	return h, err
+}
+
+func TestInventoryOnlyFencesPrivateAnchorAfterConsumptionReads(t *testing.T) {
+	s, _, _ := testSession(t)
+	ctx := context.Background()
+	base := s.options.Provider.(sessionProvider)
+	h := fixtureHeader(9, base.head.Time)
+	point := protocolrpc.CanonicalBlock{Number: 9, Hash: h.Hash(), ParentHash: h.ParentHash, Timestamp: h.Time}
+	if err := s.options.Store.Update(ctx, s.scope, func(v *WalletState) error {
+		v.ObservedThrough = &point
+		v.CheckedThrough = &point
+		return nil
+	}); err != nil {
+		t.Fatal(err)
+	}
+	before, _ := s.options.Store.ReadSnapshot(ctx, s.scope)
+	provider := &privateAnchorReorgProvider{Provider: base}
+	s.options.Provider = provider
+	s.rpc = s.rpc.WithProvider(provider)
+	if err := s.RefreshStateWithOptions(ctx, StateRefreshOptions{InventoryOnly: true}); err == nil {
+		t.Fatal("private anchor reorg during state reads accepted")
+	}
+	after, _ := s.options.Store.ReadSnapshot(ctx, s.scope)
+	if !provider.changed.Load() || after.Revision != before.Revision {
+		t.Fatal("test did not reach state reads or committed partial inventory")
 	}
 }
 
