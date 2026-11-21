@@ -12,6 +12,9 @@ import (
 	"github.com/invisi-labs/invisi-sdk-go/rpc/broadcaster"
 )
 
+// Wallet callbacks return on-chain EOA signatures with v=27/28 (normalize
+// geth crypto.Sign parity 0/1); ERC-1271 follows the wallet format. EIP-7702
+// authorization yParity stays 0/1.
 // These host integration recipes have no Output directive. go test compiles
 // them without calling a provider, wallet or Broadcaster. core must be a real
 // independently verified proof exported after PreparePayment(...).Prove(ctx).

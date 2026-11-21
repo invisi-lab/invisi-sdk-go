@@ -51,6 +51,12 @@ Quotes use `execution: "direct"` and `requestHashFormat: "payment-router-envelop
 
 See the [compiling host-integration examples](workflow_example_test.go) for self-submitted ERC20, relayed ERC20 and sponsored native workflows. They accept a real host-proved Core call and wallet callbacks; `go test` compiles them without executing RPC calls or broadcasting fixture proofs. Golden fixtures separately cover canonical calldata, hashes, signatures and authorization envelopes; they do not certify live DEX or wallet compatibility.
 
+EOA signatures attached to Router intents or account payments use low-s
+`r || s || v` bytes with on-chain `v` equal to 27 or 28. A host signer such as
+geth `crypto.Sign` returns recovery parity 0 or 1; normalize that final byte
+before attaching it. ERC-1271 signatures follow the contract wallet's format.
+EIP-7702 authorization `yParity` remains 0 or 1 and must not be changed to 27/28.
+
 ## Legacy native-only integration
 
 The optional module `github.com/invisi-labs/invisi-sdk-go/paymentrouter` retains `Quote`, `BuildPaymentTransaction`, `SimulatePayment`, `LegacyPaymentRouterABI` and `ZeroExPaymentRouterABI` as historical native-only APIs for existing deployments. The core SDK has no dependency on this module.
