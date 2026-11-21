@@ -77,8 +77,19 @@ func routerHashArgs(args abi.Arguments, v ...any) (common.Hash, error) {
 const RouterRequestHashFormat = "payment-router-envelope-v1"
 
 func VerifyRouterQuote(s SignedQuote, t Trust, data []byte, env RouterEnvelope, now uint64) error {
-	if s.ProvenanceRequired || s.RequestHashFormat != RouterRequestHashFormat || s.Quote.Execution != "direct" || s.Quote.Schedule != nil {
+	if s.RequestHashFormat != RouterRequestHashFormat || s.Quote.Execution != "direct" || s.Quote.Schedule != nil {
 		return fmt.Errorf("unsupported Router quote policy")
+	}
+	limit, e := relayDeadline(data, env)
+	if e != nil {
+		return e
+	}
+	deadline, e := decimal(s.Quote.Deadline)
+	if e != nil {
+		return e
+	}
+	if deadline.Cmp(limit) > 0 {
+		return fmt.Errorf("Router quote outlives payment authorization")
 	}
 	h, e := EnvelopeHash(t.ChainID, t.Protocol, env)
 	if e != nil {
@@ -88,6 +99,9 @@ func VerifyRouterQuote(s SignedQuote, t Trust, data []byte, env RouterEnvelope, 
 }
 func (c *Client) EstimateRouterQuote(ctx context.Context, data []byte, env RouterEnvelope) (Fee, error) {
 	var fee Fee
+	if _, e := relayDeadline(data, env); e != nil {
+		return fee, e
+	}
 	if _, e := DecodeIntent(data); e != nil {
 		return fee, e
 	}

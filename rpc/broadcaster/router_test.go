@@ -3,6 +3,7 @@ package broadcaster
 import (
 	"context"
 	"encoding/json"
+	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/crypto"
@@ -44,8 +45,36 @@ func TestRouterEnvelopeGoldenVectors(t *testing.T) {
 
 func TestRouterQuoteBindsOuterAndSubmitWire(t *testing.T) {
 	data, trust, key := intent(t)
-	env := RouterEnvelope{To: common.HexToAddress("0x44"), Data: []byte{1, 2, 3, 4}, Value: "0"}
+	var rows []struct {
+		Core     common.Address
+		Envelope RouterEnvelope
+	}
+	raw, err := os.ReadFile("testdata/payment-router-envelope-vectors.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err = json.Unmarshal(raw, &rows); err != nil {
+		t.Fatal(err)
+	}
+	env := rows[0].Envelope
+	trust.ChainID = big.NewInt(31337)
+	trust.Protocol = rows[0].Core
+	args, err := unpackRelay("payTokenFor", env.Data)
+	if err != nil {
+		t.Fatal(err)
+	}
+	core := relayMethods["transact"]
+	encoded, err := core.Inputs.Pack(args[0], args[1])
+	if err != nil {
+		t.Fatal(err)
+	}
+	data = append(core.ID, encoded...)
 	s := signed(t, data, trust, key)
+	decoded, err := DecodeIntent(data)
+	if err != nil {
+		t.Fatal(err)
+	}
+	s.Quote.FeeAmount = decoded.FeeAmount.String()
 	h, e := EnvelopeHash(trust.ChainID, trust.Protocol, env)
 	if e != nil {
 		t.Fatal(e)
@@ -68,6 +97,16 @@ func TestRouterQuoteBindsOuterAndSubmitWire(t *testing.T) {
 	s.Context = &trust
 	if e = VerifyRouterQuote(s, trust, data, env, 0); e != nil {
 		t.Fatal(e)
+	}
+	s.ProvenanceRequired = true
+	if e = VerifyRouterQuote(s, trust, data, env, 0); e != nil {
+		t.Fatal("capability metadata rejected", e)
+	}
+	s.ProvenanceRequired = false
+	changed := append([]byte(nil), data...)
+	changed[len(changed)-32] ^= 1
+	if e = VerifyRouterQuote(s, trust, changed, env, 0); e == nil {
+		t.Fatal("accepted different embedded Core payload")
 	}
 	wrong := env
 	wrong.To = common.HexToAddress("0x55")
@@ -118,5 +157,64 @@ func TestRouterQuoteBindsOuterAndSubmitWire(t *testing.T) {
 	status, e := client.SubmitRouterTransaction(context.Background(), data, env, s)
 	if e != nil || status.ID != "router-job" {
 		t.Fatal(status, e)
+	}
+}
+
+func TestRouterBindingUsesInnerAndAccountAuthorizationDeadlines(t *testing.T) {
+	raw, e := os.ReadFile("testdata/payment-router-envelope-vectors.json")
+	if e != nil {
+		t.Fatal(e)
+	}
+	var rows []struct{ Envelope RouterEnvelope }
+	if e = json.Unmarshal(raw, &rows); e != nil {
+		t.Fatal(e)
+	}
+	for _, native := range []bool{false, true} {
+		env := rows[0].Envelope
+		name := "payTokenFor"
+		inner := []byte(env.Data)
+		var account []any
+		if native {
+			env = rows[1].Envelope
+			account, e = unpackRelay("executeNativePayment", env.Data)
+			if e != nil {
+				t.Fatal(e)
+			}
+			inner = account[0].([]byte)
+			name = "payNative"
+		}
+		args, e := unpackRelay(name, inner)
+		if e != nil {
+			t.Fatal(e)
+		}
+		m := relayMethods["transact"]
+		core, e := m.Inputs.Pack(args[0], args[1])
+		if e != nil {
+			t.Fatal(e)
+		}
+		core = append(append([]byte(nil), m.ID...), core...)
+		intent := abi.ConvertType(args[2], new(relayIntent)).(*relayIntent)
+		intent.Deadline = new(big.Int).Sub(intent.Deadline, big.NewInt(100))
+		args[2] = *intent
+		encoded, e := relayMethods[name].Inputs.Pack(args...)
+		if e != nil {
+			t.Fatal(e)
+		}
+		env.Data = append(append([]byte(nil), relayMethods[name].ID...), encoded...)
+		expected := new(big.Int).Set(intent.Deadline)
+		if native {
+			account[0] = []byte(env.Data)
+			account[3] = new(big.Int).Sub(expected, big.NewInt(100))
+			expected.Set(account[3].(*big.Int))
+			encoded, e = relayMethods["executeNativePayment"].Inputs.Pack(account...)
+			if e != nil {
+				t.Fatal(e)
+			}
+			env.Data = append(append([]byte(nil), relayMethods["executeNativePayment"].ID...), encoded...)
+		}
+		limit, e := relayDeadline(core, env)
+		if e != nil || limit.Cmp(expected) != 0 {
+			t.Fatal(limit, e)
+		}
 	}
 }
