@@ -73,7 +73,7 @@ func (a *UniswapV3Adapter) Quote(ctx context.Context, input SwapQuoteRequest) (S
 		return best, fmt.Errorf("missing QuoterV2 code")
 	}
 	for _, route := range a.routes {
-		if route.Tokens[0] != r.Deployment.WETHAddress || route.Tokens[len(route.Tokens)-1] != r.TokenOut {
+		if route.Tokens[0] != quoteInput(r) || route.Tokens[len(route.Tokens)-1] != r.TokenOut {
 			continue
 		}
 		path, _ := EncodeV3ExactOutputPath(route.Tokens, route.Fees)
@@ -183,7 +183,11 @@ func (a *ZeroExAdapter) Quote(ctx context.Context, input SwapQuoteRequest) (Swap
 	if !addressEqual(body["buyToken"], r.TokenOut) {
 		return fail("0x buy token mismatch")
 	}
-	if !addressEqual(body["sellToken"], nativeToken) {
+	sellToken := r.TokenIn
+	if !nonzero(sellToken) {
+		sellToken = nativeToken
+	}
+	if !addressEqual(body["sellToken"], sellToken) {
 		return fail("0x sell token must be native ETH")
 	}
 	amount, e := decimal(body["buyAmount"], "buyAmount")
@@ -208,7 +212,7 @@ func (a *ZeroExAdapter) Quote(ctx context.Context, input SwapQuoteRequest) (Swap
 	if e != nil {
 		return q, e
 	}
-	if value.Cmp(max) != 0 {
+	if (!nonzero(r.TokenIn) && value.Cmp(max) != 0) || (nonzero(r.TokenIn) && value.Sign() != 0) {
 		return fail("0x native transaction value mismatch")
 	}
 	for _, field := range []string{"taker", "recipient"} {
@@ -254,7 +258,14 @@ func (a *ZeroExAdapter) Quote(ctx context.Context, input SwapQuoteRequest) (Swap
 	if e != nil {
 		return fail("invalid transaction data")
 	}
-	checked, e := ValidateZeroExPayload(ZeroExPayloadOptions{Target: target, Data: data, RouterAddress: r.Deployment.RouterAddress, TokenOut: r.TokenOut, AmountOut: r.AmountOut, MaxInput: max, SettlerAddress: r.SettlerAddress, AllowanceHolderAddress: r.Deployment.ZeroEx.AllowanceHolderAddress, Now: r.Now})
+	options := ZeroExPayloadOptions{Target: target, Data: data, RouterAddress: r.Deployment.RouterAddress, TokenOut: r.TokenOut, AmountOut: r.AmountOut, MaxInput: max, SettlerAddress: r.SettlerAddress, AllowanceHolderAddress: r.Deployment.ZeroEx.AllowanceHolderAddress, Now: r.Now}
+	var checked CheckedZeroExPayload
+	if nonzero(r.TokenIn) {
+		e = ValidateZeroExTokenPayload(r.TokenIn, options)
+		checked = CheckedZeroExPayload{Target: target, Data: data, SettlerAddress: r.SettlerAddress, NativeDeadline: r.Deadline}
+	} else {
+		checked, e = ValidateZeroExPayload(options)
+	}
 	if e != nil {
 		return q, e
 	}
@@ -309,7 +320,11 @@ func NewZeroExQuoteFetcher(o ZeroExHTTPOptions) (ZeroExQuoteTransport, error) {
 			return nil, e
 		}
 		v := *u
-		values := url.Values{"chainId": {r.Deployment.ChainID.String()}, "sellToken": {nativeToken.Hex()}, "buyToken": {r.TokenOut.Hex()}, "buyAmount": {r.AmountOut.String()}, "taker": {r.Deployment.RouterAddress.Hex()}, "recipient": {r.Deployment.RouterAddress.Hex()}, "slippageBps": {strconv.Itoa(slippageBps(r.QuoteParameters))}}
+		sellToken := r.TokenIn
+		if !nonzero(sellToken) {
+			sellToken = nativeToken
+		}
+		values := url.Values{"chainId": {r.Deployment.ChainID.String()}, "sellToken": {sellToken.Hex()}, "buyToken": {r.TokenOut.Hex()}, "buyAmount": {r.AmountOut.String()}, "taker": {r.Deployment.RouterAddress.Hex()}, "recipient": {r.Deployment.RouterAddress.Hex()}, "slippageBps": {strconv.Itoa(slippageBps(r.QuoteParameters))}}
 		v.RawQuery = values.Encode()
 		req, e := http.NewRequestWithContext(ctx, http.MethodGet, v.String(), nil)
 		if e != nil {
@@ -340,4 +355,11 @@ func NewZeroExQuoteFetcher(o ZeroExHTTPOptions) (ZeroExQuoteTransport, error) {
 		}
 		return body, nil
 	}, nil
+}
+
+func quoteInput(r SwapQuoteRequest) common.Address {
+	if nonzero(r.TokenIn) {
+		return r.TokenIn
+	}
+	return r.Deployment.WETHAddress
 }

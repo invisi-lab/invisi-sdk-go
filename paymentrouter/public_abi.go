@@ -11,8 +11,11 @@ var paymentRouterJSON string
 //go:embed zeroex-payment-router.json
 var zeroExPaymentRouterJSON string
 
-// PaymentRouterABI returns a fresh ABI snapshot of the V3-only Router.
-func PaymentRouterABI() abi.ABI { return mustABI(paymentRouterJSON) }
+// PaymentRouterABI returns the canonical multi-mode Router ABI.
+func PaymentRouterABI() abi.ABI { return CanonicalRouterABI() }
 
-// ZeroExPaymentRouterABI returns a fresh ABI snapshot of the Router with both channels.
+// LegacyPaymentRouterABI returns the historical V3-only ABI.
+func LegacyPaymentRouterABI() abi.ABI { return mustABI(paymentRouterJSON) }
+
+// ZeroExPaymentRouterABI returns the legacy native Router ABI with both swap channels.
 func ZeroExPaymentRouterABI() abi.ABI { return mustABI(zeroExPaymentRouterJSON) }

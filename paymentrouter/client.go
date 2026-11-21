@@ -48,9 +48,6 @@ func (c *Client) PreparePayment(ctx context.Context, o PreparePaymentOptions) (*
 	if len(o.Outputs) < 2 {
 		return nil, fmt.Errorf("pure funding requires at least two Note outputs")
 	}
-	if o.TokenAddress == c.deployment.WETHAddress {
-		return nil, fmt.Errorf("WETH output is not supported")
-	}
 	amount := new(big.Int)
 	if o.Fee != nil && o.Fee.Amount != nil {
 		amount.Set(o.Fee.Amount)
@@ -124,7 +121,12 @@ func (c *Client) checkQuote(q SwapQuote, f deploymentFrame) error {
 func (c *Client) checkZero(q SwapQuote, f deploymentFrame) (CheckedZeroExPayload, error) {
 	return ValidateZeroExPayload(ZeroExPayloadOptions{Target: q.Target, Data: q.Data, RouterAddress: c.deployment.RouterAddress, TokenOut: q.TokenOut, AmountOut: q.AmountOut, MaxInput: q.MaxInput, SettlerAddress: f.SettlerAddress, AllowanceHolderAddress: c.deployment.ZeroEx.AllowanceHolderAddress, Now: f.Now})
 }
+
+// Quote is the legacy native-only quote API; canonical integrations use QuoteRoute.
 func (c *Client) Quote(ctx context.Context, a QuoteAdapter, p QuoteParameters) (SwapQuote, error) {
+	if nonzero(p.TokenIn) {
+		return SwapQuote{}, fmt.Errorf("ERC20 input requires QuoteRoute")
+	}
 	p = cloneParameters(p)
 	fail := func(e error) (SwapQuote, error) { return SwapQuote{}, e }
 	if e := ctx.Err(); e != nil {
@@ -179,6 +181,9 @@ func (c *Client) Quote(ctx context.Context, a QuoteAdapter, p QuoteParameters) (
 
 // InspectCorePayment decodes and validates the existing proof statement without modifying it.
 func InspectCorePayment(call protocol.TransactionCall, d Deployment, now *big.Int) ([]byte, protocol.TransactRequest, error) {
+	return inspectCorePayment(call, d, now, false)
+}
+func inspectCorePayment(call protocol.TransactionCall, d Deployment, now *big.Int, allowWETH bool) ([]byte, protocol.TransactRequest, error) {
 	var r protocol.TransactRequest
 	fail := func(s string) ([]byte, protocol.TransactRequest, error) { return nil, r, fmt.Errorf("%s", s) }
 	if call.To != d.CoreAddress || call.Value == nil || call.Value.Sign() != 0 {
@@ -210,14 +215,14 @@ func InspectCorePayment(call protocol.TransactionCall, d Deployment, now *big.In
 	if len(p.Sources) != 0 || len(p.Nullifiers) != 0 || p.WithdrawalAmount.Sign() != 0 || nonzero(p.WithdrawalAddress) {
 		return fail("Router payment requires zero private inputs and no withdrawal")
 	}
-	if p.Token == d.WETHAddress {
+	if !allowWETH && p.Token == d.WETHAddress {
 		return fail("WETH output is not supported")
 	}
 	_, e = protocol.NormalizeTransactRequest(protocol.TransactionContext{ChainID: d.ChainID, ProtocolAddress: d.CoreAddress, TokenAddress: p.Token, Now: now}, p, r.Deliveries, f)
 	return proof, r, e
 }
 
-// BuildPaymentTransaction accepts a core call or *sdk.PreparedTransaction with a ready proof.
+// BuildPaymentTransaction is the legacy native-only builder. It accepts a core call or *sdk.PreparedTransaction with a ready proof.
 func (c *Client) BuildPaymentTransaction(ctx context.Context, payment any, quote SwapQuote, recipient common.Address) (protocol.TransactionCall, error) {
 	q := cloneQuote(quote)
 	var empty protocol.TransactionCall
@@ -281,7 +286,7 @@ func (c *Client) BuildPaymentTransaction(ctx context.Context, payment any, quote
 	return protocol.TransactionCall{To: c.deployment.RouterAddress, Data: data, Value: copyInt(q.MaxInput)}, nil
 }
 
-// SimulatePayment calls and estimates the entire payable Router transaction at one block.
+// SimulatePayment is the legacy native-only simulator. It calls and estimates the entire payable Router transaction at one block.
 func (c *Client) SimulatePayment(ctx context.Context, input protocol.TransactionCall, from common.Address) (RouterSimulation, error) {
 	var result RouterSimulation
 	call := input

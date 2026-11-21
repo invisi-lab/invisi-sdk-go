@@ -35,6 +35,8 @@ const (
 
 // SlippageBps defaults to 50 when nil; a pointer to zero disables slippage.
 type QuoteParameters struct {
+	// TokenIn is zero for native input. Canonical quote flows also support ERC20.
+	TokenIn                       common.Address
 	TokenOut                      common.Address
 	AmountOut, MaxInput, Deadline *big.Int
 	SlippageBps                   *int

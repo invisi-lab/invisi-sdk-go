@@ -36,6 +36,10 @@ func (p GethProvider) EstimateGasAt(ctx context.Context, msg ethereum.CallMsg, b
 	if msg.GasTipCap != nil {
 		args["maxPriorityFeePerGas"] = (*hexutil.Big)(msg.GasTipCap)
 	}
+	if len(msg.AuthorizationList) > 0 {
+		args["authorizationList"] = msg.AuthorizationList
+		args["type"] = hexutil.Uint64(4)
+	}
 	var out hexutil.Uint64
 	e := p.Client.Client().CallContext(ctx, &out, "eth_estimateGas", args, hexutil.EncodeBig(block))
 	return uint64(out), e
