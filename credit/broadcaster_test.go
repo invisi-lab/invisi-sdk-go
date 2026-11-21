@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/ecdsa"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"math/big"
@@ -197,6 +198,7 @@ func TestCreditKnownSubmissionQueriesWithoutFreshProof(t *testing.T) {
 }
 
 func TestCreditScheduledQuotesCoverEveryMethod(t *testing.T) {
+	now := uint64(time.Now().Unix())
 	s, f := fixture(t)
 	raw := common.LeftPadBytes([]byte{1}, 32)
 	key, _ := crypto.ToECDSA(raw)
@@ -204,7 +206,7 @@ func TestCreditScheduledQuotesCoverEveryMethod(t *testing.T) {
 	s.OwnerWalletIdentity = primitives.BigIntToElement(owner.Big())
 	s.SpenderWalletIdentity = s.OwnerWalletIdentity
 	commitment, _ := s.Commitment()
-	c := Context{ProtocolContext: s.ProtocolContext, TokenAddress: common.BigToAddress(big.NewInt(34)), Timestamp: 2000000000}
+	c := Context{ProtocolContext: s.ProtocolContext, TokenAddress: common.BigToAddress(big.NewInt(34)), Timestamp: now}
 	d := f["delivery"].(map[string]any)
 	clue := make([]byte, 68)
 	clue[64] = 24
@@ -249,8 +251,16 @@ func TestCreditScheduledQuotesCoverEveryMethod(t *testing.T) {
 	client := creditBroadcaster(t, c, quoteKey, common.HexToAddress("0x1234"))
 	seen := map[string]bool{}
 	for _, prepared := range []*Prepared{p, draw, update, revoke} {
-		after := strconv.FormatInt(time.Now().Unix()+60, 10)
-		if err = client.Quote(context.Background(), prepared, BroadcasterQuoteOptions{MaxFeeAmount: big.NewInt(2), Schedule: &broadcaster.ScheduleOptions{PublishAfter: after}}); err != nil {
+		publishAfter := uint64(time.Now().Unix() + 60)
+		after := strconv.FormatUint(publishAfter, 10)
+		err = client.Quote(context.Background(), prepared, BroadcasterQuoteOptions{MaxFeeAmount: big.NewInt(2), Schedule: &broadcaster.ScheduleOptions{PublishAfter: after}})
+		if prepared == draw && Periods(c.Timestamp) != Periods(publishAfter+299) {
+			if !errors.Is(err, ErrCreditPeriodChanged) {
+				t.Fatal("cross-midnight draw schedule accepted", err)
+			}
+			continue
+		}
+		if err != nil {
 			t.Fatal(err)
 		}
 		intent, err := prepared.ExportIntent()

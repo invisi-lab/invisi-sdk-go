@@ -62,6 +62,19 @@ func (i *Invisi) creditBuilder(ctx context.Context, identity TransactionIdentity
 	var block protocolrpc.CanonicalBlock
 	roots := map[uint64]common.Hash{}
 	return credit.PreparationBuilder{
+		ChainTimestamp: func(ctx context.Context) (uint64, error) {
+			if i.options.Provider == nil {
+				return 0, errors.New("current Credit chain provider required")
+			}
+			head, err := i.options.Provider.HeaderByNumber(ctx, nil)
+			if err != nil {
+				return 0, err
+			}
+			if head == nil || head.Number == nil || !head.Number.IsUint64() || head.Time == 0 {
+				return 0, errors.New("current Credit block unavailable")
+			}
+			return head.Time, nil
+		},
 		Owner:   identity.Wallet.GetAddress,
 		Resolve: r.ResolveRecipient,
 		Frame: func(ctx context.Context, token common.Address, deadline uint64) (credit.Context, uint64, error) {

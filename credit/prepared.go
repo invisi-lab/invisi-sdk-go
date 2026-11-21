@@ -41,6 +41,7 @@ type Prepared struct {
 	broadcaster.OperationTarget `json:"-"`
 	mu                          sync.Mutex
 	intent                      Intent
+	chainTimestamp              func(context.Context) (uint64, error)
 	authority                   *Authority
 	proof                       *prover.ProofBundle
 	revokeSignature             []byte
@@ -501,14 +502,14 @@ func (p *Prepared) CheckTimestamp(timestamp uint64) error {
 	case i.Create != nil:
 		deadline = i.Create.Deadline
 		if i.Create.HasInitialPayment != nil && *i.Create.HasInitialPayment && Periods(timestamp) != Periods(i.Context.Timestamp) {
-			return fmt.Errorf("initial payment crossed a UTC usage period; prepare again")
+			return ErrCreditPeriodChanged
 		}
 	case i.Update != nil:
 		deadline = i.Update.Deadline
 	case i.Draw != nil:
 		deadline = i.Draw.Deadline
 		if Periods(timestamp) != Periods(i.Context.Timestamp) {
-			return fmt.Errorf("Credit draw crossed a UTC usage period; prepare again")
+			return ErrCreditPeriodChanged
 		}
 	case i.Revoke != nil:
 		deadline = i.Revoke.Deadline

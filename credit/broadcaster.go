@@ -253,6 +253,13 @@ func (p *Prepared) quoteBroadcaster(ctx context.Context, client *broadcaster.Cli
 		if !ok || slack.Sign() < 0 {
 			return fmt.Errorf("invalid deadline slack")
 		}
+		if base.Draw != nil || base.Create != nil && base.Create.HasInitialPayment != nil && *base.Create.HasInitialPayment {
+			// Period validity is separate from business deadline coverage below.
+			// ExecuteBefore is exclusive; a window ending at midnight stays in this day.
+			if Periods(after) != Periods(base.Context.Timestamp) || Periods(before-1) != Periods(base.Context.Timestamp) {
+				return ErrCreditPeriodChanged
+			}
+		}
 		minimum := new(big.Int).Add(new(big.Int).SetUint64(before), slack)
 		var deadline *big.Int
 		switch {
@@ -401,6 +408,11 @@ func (p *Prepared) submitViaBroadcaster(ctx context.Context, client *broadcaster
 	if retry && known.RequestID != "" {
 		return client.Status(ctx, known.RequestID)
 	}
+	if !retry {
+		if err := p.CheckCurrentTimestamp(ctx); err != nil {
+			return broadcaster.Status{}, err
+		}
+	}
 	var data []byte
 	var quote broadcaster.SignedQuote
 	var err error
@@ -426,6 +438,11 @@ func (p *Prepared) submitViaBroadcaster(ctx context.Context, client *broadcaster
 			return broadcaster.Status{}, e
 		}
 		request = &value
+	}
+	if !retry {
+		if err = p.CheckCurrentTimestamp(ctx); err != nil {
+			return broadcaster.Status{}, err
+		}
 	}
 	p.mu.Lock()
 	p.request = request

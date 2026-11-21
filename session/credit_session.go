@@ -13,8 +13,20 @@ func (s *WalletSession) Credit() (*creditsession.Session, error) {
 	if s == nil || s.options.Store == nil {
 		return nil, errors.New("managed wallet store required")
 	}
-	context := s.coreContext()
-	return creditsession.New(creditsession.Options{WrapPreparation: transaction.WrapPreparation, Build: s.buildCreditRequest, Store: creditStoreAdapter{session: s}, OwnerAddress: s.scope.OwnerAddress, Context: &context, Validate: s.validateCreditIntent, CheckCancellation: s.checkCreditCancellation, Prepare: s.prepareCreditIntent, ValidatePreparation: s.validateCreditPreparation, CheckPreparation: s.checkCreditPreparation, VerifyRevocation: s.verifyCreditRevocation})
+	coreContext := s.coreContext()
+	return creditsession.New(creditsession.Options{ChainTimestamp: func(ctx context.Context) (uint64, error) {
+		if s.options.Provider == nil {
+			return 0, errors.New("current Credit chain provider required")
+		}
+		head, err := s.options.Provider.HeaderByNumber(ctx, nil)
+		if err != nil {
+			return 0, err
+		}
+		if head == nil || head.Number == nil || !head.Number.IsUint64() || head.Time == 0 {
+			return 0, errors.New("current Credit block unavailable")
+		}
+		return head.Time, nil
+	}, WrapPreparation: transaction.WrapPreparation, Build: s.buildCreditRequest, Store: creditStoreAdapter{session: s}, OwnerAddress: s.scope.OwnerAddress, Context: &coreContext, Validate: s.validateCreditIntent, CheckCancellation: s.checkCreditCancellation, Prepare: s.prepareCreditIntent, ValidatePreparation: s.validateCreditPreparation, CheckPreparation: s.checkCreditPreparation, VerifyRevocation: s.verifyCreditRevocation})
 }
 
 type creditStoreAdapter struct{ session *WalletSession }

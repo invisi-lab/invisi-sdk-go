@@ -17,6 +17,8 @@ import (
 )
 
 type Options struct {
+	// ChainTimestamp reads fresh canonical chain time before a new payment submission.
+	ChainTimestamp      func(context.Context) (uint64, error)
 	WrapPreparation     func(string, error) error
 	Build               func(context.Context, any) (*credit.Prepared, error)
 	CheckPreparation    func(context.Context, PreparationEvidence) error
@@ -30,6 +32,7 @@ type Options struct {
 	Context             *primitives.ProtocolContext
 }
 type Session struct {
+	chainTimestamp      func(context.Context) (uint64, error)
 	wrapPreparation     func(string, error) error
 	build               func(context.Context, any) (*credit.Prepared, error)
 	checkPreparation    func(context.Context, PreparationEvidence) error
@@ -52,7 +55,7 @@ func New(options Options) (*Session, error) {
 		copy := *options.Context
 		pinned = &copy
 	}
-	return &Session{checkCancellation: options.CheckCancellation, wrapPreparation: options.WrapPreparation, build: options.Build, checkPreparation: options.CheckPreparation, validatePreparation: options.ValidatePreparation, store: options.Store, owner: options.OwnerAddress, context: pinned, validate: options.Validate, prepare: options.Prepare, verifyRevocation: options.VerifyRevocation}, nil
+	return &Session{chainTimestamp: options.ChainTimestamp, checkCancellation: options.CheckCancellation, wrapPreparation: options.WrapPreparation, build: options.Build, checkPreparation: options.CheckPreparation, validatePreparation: options.ValidatePreparation, store: options.Store, owner: options.OwnerAddress, context: pinned, validate: options.Validate, prepare: options.Prepare, verifyRevocation: options.VerifyRevocation}, nil
 }
 func validateStored(s StoredState) error {
 	if s.GrantStatus > 2 || s.Revoked != (s.GrantStatus == 2) {
@@ -417,10 +420,15 @@ func (o *Operation) checkFresh(ctx context.Context) error {
 				return err
 			}
 		}
-		now := uint64(time.Now().Unix())
-		if record.Intent.Context.Timestamp > now {
-			now = record.Intent.Context.Timestamp
+		now := record.Intent.Context.Timestamp
+		periodBound := record.Intent.Draw != nil || record.Intent.Create != nil && record.Intent.Create.HasInitialPayment != nil && *record.Intent.Create.HasInitialPayment
+		if !periodBound {
+			if local := time.Now().Unix(); local > 0 && uint64(local) > now {
+				now = uint64(local)
+			}
 		}
+		// Cached local payment work retains its authenticated preparation period.
+		// Only submission requires fresh canonical chain time; machine time cannot select a usage period.
 		return o.prepared.CheckTimestamp(now)
 	}
 	return o.session.validate(ctx, record.Intent)
@@ -441,6 +449,9 @@ func (o *Operation) validateSubmission(ctx context.Context) error {
 		return err
 	}
 	record := state.Operations[o.id]
+	if record.Externalized {
+		return nil
+	}
 	if record.SubmissionValidation == "required" && record.Preparation == nil {
 		return fmt.Errorf("cached Credit preparation evidence missing")
 	}
@@ -453,6 +464,12 @@ func (o *Operation) validateSubmission(ctx context.Context) error {
 		if err = o.session.validate(ctx, record.Intent); err != nil {
 			return err
 		}
+	}
+	if o.session.chainTimestamp != nil {
+		o.prepared.SetChainTimestampReader(o.session.chainTimestamp)
+	}
+	if err = o.prepared.CheckCurrentTimestamp(ctx); err != nil {
+		return err
 	}
 	if record.Intent.Revoke != nil && len(record.RevocationSignature) > 0 && o.session.verifyRevocation != nil {
 		typed, e := o.prepared.SigningRequest()

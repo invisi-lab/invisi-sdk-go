@@ -41,6 +41,9 @@ type Fee struct {
 	MaxGas       string         `json:"maxGas"`
 }
 type Status struct {
+	ReasonCode      string        `json:"reasonCode,omitempty"`
+	PublishAfter    string        `json:"publishAfter,omitempty"`
+	ExecuteBefore   string        `json:"executeBefore,omitempty"`
 	Confirmation    *Confirmation `json:"confirmation,omitempty"`
 	ID              string        `json:"id"`
 	State           string        `json:"state"`

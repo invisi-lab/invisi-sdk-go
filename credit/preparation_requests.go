@@ -77,11 +77,13 @@ type PreparationInput struct {
 
 // PreparationBuilder resolves current or pinned facts; authorization stays with the application.
 type PreparationBuilder struct {
-	Frame   func(context.Context, common.Address, uint64) (Context, uint64, error)
-	Resolve func(context.Context, string) (primitives.ReceivingAddress, error)
-	Owner   func() (string, error)
-	Status  func(context.Context, Context, common.Address, *big.Int) (uint8, error)
-	Input   func(context.Context, Context, common.Hash, Role) (PreparationInput, error)
+	// ChainTimestamp reads fresh canonical chain time for first submission.
+	ChainTimestamp func(context.Context) (uint64, error)
+	Frame          func(context.Context, common.Address, uint64) (Context, uint64, error)
+	Resolve        func(context.Context, string) (primitives.ReceivingAddress, error)
+	Owner          func() (string, error)
+	Status         func(context.Context, Context, common.Address, *big.Int) (uint8, error)
+	Input          func(context.Context, Context, common.Hash, Role) (PreparationInput, error)
 }
 
 func requestFee(f *Fee) (common.Address, *big.Int, error) {
@@ -118,7 +120,12 @@ func Seal(d DeliveryState) ([]protocol.Delivery, error) {
 	}
 	return ds, nil
 }
-func (b PreparationBuilder) Create(ctx context.Context, p CreatePreparation) (*Prepared, error) {
+func (b PreparationBuilder) Create(ctx context.Context, p CreatePreparation) (prepared *Prepared, err error) {
+	defer func() {
+		if prepared != nil {
+			prepared.SetChainTimestampReader(b.ChainTimestamp)
+		}
+	}()
 	p = p.Clone()
 	if p.CreationABI != "" && p.CreationABI != "legacy" && p.CreationABI != "initial-payment" {
 		return nil, fmt.Errorf("unsupported creation ABI")
@@ -334,7 +341,12 @@ func (b PreparationBuilder) Revoke(ctx context.Context, p RevokePreparation) (*P
 	}
 	return PrepareRevoke(c, RevokeParams{Token: p.TokenAddress, Owner: owner, GrantID: p.GrantID, Deadline: new(big.Int).SetUint64(deadline), FeeRecipient: r, FeeAmount: f})
 }
-func (b PreparationBuilder) Draw(ctx context.Context, p DrawPreparation) (*Prepared, error) {
+func (b PreparationBuilder) Draw(ctx context.Context, p DrawPreparation) (prepared *Prepared, err error) {
+	defer func() {
+		if prepared != nil {
+			prepared.SetChainTimestampReader(b.ChainTimestamp)
+		}
+	}()
 	p = p.Clone()
 	c, deadline, err := b.Frame(ctx, p.TokenAddress, p.Deadline)
 	if err != nil {

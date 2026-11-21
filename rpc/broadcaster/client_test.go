@@ -223,3 +223,21 @@ func TestRejectsMalformedAndOversizedRPCResponses(t *testing.T) {
 		})
 	}
 }
+
+func TestScheduledRejectedStatusPreservesPeriodReason(t *testing.T) {
+	var status Status
+	if err := json.Unmarshal([]byte(`{"id":"scheduled","state":"rejected","reasonCode":"CREDIT_PERIOD_CHANGED","publishAfter":"1795219200","executeBefore":"1795219500"}`), &status); err != nil {
+		t.Fatal(err)
+	}
+	raw, err := json.Marshal(status)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var fields map[string]any
+	if err = json.Unmarshal(raw, &fields); err != nil {
+		t.Fatal(err)
+	}
+	if fields["reasonCode"] != "CREDIT_PERIOD_CHANGED" || fields["publishAfter"] != "1795219200" || fields["executeBefore"] != "1795219500" {
+		t.Fatalf("scheduled rejection details lost: %s", raw)
+	}
+}

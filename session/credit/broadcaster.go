@@ -102,6 +102,9 @@ func (o *Operation) submitViaBroadcaster(ctx context.Context, client *broadcaste
 	if err != nil {
 		return broadcaster.Status{}, err
 	}
+	if err = o.prepared.CheckCurrentTimestamp(ctx); err != nil {
+		return broadcaster.Status{}, err
+	}
 	if err = o.update(ctx, func(record *Journal) error {
 		record.BroadcasterRequest = &request
 		if len(record.Calldata) > 0 && string(record.Calldata) != string(data) {
